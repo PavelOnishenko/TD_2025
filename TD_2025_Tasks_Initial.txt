@@ -10,4 +10,5 @@
 008 | TODO | If enemy reaches the end of canvas, clear canvas and show "GAME OVER" in large red text.
 
 009 | TODO | After completing all tasks, commit with message "feat: minimal TD prototype" and mark all tasks as DONE.
-010 | TODO | Add GitHub remote using the correct URL. Push local branches and enable pull request creation.
+010 | TODO | Add GitHub remote and push local commits so pull requests can be created. Use HTTPS: https://github.com/PavelOnishenko/TD_2025.git
+
