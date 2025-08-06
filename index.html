@@ -9,5 +9,13 @@
 </head>
 <body>
   <canvas id="game" width="800" height="450"></canvas>
+  <script>
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+
+    // draw road
+    ctx.fillStyle = '#888';
+    ctx.fillRect(0, 380, canvas.width, 20);
+  </script>
 </body>
 </html>
