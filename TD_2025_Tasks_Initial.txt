@@ -2,7 +2,7 @@
 
 001 | TODO | Create index.html with <canvas id="game"> sized 800×450 on white background.
 002 | TODO | Draw a fixed horizontal road at the bottom of the canvas (y=380, height=20).
-003 | TODO | Spawn one enemy rectangle (30×30, red) at x=0, y=365; move right at 50 px/sec.
+003 | DONE | Spawn one enemy rectangle (30×30, red) at x=0, y=365; move right at 50 px/sec.
 004 | TODO | Place one tower square (40×40, blue) at x=400, y=280 with a 120 px circular detection radius.
 005 | TODO | When enemy is inside radius, fire one projectile (radius 6) toward it every 1 sec.
 006 | TODO | Projectiles move at 200 px/sec; on collision, reduce enemy HP by 1.

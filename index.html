@@ -13,9 +13,36 @@
     const canvas = document.getElementById('game');
     const ctx = canvas.getContext('2d');
 
-    // draw road
-    ctx.fillStyle = '#888';
-    ctx.fillRect(0, 380, canvas.width, 20);
+    const enemy = {
+      x: 0,
+      y: 365,
+      w: 30,
+      h: 30,
+      speed: 50
+    };
+
+    let lastTime = 0;
+
+    function update(timestamp) {
+      const dt = (timestamp - lastTime) / 1000;
+      lastTime = timestamp;
+
+      enemy.x += enemy.speed * dt;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // draw road
+      ctx.fillStyle = '#888';
+      ctx.fillRect(0, 380, canvas.width, 20);
+
+      // draw enemy
+      ctx.fillStyle = 'red';
+      ctx.fillRect(enemy.x, enemy.y, enemy.w, enemy.h);
+
+      requestAnimationFrame(update);
+    }
+
+    requestAnimationFrame(update);
   </script>
 </body>
 </html>
