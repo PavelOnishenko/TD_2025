@@ -29,6 +29,11 @@
       range: 120
     };
 
+    const projectiles = [];
+    const projectileSpeed = 200;
+    const projectileRadius = 6;
+    let lastShot = 0;
+
     let lastTime = 0;
 
     function update(timestamp) {
@@ -36,6 +41,30 @@
       lastTime = timestamp;
 
       enemy.x += enemy.speed * dt;
+
+      const towerCenterX = tower.x + tower.w / 2;
+      const towerCenterY = tower.y + tower.h / 2;
+      const enemyCenterX = enemy.x + enemy.w / 2;
+      const enemyCenterY = enemy.y + enemy.h / 2;
+      const dx = enemyCenterX - towerCenterX;
+      const dy = enemyCenterY - towerCenterY;
+      const dist = Math.hypot(dx, dy);
+
+      if (dist <= tower.range && timestamp - lastShot >= 1000) {
+        const angle = Math.atan2(dy, dx);
+        projectiles.push({
+          x: towerCenterX,
+          y: towerCenterY,
+          vx: Math.cos(angle) * projectileSpeed,
+          vy: Math.sin(angle) * projectileSpeed
+        });
+        lastShot = timestamp;
+      }
+
+      projectiles.forEach(p => {
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+      });
 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -62,6 +91,14 @@
       // draw enemy
       ctx.fillStyle = 'red';
       ctx.fillRect(enemy.x, enemy.y, enemy.w, enemy.h);
+
+      // draw projectiles
+      ctx.fillStyle = 'black';
+      projectiles.forEach(p => {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, projectileRadius, 0, Math.PI * 2);
+        ctx.fill();
+      });
 
       requestAnimationFrame(update);
     }
