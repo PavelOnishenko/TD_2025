@@ -18,7 +18,8 @@
       y: 365,
       w: 30,
       h: 30,
-      speed: 50
+      speed: 50,
+      hp: 3
     };
 
     const tower = {
@@ -35,12 +36,33 @@
     let lastShot = 0;
 
     let lastTime = 0;
+    let gameOver = false;
+    let win = false;
+
+    function showEnd(text, color) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = color;
+      ctx.font = '48px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(text, canvas.width / 2, canvas.height / 2);
+    }
 
     function update(timestamp) {
       const dt = (timestamp - lastTime) / 1000;
       lastTime = timestamp;
 
+      if (gameOver) {
+        showEnd(win ? 'YOU WIN' : 'GAME OVER', win ? 'green' : 'red');
+        return;
+      }
+
       enemy.x += enemy.speed * dt;
+
+      if (enemy.x + enemy.w >= canvas.width) {
+        gameOver = true;
+        win = false;
+      }
 
       const towerCenterX = tower.x + tower.w / 2;
       const towerCenterY = tower.y + tower.h / 2;
@@ -61,10 +83,40 @@
         lastShot = timestamp;
       }
 
-      projectiles.forEach(p => {
+      for (let i = projectiles.length - 1; i >= 0; i--) {
+        const p = projectiles[i];
         p.x += p.vx * dt;
         p.y += p.vy * dt;
-      });
+
+        if (
+          p.x >= enemy.x &&
+          p.x <= enemy.x + enemy.w &&
+          p.y >= enemy.y &&
+          p.y <= enemy.y + enemy.h
+        ) {
+          enemy.hp -= 1;
+          projectiles.splice(i, 1);
+          if (enemy.hp <= 0) {
+            gameOver = true;
+            win = true;
+          }
+          continue;
+        }
+
+        if (
+          p.x < 0 ||
+          p.x > canvas.width ||
+          p.y < 0 ||
+          p.y > canvas.height
+        ) {
+          projectiles.splice(i, 1);
+        }
+      }
+
+      if (gameOver) {
+        showEnd(win ? 'YOU WIN' : 'GAME OVER', win ? 'green' : 'red');
+        return;
+      }
 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
