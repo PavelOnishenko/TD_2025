@@ -1,14 +1,15 @@
 # Minimal Tower Defense game (HTML5 + canvas)
 
-001 | TODO | Create index.html with <canvas id="game"> sized 800×450 on white background.
-002 | TODO | Draw a fixed horizontal road at the bottom of the canvas (y=380, height=20).
+001 | DONE | Create index.html with <canvas id="game"> sized 800×450 on white background.
+002 | DONE | Draw a fixed horizontal road at the bottom of the canvas (y=380, height=20).
 003 | DONE | Spawn one enemy rectangle (30×30, red) at x=0, y=365; move right at 50 px/sec.
-004 | TODO | Place one tower square (40×40, blue) at x=400, y=280 with a 120 px circular detection radius.
-005 | TODO | When enemy is inside radius, fire one projectile (radius 6) toward it every 1 sec.
+004 | DONE | Place one tower square (40×40, blue) at x=400, y=280 with a 120 px circular detection radius.
+005 | DONE | When enemy is inside radius, fire one projectile (radius 6) toward it every 1 sec.
 006 | TODO | Projectiles move at 200 px/sec; on collision, reduce enemy HP by 1.
 007 | TODO | Enemy has 3 HP; when HP reaches 0, clear canvas and show "YOU WIN" in large green text.
 008 | TODO | If enemy reaches the end of canvas, clear canvas and show "GAME OVER" in large red text.
 
 009 | TODO | After completing all tasks, commit with message "feat: minimal TD prototype" and mark all tasks as DONE.
 010 | TODO | Add GitHub remote and push local commits so pull requests can be created. Use HTTPS: https://github.com/PavelOnishenko/TD_2025.git
+
 
