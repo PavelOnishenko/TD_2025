@@ -8,8 +8,6 @@
 006 | TODO | Projectiles move at 200 px/sec; on collision, reduce enemy HP by 1.
 007 | TODO | Enemy has 3 HP; when HP reaches 0, clear canvas and show "YOU WIN" in large green text.
 008 | TODO | If enemy reaches the end of canvas, clear canvas and show "GAME OVER" in large red text.
-
 009 | TODO | After completing all tasks, commit with message "feat: minimal TD prototype" and mark all tasks as DONE.
-010 | TODO | Add GitHub remote and push local commits so pull requests can be created. Use HTTPS: https://github.com/PavelOnishenko/TD_2025.git
 
 
