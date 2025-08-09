@@ -1,0 +1,26 @@
+What it is: a minimal playable TD with a grid, one tower type, and a fixed enemy path. Place towers on free cells and start each wave. Enemies follow waypoints to the base. Survive all 5 waves.
+
+Scope trimmed for time:
+
+Canvas: 720×480. Left: grid 8×5 (tile 50px). Right: thin sidebar.
+
+Path: 5–6 waypoints (polyline) from entry to base.
+
+Building: one tower (Arrow). Cost 10, Range 60, DMG 1, CD 0.6s.
+Flow: click “Place Tower (10)” → click a free cell (if enough gold).
+Only per-cell highlight under cursor (green/red).
+
+Enemy: base unit, speed ~36 px/s. Wave-scaled HP.
+
+Waves (5): enemy counts = 6,7,8,9,10; spawn gap 0.7s.
+Wave HP = 5,7,9,12,15.
+
+Economy: start gold 15; +1 per kill; +3 after each finished wave.
+
+UI: top bar: Lives (10), Gold, Wave X/5, “Next Wave.” Button disabled while the wave runs.
+
+Win/Lose: reaching base → −1 Life. Win after wave 5 ends; Lose at 0 lives. Show short “WIN/LOSE” label in top bar and a “Restart” button.
+
+Rendering: simple shapes only; no assets, no effects.
+
+Tech: single index.html, Canvas 2D, no libs.
