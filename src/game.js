@@ -23,12 +23,13 @@ class Enemy {
 }
 
 class Tower {
-  constructor() {
-    this.x = 400;
-    this.y = 280;
+  constructor(x, y) {
+    this.x = x;
+    this.y = y;
     this.w = 40;
     this.h = 40;
     this.range = 120;
+    this.lastShot = 0;
   }
 
   center() {
@@ -55,11 +56,10 @@ class Game {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d');
     this.enemies = [];
-    this.tower = new Tower();
+    this.towers = [new Tower(400, 280)];
     this.projectiles = [];
     this.projectileSpeed = 400;
     this.projectileRadius = 6;
-    this.lastShot = 0;
     this.lastTime = 0;
 
     this.lives = 10;
@@ -104,6 +104,17 @@ class Game {
     this.canvas.addEventListener('mouseleave', () => {
       this.hoverCell = null;
     });
+    this.canvas.addEventListener('click', () => {
+      if (!this.buildMode || !this.hoverCell) return;
+      const affordable = this.gold >= this.towerCost;
+      const placeable = !this.hoverCell.occupied;
+      if (affordable && placeable) {
+        this.towers.push(new Tower(this.hoverCell.x, this.hoverCell.y));
+        this.hoverCell.occupied = true;
+        this.gold -= this.towerCost;
+        this.updateHUD();
+      }
+    });
     this.nextWaveBtn.addEventListener('click', () => this.startWave());
 
     this.updateHUD();
@@ -132,8 +143,8 @@ class Game {
     this.waveEl.textContent = `Wave: ${this.wave}/${this.maxWaves}`;
   }
 
-  spawnProjectile(angle) {
-    const c = this.tower.center();
+  spawnProjectile(angle, tower) {
+    const c = tower.center();
     this.projectiles.push({
       x: c.x,
       y: c.y,
@@ -212,7 +223,7 @@ class Game {
       ctx.fillRect(this.hoverCell.x, this.hoverCell.y, this.hoverCell.w, this.hoverCell.h);
     }
 
-    this.tower.draw(ctx);
+    this.towers.forEach(t => t.draw(ctx));
     this.enemies.forEach(e => e.draw(ctx));
 
     ctx.fillStyle = 'black';
@@ -243,21 +254,23 @@ class Game {
       }
     }
 
-    const target = this.enemies[0];
-    if (target) {
-      const towerCenter = this.tower.center();
-      const enemyCenter = {
-        x: target.x + target.w / 2,
-        y: target.y + target.h / 2
-      };
-      const dx = enemyCenter.x - towerCenter.x;
-      const dy = enemyCenter.y - towerCenter.y;
-      const dist = Math.hypot(dx, dy);
+    for (const tower of this.towers) {
+      for (const target of this.enemies) {
+        const towerCenter = tower.center();
+        const enemyCenter = {
+          x: target.x + target.w / 2,
+          y: target.y + target.h / 2
+        };
+        const dx = enemyCenter.x - towerCenter.x;
+        const dy = enemyCenter.y - towerCenter.y;
+        const dist = Math.hypot(dx, dy);
 
-      if (dist <= this.tower.range && timestamp - this.lastShot >= 1000) {
-        const angle = Math.atan2(dy, dx);
-        this.spawnProjectile(angle);
-        this.lastShot = timestamp;
+        if (dist <= tower.range && timestamp - tower.lastShot >= 1000) {
+          const angle = Math.atan2(dy, dx);
+          this.spawnProjectile(angle, tower);
+          tower.lastShot = timestamp;
+          break;
+        }
       }
     }
 
