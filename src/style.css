@@ -2,3 +2,15 @@ body {
   margin: 0;
   background: #fff;
 }
+
+#hud {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 10px;
+  font-family: sans-serif;
+}
+
+#placeTower.active {
+  background: #ff0;
+}

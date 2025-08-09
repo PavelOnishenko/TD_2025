@@ -64,6 +64,25 @@ class Game {
     this.gameOver = false;
     this.win = false;
 
+    this.lives = 10;
+    this.gold = 15;
+    this.wave = 1;
+    this.maxWaves = 5;
+    this.buildMode = false;
+
+    this.livesEl = document.getElementById('lives');
+    this.goldEl = document.getElementById('gold');
+    this.waveEl = document.getElementById('wave');
+    this.nextWaveBtn = document.getElementById('nextWave');
+    this.placeTowerBtn = document.getElementById('placeTower');
+
+    this.placeTowerBtn.addEventListener('click', () => {
+      this.buildMode = !this.buildMode;
+      this.placeTowerBtn.classList.toggle('active', this.buildMode);
+    });
+
+    this.updateHUD();
+
     this.grid = [];
     for (let i = 0; i < 10; i++) {
       this.grid.push({ x: 20 + i * 80, y: 340, w: 40, h: 40 });
@@ -80,6 +99,12 @@ class Game {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(text, this.canvas.width / 2, this.canvas.height / 2);
+  }
+
+  updateHUD() {
+    this.livesEl.textContent = `Lives: ${this.lives}`;
+    this.goldEl.textContent = `Gold: ${this.gold}`;
+    this.waveEl.textContent = `Wave: ${this.wave}/${this.maxWaves}`;
   }
 
   spawnProjectile(angle) {
