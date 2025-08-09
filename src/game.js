@@ -64,6 +64,11 @@ class Game {
     this.gameOver = false;
     this.win = false;
 
+    this.grid = [];
+    for (let i = 0; i < 10; i++) {
+      this.grid.push({ x: 20 + i * 80, y: 340, w: 40, h: 40 });
+    }
+
     this.update = this.update.bind(this);
   }
 
@@ -125,6 +130,11 @@ class Game {
 
     ctx.fillStyle = '#888';
     ctx.fillRect(0, 380, this.canvas.width, 20);
+
+    ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+    this.grid.forEach(cell => {
+      ctx.strokeRect(cell.x, cell.y, cell.w, cell.h);
+    });
 
     this.tower.draw(ctx);
     this.enemy.draw(ctx);
