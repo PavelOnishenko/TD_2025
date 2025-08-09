@@ -54,15 +54,13 @@ class Game {
   constructor(canvas) {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d');
-    this.enemy = new Enemy();
+    this.enemies = [];
     this.tower = new Tower();
     this.projectiles = [];
     this.projectileSpeed = 400;
     this.projectileRadius = 6;
     this.lastShot = 0;
     this.lastTime = 0;
-    this.gameOver = false;
-    this.win = false;
 
     this.lives = 10;
     this.gold = 15;
@@ -71,6 +69,12 @@ class Game {
     this.buildMode = false;
     this.hoverCell = null;
     this.towerCost = 10;
+
+    this.waveInProgress = false;
+    this.spawnInterval = 1;
+    this.enemiesPerWave = 5;
+    this.spawned = 0;
+    this.spawnTimer = 0;
 
     this.livesEl = document.getElementById('lives');
     this.goldEl = document.getElementById('gold');
@@ -100,6 +104,7 @@ class Game {
     this.canvas.addEventListener('mouseleave', () => {
       this.hoverCell = null;
     });
+    this.nextWaveBtn.addEventListener('click', () => this.startWave());
 
     this.updateHUD();
 
@@ -137,26 +142,46 @@ class Game {
     });
   }
 
+  spawnEnemy() {
+    this.enemies.push(new Enemy());
+    this.spawned++;
+  }
+
+  startWave() {
+    if (this.waveInProgress) return;
+    this.waveInProgress = true;
+    this.nextWaveBtn.disabled = true;
+    this.enemies = [];
+    this.spawned = 0;
+    this.spawnTimer = 0;
+    this.spawnEnemy();
+  }
+
   updateProjectiles(dt) {
     for (let i = this.projectiles.length - 1; i >= 0; i--) {
       const p = this.projectiles[i];
       p.x += p.vx * dt;
       p.y += p.vy * dt;
 
-      if (
-        p.x >= this.enemy.x &&
-        p.x <= this.enemy.x + this.enemy.w &&
-        p.y >= this.enemy.y &&
-        p.y <= this.enemy.y + this.enemy.h
-      ) {
-        this.enemy.hp -= 1;
-        this.projectiles.splice(i, 1);
-        if (this.enemy.hp <= 0) {
-          this.gameOver = true;
-          this.win = true;
+      let hit = false;
+      for (let j = this.enemies.length - 1; j >= 0; j--) {
+        const e = this.enemies[j];
+        if (
+          p.x >= e.x &&
+          p.x <= e.x + e.w &&
+          p.y >= e.y &&
+          p.y <= e.y + e.h
+        ) {
+          e.hp -= 1;
+          this.projectiles.splice(i, 1);
+          if (e.hp <= 0) {
+            this.enemies.splice(j, 1);
+          }
+          hit = true;
+          break;
         }
-        continue;
       }
+      if (hit) continue;
 
       if (
         p.x < 0 ||
@@ -188,7 +213,7 @@ class Game {
     }
 
     this.tower.draw(ctx);
-    this.enemy.draw(ctx);
+    this.enemies.forEach(e => e.draw(ctx));
 
     ctx.fillStyle = 'black';
     this.projectiles.forEach(p => {
@@ -202,37 +227,49 @@ class Game {
     const dt = (timestamp - this.lastTime) / 1000;
     this.lastTime = timestamp;
 
-    if (this.gameOver) {
-      this.showEnd(this.win ? 'YOU WIN' : 'GAME OVER', this.win ? 'green' : 'red');
-      return;
+    if (this.waveInProgress && this.spawned < this.enemiesPerWave) {
+      this.spawnTimer += dt;
+      if (this.spawnTimer >= this.spawnInterval) {
+        this.spawnEnemy();
+        this.spawnTimer = 0;
+      }
     }
 
-    this.enemy.update(dt);
-    if (this.enemy.isOutOfBounds(this.canvas.width)) {
-      this.gameOver = true;
-      this.win = false;
+    for (let i = this.enemies.length - 1; i >= 0; i--) {
+      const e = this.enemies[i];
+      e.update(dt);
+      if (e.isOutOfBounds(this.canvas.width)) {
+        this.enemies.splice(i, 1);
+      }
     }
 
-    const towerCenter = this.tower.center();
-    const enemyCenter = {
-      x: this.enemy.x + this.enemy.w / 2,
-      y: this.enemy.y + this.enemy.h / 2
-    };
-    const dx = enemyCenter.x - towerCenter.x;
-    const dy = enemyCenter.y - towerCenter.y;
-    const dist = Math.hypot(dx, dy);
+    const target = this.enemies[0];
+    if (target) {
+      const towerCenter = this.tower.center();
+      const enemyCenter = {
+        x: target.x + target.w / 2,
+        y: target.y + target.h / 2
+      };
+      const dx = enemyCenter.x - towerCenter.x;
+      const dy = enemyCenter.y - towerCenter.y;
+      const dist = Math.hypot(dx, dy);
 
-    if (dist <= this.tower.range && timestamp - this.lastShot >= 1000) {
-      const angle = Math.atan2(dy, dx);
-      this.spawnProjectile(angle);
-      this.lastShot = timestamp;
+      if (dist <= this.tower.range && timestamp - this.lastShot >= 1000) {
+        const angle = Math.atan2(dy, dx);
+        this.spawnProjectile(angle);
+        this.lastShot = timestamp;
+      }
     }
 
     this.updateProjectiles(dt);
 
-    if (this.gameOver) {
-      this.showEnd(this.win ? 'YOU WIN' : 'GAME OVER', this.win ? 'green' : 'red');
-      return;
+    if (
+      this.waveInProgress &&
+      this.spawned === this.enemiesPerWave &&
+      this.enemies.length === 0
+    ) {
+      this.waveInProgress = false;
+      this.nextWaveBtn.disabled = false;
     }
 
     this.draw();
