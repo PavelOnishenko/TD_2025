@@ -95,6 +95,8 @@ class Game {
     this.waveEl = document.getElementById('wave');
     this.nextWaveBtn = document.getElementById('nextWave');
     this.placeTowerBtn = document.getElementById('placeTower');
+	
+	this.shootingInterval = 500;
 
     this.placeTowerBtn.addEventListener('click', () => {
       this.buildMode = !this.buildMode;
@@ -190,6 +192,8 @@ class Game {
           this.projectiles.splice(i, 1);
           if (e.hp <= 0) {
             this.enemies.splice(j, 1);
+            this.gold += 1;
+            this.updateHUD();
           }
           hit = true;
           break;
@@ -238,81 +242,82 @@ class Game {
   }
 
   update(timestamp) {
-    const dt = (timestamp - this.lastTime) / 1000;
-    this.lastTime = timestamp;
+	  const dt = (timestamp - this.lastTime) / 1000;
+	  this.lastTime = timestamp;
 
-    if (this.waveInProgress && this.spawned < this.enemiesPerWave) {
-      this.spawnTimer += dt;
-      if (this.spawnTimer >= this.spawnInterval) {
-        this.spawnEnemy();
-        this.spawnTimer = 0;
-      }
-    }
+	  // Спавн волн
+	  if (this.waveInProgress && this.spawned < this.enemiesPerWave) {
+		this.spawnTimer += dt;
+		if (this.spawnTimer >= this.spawnInterval) {
+		  this.spawnEnemy();
+		  this.spawnTimer = 0;
+		}
+	  }
 
-    for (let i = this.enemies.length - 1; i >= 0; i--) {
-      const e = this.enemies[i];
-      e.update(dt);
-      if (e.isOutOfBounds(this.canvas.width)) {
-        this.enemies.splice(i, 1);
-      }
-    }
+	  // Обновление врагов + удаление тех, кто ушёл за край
+	  for (let i = this.enemies.length - 1; i >= 0; i--) {
+		const e = this.enemies[i];
+		e.update(dt);
+		if (e.isOutOfBounds(this.canvas.width)) {
+		  this.enemies.splice(i, 1);
+		}
+	  }
 
-    const towerCenter = this.tower.center();
-    if (this.target) {
-      const enemyCenter = {
-        x: this.target.x + this.target.w / 2,
-        y: this.target.y + this.target.h / 2
-      };
-      const dist = Math.hypot(
-        enemyCenter.x - towerCenter.x,
-        enemyCenter.y - towerCenter.y
-      );
-      if (dist > this.tower.range || !this.enemies.includes(this.target)) {
-        this.target = null;
-      }
-    }
+	  const towerCenter = this.tower.center();
 
-    if (!this.target) {
-      for (const e of this.enemies) {
-        const enemyCenter = { x: e.x + e.w / 2, y: e.y + e.h / 2 };
-        const dist = Math.hypot(
-          enemyCenter.x - towerCenter.x,
-          enemyCenter.y - towerCenter.y
-        );
-        if (dist <= this.tower.range) {
-          this.target = e;
-          break;
-        }
-      }
-    }
+	  // Если есть текущая цель — проверяем дистанцию/валидность и стреляем по КД
+	  if (this.target) {
+		const enemyCenter = {
+		  x: this.target.x + this.target.w / 2,
+		  y: this.target.y + this.target.h / 2
+		};
+		const dx = enemyCenter.x - towerCenter.x;
+		const dy = enemyCenter.y - towerCenter.y;
+		const dist = Math.hypot(dx, dy);
 
-    if (this.target && timestamp - this.lastShot >= 1000) {
-      const enemyCenter = {
-        x: this.target.x + this.target.w / 2,
-        y: this.target.y + this.target.h / 2
-      };
-      const angle = Math.atan2(
-        enemyCenter.y - towerCenter.y,
-        enemyCenter.x - towerCenter.x
-      );
-      this.spawnProjectile(angle);
-      this.lastShot = timestamp;
-    }
+		// Сброс цели, если вышла из радиуса или больше не существует
+		if (dist > this.tower.range || !this.enemies.includes(this.target)) {
+		  this.target = null;
+		} else if (timestamp - this.lastShot >= this.shootingInterval) {
+		  // Стреляем, если цель в радиусе и КД прошёл
+		  const angle = Math.atan2(dy, dx);
+		  this.spawnProjectile(angle);
+		  this.lastShot = timestamp;
+		}
+	  }
 
-    this.updateProjectiles(dt);
+	  // Поиск новой цели, если её нет
+	  if (!this.target) {
+		for (const e of this.enemies) {
+		  const enemyCenter = { x: e.x + e.w / 2, y: e.y + e.h / 2 };
+		  const dist = Math.hypot(
+			enemyCenter.x - towerCenter.x,
+			enemyCenter.y - towerCenter.y
+		  );
+		  if (dist <= this.tower.range) {
+			this.target = e;
+			break;
+		  }
+		}
+	  }
 
-    if (
-      this.waveInProgress &&
-      this.spawned === this.enemiesPerWave &&
-      this.enemies.length === 0
-    ) {
-      this.waveInProgress = false;
-      this.nextWaveBtn.disabled = false;
-    }
+	  // Движение и столкновения снарядов
+	  this.updateProjectiles(dt);
 
-    this.draw();
-    requestAnimationFrame(this.update);
-  }
+	  // Завершение волны
+	  if (
+		this.waveInProgress &&
+		this.spawned === this.enemiesPerWave &&
+		this.enemies.length === 0
+	  ) {
+		this.waveInProgress = false;
+		this.nextWaveBtn.disabled = false;
+	  }
+
+	  this.draw();
+	  requestAnimationFrame(this.update);
+	}
+
 
   run() {
     this.lastTime = performance.now();
