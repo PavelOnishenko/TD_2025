@@ -69,6 +69,8 @@ class Game {
     this.wave = 1;
     this.maxWaves = 5;
     this.buildMode = false;
+    this.hoverCell = null;
+    this.towerCost = 10;
 
     this.livesEl = document.getElementById('lives');
     this.goldEl = document.getElementById('gold');
@@ -79,13 +81,31 @@ class Game {
     this.placeTowerBtn.addEventListener('click', () => {
       this.buildMode = !this.buildMode;
       this.placeTowerBtn.classList.toggle('active', this.buildMode);
+      if (!this.buildMode) this.hoverCell = null;
+    });
+
+    this.canvas.addEventListener('mousemove', (e) => {
+      const rect = this.canvas.getBoundingClientRect();
+      const mx = e.clientX - rect.left;
+      const my = e.clientY - rect.top;
+      this.hoverCell = null;
+      if (!this.buildMode) return;
+      for (const cell of this.grid) {
+        if (mx >= cell.x && mx <= cell.x + cell.w && my >= cell.y && my <= cell.y + cell.h) {
+          this.hoverCell = cell;
+          break;
+        }
+      }
+    });
+    this.canvas.addEventListener('mouseleave', () => {
+      this.hoverCell = null;
     });
 
     this.updateHUD();
 
     this.grid = [];
     for (let i = 0; i < 10; i++) {
-      this.grid.push({ x: 20 + i * 80, y: 340, w: 40, h: 40 });
+      this.grid.push({ x: 20 + i * 80, y: 340, w: 40, h: 40, occupied: false });
     }
 
     this.update = this.update.bind(this);
@@ -160,6 +180,12 @@ class Game {
     this.grid.forEach(cell => {
       ctx.strokeRect(cell.x, cell.y, cell.w, cell.h);
     });
+    if (this.buildMode && this.hoverCell) {
+      const affordable = this.gold >= this.towerCost;
+      const placeable = !this.hoverCell.occupied;
+      ctx.fillStyle = affordable && placeable ? 'rgba(0,255,0,0.3)' : 'rgba(255,0,0,0.3)';
+      ctx.fillRect(this.hoverCell.x, this.hoverCell.y, this.hoverCell.w, this.hoverCell.h);
+    }
 
     this.tower.draw(ctx);
     this.enemy.draw(ctx);
