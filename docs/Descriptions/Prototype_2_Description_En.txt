@@ -1,26 +1,27 @@
-What it is: a minimal playable TD with a grid, one tower type, and a fixed enemy path. Place towers on free cells and start each wave. Enemies follow waypoints to the base. Survive all 5 waves.
+What it is: an evolution of Prototype #1. The player now places towers on limited build spots along the straight enemy path, starts waves with a button, and the game tracks gold, lives, and wave progress.
 
-Scope trimmed for time:
+What’s in the game
+Field: enemies follow the same straight road as in Prototype #1, but it now has 10 marked spots for building towers.
 
-Canvas: 720×480. Left: grid 8×5 (tile 50px). Right: thin sidebar.
+HUD: above the canvas, display Lives (10), Gold (15), current Wave (1/5), and two buttons — “Next Wave” and “Place Tower (10)”.
 
-Path: 5–6 waypoints (polyline) from entry to base.
+Building: clicking “Place Tower (10)” enables build mode and highlights the button when active.
+Hovering over a build spot highlights it green if buildable and affordable, or red if blocked or unaffordable.
+Clicking a green spot places a tower, subtracts 10 Gold, and marks the spot as occupied. There are no pre-placed towers — the one from Prototype #1 is removed.
 
-Building: one tower (Arrow). Cost 10, Range 60, DMG 1, CD 0.6s.
-Flow: click “Place Tower (10)” → click a free cell (if enough gold).
-Only per-cell highlight under cursor (green/red).
+Enemy movement: enemies still move along the straight road, same as in Prototype #1.
 
-Enemy: base unit, speed ~36 px/s. Wave-scaled HP.
+Wave start: “Next Wave” starts the current wave, disables itself until the wave ends, and spawns enemies along the road.
 
-Waves (5): enemy counts = 6,7,8,9,10; spawn gap 0.7s.
-Wave HP = 5,7,9,12,15.
+Enemies: each enemy has a visible HP bar above it.
+Towers target the first enemy entering range and keep firing at it while it’s in sight; when it leaves range, the tower picks the next target.
 
-Economy: start gold 15; +1 per kill; +3 after each finished wave.
+Economy: killing an enemy grants +1 Gold, instantly updating the HUD. If an enemy reaches the base, it disappears and Lives decrease by 1.
 
-UI: top bar: Lives (10), Gold, Wave X/5, “Next Wave.” Button disabled while the wave runs.
+Waves: when all enemies are gone, “Next Wave” becomes active again, Wave increases by 1, and +3 Gold is awarded.
+Enemy HP increases each wave according to a simple built-in scheme.
 
-Win/Lose: reaching base → −1 Life. Win after wave 5 ends; Lose at 0 lives. Show short “WIN/LOSE” label in top bar and a “Restart” button.
+Endgame: after Wave 5 and all enemies are destroyed, the HUD shows “WIN” and the game stops.
+If Lives reach 0, the HUD shows “LOSE” and the game stops.
 
-Rendering: simple shapes only; no assets, no effects.
-
-Tech: single index.html, Canvas 2D, no libs.
+Restart: a “Restart” button resets Lives, Gold, Wave, and clears all towers and enemies.
