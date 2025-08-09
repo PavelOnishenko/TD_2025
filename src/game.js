@@ -74,6 +74,7 @@ class Game {
     this.projectileRadius = 6;
     this.lastShot = 0;
     this.lastTime = 0;
+    this.target = null;
 
     this.lives = 10;
     this.gold = 15;
@@ -256,22 +257,46 @@ class Game {
       }
     }
 
-    const target = this.enemies[0];
-    if (target) {
-      const towerCenter = this.tower.center();
+    const towerCenter = this.tower.center();
+    if (this.target) {
       const enemyCenter = {
-        x: target.x + target.w / 2,
-        y: target.y + target.h / 2
+        x: this.target.x + this.target.w / 2,
+        y: this.target.y + this.target.h / 2
       };
-      const dx = enemyCenter.x - towerCenter.x;
-      const dy = enemyCenter.y - towerCenter.y;
-      const dist = Math.hypot(dx, dy);
-
-      if (dist <= this.tower.range && timestamp - this.lastShot >= 1000) {
-        const angle = Math.atan2(dy, dx);
-        this.spawnProjectile(angle);
-        this.lastShot = timestamp;
+      const dist = Math.hypot(
+        enemyCenter.x - towerCenter.x,
+        enemyCenter.y - towerCenter.y
+      );
+      if (dist > this.tower.range || !this.enemies.includes(this.target)) {
+        this.target = null;
       }
+    }
+
+    if (!this.target) {
+      for (const e of this.enemies) {
+        const enemyCenter = { x: e.x + e.w / 2, y: e.y + e.h / 2 };
+        const dist = Math.hypot(
+          enemyCenter.x - towerCenter.x,
+          enemyCenter.y - towerCenter.y
+        );
+        if (dist <= this.tower.range) {
+          this.target = e;
+          break;
+        }
+      }
+    }
+
+    if (this.target && timestamp - this.lastShot >= 1000) {
+      const enemyCenter = {
+        x: this.target.x + this.target.w / 2,
+        y: this.target.y + this.target.h / 2
+      };
+      const angle = Math.atan2(
+        enemyCenter.y - towerCenter.y,
+        enemyCenter.x - towerCenter.x
+      );
+      this.spawnProjectile(angle);
+      this.lastShot = timestamp;
     }
 
     this.updateProjectiles(dt);
