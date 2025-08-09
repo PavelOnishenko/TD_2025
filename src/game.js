@@ -5,7 +5,8 @@ class Enemy {
     this.w = 30;
     this.h = 30;
     this.speed = 50;
-    this.hp = 3;
+    this.maxHp = 3;
+    this.hp = this.maxHp;
   }
 
   update(dt) {
@@ -15,6 +16,18 @@ class Enemy {
   draw(ctx) {
     ctx.fillStyle = 'red';
     ctx.fillRect(this.x, this.y, this.w, this.h);
+
+    const barWidth = this.w;
+    const barHeight = 4;
+    const barX = this.x;
+    const barY = this.y - barHeight - 2;
+
+    ctx.fillStyle = 'red';
+    ctx.fillRect(barX, barY, barWidth, barHeight);
+    ctx.fillStyle = 'green';
+    ctx.fillRect(barX, barY, barWidth * (this.hp / this.maxHp), barHeight);
+    ctx.strokeStyle = 'black';
+    ctx.strokeRect(barX, barY, barWidth, barHeight);
   }
 
   isOutOfBounds(width) {
