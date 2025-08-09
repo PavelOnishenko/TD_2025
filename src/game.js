@@ -94,6 +94,8 @@ class Game {
     this.waveEl = document.getElementById('wave');
     this.nextWaveBtn = document.getElementById('nextWave');
     this.placeTowerBtn = document.getElementById('placeTower');
+	
+	this.shootingInterval = 500;
 
     this.placeTowerBtn.addEventListener('click', () => {
       this.buildMode = !this.buildMode;
@@ -269,7 +271,7 @@ class Game {
       const dy = enemyCenter.y - towerCenter.y;
       const dist = Math.hypot(dx, dy);
 
-      if (dist <= this.tower.range && timestamp - this.lastShot >= 1000) {
+      if (dist <= this.tower.range && timestamp - this.lastShot >= this.shootingInterval) {
         const angle = Math.atan2(dy, dx);
         this.spawnProjectile(angle);
         this.lastShot = timestamp;
