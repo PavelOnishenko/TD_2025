@@ -4,16 +4,13 @@
 004 | TODO | In build mode, moving the mouse over the field highlights the hovered cell green if placeable and red if blocked or unaffordable.
 005 | TODO | Clicking a green cell places one Arrow tower, subtracts 10 Gold, and marks the cell as occupied.
 006 | TODO | Placed towers are visible as simple markers on the grid.
-007 | TODO | Towers automatically target enemies within range and fire projectiles without further input.
-008 | TODO | Projectiles are visible flying from towers to targeted enemies.
-009 | TODO | Clicking “Next Wave” starts the current wave, disables the button during the wave, and spawns enemies along the path.
-010 | TODO | Enemies are visible moving from the path start to the base at steady speed.
-011 | TODO | Enemy HP decreases when hit; enemies disappear when HP reaches zero.
-012 | TODO | Each killed enemy grants +1 Gold and updates the HUD immediately.
-013 | TODO | When an enemy reaches the base, it disappears and Lives decrease by 1 in the HUD.
-014 | TODO | A wave ends when all its enemies are gone, the “Next Wave” button re-enables, Wave increases by 1, and +3 Gold is awarded.
-015 | TODO | Wave difficulty increases by raising enemy HP per wave.
-016 | TODO | After Wave 5 ends and no enemies remain, the HUD shows “WIN” and the game stops.
-017 | TODO | If Lives reach 0, the HUD shows “LOSE” and the game stops.
-018 | TODO | A “Restart” button resets Lives, Gold, Wave, and clears all towers and enemies.
-019 | TODO | Grid lines and the enemy path remain visible during the entire game.
+007 | TODO | Clicking “Next Wave” starts the current wave, disables the button during the wave, and spawns enemies along the path.
+008 | TODO | Enemies moving by waypoints.
+009 | TODO | Enemy HP is visible.
+010 | TODO | Each killed enemy grants +1 Gold and updates the HUD immediately.
+011 | TODO | When an enemy reaches the base, it disappears and Lives decrease by 1 in the HUD.
+012 | TODO | A wave ends when all its enemies are gone, the “Next Wave” button re-enables, Wave increases by 1, and +3 Gold is awarded.
+013 | TODO | Wave difficulty increases by raising enemy HP per wave.
+014 | TODO | After Wave 5 ends and no enemies remain, the HUD shows “WIN” and the game stops.
+015 | TODO | If Lives reach 0, the HUD shows “LOSE” and the game stops.
+016 | TODO | A “Restart” button resets Lives, Gold, Wave, and clears all towers and enemies.
