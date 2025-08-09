@@ -176,6 +176,8 @@ class Game {
           this.projectiles.splice(i, 1);
           if (e.hp <= 0) {
             this.enemies.splice(j, 1);
+            this.gold += 1;
+            this.updateHUD();
           }
           hit = true;
           break;
