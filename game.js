@@ -63,6 +63,8 @@ class Game {
     this.lastTime = 0;
     this.gameOver = false;
     this.win = false;
+
+    this.update = this.update.bind(this);
   }
 
   showEnd(text, color) {
@@ -135,7 +137,7 @@ class Game {
     });
   }
 
-  update = timestamp => {
+  update(timestamp) {
     const dt = (timestamp - this.lastTime) / 1000;
     this.lastTime = timestamp;
 
@@ -174,9 +176,10 @@ class Game {
 
     this.draw();
     requestAnimationFrame(this.update);
-  };
+  }
 
   run() {
+    this.lastTime = performance.now();
     requestAnimationFrame(this.update);
   }
 }
