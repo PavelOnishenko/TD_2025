@@ -76,8 +76,10 @@ class Game {
     this.lastTime = 0;
     this.target = null;
 
-    this.lives = 10;
-    this.gold = 20;
+	this.inititalLives = 5;
+    this.lives = this.inititalLives;
+	this.inititalGold = 20;
+    this.gold = this.inititalGold;
     this.wave = 1;
     this.maxWaves = 5;
     this.buildMode = false;
@@ -352,8 +354,8 @@ class Game {
   }
 
   restart() {
-    this.lives = 10;
-    this.gold = 15;
+    this.lives = this.inititalLives;
+    this.gold = this.inititalGold;
     this.wave = 1;
     this.towers = [];
     this.enemies = [];
