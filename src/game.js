@@ -4,7 +4,7 @@ class Enemy {
     this.y = 365;
     this.w = 30;
     this.h = 30;
-    this.speed = 50;
+    this.speed = 100;
     this.maxHp = maxHp;
     this.hp = this.maxHp;
   }
@@ -71,8 +71,9 @@ class Game {
     this.enemies = [];
     this.towers = [];
     this.projectiles = [];
-    this.projectileSpeed = 400;
+    this.projectileSpeed = 800;
     this.projectileRadius = 6;
+    this.projectileSpawnInterval = 500;
     this.lastTime = 0;
     this.target = null;
 
@@ -87,7 +88,7 @@ class Game {
     this.towerCost = 10;
 
     this.waveInProgress = false;
-    this.spawnInterval = 1;
+    this.spawnInterval = 0.5;
     this.enemiesPerWave = 5;
     this.spawned = 0;
     this.spawnTimer = 0;
@@ -316,7 +317,7 @@ class Game {
         const dy = enemyCenter.y - towerCenter.y;
         const dist = Math.hypot(dx, dy);
 
-        if (dist <= tower.range && timestamp - tower.lastShot >= 1000) {
+        if (dist <= tower.range && timestamp - tower.lastShot >= this.projectileSpawnInterval) {
           const angle = Math.atan2(dy, dx);
           this.spawnProjectile(angle, tower);
           tower.lastShot = timestamp;
