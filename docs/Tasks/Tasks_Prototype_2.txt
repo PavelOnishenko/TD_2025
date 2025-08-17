@@ -3,7 +3,7 @@
 003 | DONE | Make “Place Tower (10)” toggle build mode and visually highlight when active.
 004 | DONE | In build mode, highlight the hovered grid cell green if placeable and affordable, or red if blocked or unaffordable.
 005 | DONE | Allow placing an tower on a green cell, deducting 10 Gold and marking the cell as occupied.
-006 | TODO | Remove the pre-placed tower from Proto #1 so towers only appear when placed by the player. Initial money must be enough to buy 2 towers.
+006 | DONE | Remove the pre-placed tower from Proto #1 so towers only appear when placed by the player. Initial money must be enough to buy 2 towers.
 007 | DONE | Make “Next Wave” button start the current wave, disable the button during the wave, and spawn enemies along the waypoint path.
 008 | DONE | Show enemy HP as a small visible bar above each enemy.
 009 | DONE | Keep the existing tower attack from Proto #1 but adapt it to target any enemy within range in the new grid/path system. The logic I propose is to select the first enemy seen as target and when it goes out of sight, look for the next seen. Mb use queue or something like that.
