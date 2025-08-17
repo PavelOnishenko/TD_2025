@@ -95,6 +95,8 @@ class Game {
     this.waveEl = document.getElementById('wave');
     this.nextWaveBtn = document.getElementById('nextWave');
     this.placeTowerBtn = document.getElementById('placeTower');
+    this.statusEl = document.getElementById('status');
+    this.gameOver = false;
 	
 	this.shootingInterval = 500;
 
@@ -159,6 +161,14 @@ class Game {
     this.livesEl.textContent = `Lives: ${this.lives}`;
     this.goldEl.textContent = `Gold: ${this.gold}`;
     this.waveEl.textContent = `Wave: ${this.wave}/${this.maxWaves}`;
+  }
+
+  endGame(text) {
+    this.statusEl.textContent = text;
+    this.statusEl.style.color = 'red';
+    this.nextWaveBtn.disabled = true;
+    this.placeTowerBtn.disabled = true;
+    this.gameOver = true;
   }
 
   spawnProjectile(angle, tower) {
@@ -258,6 +268,7 @@ class Game {
   }
 
   update(timestamp) {
+    if (this.gameOver) return;
     const dt = (timestamp - this.lastTime) / 1000;
     this.lastTime = timestamp;
 
@@ -278,6 +289,9 @@ class Game {
         this.enemies.splice(i, 1);
         this.lives -= 1;
         this.updateHUD();
+        if (this.lives <= 0) {
+          this.endGame('LOSE');
+        }
       } else if (e.isOutOfBounds(this.canvas.width)) {
         this.enemies.splice(i, 1);
       }
@@ -321,7 +335,7 @@ class Game {
     }
 
     this.draw();
-    requestAnimationFrame(this.update);
+    if (!this.gameOver) requestAnimationFrame(this.update);
   }
 
   run() {
