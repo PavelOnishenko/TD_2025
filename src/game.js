@@ -1,11 +1,11 @@
 class Enemy {
-  constructor() {
+  constructor(maxHp = 3) {
     this.x = 0;
     this.y = 365;
     this.w = 30;
     this.h = 30;
     this.speed = 50;
-    this.maxHp = 3;
+    this.maxHp = maxHp;
     this.hp = this.maxHp;
   }
 
@@ -90,14 +90,16 @@ class Game {
     this.spawned = 0;
     this.spawnTimer = 0;
 
+    this.enemyHpPerWave = [3, 4, 5, 6, 7];
+
     this.livesEl = document.getElementById('lives');
     this.goldEl = document.getElementById('gold');
     this.waveEl = document.getElementById('wave');
+    this.statusEl = document.getElementById('status');
     this.nextWaveBtn = document.getElementById('nextWave');
     this.placeTowerBtn = document.getElementById('placeTower');
     this.statusEl = document.getElementById('status');
     this.gameOver = false;
-	
 	this.shootingInterval = 500;
 
     this.placeTowerBtn.addEventListener('click', () => {
@@ -182,7 +184,8 @@ class Game {
   }
 
   spawnEnemy() {
-    this.enemies.push(new Enemy());
+    const hp = this.enemyHpPerWave[this.wave - 1] ?? this.enemyHpPerWave[this.enemyHpPerWave.length - 1];
+    this.enemies.push(new Enemy(hp));
     this.spawned++;
   }
 
@@ -328,7 +331,15 @@ class Game {
       this.enemies.length === 0
     ) {
       this.waveInProgress = false;
-      this.nextWaveBtn.disabled = false;
+      
+       if (this.wave === this.maxWaves) {
+        this.statusEl.textContent = 'WIN';
+        this.nextWaveBtn.disabled = true;
+        this.placeTowerBtn.disabled = true;
+        this.gameOver = true;
+      } else {
+        this.nextWaveBtn.disabled = false;
+      }
       this.wave += 1;
       this.gold += 3;
       this.updateHUD();
