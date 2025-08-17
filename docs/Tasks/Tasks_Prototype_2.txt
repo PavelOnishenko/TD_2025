@@ -6,8 +6,13 @@
 006 | TODO | Remove the pre-placed tower from Proto #1 so towers only appear when placed by the player.
 007 | DONE | Make “Next Wave” button start the current wave, disable the button during the wave, and spawn enemies along the waypoint path.
 008 | TODO | Show enemy HP as a small visible bar above each enemy.
-009 | TODO | Keep the existing tower attack from Proto #1 but adapt it to target any enemy within range in the new grid/path system. The logic I propose is to select the first enemy seen as target and when it goes out of sight, look for the next seen. Mb use queue or something like that.
+<<<<<<< HEAD
+009 | DONE | Keep the existing tower attack from Proto #1 but adapt it to target any enemy within range in the new grid/path system. The logic I propose is to select the first enemy seen as target and when it goes out of sight, look for the next seen. Mb use queue or something like that.
 010 | TODO | When an enemy is killed, grant +1 Gold and update the HUD immediately.
+=======
+009 | TODO | Keep the existing tower attack from Proto #1 but adapt it to target any enemy within range in the new grid/path system. The logic I propose is to select the first enemy seen as target and when it goes out of sight, look for the next seen. Mb use queue or something like that.
+010 | DONE | When an enemy is killed, grant +1 Gold and update the HUD immediately.
+>>>>>>> master
 011 | TODO | When an enemy reaches the base, remove it and decrease Lives by 1 in the HUD.
 012 | TODO | End a wave when all its enemies are gone, re-enable “Next Wave”, increase Wave by 1, and award +3 Gold.
 013 | TODO | Increase wave difficulty by raising enemy HP per wave according to the spec. Store spec any way you deem appropriate. Remember, the main thing is development speed and nothing else.
