@@ -69,7 +69,7 @@ class Game {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d');
     this.enemies = [];
-    this.towers = [new Tower(400, 280)];
+    this.towers = [];
     this.projectiles = [];
     this.projectileSpeed = 400;
     this.projectileRadius = 6;
@@ -77,7 +77,7 @@ class Game {
     this.target = null;
 
     this.lives = 10;
-    this.gold = 15;
+    this.gold = 20;
     this.wave = 1;
     this.maxWaves = 5;
     this.buildMode = false;
@@ -139,6 +139,8 @@ class Game {
     for (let i = 0; i < 10; i++) {
       this.grid.push({ x: 20 + i * 80, y: 340, w: 40, h: 40, occupied: false });
     }
+
+    this.base = { x: this.canvas.width - 40, y: 360, w: 40, h: 40 };
 
     this.update = this.update.bind(this);
   }
@@ -230,6 +232,9 @@ class Game {
     ctx.fillStyle = '#888';
     ctx.fillRect(0, 380, this.canvas.width, 20);
 
+    ctx.fillStyle = 'green';
+    ctx.fillRect(this.base.x, this.base.y, this.base.w, this.base.h);
+
     ctx.strokeStyle = 'rgba(0,0,0,0.3)';
     this.grid.forEach(cell => {
       ctx.strokeRect(cell.x, cell.y, cell.w, cell.h);
@@ -269,7 +274,11 @@ class Game {
     for (let i = this.enemies.length - 1; i >= 0; i--) {
       const e = this.enemies[i];
       e.update(dt);
-      if (e.isOutOfBounds(this.canvas.width)) {
+      if (e.x + e.w >= this.base.x) {
+        this.enemies.splice(i, 1);
+        this.lives -= 1;
+        this.updateHUD();
+      } else if (e.isOutOfBounds(this.canvas.width)) {
         this.enemies.splice(i, 1);
       }
     }
