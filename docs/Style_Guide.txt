@@ -1,0 +1,13 @@
+Here are code style rules:
+1. No more than 170 characters in line
+2. Named functions no longer than 20 lines
+3. Files not longer than 200 lines
+4. Strict indentation, step is 4 characters
+5. Extract method when same code is written 3 times or more
+6. Create variable if value is evaluated 2 times or more
+7. Meaningful names for everything
+8. Code is self-explanatory, no comments where you can easily understand from code.
+9. Class can be any concept. We can be creative with how we break down code into classes.
+10. Always aim for "code perfect for right now", not some ideal code. Avoid premature optimization.
+11. Testability is a good bonus but not strict requirement right now.
+12. When extracting class or function, aim for even distribution of LOC between original entity and new entity.
