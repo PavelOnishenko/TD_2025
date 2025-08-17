@@ -1,11 +1,11 @@
 class Enemy {
-  constructor() {
+  constructor(maxHp = 3) {
     this.x = 0;
     this.y = 365;
     this.w = 30;
     this.h = 30;
     this.speed = 50;
-    this.maxHp = 3;
+    this.maxHp = maxHp;
     this.hp = this.maxHp;
   }
 
@@ -90,6 +90,8 @@ class Game {
     this.spawned = 0;
     this.spawnTimer = 0;
 
+    this.enemyHpPerWave = [3, 4, 5, 6, 7];
+
     this.livesEl = document.getElementById('lives');
     this.goldEl = document.getElementById('gold');
     this.waveEl = document.getElementById('wave');
@@ -172,7 +174,8 @@ class Game {
   }
 
   spawnEnemy() {
-    this.enemies.push(new Enemy());
+    const hp = this.enemyHpPerWave[this.wave - 1] ?? this.enemyHpPerWave[this.enemyHpPerWave.length - 1];
+    this.enemies.push(new Enemy(hp));
     this.spawned++;
   }
 
