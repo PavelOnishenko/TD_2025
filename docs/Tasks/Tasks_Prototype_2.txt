@@ -2,7 +2,7 @@
 002 | DONE | Add a HUD above the canvas showing Lives=10, Gold=15, Wave=1/5, and buttons “Next Wave” and “Place Tower (10)”.
 003 | DONE | Make “Place Tower (10)” toggle build mode and visually highlight when active.
 004 | TODO | In build mode, highlight the hovered grid cell green if placeable and affordable, or red if blocked or unaffordable.
-005 | TODO | Allow placing an tower on a green cell, deducting 10 Gold and marking the cell as occupied.
+005 | DONE | Allow placing an tower on a green cell, deducting 10 Gold and marking the cell as occupied.
 006 | TODO | Remove the pre-placed tower from Proto #1 so towers only appear when placed by the player.
 007 | DONE | Make “Next Wave” button start the current wave, disable the button during the wave, and spawn enemies along the waypoint path.
 008 | TODO | Show enemy HP as a small visible bar above each enemy.
