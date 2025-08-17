@@ -98,8 +98,10 @@ class Game {
     this.statusEl = document.getElementById('status');
     this.nextWaveBtn = document.getElementById('nextWave');
     this.placeTowerBtn = document.getElementById('placeTower');
+    this.statusEl = document.getElementById('status');
     this.restartBtn = document.getElementById('restart');
     this.gameOver = false;
+	this.shootingInterval = 500;
 
     this.placeTowerBtn.addEventListener('click', () => {
       this.buildMode = !this.buildMode;
@@ -163,6 +165,14 @@ class Game {
     this.livesEl.textContent = `Lives: ${this.lives}`;
     this.goldEl.textContent = `Gold: ${this.gold}`;
     this.waveEl.textContent = `Wave: ${this.wave}/${this.maxWaves}`;
+  }
+
+  endGame(text) {
+    this.statusEl.textContent = text;
+    this.statusEl.style.color = 'red';
+    this.nextWaveBtn.disabled = true;
+    this.placeTowerBtn.disabled = true;
+    this.gameOver = true;
   }
 
   spawnProjectile(angle, tower) {
@@ -284,6 +294,9 @@ class Game {
         this.enemies.splice(i, 1);
         this.lives -= 1;
         this.updateHUD();
+        if (this.lives <= 0) {
+          this.endGame('LOSE');
+        }
       } else if (e.isOutOfBounds(this.canvas.width)) {
         this.enemies.splice(i, 1);
       }
