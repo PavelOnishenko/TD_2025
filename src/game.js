@@ -306,6 +306,9 @@ class Game {
     ) {
       this.waveInProgress = false;
       this.nextWaveBtn.disabled = false;
+      this.wave += 1;
+      this.gold += 3;
+      this.updateHUD();
     }
 
     this.draw();
