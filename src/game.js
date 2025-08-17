@@ -93,10 +93,13 @@ class Game {
     this.livesEl = document.getElementById('lives');
     this.goldEl = document.getElementById('gold');
     this.waveEl = document.getElementById('wave');
+    this.statusEl = document.getElementById('status');
     this.nextWaveBtn = document.getElementById('nextWave');
     this.placeTowerBtn = document.getElementById('placeTower');
-	
-	this.shootingInterval = 500;
+
+        this.shootingInterval = 500;
+
+    this.gameOver = false;
 
     this.placeTowerBtn.addEventListener('click', () => {
       this.buildMode = !this.buildMode;
@@ -253,6 +256,7 @@ class Game {
   }
 
   update(timestamp) {
+    if (this.gameOver) return;
     const dt = (timestamp - this.lastTime) / 1000;
     this.lastTime = timestamp;
 
@@ -305,11 +309,18 @@ class Game {
       this.enemies.length === 0
     ) {
       this.waveInProgress = false;
-      this.nextWaveBtn.disabled = false;
+      if (this.wave === this.maxWaves) {
+        this.statusEl.textContent = 'WIN';
+        this.nextWaveBtn.disabled = true;
+        this.placeTowerBtn.disabled = true;
+        this.gameOver = true;
+      } else {
+        this.nextWaveBtn.disabled = false;
+      }
     }
 
     this.draw();
-    requestAnimationFrame(this.update);
+    if (!this.gameOver) requestAnimationFrame(this.update);
   }
 
   run() {
