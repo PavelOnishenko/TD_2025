@@ -354,6 +354,9 @@ class Game {
   }
 
   restart() {
+    // remember whether the game loop has stopped so we can safely resume it
+    const wasGameOver = this.gameOver;
+
     this.lives = this.inititalLives;
     this.gold = this.inititalGold;
     this.wave = 1;
@@ -368,10 +371,16 @@ class Game {
     this.grid.forEach(cell => (cell.occupied = false));
     this.spawned = 0;
     this.spawnTimer = 0;
-	this.gameOver =  false;
+    this.gameOver = false;
     this.statusEl.textContent = "";
     this.placeTowerBtn.disabled = false;
     this.updateHUD();
+
+    // if the game loop was stopped (after WIN/LOSE) restart it so highlighting works
+    if (wasGameOver) {
+      this.lastTime = performance.now();
+      requestAnimationFrame(this.update);
+    }
   }
 
   run() {
