@@ -368,6 +368,9 @@ class Game {
     this.grid.forEach(cell => (cell.occupied = false));
     this.spawned = 0;
     this.spawnTimer = 0;
+	this.gameOver =  false;
+    this.statusEl.textContent = "";
+    this.placeTowerBtn.disabled = false;
     this.updateHUD();
   }
 

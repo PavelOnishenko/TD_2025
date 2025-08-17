@@ -12,5 +12,6 @@
 012 | DONE | End a wave when all its enemies are gone, re-enable “Next Wave”, increase Wave by 1, and award +3 Gold.
 013 | DONE | Increase wave difficulty by raising enemy HP per wave according to the spec. Store spec any way you deem appropriate. Remember, the main thing is development speed and nothing else.
 014 | DONE | After Wave 5 ends and no enemies remain, show “WIN” in the HUD and stop the game.
-015 | TODO | If Lives reach 0, show “LOSE” in the HUD and stop the game.
+015 | DONE | If Lives reach 0, show “LOSE” in the HUD and stop the game.
 016 | DONE | Add a “Restart” button that resets Lives, Gold, Wave, and clears all towers and enemies.
+017 | TODO | Bug - after a restart under some circumstances green highlight of cells stop working. Ensure in code with 100% certainty that green highlight always works when user sees that build mode is on.
