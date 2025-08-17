@@ -69,7 +69,7 @@ class Game {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d');
     this.enemies = [];
-    this.towers = [new Tower(400, 280)];
+    this.towers = [];
     this.projectiles = [];
     this.projectileSpeed = 400;
     this.projectileRadius = 6;
@@ -77,7 +77,7 @@ class Game {
     this.target = null;
 
     this.lives = 10;
-    this.gold = 15;
+    this.gold = 20;
     this.wave = 1;
     this.maxWaves = 5;
     this.buildMode = false;
