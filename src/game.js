@@ -1,11 +1,11 @@
 class Enemy {
-  constructor() {
+  constructor(maxHp = 3) {
     this.x = 0;
     this.y = 365;
     this.w = 30;
     this.h = 30;
     this.speed = 50;
-    this.maxHp = 3;
+    this.maxHp = maxHp;
     this.hp = this.maxHp;
   }
 
@@ -69,7 +69,7 @@ class Game {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d');
     this.enemies = [];
-    this.towers = [new Tower(400, 280)];
+    this.towers = [];
     this.projectiles = [];
     this.projectileSpeed = 400;
     this.projectileRadius = 6;
@@ -77,7 +77,7 @@ class Game {
     this.target = null;
 
     this.lives = 10;
-    this.gold = 15;
+    this.gold = 20;
     this.wave = 1;
     this.maxWaves = 5;
     this.buildMode = false;
@@ -89,6 +89,8 @@ class Game {
     this.enemiesPerWave = 5;
     this.spawned = 0;
     this.spawnTimer = 0;
+
+    this.enemyHpPerWave = [3, 4, 5, 6, 7];
 
     this.livesEl = document.getElementById('lives');
     this.goldEl = document.getElementById('gold');
@@ -143,6 +145,8 @@ class Game {
       this.grid.push({ x: 20 + i * 80, y: 340, w: 40, h: 40, occupied: false });
     }
 
+    this.base = { x: this.canvas.width - 40, y: 360, w: 40, h: 40 };
+
     this.update = this.update.bind(this);
   }
 
@@ -173,7 +177,8 @@ class Game {
   }
 
   spawnEnemy() {
-    this.enemies.push(new Enemy());
+    const hp = this.enemyHpPerWave[this.wave - 1] ?? this.enemyHpPerWave[this.enemyHpPerWave.length - 1];
+    this.enemies.push(new Enemy(hp));
     this.spawned++;
   }
 
@@ -233,6 +238,9 @@ class Game {
     ctx.fillStyle = '#888';
     ctx.fillRect(0, 380, this.canvas.width, 20);
 
+    ctx.fillStyle = 'green';
+    ctx.fillRect(this.base.x, this.base.y, this.base.w, this.base.h);
+
     ctx.strokeStyle = 'rgba(0,0,0,0.3)';
     this.grid.forEach(cell => {
       ctx.strokeRect(cell.x, cell.y, cell.w, cell.h);
@@ -273,7 +281,11 @@ class Game {
     for (let i = this.enemies.length - 1; i >= 0; i--) {
       const e = this.enemies[i];
       e.update(dt);
-      if (e.isOutOfBounds(this.canvas.width)) {
+      if (e.x + e.w >= this.base.x) {
+        this.enemies.splice(i, 1);
+        this.lives -= 1;
+        this.updateHUD();
+      } else if (e.isOutOfBounds(this.canvas.width)) {
         this.enemies.splice(i, 1);
       }
     }
@@ -309,7 +321,8 @@ class Game {
       this.enemies.length === 0
     ) {
       this.waveInProgress = false;
-      if (this.wave === this.maxWaves) {
+      
+       if (this.wave === this.maxWaves) {
         this.statusEl.textContent = 'WIN';
         this.nextWaveBtn.disabled = true;
         this.placeTowerBtn.disabled = true;
@@ -317,6 +330,9 @@ class Game {
       } else {
         this.nextWaveBtn.disabled = false;
       }
+      this.wave += 1;
+      this.gold += 3;
+      this.updateHUD();
     }
 
     this.draw();
