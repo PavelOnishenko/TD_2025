@@ -98,9 +98,7 @@ class Game {
     this.statusEl = document.getElementById('status');
     this.nextWaveBtn = document.getElementById('nextWave');
     this.placeTowerBtn = document.getElementById('placeTower');
-
-        this.shootingInterval = 500;
-
+    this.restartBtn = document.getElementById('restart');
     this.gameOver = false;
 
     this.placeTowerBtn.addEventListener('click', () => {
@@ -137,6 +135,7 @@ class Game {
       }
     });
     this.nextWaveBtn.addEventListener('click', () => this.startWave());
+    this.restartBtn.addEventListener('click', () => this.restart());
 
     this.updateHUD();
 
@@ -337,6 +336,24 @@ class Game {
 
     this.draw();
     if (!this.gameOver) requestAnimationFrame(this.update);
+  }
+
+  restart() {
+    this.lives = 10;
+    this.gold = 15;
+    this.wave = 1;
+    this.towers = [];
+    this.enemies = [];
+    this.projectiles = [];
+    this.waveInProgress = false;
+    this.nextWaveBtn.disabled = false;
+    this.buildMode = false;
+    this.hoverCell = null;
+    this.placeTowerBtn.classList.remove('active');
+    this.grid.forEach(cell => (cell.occupied = false));
+    this.spawned = 0;
+    this.spawnTimer = 0;
+    this.updateHUD();
   }
 
   run() {

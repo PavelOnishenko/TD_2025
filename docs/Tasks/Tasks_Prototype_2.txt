@@ -13,4 +13,4 @@
 013 | DONE | Increase wave difficulty by raising enemy HP per wave according to the spec. Store spec any way you deem appropriate. Remember, the main thing is development speed and nothing else.
 014 | DONE | After Wave 5 ends and no enemies remain, show “WIN” in the HUD and stop the game.
 015 | TODO | If Lives reach 0, show “LOSE” in the HUD and stop the game.
-016 | TODO | Add a “Restart” button that resets Lives, Gold, Wave, and clears all towers and enemies.
+016 | DONE | Add a “Restart” button that resets Lives, Gold, Wave, and clears all towers and enemies.
