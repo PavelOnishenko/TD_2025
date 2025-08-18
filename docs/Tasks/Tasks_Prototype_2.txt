@@ -14,4 +14,4 @@
 014 | DONE | After Wave 5 ends and no enemies remain, show “WIN” in the HUD and stop the game.
 015 | DONE | If Lives reach 0, show “LOSE” in the HUD and stop the game.
 016 | DONE | Add a “Restart” button that resets Lives, Gold, Wave, and clears all towers and enemies.
-017 | TODO | Bug - after a restart under some circumstances green highlight of cells stop working. Ensure in code with 100% certainty that green highlight always works when user sees that build mode is on.
+017 | DONE | Bug - after a restart under some circumstances green highlight of cells stop working. Ensure in code with 100% certainty that green highlight always works when user sees that build mode is on.

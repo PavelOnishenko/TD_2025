@@ -114,10 +114,8 @@ export default class Game {
                 const enemyCenter = { x: target.x + target.w / 2, y: target.y + target.h / 2 };
                 const dx = enemyCenter.x - towerCenter.x;
                 const dy = enemyCenter.y - towerCenter.y;
-                const dist = Math.hypot(dx, dy);
-                if (dist <= tower.range && timestamp - tower.lastShot >= this.projectileSpawnInterval) {
-                    const angle = Math.atan2(dy, dx);
-                    this.spawnProjectile(angle, tower);
+                if (Math.hypot(dx, dy) <= tower.range && timestamp - tower.lastShot >= this.projectileSpawnInterval) {
+                    this.spawnProjectile(Math.atan2(dy, dx), tower);
                     tower.lastShot = timestamp;
                     break;
                 }

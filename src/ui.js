@@ -54,9 +54,7 @@ function bindMouseLeave(game) {
 function bindCanvasClick(game) {
     game.canvas.addEventListener('click', () => {
         if (!game.buildMode || !game.hoverCell) return;
-        const affordable = game.gold >= game.towerCost;
-        const placeable = !game.hoverCell.occupied;
-        if (affordable && placeable) {
+        if (game.gold >= game.towerCost && !game.hoverCell.occupied) {
             game.towers.push(new Tower(game.hoverCell.x, game.hoverCell.y));
             game.hoverCell.occupied = true;
             game.gold -= game.towerCost;
