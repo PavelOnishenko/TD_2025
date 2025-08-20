@@ -15,7 +15,6 @@ export default class Game {
         this.projectileSpawnInterval = 500;
         this.lastTime = 0;
         this.initStats();
-        bindUI(this);
         this.createGrid();
         this.base = { x: canvas.width - 40, y: 360, w: 40, h: 40 };
         this.update = this.update.bind(this);

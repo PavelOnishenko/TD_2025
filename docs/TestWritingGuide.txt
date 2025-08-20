@@ -1,0 +1,14 @@
+Cover each function in files containing game logic. Don't test rendering, UI and launch code (like main.js, ui.js and render.js)
+For each function cover main scenario, all if/else branches and those corner cases that you deem worth testing.
+Be reasonable. If you see that there is no sense in testing a function, don't do it.
+Tests must be helpful in development stage we are currently on. 
+As most of the code will be written by you, the AI agent, you should write the tests in a way that will help you develop and spot errors in new and existing logic.
+Use existing tests and suits as an example of style and approach.
+Style_Guide.txt also applies!
+You can create helper functions and classes so that it's easier and faster to write tests.
+Don't overcomplicate things on the other hand, tests must be easily written, readable and understandable.
+As an example of factors influencing the decision to extract some part of code or variable, you can use rule of 3, but again, be reasonable. You can stray away from guidelines if you deem it helpful for project development.
+Assert messages are not neccessary but add them if/when they will help you work on the project.
+Adhere to AAA pattern in structure of tests.
+You can create mocks and stubs to isolate testable code from non-testable. e.g. canvas is not going to work in Node environment.
+You can modify the game code to make testability better, but do it when there is a neccessity to do so or it's important for simplicity of testing. Keep balance between test simplicity and production code simplicity, with a bias toward prod code simplicity.

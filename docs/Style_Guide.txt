@@ -9,6 +9,6 @@ Here are code style rules:
 8. Code is self-explanatory, no comments where you can easily understand from code.
 9. Class can be any concept. We can be creative with how we break down code into classes.
 10. Always aim for "code perfect for right now", not some ideal code. Avoid premature optimization.
-11. Testability is a good bonus but not strict requirement right now.
+11. Code should be testable.
 12. When extracting class or function, aim for even distribution of LOC between original entity and new entity.
 13. Be simple and effective.
