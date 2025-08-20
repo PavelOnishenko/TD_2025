@@ -1,6 +1,7 @@
 import Game from './Game.js';
+import { bindUI } from './ui.js';
 
 const canvas = document.getElementById('game');
 const game = new Game(canvas);
-game.bindUI(game);
+bindUI(game);
 game.run();

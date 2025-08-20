@@ -1,5 +1,5 @@
 import Enemy from './Enemy.js';
-import { bindUI, updateHUD, endGame } from './ui.js';
+import { updateHUD, endGame } from './ui.js';
 import { draw } from './render.js';
 import { moveProjectiles, handleProjectileHits } from './projectiles.js';
 
