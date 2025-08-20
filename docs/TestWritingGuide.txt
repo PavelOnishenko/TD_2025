@@ -12,3 +12,4 @@ Assert messages are not neccessary but add them if/when they will help you work 
 Adhere to AAA pattern in structure of tests.
 You can create mocks and stubs to isolate testable code from non-testable. e.g. canvas is not going to work in Node environment.
 You can modify the game code to make testability better, but do it when there is a neccessity to do so or it's important for simplicity of testing. Keep balance between test simplicity and production code simplicity, with a bias toward prod code simplicity.
+If a function doesn't contain no if's, no loops, no calculations (at least addition or string concatenation), there is no need to test it.
