@@ -5,7 +5,7 @@ Tests must be helpful in development stage we are currently on.
 As most of the code will be written by you, the AI agent, you should write the tests in a way that will help you develop and spot errors in new and existing logic.
 Use existing tests and suits as an example of style and approach.
 Style_Guide.txt also applies!
-You can create helper functions and classes so that it's easier and faster to write tests.
+You can create helper functions, files and classes so that it's easier and faster to write tests.
 Don't overcomplicate things on the other hand, tests must be easily written, readable and understandable.
 As an example of factors influencing the decision to extract some part of code or variable, you can use rule of 3, but again, be reasonable. You can stray away from guidelines if you deem it helpful for project development.
 Assert messages are not neccessary but add them if/when they will help you work on the project.
