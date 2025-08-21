@@ -165,3 +165,89 @@ test('resetState restores initial game values', () => {
     assert.equal(game.statusEl.textContent, '');
 });
 
+test('startWave initiates wave and spawns first enemy', () => {
+    const game = new Game(makeFakeCanvas());
+    attachDomStubs(game);
+    game.enemies.push({});
+    game.spawned = 2;
+    game.spawnTimer = 1;
+
+    game.startWave();
+
+    assert.equal(game.waveInProgress, true);
+    assert.equal(game.nextWaveBtn.disabled, true);
+    assert.equal(game.enemies.length, 1);
+    assert.equal(game.spawned, 1);
+    assert.equal(game.spawnTimer, 0);
+});
+
+test('startWave does nothing if wave already in progress', () => {
+    const game = new Game(makeFakeCanvas());
+    game.waveInProgress = true;
+    game.enemies.push({});
+    game.spawned = 1;
+
+    game.startWave();
+
+    assert.equal(game.enemies.length, 1);
+    assert.equal(game.spawned, 1);
+});
+
+test('towerAttacks fires projectile when enemy in range and off cooldown', () => {
+    const game = new Game(makeFakeCanvas());
+    const tower = new Tower(100, 200);
+    const enemy = { x: 110, y: 210, w: 30, h: 30 };
+    game.towers.push(tower);
+    game.enemies.push(enemy);
+
+    game.towerAttacks(600);
+
+    assert.equal(game.projectiles.length, 1);
+    assert.equal(tower.lastShot, 600);
+});
+
+test('towerAttacks respects firing cooldown', () => {
+    const game = new Game(makeFakeCanvas());
+    const tower = new Tower(100, 200);
+    tower.lastShot = 200;
+    const enemy = { x: 110, y: 210, w: 30, h: 30 };
+    game.towers.push(tower);
+    game.enemies.push(enemy);
+
+    game.towerAttacks(600);
+
+    assert.equal(game.projectiles.length, 0);
+});
+
+test('update spawns enemy and schedules next frame', () => {
+    const game = new Game(makeFakeCanvas());
+    attachDomStubs(game);
+    game.startWave();
+    game.lastTime = 0;
+    const originalRAF = globalThis.requestAnimationFrame;
+    let scheduled = null;
+    globalThis.requestAnimationFrame = cb => { scheduled = cb; };
+
+    game.update(500);
+
+    globalThis.requestAnimationFrame = originalRAF;
+    assert.equal(game.enemies.length, 2);
+    assert.equal(game.lastTime, 500);
+    assert.equal(scheduled, game.update);
+});
+
+test('update returns early when game over', () => {
+    const game = new Game(makeFakeCanvas());
+    attachDomStubs(game);
+    game.gameOver = true;
+    const originalRAF = globalThis.requestAnimationFrame;
+    let called = false;
+    globalThis.requestAnimationFrame = () => { called = true; };
+
+    game.update(500);
+
+    globalThis.requestAnimationFrame = originalRAF;
+    assert.equal(called, false);
+    assert.equal(game.lastTime, 0);
+});
+
