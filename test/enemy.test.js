@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import Enemy from '../src/Enemy.js';
+import Enemy, { TankEnemy } from '../src/Enemy.js';
 
 test('update moves enemy based on dt and speed', () => {
     const enemy = new Enemy();
@@ -32,6 +32,13 @@ test('draw draws enemy and health bar correctly', () => {
     assert.deepEqual(ctx.ops[5], ['fillRect', 0, 359, 15, 4]);
     // border
     assert.deepEqual(ctx.ops[7], ['strokeRect', 0, 359, 30, 4]);
+});
+
+test('tank enemy has higher hp and slower speed', () => {
+    const tank = new TankEnemy();
+    const base = new Enemy();
+    assert.ok(tank.maxHp > base.maxHp);
+    assert.ok(tank.speed < base.speed);
 });
 
 function makeFakeCtx() {
