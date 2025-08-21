@@ -18,20 +18,29 @@ test('isOutOfBounds returns correct value', () => {
     assert.equal(enemy.isOutOfBounds(800), false);
 });
 
-test('draw draws enemy and health bar correctly', () => {
-    const enemy = new Enemy(10);
+test('draw uses enemy color and health bar correctly', () => {
+    const enemy = new Enemy(10, 'blue');
     enemy.hp = 5; // half health
     const ctx = makeFakeCtx();
     enemy.draw(ctx);
 
     // body
+    assert.deepEqual(ctx.ops[0], ['fillStyle', 'blue']);
     assert.deepEqual(ctx.ops[1], ['fillRect', 0, 365, 30, 30]);
     // health bar background
+    assert.deepEqual(ctx.ops[2], ['fillStyle', 'red']);
     assert.deepEqual(ctx.ops[3], ['fillRect', 0, 359, 30, 4]);
     // health bar current hp
+    assert.deepEqual(ctx.ops[4], ['fillStyle', 'green']);
     assert.deepEqual(ctx.ops[5], ['fillRect', 0, 359, 15, 4]);
     // border
+    assert.deepEqual(ctx.ops[6], ['strokeStyle', 'black']);
     assert.deepEqual(ctx.ops[7], ['strokeRect', 0, 359, 30, 4]);
+});
+
+test('default enemy color is red', () => {
+    const enemy = new Enemy();
+    assert.equal(enemy.color, 'red');
 });
 
 function makeFakeCtx() {
