@@ -1,0 +1,79 @@
+Prototype 3 — Mobile Color+Merge
+
+Core Idea:
+A casual mobile “time-killer” with puzzle-like mechanics. Towers are red and blue, enemies are also red and blue. Matching colors deals more damage. Towers can merge to upgrade, but upgrades make them less flexible. Two enemy archetypes appear — fast weak swarms and slow tough tanks. The player constantly balances between power vs. flexibility, deciding when to build towers, switch colors, or merge. Controls are one-finger simple.
+
+Mechanics
+
+Building
+
+The map has fixed slots along the enemy path.
+
+Tapping an empty slot instantly builds a tower (cost 10).
+
+No separate build mode — tapping an empty slot always means build.
+
+Color Match
+
+Enemies have a color: red or blue.
+
+Towers also have a color mode: red or blue.
+
+Match = ×1.5 damage, mismatch = ×0.75.
+
+Global Switch Cooldown
+
+Tapping a tower switches its color.
+
+A global cooldown (e.g. 2 seconds) applies to all towers.
+
+While cooldown is active, no switching is possible.
+
+A single HUD icon/bar shows “Switch ready”.
+
+Tower Merging
+
+At the end of each wave, pairs of adjacent towers are checked.
+
+If two towers of the same color and level stand next to each other, they merge into one upgraded tower.
+
+The second slot becomes empty.
+
+Merged tower gets +80% damage and +20% radius, but overall tower count decreases.
+
+Upgraded Tower Limitation
+
+Level 2 towers can still switch color, but their cooldown is longer (e.g. 3 seconds).
+
+Stronger, but less flexible.
+
+Enemy Types
+
+Swarm: fast, weak, come in groups, often mixed colors. Countered by many Level 1 towers.
+
+Tank: slow, very high HP. Countered by Level 2 towers.
+
+Waves
+
+10 short waves, 20–40 seconds each.
+
+First 2–3 waves are single-color (tutorial).
+
+Then Tanks are introduced.
+
+Later waves mix swarms and tanks, often in chaotic color combinations.
+
+Final waves: heavy randomized mixes.
+
+HUD
+
+Lives, Gold, Wave X/10.
+
+“Switch ready” indicator.
+
+Small tip: “Tap slot to build. Tap tower to switch.”
+
+Result:
+A simple but engaging game where all actions come down to tapping: build towers, switch colors. The two enemy archetypes and merging mechanic create a true dilemma: keep more weak flexible towers for swarm control or risk merging into powerful but rigid Level 2 towers to deal with tanks.
+
+The constant trade-offs form the “sticky” puzzle-like loop that makes players want to play “just one more wave”.
