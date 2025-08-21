@@ -10,7 +10,3 @@ body {
     padding: 10px;
     font-family: sans-serif;
 }
-
-#placeTower.active {
-    background: #ff0;
-}
