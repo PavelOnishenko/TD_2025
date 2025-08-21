@@ -1,12 +1,13 @@
 export default class Enemy {
-    constructor(maxHp = 3) {
+    constructor(maxHp = 3, color = 'red', y = 365) {
         this.x = 0;
-        this.y = 365;
+        this.y = y;
         this.w = 30;
         this.h = 30;
         this.speed = 100;
         this.maxHp = maxHp;
         this.hp = this.maxHp;
+        this.color = color;
     }
 
     update(dt) {
@@ -14,7 +15,7 @@ export default class Enemy {
     }
 
     draw(ctx) {
-        ctx.fillStyle = 'red';
+        ctx.fillStyle = this.color;
         ctx.fillRect(this.x, this.y, this.w, this.h);
 
         const barWidth = this.w;
@@ -32,5 +33,12 @@ export default class Enemy {
 
     isOutOfBounds(width) {
         return this.x + this.w >= width;
+    }
+}
+
+export class TankEnemy extends Enemy {
+    constructor(maxHp = 15) {
+        super(maxHp);
+        this.speed = 40;
     }
 }

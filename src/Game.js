@@ -1,4 +1,4 @@
-import Enemy from './Enemy.js';
+import Enemy, { TankEnemy } from './Enemy.js';
 import { updateHUD, endGame } from './ui.js';
 import { draw } from './render.js';
 import { moveProjectiles, handleProjectileHits } from './projectiles.js';
@@ -15,8 +15,9 @@ export default class Game {
         this.projectileSpawnInterval = 500;
         this.lastTime = 0;
         this.initStats();
+        this.pathY = canvas.height / 2 - 15;
+        this.base = { x: canvas.width - 40, y: this.pathY, w: 40, h: 40 };
         this.createGrid();
-        this.base = { x: canvas.width - 40, y: 360, w: 40, h: 40 };
         this.update = this.update.bind(this);
     }
 
@@ -40,8 +41,14 @@ export default class Game {
 
     createGrid() {
         this.grid = [];
-        for (let i = 0; i < 10; i++) {
-            this.grid.push({ x: 20 + i * 80, y: 340, w: 40, h: 40, occupied: false, highlight: false });
+        const topY = this.pathY - 100;
+        const bottomY = this.pathY + 100;
+        const startX = 60;
+        const step = 140;
+        for (let i = 0; i < 5; i++) {
+            const x = startX + i * step;
+            this.grid.push({ x, y: topY, w: 40, h: 40, occupied: false, highlight: false });
+            this.grid.push({ x, y: bottomY, w: 40, h: 40, occupied: false, highlight: false });
         }
     }
 
@@ -55,9 +62,14 @@ export default class Game {
         });
     }
 
-    spawnEnemy() {
+    spawnEnemy(type = 'swarm') {
         const hp = this.enemyHpPerWave[this.wave - 1] ?? this.enemyHpPerWave[this.enemyHpPerWave.length - 1];
-        this.enemies.push(new Enemy(hp));
+        const color = Math.random() < 0.5 ? 'red' : 'blue';
+        if (type === 'tank') {
+            this.enemies.push(new TankEnemy(hp * 5, color, this.pathY));
+        } else {
+            this.enemies.push(new Enemy(hp, color, this.pathY));
+        }
         this.spawned += 1;
     }
 
