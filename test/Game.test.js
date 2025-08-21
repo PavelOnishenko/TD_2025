@@ -26,7 +26,6 @@ function attachDomStubs(game) {
     game.waveEl = { textContent: '' };
     game.statusEl = { textContent: '', style: {} };
     game.nextWaveBtn = { disabled: false };
-    game.placeTowerBtn = { classList: { remove: () => {} }, disabled: false };
 }
 
 test('spawnProjectile main', () => {
@@ -157,11 +156,8 @@ test('resetState restores initial game values', () => {
     game.enemies.push({});
     game.projectiles.push({});
     game.waveInProgress = true;
-    game.buildMode = true;
-    game.hoverCell = {};
     game.grid[0].occupied = true;
     game.nextWaveBtn.disabled = true;
-    game.placeTowerBtn.disabled = true;
     game.statusEl.textContent = 'status';
     game.resetState();
     assert.equal(game.lives, game.initialLives);
@@ -171,10 +167,7 @@ test('resetState restores initial game values', () => {
     assert.equal(game.enemies.length, 0);
     assert.equal(game.projectiles.length, 0);
     assert.equal(game.waveInProgress, false);
-    assert.equal(game.buildMode, false);
-    assert.equal(game.hoverCell, null);
     assert.equal(game.nextWaveBtn.disabled, false);
-    assert.equal(game.placeTowerBtn.disabled, false);
     assert.equal(game.grid[0].occupied, false);
     assert.equal(game.statusEl.textContent, '');
 });

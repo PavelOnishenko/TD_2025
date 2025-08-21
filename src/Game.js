@@ -15,8 +15,9 @@ export default class Game {
         this.projectileSpawnInterval = 500;
         this.lastTime = 0;
         this.initStats();
+        this.pathY = canvas.height / 2 - 15;
+        this.base = { x: canvas.width - 40, y: this.pathY, w: 40, h: 40 };
         this.createGrid();
-        this.base = { x: canvas.width - 40, y: 360, w: 40, h: 40 };
         this.update = this.update.bind(this);
     }
 
@@ -27,8 +28,6 @@ export default class Game {
         this.gold = this.initialGold;
         this.wave = 1;
         this.maxWaves = 5;
-        this.buildMode = false;
-        this.hoverCell = null;
         this.towerCost = 10;
         this.waveInProgress = false;
         this.spawnInterval = 0.5;
@@ -42,8 +41,14 @@ export default class Game {
 
     createGrid() {
         this.grid = [];
-        for (let i = 0; i < 10; i++) {
-            this.grid.push({ x: 20 + i * 80, y: 340, w: 40, h: 40, occupied: false });
+        const topY = this.pathY - 100;
+        const bottomY = this.pathY + 100;
+        const startX = 60;
+        const step = 140;
+        for (let i = 0; i < 5; i++) {
+            const x = startX + i * step;
+            this.grid.push({ x, y: topY, w: 40, h: 40, occupied: false });
+            this.grid.push({ x, y: bottomY, w: 40, h: 40, occupied: false });
         }
     }
 
@@ -59,10 +64,11 @@ export default class Game {
 
     spawnEnemy(type = 'swarm') {
         const hp = this.enemyHpPerWave[this.wave - 1] ?? this.enemyHpPerWave[this.enemyHpPerWave.length - 1];
+        const color = Math.random() < 0.5 ? 'red' : 'blue';
         if (type === 'tank') {
-            this.enemies.push(new TankEnemy(hp * 5));
+            this.enemies.push(new TankEnemy(hp * 5, color, this.pathY));
         } else {
-            this.enemies.push(new Enemy(hp));
+            this.enemies.push(new Enemy(hp, color, this.pathY));
         }
         this.spawned += 1;
     }
@@ -162,15 +168,11 @@ export default class Game {
         this.projectiles = [];
         this.waveInProgress = false;
         this.nextWaveBtn.disabled = false;
-        this.buildMode = false;
-        this.hoverCell = null;
-        this.placeTowerBtn.classList.remove('active');
         this.grid.forEach(cell => (cell.occupied = false));
         this.spawned = 0;
         this.spawnTimer = 0;
         this.gameOver = false;
         this.statusEl.textContent = '';
-        this.placeTowerBtn.disabled = false;
         updateHUD(this);
     }
 
