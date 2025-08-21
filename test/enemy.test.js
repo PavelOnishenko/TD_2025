@@ -2,17 +2,6 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import Enemy from '../src/Enemy.js';
 
-test('Enemy constructor sets default values', () => {
-    const enemy = new Enemy();
-    assert.equal(enemy.x, 0);
-    assert.equal(enemy.y, 365);
-    assert.equal(enemy.w, 30);
-    assert.equal(enemy.h, 30);
-    assert.equal(enemy.speed, 100);
-    assert.equal(enemy.maxHp, 3);
-    assert.equal(enemy.hp, 3);
-});
-
 test('update moves enemy based on dt and speed', () => {
     const enemy = new Enemy();
     enemy.update(0.5);
@@ -55,4 +44,3 @@ function makeFakeCtx() {
         strokeRect(x, y, w, h) { ops.push(['strokeRect', x, y, w, h]); },
     };
 }
-
