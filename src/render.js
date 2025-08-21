@@ -28,7 +28,7 @@ function drawGrid(game) {
     });
 }
 
-function drawHoverCell(game) {
+export function drawHoverCell(game) {
     if (!game.buildMode || !game.hoverCell) return;
     const ctx = game.ctx;
     const affordable = game.gold >= game.towerCost;
@@ -37,7 +37,7 @@ function drawHoverCell(game) {
     ctx.fillRect(game.hoverCell.x, game.hoverCell.y, game.hoverCell.w, game.hoverCell.h);
 }
 
-function drawEntities(game) {
+export function drawEntities(game) {
     game.towers.forEach(t => t.draw(game.ctx));
     game.enemies.forEach(e => e.draw(game.ctx));
     game.ctx.fillStyle = 'black';
