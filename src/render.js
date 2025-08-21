@@ -21,8 +21,14 @@ function drawBase(game) {
 
 function drawGrid(game) {
     const ctx = game.ctx;
-    ctx.strokeStyle = 'rgba(0,0,0,0.3)';
     game.grid.forEach(cell => {
+        if (cell.highlight) {
+            ctx.strokeStyle = 'red';
+            ctx.lineWidth = 3;
+        } else {
+            ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+            ctx.lineWidth = 1;
+        }
         ctx.strokeRect(cell.x, cell.y, cell.w, cell.h);
     });
 }

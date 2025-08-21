@@ -21,18 +21,27 @@ function bindButtons(game) {
     game.restartBtn.addEventListener('click', () => game.restart());
 }
 
-function bindCanvasClick(game) {
+export function bindCanvasClick(game) {
     game.canvas.addEventListener('click', e => {
         const rect = game.canvas.getBoundingClientRect();
         const mx = e.clientX - rect.left;
         const my = e.clientY - rect.top;
         for (const cell of game.grid) {
             if (mx >= cell.x && mx <= cell.x + cell.w && my >= cell.y && my <= cell.y + cell.h) {
-                if (game.gold >= game.towerCost && !cell.occupied) {
-                    game.towers.push(new Tower(cell.x, cell.y));
-                    cell.occupied = true;
-                    game.gold -= game.towerCost;
-                    updateHUD(game);
+                if (!cell.occupied) {
+                    if (game.gold >= game.towerCost) {
+                        game.towers.push(new Tower(cell.x, cell.y));
+                        cell.occupied = true;
+                        game.gold -= game.towerCost;
+                        updateHUD(game);
+                    } else {
+                        cell.highlight = true;
+                        clearTimeout(cell.highlightTimeout);
+                        cell.highlightTimeout = setTimeout(() => {
+                            cell.highlight = false;
+                            cell.highlightTimeout = null;
+                        }, 200);
+                    }
                 }
                 break;
             }

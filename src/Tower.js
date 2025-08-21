@@ -6,6 +6,7 @@ export default class Tower {
         this.h = 40;
         this.range = 120;
         this.lastShot = 0;
+        this.level = 1;
     }
 
     center() {

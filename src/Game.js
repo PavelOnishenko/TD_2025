@@ -41,7 +41,7 @@ export default class Game {
     createGrid() {
         this.grid = [];
         for (let i = 0; i < 10; i++) {
-            this.grid.push({ x: 20 + i * 80, y: 340, w: 40, h: 40, occupied: false });
+            this.grid.push({ x: 20 + i * 80, y: 340, w: 40, h: 40, occupied: false, highlight: false });
         }
     }
 
@@ -156,7 +156,14 @@ export default class Game {
         this.projectiles = [];
         this.waveInProgress = false;
         this.nextWaveBtn.disabled = false;
-        this.grid.forEach(cell => (cell.occupied = false));
+        this.grid.forEach(cell => {
+            cell.occupied = false;
+            cell.highlight = false;
+            if (cell.highlightTimeout) {
+                clearTimeout(cell.highlightTimeout);
+                cell.highlightTimeout = null;
+            }
+        });
         this.spawned = 0;
         this.spawnTimer = 0;
         this.gameOver = false;
