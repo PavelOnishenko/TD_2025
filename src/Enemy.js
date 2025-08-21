@@ -1,5 +1,5 @@
 export default class Enemy {
-    constructor(maxHp = 3) {
+    constructor(maxHp = 3, color = 'red') {
         this.x = 0;
         this.y = 365;
         this.w = 30;
@@ -7,6 +7,7 @@ export default class Enemy {
         this.speed = 100;
         this.maxHp = maxHp;
         this.hp = this.maxHp;
+        this.color = color;
     }
 
     update(dt) {
@@ -14,7 +15,7 @@ export default class Enemy {
     }
 
     draw(ctx) {
-        ctx.fillStyle = 'red';
+        ctx.fillStyle = this.color;
         ctx.fillRect(this.x, this.y, this.w, this.h);
 
         const barWidth = this.w;
