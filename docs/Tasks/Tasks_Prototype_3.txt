@@ -3,7 +3,7 @@ Prototype 3 — Task List
 001 | TODO | Remove build mode toggle and highlighting logic from Prototype 2. Tapping an empty slot should always mean build attempt.
 002 | DONE | Replace grid system with fixed tower slots. Arrange ~10 slots total: 5 on top row and 5 on bottom row, flanking the straight enemy path. Show empty slots as outlined circles or squares.
 003 | TODO | Implement tower building: tap empty slot to place Level 1 tower (cost 10). If not enough gold, ignore and briefly highlight slot.
-004 | TODO | Add color property to enemies: 'red' or 'blue'. Show by filling their sprite/rectangle.
+004 | DONE | Add color property to enemies: 'red' or 'blue'. Show by filling their sprite/rectangle.
 005 | TODO | Add color property to towers. Default new tower = 'red'.
 006 | TODO | Implement color damage rules: if tower.color = enemy.color → 1.0× damage, else 0.4× damage.
 007 | TODO | Implement global switch cooldown system: one timer shared by all towers. Tap on a tower switches its color (red ↔ blue) only if cooldown = 0. Set cooldown = 2s.

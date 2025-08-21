@@ -64,7 +64,8 @@ export default class Game {
 
     spawnEnemy() {
         const hp = this.enemyHpPerWave[this.wave - 1] ?? this.enemyHpPerWave[this.enemyHpPerWave.length - 1];
-        this.enemies.push(new Enemy(hp, this.pathY));
+        const color = Math.random() < 0.5 ? 'red' : 'blue';
+        this.enemies.push(new Enemy(hp, color, this.pathY));
         this.spawned += 1;
     }
 
