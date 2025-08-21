@@ -11,7 +11,9 @@ export function draw(game) {
 function drawGround(game) {
     const ctx = game.ctx;
     ctx.fillStyle = '#888';
-    ctx.fillRect(0, 380, game.canvas.width, 20);
+    const pathHeight = 20;
+    const y = game.pathY + (30 - pathHeight) / 2;
+    ctx.fillRect(0, y, game.canvas.width, pathHeight);
 }
 
 function drawBase(game) {
@@ -24,7 +26,13 @@ function drawGrid(game) {
     const ctx = game.ctx;
     ctx.strokeStyle = 'rgba(0,0,0,0.3)';
     game.grid.forEach(cell => {
-        ctx.strokeRect(cell.x, cell.y, cell.w, cell.h);
+        if (!cell.occupied) {
+            const cx = cell.x + cell.w / 2;
+            const cy = cell.y + cell.h / 2;
+            ctx.beginPath();
+            ctx.arc(cx, cy, cell.w / 2, 0, Math.PI * 2);
+            ctx.stroke();
+        }
     });
 }
 
