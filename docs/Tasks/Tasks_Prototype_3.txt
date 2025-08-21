@@ -12,7 +12,7 @@ Prototype 3 — Task List
 010 | TODO | Add Level 2 tower stats: +80% damage, +20% radius compared to Level 1.
 011 | TODO | Level 2 towers still switch color, but with global cooldown = 3s instead of 2s.
 012 | TODO | Add Swarm enemy type: low HP, high speed. Spawns in groups.
-013 | TODO | Add Tank enemy type: very high HP, slow speed. Spawns in smaller numbers.
+013 | DONE | Add Tank enemy type: very high HP, slow speed. Spawns in smaller numbers.
 
 014 | TODO | Redefine wave system: 10 waves, 20–40s each.
 Waves 1–2: mono-color swarms.

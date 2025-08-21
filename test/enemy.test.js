@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import Enemy from '../src/Enemy.js';
+import Enemy, { TankEnemy } from '../src/Enemy.js';
 
 test('update moves enemy based on dt and speed', () => {
     const enemy = new Enemy();
@@ -36,6 +36,13 @@ test('draw uses enemy color and health bar correctly', () => {
     // border
     assert.deepEqual(ctx.ops[6], ['strokeStyle', 'black']);
     assert.deepEqual(ctx.ops[7], ['strokeRect', 0, 359, 30, 4]);
+});
+
+test('tank enemy has higher hp and slower speed', () => {
+    const tank = new TankEnemy();
+    const base = new Enemy();
+    assert.ok(tank.maxHp > base.maxHp);
+    assert.ok(tank.speed < base.speed);
 });
 
 test('default enemy color is red', () => {
