@@ -15,8 +15,9 @@ export default class Game {
         this.projectileSpawnInterval = 500;
         this.lastTime = 0;
         this.initStats();
+        this.pathY = canvas.height / 2 - 15;
+        this.base = { x: canvas.width - 40, y: this.pathY, w: 40, h: 40 };
         this.createGrid();
-        this.base = { x: canvas.width - 40, y: 360, w: 40, h: 40 };
         this.update = this.update.bind(this);
     }
 
@@ -40,8 +41,14 @@ export default class Game {
 
     createGrid() {
         this.grid = [];
-        for (let i = 0; i < 10; i++) {
-            this.grid.push({ x: 20 + i * 80, y: 340, w: 40, h: 40, occupied: false });
+        const topY = this.pathY - 100;
+        const bottomY = this.pathY + 100;
+        const startX = 60;
+        const step = 140;
+        for (let i = 0; i < 5; i++) {
+            const x = startX + i * step;
+            this.grid.push({ x, y: topY, w: 40, h: 40, occupied: false });
+            this.grid.push({ x, y: bottomY, w: 40, h: 40, occupied: false });
         }
     }
 
@@ -57,7 +64,7 @@ export default class Game {
 
     spawnEnemy() {
         const hp = this.enemyHpPerWave[this.wave - 1] ?? this.enemyHpPerWave[this.enemyHpPerWave.length - 1];
-        this.enemies.push(new Enemy(hp));
+        this.enemies.push(new Enemy(hp, this.pathY));
         this.spawned += 1;
     }
 
