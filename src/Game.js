@@ -27,8 +27,6 @@ export default class Game {
         this.gold = this.initialGold;
         this.wave = 1;
         this.maxWaves = 5;
-        this.buildMode = false;
-        this.hoverCell = null;
         this.towerCost = 10;
         this.waveInProgress = false;
         this.spawnInterval = 0.5;
@@ -158,15 +156,11 @@ export default class Game {
         this.projectiles = [];
         this.waveInProgress = false;
         this.nextWaveBtn.disabled = false;
-        this.buildMode = false;
-        this.hoverCell = null;
-        this.placeTowerBtn.classList.remove('active');
         this.grid.forEach(cell => (cell.occupied = false));
         this.spawned = 0;
         this.spawnTimer = 0;
         this.gameOver = false;
         this.statusEl.textContent = '';
-        this.placeTowerBtn.disabled = false;
         updateHUD(this);
     }
 

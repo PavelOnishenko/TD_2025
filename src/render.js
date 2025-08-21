@@ -4,7 +4,6 @@ export function draw(game) {
     drawGround(game);
     drawBase(game);
     drawGrid(game);
-    drawHoverCell(game);
     drawEntities(game);
 }
 
@@ -26,15 +25,6 @@ function drawGrid(game) {
     game.grid.forEach(cell => {
         ctx.strokeRect(cell.x, cell.y, cell.w, cell.h);
     });
-}
-
-export function drawHoverCell(game) {
-    if (!game.buildMode || !game.hoverCell) return;
-    const ctx = game.ctx;
-    const affordable = game.gold >= game.towerCost;
-    const placeable = !game.hoverCell.occupied;
-    ctx.fillStyle = affordable && placeable ? 'rgba(0,255,0,0.3)' : 'rgba(255,0,0,0.3)';
-    ctx.fillRect(game.hoverCell.x, game.hoverCell.y, game.hoverCell.w, game.hoverCell.h);
 }
 
 export function drawEntities(game) {
