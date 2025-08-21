@@ -1,11 +1,9 @@
 # Codex Instructions
 
-For each task from tasks.txt:
+For each task for a current prototype:
 
-1. Create a new branch named task-XXX (e.g. task-001).
-2. Make only the changes required to complete the task.
-3. Commit with message: feat(task-XXX): <short description>.
-4. Push the branch to origin.
-5. Create a real pull request on GitHub with the same title.
-6. Don't touch the tasks file. I will mark tasks done myself when I will be sure they are completed.
-7. Only after all that, move to the next task.
+1. Make only the changes required to complete the task.
+2. Modify tests to reflect the change. Remove those unneeded, add those that will be valuable for new logic on the current stage.
+3. Perform in a simple and efficient way.
+4. Code should be readable, easy to reason about, modular but without too much complexity. So with tests.
+5. Code should be self-documented, comments are only for cases when they are really valuable. 
