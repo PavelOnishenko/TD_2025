@@ -60,7 +60,7 @@ export default class Game {
         const rightX = this.pathX + 60;
         const startY = 60;
         const step = 80;
-        for (let i = 0; i < 8; i++) {
+        for (let i = 0; i < 5; i++) {
             const y = startY + i * step;
             this.grid.push({ x: leftX, y, w: 40, h: 40, occupied: false, highlight: 0 });
             this.grid.push({ x: rightX, y, w: 40, h: 40, occupied: false, highlight: 0 });
