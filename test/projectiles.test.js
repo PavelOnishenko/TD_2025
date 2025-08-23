@@ -7,6 +7,7 @@ function makeGame() {
         projectiles: [],
         enemies: [],
         canvas: { width: 800, height: 600 },
+        projectileSpeed: 800,
         gold: 0,
         wave: 1,
         maxWaves: 5,
@@ -26,6 +27,18 @@ test('moveProjectiles updates positions', () => {
 
     assert.deepEqual(game.projectiles[0], { x: 5, y: 0, vx: 10, vy: 0 });
     assert.deepEqual(game.projectiles[1], { x: 40, y: 55, vx: -20, vy: 10 });
+});
+
+test('moveProjectiles homes towards target when provided', () => {
+    const game = makeGame();
+    const target = { x: 100, y: -5, w: 10, h: 10 };
+    game.enemies.push(target);
+    game.projectiles.push({ x: 0, y: 0, vx: 0, vy: 0, target });
+
+    moveProjectiles(game, 0.5);
+
+    assert.ok(game.projectiles[0].x > 0);
+    assert.equal(game.projectiles[0].y, 0);
 });
 
 test('hitEnemy damages enemy and removes projectile when enemy survives', () => {

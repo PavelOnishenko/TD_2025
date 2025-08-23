@@ -2,6 +2,17 @@ import { updateHUD } from './ui.js';
 
 export function moveProjectiles(game, dt) {
     for (const p of game.projectiles) {
+        if (p.target && game.enemies.includes(p.target)) {
+            const enemyCenter = {
+                x: p.target.x + p.target.w / 2,
+                y: p.target.y + p.target.h / 2,
+            };
+            const dx = enemyCenter.x - p.x;
+            const dy = enemyCenter.y - p.y;
+            const dist = Math.hypot(dx, dy) || 1;
+            p.vx = (dx / dist) * game.projectileSpeed;
+            p.vy = (dy / dist) * game.projectileSpeed;
+        }
         p.x += p.vx * dt;
         p.y += p.vy * dt;
     }
