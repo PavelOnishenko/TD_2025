@@ -49,8 +49,8 @@ export default class Game {
         const step = 140;
         for (let i = 0; i < 5; i++) {
             const x = startX + i * step;
-            this.grid.push({ x, y: topY, w: 40, h: 40, occupied: false });
-            this.grid.push({ x, y: bottomY, w: 40, h: 40, occupied: false });
+            this.grid.push({ x, y: topY, w: 40, h: 40, occupied: false, highlight: 0 });
+            this.grid.push({ x, y: bottomY, w: 40, h: 40, occupied: false, highlight: 0 });
         }
     }
 
@@ -168,6 +168,11 @@ export default class Game {
         this.towerAttacks(timestamp);
         moveProjectiles(this, dt);
         handleProjectileHits(this);
+        this.grid.forEach(cell => {
+            if (cell.highlight > 0) {
+                cell.highlight = Math.max(0, cell.highlight - dt);
+            }
+        });
         this.checkWaveCompletion();
         draw(this);
         if (!this.gameOver) requestAnimationFrame(this.update);
@@ -182,7 +187,10 @@ export default class Game {
         this.projectiles = [];
         this.waveInProgress = false;
         this.nextWaveBtn.disabled = false;
-        this.grid.forEach(cell => (cell.occupied = false));
+        this.grid.forEach(cell => {
+            cell.occupied = false;
+            cell.highlight = 0;
+        });
         this.spawned = 0;
         this.spawnTimer = 0;
         this.gameOver = false;

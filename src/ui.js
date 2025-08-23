@@ -34,11 +34,15 @@ function bindCanvasClick(game) {
         }
         for (const cell of game.grid) {
             if (mx >= cell.x && mx <= cell.x + cell.w && my >= cell.y && my <= cell.y + cell.h) {
-                if (game.gold >= game.towerCost && !cell.occupied) {
-                    game.towers.push(new Tower(cell.x, cell.y));
-                    cell.occupied = true;
-                    game.gold -= game.towerCost;
-                    updateHUD(game);
+                if (!cell.occupied) {
+                    if (game.gold >= game.towerCost) {
+                        game.towers.push(new Tower(cell.x, cell.y));
+                        cell.occupied = true;
+                        game.gold -= game.towerCost;
+                        updateHUD(game);
+                    } else {
+                        cell.highlight = 0.3;
+                    }
                 }
                 break;
             }

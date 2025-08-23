@@ -7,6 +7,7 @@ export default class Tower {
         this.range = 120;
         this.lastShot = 0;
         this.color = color;
+        this.level = 1;
     }
 
     center() {
