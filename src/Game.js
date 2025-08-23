@@ -56,18 +56,14 @@ export default class Game {
 
     createGrid() {
         this.grid = [];
-        const roadL2X = this.pathX - 120;
-        const roadL1X = this.pathX - 60;
-        const roadR1X = this.pathX + 60;
-        const roadR2X = this.pathX + 120;
-        const startY = 40;
+        const leftX = this.pathX - 60;
+        const rightX = this.pathX + 60;
+        const startY = 60;
         const step = 80;
         for (let i = 0; i < 5; i++) {
             const y = startY + i * step;
-            this.grid.push({ x: roadL2X, y, w: 40, h: 40, occupied: false, highlight: 0 });
-            this.grid.push({ x: roadL1X, y, w: 40, h: 40, occupied: false, highlight: 0 });
-            this.grid.push({ x: roadR1X, y, w: 40, h: 40, occupied: false, highlight: 0 });
-            this.grid.push({ x: roadR2X, y, w: 40, h: 40, occupied: false, highlight: 0 });
+            this.grid.push({ x: leftX, y, w: 40, h: 40, occupied: false, highlight: 0 });
+            this.grid.push({ x: rightX, y, w: 40, h: 40, occupied: false, highlight: 0 });
         }
     }
 
@@ -100,9 +96,11 @@ export default class Game {
         } else if (type === 'swarm') {
             const groupSize = 3;
             const swarmHp = Math.max(1, Math.floor(hp / 2));
+            const spacing = 40; // vertical offset to prevent overlap
             for (let i = 0; i < groupSize; i++) {
                 const color = this.getEnemyColor();
-                this.enemies.push(new SwarmEnemy(swarmHp, color, this.pathX, startY));
+                const y = startY - i * spacing;
+                this.enemies.push(new SwarmEnemy(swarmHp, color, this.pathX, y));
             }
         } else {
             const color = this.getEnemyColor();
