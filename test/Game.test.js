@@ -40,6 +40,8 @@ test('spawnProjectile main', () => {
     assert.equal(projectile.y, 220);
     assert.ok(Math.abs(projectile.vx - 432.24) < 0.01);
     assert.ok(Math.abs(projectile.vy - 673.18) < 0.01);
+    assert.equal(projectile.color, tower.color);
+    assert.equal(projectile.damage, 1);
 });
 
 test('spawnEnemy main', () => {

@@ -58,7 +58,9 @@ export default class Game {
             x: c.x,
             y: c.y,
             vx: Math.cos(angle) * this.projectileSpeed,
-            vy: Math.sin(angle) * this.projectileSpeed
+            vy: Math.sin(angle) * this.projectileSpeed,
+            color: tower.color,
+            damage: 1
         });
     }
 
