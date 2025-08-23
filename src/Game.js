@@ -22,8 +22,8 @@ export default class Game {
     }
 
     initStats() {
-        this.initialLives = 5;
-        this.initialGold = 20;
+        this.initialLives = 10;
+        this.initialGold = 50;
         this.lives = this.initialLives;
         this.gold = this.initialGold;
         this.wave = 1;
@@ -67,7 +67,7 @@ export default class Game {
         }
     }
 
-    spawnProjectile(angle, tower) {
+    spawnProjectile(angle, tower, target = null) {
         const c = tower.center();
         this.projectiles.push({
             x: c.x,
@@ -75,7 +75,8 @@ export default class Game {
             vx: Math.cos(angle) * this.projectileSpeed,
             vy: Math.sin(angle) * this.projectileSpeed,
             color: tower.color,
-            damage: tower.damage
+            damage: tower.damage,
+            target,
         });
     }
 
@@ -168,7 +169,7 @@ export default class Game {
                 const dx = enemyCenter.x - towerCenter.x;
                 const dy = enemyCenter.y - towerCenter.y;
                 if (Math.hypot(dx, dy) <= tower.range && timestamp - tower.lastShot >= this.projectileSpawnInterval) {
-                    this.spawnProjectile(Math.atan2(dy, dx), tower);
+                    this.spawnProjectile(Math.atan2(dy, dx), tower, target);
                     tower.lastShot = timestamp;
                     break;
                 }

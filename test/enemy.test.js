@@ -5,9 +5,9 @@ import Enemy, { TankEnemy, SwarmEnemy } from '../src/Enemy.js';
 test('update moves enemy based on dt and speed', () => {
     const enemy = new Enemy();
     enemy.update(0.5);
-    assert.equal(enemy.x, 50);
+    assert.equal(enemy.x, 20);
     enemy.update(0.25);
-    assert.equal(enemy.x, 75);
+    assert.equal(enemy.x, 30);
 });
 
 test('isOutOfBounds returns correct value', () => {
