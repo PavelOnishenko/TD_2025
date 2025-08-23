@@ -4,10 +4,19 @@ export default class Tower {
         this.y = y;
         this.w = 40;
         this.h = 40;
-        this.range = 120;
+        this.baseRange = 120;
+        this.baseDamage = 1;
         this.lastShot = 0;
         this.color = color;
         this.level = level;
+        this.updateStats();
+    }
+
+    updateStats() {
+        const rangeMultiplier = 1 + 0.2 * (this.level - 1);
+        const damageMultiplier = 1 + 0.8 * (this.level - 1);
+        this.range = this.baseRange * rangeMultiplier;
+        this.damage = this.baseDamage * damageMultiplier;
     }
 
     center() {

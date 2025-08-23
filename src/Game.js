@@ -62,7 +62,7 @@ export default class Game {
             vx: Math.cos(angle) * this.projectileSpeed,
             vy: Math.sin(angle) * this.projectileSpeed,
             color: tower.color,
-            damage: 1
+            damage: tower.damage
         });
     }
 
@@ -166,6 +166,7 @@ export default class Game {
                     const tb = this.getTowerAt(b);
                     if (ta && tb && ta.color === tb.color && ta.level === tb.level) {
                         ta.level += 1;
+                        ta.updateStats();
                         this.towers = this.towers.filter(t => t !== tb);
                         b.occupied = false;
                         i += 1;
