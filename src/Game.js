@@ -1,4 +1,4 @@
-import Enemy, { TankEnemy } from './Enemy.js';
+import Enemy, { TankEnemy, SwarmEnemy } from './Enemy.js';
 import { updateHUD, endGame, updateSwitchIndicator } from './ui.js';
 import { draw } from './render.js';
 import { moveProjectiles, handleProjectileHits } from './projectiles.js';
@@ -67,10 +67,16 @@ export default class Game {
     }
 
     spawnEnemy(type = 'swarm') {
-        const hp = this.enemyHpPerWave[this.wave - 1] ?? this.enemyHpPerWave[this.enemyHpPerWave.length - 1];
+        const hp = this.enemyHpPerWave[this.wave - 1] ?? this.enemyHpPerWave.at(-1);
         const color = Math.random() < 0.5 ? 'red' : 'blue';
         if (type === 'tank') {
             this.enemies.push(new TankEnemy(hp * 5, color, this.pathY));
+        } else if (type === 'swarm') {
+            const groupSize = 3;
+            const swarmHp = Math.max(1, Math.floor(hp / 2));
+            for (let i = 0; i < groupSize; i++) {
+                this.enemies.push(new SwarmEnemy(swarmHp, color, this.pathY));
+            }
         } else {
             this.enemies.push(new Enemy(hp, color, this.pathY));
         }

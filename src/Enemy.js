@@ -42,3 +42,10 @@ export class TankEnemy extends Enemy {
         this.speed = 40;
     }
 }
+
+export class SwarmEnemy extends Enemy {
+    constructor(maxHp = 1, color = 'red', y = 365) {
+        super(maxHp, color, y);
+        this.speed = 160;
+    }
+}
