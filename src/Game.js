@@ -56,8 +56,8 @@ export default class Game {
 
     createGrid() {
         this.grid = [];
-        const leftX = this.pathX - 120;
-        const rightX = this.pathX + 120;
+        const leftX = this.pathX - 60;
+        const rightX = this.pathX + 60;
         const startY = 60;
         const step = 80;
         for (let i = 0; i < 8; i++) {
