@@ -37,5 +37,14 @@ export default class Tower {
 
         ctx.fillStyle = this.color;
         ctx.fillRect(this.x, this.y, this.w, this.h);
+
+        if (this.level > 1) {
+            ctx.strokeStyle = 'yellow';
+            ctx.strokeRect(this.x - 2, this.y - 2, this.w + 4, this.h + 4);
+        }
+
+        ctx.fillStyle = 'black';
+        ctx.font = '10px sans-serif';
+        ctx.fillText(String(this.level), this.x + this.w + 2, this.y + 10);
     }
 }
