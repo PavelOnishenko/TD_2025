@@ -80,28 +80,27 @@ export default class Game {
     }
 
     getEnemyColor() {
-        if (this.wave === 1) return 'red';
-        if (this.wave === 2) return 'blue';
-        const mix = Math.min(0.5, 0.1 * (this.wave - 2));
-        return Math.random() < mix ? 'blue' : 'red';
+        return Math.random() < 0.5 ? 'red' : 'blue';
     }
 
     spawnEnemy(type) {
         const hp = this.enemyHpPerWave[this.wave - 1] ?? this.enemyHpPerWave.at(-1);
-        const color = this.getEnemyColor();
         if (!type) {
             const cfg = this.waveConfigs[this.wave - 1] ?? this.waveConfigs.at(-1);
             type = this.wave <= 2 ? 'swarm' : (Math.random() < cfg.tankChance ? 'tank' : 'swarm');
         }
         if (type === 'tank') {
+            const color = this.getEnemyColor();
             this.enemies.push(new TankEnemy(hp * 5, color, this.pathY));
         } else if (type === 'swarm') {
             const groupSize = 3;
             const swarmHp = Math.max(1, Math.floor(hp / 2));
             for (let i = 0; i < groupSize; i++) {
+                const color = this.getEnemyColor();
                 this.enemies.push(new SwarmEnemy(swarmHp, color, this.pathY));
             }
         } else {
+            const color = this.getEnemyColor();
             this.enemies.push(new Enemy(hp, color, this.pathY));
         }
         this.spawned += 1;
