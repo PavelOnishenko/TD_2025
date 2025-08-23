@@ -1,5 +1,5 @@
 import Enemy, { TankEnemy, SwarmEnemy } from './Enemy.js';
-import { updateHUD, endGame } from './ui.js';
+import { updateHUD, endGame, updateSwitchIndicator } from './ui.js';
 import { draw } from './render.js';
 import { moveProjectiles, handleProjectileHits } from './projectiles.js';
 
@@ -87,6 +87,7 @@ export default class Game {
         if (this.switchCooldown > 0) return false;
         tower.color = tower.color === 'red' ? 'blue' : 'red';
         this.switchCooldown = this.switchCooldownDuration;
+        updateSwitchIndicator(this);
         return true;
     }
 
@@ -149,9 +150,37 @@ export default class Game {
         }
     }
 
+    getTowerAt(cell) {
+        return this.towers.find(t => t.x === cell.x && t.y === cell.y);
+    }
+
+    mergeTowers() {
+        const topRow = this.grid.filter(c => c.y < this.pathY);
+        const bottomRow = this.grid.filter(c => c.y > this.pathY);
+        const scan = row => {
+            for (let i = 0; i < row.length - 1; i++) {
+                const a = row[i];
+                const b = row[i + 1];
+                if (a.occupied && b.occupied) {
+                    const ta = this.getTowerAt(a);
+                    const tb = this.getTowerAt(b);
+                    if (ta && tb && ta.color === tb.color && ta.level === tb.level) {
+                        ta.level += 1;
+                        this.towers = this.towers.filter(t => t !== tb);
+                        b.occupied = false;
+                        i += 1;
+                    }
+                }
+            }
+        };
+        scan(topRow);
+        scan(bottomRow);
+    }
+
     checkWaveCompletion() {
         if (this.waveInProgress && this.spawned === this.enemiesPerWave && this.enemies.length === 0) {
             this.waveInProgress = false;
+            this.mergeTowers();
             if (this.wave === this.maxWaves) {
                 endGame(this, 'WIN');
             } else {
@@ -168,6 +197,7 @@ export default class Game {
         const dt = this.calcDelta(timestamp);
         if (this.switchCooldown > 0) {
             this.switchCooldown = Math.max(0, this.switchCooldown - dt);
+            updateSwitchIndicator(this);
         }
         this.spawnEnemiesIfNeeded(dt);
         this.updateEnemies(dt);
@@ -203,6 +233,7 @@ export default class Game {
         this.statusEl.textContent = '';
         this.switchCooldown = 0;
         updateHUD(this);
+        updateSwitchIndicator(this);
     }
 
     restart() {

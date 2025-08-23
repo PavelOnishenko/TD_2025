@@ -139,6 +139,27 @@ test('checkWaveCompletion increments wave and gold', () => {
     assert.equal(game.nextWaveBtn.disabled, false);
 });
 
+test('checkWaveCompletion merges adjacent towers of same color and level', () => {
+    const game = new Game(makeFakeCanvas());
+    attachDomStubs(game);
+    const cellA = game.grid[0];
+    const cellB = game.grid[2];
+    const t1 = new Tower(cellA.x, cellA.y, 'red');
+    const t2 = new Tower(cellB.x, cellB.y, 'red');
+    game.towers.push(t1, t2);
+    cellA.occupied = true;
+    cellB.occupied = true;
+    game.waveInProgress = true;
+    game.spawned = game.enemiesPerWave;
+    game.enemies = [];
+    game.checkWaveCompletion();
+    assert.equal(game.towers.length, 1);
+    assert.equal(game.towers[0], t1);
+    assert.equal(t1.level, 2);
+    assert.equal(cellA.occupied, true);
+    assert.equal(cellB.occupied, false);
+});
+
 test('checkWaveCompletion triggers win on final wave', () => {
     const game = new Game(makeFakeCanvas());
     attachDomStubs(game);
