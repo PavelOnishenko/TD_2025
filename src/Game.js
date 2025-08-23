@@ -47,7 +47,7 @@ export default class Game {
         this.enemiesPerWave = cfg.cycles;
         this.spawned = 0;
         this.spawnTimer = 0;
-        this.enemyHpPerWave = [3, 4, 5, 6, 7];
+        this.enemyHpPerWave = [2, 3, 4, 5, 6];
         this.gameOver = false;
         this.shootingInterval = 500;
         this.switchCooldownDuration = 0.5;
