@@ -6,7 +6,7 @@ Prototype 3 — Task List
 004 | DONE | Add color property to enemies: 'red' or 'blue'. Show by filling their sprite/rectangle.
 005 | DONE | Add color property to towers. Default new tower = 'red'.
 006 | TODO | Implement color damage rules: if tower.color = enemy.color → 1.0× damage, else 0.4× damage.
-007 | TODO | Implement global switch cooldown system: one timer shared by all towers. Tap on a tower switches its color (red ↔ blue) only if cooldown = 0. Set cooldown = 2s.
+007 | DONE | Implement global switch cooldown system: one timer shared by all towers. Tap on a tower switches its color (red ↔ blue) only if cooldown = 0. Set cooldown = 2s.
 008 | TODO | Add HUD indicator for switch cooldown (“Switch ready” bar or simple text).
 009 | TODO | Implement auto-merge mechanic at end of wave: scan slots left to right; if two adjacent towers have same color and same level, merge into one tower (level+1), free second slot. Do only one merge pass per wave.
 010 | TODO | Add Level 2 tower stats: +80% damage, +20% radius compared to Level 1.
