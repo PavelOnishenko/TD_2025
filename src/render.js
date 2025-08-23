@@ -23,13 +23,13 @@ function drawBase(game) {
 
 function drawGrid(game) {
     const ctx = game.ctx;
-    ctx.strokeStyle = 'rgba(0,0,0,0.3)';
     game.grid.forEach(cell => {
         if (!cell.occupied) {
             const cx = cell.x + cell.w / 2;
             const cy = cell.y + cell.h / 2;
             ctx.beginPath();
             ctx.arc(cx, cy, cell.w / 2, 0, Math.PI * 2);
+            ctx.strokeStyle = cell.highlight > 0 ? 'red' : 'rgba(0,0,0,0.3)';
             ctx.stroke();
         }
     });
