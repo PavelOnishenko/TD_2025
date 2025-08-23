@@ -95,7 +95,7 @@ export default class Game {
             this.enemies.push(new TankEnemy(hp * 5, color, this.pathX, startY));
         } else if (type === 'swarm') {
             const groupSize = 3;
-            const swarmHp = Math.max(1, Math.floor(hp / 2));
+            const swarmHp = Math.max(1, hp);
             const spacing = 40; // vertical offset to prevent overlap
             for (let i = 0; i < groupSize; i++) {
                 const color = this.getEnemyColor();
@@ -110,8 +110,10 @@ export default class Game {
     }
 
     switchTowerColor(tower) {
-        if (this.switchCooldown > 0) return false;
+        if (this.switchCooldown > 0 || this.gold < 1) return false;
         tower.color = tower.color === 'red' ? 'blue' : 'red';
+        this.gold -= 1;
+        updateHUD(this);
         this.switchCooldown = this.switchCooldownDuration;
         updateSwitchIndicator(this);
         return true;
@@ -184,27 +186,21 @@ export default class Game {
     }
 
     mergeTowers() {
-        const leftCol = this.grid.filter(c => c.x < this.pathX);
-        const rightCol = this.grid.filter(c => c.x > this.pathX);
-        const scan = col => {
-            for (let i = 0; i < col.length - 1; i++) {
-                const a = col[i];
-                const b = col[i + 1];
-                if (a.occupied && b.occupied) {
-                    const ta = this.getTowerAt(a);
-                    const tb = this.getTowerAt(b);
-                    if (ta && tb && ta.color === tb.color && ta.level === tb.level) {
-                        ta.level += 1;
-                        ta.updateStats();
-                        this.towers = this.towers.filter(t => t !== tb);
-                        b.occupied = false;
-                        i += 1;
-                    }
+        for (let i = 0; i < this.grid.length - 1; i++) {
+            const a = this.grid[i];
+            const b = this.grid[i + 1];
+            if (a.occupied && b.occupied) {
+                const ta = this.getTowerAt(a);
+                const tb = this.getTowerAt(b);
+                if (ta && tb && ta.color === tb.color && ta.level === tb.level) {
+                    ta.level += 1;
+                    ta.updateStats();
+                    this.towers = this.towers.filter(t => t !== tb);
+                    b.occupied = false;
+                    i += 1;
                 }
             }
-        };
-        scan(leftCol);
-        scan(rightCol);
+        }
     }
 
     checkWaveCompletion() {

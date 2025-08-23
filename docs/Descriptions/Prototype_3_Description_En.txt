@@ -71,7 +71,7 @@ Lives, Gold, Wave X/10.
 
 “Switch ready” indicator.
 
-Small tip: “Tap slot to build. Tap tower to switch.”
+Small tip: “Tap slot to build. Tap tower to switch (1 gold).”
 
 Result:
 A simple but engaging game where all actions come down to tapping: build towers, switch colors. The two enemy archetypes and merging mechanic create a true dilemma: keep more weak flexible towers for swarm control or risk merging into powerful but rigid Level 2 towers to deal with tanks.
