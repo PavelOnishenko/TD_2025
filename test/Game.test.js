@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import Game from '../src/Game.js';
 import Tower from '../src/Tower.js';
+import { TankEnemy } from '../src/Enemy.js';
 
 function makeFakeCanvas() {
     return {
@@ -40,6 +41,8 @@ test('spawnProjectile main', () => {
     assert.equal(projectile.y, 220);
     assert.ok(Math.abs(projectile.vx - 432.24) < 0.01);
     assert.ok(Math.abs(projectile.vy - 673.18) < 0.01);
+    assert.equal(projectile.color, tower.color);
+    assert.equal(projectile.damage, 1);
 });
 
 test('spawnEnemy main', () => {
@@ -52,6 +55,19 @@ test('spawnEnemy main', () => {
     assert.equal(game.spawned, 1);
     const enemy = game.enemies[0];
     assert.equal(enemy.maxHp, 3);
+});
+
+test('spawnEnemy can create tank enemies', () => {
+    const fakeCanvas = makeFakeCanvas();
+    const game = new Game(fakeCanvas);
+
+    const baseHp = game.enemyHpPerWave[game.wave - 1];
+    game.spawnEnemy('tank');
+
+    assert.equal(game.enemies.length, 1);
+    assert.ok(game.enemies[0] instanceof TankEnemy);
+    assert.equal(game.spawned, 1);
+    assert.equal(game.enemies[0].maxHp, baseHp * 5);
 });
 
 test('spawnEnemy defaults to last hp for high wave', () => {

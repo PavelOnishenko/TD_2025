@@ -30,8 +30,8 @@ test('moveProjectiles updates positions', () => {
 
 test('hitEnemy damages enemy and removes projectile when enemy survives', () => {
     const game = makeGame();
-    const enemy = { x: 10, y: 10, w: 20, h: 20, hp: 2 };
-    const projectile = { x: 15, y: 15 };
+    const enemy = { x: 10, y: 10, w: 20, h: 20, hp: 2, color: 'red' };
+    const projectile = { x: 15, y: 15, color: 'red', damage: 1 };
     game.enemies.push(enemy);
     game.projectiles.push(projectile);
 
@@ -46,8 +46,8 @@ test('hitEnemy damages enemy and removes projectile when enemy survives', () => 
 
 test('hitEnemy removes enemy and updates gold when enemy dies', () => {
     const game = makeGame();
-    const enemy = { x: 10, y: 10, w: 20, h: 20, hp: 1 };
-    const projectile = { x: 15, y: 15 };
+    const enemy = { x: 10, y: 10, w: 20, h: 20, hp: 1, color: 'red' };
+    const projectile = { x: 15, y: 15, color: 'red', damage: 1 };
     game.enemies.push(enemy);
     game.projectiles.push(projectile);
 
@@ -62,10 +62,10 @@ test('hitEnemy removes enemy and updates gold when enemy dies', () => {
 
 test('handleProjectileHits removes offscreen and hit projectiles', () => {
     const game = makeGame();
-    const enemy = { x: 10, y: 10, w: 20, h: 20, hp: 1 };
-    const pHit = { x: 15, y: 15 };
-    const pMiss = { x: 100, y: 100 };
-    const pOff = { x: -5, y: 0 };
+    const enemy = { x: 10, y: 10, w: 20, h: 20, hp: 1, color: 'red' };
+    const pHit = { x: 15, y: 15, color: 'red', damage: 1 };
+    const pMiss = { x: 100, y: 100, color: 'red', damage: 1 };
+    const pOff = { x: -5, y: 0, color: 'red', damage: 1 };
     game.enemies.push(enemy);
     game.projectiles.push(pHit, pMiss, pOff);
 
@@ -75,4 +75,20 @@ test('handleProjectileHits removes offscreen and hit projectiles', () => {
     assert.deepEqual(game.projectiles[0], pMiss);
     assert.equal(game.enemies.length, 0);
     assert.equal(game.gold, 1);
+});
+
+test('hitEnemy deals reduced damage when colors differ', () => {
+    const game = makeGame();
+    const enemy = { x: 10, y: 10, w: 20, h: 20, hp: 1, color: 'blue' };
+    const projectile = { x: 15, y: 15, color: 'red', damage: 1 };
+    game.enemies.push(enemy);
+    game.projectiles.push(projectile);
+
+    const result = hitEnemy(game, projectile, 0);
+
+    assert.equal(result, true);
+    assert.ok(Math.abs(enemy.hp - 0.6) < 1e-6);
+    assert.equal(game.projectiles.length, 0);
+    assert.equal(game.enemies.length, 1);
+    assert.equal(game.gold, 0);
 });

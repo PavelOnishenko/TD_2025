@@ -6,4 +6,5 @@ For each task for a current prototype:
 2. Modify tests to reflect the change. Remove those unneeded, add those that will be valuable for new logic on the current stage.
 3. Perform in a simple and efficient way.
 4. Code should be readable, easy to reason about, modular but without too much complexity. So with tests.
-5. Code should be self-documented, comments are only for cases when they are really valuable. 
+5. Code should be self-documented, comments are only for cases when they are really valuable.
+6. Mark the task DONE in current prototype tasks file. 

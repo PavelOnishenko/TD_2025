@@ -35,3 +35,10 @@ export default class Enemy {
         return this.x + this.w >= width;
     }
 }
+
+export class TankEnemy extends Enemy {
+    constructor(maxHp = 15) {
+        super(maxHp);
+        this.speed = 40;
+    }
+}
