@@ -144,9 +144,37 @@ export default class Game {
         }
     }
 
+    getTowerAt(cell) {
+        return this.towers.find(t => t.x === cell.x && t.y === cell.y);
+    }
+
+    mergeTowers() {
+        const topRow = this.grid.filter(c => c.y < this.pathY);
+        const bottomRow = this.grid.filter(c => c.y > this.pathY);
+        const scan = row => {
+            for (let i = 0; i < row.length - 1; i++) {
+                const a = row[i];
+                const b = row[i + 1];
+                if (a.occupied && b.occupied) {
+                    const ta = this.getTowerAt(a);
+                    const tb = this.getTowerAt(b);
+                    if (ta && tb && ta.color === tb.color && ta.level === tb.level) {
+                        ta.level += 1;
+                        this.towers = this.towers.filter(t => t !== tb);
+                        b.occupied = false;
+                        i += 1;
+                    }
+                }
+            }
+        };
+        scan(topRow);
+        scan(bottomRow);
+    }
+
     checkWaveCompletion() {
         if (this.waveInProgress && this.spawned === this.enemiesPerWave && this.enemies.length === 0) {
             this.waveInProgress = false;
+            this.mergeTowers();
             if (this.wave === this.maxWaves) {
                 endGame(this, 'WIN');
             } else {

@@ -1,5 +1,5 @@
 export default class Tower {
-    constructor(x, y, color = 'red') {
+    constructor(x, y, color = 'red', level = 1) {
         this.x = x;
         this.y = y;
         this.w = 40;
@@ -7,7 +7,7 @@ export default class Tower {
         this.range = 120;
         this.lastShot = 0;
         this.color = color;
-        this.level = 1;
+        this.level = level;
     }
 
     center() {
