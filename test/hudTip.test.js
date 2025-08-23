@@ -8,7 +8,7 @@ test('bindUI attaches tip element with text', () => {
   for (const id of ids) {
     elements[id] = { textContent: '', addEventListener: () => {} };
   }
-  elements['tip'].textContent = 'Tap slot to build. Tap tower to switch.';
+  elements['tip'].textContent = 'Tap slot to build. Tap tower to switch (1 gold).';
   const doc = {
     getElementById: id => elements[id]
   };
@@ -25,6 +25,6 @@ test('bindUI attaches tip element with text', () => {
   };
   global.document = doc;
   bindUI(game);
-  assert.equal(game.tipEl.textContent, 'Tap slot to build. Tap tower to switch.');
+  assert.equal(game.tipEl.textContent, 'Tap slot to build. Tap tower to switch (1 gold).');
   delete global.document;
 });
