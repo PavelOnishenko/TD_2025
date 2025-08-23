@@ -261,11 +261,11 @@ test('update spawns enemy and schedules next frame', () => {
     let scheduled = null;
     globalThis.requestAnimationFrame = cb => { scheduled = cb; };
 
-    game.update(500);
+    game.update(game.spawnInterval * 1000);
 
     globalThis.requestAnimationFrame = originalRAF;
     assert.equal(game.enemies.length, 6);
-    assert.equal(game.lastTime, 500);
+    assert.equal(game.lastTime, game.spawnInterval * 1000);
     assert.equal(scheduled, game.update);
 });
 

@@ -27,11 +27,24 @@ export default class Game {
         this.lives = this.initialLives;
         this.gold = this.initialGold;
         this.wave = 1;
-        this.maxWaves = 5;
+        this.maxWaves = 10;
         this.towerCost = 10;
         this.waveInProgress = false;
-        this.spawnInterval = 0.5;
-        this.enemiesPerWave = 5;
+        this.waveConfigs = [
+            { interval: 1, cycles: 20, tankChance: 0 },
+            { interval: 1, cycles: 25, tankChance: 0 },
+            { interval: 1, cycles: 22, tankChance: 0.1 },
+            { interval: 1, cycles: 25, tankChance: 0.15 },
+            { interval: 1, cycles: 28, tankChance: 0.2 },
+            { interval: 1, cycles: 30, tankChance: 0.25 },
+            { interval: 1, cycles: 32, tankChance: 0.3 },
+            { interval: 1, cycles: 35, tankChance: 0.35 },
+            { interval: 1, cycles: 38, tankChance: 0.4 },
+            { interval: 1, cycles: 40, tankChance: 0.45 }
+        ];
+        const cfg = this.waveConfigs[0];
+        this.spawnInterval = cfg.interval;
+        this.enemiesPerWave = cfg.cycles;
         this.spawned = 0;
         this.spawnTimer = 0;
         this.enemyHpPerWave = [3, 4, 5, 6, 7];
@@ -66,9 +79,20 @@ export default class Game {
         });
     }
 
-    spawnEnemy(type = 'swarm') {
+    getEnemyColor() {
+        if (this.wave === 1) return 'red';
+        if (this.wave === 2) return 'blue';
+        const mix = Math.min(0.5, 0.1 * (this.wave - 2));
+        return Math.random() < mix ? 'blue' : 'red';
+    }
+
+    spawnEnemy(type) {
         const hp = this.enemyHpPerWave[this.wave - 1] ?? this.enemyHpPerWave.at(-1);
-        const color = Math.random() < 0.5 ? 'red' : 'blue';
+        const color = this.getEnemyColor();
+        if (!type) {
+            const cfg = this.waveConfigs[this.wave - 1] ?? this.waveConfigs.at(-1);
+            type = this.wave <= 2 ? 'swarm' : (Math.random() < cfg.tankChance ? 'tank' : 'swarm');
+        }
         if (type === 'tank') {
             this.enemies.push(new TankEnemy(hp * 5, color, this.pathY));
         } else if (type === 'swarm') {
@@ -95,6 +119,9 @@ export default class Game {
         if (this.waveInProgress) return;
         this.waveInProgress = true;
         this.nextWaveBtn.disabled = true;
+        const cfg = this.waveConfigs[this.wave - 1] ?? this.waveConfigs.at(-1);
+        this.spawnInterval = cfg.interval;
+        this.enemiesPerWave = cfg.cycles;
         this.enemies = [];
         this.spawned = 0;
         this.spawnTimer = 0;
@@ -223,6 +250,9 @@ export default class Game {
         this.projectiles = [];
         this.waveInProgress = false;
         this.nextWaveBtn.disabled = false;
+        const cfg = this.waveConfigs[0];
+        this.spawnInterval = cfg.interval;
+        this.enemiesPerWave = cfg.cycles;
         this.grid.forEach(cell => {
             cell.occupied = false;
             cell.highlight = 0;
