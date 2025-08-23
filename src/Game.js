@@ -10,6 +10,7 @@ export default class Game {
         this.enemies = [];
         this.towers = [];
         this.projectiles = [];
+        this.mergeAnimations = [];
         this.projectileSpeed = 800;
         this.projectileRadius = 6;
         this.projectileSpawnInterval = 500;
@@ -183,6 +184,32 @@ export default class Game {
         return this.towers.find(t => t.x === cell.x && t.y === cell.y);
     }
 
+    startMergeAnimation(target, source) {
+        this.mergeAnimations.push({
+            tower: source,
+            target,
+            startX: source.x,
+            startY: source.y,
+            progress: 0,
+            duration: 0.3,
+        });
+    }
+
+    updateMergeAnimations(dt) {
+        for (let i = this.mergeAnimations.length - 1; i >= 0; i--) {
+            const anim = this.mergeAnimations[i];
+            anim.progress += dt / anim.duration;
+            const t = Math.min(anim.progress, 1);
+            anim.tower.x = anim.startX + (anim.target.x - anim.startX) * t;
+            anim.tower.y = anim.startY + (anim.target.y - anim.startY) * t;
+            if (t >= 1) {
+                anim.target.level += 1;
+                anim.target.updateStats();
+                this.mergeAnimations.splice(i, 1);
+            }
+        }
+    }
+
     mergeTowers() {
         const leftCol = this.grid.filter(c => c.x < this.pathX);
         const rightCol = this.grid.filter(c => c.x > this.pathX);
@@ -194,10 +221,9 @@ export default class Game {
                     const ta = this.getTowerAt(a);
                     const tb = this.getTowerAt(b);
                     if (ta && tb && ta.color === tb.color && ta.level === tb.level) {
-                        ta.level += 1;
-                        ta.updateStats();
                         this.towers = this.towers.filter(t => t !== tb);
                         b.occupied = false;
+                        this.startMergeAnimation(ta, tb);
                         i += 1;
                     }
                 }
@@ -239,6 +265,7 @@ export default class Game {
                 cell.highlight = Math.max(0, cell.highlight - dt);
             }
         });
+        this.updateMergeAnimations(dt);
         this.checkWaveCompletion();
         draw(this);
         if (!this.gameOver) requestAnimationFrame(this.update);

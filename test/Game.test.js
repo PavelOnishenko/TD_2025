@@ -180,7 +180,7 @@ test('checkWaveCompletion merges adjacent towers of same color and level', () =>
     const game = new Game(makeFakeCanvas());
     attachDomStubs(game);
     const cellA = game.grid[0];
-    const cellB = game.grid[1];
+    const cellB = game.grid[2];
     const t1 = new Tower(cellA.x, cellA.y, 'red');
     const t2 = new Tower(cellB.x, cellB.y, 'red');
     game.towers.push(t1, t2);
@@ -192,6 +192,9 @@ test('checkWaveCompletion merges adjacent towers of same color and level', () =>
     game.checkWaveCompletion();
     assert.equal(game.towers.length, 1);
     assert.equal(game.towers[0], t1);
+    assert.equal(game.mergeAnimations.length, 1);
+    game.updateMergeAnimations(1);
+    assert.equal(game.mergeAnimations.length, 0);
     assert.equal(t1.level, 2);
     assert.equal(cellA.occupied, true);
     assert.equal(cellB.occupied, false);

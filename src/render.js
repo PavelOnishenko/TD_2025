@@ -37,6 +37,7 @@ function drawGrid(game) {
 
 export function drawEntities(game) {
     game.towers.forEach(t => t.draw(game.ctx));
+    (game.mergeAnimations || []).forEach(a => a.tower.draw(game.ctx));
     game.enemies.forEach(e => e.draw(game.ctx));
     game.ctx.fillStyle = 'black';
     game.projectiles.forEach(p => {

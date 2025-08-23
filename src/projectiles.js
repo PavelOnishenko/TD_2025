@@ -11,7 +11,7 @@ export function hitEnemy(game, p, index) {
     for (let j = game.enemies.length - 1; j >= 0; j--) {
         const e = game.enemies[j];
         if (p.x >= e.x && p.x <= e.x + e.w && p.y >= e.y && p.y <= e.y + e.h) {
-            const multiplier = p.color === e.color ? 1 : 0.1;
+            const multiplier = p.color === e.color ? 1 : 0.4;
             const damage = (p.damage ?? 1) * multiplier;
             e.hp -= damage;
             game.projectiles.splice(index, 1);
