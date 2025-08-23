@@ -5,12 +5,14 @@ export function bindUI(game) {
     bindButtons(game);
     bindCanvasClick(game);
     updateHUD(game);
+    updateSwitchIndicator(game);
 }
 
 function bindHUD(game) {
     game.livesEl = document.getElementById('lives');
     game.goldEl = document.getElementById('gold');
     game.waveEl = document.getElementById('wave');
+    game.cooldownEl = document.getElementById('cooldown');
     game.statusEl = document.getElementById('status');
     game.nextWaveBtn = document.getElementById('nextWave');
     game.restartBtn = document.getElementById('restart');
@@ -34,11 +36,15 @@ function bindCanvasClick(game) {
         }
         for (const cell of game.grid) {
             if (mx >= cell.x && mx <= cell.x + cell.w && my >= cell.y && my <= cell.y + cell.h) {
-                if (game.gold >= game.towerCost && !cell.occupied) {
-                    game.towers.push(new Tower(cell.x, cell.y));
-                    cell.occupied = true;
-                    game.gold -= game.towerCost;
-                    updateHUD(game);
+                if (!cell.occupied) {
+                    if (game.gold >= game.towerCost) {
+                        game.towers.push(new Tower(cell.x, cell.y));
+                        cell.occupied = true;
+                        game.gold -= game.towerCost;
+                        updateHUD(game);
+                    } else {
+                        cell.highlight = 0.3;
+                    }
                 }
                 break;
             }
@@ -50,6 +56,15 @@ export function updateHUD(game) {
     game.livesEl.textContent = `Lives: ${game.lives}`;
     game.goldEl.textContent = `Gold: ${game.gold}`;
     game.waveEl.textContent = `Wave: ${game.wave}/${game.maxWaves}`;
+}
+
+export function updateSwitchIndicator(game) {
+    if (!game.cooldownEl) return;
+    if (game.switchCooldown > 0) {
+        game.cooldownEl.textContent = `Switch: ${game.switchCooldown.toFixed(1)}s`;
+    } else {
+        game.cooldownEl.textContent = 'Switch: Ready';
+    }
 }
 
 export function endGame(game, text) {

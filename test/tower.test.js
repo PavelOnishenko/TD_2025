@@ -13,6 +13,11 @@ test('constructor sets default color to red', () => {
     assert.equal(tower.color, 'red');
 });
 
+test('constructor sets level to 1', () => {
+    const tower = new Tower(0, 0);
+    assert.equal(tower.level, 1);
+});
+
 test('draw draws range and tower body correctly', () => {
     const tower = new Tower(50, 60);
     const ctx = makeFakeCtx();
