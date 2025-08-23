@@ -37,6 +37,8 @@ export default class Game {
         this.enemyHpPerWave = [3, 4, 5, 6, 7];
         this.gameOver = false;
         this.shootingInterval = 500;
+        this.switchCooldownDuration = 2;
+        this.switchCooldown = 0;
     }
 
     createGrid() {
@@ -73,6 +75,13 @@ export default class Game {
             this.enemies.push(new Enemy(hp, color, this.pathY));
         }
         this.spawned += 1;
+    }
+
+    switchTowerColor(tower) {
+        if (this.switchCooldown > 0) return false;
+        tower.color = tower.color === 'red' ? 'blue' : 'red';
+        this.switchCooldown = this.switchCooldownDuration;
+        return true;
     }
 
     startWave() {
@@ -151,6 +160,9 @@ export default class Game {
     update(timestamp) {
         if (this.gameOver) return;
         const dt = this.calcDelta(timestamp);
+        if (this.switchCooldown > 0) {
+            this.switchCooldown = Math.max(0, this.switchCooldown - dt);
+        }
         this.spawnEnemiesIfNeeded(dt);
         this.updateEnemies(dt);
         this.towerAttacks(timestamp);
@@ -175,6 +187,7 @@ export default class Game {
         this.spawnTimer = 0;
         this.gameOver = false;
         this.statusEl.textContent = '';
+        this.switchCooldown = 0;
         updateHUD(this);
     }
 

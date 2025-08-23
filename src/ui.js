@@ -26,6 +26,12 @@ function bindCanvasClick(game) {
         const rect = game.canvas.getBoundingClientRect();
         const mx = e.clientX - rect.left;
         const my = e.clientY - rect.top;
+        for (const tower of game.towers) {
+            if (mx >= tower.x && mx <= tower.x + tower.w && my >= tower.y && my <= tower.y + tower.h) {
+                game.switchTowerColor(tower);
+                return;
+            }
+        }
         for (const cell of game.grid) {
             if (mx >= cell.x && mx <= cell.x + cell.w && my >= cell.y && my <= cell.y + cell.h) {
                 if (game.gold >= game.towerCost && !cell.occupied) {
