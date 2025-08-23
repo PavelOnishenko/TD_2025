@@ -88,11 +88,37 @@ test('spawnEnemy defaults to last hp for high wave', () => {
     const game = new Game(fakeCanvas);
     game.wave = game.enemyHpPerWave.length + 3;
 
-    game.spawnEnemy();
+    game.spawnEnemy('swarm');
 
     const enemy = game.enemies[0];
     const expectedHp = Math.max(1, Math.floor(game.enemyHpPerWave.at(-1) / 2));
     assert.equal(enemy.maxHp, expectedHp);
+});
+
+test('spawnEnemy assigns random color for each spawned enemy', () => {
+    const fakeCanvas = makeFakeCanvas();
+    const game = new Game(fakeCanvas);
+    const seq = [0.2, 0.8, 0.1]; // red, blue, red
+    const original = Math.random;
+    let i = 0;
+    Math.random = () => seq[i++];
+    try {
+        game.spawnEnemy('swarm');
+    } finally {
+        Math.random = original;
+    }
+    const colors = game.enemies.map(e => e.color);
+    assert.deepEqual(colors, ['red', 'blue', 'red']);
+});
+
+test('getEnemyColor picks red or blue based on Math.random', () => {
+    const game = new Game(makeFakeCanvas());
+    const original = Math.random;
+    Math.random = () => 0.3;
+    assert.equal(game.getEnemyColor(), 'red');
+    Math.random = () => 0.7;
+    assert.equal(game.getEnemyColor(), 'blue');
+    Math.random = original;
 });
 
 test('calcDelta returns delta time in seconds and updates lastTime', () => {
