@@ -10,7 +10,6 @@ Prototype 3 — Task List
 008 | DONE | Add HUD indicator for switch cooldown (“Switch ready” bar or simple text).
 009 | DONE | Implement auto-merge mechanic at end of wave: scan slots left to right; if two adjacent towers have same color and same level, merge into one tower (level+1), free second slot. Do only one merge pass per wave.
 010 | DONE | Add Level 2 tower stats: +80% damage, +20% radius compared to Level 1.
-011 | TODO | Level 2 towers still switch color, but with global cooldown = 3s instead of 2s.
 012 | TODO | Add Swarm enemy type: low HP, high speed. Spawns in groups.
 013 | DONE | Add Tank enemy type: very high HP, slow speed. Spawns in smaller numbers.
 
