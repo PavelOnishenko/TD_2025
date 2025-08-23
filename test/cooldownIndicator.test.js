@@ -1,0 +1,41 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import Game from '../src/Game.js';
+import { updateSwitchIndicator } from '../src/ui.js';
+
+function makeFakeCanvas() {
+    return {
+        width: 800,
+        height: 450,
+        getContext: () => ({
+            fillRect: () => {},
+            clearRect: () => {},
+            beginPath: () => {},
+            arc: () => {},
+            fill: () => {},
+            stroke: () => {},
+            strokeRect: () => {},
+        }),
+    };
+}
+
+test('updateSwitchIndicator shows remaining cooldown or ready', () => {
+    const game = { switchCooldown: 1.234, cooldownEl: { textContent: '' } };
+    updateSwitchIndicator(game);
+    assert.equal(game.cooldownEl.textContent, 'Switch: 1.2s');
+    game.switchCooldown = 0;
+    updateSwitchIndicator(game);
+    assert.equal(game.cooldownEl.textContent, 'Switch: Ready');
+});
+
+test('Game.update refreshes cooldown indicator', () => {
+    const game = new Game(makeFakeCanvas());
+    game.cooldownEl = { textContent: '' };
+    game.switchCooldown = 1;
+    const originalRAF = globalThis.requestAnimationFrame;
+    globalThis.requestAnimationFrame = () => {};
+    game.lastTime = 0;
+    game.update(1000);
+    globalThis.requestAnimationFrame = originalRAF;
+    assert.equal(game.cooldownEl.textContent, 'Switch: Ready');
+});

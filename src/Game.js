@@ -1,5 +1,5 @@
 import Enemy, { TankEnemy } from './Enemy.js';
-import { updateHUD, endGame } from './ui.js';
+import { updateHUD, endGame, updateSwitchIndicator } from './ui.js';
 import { draw } from './render.js';
 import { moveProjectiles, handleProjectileHits } from './projectiles.js';
 
@@ -81,6 +81,7 @@ export default class Game {
         if (this.switchCooldown > 0) return false;
         tower.color = tower.color === 'red' ? 'blue' : 'red';
         this.switchCooldown = this.switchCooldownDuration;
+        updateSwitchIndicator(this);
         return true;
     }
 
@@ -162,6 +163,7 @@ export default class Game {
         const dt = this.calcDelta(timestamp);
         if (this.switchCooldown > 0) {
             this.switchCooldown = Math.max(0, this.switchCooldown - dt);
+            updateSwitchIndicator(this);
         }
         this.spawnEnemiesIfNeeded(dt);
         this.updateEnemies(dt);
@@ -197,6 +199,7 @@ export default class Game {
         this.statusEl.textContent = '';
         this.switchCooldown = 0;
         updateHUD(this);
+        updateSwitchIndicator(this);
     }
 
     restart() {
