@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import Enemy, { TankEnemy } from '../src/Enemy.js';
+import Enemy, { TankEnemy, SwarmEnemy } from '../src/Enemy.js';
 
 test('update moves enemy based on dt and speed', () => {
     const enemy = new Enemy();
@@ -43,6 +43,13 @@ test('tank enemy has higher hp and slower speed', () => {
     const base = new Enemy();
     assert.ok(tank.maxHp > base.maxHp);
     assert.ok(tank.speed < base.speed);
+});
+
+test('swarm enemy has lower hp and faster speed', () => {
+    const swarm = new SwarmEnemy();
+    const base = new Enemy();
+    assert.ok(swarm.maxHp < base.maxHp);
+    assert.ok(swarm.speed > base.speed);
 });
 
 test('default enemy color is red', () => {

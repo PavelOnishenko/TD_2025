@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import Game from '../src/Game.js';
 import Tower from '../src/Tower.js';
-import { TankEnemy } from '../src/Enemy.js';
+import { TankEnemy, SwarmEnemy } from '../src/Enemy.js';
 
 function makeFakeCanvas() {
     return {
@@ -51,10 +51,12 @@ test('spawnEnemy main', () => {
 
     game.spawnEnemy();
 
-    assert.equal(game.enemies.length, 1);
+    assert.equal(game.enemies.length, 3);
     assert.equal(game.spawned, 1);
-    const enemy = game.enemies[0];
-    assert.equal(enemy.maxHp, 3);
+    for (const e of game.enemies) {
+        assert.ok(e instanceof SwarmEnemy);
+        assert.equal(e.maxHp, 1);
+    }
 });
 
 test('spawnEnemy can create tank enemies', () => {
@@ -78,7 +80,8 @@ test('spawnEnemy defaults to last hp for high wave', () => {
     game.spawnEnemy();
 
     const enemy = game.enemies[0];
-    assert.equal(enemy.maxHp, game.enemyHpPerWave.at(-1));
+    const expectedHp = Math.max(1, Math.floor(game.enemyHpPerWave.at(-1) / 2));
+    assert.equal(enemy.maxHp, expectedHp);
 });
 
 test('calcDelta returns delta time in seconds and updates lastTime', () => {
@@ -94,7 +97,7 @@ test('spawnEnemiesIfNeeded spawns when timer exceeds interval', () => {
     game.waveInProgress = true;
     game.spawnTimer = game.spawnInterval;
     game.spawnEnemiesIfNeeded(0);
-    assert.equal(game.enemies.length, 1);
+    assert.equal(game.enemies.length, 3);
     assert.equal(game.spawnTimer, 0);
 });
 
@@ -185,7 +188,7 @@ test('startWave initiates wave and spawns first enemy', () => {
 
     assert.equal(game.waveInProgress, true);
     assert.equal(game.nextWaveBtn.disabled, true);
-    assert.equal(game.enemies.length, 1);
+    assert.equal(game.enemies.length, 3);
     assert.equal(game.spawned, 1);
     assert.equal(game.spawnTimer, 0);
 });
@@ -240,7 +243,7 @@ test('update spawns enemy and schedules next frame', () => {
     game.update(500);
 
     globalThis.requestAnimationFrame = originalRAF;
-    assert.equal(game.enemies.length, 2);
+    assert.equal(game.enemies.length, 6);
     assert.equal(game.lastTime, 500);
     assert.equal(scheduled, game.update);
 });
