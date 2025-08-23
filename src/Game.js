@@ -50,7 +50,7 @@ export default class Game {
         this.enemyHpPerWave = [3, 4, 5, 6, 7];
         this.gameOver = false;
         this.shootingInterval = 500;
-        this.switchCooldownDuration = 2;
+        this.switchCooldownDuration = 0.5;
         this.switchCooldown = 0;
     }
 
