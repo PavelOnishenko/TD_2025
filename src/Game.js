@@ -56,14 +56,18 @@ export default class Game {
 
     createGrid() {
         this.grid = [];
-        const leftX = this.pathX - 100;
-        const rightX = this.pathX + 100;
+        const roadL2X = this.pathX - 120;
+        const roadL1X = this.pathX - 60;
+        const roadR1X = this.pathX + 60;
+        const roadR2X = this.pathX + 120;
         const startY = 60;
-        const step = 140;
-        for (let i = 0; i < 5; i++) {
+        const step = 80;
+        for (let i = 0; i < 8; i++) {
             const y = startY + i * step;
-            this.grid.push({ x: leftX, y, w: 40, h: 40, occupied: false, highlight: 0 });
-            this.grid.push({ x: rightX, y, w: 40, h: 40, occupied: false, highlight: 0 });
+            this.grid.push({ x: roadL2X, y, w: 40, h: 40, occupied: false, highlight: 0 });
+            this.grid.push({ x: roadL1X, y, w: 40, h: 40, occupied: false, highlight: 0 });
+            this.grid.push({ x: roadR1X, y, w: 40, h: 40, occupied: false, highlight: 0 });
+            this.grid.push({ x: roadR2X, y, w: 40, h: 40, occupied: false, highlight: 0 });
         }
     }
 
