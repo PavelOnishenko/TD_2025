@@ -14,10 +14,10 @@ Prototype 3 — Task List
 012 | TODO | Add Swarm enemy type: low HP, high speed. Spawns in groups.
 013 | DONE | Add Tank enemy type: very high HP, slow speed. Spawns in smaller numbers.
 
-014 | TODO | Redefine wave system: 10 waves, 20–40s each.
-Waves 1–2: mono-color swarms.
-Wave 3+: introduce tanks.
-Later waves: mixed swarms and tanks, increasing randomness in colors (up to 50/50 mix).
+014 | DONE | Redefine wave system: 10 waves, 20–40s each.
+    Waves 1–2: mono-color swarms.
+    Wave 3+: introduce tanks.
+    Later waves: mixed swarms and tanks, increasing randomness in colors (up to 50/50 mix).
 
 015 | TODO | Update HUD: Lives, Gold, Wave X/10, cooldown indicator, tip text “Tap slot to build. Tap tower to switch.”
 016 | TODO | Balance constants: BUILD_COST=10, Lives=10, SwitchCooldown=2s (3s for L2), Damage multipliers (1.0 / 0.4), adjust HP/speed for swarm and tank enemies.
