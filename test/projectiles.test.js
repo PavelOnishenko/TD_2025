@@ -6,7 +6,7 @@ function makeGame() {
     return {
         projectiles: [],
         enemies: [],
-        canvas: { width: 800, height: 600 },
+        canvas: { width: 450, height: 800 },
         gold: 0,
         wave: 1,
         maxWaves: 5,

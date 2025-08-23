@@ -15,8 +15,8 @@ export default class Game {
         this.projectileSpawnInterval = 500;
         this.lastTime = 0;
         this.initStats();
-        this.pathY = canvas.height / 2 - 15;
-        this.base = { x: canvas.width - 40, y: this.pathY, w: 40, h: 40 };
+        this.pathX = canvas.width / 2 - 15;
+        this.base = { x: this.pathX, y: 0, w: 40, h: 40 };
         this.createGrid();
         this.update = this.update.bind(this);
     }
@@ -56,14 +56,14 @@ export default class Game {
 
     createGrid() {
         this.grid = [];
-        const topY = this.pathY - 100;
-        const bottomY = this.pathY + 100;
-        const startX = 60;
+        const leftX = this.pathX - 100;
+        const rightX = this.pathX + 100;
+        const startY = 60;
         const step = 140;
         for (let i = 0; i < 5; i++) {
-            const x = startX + i * step;
-            this.grid.push({ x, y: topY, w: 40, h: 40, occupied: false, highlight: 0 });
-            this.grid.push({ x, y: bottomY, w: 40, h: 40, occupied: false, highlight: 0 });
+            const y = startY + i * step;
+            this.grid.push({ x: leftX, y, w: 40, h: 40, occupied: false, highlight: 0 });
+            this.grid.push({ x: rightX, y, w: 40, h: 40, occupied: false, highlight: 0 });
         }
     }
 
@@ -89,19 +89,20 @@ export default class Game {
             const cfg = this.waveConfigs[this.wave - 1] ?? this.waveConfigs.at(-1);
             type = this.wave <= 2 ? 'swarm' : (Math.random() < cfg.tankChance ? 'tank' : 'swarm');
         }
+        const startY = this.canvas.height - 30;
         if (type === 'tank') {
             const color = this.getEnemyColor();
-            this.enemies.push(new TankEnemy(hp * 5, color, this.pathY));
+            this.enemies.push(new TankEnemy(hp * 5, color, this.pathX, startY));
         } else if (type === 'swarm') {
             const groupSize = 3;
             const swarmHp = Math.max(1, Math.floor(hp / 2));
             for (let i = 0; i < groupSize; i++) {
                 const color = this.getEnemyColor();
-                this.enemies.push(new SwarmEnemy(swarmHp, color, this.pathY));
+                this.enemies.push(new SwarmEnemy(swarmHp, color, this.pathX, startY));
             }
         } else {
             const color = this.getEnemyColor();
-            this.enemies.push(new Enemy(hp, color, this.pathY));
+            this.enemies.push(new Enemy(hp, color, this.pathX, startY));
         }
         this.spawned += 1;
     }
@@ -147,14 +148,14 @@ export default class Game {
         for (let i = this.enemies.length - 1; i >= 0; i--) {
             const e = this.enemies[i];
             e.update(dt);
-            if (e.x + e.w >= this.base.x) {
+            if (e.y <= this.base.y + this.base.h) {
                 this.enemies.splice(i, 1);
                 this.lives -= 1;
                 updateHUD(this);
                 if (this.lives <= 0) {
                     endGame(this, 'LOSE');
                 }
-            } else if (e.isOutOfBounds(this.canvas.width)) {
+            } else if (e.isOutOfBounds()) {
                 this.enemies.splice(i, 1);
             }
         }
@@ -181,12 +182,12 @@ export default class Game {
     }
 
     mergeTowers() {
-        const topRow = this.grid.filter(c => c.y < this.pathY);
-        const bottomRow = this.grid.filter(c => c.y > this.pathY);
-        const scan = row => {
-            for (let i = 0; i < row.length - 1; i++) {
-                const a = row[i];
-                const b = row[i + 1];
+        const leftCol = this.grid.filter(c => c.x < this.pathX);
+        const rightCol = this.grid.filter(c => c.x > this.pathX);
+        const scan = col => {
+            for (let i = 0; i < col.length - 1; i++) {
+                const a = col[i];
+                const b = col[i + 1];
                 if (a.occupied && b.occupied) {
                     const ta = this.getTowerAt(a);
                     const tb = this.getTowerAt(b);
@@ -200,8 +201,8 @@ export default class Game {
                 }
             }
         };
-        scan(topRow);
-        scan(bottomRow);
+        scan(leftCol);
+        scan(rightCol);
     }
 
     checkWaveCompletion() {

@@ -3,39 +3,38 @@ import assert from 'node:assert/strict';
 import Enemy, { TankEnemy, SwarmEnemy } from '../src/Enemy.js';
 
 test('update moves enemy based on dt and speed', () => {
-    const enemy = new Enemy();
+    const enemy = new Enemy(3, 'red', 0, 100);
     enemy.update(0.5);
-    assert.equal(enemy.x, 50);
+    assert.equal(enemy.y, 50);
     enemy.update(0.25);
-    assert.equal(enemy.x, 75);
+    assert.equal(enemy.y, 25);
 });
 
 test('isOutOfBounds returns correct value', () => {
-    const enemy = new Enemy();
-    enemy.x = 770; // x + w = 800
-    assert.equal(enemy.isOutOfBounds(800), true);
-    enemy.x = 769; // x + w = 799
-    assert.equal(enemy.isOutOfBounds(800), false);
+    const enemy = new Enemy(3, 'red', 0, -30); // y + h = 0
+    assert.equal(enemy.isOutOfBounds(), true);
+    enemy.y = -29; // y + h = 1
+    assert.equal(enemy.isOutOfBounds(), false);
 });
 
 test('draw uses enemy color and health bar correctly', () => {
-    const enemy = new Enemy(10, 'blue');
+    const enemy = new Enemy(10, 'blue', 0, 50);
     enemy.hp = 5; // half health
     const ctx = makeFakeCtx();
     enemy.draw(ctx);
 
     // body
     assert.deepEqual(ctx.ops[0], ['fillStyle', 'blue']);
-    assert.deepEqual(ctx.ops[1], ['fillRect', 0, 365, 30, 30]);
+    assert.deepEqual(ctx.ops[1], ['fillRect', 0, 50, 30, 30]);
     // health bar background
     assert.deepEqual(ctx.ops[2], ['fillStyle', 'red']);
-    assert.deepEqual(ctx.ops[3], ['fillRect', 0, 359, 30, 4]);
+    assert.deepEqual(ctx.ops[3], ['fillRect', 0, 44, 30, 4]);
     // health bar current hp
     assert.deepEqual(ctx.ops[4], ['fillStyle', 'green']);
-    assert.deepEqual(ctx.ops[5], ['fillRect', 0, 359, 15, 4]);
+    assert.deepEqual(ctx.ops[5], ['fillRect', 0, 44, 15, 4]);
     // border
     assert.deepEqual(ctx.ops[6], ['strokeStyle', 'black']);
-    assert.deepEqual(ctx.ops[7], ['strokeRect', 0, 359, 30, 4]);
+    assert.deepEqual(ctx.ops[7], ['strokeRect', 0, 44, 30, 4]);
 });
 
 test('tank enemy has higher hp and slower speed', () => {

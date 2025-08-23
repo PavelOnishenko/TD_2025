@@ -6,8 +6,8 @@ import { TankEnemy, SwarmEnemy } from '../src/Enemy.js';
 
 function makeFakeCanvas() {
     return {
-        width: 800,
-        height: 450,
+        width: 450,
+        height: 800,
         getContext: () => ({
             fillRect: () => {},
             clearRect: () => {},
@@ -150,8 +150,8 @@ test('updateEnemies removes enemies reaching base and reduces lives', () => {
     const game = new Game(makeFakeCanvas());
     attachDomStubs(game);
     const enemy = {
-        x: game.base.x - 10,
-        w: 20,
+        y: game.base.y + game.base.h - 10,
+        h: 20,
         update: () => {},
         isOutOfBounds: () => false,
     };

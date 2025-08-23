@@ -57,7 +57,7 @@ test('draw clears canvas, draws entities and projectiles', () => {
     const projectile = { x: 25, y: 35 };
     const game = {
         ctx,
-        canvas: { width: 800, height: 450 },
+        canvas: { width: 450, height: 800 },
         base: { x: 0, y: 0, w: 0, h: 0 },
         grid: [],
         towers: [tower],
@@ -68,7 +68,7 @@ test('draw clears canvas, draws entities and projectiles', () => {
 
     draw(game);
 
-    assert.ok(ctx.ops.some(op => op[0] === 'clearRect' && op[1] === 0 && op[2] === 0 && op[3] === 800 && op[4] === 450));
+    assert.ok(ctx.ops.some(op => op[0] === 'clearRect' && op[1] === 0 && op[2] === 0 && op[3] === 450 && op[4] === 800));
     assert.ok(towerCalled);
     assert.ok(enemyCalled);
     const twoPi = Math.PI * 2;
