@@ -18,5 +18,5 @@ Prototype 3 — Task List
     Wave 3+: introduce tanks.
     Later waves: mixed swarms and tanks, increasing randomness in colors (up to 50/50 mix).
 
-015 | TODO | Update HUD: Lives, Gold, Wave X/10, cooldown indicator, tip text “Tap slot to build. Tap tower to switch.”
+015 | DONE | Update HUD: Lives, Gold, Wave X/10, cooldown indicator, tip text “Tap slot to build. Tap tower to switch.”
 016 | TODO | Balance constants: BUILD_COST=10, Lives=10, SwitchCooldown=2s (3s for L2), Damage multipliers (1.0 / 0.4), adjust HP/speed for swarm and tank enemies.
