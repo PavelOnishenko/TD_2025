@@ -30,6 +30,12 @@ test('draw draws range and tower body correctly', () => {
     assert.deepEqual(ctx.ops[5], ['fillRect', 50, 60, 40, 40]);
 });
 
+test('level 2 tower has increased range and damage', () => {
+    const tower = new Tower(0, 0, 'red', 2);
+    assert.equal(tower.range, 144);
+    assert.ok(Math.abs(tower.damage - 1.8) < 1e-6);
+});
+
 function makeFakeCtx() {
     const ops = [];
     return {

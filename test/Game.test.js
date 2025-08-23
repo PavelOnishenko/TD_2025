@@ -45,6 +45,17 @@ test('spawnProjectile main', () => {
     assert.equal(projectile.damage, 1);
 });
 
+test('spawnProjectile uses tower damage', () => {
+    const fakeCanvas = makeFakeCanvas();
+    const game = new Game(fakeCanvas);
+    const tower = new Tower(100, 200, 'red', 2);
+
+    game.spawnProjectile(0, tower);
+
+    assert.equal(game.projectiles[0].damage, tower.damage);
+    assert.ok(Math.abs(game.projectiles[0].damage - 1.8) < 1e-6);
+});
+
 test('spawnEnemy main', () => {
     const fakeCanvas = makeFakeCanvas();
     const game = new Game(fakeCanvas);
