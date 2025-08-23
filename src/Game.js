@@ -95,7 +95,7 @@ export default class Game {
             this.enemies.push(new TankEnemy(hp * 5, color, this.pathX, startY));
         } else if (type === 'swarm') {
             const groupSize = 3;
-            const swarmHp = Math.max(1, Math.floor(hp / 2));
+            const swarmHp = Math.max(1, hp);
             const spacing = 40; // vertical offset to prevent overlap
             for (let i = 0; i < groupSize; i++) {
                 const color = this.getEnemyColor();
