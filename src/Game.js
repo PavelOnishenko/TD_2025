@@ -23,7 +23,7 @@ export default class Game {
 
     initStats() {
         this.initialLives = 5;
-        this.initialGold = 20;
+        this.initialGold = 50;
         this.lives = this.initialLives;
         this.gold = this.initialGold;
         this.wave = 1;
