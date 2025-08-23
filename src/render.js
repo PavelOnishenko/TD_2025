@@ -10,9 +10,9 @@ export function draw(game) {
 function drawGround(game) {
     const ctx = game.ctx;
     ctx.fillStyle = '#888';
-    const pathHeight = 20;
-    const y = game.pathY + (30 - pathHeight) / 2;
-    ctx.fillRect(0, y, game.canvas.width, pathHeight);
+    const pathWidth = 20;
+    const x = game.pathX + (30 - pathWidth) / 2;
+    ctx.fillRect(x, 0, pathWidth, game.canvas.height);
 }
 
 function drawBase(game) {

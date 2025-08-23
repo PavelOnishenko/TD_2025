@@ -5,8 +5,8 @@ import { updateSwitchIndicator } from '../src/ui.js';
 
 function makeFakeCanvas() {
     return {
-        width: 800,
-        height: 450,
+        width: 450,
+        height: 800,
         getContext: () => ({
             fillRect: () => {},
             clearRect: () => {},
