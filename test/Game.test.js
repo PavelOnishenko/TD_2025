@@ -121,6 +121,42 @@ test('getEnemyColor picks red or blue based on Math.random', () => {
     Math.random = original;
 });
 
+test('startWave picks distinct color probabilities A and B', () => {
+    const game = new Game(makeFakeCanvas());
+    attachDomStubs(game);
+    const seq = [0.1, 0.4, 0.2, 0.8, 0.1, 0.9, 0.2];
+    const original = Math.random;
+    let i = 0;
+    Math.random = () => seq[i++];
+    try {
+        game.startWave();
+    } finally {
+        Math.random = original;
+    }
+    assert.equal(game.colorProbStart, 0.2);
+    assert.equal(game.colorProbEnd, 0.8);
+    assert.ok(Math.abs(game.colorProbStart - game.colorProbEnd) > 0.35);
+});
+
+test('getEnemyColor probability shifts linearly across wave', () => {
+    const game = new Game(makeFakeCanvas());
+    game.enemiesPerWave = 4;
+    game.spawned = 0;
+    game.colorProbStart = 0.2;
+    game.colorProbEnd = 0.8;
+    const seq = [0.1, 0.5, 0.55, 0.9];
+    const original = Math.random;
+    let i = 0;
+    Math.random = () => seq[i++];
+    const colors = [];
+    for (let j = 0; j < 4; j++) {
+        colors.push(game.getEnemyColor());
+        game.spawned += 1;
+    }
+    Math.random = original;
+    assert.deepEqual(colors, ['red', 'blue', 'red', 'blue']);
+});
+
 test('calcDelta returns delta time in seconds and updates lastTime', () => {
     const game = new Game(makeFakeCanvas());
     game.lastTime = 1000;
@@ -180,7 +216,7 @@ test('checkWaveCompletion merges adjacent towers of same color and level', () =>
     const game = new Game(makeFakeCanvas());
     attachDomStubs(game);
     const cellA = game.grid[0];
-    const cellB = game.grid[1];
+    const cellB = game.grid[2];
     const t1 = new Tower(cellA.x, cellA.y, 'red');
     const t2 = new Tower(cellB.x, cellB.y, 'red');
     game.towers.push(t1, t2);
