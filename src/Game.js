@@ -52,6 +52,8 @@ export default class Game {
         this.shootingInterval = 500;
         this.switchCooldownDuration = 0.5;
         this.switchCooldown = 0;
+        this.colorProbStart = 0.5;
+        this.colorProbEnd = 0.5;
     }
 
     createGrid() {
@@ -80,7 +82,10 @@ export default class Game {
     }
 
     getEnemyColor() {
-        return Math.random() < 0.5 ? 'red' : 'blue';
+        const denom = this.enemiesPerWave - 1;
+        const progress = denom > 0 ? this.spawned / denom : 1;
+        const p = this.colorProbStart + (this.colorProbEnd - this.colorProbStart) * progress;
+        return Math.random() < p ? 'red' : 'blue';
     }
 
     spawnEnemy(type) {
@@ -127,6 +132,10 @@ export default class Game {
         this.enemies = [];
         this.spawned = 0;
         this.spawnTimer = 0;
+        do {
+            this.colorProbStart = Math.random();
+            this.colorProbEnd = Math.random();
+        } while (Math.abs(this.colorProbStart - this.colorProbEnd) <= 0.35);
         this.spawnEnemy();
     }
 
