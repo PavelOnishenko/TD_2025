@@ -100,7 +100,7 @@ export default class Game {
             this.enemies.push(new TankEnemy(hp * 5, color, this.pathX, startY));
         } else if (type === 'swarm') {
             const groupSize = 3;
-            const swarmHp = Math.max(1, hp);
+            const swarmHp = Math.max(1, Math.floor(hp / 2));
             const spacing = 40; // vertical offset to prevent overlap
             for (let i = 0; i < groupSize; i++) {
                 const color = this.getEnemyColor();
@@ -195,18 +195,20 @@ export default class Game {
     }
 
     mergeTowers() {
-        for (let i = 0; i < this.grid.length - 1; i++) {
-            const a = this.grid[i];
-            const b = this.grid[i + 1];
-            if (a.occupied && b.occupied) {
-                const ta = this.getTowerAt(a);
-                const tb = this.getTowerAt(b);
-                if (ta && tb && ta.color === tb.color && ta.level === tb.level) {
-                    ta.level += 1;
-                    ta.updateStats();
-                    this.towers = this.towers.filter(t => t !== tb);
-                    b.occupied = false;
-                    i += 1;
+        for (const start of [0, 1]) {
+            for (let i = start; i < this.grid.length - 2; i += 2) {
+                const a = this.grid[i];
+                const b = this.grid[i + 2];
+                if (a.occupied && b.occupied) {
+                    const ta = this.getTowerAt(a);
+                    const tb = this.getTowerAt(b);
+                    if (ta && tb && ta.color === tb.color && ta.level === tb.level) {
+                        ta.level += 1;
+                        ta.updateStats();
+                        this.towers = this.towers.filter(t => t !== tb);
+                        b.occupied = false;
+                        i += 2;
+                    }
                 }
             }
         }
