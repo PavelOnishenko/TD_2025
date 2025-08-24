@@ -36,7 +36,7 @@ export default class Tower {
         ctx.stroke();
 
         ctx.fillStyle = this.color;
-        ctx.fillRect(this.x, this.y, this.w, this.h);
+        this.drawBody(ctx, c);
 
         if (this.level > 1) {
             ctx.strokeStyle = 'yellow';
@@ -46,5 +46,39 @@ export default class Tower {
         ctx.fillStyle = 'black';
         ctx.font = '10px sans-serif';
         ctx.fillText(String(this.level), this.x + this.w + 2, this.y + 10);
+    }
+
+    drawBody(ctx, c) {
+        const size = this.w / 2;
+        ctx.beginPath();
+
+        if (this.level === 1) {
+            ctx.moveTo(c.x, this.y);
+            ctx.lineTo(this.x, this.y + this.h);
+            ctx.lineTo(this.x + this.w, this.y + this.h);
+        } else if (this.level === 2) {
+            for (let i = 0; i < 6; i++) {
+                const angle = Math.PI / 3 * i - Math.PI / 6;
+                const x = c.x + size * Math.cos(angle);
+                const y = c.y + size * Math.sin(angle);
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+        } else {
+            const spikes = 5;
+            const outer = size;
+            const inner = size / 2;
+            for (let i = 0; i < spikes * 2; i++) {
+                const r = i % 2 === 0 ? outer : inner;
+                const angle = (Math.PI / spikes) * i - Math.PI / 2;
+                const x = c.x + r * Math.cos(angle);
+                const y = c.y + r * Math.sin(angle);
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+        }
+
+        ctx.closePath();
+        ctx.fill();
     }
 }
