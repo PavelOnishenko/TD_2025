@@ -186,7 +186,7 @@ test('updateEnemies removes enemies reaching base and reduces lives', () => {
     const game = new Game(makeFakeCanvas());
     attachDomStubs(game);
     const enemy = {
-        y: game.base.y + game.base.h - 10,
+        y: game.base.y - 10,
         h: 20,
         update: () => {},
         isOutOfBounds: () => false,
