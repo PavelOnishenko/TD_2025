@@ -16,7 +16,7 @@ export default class Game {
         this.lastTime = 0;
         this.initStats();
         this.pathX = canvas.width / 2 - 15;
-        this.base = { x: this.pathX, y: 0, w: 40, h: 40 };
+        this.base = { x: this.pathX, y: canvas.height - 40, w: 40, h: 40 };
         this.createGrid();
         this.update = this.update.bind(this);
     }
@@ -61,10 +61,10 @@ export default class Game {
         this.grid = [];
         const leftX = this.pathX - 60;
         const rightX = this.pathX + 60;
-        const startY = 60;
+        const startY = this.canvas.height - 100;
         const step = 80;
         for (let i = 0; i < 5; i++) {
-            const y = startY + i * step;
+            const y = startY - i * step;
             this.grid.push({ x: leftX, y, w: 40, h: 40, occupied: false, highlight: 0 });
             this.grid.push({ x: rightX, y, w: 40, h: 40, occupied: false, highlight: 0 });
         }
@@ -95,7 +95,7 @@ export default class Game {
             const cfg = this.waveConfigs[this.wave - 1] ?? this.waveConfigs.at(-1);
             type = this.wave <= 2 ? 'swarm' : (Math.random() < cfg.tankChance ? 'tank' : 'swarm');
         }
-        const startY = this.canvas.height - 30;
+        const startY = 0;
         if (type === 'tank') {
             const color = this.getEnemyColor();
             this.enemies.push(new TankEnemy(hp * 5, color, this.pathX, startY));
@@ -105,7 +105,7 @@ export default class Game {
             const spacing = 40; // vertical offset to prevent overlap
             for (let i = 0; i < groupSize; i++) {
                 const color = this.getEnemyColor();
-                const y = startY - i * spacing;
+                const y = startY + i * spacing;
                 this.enemies.push(new SwarmEnemy(swarmHp, color, this.pathX, y));
             }
         } else {
@@ -162,14 +162,14 @@ export default class Game {
         for (let i = this.enemies.length - 1; i >= 0; i--) {
             const e = this.enemies[i];
             e.update(dt);
-            if (e.y <= this.base.y + this.base.h) {
+            if (e.y + e.h >= this.base.y) {
                 this.enemies.splice(i, 1);
                 this.lives -= 1;
                 updateHUD(this);
                 if (this.lives <= 0) {
                     endGame(this, 'LOSE');
                 }
-            } else if (e.isOutOfBounds()) {
+            } else if (e.isOutOfBounds(this.canvas.height)) {
                 this.enemies.splice(i, 1);
             }
         }

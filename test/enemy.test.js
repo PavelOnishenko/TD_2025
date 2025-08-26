@@ -5,16 +5,16 @@ import Enemy, { TankEnemy, SwarmEnemy } from '../src/Enemy.js';
 test('update moves enemy based on dt and speed', () => {
     const enemy = new Enemy(3, 'red', 0, 100);
     enemy.update(0.5);
-    assert.equal(enemy.y, 50);
+    assert.equal(enemy.y, 150);
     enemy.update(0.25);
-    assert.equal(enemy.y, 25);
+    assert.equal(enemy.y, 175);
 });
 
 test('isOutOfBounds returns correct value', () => {
-    const enemy = new Enemy(3, 'red', 0, -30); // y + h = 0
-    assert.equal(enemy.isOutOfBounds(), true);
-    enemy.y = -29; // y + h = 1
-    assert.equal(enemy.isOutOfBounds(), false);
+    const enemy = new Enemy(3, 'red', 0, 800);
+    assert.equal(enemy.isOutOfBounds(800), true);
+    enemy.y = 799;
+    assert.equal(enemy.isOutOfBounds(800), false);
 });
 
 test('draw uses enemy color and health bar correctly', () => {

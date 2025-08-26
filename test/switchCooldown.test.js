@@ -26,7 +26,7 @@ test('switchTowerColor costs gold and respects global cooldown', () => {
     game.waveEl = { textContent: '' };
     const tower = new Tower(0, 0);
 
-    game.gold = 2;
+    game.gold = game.switchCost + 1;
     assert.equal(game.switchCooldown, 0);
     const first = game.switchTowerColor(tower);
     assert.equal(first, true);
@@ -52,7 +52,7 @@ test('switchTowerColor costs gold and respects global cooldown', () => {
     assert.equal(tower.color, 'blue');
     assert.equal(game.gold, 0);
 
-    game.gold = 1;
+    game.gold = game.switchCost;
     const fourth = game.switchTowerColor(tower);
     assert.equal(fourth, true);
     assert.equal(tower.color, 'red');

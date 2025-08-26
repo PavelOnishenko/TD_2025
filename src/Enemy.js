@@ -11,7 +11,7 @@ export default class Enemy {
     }
 
     update(dt) {
-        this.y -= this.speed * dt;
+        this.y += this.speed * dt;
     }
 
     draw(ctx) {
@@ -31,8 +31,8 @@ export default class Enemy {
         ctx.strokeRect(barX, barY, barWidth, barHeight);
     }
 
-    isOutOfBounds() {
-        return this.y + this.h <= 0;
+    isOutOfBounds(canvasHeight) {
+        return this.y >= canvasHeight;
     }
 }
 
