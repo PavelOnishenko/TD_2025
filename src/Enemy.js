@@ -39,7 +39,7 @@ export default class Enemy {
 export class TankEnemy extends Enemy {
     constructor(maxHp = 15, color = 'red', x = 0, y = 0) {
         super(maxHp, color, x, y);
-        this.speed = 40;
+        this.speed = 60;
     }
 }
 
