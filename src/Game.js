@@ -28,7 +28,8 @@ export default class Game {
         this.gold = this.initialGold;
         this.wave = 1;
         this.maxWaves = 10;
-        this.towerCost = 10;
+        this.towerCost = 12;
+        this.switchCost = 4;
         this.waveInProgress = false;
         this.waveConfigs = [
             { interval: 1, cycles: 20, tankChance: 0 },
@@ -117,7 +118,7 @@ export default class Game {
     switchTowerColor(tower) {
         if (this.switchCooldown > 0 || this.gold < 1) return false;
         tower.color = tower.color === 'red' ? 'blue' : 'red';
-        this.gold -= 1;
+        this.gold -= this.switchCost;
         updateHUD(this);
         this.switchCooldown = this.switchCooldownDuration;
         updateSwitchIndicator(this);
@@ -197,12 +198,16 @@ export default class Game {
     mergeTowers() {
         for (const start of [0, 1]) {
             for (let i = start; i < this.grid.length - 2; i += 2) {
+                console.log(`start = ${start}; i = ${i}`);
                 const a = this.grid[i];
                 const b = this.grid[i + 2];
+                console.log(`a = ${a.x}:${a.y}; b = ${b.x}:${b.y}`);
                 if (a.occupied && b.occupied) {
+                    console.log(`Occupied!`);
                     const ta = this.getTowerAt(a);
                     const tb = this.getTowerAt(b);
                     if (ta && tb && ta.color === tb.color && ta.level === tb.level) {
+                        console.log(`Merging!!`);
                         ta.level += 1;
                         ta.updateStats();
                         this.towers = this.towers.filter(t => t !== tb);
