@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import Enemy, { TankEnemy, SwarmEnemy } from '../src/Enemy.js';
 
 test('update moves enemy based on dt and speed', () => {
-    const enemy = new Enemy(3, 'red', 0, 100);
+    const enemy = new Enemy(3, 'red', 0, 100, 100);
     enemy.update(0.5);
     assert.equal(enemy.y, 150);
     enemy.update(0.25);
@@ -39,21 +39,16 @@ test('draw uses enemy color and health bar correctly', () => {
 
 test('tank enemy has higher hp and slower speed', () => {
     const tank = new TankEnemy();
-    const base = new Enemy();
+    const base = new SwarmEnemy();
     assert.ok(tank.maxHp > base.maxHp);
     assert.ok(tank.speed < base.speed);
 });
 
 test('swarm enemy has lower hp and faster speed', () => {
     const swarm = new SwarmEnemy();
-    const base = new Enemy();
+    const base = new TankEnemy();
     assert.ok(swarm.maxHp < base.maxHp);
     assert.ok(swarm.speed > base.speed);
-});
-
-test('default enemy color is red', () => {
-    const enemy = new Enemy();
-    assert.equal(enemy.color, 'red');
 });
 
 function makeFakeCtx() {
