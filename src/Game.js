@@ -1,7 +1,7 @@
-import Enemy, { TankEnemy, SwarmEnemy } from './Enemy.js';
 import { updateHUD, endGame, updateSwitchIndicator } from './ui.js';
 import { draw } from './render.js';
 import { moveProjectiles, handleProjectileHits } from './projectiles.js';
+import WaveManager from './WaveManager.js';
 
 export default class Game {
     constructor(canvas) {
@@ -18,6 +18,7 @@ export default class Game {
         this.pathX = canvas.width / 2 - 15;
         this.base = { x: this.pathX, y: canvas.height - 40, w: 40, h: 40 };
         this.createGrid();
+        this.waveManager = new WaveManager(this);
         this.update = this.update.bind(this);
     }
 
@@ -83,36 +84,11 @@ export default class Game {
     }
 
     getEnemyColor() {
-        const denom = this.enemiesPerWave - 1;
-        const progress = denom > 0 ? this.spawned / denom : 1;
-        const p = this.colorProbStart + (this.colorProbEnd - this.colorProbStart) * progress;
-        return Math.random() < p ? 'red' : 'blue';
+        return this.waveManager.getEnemyColor();
     }
 
     spawnEnemy(type) {
-        const hp = this.enemyHpPerWave[this.wave - 1] ?? this.enemyHpPerWave.at(-1);
-        if (!type) {
-            const cfg = this.waveConfigs[this.wave - 1] ?? this.waveConfigs.at(-1);
-            type = this.wave <= 2 ? 'swarm' : (Math.random() < cfg.tankChance ? 'tank' : 'swarm');
-        }
-        const startY = 0;
-        if (type === 'tank') {
-            const color = this.getEnemyColor();
-            this.enemies.push(new TankEnemy(hp * 5, color, this.pathX, startY));
-        } else if (type === 'swarm') {
-            const groupSize = 3;
-            const swarmHp = Math.max(1, Math.floor(hp / 2));
-            const spacing = 40; // vertical offset to prevent overlap
-            for (let i = 0; i < groupSize; i++) {
-                const color = this.getEnemyColor();
-                const y = startY + i * spacing;
-                this.enemies.push(new SwarmEnemy(swarmHp, color, this.pathX, y));
-            }
-        } else {
-            const color = this.getEnemyColor();
-            this.enemies.push(new Enemy(hp, color, this.pathX, startY));
-        }
-        this.spawned += 1;
+        this.waveManager.spawnEnemy(type);
     }
 
     switchTowerColor(tower) {
@@ -126,20 +102,7 @@ export default class Game {
     }
 
     startWave() {
-        if (this.waveInProgress) return;
-        this.waveInProgress = true;
-        this.nextWaveBtn.disabled = true;
-        const cfg = this.waveConfigs[this.wave - 1] ?? this.waveConfigs.at(-1);
-        this.spawnInterval = cfg.interval;
-        this.enemiesPerWave = cfg.cycles;
-        this.enemies = [];
-        this.spawned = 0;
-        this.spawnTimer = 0;
-        do {
-            this.colorProbStart = Math.random();
-            this.colorProbEnd = Math.random();
-        } while (Math.abs(this.colorProbStart - this.colorProbEnd) <= 0.35);
-        this.spawnEnemy();
+        this.waveManager.startWave();
     }
 
     calcDelta(timestamp) {
@@ -149,13 +112,7 @@ export default class Game {
     }
 
     spawnEnemiesIfNeeded(dt) {
-        if (this.waveInProgress && this.spawned < this.enemiesPerWave) {
-            this.spawnTimer += dt;
-            if (this.spawnTimer >= this.spawnInterval) {
-                this.spawnEnemy();
-                this.spawnTimer = 0;
-            }
-        }
+        this.waveManager.spawnEnemiesIfNeeded(dt);
     }
 
     updateEnemies(dt) {
@@ -216,18 +173,7 @@ export default class Game {
     }
 
     checkWaveCompletion() {
-        if (this.waveInProgress && this.spawned === this.enemiesPerWave && this.enemies.length === 0) {
-            this.waveInProgress = false;
-            this.mergeTowers();
-            if (this.wave === this.maxWaves) {
-                endGame(this, 'WIN');
-            } else {
-                this.nextWaveBtn.disabled = false;
-            }
-            this.wave += 1;
-            this.gold += 3;
-            updateHUD(this);
-        }
+        this.waveManager.checkWaveCompletion();
     }
 
     update(timestamp) {
