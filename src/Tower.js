@@ -28,24 +28,24 @@ export default class Tower {
 
     draw(ctx) {
         const c = this.center();
+        this.drawRange(ctx, c);
+        ctx.fillStyle = this.color;
+        this.drawBody(ctx, c);
+
+        if (this.level > 1) {
+            this.highlight(ctx);
+        }
+
+        this.drawLevelIndicator(ctx);
+    }
+
+    drawRange(ctx, c) {
         ctx.beginPath();
         ctx.arc(c.x, c.y, this.range, 0, Math.PI * 2);
         ctx.strokeStyle = this.color === 'red'
             ? 'rgba(255,0,0,0.3)'
             : 'rgba(0,0,255,0.3)';
         ctx.stroke();
-
-        ctx.fillStyle = this.color;
-        this.drawBody(ctx, c);
-
-        if (this.level > 1) {
-            ctx.strokeStyle = 'yellow';
-            ctx.strokeRect(this.x - 2, this.y - 2, this.w + 4, this.h + 4);
-        }
-
-        ctx.fillStyle = 'black';
-        ctx.font = '10px sans-serif';
-        ctx.fillText(String(this.level), this.x + this.w + 2, this.y + 10);
     }
 
     drawBody(ctx, c) {
@@ -53,32 +53,52 @@ export default class Tower {
         ctx.beginPath();
 
         if (this.level === 1) {
-            ctx.moveTo(c.x, this.y);
-            ctx.lineTo(this.x, this.y + this.h);
-            ctx.lineTo(this.x + this.w, this.y + this.h);
+            this.drawTriangle(ctx, c);
         } else if (this.level === 2) {
-            for (let i = 0; i < 6; i++) {
-                const angle = Math.PI / 3 * i - Math.PI / 6;
-                const x = c.x + size * Math.cos(angle);
-                const y = c.y + size * Math.sin(angle);
-                if (i === 0) ctx.moveTo(x, y);
-                else ctx.lineTo(x, y);
-            }
+            this.drawRegularPolygon(ctx, c, 6, size, -Math.PI / 6);
         } else {
-            const spikes = 5;
-            const outer = size;
-            const inner = size / 2;
-            for (let i = 0; i < spikes * 2; i++) {
-                const r = i % 2 === 0 ? outer : inner;
-                const angle = (Math.PI / spikes) * i - Math.PI / 2;
-                const x = c.x + r * Math.cos(angle);
-                const y = c.y + r * Math.sin(angle);
-                if (i === 0) ctx.moveTo(x, y);
-                else ctx.lineTo(x, y);
-            }
+            this.drawStar(ctx, c, 5, size, size / 2);
         }
 
         ctx.closePath();
         ctx.fill();
+    }
+
+    drawTriangle(ctx, c) {
+        ctx.moveTo(c.x, this.y);
+        ctx.lineTo(this.x, this.y + this.h);
+        ctx.lineTo(this.x + this.w, this.y + this.h);
+    }
+
+    drawRegularPolygon(ctx, c, sides, radius, offset = 0) {
+        for (let i = 0; i < sides; i++) {
+            const angle = (Math.PI * 2 * i) / sides + offset;
+            const x = c.x + radius * Math.cos(angle);
+            const y = c.y + radius * Math.sin(angle);
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+        }
+    }
+
+    drawStar(ctx, c, spikes, outer, inner) {
+        for (let i = 0; i < spikes * 2; i++) {
+            const r = i % 2 === 0 ? outer : inner;
+            const angle = (Math.PI / spikes) * i - Math.PI / 2;
+            const x = c.x + r * Math.cos(angle);
+            const y = c.y + r * Math.sin(angle);
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+        }
+    }
+
+    highlight(ctx) {
+        ctx.strokeStyle = 'yellow';
+        ctx.strokeRect(this.x - 2, this.y - 2, this.w + 4, this.h + 4);
+    }
+
+    drawLevelIndicator(ctx) {
+        ctx.fillStyle = 'black';
+        ctx.font = '10px sans-serif';
+        ctx.fillText(String(this.level), this.x + this.w + 2, this.y + 10);
     }
 }
