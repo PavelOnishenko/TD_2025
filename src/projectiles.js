@@ -1,29 +1,27 @@
 import { updateHUD } from './ui.js';
 
 export function moveProjectiles(game, dt) {
-    for (const p of game.projectiles) {
+    game.projectiles.forEach(p => {
         p.x += p.vx * dt;
         p.y += p.vy * dt;
-    }
+    });
 }
 
-export function hitEnemy(game, p, index) {
-    for (let j = game.enemies.length - 1; j >= 0; j--) {
-        const e = game.enemies[j];
-        if (p.x >= e.x && p.x <= e.x + e.w && p.y >= e.y && p.y <= e.y + e.h) {
-            const multiplier = p.color === e.color ? 1 : 0.4;
-            const damage = (p.damage ?? 1) * multiplier;
-            e.hp -= damage;
-            game.projectiles.splice(index, 1);
-            if (e.hp <= 0) {
-                game.enemies.splice(j, 1);
-                game.gold += 1;
-                updateHUD(game);
-            }
-            return true;
-        }
+export function hitEnemy(game, projectile, index) {
+    const enemyIndex = findCollidingEnemy(projectile, game.enemies);
+    if (enemyIndex === -1) return false;
+
+    const enemy = game.enemies[enemyIndex];
+    enemy.hp -= calculateDamage(projectile, enemy);
+    game.projectiles.splice(index, 1);
+
+    if (enemy.hp <= 0) {
+        game.enemies.splice(enemyIndex, 1);
+        game.gold += 1;
+        updateHUD(game);
     }
-    return false;
+
+    return true;
 }
 
 export function handleProjectileHits(game) {
@@ -34,6 +32,26 @@ export function handleProjectileHits(game) {
     }
 }
 
+function findCollidingEnemy(projectile, enemies) {
+    return enemies.findIndex(e =>
+        projectile.x >= e.x &&
+        projectile.x <= e.x + e.w &&
+        projectile.y >= e.y &&
+        projectile.y <= e.y + e.h
+    );
+}
+
+function calculateDamage(projectile, enemy) {
+    const base = projectile.damage ?? 1;
+    const multiplier = projectile.color === enemy.color ? 1 : 0.4;
+    return base * multiplier;
+}
+
 function isProjectileOffscreen(game, p) {
-    return p.x < 0 || p.x > game.canvas.width || p.y < 0 || p.y > game.canvas.height;
+    return (
+        p.x < 0 ||
+        p.x > game.canvas.width ||
+        p.y < 0 ||
+        p.y > game.canvas.height
+    );
 }
