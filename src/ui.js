@@ -1,5 +1,22 @@
 import Tower from './Tower.js';
 
+function getMousePos(canvas, e) {
+    const rect = canvas.getBoundingClientRect();
+    return {
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top,
+    };
+}
+
+function isInside(pos, rect) {
+    return (
+        pos.x >= rect.x &&
+        pos.x <= rect.x + rect.w &&
+        pos.y >= rect.y &&
+        pos.y <= rect.y + rect.h
+    );
+}
+
 export function bindUI(game) {
     bindHUD(game);
     bindButtons(game);
@@ -26,28 +43,24 @@ function bindButtons(game) {
 
 function bindCanvasClick(game) {
     game.canvas.addEventListener('click', e => {
-        const rect = game.canvas.getBoundingClientRect();
-        const mx = e.clientX - rect.left;
-        const my = e.clientY - rect.top;
-        for (const tower of game.towers) {
-            if (mx >= tower.x && mx <= tower.x + tower.w && my >= tower.y && my <= tower.y + tower.h) {
-                game.switchTowerColor(tower);
-                return;
-            }
+        const pos = getMousePos(game.canvas, e);
+
+        const tower = game.towers.find(t => isInside(pos, t));
+        if (tower) {
+            game.switchTowerColor(tower);
+            return;
         }
-        for (const cell of game.grid) {
-            if (mx >= cell.x && mx <= cell.x + cell.w && my >= cell.y && my <= cell.y + cell.h) {
-                if (!cell.occupied) {
-                    if (game.gold >= game.towerCost) {
-                        game.towers.push(new Tower(cell.x, cell.y));
-                        cell.occupied = true;
-                        game.gold -= game.towerCost;
-                        updateHUD(game);
-                    } else {
-                        cell.highlight = 0.3;
-                    }
-                }
-                break;
+
+        const cell = game.grid.find(c => isInside(pos, c));
+        if (!cell) return;
+        if (!cell.occupied) {
+            if (game.gold >= game.towerCost) {
+                game.towers.push(new Tower(cell.x, cell.y));
+                cell.occupied = true;
+                game.gold -= game.towerCost;
+                updateHUD(game);
+            } else {
+                cell.highlight = 0.3;
             }
         }
     });
@@ -61,11 +74,10 @@ export function updateHUD(game) {
 
 export function updateSwitchIndicator(game) {
     if (!game.cooldownEl) return;
-    if (game.switchCooldown > 0) {
-        game.cooldownEl.textContent = `Switch: ${game.switchCooldown.toFixed(1)}s`;
-    } else {
-        game.cooldownEl.textContent = 'Switch: Ready';
-    }
+    game.cooldownEl.textContent =
+        game.switchCooldown > 0
+            ? `Switch: ${game.switchCooldown.toFixed(1)}s`
+            : 'Switch: Ready';
 }
 
 export function endGame(game, text) {
