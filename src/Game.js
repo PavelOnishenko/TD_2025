@@ -1,9 +1,10 @@
-import Enemy, { TankEnemy, SwarmEnemy } from './Enemy.js';
-import { updateHUD, endGame, updateSwitchIndicator } from './ui.js';
+import { updateHUD, updateSwitchIndicator } from './ui.js';
 import { draw } from './render.js';
 import { moveProjectiles, handleProjectileHits } from './projectiles.js';
+import { enemyActions } from './gameEnemies.js';
+import { waveActions } from './gameWaves.js';
 
-export default class Game {
+class Game {
     constructor(canvas) {
         this.canvas = canvas;
         this.ctx = canvas.getContext('2d');
@@ -82,39 +83,6 @@ export default class Game {
         });
     }
 
-    getEnemyColor() {
-        const denom = this.enemiesPerWave - 1;
-        const progress = denom > 0 ? this.spawned / denom : 1;
-        const p = this.colorProbStart + (this.colorProbEnd - this.colorProbStart) * progress;
-        return Math.random() < p ? 'red' : 'blue';
-    }
-
-    spawnEnemy(type) {
-        const hp = this.enemyHpPerWave[this.wave - 1] ?? this.enemyHpPerWave.at(-1);
-        if (!type) {
-            const cfg = this.waveConfigs[this.wave - 1] ?? this.waveConfigs.at(-1);
-            type = this.wave <= 2 ? 'swarm' : (Math.random() < cfg.tankChance ? 'tank' : 'swarm');
-        }
-        const startY = 0;
-        if (type === 'tank') {
-            const color = this.getEnemyColor();
-            this.enemies.push(new TankEnemy(hp * 5, color, this.pathX, startY));
-        } else if (type === 'swarm') {
-            const groupSize = 3;
-            const swarmHp = Math.max(1, Math.floor(hp / 2));
-            const spacing = 40; // vertical offset to prevent overlap
-            for (let i = 0; i < groupSize; i++) {
-                const color = this.getEnemyColor();
-                const y = startY + i * spacing;
-                this.enemies.push(new SwarmEnemy(swarmHp, color, this.pathX, y));
-            }
-        } else {
-            const color = this.getEnemyColor();
-            this.enemies.push(new Enemy(hp, color, this.pathX, startY));
-        }
-        this.spawned += 1;
-    }
-
     switchTowerColor(tower) {
         if (this.switchCooldown > 0 || this.gold < 1) return false;
         tower.color = tower.color === 'red' ? 'blue' : 'red';
@@ -125,109 +93,14 @@ export default class Game {
         return true;
     }
 
-    startWave() {
-        if (this.waveInProgress) return;
-        this.waveInProgress = true;
-        this.nextWaveBtn.disabled = true;
-        const cfg = this.waveConfigs[this.wave - 1] ?? this.waveConfigs.at(-1);
-        this.spawnInterval = cfg.interval;
-        this.enemiesPerWave = cfg.cycles;
-        this.enemies = [];
-        this.spawned = 0;
-        this.spawnTimer = 0;
-        do {
-            this.colorProbStart = Math.random();
-            this.colorProbEnd = Math.random();
-        } while (Math.abs(this.colorProbStart - this.colorProbEnd) <= 0.35);
-        this.spawnEnemy();
-    }
-
     calcDelta(timestamp) {
         const dt = (timestamp - this.lastTime) / 1000;
         this.lastTime = timestamp;
         return dt;
     }
 
-    spawnEnemiesIfNeeded(dt) {
-        if (this.waveInProgress && this.spawned < this.enemiesPerWave) {
-            this.spawnTimer += dt;
-            if (this.spawnTimer >= this.spawnInterval) {
-                this.spawnEnemy();
-                this.spawnTimer = 0;
-            }
-        }
-    }
-
-    updateEnemies(dt) {
-        for (let i = this.enemies.length - 1; i >= 0; i--) {
-            const e = this.enemies[i];
-            e.update(dt);
-            if (e.y + e.h >= this.base.y) {
-                this.enemies.splice(i, 1);
-                this.lives -= 1;
-                updateHUD(this);
-                if (this.lives <= 0) {
-                    endGame(this, 'LOSE');
-                }
-            } else if (e.isOutOfBounds(this.canvas.height)) {
-                this.enemies.splice(i, 1);
-            }
-        }
-    }
-
-    towerAttacks(timestamp) {
-        for (const tower of this.towers) {
-            for (const target of this.enemies) {
-                const towerCenter = tower.center();
-                const enemyCenter = { x: target.x + target.w / 2, y: target.y + target.h / 2 };
-                const dx = enemyCenter.x - towerCenter.x;
-                const dy = enemyCenter.y - towerCenter.y;
-                if (Math.hypot(dx, dy) <= tower.range && timestamp - tower.lastShot >= this.projectileSpawnInterval) {
-                    this.spawnProjectile(Math.atan2(dy, dx), tower);
-                    tower.lastShot = timestamp;
-                    break;
-                }
-            }
-        }
-    }
-
     getTowerAt(cell) {
         return this.towers.find(t => t.x === cell.x && t.y === cell.y);
-    }
-
-    mergeTowers() {
-        for (const start of [0, 1]) {
-            for (let i = start; i < this.grid.length - 2; i += 2) {
-                const a = this.grid[i];
-                const b = this.grid[i + 2];
-                if (a.occupied && b.occupied) {
-                    const ta = this.getTowerAt(a);
-                    const tb = this.getTowerAt(b);
-                    if (ta && tb && ta.color === tb.color && ta.level === tb.level) {
-                        ta.level += 1;
-                        ta.updateStats();
-                        this.towers = this.towers.filter(t => t !== tb);
-                        b.occupied = false;
-                        i += 2;
-                    }
-                }
-            }
-        }
-    }
-
-    checkWaveCompletion() {
-        if (this.waveInProgress && this.spawned === this.enemiesPerWave && this.enemies.length === 0) {
-            this.waveInProgress = false;
-            this.mergeTowers();
-            if (this.wave === this.maxWaves) {
-                endGame(this, 'WIN');
-            } else {
-                this.nextWaveBtn.disabled = false;
-            }
-            this.wave += 1;
-            this.gold += 3;
-            updateHUD(this);
-        }
     }
 
     update(timestamp) {
@@ -292,3 +165,7 @@ export default class Game {
         requestAnimationFrame(this.update);
     }
 }
+
+Object.assign(Game.prototype, enemyActions, waveActions);
+
+export default Game;
