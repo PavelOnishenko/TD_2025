@@ -287,6 +287,7 @@ export default class Game {
     }
 
     run() {
+        callCrazyGamesEvent('gameplayStart');
         this.lastTime = performance.now();
         requestAnimationFrame(this.update);
     }
