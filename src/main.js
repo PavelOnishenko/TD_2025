@@ -1,21 +1,15 @@
+import { callCrazyGamesEvent, checkCrazyGamesIntegration, initializeCrazyGamesIntegration } from './crazyGamesIntegration.js';
 import Game from './Game.js';
 import { bindUI } from './ui.js';
+
+await initializeCrazyGamesIntegration();
+console.log("CrazyGames integration kinda finished..");
+callCrazyGamesEvent('sdkGameLoadingStart');
 
 const canvas = document.getElementById('game');
 const game = new Game(canvas);
 bindUI(game);
 
-InitializeForCrazyGames();
+callCrazyGamesEvent('sdkGameLoadingStop');
 
 game.run();
-function InitializeForCrazyGames() {
-    window.addEventListener("wheel", (event) => event.preventDefault(), {
-        passive: false,
-    });
-    window.addEventListener("keydown", (event) => {
-        if (["ArrowUp", "ArrowDown", " "].includes(event.key)) {
-            event.preventDefault();
-        }
-    });
-}
-

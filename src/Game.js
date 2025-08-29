@@ -3,6 +3,7 @@ import { draw } from './render.js';
 import { moveProjectiles, handleProjectileHits } from './projectiles.js';
 import { enemyActions } from './gameEnemies.js';
 import { waveActions } from './gameWaves.js';
+import { callCrazyGamesEvent } from './crazyGamesIntegration.js';
 
 class Game {
     constructor(canvas) {
@@ -157,9 +158,11 @@ class Game {
             this.lastTime = performance.now();
             requestAnimationFrame(this.update);
         }
+        callCrazyGamesEvent('gameplayStart');
     }
 
     run() {
+        callCrazyGamesEvent('gameplayStart');
         this.lastTime = performance.now();
         requestAnimationFrame(this.update);
     }
