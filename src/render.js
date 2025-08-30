@@ -1,18 +1,17 @@
 export function draw(game) {
     const ctx = game.ctx;
     ctx.clearRect(0, 0, game.canvas.width, game.canvas.height);
-    drawGround(game);
+
+    if (game.assets?.bg) {
+        console.log("Drawing background");
+        ctx.drawImage(game.assets.bg, 0, 0, game.logicalW, game.logicalH);
+    } else {
+        console.log("No background asset found, filling with white");
+    }
+
     drawBase(game);
     drawGrid(game);
     drawEntities(game);
-}
-
-function drawGround(game) {
-    const ctx = game.ctx;
-    ctx.fillStyle = '#888';
-    const pathWidth = 20;
-    const x = game.pathX + (30 - pathWidth) / 2;
-    ctx.fillRect(x, 0, pathWidth, game.canvas.height);
 }
 
 function drawBase(game) {
