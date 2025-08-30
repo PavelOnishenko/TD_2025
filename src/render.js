@@ -3,7 +3,7 @@ export function draw(game) {
     ctx.clearRect(0, 0, game.canvas.width, game.canvas.height);
 
     if (game.assets?.bg) {
-        console.log("Drawing background");
+        console.log(`Drawing background, logical sizes are: [${game.logicalW}:${game.logicalH}].`);
         ctx.drawImage(game.assets.bg, 0, 0, game.logicalW, game.logicalH);
     } else {
         console.log("No background asset found, filling with white");

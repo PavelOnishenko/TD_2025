@@ -6,8 +6,10 @@ import { waveActions } from './gameWaves.js';
 import { callCrazyGamesEvent } from './crazyGamesIntegration.js';
 
 class Game {
-    constructor(canvas) {
+    constructor(canvas, { width = 540, height = 960, assets = null } = {}) {
         this.canvas = canvas;
+        this.logicalW = width;
+        this.logicalH = height;
         this.ctx = canvas.getContext('2d');
         this.enemies = [];
         this.towers = [];
@@ -17,8 +19,8 @@ class Game {
         this.projectileSpawnInterval = 500;
         this.lastTime = 0;
         this.initStats();
-        this.pathX = canvas.width / 2 - 15;
-        this.base = { x: this.pathX, y: canvas.height - 40, w: 40, h: 40 };
+        this.pathX = this.logicalW / 2;
+        this.base = { x: this.pathX - 20, y: this.logicalH - 60, w: 40, h: 40 };
         this.createGrid();
         this.update = this.update.bind(this);
     }
