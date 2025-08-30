@@ -3,10 +3,8 @@ export function draw(game) {
     ctx.clearRect(0, 0, game.canvas.width, game.canvas.height);
 
     if (game.assets?.bg) {
-        console.log(`Drawing background, logical sizes are: [${game.logicalW}:${game.logicalH}].`);
         ctx.drawImage(game.assets.bg, 0, 0, game.logicalW, game.logicalH);
-    } else {
-        console.log("No background asset found, filling with white");
+        ctx.drawImage(game.assets.road, game.logicalW / 2 - 50, 0, 100, game.logicalH);
     }
 
     drawBase(game);
@@ -27,15 +25,16 @@ function drawGrid(game) {
             const cx = cell.x + cell.w / 2;
             const cy = cell.y + cell.h / 2;
             ctx.beginPath();
-            ctx.arc(cx, cy, cell.w / 2, 0, Math.PI * 2);
-            ctx.strokeStyle = cell.highlight > 0 ? 'red' : 'rgba(0,0,0,0.3)';
-            ctx.stroke();
+            ctx.drawImage(game.assets.cell, cell.x, cell.y, 45, 45);
+            // ctx.arc(cx, cy, cell.w / 2, 0, Math.PI * 2);
+            // ctx.strokeStyle = cell.highlight > 0 ? 'red' : 'rgba(65, 245, 0, 1)';
+            // ctx.stroke();
         }
     });
 }
 
 export function drawEntities(game) {
-    game.towers.forEach(t => t.draw(game.ctx));
+    game.towers.forEach(t => t.draw(game.ctx, game.assets));
     game.enemies.forEach(e => e.draw(game.ctx));
     game.ctx.fillStyle = 'black';
     game.projectiles.forEach(p => {

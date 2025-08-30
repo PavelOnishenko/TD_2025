@@ -26,11 +26,11 @@ export default class Tower {
         };
     }
 
-    draw(ctx) {
+    draw(ctx, assets) {
         const c = this.center();
         this.drawRange(ctx, c);
         ctx.fillStyle = this.color;
-        this.drawBody(ctx, c);
+        this.drawBody(ctx, c, assets);
 
         if (this.level > 1) {
             this.highlight(ctx);
@@ -48,12 +48,23 @@ export default class Tower {
         ctx.stroke();
     }
 
-    drawBody(ctx, c) {
+    drawBody(ctx, c, assets) {
         const size = this.w / 2;
         ctx.beginPath();
 
+        const tower1Size = 70; 
+
+        // const sprite = this.color === 'red' ? assets.tower1 : assets.tower2;
+
+        const propertyName = `tower_${this.level}${this.color.charAt(0)}`;
+        const sprite = assets[propertyName];
+        if (!sprite) {
+            console.warn(`No sprite found for property name: ${propertyName}`);
+            return;
+        }
+
         if (this.level === 1) {
-            this.drawTriangle(ctx, c);
+            ctx.drawImage(sprite, c.x-tower1Size/2, c.y-tower1Size/2, tower1Size, tower1Size);
         } else if (this.level === 2) {
             this.drawRegularPolygon(ctx, c, 6, size, -Math.PI / 6);
         } else {
@@ -64,6 +75,7 @@ export default class Tower {
         ctx.fill();
     }
 
+    // todo remove if not needed
     drawTriangle(ctx, c) {
         ctx.moveTo(c.x, this.y);
         ctx.lineTo(this.x, this.y + this.h);

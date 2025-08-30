@@ -44,8 +44,13 @@ function bindButtons(game) {
 function bindCanvasClick(game) {
     game.canvas.addEventListener('click', e => {
         const pos = getMousePos(game.canvas, e);
+            console.log('Canvas click at', pos);
 
-        const tower = game.towers.find(t => isInside(pos, t));
+        // const tower = game.towers.find(t => isInside(pos, t));
+        const tower = game.towers.find(t => {
+            console.log('Checking tower at', t.x, t.y, 'with size', t.w, t.h);
+            return isInside(pos, t);
+    });
         if (tower) {
             game.switchTowerColor(tower);
             return;

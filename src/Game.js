@@ -6,7 +6,7 @@ import { waveActions } from './gameWaves.js';
 import { callCrazyGamesEvent } from './crazyGamesIntegration.js';
 
 class Game {
-    constructor(canvas, { width = 540, height = 960, assets = null } = {}) {
+    constructor(canvas, { width = 540, height = 960 }) {
         this.canvas = canvas;
         this.logicalW = width;
         this.logicalH = height;
@@ -19,7 +19,8 @@ class Game {
         this.projectileSpawnInterval = 500;
         this.lastTime = 0;
         this.initStats();
-        this.pathX = this.logicalW / 2;
+        // this.pathX = this.logicalW / 2;
+        this.pathX = this.logicalW / 2 - 22;
         this.base = { x: this.pathX - 20, y: this.logicalH - 60, w: 40, h: 40 };
         this.createGrid();
         this.update = this.update.bind(this);
@@ -63,14 +64,17 @@ class Game {
 
     createGrid() {
         this.grid = [];
-        const leftX = this.pathX - 60;
-        const rightX = this.pathX + 60;
-        const startY = this.canvas.height - 100;
-        const step = 80;
-        for (let i = 0; i < 5; i++) {
+        // const leftX = this.pathX - 60;
+        const leftX = this.pathX - 97;
+        // const rightX = this.pathX + 60;
+        const rightX = this.pathX + 97;
+        // const startY = this.canvas.height - 100;
+        const startY = this.canvas.height - 21;
+        const step = 120.5;
+        for (let i = 0; i < 6; i++) {
             const y = startY - i * step;
-            this.grid.push({ x: leftX, y, w: 40, h: 40, occupied: false, highlight: 0 });
-            this.grid.push({ x: rightX, y, w: 40, h: 40, occupied: false, highlight: 0 });
+            this.grid.push({ x: leftX, y, w: 45, h: 45, occupied: false, highlight: 0 });
+            this.grid.push({ x: rightX, y, w: 45, h: 45, occupied: false, highlight: 0 });
         }
     }
 
