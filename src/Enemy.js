@@ -16,9 +16,10 @@ export default class Enemy {
         this.y += this.speedY * dt;
     }
 
-    draw(ctx) {
-        ctx.fillStyle = this.color;
-        ctx.fillRect(this.x, this.y, this.w, this.h);
+    draw(ctx, assets) {
+        const propertyName = `swarm_${this.color.charAt(0)}`;
+        const sprite = assets[propertyName];
+        ctx.drawImage(sprite, this.x, this.y, this.w, this.h);
 
         const barWidth = this.w;
         const barHeight = 4;

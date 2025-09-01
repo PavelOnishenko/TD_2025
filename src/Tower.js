@@ -49,10 +49,6 @@ export default class Tower {
     }
 
     drawBody(ctx, c, assets) {
-        // ctx.beginPath();
-
-        // const sprite = this.color === 'red' ? assets.tower1 : assets.tower2;
-
         const propertyName = `tower_${this.level}${this.color.charAt(0)}`;
         const sprite = assets[propertyName];
         if (!sprite) {
@@ -61,37 +57,6 @@ export default class Tower {
         }
 
         ctx.drawImage(sprite, this.x, this.y, this.w, this.h);
-
-        // ctx.closePath();
-        // ctx.fill();
-    }
-
-    // todo remove if not needed
-    drawTriangle(ctx, c) {
-        ctx.moveTo(c.x, this.y);
-        ctx.lineTo(this.x, this.y + this.h);
-        ctx.lineTo(this.x + this.w, this.y + this.h);
-    }
-
-    drawRegularPolygon(ctx, c, sides, radius, offset = 0) {
-        for (let i = 0; i < sides; i++) {
-            const angle = (Math.PI * 2 * i) / sides + offset;
-            const x = c.x + radius * Math.cos(angle);
-            const y = c.y + radius * Math.sin(angle);
-            if (i === 0) ctx.moveTo(x, y);
-            else ctx.lineTo(x, y);
-        }
-    }
-
-    drawStar(ctx, c, spikes, outer, inner) {
-        for (let i = 0; i < spikes * 2; i++) {
-            const r = i % 2 === 0 ? outer : inner;
-            const angle = (Math.PI / spikes) * i - Math.PI / 2;
-            const x = c.x + r * Math.cos(angle);
-            const y = c.y + r * Math.sin(angle);
-            if (i === 0) ctx.moveTo(x, y);
-            else ctx.lineTo(x, y);
-        }
     }
 
     highlight(ctx) {
