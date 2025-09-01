@@ -111,7 +111,7 @@ class Game {
     }
 
     switchTowerColor(tower) {
-        if (this.switchCooldown > 0 || this.gold < 1) return false;
+        if (this.switchCooldown > 0 || this.gold < this.switchCost) return false;
         tower.color = tower.color === 'red' ? 'blue' : 'red';
         this.gold -= this.switchCost;
         updateHUD(this);
