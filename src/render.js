@@ -4,7 +4,6 @@ export function draw(game) {
 
     if (game.assets?.bg) {
         ctx.drawImage(game.assets.bg, 0, 0, game.logicalW, game.logicalH);
-        ctx.drawImage(game.assets.road, game.logicalW / 2 - 50, 0, 100, game.logicalH);
     }
 
     drawBase(game);
@@ -22,13 +21,7 @@ function drawGrid(game) {
     const ctx = game.ctx;
     game.grid.forEach(cell => {
         if (!cell.occupied) {
-            const cx = cell.x + cell.w / 2;
-            const cy = cell.y + cell.h / 2;
-            ctx.beginPath();
-            ctx.drawImage(game.assets.cell, cell.x, cell.y, 45, 45);
-            // ctx.arc(cx, cy, cell.w / 2, 0, Math.PI * 2);
-            // ctx.strokeStyle = cell.highlight > 0 ? 'red' : 'rgba(65, 245, 0, 1)';
-            // ctx.stroke();
+            ctx.drawImage(game.assets.cell, cell.x, cell.y, cell.w, cell.h);
         }
     });
 }

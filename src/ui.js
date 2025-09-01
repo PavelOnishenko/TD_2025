@@ -2,9 +2,12 @@ import Tower from './Tower.js';
 
 function getMousePos(canvas, e) {
     const rect = canvas.getBoundingClientRect();
+    // Map from CSS pixels to canvas logical coordinates for precise hit testing
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
     return {
-        x: e.clientX - rect.left,
-        y: e.clientY - rect.top,
+        x: (e.clientX - rect.left) * scaleX,
+        y: (e.clientY - rect.top) * scaleY,
     };
 }
 
@@ -44,13 +47,7 @@ function bindButtons(game) {
 function bindCanvasClick(game) {
     game.canvas.addEventListener('click', e => {
         const pos = getMousePos(game.canvas, e);
-            console.log('Canvas click at', pos);
-
-        // const tower = game.towers.find(t => isInside(pos, t));
-        const tower = game.towers.find(t => {
-            console.log('Checking tower at', t.x, t.y, 'with size', t.w, t.h);
-            return isInside(pos, t);
-    });
+        const tower = game.towers.find(t => isInside(pos, t));
         if (tower) {
             game.switchTowerColor(tower);
             return;
@@ -60,7 +57,12 @@ function bindCanvasClick(game) {
         if (!cell) return;
         if (!cell.occupied) {
             if (game.gold >= game.towerCost) {
-                game.towers.push(new Tower(cell.x, cell.y));
+                const tower = new Tower(cell.x, cell.y);
+                // todo how can we fix magic numbers here? 
+                // It's done so that towers are placed visually in correct place at cell
+                tower.x -= tower.w / 4;
+                tower.y -= tower.h * 0.8;
+                game.towers.push(tower);
                 cell.occupied = true;
                 game.gold -= game.towerCost;
                 updateHUD(game);

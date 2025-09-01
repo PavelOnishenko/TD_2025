@@ -19,7 +19,6 @@ class Game {
         this.projectileSpawnInterval = 500;
         this.lastTime = 0;
         this.initStats();
-        // this.pathX = this.logicalW / 2;
         this.pathX = this.logicalW / 2 - 22;
         this.base = { x: this.pathX - 20, y: this.logicalH - 60, w: 40, h: 40 };
         this.createGrid();
@@ -36,18 +35,7 @@ class Game {
         this.towerCost = 12;
         this.switchCost = 4;
         this.waveInProgress = false;
-        this.waveConfigs = [
-            { interval: 1, cycles: 20, tankChance: 0 },
-            { interval: 1, cycles: 25, tankChance: 0 },
-            { interval: 1, cycles: 22, tankChance: 0.1 },
-            { interval: 1, cycles: 25, tankChance: 0.15 },
-            { interval: 1, cycles: 28, tankChance: 0.2 },
-            { interval: 1, cycles: 30, tankChance: 0.25 },
-            { interval: 1, cycles: 32, tankChance: 0.3 },
-            { interval: 1, cycles: 35, tankChance: 0.35 },
-            { interval: 1, cycles: 38, tankChance: 0.4 },
-            { interval: 1, cycles: 40, tankChance: 0.45 }
-        ];
+        this.waveConfigs = this.getWaveConfigs();
         const cfg = this.waveConfigs[0];
         this.spawnInterval = cfg.interval;
         this.enemiesPerWave = cfg.cycles;
@@ -62,20 +50,53 @@ class Game {
         this.colorProbEnd = 0.5;
     }
 
+    getWaveConfigs() {
+        return [
+            { interval: 1, cycles: 20, tankChance: 0 },
+            { interval: 1, cycles: 25, tankChance: 0 },
+            { interval: 1, cycles: 22, tankChance: 0.1 },
+            { interval: 1, cycles: 25, tankChance: 0.15 },
+            { interval: 1, cycles: 28, tankChance: 0.2 },
+            { interval: 1, cycles: 30, tankChance: 0.25 },
+            { interval: 1, cycles: 32, tankChance: 0.3 },
+            { interval: 1, cycles: 35, tankChance: 0.35 },
+            { interval: 1, cycles: 38, tankChance: 0.4 },
+            { interval: 1, cycles: 40, tankChance: 0.45 }
+        ];
+    }
+
+    createCell(x, y) {
+        return { x, y, w: 40, h: 24, occupied: false, highlight: 0 };
+    }
+
     createGrid() {
-        this.grid = [];
-        // const leftX = this.pathX - 60;
-        const leftX = this.pathX - 97;
-        // const rightX = this.pathX + 60;
-        const rightX = this.pathX + 97;
-        // const startY = this.canvas.height - 100;
-        const startY = this.canvas.height - 21;
-        const step = 120.5;
-        for (let i = 0; i < 6; i++) {
-            const y = startY - i * step;
-            this.grid.push({ x: leftX, y, w: 45, h: 45, occupied: false, highlight: 0 });
-            this.grid.push({ x: rightX, y, w: 45, h: 45, occupied: false, highlight: 0 });
-        }
+        const topPlatform = { x: 70, y: 140 };
+        const bottomPlatform = { x: 80, y: 480 };
+        const topPlatformGrid = [
+            this.createCell(0, 0),
+            this.createCell(40, 50),
+            this.createCell(100, 110),
+            this.createCell(170, 165),
+            this.createCell(230, 200),
+            this.createCell(300, 225),
+        ];
+        topPlatformGrid.forEach(cell => {
+            cell.x += topPlatform.x;
+            cell.y += topPlatform.y;
+        });
+        const bottomPlatformGrid = [
+            this.createCell(0, 0),
+            this.createCell(75, 25),
+            this.createCell(155, 65),
+            this.createCell(220, 115),
+            this.createCell(290, 170),
+            this.createCell(325, 250),
+        ];
+        bottomPlatformGrid.forEach(cell => {
+            cell.x += bottomPlatform.x;
+            cell.y += bottomPlatform.y;
+        });
+        this.grid = [...topPlatformGrid, ...bottomPlatformGrid];
     }
 
     spawnProjectile(angle, tower) {

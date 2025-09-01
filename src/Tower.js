@@ -2,8 +2,8 @@ export default class Tower {
     constructor(x, y, color = 'red', level = 1) {
         this.x = x;
         this.y = y;
-        this.w = 40;
-        this.h = 40;
+        this.w = 60;
+        this.h = 90;
         this.baseRange = 120;
         this.baseDamage = 1;
         this.lastShot = 0;
@@ -49,10 +49,7 @@ export default class Tower {
     }
 
     drawBody(ctx, c, assets) {
-        const size = this.w / 2;
-        ctx.beginPath();
-
-        const tower1Size = 70; 
+        // ctx.beginPath();
 
         // const sprite = this.color === 'red' ? assets.tower1 : assets.tower2;
 
@@ -63,16 +60,10 @@ export default class Tower {
             return;
         }
 
-        if (this.level === 1) {
-            ctx.drawImage(sprite, c.x-tower1Size/2, c.y-tower1Size/2, tower1Size, tower1Size);
-        } else if (this.level === 2) {
-            this.drawRegularPolygon(ctx, c, 6, size, -Math.PI / 6);
-        } else {
-            this.drawStar(ctx, c, 5, size, size / 2);
-        }
+        ctx.drawImage(sprite, this.x, this.y, this.w, this.h);
 
-        ctx.closePath();
-        ctx.fill();
+        // ctx.closePath();
+        // ctx.fill();
     }
 
     // todo remove if not needed
