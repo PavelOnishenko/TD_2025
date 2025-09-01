@@ -15,10 +15,10 @@ export const enemyActions = {
             const cfg = this.waveConfigs[this.wave - 1] ?? this.waveConfigs.at(-1);
             type = this.wave <= 2 ? 'swarm' : (Math.random() < cfg.tankChance ? 'tank' : 'swarm');
         }
-        const startY = 0;
+        const startY = 200;
         if (type === 'tank') {
             const color = this.getEnemyColor();
-            this.enemies.push(new TankEnemy(hp * 5, color, this.pathX, startY));
+            this.enemies.push(new TankEnemy(hp * 5, color, 0, startY));
         } else if (type === 'swarm') {
             const groupSize = 3;
             const swarmHp = Math.max(1, Math.floor(hp / 2));
@@ -26,7 +26,7 @@ export const enemyActions = {
             for (let i = 0; i < groupSize; i++) {
                 const color = this.getEnemyColor();
                 const y = startY + i * spacing;
-                this.enemies.push(new SwarmEnemy(swarmHp, color, this.pathX, y));
+                this.enemies.push(new SwarmEnemy(swarmHp, color, 0, y));
             }
         } else {
             const color = this.getEnemyColor();
@@ -49,7 +49,7 @@ export const enemyActions = {
         for (let i = this.enemies.length - 1; i >= 0; i--) {
             const e = this.enemies[i];
             e.update(dt);
-            if (e.y + e.h >= this.base.y) {
+            if (e.x + e.w >= this.base.x) {
                 this.enemies.splice(i, 1);
                 this.lives -= 1;
                 updateHUD(this);

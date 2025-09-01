@@ -1,17 +1,19 @@
 export default class Enemy {
-    constructor(maxHp, color, x, y, speed) {
+    constructor(maxHp, color, x, y, speedX, speedY) {
         this.x = x;
         this.y = y;
         this.w = 30;
         this.h = 30;
-        this.speed = speed;
+        this.speedX = speedX;
+        this.speedY = speedY;
         this.maxHp = maxHp;
         this.hp = this.maxHp;
         this.color = color;
     }
 
     update(dt) {
-        this.y += this.speed * dt;
+        this.x += this.speedX * dt;
+        this.y += this.speedY * dt;
     }
 
     draw(ctx) {
@@ -38,12 +40,12 @@ export default class Enemy {
 
 export class TankEnemy extends Enemy {
     constructor(maxHp = 15, color = 'red', x = 0, y = 0) {
-        super(maxHp, color, x, y, 60);
+        super(maxHp, color, x, y, 50, 34);
     }
 }
 
 export class SwarmEnemy extends Enemy {
     constructor(maxHp = 1, color = 'red', x = 0, y = 0) {
-        super(maxHp, color, x, y, 120);
+        super(maxHp, color, x, y, 100, 76);
     }
 }

@@ -19,8 +19,7 @@ class Game {
         this.projectileSpawnInterval = 500;
         this.lastTime = 0;
         this.initStats();
-        this.pathX = this.logicalW / 2 - 22;
-        this.base = { x: this.pathX - 20, y: this.logicalH - 60, w: 40, h: 40 };
+        this.base = { x: this.logicalW, y: this.logicalH - 60, w: 40, h: 40 };
         this.createGrid();
         this.update = this.update.bind(this);
     }
