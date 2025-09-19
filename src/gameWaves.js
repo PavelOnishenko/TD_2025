@@ -18,21 +18,25 @@ export const waveActions = {
         this.spawnEnemy();
     },
 
-    mergeTowers() {
-        for (const start of [0, 1]) {
-            for (let i = start; i < this.grid.length - 2; i += 2) {
-                const a = this.grid[i];
-                const b = this.grid[i + 2];
-                if (a.occupied && b.occupied) {
-                    const ta = this.getTowerAt(a);
-                    const tb = this.getTowerAt(b);
-                    if (ta && tb && ta.color === tb.color && ta.level === tb.level) {
-                        ta.level += 1;
-                        ta.updateStats();
-                        this.towers = this.towers.filter(t => t !== tb);
-                        b.occupied = false;
-                        i += 2;
-                    }
+    mergeTowers(row) {
+        for (let i = 0; i < row.length - 1; i++) {
+            const a = row[i];
+            const b = row[i + 1];
+            if (a.occupied && b.occupied) {
+                // todo remove console
+                console.log(`a and b coords: ${a.x} ${a.y} and ${b.x} ${b.y}`);
+                // todo need some solution to connect cells to towers. Store them connected and easily retrieve the corresponding one.
+                const ta = this.getTowerAt(a);
+                const tb = this.getTowerAt(b);
+                // todo remove console
+                console.log(`ta and tb: ${ta} ${tb}`);
+                console.log(`ta and tb color and level: ${ta.color} ${tb.color} ${ta.level} ${tb.level}`);
+                if (ta && tb && ta.color === tb.color && ta.level === tb.level) {
+                    ta.level += 1;
+                    ta.updateStats();
+                    this.towers = this.towers.filter(t => t !== tb);
+                    b.occupied = false;
+                    i++; 
                 }
             }
         }
@@ -41,7 +45,8 @@ export const waveActions = {
     checkWaveCompletion() {
         if (this.waveInProgress && this.spawned === this.enemiesPerWave && this.enemies.length === 0) {
             this.waveInProgress = false;
-            this.mergeTowers();
+            this.mergeTowers(this.bottomCells);
+            this.mergeTowers(this.topCells);
             if (this.wave === this.maxWaves) {
                 endGame(this, 'WIN');
             } else {

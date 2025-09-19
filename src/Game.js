@@ -71,7 +71,7 @@ class Game {
     createGrid() {
         const topPlatform = { x: 70, y: 140 };
         const bottomPlatform = { x: 80, y: 480 };
-        const topPlatformGrid = [
+        this.topCells = [
             this.createCell(0, 0),
             this.createCell(40, 50),
             this.createCell(100, 110),
@@ -79,11 +79,11 @@ class Game {
             this.createCell(230, 200),
             this.createCell(300, 225),
         ];
-        topPlatformGrid.forEach(cell => {
+        this.topCells.forEach(cell => {
             cell.x += topPlatform.x;
             cell.y += topPlatform.y;
         });
-        const bottomPlatformGrid = [
+        this.bottomCells = [
             this.createCell(0, 0),
             this.createCell(75, 25),
             this.createCell(155, 65),
@@ -91,11 +91,14 @@ class Game {
             this.createCell(290, 170),
             this.createCell(325, 250),
         ];
-        bottomPlatformGrid.forEach(cell => {
+        this.bottomCells.forEach(cell => {
             cell.x += bottomPlatform.x;
             cell.y += bottomPlatform.y;
         });
-        this.grid = [...topPlatformGrid, ...bottomPlatformGrid];
+    }
+
+    getAllCells() {
+        return [...this.topCells, ...this.bottomCells];
     }
 
     spawnProjectile(angle, tower) {
@@ -127,7 +130,10 @@ class Game {
     }
 
     getTowerAt(cell) {
-        return this.towers.find(t => t.x === cell.x && t.y === cell.y);
+        return this.towers.find(t => {
+                console.log(`Comparing tower at ${t.x},${t.y} with cell at ${cell.x},${cell.y}`);
+                return Math.abs(t.x - cell.x) < 90 && Math.abs(t.y - cell.y) < 90;
+            } );
     }
 
     update(timestamp) {
@@ -142,7 +148,7 @@ class Game {
         this.towerAttacks(timestamp);
         moveProjectiles(this, dt);
         handleProjectileHits(this);
-        this.grid.forEach(cell => {
+        this.getAllCells().forEach(cell => {
             if (cell.highlight > 0) {
                 cell.highlight = Math.max(0, cell.highlight - dt);
             }
@@ -164,7 +170,7 @@ class Game {
         const cfg = this.waveConfigs[0];
         this.spawnInterval = cfg.interval;
         this.enemiesPerWave = cfg.cycles;
-        this.grid.forEach(cell => {
+        this.getAllCells().forEach(cell => {
             cell.occupied = false;
             cell.highlight = 0;
         });

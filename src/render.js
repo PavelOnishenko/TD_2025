@@ -19,7 +19,8 @@ function drawBase(game) {
 
 function drawGrid(game) {
     const ctx = game.ctx;
-    game.grid.forEach(cell => {
+    const grid = game.getAllCells();
+    grid.forEach(cell => {
         if (!cell.occupied) {
             ctx.drawImage(game.assets.cell, cell.x, cell.y, cell.w, cell.h);
         }

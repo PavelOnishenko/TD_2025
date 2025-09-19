@@ -53,7 +53,7 @@ function bindCanvasClick(game) {
             return;
         }
 
-        const cell = game.grid.find(c => isInside(pos, c));
+        const cell = game.getAllCells().find(c => isInside(pos, c));
         if (!cell) return;
         if (!cell.occupied) {
             if (game.gold >= game.towerCost) {
