@@ -1,0 +1,32 @@
+Prototype 4 — Visual Effects and Liveliness
+
+Main Goal:
+Make the game look vivid and engaging by adding simple but striking visual effects. Priority: special effects (glows, trails, flashes, mini-explosions), then basic animations for towers and ships, and, if time allows, sound. Everything should fit within 3–4 hours of joint work with Codex.
+
+Special Effects
+
+Engine glow on ships. Add glowing thrusters so it’s clear that ships are pushing forward.
+
+Trails. Ships leave behind light trails that fade out gradually.
+
+Tower crystal glow. The crystal/sphere on top of a tower glows brightly when firing, simulating an energy discharge.
+
+Mini-explosion on hit. Projectiles create a small particle explosion effect when hitting an enemy.
+
+Animation
+
+Towers. Add a simple cyclical animation (pulsating glow of the crystal or flickering energy).
+
+Ships. Basic animation of lights or subtle flickering (2–3 frame cycle or sine-based blinking).
+
+Sound (if time remains)
+
+Integrate howler.js.
+
+Add basic sound effects: firing, explosion.
+
+Background music loop.
+
+Result
+
+The game screen is filled with light, motion, and sound. Visuals become brighter and more attractive: ships leave trails, towers’ crystals glow and discharge energy, hits are accompanied by small explosions, and both towers and ships show subtle animation. The game feels “alive” and ready to be shown even in an intermediate stage.
