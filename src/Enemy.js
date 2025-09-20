@@ -1,11 +1,12 @@
 export default class Enemy {
-    constructor(maxHp, color, x, y, speedX, speedY) {
+    constructor(maxHp, color, x, y, speedX = 0, speedY = 0) {
         this.x = x;
         this.y = y;
         this.w = 30;
         this.h = 30;
         this.speedX = speedX;
         this.speedY = speedY;
+        this.speed = this.speedY;
         this.maxHp = maxHp;
         this.hp = this.maxHp;
         this.color = color;
@@ -18,8 +19,13 @@ export default class Enemy {
 
     draw(ctx, assets) {
         const propertyName = `swarm_${this.color.charAt(0)}`;
-        const sprite = assets[propertyName];
-        ctx.drawImage(sprite, this.x, this.y, this.w, this.h);
+        const sprite = assets?.[propertyName];
+        if (sprite) {
+            ctx.drawImage(sprite, this.x, this.y, this.w, this.h);
+        } else {
+            ctx.fillStyle = this.color;
+            ctx.fillRect(this.x, this.y, this.w, this.h);
+        }
 
         const barWidth = this.w;
         const barHeight = 4;

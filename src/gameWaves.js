@@ -22,23 +22,26 @@ export const waveActions = {
         for (let i = 0; i < row.length - 1; i++) {
             const a = row[i];
             const b = row[i + 1];
-            if (a.occupied && b.occupied) {
-                // todo remove console
-                console.log(`a and b coords: ${a.x} ${a.y} and ${b.x} ${b.y}`);
-                // todo need some solution to connect cells to towers. Store them connected and easily retrieve the corresponding one.
-                const ta = this.getTowerAt(a);
-                const tb = this.getTowerAt(b);
-                // todo remove console
-                console.log(`ta and tb: ${ta} ${tb}`);
-                console.log(`ta and tb color and level: ${ta.color} ${tb.color} ${ta.level} ${tb.level}`);
-                if (ta && tb && ta.color === tb.color && ta.level === tb.level) {
-                    ta.level += 1;
-                    ta.updateStats();
-                    this.towers = this.towers.filter(t => t !== tb);
-                    b.occupied = false;
-                    i++; 
-                }
+            if (!a.occupied || !b.occupied) continue;
+
+            const ta = this.getTowerAt(a);
+            const tb = this.getTowerAt(b);
+            if (!ta || !tb) continue;
+            if (ta.color !== tb.color || ta.level !== tb.level) continue;
+
+            ta.level += 1;
+            ta.updateStats();
+            this.towers = this.towers.filter(t => t !== tb);
+            if (tb.cell) {
+                tb.cell.tower = null;
+                tb.cell.occupied = false;
+                tb.cell = null;
             }
+            b.occupied = false;
+            b.tower = null;
+            ta.cell = a;
+            a.tower = ta;
+            i++;
         }
     },
 

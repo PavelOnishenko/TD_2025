@@ -14,6 +14,7 @@ function makeFakeCtx() {
         beginPath() { ops.push(['beginPath']); },
         arc(x, y, r, s, e) { ops.push(['arc', x, y, r, s, e]); },
         fill() { ops.push(['fill']); },
+        drawImage(img, x, y, w, h) { ops.push(['drawImage', img, x, y, w, h]); },
     };
 }
 
@@ -60,6 +61,8 @@ test('draw clears canvas, draws entities and projectiles', () => {
         canvas: { width: 450, height: 800 },
         base: { x: 0, y: 0, w: 0, h: 0 },
         grid: [],
+        getAllCells() { return this.grid; },
+        assets: {},
         towers: [tower],
         enemies: [enemy],
         projectiles: [projectile],

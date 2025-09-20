@@ -58,12 +58,14 @@ function bindCanvasClick(game) {
         if (!cell.occupied) {
             if (game.gold >= game.towerCost) {
                 const tower = new Tower(cell.x, cell.y);
-                // todo how can we fix magic numbers here? 
+                // todo how can we fix magic numbers here?
                 // It's done so that towers are placed visually in correct place at cell
                 tower.x -= tower.w / 4;
                 tower.y -= tower.h * 0.8;
-                game.towers.push(tower);
+                tower.cell = cell;
+                cell.tower = tower;
                 cell.occupied = true;
+                game.towers.push(tower);
                 game.gold -= game.towerCost;
                 updateHUD(game);
             } else {

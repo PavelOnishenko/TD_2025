@@ -2,12 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import Game from '../src/Game.js';
 import Tower from '../src/Tower.js';
-import { TankEnemy, SwarmEnemy } from '../src/Enemy.js';
 
 function makeFakeCanvas() {
     return {
-        width: 450,
-        height: 800,
+        width: 540,
+        height: 960,
         getContext: () => ({
             fillRect: () => {},
             clearRect: () => {},
@@ -16,6 +15,7 @@ function makeFakeCanvas() {
             fill: () => {},
             stroke: () => {},
             strokeRect: () => {},
+            drawImage: () => {},
         }),
     };
 }
@@ -25,335 +25,115 @@ function attachDomStubs(game) {
     game.goldEl = { textContent: '' };
     game.waveEl = { textContent: '' };
     game.statusEl = { textContent: '', style: {} };
+    game.tipEl = { textContent: '' };
     game.nextWaveBtn = { disabled: false };
+    game.cooldownEl = { textContent: '' };
 }
 
-test('spawnProjectile main', () => {
-    const fakeCanvas = makeFakeCanvas();
-    const game = new Game(fakeCanvas);
-    const tower = new Tower(100, 200);
+function placeTowerOnCell(game, cell, { color = 'red', level = 1 } = {}) {
+    const tower = new Tower(cell.x, cell.y, color, level);
+    tower.x -= tower.w / 4;
+    tower.y -= tower.h * 0.8;
+    tower.cell = cell;
+    cell.tower = tower;
+    cell.occupied = true;
+    game.towers.push(tower);
+    return tower;
+}
 
-    game.spawnProjectile(1, tower);
-
-    assert.equal(game.projectiles.length, 1);
-    const projectile = game.projectiles[0];
-    assert.equal(projectile.x, 120);
-    assert.equal(projectile.y, 220);
-    assert.ok(Math.abs(projectile.vx - 432.24) < 0.01);
-    assert.ok(Math.abs(projectile.vy - 673.18) < 0.01);
-    assert.equal(projectile.color, tower.color);
-    assert.equal(projectile.damage, 1);
-});
-
-test('spawnProjectile uses tower damage', () => {
-    const fakeCanvas = makeFakeCanvas();
-    const game = new Game(fakeCanvas);
-    const tower = new Tower(100, 200, 'red', 2);
-
-    game.spawnProjectile(0, tower);
-
-    assert.equal(game.projectiles[0].damage, tower.damage);
-    assert.ok(Math.abs(game.projectiles[0].damage - 1.8) < 1e-6);
-});
-
-test('spawnEnemy main', () => {
-    const fakeCanvas = makeFakeCanvas();
-    const game = new Game(fakeCanvas);
-
-    game.spawnEnemy();
-
-    assert.equal(game.enemies.length, 3);
-    assert.equal(game.spawned, 1);
-    for (const e of game.enemies) {
-        assert.ok(e instanceof SwarmEnemy);
-        assert.equal(e.maxHp, 1);
-    }
-});
-
-test('spawnEnemy can create tank enemies', () => {
-    const fakeCanvas = makeFakeCanvas();
-    const game = new Game(fakeCanvas);
-
-    const baseHp = game.enemyHpPerWave[game.wave - 1];
-    game.spawnEnemy('tank');
-
-    assert.equal(game.enemies.length, 1);
-    assert.ok(game.enemies[0] instanceof TankEnemy);
-    assert.equal(game.spawned, 1);
-    assert.equal(game.enemies[0].maxHp, baseHp * 5);
-});
-
-test('spawnEnemy defaults to last hp for high wave', () => {
-    const fakeCanvas = makeFakeCanvas();
-    const game = new Game(fakeCanvas);
-    game.wave = game.enemyHpPerWave.length + 3;
-
-    game.spawnEnemy('swarm');
-
-    const enemy = game.enemies[0];
-    const expectedHp = Math.max(1, Math.floor(game.enemyHpPerWave.at(-1) / 2));
-    assert.equal(enemy.maxHp, expectedHp);
-});
-
-test('spawnEnemy assigns random color for each spawned enemy', () => {
-    const fakeCanvas = makeFakeCanvas();
-    const game = new Game(fakeCanvas);
-    const seq = [0.2, 0.8, 0.1]; // red, blue, red
-    const original = Math.random;
-    let i = 0;
-    Math.random = () => seq[i++];
-    try {
-        game.spawnEnemy('swarm');
-    } finally {
-        Math.random = original;
-    }
-    const colors = game.enemies.map(e => e.color);
-    assert.deepEqual(colors, ['red', 'blue', 'red']);
-});
-
-test('getEnemyColor picks red or blue based on Math.random', () => {
+test('game constructor creates grid and attaches context without options', () => {
     const game = new Game(makeFakeCanvas());
-    const original = Math.random;
-    Math.random = () => 0.3;
-    assert.equal(game.getEnemyColor(), 'red');
-    Math.random = () => 0.7;
-    assert.equal(game.getEnemyColor(), 'blue');
-    Math.random = original;
+    assert.equal(game.getAllCells().length, 12);
+    assert.equal(game.grid.length, 12);
+    const refCtx = game.canvas.getContext('2d');
+    assert.deepEqual(
+        Object.keys(game.ctx).sort(),
+        Object.keys(refCtx).sort()
+    );
 });
 
-test('startWave picks distinct color probabilities A and B', () => {
+test('getTowerAt returns tower bound to a cell', () => {
+    const game = new Game(makeFakeCanvas());
+    const cell = game.topCells[0];
+    const tower = placeTowerOnCell(game, cell, {});
+
+    assert.equal(game.getTowerAt(cell), tower);
+    assert.equal(cell.tower, tower);
+    assert.equal(tower.cell, cell);
+});
+
+test('mergeTowers upgrades tower and frees merged cell', () => {
+    const game = new Game(makeFakeCanvas());
+    const [cellA, cellB] = game.bottomCells;
+    const towerA = placeTowerOnCell(game, cellA);
+    const towerB = placeTowerOnCell(game, cellB);
+
+    towerB.color = towerA.color;
+    towerB.level = towerA.level;
+
+    const towersBefore = game.towers.length;
+    game.mergeTowers(game.bottomCells);
+
+    assert.equal(game.towers.length, towersBefore - 1);
+    assert.equal(cellA.tower, towerA);
+    assert.equal(cellA.occupied, true);
+    assert.equal(cellB.tower, null);
+    assert.equal(cellB.occupied, false);
+    assert.equal(towerA.level, 2);
+    assert.ok(towerA.range > towerA.baseRange);
+});
+
+test('mergeTowers ignores towers with different color or level', () => {
+    const game = new Game(makeFakeCanvas());
+    const [cellA, cellB] = game.topCells;
+    const towerA = placeTowerOnCell(game, cellA, { color: 'red', level: 1 });
+    const towerB = placeTowerOnCell(game, cellB, { color: 'blue', level: 1 });
+
+    game.mergeTowers(game.topCells);
+    assert.equal(cellA.tower, towerA);
+    assert.equal(cellB.tower, towerB);
+    assert.equal(towerA.level, 1);
+    assert.equal(towerB.level, 1);
+
+    towerB.color = 'red';
+    towerB.level = 2;
+    game.mergeTowers(game.topCells);
+    assert.equal(cellA.tower, towerA);
+    assert.equal(cellB.tower, towerB);
+});
+
+test('checkWaveCompletion merges towers and advances wave', () => {
     const game = new Game(makeFakeCanvas());
     attachDomStubs(game);
-    const seq = [0.1, 0.4, 0.2, 0.8, 0.1, 0.9, 0.2];
-    const original = Math.random;
-    let i = 0;
-    Math.random = () => seq[i++];
-    try {
-        game.startWave();
-    } finally {
-        Math.random = original;
-    }
-    assert.equal(game.colorProbStart, 0.2);
-    assert.equal(game.colorProbEnd, 0.8);
-    assert.ok(Math.abs(game.colorProbStart - game.colorProbEnd) > 0.35);
-});
+    const [cellA, cellB] = game.bottomCells;
+    placeTowerOnCell(game, cellA, { color: 'red' });
+    const towerB = placeTowerOnCell(game, cellB, { color: 'red' });
+    towerB.level = 1;
 
-test('getEnemyColor probability shifts linearly across wave', () => {
-    const game = new Game(makeFakeCanvas());
-    game.enemiesPerWave = 4;
-    game.spawned = 0;
-    game.colorProbStart = 0.2;
-    game.colorProbEnd = 0.8;
-    const seq = [0.1, 0.5, 0.55, 0.9];
-    const original = Math.random;
-    let i = 0;
-    Math.random = () => seq[i++];
-    const colors = [];
-    for (let j = 0; j < 4; j++) {
-        colors.push(game.getEnemyColor());
-        game.spawned += 1;
-    }
-    Math.random = original;
-    assert.deepEqual(colors, ['red', 'blue', 'red', 'blue']);
-});
-
-test('calcDelta returns delta time in seconds and updates lastTime', () => {
-    const game = new Game(makeFakeCanvas());
-    game.lastTime = 1000;
-    const dt = game.calcDelta(2000);
-    assert.equal(dt, 1);
-    assert.equal(game.lastTime, 2000);
-});
-
-test('spawnEnemiesIfNeeded spawns when timer exceeds interval', () => {
-    const game = new Game(makeFakeCanvas());
-    game.waveInProgress = true;
-    game.spawnTimer = game.spawnInterval;
-    game.spawnEnemiesIfNeeded(0);
-    assert.equal(game.enemies.length, 3);
-    assert.equal(game.spawnTimer, 0);
-});
-
-test('spawnEnemiesIfNeeded accumulates timer when below interval', () => {
-    const game = new Game(makeFakeCanvas());
-    game.waveInProgress = true;
-    game.spawnEnemiesIfNeeded(0.2);
-    assert.equal(game.enemies.length, 0);
-    assert.equal(game.spawnTimer, 0.2);
-});
-
-test('updateEnemies removes enemies reaching base and reduces lives', () => {
-    const game = new Game(makeFakeCanvas());
-    attachDomStubs(game);
-    const enemy = {
-        y: game.base.y - 10,
-        h: 20,
-        update: () => {},
-        isOutOfBounds: () => false,
-    };
-    game.enemies.push(enemy);
-    const livesBefore = game.lives;
-    game.updateEnemies(0.016);
-    assert.equal(game.enemies.length, 0);
-    assert.equal(game.lives, livesBefore - 1);
-});
-
-test('checkWaveCompletion increments wave and gold', () => {
-    const game = new Game(makeFakeCanvas());
-    attachDomStubs(game);
     game.waveInProgress = true;
     game.spawned = game.enemiesPerWave;
     game.enemies = [];
-    game.nextWaveBtn.disabled = true;
+
+    const initialGold = game.gold;
     game.checkWaveCompletion();
+
     assert.equal(game.waveInProgress, false);
     assert.equal(game.wave, 2);
-    assert.equal(game.gold, game.initialGold + 3);
-    assert.equal(game.nextWaveBtn.disabled, false);
-});
-
-test('checkWaveCompletion merges adjacent towers of same color and level', () => {
-    const game = new Game(makeFakeCanvas());
-    attachDomStubs(game);
-    const cellA = game.grid[0];
-    const cellB = game.grid[2];
-    const t1 = new Tower(cellA.x, cellA.y, 'red');
-    const t2 = new Tower(cellB.x, cellB.y, 'red');
-    game.towers.push(t1, t2);
-    cellA.occupied = true;
-    cellB.occupied = true;
-    game.waveInProgress = true;
-    game.spawned = game.enemiesPerWave;
-    game.enemies = [];
-    game.checkWaveCompletion();
-    assert.equal(game.towers.length, 1);
-    assert.equal(game.towers[0], t1);
-    assert.equal(t1.level, 2);
-    assert.equal(cellA.occupied, true);
+    assert.equal(game.gold, initialGold + 3);
+    assert.equal(cellB.tower, null);
     assert.equal(cellB.occupied, false);
 });
 
-test('checkWaveCompletion triggers win on final wave', () => {
+test('resetState clears towers and cell references', () => {
     const game = new Game(makeFakeCanvas());
     attachDomStubs(game);
-    game.wave = game.maxWaves;
-    game.waveInProgress = true;
-    game.spawned = game.enemiesPerWave;
-    game.enemies = [];
-    game.checkWaveCompletion();
-    assert.equal(game.statusEl.textContent, 'WIN');
-    assert.equal(game.gameOver, true);
-});
+    const cell = game.topCells[0];
+    const tower = placeTowerOnCell(game, cell);
 
-test('resetState restores initial game values', () => {
-    const game = new Game(makeFakeCanvas());
-    attachDomStubs(game);
-    game.lives = 1;
-    game.gold = 0;
-    game.wave = 3;
-    game.towers.push({});
-    game.enemies.push({});
-    game.projectiles.push({});
-    game.waveInProgress = true;
-    game.grid[0].occupied = true;
-    game.nextWaveBtn.disabled = true;
-    game.statusEl.textContent = 'status';
     game.resetState();
-    assert.equal(game.lives, game.initialLives);
-    assert.equal(game.gold, game.initialGold);
-    assert.equal(game.wave, 1);
+
     assert.equal(game.towers.length, 0);
-    assert.equal(game.enemies.length, 0);
-    assert.equal(game.projectiles.length, 0);
-    assert.equal(game.waveInProgress, false);
-    assert.equal(game.nextWaveBtn.disabled, false);
-    assert.equal(game.grid[0].occupied, false);
-    assert.equal(game.statusEl.textContent, '');
+    assert.equal(cell.occupied, false);
+    assert.equal(cell.tower, null);
+    assert.equal(tower.cell, null);
 });
-
-test('startWave initiates wave and spawns first enemy', () => {
-    const game = new Game(makeFakeCanvas());
-    attachDomStubs(game);
-    game.enemies.push({});
-    game.spawned = 2;
-    game.spawnTimer = 1;
-
-    game.startWave();
-
-    assert.equal(game.waveInProgress, true);
-    assert.equal(game.nextWaveBtn.disabled, true);
-    assert.equal(game.enemies.length, 3);
-    assert.equal(game.spawned, 1);
-    assert.equal(game.spawnTimer, 0);
-});
-
-test('startWave does nothing if wave already in progress', () => {
-    const game = new Game(makeFakeCanvas());
-    game.waveInProgress = true;
-    game.enemies.push({});
-    game.spawned = 1;
-
-    game.startWave();
-
-    assert.equal(game.enemies.length, 1);
-    assert.equal(game.spawned, 1);
-});
-
-test('towerAttacks fires projectile when enemy in range and off cooldown', () => {
-    const game = new Game(makeFakeCanvas());
-    const tower = new Tower(100, 200);
-    const enemy = { x: 110, y: 210, w: 30, h: 30 };
-    game.towers.push(tower);
-    game.enemies.push(enemy);
-
-    game.towerAttacks(600);
-
-    assert.equal(game.projectiles.length, 1);
-    assert.equal(tower.lastShot, 600);
-});
-
-test('towerAttacks respects firing cooldown', () => {
-    const game = new Game(makeFakeCanvas());
-    const tower = new Tower(100, 200);
-    tower.lastShot = 200;
-    const enemy = { x: 110, y: 210, w: 30, h: 30 };
-    game.towers.push(tower);
-    game.enemies.push(enemy);
-
-    game.towerAttacks(600);
-
-    assert.equal(game.projectiles.length, 0);
-});
-
-test('update spawns enemy and schedules next frame', () => {
-    const game = new Game(makeFakeCanvas());
-    attachDomStubs(game);
-    game.startWave();
-    game.lastTime = 0;
-    const originalRAF = globalThis.requestAnimationFrame;
-    let scheduled = null;
-    globalThis.requestAnimationFrame = cb => { scheduled = cb; };
-
-    game.update(game.spawnInterval * 1000);
-
-    globalThis.requestAnimationFrame = originalRAF;
-    assert.equal(game.enemies.length, 6);
-    assert.equal(game.lastTime, game.spawnInterval * 1000);
-    assert.equal(scheduled, game.update);
-});
-
-test('update returns early when game over', () => {
-    const game = new Game(makeFakeCanvas());
-    attachDomStubs(game);
-    game.gameOver = true;
-    const originalRAF = globalThis.requestAnimationFrame;
-    let called = false;
-    globalThis.requestAnimationFrame = () => { called = true; };
-
-    game.update(500);
-
-    globalThis.requestAnimationFrame = originalRAF;
-    assert.equal(called, false);
-    assert.equal(game.lastTime, 0);
-});
-

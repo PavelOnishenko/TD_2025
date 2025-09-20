@@ -20,9 +20,11 @@ function drawBase(game) {
 function drawGrid(game) {
     const ctx = game.ctx;
     const grid = game.getAllCells();
+    const cellSprite = game.assets?.cell;
+    if (!cellSprite) return;
     grid.forEach(cell => {
         if (!cell.occupied) {
-            ctx.drawImage(game.assets.cell, cell.x, cell.y, cell.w, cell.h);
+            ctx.drawImage(cellSprite, cell.x, cell.y, cell.w, cell.h);
         }
     });
 }

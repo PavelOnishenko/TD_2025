@@ -9,6 +9,7 @@ export default class Tower {
         this.lastShot = 0;
         this.color = color;
         this.level = level;
+        this.cell = null;
         this.updateStats();
     }
 
@@ -50,13 +51,32 @@ export default class Tower {
 
     drawBody(ctx, c, assets) {
         const propertyName = `tower_${this.level}${this.color.charAt(0)}`;
-        const sprite = assets[propertyName];
-        if (!sprite) {
-            console.warn(`No sprite found for property name: ${propertyName}`);
+        const sprite = assets?.[propertyName];
+        if (sprite) {
+            ctx.drawImage(sprite, this.x, this.y, this.w, this.h);
             return;
         }
 
-        ctx.drawImage(sprite, this.x, this.y, this.w, this.h);
+        this.drawFallbackBody(ctx, c);
+    }
+
+    drawFallbackBody(ctx, c) {
+        ctx.beginPath();
+        if (this.level <= 1) {
+            ctx.moveTo(c.x, this.y);
+            ctx.lineTo(this.x, this.y + this.h);
+            ctx.lineTo(this.x + this.w, this.y + this.h);
+        } else {
+            const quarterHeight = this.h / 3;
+            ctx.moveTo(c.x, this.y);
+            ctx.lineTo(this.x + this.w, this.y + quarterHeight);
+            ctx.lineTo(this.x + this.w, this.y + this.h - quarterHeight);
+            ctx.lineTo(c.x, this.y + this.h);
+            ctx.lineTo(this.x, this.y + this.h - quarterHeight);
+            ctx.lineTo(this.x, this.y + quarterHeight);
+        }
+        ctx.closePath();
+        ctx.fill();
     }
 
     highlight(ctx) {

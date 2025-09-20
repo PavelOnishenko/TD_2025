@@ -6,7 +6,7 @@ import { waveActions } from './gameWaves.js';
 import { callCrazyGamesEvent } from './crazyGamesIntegration.js';
 
 class Game {
-    constructor(canvas, { width = 540, height = 960 }) {
+    constructor(canvas, { width = 540, height = 960 } = {}) {
         this.canvas = canvas;
         this.logicalW = width;
         this.logicalH = height;
@@ -65,7 +65,7 @@ class Game {
     }
 
     createCell(x, y) {
-        return { x, y, w: 40, h: 24, occupied: false, highlight: 0 };
+        return { x, y, w: 40, h: 24, occupied: false, highlight: 0, tower: null };
     }
 
     createGrid() {
@@ -95,10 +95,11 @@ class Game {
             cell.x += bottomPlatform.x;
             cell.y += bottomPlatform.y;
         });
+        this.grid = [...this.topCells, ...this.bottomCells];
     }
 
     getAllCells() {
-        return [...this.topCells, ...this.bottomCells];
+        return this.grid;
     }
 
     spawnProjectile(angle, tower) {
@@ -130,10 +131,9 @@ class Game {
     }
 
     getTowerAt(cell) {
-        return this.towers.find(t => {
-                console.log(`Comparing tower at ${t.x},${t.y} with cell at ${cell.x},${cell.y}`);
-                return Math.abs(t.x - cell.x) < 90 && Math.abs(t.y - cell.y) < 90;
-            } );
+        if (!cell) return undefined;
+        if (cell.tower) return cell.tower;
+        return this.towers.find(t => t.cell === cell);
     }
 
     update(timestamp) {
@@ -171,8 +171,12 @@ class Game {
         this.spawnInterval = cfg.interval;
         this.enemiesPerWave = cfg.cycles;
         this.getAllCells().forEach(cell => {
+            if (cell.tower) {
+                cell.tower.cell = null;
+            }
             cell.occupied = false;
             cell.highlight = 0;
+            cell.tower = null;
         });
         this.spawned = 0;
         this.spawnTimer = 0;
