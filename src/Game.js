@@ -6,7 +6,7 @@ import { waveActions } from './gameWaves.js';
 import { callCrazyGamesEvent } from './crazyGamesIntegration.js';
 
 class Game {
-    constructor(canvas, { width = 540, height = 960 }) {
+    constructor(canvas, { width = 540, height = 960 } = {}) {
         this.canvas = canvas;
         this.logicalW = width;
         this.logicalH = height;
@@ -65,7 +65,7 @@ class Game {
     }
 
     createCell(x, y) {
-        return { x, y, w: 40, h: 24, occupied: false, highlight: 0 };
+        return { x, y, w: 40, h: 24, occupied: false, highlight: 0, tower: null };
     }
 
     createGrid() {
@@ -130,10 +130,7 @@ class Game {
     }
 
     getTowerAt(cell) {
-        return this.towers.find(t => {
-                console.log(`Comparing tower at ${t.x},${t.y} with cell at ${cell.x},${cell.y}`);
-                return Math.abs(t.x - cell.x) < 90 && Math.abs(t.y - cell.y) < 90;
-            } );
+        return cell?.tower ?? null;
     }
 
     update(timestamp) {
@@ -173,6 +170,7 @@ class Game {
         this.getAllCells().forEach(cell => {
             cell.occupied = false;
             cell.highlight = 0;
+            cell.tower = null;
         });
         this.spawned = 0;
         this.spawnTimer = 0;

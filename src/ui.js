@@ -64,6 +64,8 @@ function bindCanvasClick(game) {
                 tower.y -= tower.h * 0.8;
                 game.towers.push(tower);
                 cell.occupied = true;
+                cell.tower = tower;
+                tower.cell = cell;
                 game.gold -= game.towerCost;
                 updateHUD(game);
             } else {

@@ -15,8 +15,21 @@ function makeFakeCanvas() {
             fill: () => {},
             stroke: () => {},
             strokeRect: () => {},
+            drawImage: () => {},
+            fillText: () => {},
         }),
     };
+}
+
+function makeAssets() {
+    return new Proxy({ cell: {} }, {
+        get(target, prop) {
+            if (!(prop in target)) {
+                target[prop] = {};
+            }
+            return target[prop];
+        }
+    });
 }
 
 test('switchTowerColor costs gold and respects global cooldown', () => {
@@ -24,6 +37,9 @@ test('switchTowerColor costs gold and respects global cooldown', () => {
     game.livesEl = { textContent: '' };
     game.goldEl = { textContent: '' };
     game.waveEl = { textContent: '' };
+    game.cooldownEl = { textContent: '' };
+    game.nextWaveBtn = { disabled: false };
+    game.assets = makeAssets();
     const tower = new Tower(0, 0);
 
     game.gold = game.switchCost + 1;
