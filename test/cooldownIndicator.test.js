@@ -15,8 +15,21 @@ function makeFakeCanvas() {
             fill: () => {},
             stroke: () => {},
             strokeRect: () => {},
+            drawImage: () => {},
+            fillText: () => {},
         }),
     };
+}
+
+function makeAssets() {
+    return new Proxy({ cell: {} }, {
+        get(target, prop) {
+            if (!(prop in target)) {
+                target[prop] = {};
+            }
+            return target[prop];
+        }
+    });
 }
 
 test('updateSwitchIndicator shows remaining cooldown or ready', () => {
@@ -31,6 +44,7 @@ test('updateSwitchIndicator shows remaining cooldown or ready', () => {
 test('Game.update refreshes cooldown indicator', () => {
     const game = new Game(makeFakeCanvas());
     game.cooldownEl = { textContent: '' };
+    game.assets = makeAssets();
     game.switchCooldown = 1;
     const originalRAF = globalThis.requestAnimationFrame;
     globalThis.requestAnimationFrame = () => {};
