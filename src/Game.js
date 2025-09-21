@@ -113,6 +113,7 @@ class Game {
             color: tower.color,
             damage: tower.damage
         });
+        tower.triggerFlash();
         this.audio.playFire();
     }
 
@@ -143,6 +144,7 @@ class Game {
             this.switchCooldown = Math.max(0, this.switchCooldown - dt);
             updateSwitchIndicator(this);
         }
+        this.towers.forEach(tower => tower.update(dt));
         this.spawnEnemiesIfNeeded(dt);
         this.updateEnemies(dt);
         this.towerAttacks(timestamp);

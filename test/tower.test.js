@@ -51,18 +51,53 @@ test('level 2 tower increases stats and draws highlight', () => {
     assert.deepEqual(arcCall, ['arc', 80, 105, tower.range, 0, Math.PI * 2]);
 });
 
+test('triggerFlash draws muzzle glow when active', () => {
+    const tower = new Tower(50, 60);
+    const ctx = makeFakeCtx();
+    const assets = { tower_1r: {} };
+
+    tower.triggerFlash();
+    tower.draw(ctx, assets);
+
+    const hasGlow = ctx.ops.some(op => op[0] === 'globalCompositeOperation' && op[1] === 'lighter');
+    assert.ok(hasGlow);
+});
+
+test('flash timer decays over time', () => {
+    const tower = new Tower(0, 0);
+    tower.triggerFlash();
+
+    const initial = tower.flashTimer;
+    tower.update(0.05);
+    assert.ok(tower.flashTimer < initial);
+    tower.update(10);
+    assert.equal(tower.flashTimer, 0);
+});
+
 function makeFakeCtx() {
     const ops = [];
     return {
         ops,
+        save() { ops.push(['save']); },
+        restore() { ops.push(['restore']); },
         beginPath() { ops.push(['beginPath']); },
         arc(x, y, r, s, e) { ops.push(['arc', x, y, r, s, e]); },
         set strokeStyle(v) { ops.push(['strokeStyle', v]); },
         stroke() { ops.push(['stroke']); },
         set fillStyle(v) { ops.push(['fillStyle', v]); },
+        fill() { ops.push(['fill']); },
         drawImage(img, x, y, w, h) { ops.push(['drawImage', img, x, y, w, h]); },
         strokeRect(x, y, w, h) { ops.push(['strokeRect', x, y, w, h]); },
         set font(v) { ops.push(['font', v]); },
         fillText(text, x, y) { ops.push(['fillText', text, x, y]); },
+        set globalCompositeOperation(value) { ops.push(['globalCompositeOperation', value]); },
+        createRadialGradient(x0, y0, r0, x1, y1, r1) {
+            ops.push(['createRadialGradient', x0, y0, r0, x1, y1, r1]);
+            return {
+                addColorStop(offset, color) {
+                    ops.push(['addColorStop', offset, color]);
+                }
+            };
+        },
     };
 }
