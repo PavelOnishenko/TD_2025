@@ -1,3 +1,5 @@
+import { drawExplosions } from './effects.js';
+
 export function draw(game) {
     const ctx = game.ctx;
     ctx.clearRect(0, 0, game.canvas.width, game.canvas.height);
@@ -36,4 +38,5 @@ export function drawEntities(game) {
         game.ctx.arc(p.x, p.y, game.projectileRadius, 0, Math.PI * 2);
         game.ctx.fill();
     });
+    drawExplosions(game.ctx, game.explosions ?? []);
 }

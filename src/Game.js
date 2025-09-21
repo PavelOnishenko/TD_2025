@@ -5,6 +5,7 @@ import { enemyActions } from './gameEnemies.js';
 import { waveActions } from './gameWaves.js';
 import { callCrazyGamesEvent } from './crazyGamesIntegration.js';
 import { createGameAudio } from './audio.js';
+import { updateExplosions } from './effects.js';
 
 class Game {
     constructor(canvas, { width = 540, height = 960 } = {}) {
@@ -15,6 +16,7 @@ class Game {
         this.enemies = [];
         this.towers = [];
         this.projectiles = [];
+        this.explosions = [];
         this.projectileSpeed = 800;
         this.projectileRadius = 6;
         this.projectileSpawnInterval = 500;
@@ -150,6 +152,7 @@ class Game {
         this.towerAttacks(timestamp);
         moveProjectiles(this, dt);
         handleProjectileHits(this);
+        updateExplosions(this.explosions, dt);
         this.getAllCells().forEach(cell => {
             if (cell.highlight > 0) {
                 cell.highlight = Math.max(0, cell.highlight - dt);
@@ -167,6 +170,7 @@ class Game {
         this.towers = [];
         this.enemies = [];
         this.projectiles = [];
+        this.explosions = [];
         this.waveInProgress = false;
         this.nextWaveBtn.disabled = false;
         const cfg = this.waveConfigs[0];

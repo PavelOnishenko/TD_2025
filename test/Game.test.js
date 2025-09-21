@@ -29,6 +29,9 @@ function makeFakeCanvas() {
             strokeRect: () => {},
             drawImage: () => {},
             fillText: () => {},
+            save: () => {},
+            restore: () => {},
+            set globalCompositeOperation(_) {},
         }),
     };
 }
@@ -285,6 +288,7 @@ test('resetState restores initial game values', () => {
     game.towers.push({});
     game.enemies.push({});
     game.projectiles.push({});
+    game.explosions.push({ particles: [{}] });
     game.waveInProgress = true;
     const firstCell = game.getAllCells()[0];
     firstCell.occupied = true;
@@ -298,6 +302,7 @@ test('resetState restores initial game values', () => {
     assert.equal(game.towers.length, 0);
     assert.equal(game.enemies.length, 0);
     assert.equal(game.projectiles.length, 0);
+    assert.equal(game.explosions.length, 0);
     assert.equal(game.waveInProgress, false);
     assert.equal(game.nextWaveBtn.disabled, false);
     assert.equal(firstCell.occupied, false);
