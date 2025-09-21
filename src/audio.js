@@ -50,22 +50,24 @@ export function createGameAudio() {
     }
 
     const fire = createSound({
-        src: [DATA_URI_SOUNDS.fire],
-        volume: 0.35,
+        src: ['assets/fire.wav'],
+        volume: 0.8,
         preload: true
     });
 
     const explosion = createSound({
-        src: [DATA_URI_SOUNDS.explosion],
-        volume: 0.45,
+        src: ['assets/explosion.wav'],
+        volume: 0.05,
         preload: true
     });
 
     return {
         playFire() {
+            console.log('Playing fire sound');
             fire.play();
         },
         playExplosion() {
+            console.log('Playing explosion sound');
             explosion.play();
         }
     };
