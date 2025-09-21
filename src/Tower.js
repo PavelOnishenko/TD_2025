@@ -11,6 +11,8 @@ export default class Tower {
         this.level = level;
         this.flashDuration = 0.12;
         this.flashTimer = 0;
+        this.glowTime = Math.random() * Math.PI * 2;
+        this.glowSpeed = 2.4;
         this.updateStats();
     }
 
@@ -25,6 +27,7 @@ export default class Tower {
         if (this.flashTimer > 0) {
             this.flashTimer = Math.max(0, this.flashTimer - dt);
         }
+        this.glowTime = (this.glowTime + dt * this.glowSpeed) % (Math.PI * 2);
     }
 
     triggerFlash() {
@@ -43,6 +46,10 @@ export default class Tower {
         this.drawRange(ctx, c);
         ctx.fillStyle = this.color;
         this.drawBody(ctx, c, assets);
+
+        if (this.level === 3) {
+            this.drawCrystalGlow(ctx);
+        }
 
         if (this.flashTimer > 0) {
             this.drawMuzzleFlash(ctx);
@@ -121,5 +128,46 @@ export default class Tower {
         return this.color === 'red'
             ? `rgba(255,140,100,${alpha})`
             : `rgba(140,190,255,${alpha})`;
+    }
+
+    drawCrystalGlow(ctx) {
+        const pulse = this.getCrystalPulse();
+        const { x, y } = this.getEmitterPosition();
+        const radius = this.getCrystalRadius(pulse);
+        const gradient = ctx.createRadialGradient(x, y, radius * 0.2, x, y, radius);
+        const colors = this.getCrystalGlowColor(pulse);
+        gradient.addColorStop(0, `rgba(255,255,255,${0.35 + 0.25 * pulse})`);
+        gradient.addColorStop(0.5, colors.inner);
+        gradient.addColorStop(1, colors.outer);
+        ctx.save();
+        ctx.globalCompositeOperation = 'lighter';
+        ctx.beginPath();
+        ctx.fillStyle = gradient;
+        ctx.arc(x, y, radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+    }
+
+    getCrystalPulse() {
+        return 0.5 + 0.5 * Math.sin(this.glowTime);
+    }
+
+    getCrystalRadius(pulse) {
+        const base = this.getFlashRadius() * 0.85;
+        return base * (0.9 + 0.25 * pulse);
+    }
+
+    getCrystalGlowColor(pulse) {
+        const alpha = 0.45 + 0.25 * pulse;
+        if (this.color === 'red') {
+            return {
+                inner: `rgba(255,150,120,${alpha})`,
+                outer: 'rgba(255,120,90,0)'
+            };
+        }
+        return {
+            inner: `rgba(150,190,255,${alpha})`,
+            outer: 'rgba(110,160,255,0)'
+        };
     }
 }
