@@ -14,6 +14,11 @@ export default class Enemy {
         }
         this.glowPhase = Enemy._glowPhaseCursor;
         Enemy._glowPhaseCursor = (Enemy._glowPhaseCursor + Math.PI * 0.85) % (Math.PI * 2);
+        this.trail = [];
+        this.trailSpacing = 0.04;
+        this.trailLife = 0.6;
+        this.trailMaxPoints = 24;
+        this._trailAccumulator = this.trailSpacing;
         this.engineFlame = {
             anchor: {
                 x: this.w * 0.5,
@@ -30,11 +35,13 @@ export default class Enemy {
     update(dt) {
         this.x += this.speedX * dt;
         this.y += this.speedY * dt;
+        this.updateTrail(dt);
     }
 
     draw(ctx, assets) {
         const propertyName = `swarm_${this.color.charAt(0)}`;
         const sprite = assets[propertyName];
+        this.drawTrail(ctx);
         this.drawEngineGlow(ctx);
         ctx.drawImage(sprite, this.x, this.y, this.w, this.h);
 
@@ -126,6 +133,37 @@ export default class Enemy {
         ctx.restore();
     }
 
+    drawTrail(ctx) {
+        if (!this.trail.length || !this.canRenderGlow(ctx)) {
+            return;
+        }
+
+        const palette = this.getTrailPalette();
+        ctx.save();
+        ctx.globalCompositeOperation = 'lighter';
+        for (const point of this.trail) {
+            const lifeRatio = Math.min(1, point.life / this.trailLife);
+            const fade = 1 - lifeRatio;
+            if (fade <= 0) continue;
+
+            const radius = this.w * (0.32 + 0.25 * fade);
+            ctx.save();
+            ctx.globalAlpha = fade * 0.55;
+            ctx.fillStyle = palette.outer;
+            ctx.beginPath();
+            ctx.arc(point.x, point.y, radius, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.globalAlpha = fade * 0.9;
+            ctx.fillStyle = palette.inner;
+            ctx.beginPath();
+            ctx.arc(point.x, point.y, radius * 0.55, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        }
+        ctx.restore();
+    }
+
     setEngineFlamePlacement({ anchorX, anchorY, offsetX, offsetY, angleDegrees }) {
         if (typeof anchorX === 'number') {
             this.engineFlame.anchor.x = anchorX;
@@ -160,6 +198,34 @@ export default class Enemy {
         );
     }
 
+    updateTrail(dt) {
+        this._trailAccumulator += dt;
+        const anchor = this.getTrailAnchor();
+        if (!this.trail.length) {
+            this.trail.push({ x: anchor.x, y: anchor.y, life: 0 });
+            this._trailAccumulator = 0;
+        } else if (this._trailAccumulator >= this.trailSpacing) {
+            this.trail.push({ x: anchor.x, y: anchor.y, life: 0 });
+            this._trailAccumulator = 0;
+        } else {
+            const last = this.trail[this.trail.length - 1];
+            last.x = anchor.x;
+            last.y = anchor.y;
+        }
+
+        for (let i = this.trail.length - 1; i >= 0; i--) {
+            const point = this.trail[i];
+            point.life += dt;
+            if (point.life >= this.trailLife) {
+                this.trail.splice(i, 1);
+            }
+        }
+
+        while (this.trail.length > this.trailMaxPoints) {
+            this.trail.shift();
+        }
+    }
+
     getGlowPalette() {
         const palettes = {
             red: {
@@ -189,6 +255,30 @@ export default class Enemy {
                 spark: 'rgba(255, 255, 245, 0.9)',
             }
         );
+    }
+
+    getTrailPalette() {
+        const palettes = {
+            red: {
+                inner: 'rgba(255, 210, 170, 1)',
+                outer: 'rgba(255, 100, 60, 0.75)',
+            },
+            blue: {
+                inner: 'rgba(210, 235, 255, 1)',
+                outer: 'rgba(80, 150, 255, 0.75)',
+            },
+        };
+        return palettes[this.color] ?? {
+            inner: 'rgba(255, 240, 220, 1)',
+            outer: 'rgba(255, 180, 80, 0.75)',
+        };
+    }
+
+    getTrailAnchor() {
+        return {
+            x: this.x + this.engineFlame.anchor.x + this.engineFlame.offset.x,
+            y: this.y + this.engineFlame.anchor.y + this.engineFlame.offset.y,
+        };
     }
 
     isOutOfBounds(canvasHeight) {

@@ -20,8 +20,11 @@ export const enemyActions = {
             const color = this.getEnemyColor();
             const tankEnemy = new TankEnemy(hp * 5, color, 0, startY);
             tankEnemy.setEngineFlamePlacement({
-                anchorX:this.engineFlame.anchor.x, anchorY:this.engineFlame.anchor.y, 
-                offsetX:this.engineFlame.offset.x, offsetY:this.engineFlame.offset.y, angle:this.engineFlame.angle+Math.PI
+                anchorX: tankEnemy.engineFlame.anchor.x,
+                anchorY: tankEnemy.engineFlame.anchor.y,
+                offsetX: tankEnemy.engineFlame.offset.x,
+                offsetY: tankEnemy.engineFlame.offset.y,
+                angleDegrees: 180,
             });
             this.enemies.push(tankEnemy);
         } else if (type === 'swarm') {
