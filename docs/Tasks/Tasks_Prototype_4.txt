@@ -2,7 +2,7 @@
 002 | CANCELLED | Implement light trails for ships (store recent positions, fade effect). | 001
 
 003 | DONE | The top part of towers (in form of a ball (level 1) or crystal (level 3)) should emit short bright flash when firing. | —
-004 | TODO | Add mini-explosion effect when projectile hits enemy (particle system). | —
+004 | DONE | Add mini-explosion effect when projectile hits enemy (particle system). | —
 
 005 | DONE | Add simple cyclic animation to tower crystals (pulsating glow, sine-based). | 003
 006 | CANCELLED | Add basic ship animation (light flicker or 2–3 frame cycle). | 001

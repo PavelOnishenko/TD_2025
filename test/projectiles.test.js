@@ -6,6 +6,7 @@ function makeGame() {
     return {
         projectiles: [],
         enemies: [],
+        explosions: [],
         canvas: { width: 450, height: 800 },
         gold: 0,
         wave: 1,
@@ -42,6 +43,8 @@ test('hitEnemy damages enemy and removes projectile when enemy survives', () => 
     assert.equal(game.projectiles.length, 0);
     assert.equal(game.enemies.length, 1);
     assert.equal(game.gold, 0);
+    assert.equal(game.explosions.length, 1);
+    assert.ok(game.explosions[0].particles.length > 0);
 });
 
 test('hitEnemy removes enemy and updates gold when enemy dies', () => {
@@ -58,6 +61,7 @@ test('hitEnemy removes enemy and updates gold when enemy dies', () => {
     assert.equal(game.enemies.length, 0);
     assert.equal(game.gold, 1);
     assert.equal(game.goldEl.textContent, 'Gold: 1');
+    assert.equal(game.explosions.length, 1);
 });
 
 test('handleProjectileHits removes offscreen and hit projectiles', () => {
@@ -75,6 +79,7 @@ test('handleProjectileHits removes offscreen and hit projectiles', () => {
     assert.deepEqual(game.projectiles[0], pMiss);
     assert.equal(game.enemies.length, 0);
     assert.equal(game.gold, 1);
+    assert.equal(game.explosions.length, 1);
 });
 
 test('hitEnemy deals reduced damage when colors differ', () => {
@@ -91,4 +96,5 @@ test('hitEnemy deals reduced damage when colors differ', () => {
     assert.equal(game.projectiles.length, 0);
     assert.equal(game.enemies.length, 1);
     assert.equal(game.gold, 0);
+    assert.equal(game.explosions.length, 1);
 });

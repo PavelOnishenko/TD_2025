@@ -1,4 +1,5 @@
 import { updateHUD } from './ui.js';
+import { createExplosion } from './effects.js';
 
 export function moveProjectiles(game, dt) {
     game.projectiles.forEach(p => {
@@ -15,6 +16,9 @@ export function hitEnemy(game, projectile, index) {
     enemy.hp -= calculateDamage(projectile, enemy);
     game.projectiles.splice(index, 1);
     game.audio?.playExplosion();
+    if (game.explosions) {
+        game.explosions.push(createExplosion(projectile.x, projectile.y, projectile.color));
+    }
 
     if (enemy.hp <= 0) {
         game.enemies.splice(enemyIndex, 1);
