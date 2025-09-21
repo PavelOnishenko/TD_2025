@@ -2,6 +2,7 @@ import { callCrazyGamesEvent, checkCrazyGamesIntegration, initializeCrazyGamesIn
 import Game from './Game.js';
 import { bindUI } from './ui.js';
 import { loadAssets } from './assets.js';
+import { initializeAudio } from './audio.js';
 
 function resizeCanvas() {
     const vw = window.innerWidth;
@@ -28,6 +29,8 @@ const LOGICAL_H = 960;
 await initializeCrazyGamesIntegration();
 console.log("CrazyGames integration kinda finished..");
 callCrazyGamesEvent('sdkGameLoadingStart');
+
+initializeAudio();
 
 const canvas = document.getElementById('game');
 console.log("Canvas element:", canvas);
