@@ -64,7 +64,7 @@ export function createGameAudio() {
     });
 
     const backgroundMusic = createSound({
-        src: ['assets/background_music.wav'],
+        src: ['assets/background_music.mp3'],
         volume: 0.25,
         preload: true,
         loop: true
