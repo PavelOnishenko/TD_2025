@@ -2,8 +2,8 @@ export default class Enemy {
     constructor(maxHp, color, x, y, speedX, speedY) {
         this.x = x;
         this.y = y;
-        this.w = 30;
-        this.h = 30;
+        this.w = 45;
+        this.h = 45;
         this.speedX = speedX;
         this.speedY = speedY;
         this.maxHp = maxHp;
