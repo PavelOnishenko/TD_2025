@@ -4,6 +4,7 @@ import { moveProjectiles, handleProjectileHits } from './projectiles.js';
 import { enemyActions } from './gameEnemies.js';
 import { waveActions } from './gameWaves.js';
 import { callCrazyGamesEvent } from './crazyGamesIntegration.js';
+import { createGameAudio } from './audio.js';
 
 class Game {
     constructor(canvas, { width = 540, height = 960 } = {}) {
@@ -21,6 +22,7 @@ class Game {
         this.initStats();
         this.base = { x: this.logicalW, y: this.logicalH - 60, w: 40, h: 40 };
         this.createGrid();
+        this.audio = createGameAudio();
         this.update = this.update.bind(this);
     }
 
@@ -111,6 +113,7 @@ class Game {
             color: tower.color,
             damage: tower.damage
         });
+        this.audio.playFire();
     }
 
     switchTowerColor(tower) {

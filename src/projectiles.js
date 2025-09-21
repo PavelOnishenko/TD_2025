@@ -14,6 +14,7 @@ export function hitEnemy(game, projectile, index) {
     const enemy = game.enemies[enemyIndex];
     enemy.hp -= calculateDamage(projectile, enemy);
     game.projectiles.splice(index, 1);
+    game.audio?.playExplosion();
 
     if (enemy.hp <= 0) {
         game.enemies.splice(enemyIndex, 1);

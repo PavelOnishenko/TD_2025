@@ -1,5 +1,15 @@
 const globalScope = typeof globalThis !== 'undefined' ? globalThis : window;
 
+const NOOP_AUDIO = {
+    playFire() {},
+    playExplosion() {}
+};
+
+const DATA_URI_SOUNDS = {
+    fire: 'data:audio/wav;base64,UklGRuwNAABXQVZFZm10IBAAAAABAAEAIlYAAESsAAACABAAZGF0YcgNAAAA',
+    explosion: 'data:audio/wav;base64,UklGRmwdAABXQVZFZm10IBAAAAABAAEAIlYAAESsAAACABAAZGF0YUgdAAAA'
+};
+
 function hasHowler() {
     return Boolean(globalScope && globalScope.Howl && globalScope.Howler);
 }
@@ -32,4 +42,31 @@ export function createSound(options) {
         throw new Error('Howler.js is not loaded');
     }
     return new globalScope.Howl(options);
+}
+
+export function createGameAudio() {
+    if (!hasHowler()) {
+        return NOOP_AUDIO;
+    }
+
+    const fire = createSound({
+        src: [DATA_URI_SOUNDS.fire],
+        volume: 0.35,
+        preload: true
+    });
+
+    const explosion = createSound({
+        src: [DATA_URI_SOUNDS.explosion],
+        volume: 0.45,
+        preload: true
+    });
+
+    return {
+        playFire() {
+            fire.play();
+        },
+        playExplosion() {
+            explosion.play();
+        }
+    };
 }
