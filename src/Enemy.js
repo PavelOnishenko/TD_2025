@@ -126,7 +126,7 @@ export default class Enemy {
         ctx.restore();
     }
 
-    setEngineFlamePlacement({ anchorX, anchorY, offsetX, offsetY, angle }) {
+    setEngineFlamePlacement({ anchorX, anchorY, offsetX, offsetY, angleDegrees }) {
         if (typeof anchorX === 'number') {
             this.engineFlame.anchor.x = anchorX;
         }
@@ -139,8 +139,8 @@ export default class Enemy {
         if (typeof offsetY === 'number') {
             this.engineFlame.offset.y = offsetY;
         }
-        if (typeof angle === 'number') {
-            this.engineFlame.angle = angle;
+        if (typeof angleDegrees === 'number') {
+            this.engineFlame.angle = angleDegrees * (Math.PI / 180);
         }
     }
 
