@@ -9,4 +9,4 @@
 
 007 | DONE | Integrate howler.js audio library. | —
 008 | DONE | Add SFX for tower firing and projectile explosion. | 007, 003, 004
-009 | TODO | Add background music loop. | 007
+009 | DONE | Add background music loop. | 007
