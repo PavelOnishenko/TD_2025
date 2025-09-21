@@ -18,7 +18,12 @@ export const enemyActions = {
         const startY = 200;
         if (type === 'tank') {
             const color = this.getEnemyColor();
-            this.enemies.push(new TankEnemy(hp * 5, color, 0, startY));
+            const tankEnemy = new TankEnemy(hp * 5, color, 0, startY);
+            tankEnemy.setEngineFlamePlacement({
+                anchorX:this.engineFlame.anchor.x, anchorY:this.engineFlame.anchor.y, 
+                offsetX:this.engineFlame.offset.x, offsetY:this.engineFlame.offset.y, angle:this.engineFlame.angle+Math.PI
+            });
+            this.enemies.push(tankEnemy);
         } else if (type === 'swarm') {
             const groupSize = 3;
             const swarmHp = Math.max(1, Math.floor(hp / 2));
@@ -26,7 +31,14 @@ export const enemyActions = {
             for (let i = 0; i < groupSize; i++) {
                 const color = this.getEnemyColor();
                 const y = startY + i * spacing;
-                this.enemies.push(new SwarmEnemy(swarmHp, color, 0, y));
+                const swarmEnemy = new SwarmEnemy(swarmHp, color, 0, y);
+                swarmEnemy.setEngineFlamePlacement({
+                    anchorX:swarmEnemy.engineFlame.anchor.x, anchorY:swarmEnemy.engineFlame.anchor.y, 
+                    offsetX:swarmEnemy.engineFlame.offset.x-10, offsetY:swarmEnemy.engineFlame.offset.y, 
+                    angleDegrees:swarmEnemy.engineFlame.angle - 55
+                });
+                swarmEnemy.setEngineFlamePlacement
+                this.enemies.push(swarmEnemy);
             }
         } else {
             const color = this.getEnemyColor();
