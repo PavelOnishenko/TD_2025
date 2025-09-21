@@ -1,5 +1,5 @@
 001 | TODO | Add engine glow for ships (use shadowBlur or Pixi filter glow, simple effect). | —
-002 | TODO | Implement light trails for ships (store recent positions, fade effect). | 001
+002 | CANCELLED | Implement light trails for ships (store recent positions, fade effect). | 001
 
 003 | TODO | The top part of towers (in form of a ball (level 1) or crystal (level 3)) should emit short bright flash when firing. | —
 004 | TODO | Add mini-explosion effect when projectile hits enemy (particle system). | —
