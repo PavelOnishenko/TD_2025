@@ -4,7 +4,7 @@
 003 | DONE | The top part of towers (in form of a ball (level 1) or crystal (level 3)) should emit short bright flash when firing. | —
 004 | TODO | Add mini-explosion effect when projectile hits enemy (particle system). | —
 
-005 | TODO | Add simple cyclic animation to tower crystals (pulsating glow, sine-based). | 003
+005 | DONE | Add simple cyclic animation to tower crystals (pulsating glow, sine-based). | 003
 006 | TODO | Add basic ship animation (light flicker or 2–3 frame cycle). | 001
 
 007 | DONE | Integrate howler.js audio library. | —
