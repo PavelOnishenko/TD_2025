@@ -5,7 +5,7 @@
 004 | TODO | Add mini-explosion effect when projectile hits enemy (particle system). | —
 
 005 | DONE | Add simple cyclic animation to tower crystals (pulsating glow, sine-based). | 003
-006 | TODO | Add basic ship animation (light flicker or 2–3 frame cycle). | 001
+006 | CANCELLED | Add basic ship animation (light flicker or 2–3 frame cycle). | 001
 
 007 | DONE | Integrate howler.js audio library. | —
 008 | DONE | Add SFX for tower firing and projectile explosion. | 007, 003, 004
