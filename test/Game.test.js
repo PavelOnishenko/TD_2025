@@ -66,6 +66,7 @@ test('spawnProjectile main', () => {
     assert.ok(Math.abs(projectile.vy - 673.18) < 0.01);
     assert.equal(projectile.color, tower.color);
     assert.equal(projectile.damage, 1);
+    assert.equal(tower.flashTimer, tower.flashDuration);
 });
 
 test('spawnProjectile uses tower damage', () => {
@@ -96,6 +97,12 @@ test('spawnEnemy main', () => {
 test('spawnEnemy can create tank enemies', () => {
     const fakeCanvas = makeFakeCanvas();
     const game = new Game(fakeCanvas);
+
+    game.engineFlame = {
+        anchor: { x: 0, y: 0 },
+        offset: { x: 0, y: 0 },
+        angle: 0
+    };
 
     const baseHp = game.enemyHpPerWave[game.wave - 1];
     game.spawnEnemy('tank');
