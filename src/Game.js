@@ -187,6 +187,7 @@ class Game {
     restart() {
         const wasGameOver = this.gameOver;
         this.resetState();
+        this.audio.playMusic();
         if (wasGameOver) {
             this.lastTime = performance.now();
             requestAnimationFrame(this.update);
@@ -196,6 +197,7 @@ class Game {
 
     run() {
         callCrazyGamesEvent('gameplayStart');
+        this.audio.playMusic();
         this.lastTime = performance.now();
         requestAnimationFrame(this.update);
     }

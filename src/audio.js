@@ -2,7 +2,9 @@ const globalScope = typeof globalThis !== 'undefined' ? globalThis : window;
 
 const NOOP_AUDIO = {
     playFire() {},
-    playExplosion() {}
+    playExplosion() {},
+    playMusic() {},
+    stopMusic() {}
 };
 
 const DATA_URI_SOUNDS = {
@@ -61,6 +63,13 @@ export function createGameAudio() {
         preload: true
     });
 
+    const backgroundMusic = createSound({
+        src: ['assets/background_music.mp3'],
+        volume: 0.25,
+        preload: true,
+        loop: true
+    });
+
     return {
         playFire() {
             console.log('Playing fire sound');
@@ -69,6 +78,16 @@ export function createGameAudio() {
         playExplosion() {
             console.log('Playing explosion sound');
             explosion.play();
+        },
+        playMusic() {
+            if (!backgroundMusic.playing()) {
+                backgroundMusic.play();
+            }
+        },
+        stopMusic() {
+            if (backgroundMusic.playing()) {
+                backgroundMusic.stop();
+            }
         }
     };
 }
