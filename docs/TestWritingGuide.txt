@@ -1,4 +1,5 @@
-Cover each function in files containing game logic. Don't test rendering, UI and launch code (like main.js, ui.js and render.js)
+Cover each function in files containing game logic. 
+Test everything that is reasonable and useful to test.
 For each function cover main scenario, all if/else/conditional operator branches and those corner cases that you deem worth testing.
 Be reasonable. If you see that there is no sense in testing a function, don't do it.
 Tests must be helpful in development stage we are currently on. 
