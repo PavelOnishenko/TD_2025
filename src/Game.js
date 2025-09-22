@@ -145,10 +145,7 @@ class Game {
     update(timestamp) {
         if (this.gameOver) return;
         const dt = this.calcDelta(timestamp);
-        if (this.switchCooldown > 0) {
-            this.switchCooldown = Math.max(0, this.switchCooldown - dt);
-            updateSwitchIndicator(this);
-        }
+        this.updateSwitchCooldown(dt);
         this.towers.forEach(tower => tower.update(dt));
         this.spawnEnemiesIfNeeded(dt);
         this.updateEnemies(dt);
@@ -165,6 +162,13 @@ class Game {
         draw(this);
         if (!this.gameOver) 
             requestAnimationFrame(this.update);
+    }
+
+    updateSwitchCooldown(dt) {
+        if (this.switchCooldown > 0) {
+            this.switchCooldown = Math.max(0, this.switchCooldown - dt);
+            updateSwitchIndicator(this);
+        }
     }
 
     resetState() {
