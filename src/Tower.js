@@ -1,3 +1,10 @@
+const DEFAULT_PLACEMENT_ANCHOR = Object.freeze({
+    // The anchor describes the fraction of the sprite width/height between the
+    // top-left corner and the point that should sit on the cell origin.
+    x: 0.25,
+    y: 0.8,
+});
+
 export default class Tower {
     constructor(x, y, color = 'red', level = 1) {
         this.x = x;
@@ -43,6 +50,32 @@ export default class Tower {
             x: this.x + this.w / 2,
             y: this.y + this.h / 2
         };
+    }
+
+    /**
+     * Aligns the tower so its sprite anchor sits on the provided cell.
+     * @param {{ x: number, y: number }} cell
+     */
+    alignToCell(cell) {
+        const offset = this.getPlacementOffset();
+        this.x = cell.x - offset.x;
+        this.y = cell.y - offset.y;
+    }
+
+    /**
+     * Computes the offset between the sprite origin and the visual anchor.
+     * @returns {{ x: number, y: number }}
+     */
+    getPlacementOffset() {
+        const anchor = Tower.getPlacementAnchor();
+        return {
+            x: this.w * anchor.x,
+            y: this.h * anchor.y,
+        };
+    }
+
+    static getPlacementAnchor() {
+        return DEFAULT_PLACEMENT_ANCHOR;
     }
 
     draw(ctx, assets) {
