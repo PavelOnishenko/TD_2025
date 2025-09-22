@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import Game from '../src/Game.js';
-import Tower from '../src/Tower.js';
-import { TankEnemy, SwarmEnemy } from '../src/Enemy.js';
+import Game from '../src/js/core/Game.js';
+import Tower from '../src/js/entities/Tower.js';
+import { TankEnemy, SwarmEnemy } from '../src/js/entities/Enemy.js';
 
 function placeTowerOnCell(game, cell, { color = 'red', level = 1 } = {}) {
     const tower = new Tower(cell.x, cell.y, color, level);

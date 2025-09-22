@@ -1,11 +1,11 @@
-import { updateHUD, updateSwitchIndicator } from './ui.js';
+import { updateHUD, updateSwitchIndicator } from '../systems/ui.js';
 import { draw } from './render.js';
 import { moveProjectiles, handleProjectileHits } from './projectiles.js';
 import { enemyActions } from './gameEnemies.js';
 import { waveActions } from './gameWaves.js';
-import { callCrazyGamesEvent } from './crazyGamesIntegration.js';
-import { createGameAudio } from './audio.js';
-import { updateExplosions } from './effects.js';
+import { callCrazyGamesEvent } from '../systems/crazyGamesIntegration.js';
+import { createGameAudio } from '../systems/audio.js';
+import { updateExplosions } from '../systems/effects.js';
 import GameGrid from './gameGrid.js';
 
 class Game {

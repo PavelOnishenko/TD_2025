@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import Enemy, { TankEnemy, SwarmEnemy } from '../src/Enemy.js';
+import Enemy, { TankEnemy, SwarmEnemy } from '../src/js/entities/Enemy.js';
 
 test('update moves enemy based on dt and both speed components', () => {
     const enemy = new Enemy(3, 'red', 0, 100, 120, 80);

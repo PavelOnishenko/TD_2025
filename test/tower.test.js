@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import Tower from '../src/Tower.js';
+import Tower from '../src/js/entities/Tower.js';
 
 test('center returns tower midpoint', () => {
     const tower = new Tower(10, 20);

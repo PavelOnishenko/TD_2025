@@ -1,4 +1,4 @@
-import { drawExplosions } from './effects.js';
+import { drawExplosions } from '../systems/effects.js';
 
 export function draw(game) {
     const ctx = game.ctx;
