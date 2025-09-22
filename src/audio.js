@@ -7,11 +7,6 @@ const NOOP_AUDIO = {
     stopMusic() {}
 };
 
-const DATA_URI_SOUNDS = {
-    fire: 'data:audio/wav;base64,UklGRuwNAABXQVZFZm10IBAAAAABAAEAIlYAAESsAAACABAAZGF0YcgNAAAA',
-    explosion: 'data:audio/wav;base64,UklGRmwdAABXQVZFZm10IBAAAAABAAEAIlYAAESsAAACABAAZGF0YUgdAAAA'
-};
-
 function hasHowler() {
     return Boolean(globalScope && globalScope.Howl && globalScope.Howler);
 }
