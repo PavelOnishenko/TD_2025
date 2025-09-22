@@ -4,7 +4,7 @@ import { bindUI } from '../src/ui.js';
 
 test('bindUI attaches tip element with text', () => {
   const elements = {};
-  const ids = ['lives','gold','wave','cooldown','status','nextWave','restart','tip'];
+  const ids = ['lives','gold','wave','status','nextWave','restart','tip'];
   for (const id of ids) {
     elements[id] = { textContent: '', addEventListener: () => {} };
   }
@@ -20,7 +20,6 @@ test('bindUI attaches tip element with text', () => {
     gold: 20,
     wave: 1,
     maxWaves: 10,
-    switchCooldown: 0,
     towerCost: 10
   };
   global.document = doc;

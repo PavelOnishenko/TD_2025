@@ -32,45 +32,31 @@ function makeAssets() {
     });
 }
 
-test('switchTowerColor costs gold and respects global cooldown', () => {
+test('switchTowerColor only depends on available gold', () => {
     const game = new Game(makeFakeCanvas());
     game.livesEl = { textContent: '' };
     game.goldEl = { textContent: '' };
     game.waveEl = { textContent: '' };
-    game.cooldownEl = { textContent: '' };
     game.nextWaveBtn = { disabled: false };
     game.assets = makeAssets();
     const tower = new Tower(0, 0);
+    assert.equal('switchCooldown' in game, false);
 
-    game.gold = game.switchCost + 1;
-    assert.equal(game.switchCooldown, 0);
+    game.gold = game.switchCost * 2;
     const first = game.switchTowerColor(tower);
     assert.equal(first, true);
     assert.equal(tower.color, 'blue');
-    assert.equal(game.gold, 1);
-    assert.equal(game.switchCooldown, game.switchCooldownDuration);
+    assert.equal(game.gold, game.switchCost);
 
     const second = game.switchTowerColor(tower);
-    assert.equal(second, false);
-    assert.equal(tower.color, 'blue');
-    assert.equal(game.gold, 1);
-
-    const originalRAF = globalThis.requestAnimationFrame;
-    globalThis.requestAnimationFrame = () => {};
-    game.lastTime = 0;
-    game.update(2000);
-    globalThis.requestAnimationFrame = originalRAF;
-    assert.equal(game.switchCooldown, 0);
+    assert.equal(second, true);
+    assert.equal(tower.color, 'red');
+    assert.equal(game.gold, 0);
+    assert.equal('switchCooldown' in game, false);
 
     game.gold = 0;
     const third = game.switchTowerColor(tower);
     assert.equal(third, false);
-    assert.equal(tower.color, 'blue');
-    assert.equal(game.gold, 0);
-
-    game.gold = game.switchCost;
-    const fourth = game.switchTowerColor(tower);
-    assert.equal(fourth, true);
     assert.equal(tower.color, 'red');
     assert.equal(game.gold, 0);
 });

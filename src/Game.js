@@ -1,4 +1,4 @@
-import { updateHUD, updateSwitchIndicator } from './ui.js';
+import { updateHUD } from './ui.js';
 import { draw } from './render.js';
 import { moveProjectiles, handleProjectileHits } from './projectiles.js';
 import { enemyActions } from './gameEnemies.js';
@@ -64,8 +64,6 @@ class Game {
         this.enemyHpPerWave = [2, 3, 4, 5, 6];
         this.gameOver = false;
         this.shootingInterval = 500;
-        this.switchCooldownDuration = 0.5;
-        this.switchCooldown = 0;
         this.colorProbStart = 0.5;
         this.colorProbEnd = 0.5;
     }
@@ -122,13 +120,11 @@ class Game {
     }
 
     switchTowerColor(tower) {
-        if (this.switchCooldown > 0 || this.gold < this.switchCost) 
+        if (this.gold < this.switchCost)
             return false;
         tower.color = tower.color === 'red' ? 'blue' : 'red';
         this.gold -= this.switchCost;
         updateHUD(this);
-        this.switchCooldown = this.switchCooldownDuration;
-        updateSwitchIndicator(this);
         return true;
     }
 
@@ -145,11 +141,6 @@ class Game {
     update(timestamp) {
         if (this.gameOver) return;
         const dt = this.calcDelta(timestamp);
-        // todo remove switch cooldown feature altogether!
-        if (this.switchCooldown > 0) {
-            this.switchCooldown = Math.max(0, this.switchCooldown - dt);
-            updateSwitchIndicator(this);
-        }
         this.towers.forEach(tower => tower.update(dt));
         this.spawnEnemiesIfNeeded(dt);
         this.updateEnemies(dt);
@@ -190,9 +181,7 @@ class Game {
         this.spawnTimer = 0;
         this.gameOver = false;
         this.statusEl.textContent = '';
-        this.switchCooldown = 0;
         updateHUD(this);
-        updateSwitchIndicator(this);
     }
 
     restart() {

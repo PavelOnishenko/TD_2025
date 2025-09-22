@@ -42,7 +42,6 @@ function attachDomStubs(game) {
     game.waveEl = { textContent: '' };
     game.statusEl = { textContent: '', style: {} };
     game.nextWaveBtn = { disabled: false };
-    game.cooldownEl = { textContent: '' };
     const assetProxy = new Proxy({ cell: {} }, {
         get(target, prop) {
             if (!(prop in target)) {

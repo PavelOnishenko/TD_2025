@@ -25,14 +25,12 @@ export function bindUI(game) {
     bindButtons(game);
     bindCanvasClick(game);
     updateHUD(game);
-    updateSwitchIndicator(game);
 }
 
 function bindHUD(game) {
     game.livesEl = document.getElementById('lives');
     game.goldEl = document.getElementById('gold');
     game.waveEl = document.getElementById('wave');
-    game.cooldownEl = document.getElementById('cooldown');
     game.statusEl = document.getElementById('status');
     game.tipEl = document.getElementById('tip');
     game.nextWaveBtn = document.getElementById('nextWave');
@@ -81,14 +79,6 @@ export function updateHUD(game) {
     game.livesEl.textContent = `Lives: ${game.lives}`;
     game.goldEl.textContent = `Gold: ${game.gold}`;
     game.waveEl.textContent = `Wave: ${game.wave}/${game.maxWaves}`;
-}
-
-export function updateSwitchIndicator(game) {
-    if (!game.cooldownEl) return;
-    game.cooldownEl.textContent =
-        game.switchCooldown > 0
-            ? `Switch: ${game.switchCooldown.toFixed(1)}s`
-            : 'Switch: Ready';
 }
 
 export function endGame(game, text) {
