@@ -1,4 +1,4 @@
-import { drawEnemyEngineGlow } from './effects.js';
+import { drawEnemyEngineGlow } from '../systems/effects.js';
 
 export default class Enemy {
     constructor(maxHp, color, x, y, speedX, speedY) {

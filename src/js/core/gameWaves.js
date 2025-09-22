@@ -1,4 +1,4 @@
-import { updateHUD, endGame } from './ui.js';
+import { updateHUD, endGame } from '../systems/ui.js';
 
 export const waveActions = {
     startWave() {

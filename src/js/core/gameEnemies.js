@@ -1,5 +1,5 @@
-import Enemy, { TankEnemy, SwarmEnemy } from './Enemy.js';
-import { updateHUD, endGame } from './ui.js';
+import Enemy, { TankEnemy, SwarmEnemy } from '../entities/Enemy.js';
+import { updateHUD, endGame } from '../systems/ui.js';
 
 export const enemyActions = {
     getEnemyColor() {

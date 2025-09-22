@@ -1,4 +1,4 @@
-import { drawTowerMuzzleFlash, drawTowerTopGlow } from './effects.js';
+import { drawTowerMuzzleFlash, drawTowerTopGlow } from '../systems/effects.js';
 
 const DEFAULT_PLACEMENT_ANCHOR = Object.freeze({
     // The anchor describes the fraction of the sprite width/height between the

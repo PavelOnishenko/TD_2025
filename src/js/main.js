@@ -1,8 +1,8 @@
-import { callCrazyGamesEvent, checkCrazyGamesIntegration, initializeCrazyGamesIntegration } from './crazyGamesIntegration.js';
-import Game from './Game.js';
-import { bindUI } from './ui.js';
-import { loadAssets } from './assets.js';
-import { initializeAudio } from './audio.js';
+import { callCrazyGamesEvent, checkCrazyGamesIntegration, initializeCrazyGamesIntegration } from './systems/crazyGamesIntegration.js';
+import Game from './core/Game.js';
+import { bindUI } from './systems/ui.js';
+import { loadAssets } from './systems/assets.js';
+import { initializeAudio } from './systems/audio.js';
 
 function resizeCanvas() {
     const vw = window.innerWidth;

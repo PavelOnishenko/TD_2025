@@ -1,4 +1,4 @@
-import Tower from './Tower.js';
+import Tower from '../entities/Tower.js';
 
 function getMousePos(canvas, e) {
     const rect = canvas.getBoundingClientRect();

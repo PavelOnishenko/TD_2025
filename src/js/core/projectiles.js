@@ -1,5 +1,5 @@
-import { updateHUD } from './ui.js';
-import { createExplosion } from './effects.js';
+import { updateHUD } from '../systems/ui.js';
+import { createExplosion } from '../systems/effects.js';
 
 export function moveProjectiles(game, dt) {
     game.projectiles.forEach(p => {
