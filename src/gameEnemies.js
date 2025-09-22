@@ -10,41 +10,70 @@ export const enemyActions = {
     },
 
     spawnEnemy(type) {
-        const hp = this.enemyHpPerWave[this.wave - 1] ?? this.enemyHpPerWave.at(-1);
-        if (!type) {
-            const cfg = this.waveConfigs[this.wave - 1] ?? this.waveConfigs.at(-1);
-            type = this.wave <= 2 ? 'swarm' : (Math.random() < cfg.tankChance ? 'tank' : 'swarm');
-        }
+        const hp = this.determineEnemyHp();
+        const enemyType = this.determineEnemyType(type);
         const startY = 200;
-        if (type === 'tank') {
-            const color = this.getEnemyColor();
-            const tankEnemy = new TankEnemy(hp * 5, color, 0, startY);
-            tankEnemy.setEngineFlamePlacement({
-                anchorX:tankEnemy.engineFlame.anchor.x, anchorY:tankEnemy.engineFlame.anchor.y, 
-                offsetX:tankEnemy.engineFlame.offset.x, offsetY:tankEnemy.engineFlame.offset.y, 
-                angle:tankEnemy.engineFlame.angle+Math.PI
-            });
-            this.enemies.push(tankEnemy);
-        } else if (type === 'swarm') {
-            const groupSize = 3;
-            const swarmHp = Math.max(1, Math.floor(hp / 2));
-            const spacing = 40;
-            for (let i = 0; i < groupSize; i++) {
-                const color = this.getEnemyColor();
-                const y = startY + i * spacing;
-                const swarmEnemy = new SwarmEnemy(swarmHp, color, 0, y);
-                swarmEnemy.setEngineFlamePlacement({
-                    anchorX:swarmEnemy.engineFlame.anchor.x, anchorY:swarmEnemy.engineFlame.anchor.y, 
-                    offsetX:swarmEnemy.engineFlame.offset.x-10, offsetY:swarmEnemy.engineFlame.offset.y, 
-                    angleDegrees:swarmEnemy.engineFlame.angle - 55
-                });
-                this.enemies.push(swarmEnemy);
-            }
+
+        if (enemyType === 'tank') {
+            this.spawnTankEnemy(hp, startY);
+        } else if (enemyType === 'swarm') {
+            this.spawnSwarmGroup(hp, startY);
         } else {
-            const color = this.getEnemyColor();
-            this.enemies.push(new Enemy(hp, color, this.pathX, startY));
+            this.spawnDefaultEnemy(hp, startY);
         }
+
         this.spawned += 1;
+    },
+
+    determineEnemyHp() {
+        return this.enemyHpPerWave[this.wave - 1] ?? this.enemyHpPerWave.at(-1);
+    },
+
+    determineEnemyType(type) {
+        if (type) {
+            return type;
+        }
+
+        const cfg = this.waveConfigs[this.wave - 1] ?? this.waveConfigs.at(-1);
+        if (this.wave <= 2) {
+            return 'swarm';
+        }
+
+        return Math.random() < cfg.tankChance ? 'tank' : 'swarm';
+    },
+
+    spawnTankEnemy(baseHp, startY) {
+        const color = this.getEnemyColor();
+        const tankEnemy = new TankEnemy(baseHp * 5, color, 0, startY);
+        tankEnemy.setEngineFlamePlacement({
+            anchorX:tankEnemy.engineFlame.anchor.x, anchorY:tankEnemy.engineFlame.anchor.y,
+            offsetX:tankEnemy.engineFlame.offset.x, offsetY:tankEnemy.engineFlame.offset.y,
+            angle:tankEnemy.engineFlame.angle+Math.PI
+        });
+        this.enemies.push(tankEnemy);
+    },
+
+    spawnSwarmGroup(baseHp, startY) {
+        const groupSize = 3;
+        const swarmHp = Math.max(1, Math.floor(baseHp / 2));
+        const spacing = 40;
+
+        for (let i = 0; i < groupSize; i++) {
+            const color = this.getEnemyColor();
+            const y = startY + i * spacing;
+            const swarmEnemy = new SwarmEnemy(swarmHp, color, 0, y);
+            swarmEnemy.setEngineFlamePlacement({
+                anchorX:swarmEnemy.engineFlame.anchor.x, anchorY:swarmEnemy.engineFlame.anchor.y,
+                offsetX:swarmEnemy.engineFlame.offset.x-10, offsetY:swarmEnemy.engineFlame.offset.y,
+                angleDegrees:swarmEnemy.engineFlame.angle - 55
+            });
+            this.enemies.push(swarmEnemy);
+        }
+    },
+
+    spawnDefaultEnemy(hp, startY) {
+        const color = this.getEnemyColor();
+        this.enemies.push(new Enemy(hp, color, this.pathX, startY));
     },
 
     spawnEnemiesIfNeeded(dt) {
