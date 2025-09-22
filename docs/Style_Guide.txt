@@ -14,3 +14,4 @@ Here are code style rules:
 13. Be simple and effective.
 14. One-liner ifs are not allowed.
 15. The fewer lines for a statement, the better, in most cases. If possible to write in 1 line, most of the time it's better to do it this way.
+16. No folder should contain more than 10 files/folders as its immediate children. 
