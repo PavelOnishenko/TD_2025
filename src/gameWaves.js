@@ -20,28 +20,38 @@ export const waveActions = {
 
     mergeTowers(row) {
         for (let i = 0; i < row.length - 1; i++) {
-            const a = row[i];
-            const b = row[i + 1];
-            if (!a.occupied || !b.occupied) continue;
+            const cellA = row[i];
+            const cellB = row[i + 1];
+            if (!this.canMergeCells(cellA, cellB)) continue;
 
-            const ta = this.getTowerAt(a);
-            const tb = this.getTowerAt(b);
-            if (!ta || !tb) continue;
+            const towerA = this.getTowerAt(cellA);
+            const towerB = this.getTowerAt(cellB);
+            if (!this.canMergeTowers(towerA, towerB)) continue;
 
-            if (ta.color === tb.color && ta.level === tb.level) {
-                a.tower = ta;
-                ta.level += 1;
-                ta.updateStats();
-                this.towers = this.towers.filter(t => t !== tb);
-                if (tb.cell) {
-                    tb.cell.tower = null;
-                    tb.cell = null;
-                }
-                b.occupied = false;
-                b.tower = null;
-                i++;
-            }
+            this.mergeTowerPair(cellA, cellB, towerA, towerB);
+            i++;
         }
+    },
+
+    canMergeCells(cellA, cellB) {
+        return cellA.occupied && cellB.occupied;
+    },
+
+    canMergeTowers(towerA, towerB) {
+        return towerA && towerB && towerA.color === towerB.color && towerA.level === towerB.level;
+    },
+
+    mergeTowerPair(cellA, cellB, towerA, towerB) {
+        cellA.tower = towerA;
+        towerA.level += 1;
+        towerA.updateStats();
+        this.towers = this.towers.filter(t => t !== towerB);
+        if (towerB.cell) {
+            towerB.cell.tower = null;
+            towerB.cell = null;
+        }
+        cellB.occupied = false;
+        cellB.tower = null;
     },
 
     checkWaveCompletion() {
