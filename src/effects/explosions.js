@@ -26,16 +26,7 @@ export function createExplosion(x, y, color) {
         const angle = Math.random() * Math.PI * 2;
         const speed = MIN_SPEED + Math.random() * (MAX_SPEED - MIN_SPEED);
         const life = MIN_LIFE + Math.random() * (MAX_LIFE - MIN_LIFE);
-        return {
-            x,
-            y,
-            vx: Math.cos(angle) * speed,
-            vy: Math.sin(angle) * speed,
-            life,
-            maxLife: life,
-            radius: 2 + Math.random() * 2,
-            color,
-        };
+        return {x, y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed, life, maxLife: life, radius: 2 + Math.random() * 2, color};
     });
 
     return { particles };
