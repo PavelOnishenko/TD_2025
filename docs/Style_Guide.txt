@@ -13,3 +13,4 @@ Here are code style rules:
 12. When extracting class or function, aim for even distribution of LOC between original entity and new entity.
 13. Be simple and effective.
 14. One-liner ifs are not allowed.
+15. The fewer lines for a statement, the better, in most cases. If possible to write in 1 line, most of the time it's better to do it this way.
