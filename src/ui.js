@@ -54,22 +54,27 @@ function bindCanvasClick(game) {
         }
 
         const cell = game.getAllCells().find(c => isInside(pos, c));
-        if (!cell) return;
-        if (!cell.occupied) {
-            if (game.gold >= game.towerCost) {
-                const tower = new Tower(cell.x, cell.y);
-                tower.alignToCell(cell);
-                game.towers.push(tower);
-                cell.occupied = true;
-                cell.tower = tower;
-                tower.cell = cell;
-                game.gold -= game.towerCost;
-                updateHUD(game);
-            } else {
-                cell.highlight = 0.3;
-            }
+        if (cell) {
+            tryShoot(game, cell);
         }
     });
+}
+
+function tryShoot(game, cell) {
+    if (!cell.occupied) {
+        if (game.gold >= game.towerCost) {
+            const tower = new Tower(cell.x, cell.y);
+            tower.alignToCell(cell);
+            game.towers.push(tower);
+            cell.occupied = true;
+            cell.tower = tower;
+            tower.cell = cell;
+            game.gold -= game.towerCost;
+            updateHUD(game);
+        } else {
+            cell.highlight = 0.3;
+        }
+    }
 }
 
 export function updateHUD(game) {
