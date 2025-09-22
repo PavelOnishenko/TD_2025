@@ -6,6 +6,7 @@ import { waveActions } from './gameWaves.js';
 import { callCrazyGamesEvent } from './crazyGamesIntegration.js';
 import { createGameAudio } from './audio.js';
 import { updateExplosions } from './effects.js';
+import GameGrid from './gameGrid.js';
 
 class Game {
     constructor(canvas, { width = 540, height = 960, assets = null } = {}) {
@@ -23,7 +24,9 @@ class Game {
         this.lastTime = 0;
         this.initStats();
         this.base = { x: this.logicalW, y: this.logicalH - 60, w: 40, h: 40 };
-        this.createGrid();
+        this.grid = new GameGrid();
+        this.topCells = this.grid.topCells;
+        this.bottomCells = this.grid.bottomCells;
         this._assets = null;
         this.audio = createGameAudio();
         if (assets) {
@@ -85,31 +88,8 @@ class Game {
         ];
     }
 
-    createCell(x, y) {
-        return { x, y, w: 40, h: 24, occupied: false, highlight: 0, tower: null };
-    }
-
-    createGrid() {
-        const topPlatform = { x: 70, y: 140 };
-        const bottomPlatform = { x: 80, y: 480 };
-        this.topCells = [
-            this.createCell(0, 0), this.createCell(40, 50), this.createCell(100, 110), this.createCell(170, 165), this.createCell(230, 200), this.createCell(300, 225)
-        ];
-        this.topCells.forEach(cell => {
-            cell.x += topPlatform.x;
-            cell.y += topPlatform.y;
-        });
-        this.bottomCells = [
-            this.createCell(0, 0), this.createCell(75, 25), this.createCell(155, 65), this.createCell(220, 115), this.createCell(290, 170), this.createCell(325, 250)
-        ];
-        this.bottomCells.forEach(cell => {
-            cell.x += bottomPlatform.x;
-            cell.y += bottomPlatform.y;
-        });
-    }
-
     getAllCells() {
-        return [...this.topCells, ...this.bottomCells];
+        return this.grid.getAllCells();
     }
 
     spawnProjectile(angle, tower) {
@@ -153,11 +133,7 @@ class Game {
         moveProjectiles(this, dt);
         handleProjectileHits(this);
         updateExplosions(this.explosions, dt);
-        this.getAllCells().forEach(cell => {
-            if (cell.highlight > 0) {
-                cell.highlight = Math.max(0, cell.highlight - dt);
-            }
-        });
+        this.grid.fadeHighlights(dt);
         this.checkWaveCompletion();
         draw(this);
         if (!this.gameOver) 
@@ -184,11 +160,7 @@ class Game {
         const cfg = this.waveConfigs[0];
         this.spawnInterval = cfg.interval;
         this.enemiesPerWave = cfg.cycles;
-        this.getAllCells().forEach(cell => {
-            cell.occupied = false;
-            cell.highlight = 0;
-            cell.tower = null;
-        });
+        this.grid.resetCells();
         this.spawned = 0;
         this.spawnTimer = 0;
         this.gameOver = false;
