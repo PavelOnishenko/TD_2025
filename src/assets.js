@@ -45,10 +45,7 @@ export async function loadAssets() {
         );
     }
 
-    return {
-        ...images,
-        sounds
-    };
+    return {...images, sounds};
 }
 
 function loadImage(url) {
