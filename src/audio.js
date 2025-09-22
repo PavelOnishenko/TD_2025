@@ -46,46 +46,36 @@ export function createSound(options) {
     return new globalScope.Howl(options);
 }
 
-export function createGameAudio() {
+export function createGameAudio(sounds = {}) {
     if (!hasHowler()) {
         return NOOP_AUDIO;
     }
 
-    const fire = createSound({
-        src: ['assets/fire.wav'],
-        volume: 0.8,
-        preload: true
-    });
-
-    const explosion = createSound({
-        src: ['assets/explosion.wav'],
-        volume: 0.05,
-        preload: true
-    });
-
-    const backgroundMusic = createSound({
-        src: ['assets/background_music.mp3'],
-        volume: 0.25,
-        preload: true,
-        loop: true
-    });
+    const fire = sounds.fire ?? null;
+    const explosion = sounds.explosion ?? null;
+    const backgroundMusic = sounds.backgroundMusic ?? null;
 
     return {
         playFire() {
-            console.log('Playing fire sound');
-            fire.play();
+            if (fire) {
+                console.log('Playing fire sound');
+                fire.play();
+            }
         },
         playExplosion() {
-            console.log('Playing explosion sound');
-            explosion.play();
+            if (explosion) {
+                console.log('Playing explosion sound');
+                explosion.play();
+            }
         },
         playMusic() {
-            if (!backgroundMusic.playing()) {
+            if (backgroundMusic && typeof backgroundMusic.play === 'function' &&
+                typeof backgroundMusic.playing === 'function' && !backgroundMusic.playing()) {
                 backgroundMusic.play();
             }
         },
         stopMusic() {
-            if (backgroundMusic.playing()) {
+            if (backgroundMusic && typeof backgroundMusic.playing === 'function' && backgroundMusic.playing()) {
                 backgroundMusic.stop();
             }
         }

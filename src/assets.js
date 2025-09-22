@@ -1,16 +1,54 @@
-// assets.js
+import { createSound, isAudioSupported } from './audio.js';
+
+const IMAGE_SOURCES = {
+    bg: 'assets/bg_plats.png',
+    cell: 'assets/cell_cut.png',
+    tower_1r: 'assets/tower_1R.png',
+    tower_1b: 'assets/tower_1B.png',
+    tower_2r: 'assets/tower_2R.png',
+    tower_2b: 'assets/tower_2B.png',
+    tower_3r: 'assets/tower_3R.png',
+    tower_3b: 'assets/tower_3B.png',
+    swarm_r: 'assets/swarm_R.png',
+    swarm_b: 'assets/swarm_B.png'
+};
+
+const SOUND_OPTIONS = {
+    fire: {
+        src: ['assets/fire.wav'],
+        volume: 0.8,
+        preload: true
+    },
+    explosion: {
+        src: ['assets/explosion.wav'],
+        volume: 0.05,
+        preload: true
+    },
+    backgroundMusic: {
+        src: ['assets/background_music.mp3'],
+        volume: 0.25,
+        preload: true,
+        loop: true
+    }
+};
+
 export async function loadAssets() {
-    const bg = await loadImage('assets/bg_plats.png');
-    const cell = await loadImage('assets/cell_cut.png');
-    const tower_1r = await loadImage('assets/tower_1R.png');
-    const tower_1b = await loadImage('assets/tower_1B.png');
-    const tower_2r = await loadImage('assets/tower_2R.png');
-    const tower_2b = await loadImage('assets/tower_2B.png');
-    const tower_3r = await loadImage('assets/tower_3R.png');
-    const tower_3b = await loadImage('assets/tower_3B.png');
-    const swarm_r = await loadImage('assets/swarm_R.png');
-    const swarm_b = await loadImage('assets/swarm_B.png');
-    return {bg, cell, tower_1r, tower_1b, tower_2r, tower_2b, tower_3r, tower_3b, swarm_r, swarm_b};
+    const imageEntries = await Promise.all(
+        Object.entries(IMAGE_SOURCES).map(async ([key, url]) => [key, await loadImage(url)])
+    );
+    const images = Object.fromEntries(imageEntries);
+
+    let sounds = {};
+    if (isAudioSupported()) {
+        sounds = Object.fromEntries(
+            Object.entries(SOUND_OPTIONS).map(([key, options]) => [key, createSound(options)])
+        );
+    }
+
+    return {
+        ...images,
+        sounds
+    };
 }
 
 function loadImage(url) {

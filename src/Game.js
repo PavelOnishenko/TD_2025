@@ -8,7 +8,7 @@ import { createGameAudio } from './audio.js';
 import { updateExplosions } from './effects.js';
 
 class Game {
-    constructor(canvas, { width = 540, height = 960 } = {}) {
+    constructor(canvas, { width = 540, height = 960, assets = null } = {}) {
         this.canvas = canvas;
         this.logicalW = width;
         this.logicalH = height;
@@ -24,8 +24,25 @@ class Game {
         this.initStats();
         this.base = { x: this.logicalW, y: this.logicalH - 60, w: 40, h: 40 };
         this.createGrid();
+        this._assets = null;
         this.audio = createGameAudio();
+        if (assets) {
+            this.assets = assets;
+        }
         this.update = this.update.bind(this);
+    }
+
+    get assets() {
+        return this._assets;
+    }
+
+    set assets(value) {
+        this._assets = value;
+        if (value?.sounds) {
+            this.audio = createGameAudio(value.sounds);
+        } else {
+            this.audio = createGameAudio();
+        }
     }
 
     initStats() {
