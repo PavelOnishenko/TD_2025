@@ -12,3 +12,4 @@ Here are code style rules:
 11. Code should be testable.
 12. When extracting class or function, aim for even distribution of LOC between original entity and new entity.
 13. Be simple and effective.
+14. One-liner ifs are not allowed.
