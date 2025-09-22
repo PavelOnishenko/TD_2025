@@ -22,11 +22,13 @@ export const waveActions = {
         for (let i = 0; i < row.length - 1; i++) {
             const a = row[i];
             const b = row[i + 1];
-            if (!a.occupied || !b.occupied) continue;
+            if (!a.occupied || !b.occupied) 
+                continue;
 
             const ta = this.getTowerAt(a);
             const tb = this.getTowerAt(b);
-            if (!ta || !tb) continue;
+            if (!ta || !tb) 
+                continue;
 
             if (ta.color === tb.color && ta.level === tb.level) {
                 a.tower = ta;
