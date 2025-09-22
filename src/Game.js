@@ -93,24 +93,14 @@ class Game {
         const topPlatform = { x: 70, y: 140 };
         const bottomPlatform = { x: 80, y: 480 };
         this.topCells = [
-            this.createCell(0, 0),
-            this.createCell(40, 50),
-            this.createCell(100, 110),
-            this.createCell(170, 165),
-            this.createCell(230, 200),
-            this.createCell(300, 225),
+            this.createCell(0, 0), this.createCell(40, 50), this.createCell(100, 110), this.createCell(170, 165), this.createCell(230, 200), this.createCell(300, 225)
         ];
         this.topCells.forEach(cell => {
             cell.x += topPlatform.x;
             cell.y += topPlatform.y;
         });
         this.bottomCells = [
-            this.createCell(0, 0),
-            this.createCell(75, 25),
-            this.createCell(155, 65),
-            this.createCell(220, 115),
-            this.createCell(290, 170),
-            this.createCell(325, 250),
+            this.createCell(0, 0), this.createCell(75, 25), this.createCell(155, 65), this.createCell(220, 115), this.createCell(290, 170), this.createCell(325, 250)
         ];
         this.bottomCells.forEach(cell => {
             cell.x += bottomPlatform.x;
@@ -125,19 +115,15 @@ class Game {
     spawnProjectile(angle, tower) {
         const c = tower.center();
         this.projectiles.push({
-            x: c.x,
-            y: c.y,
-            vx: Math.cos(angle) * this.projectileSpeed,
-            vy: Math.sin(angle) * this.projectileSpeed,
-            color: tower.color,
-            damage: tower.damage
+            x: c.x, y: c.y, vx: Math.cos(angle) * this.projectileSpeed, vy: Math.sin(angle) * this.projectileSpeed, color: tower.color, damage: tower.damage
         });
         tower.triggerFlash();
         this.audio.playFire();
     }
 
     switchTowerColor(tower) {
-        if (this.switchCooldown > 0 || this.gold < this.switchCost) return false;
+        if (this.switchCooldown > 0 || this.gold < this.switchCost) 
+            return false;
         tower.color = tower.color === 'red' ? 'blue' : 'red';
         this.gold -= this.switchCost;
         updateHUD(this);
@@ -159,6 +145,7 @@ class Game {
     update(timestamp) {
         if (this.gameOver) return;
         const dt = this.calcDelta(timestamp);
+        // todo remove switch cooldown feature altogether!
         if (this.switchCooldown > 0) {
             this.switchCooldown = Math.max(0, this.switchCooldown - dt);
             updateSwitchIndicator(this);
@@ -177,7 +164,8 @@ class Game {
         });
         this.checkWaveCompletion();
         draw(this);
-        if (!this.gameOver) requestAnimationFrame(this.update);
+        if (!this.gameOver) 
+            requestAnimationFrame(this.update);
     }
 
     resetState() {

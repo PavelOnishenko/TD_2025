@@ -16,17 +16,7 @@ export default class Enemy {
         }
         this.glowPhase = Enemy._glowPhaseCursor;
         Enemy._glowPhaseCursor = (Enemy._glowPhaseCursor + Math.PI * 0.85) % (Math.PI * 2);
-        this.engineFlame = {
-            anchor: {
-                x: this.w * 0.5,
-                y: this.h * 0.18,
-            },
-            offset: {
-                x: 0,
-                y: 0,
-            },
-            angle: 0,
-        };
+        this.engineFlame = { anchor: {x: this.w * 0.5, y: this.h * 0.18}, offset: {x: 0, y: 0}, angle: 0 };
     }
 
     update(dt) {
@@ -90,30 +80,18 @@ export default class Enemy {
     getGlowPalette() {
         const palettes = {
             red: {
-                core: 'rgba(255, 243, 232, 1)',
-                mid: 'rgba(255, 186, 140, 0.85)',
-                halo: 'rgba(255, 90, 40, 0.24)',
-                flare: 'rgba(255, 154, 84, 0.7)',
-                trail: 'rgba(255, 94, 48, 0)',
-                spark: 'rgba(255, 246, 235, 0.95)',
+                core: 'rgba(255, 243, 232, 1)', mid: 'rgba(255, 186, 140, 0.85)', halo: 'rgba(255, 90, 40, 0.24)', 
+                flare: 'rgba(255, 154, 84, 0.7)', trail: 'rgba(255, 94, 48, 0)', spark: 'rgba(255, 246, 235, 0.95)'
             },
             blue: {
-                core: 'rgba(232, 246, 255, 1)',
-                mid: 'rgba(132, 206, 255, 0.85)',
-                halo: 'rgba(64, 148, 255, 0.24)',
-                flare: 'rgba(152, 214, 255, 0.75)',
-                trail: 'rgba(66, 156, 255, 0)',
-                spark: 'rgba(255, 255, 255, 0.92)',
-            },
+                core: 'rgba(232, 246, 255, 1)', mid: 'rgba(132, 206, 255, 0.85)', halo: 'rgba(64, 148, 255, 0.24)',
+                flare: 'rgba(152, 214, 255, 0.75)', trail: 'rgba(66, 156, 255, 0)', spark: 'rgba(255, 255, 255, 0.92)'
+            }
         };
         return (
             palettes[this.color] ?? {
-                core: 'rgba(255, 248, 220, 1)',
-                mid: 'rgba(255, 224, 150, 0.8)',
-                halo: 'rgba(255, 200, 80, 0.22)',
-                flare: 'rgba(255, 210, 120, 0.65)',
-                trail: 'rgba(255, 190, 90, 0)',
-                spark: 'rgba(255, 255, 245, 0.9)',
+                core: 'rgba(255, 248, 220, 1)', mid: 'rgba(255, 224, 150, 0.8)', halo: 'rgba(255, 200, 80, 0.22)',
+                flare: 'rgba(255, 210, 120, 0.65)', trail: 'rgba(255, 190, 90, 0)', spark: 'rgba(255, 255, 245, 0.9)',
             }
         );
     }
