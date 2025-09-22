@@ -145,7 +145,6 @@ class Game {
     update(timestamp) {
         if (this.gameOver) return;
         const dt = this.calcDelta(timestamp);
-        // todo remove switch cooldown feature altogether!
         if (this.switchCooldown > 0) {
             this.switchCooldown = Math.max(0, this.switchCooldown - dt);
             updateSwitchIndicator(this);
