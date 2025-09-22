@@ -26,6 +26,15 @@ function drawGrid(game) {
         if (!cell.occupied) {
             ctx.drawImage(game.assets.cell, cell.x, cell.y, cell.w, cell.h);
         }
+
+        if (cell.highlight > 0) {
+            const alpha = Math.min(1, cell.highlight * 3);
+            ctx.save();
+            ctx.globalAlpha = alpha;
+            ctx.fillStyle = 'red';
+            ctx.fillRect(cell.x, cell.y, cell.w, cell.h);
+            ctx.restore();
+        }
     });
 }
 
