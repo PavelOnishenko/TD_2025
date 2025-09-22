@@ -35,10 +35,6 @@ export const enemyActions = {
         }
 
         const cfg = this.waveConfigs[this.wave - 1] ?? this.waveConfigs.at(-1);
-        if (this.wave <= 2) {
-            return 'swarm';
-        }
-
         return Math.random() < cfg.tankChance ? 'tank' : 'swarm';
     },
 
