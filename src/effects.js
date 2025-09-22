@@ -26,16 +26,7 @@ export function createExplosion(x, y, color) {
         const angle = Math.random() * Math.PI * 2;
         const speed = MIN_SPEED + Math.random() * (MAX_SPEED - MIN_SPEED);
         const life = MIN_LIFE + Math.random() * (MAX_LIFE - MIN_LIFE);
-        return {
-            x,
-            y,
-            vx: Math.cos(angle) * speed,
-            vy: Math.sin(angle) * speed,
-            life,
-            maxLife: life,
-            radius: 2 + Math.random() * 2,
-            color,
-        };
+        return {x,y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed, life, maxLife: life, radius: 2 + Math.random() * 2, color};
     });
 
     return { particles };
@@ -71,12 +62,16 @@ export function drawExplosions(ctx, explosions = []) {
             if (particle.life > 0) particles.push(particle);
         }
     }
-
-    if (!particles.length) return;
+    if (!particles.length) 
+        return;
 
     ctx.save();
     ctx.globalCompositeOperation = 'lighter';
+    drawParticlesArray(particles, ctx);
+    ctx.restore();
+}
 
+function drawParticlesArray(particles, ctx) {
     for (const particle of particles) {
         const preset = getColorPreset(particle.color);
         const progress = Math.max(0, Math.min(1, particle.life / particle.maxLife));
@@ -88,8 +83,6 @@ export function drawExplosions(ctx, explosions = []) {
         ctx.arc(particle.x, particle.y, radius, 0, Math.PI * 2);
         ctx.fill();
     }
-
-    ctx.restore();
 }
 
 export function drawEnemyEngineGlow(ctx, enemy) {
