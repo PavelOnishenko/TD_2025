@@ -74,3 +74,22 @@ test('switchTowerColor costs gold and respects global cooldown', () => {
     assert.equal(tower.color, 'red');
     assert.equal(game.gold, 0);
 });
+
+test('updateSwitchCooldown decreases timer and updates indicator', () => {
+    const game = new Game(makeFakeCanvas());
+    game.cooldownEl = { textContent: 'initial' };
+
+    game.switchCooldown = 0;
+    game.updateSwitchCooldown(0.2);
+    assert.equal(game.switchCooldown, 0);
+    assert.equal(game.cooldownEl.textContent, 'initial');
+
+    game.switchCooldown = 0.3;
+    game.updateSwitchCooldown(0.1);
+    assert.ok(Math.abs(game.switchCooldown - 0.2) < 1e-6);
+    assert.equal(game.cooldownEl.textContent, 'Switch: 0.2s');
+
+    game.updateSwitchCooldown(0.5);
+    assert.equal(game.switchCooldown, 0);
+    assert.equal(game.cooldownEl.textContent, 'Switch: Ready');
+});
