@@ -37,7 +37,6 @@ console.log("Canvas element:", canvas);
 const assets = await loadAssets();
 console.log("Assets loaded:", assets);
 const game = new Game(canvas, { width: LOGICAL_W, height: LOGICAL_H, assets });
-game.assets = assets;
 console.log("Game instance created:", game);
 console.log("Game assets:", game.assets);
 bindUI(game);
