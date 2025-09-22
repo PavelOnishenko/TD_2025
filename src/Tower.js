@@ -46,10 +46,7 @@ export default class Tower {
     }
 
     center() {
-        return {
-            x: this.x + this.w / 2,
-            y: this.y + this.h / 2
-        };
+        return { x: this.x + this.w / 2, y: this.y + this.h / 2};
     }
 
     /**
@@ -68,10 +65,7 @@ export default class Tower {
      */
     getPlacementOffset() {
         const anchor = Tower.getPlacementAnchor();
-        return {
-            x: this.w * anchor.x,
-            y: this.h * anchor.y,
-        };
+        return { x: this.w * anchor.x, y: this.h * anchor.y };
     }
 
     static getPlacementAnchor() {
@@ -83,7 +77,6 @@ export default class Tower {
         this.drawRange(ctx, c);
         ctx.fillStyle = this.color;
         this.drawBody(ctx, c, assets);
-
         this.drawTopGlow(ctx);
 
         if (this.flashTimer > 0) {
@@ -100,9 +93,7 @@ export default class Tower {
     drawRange(ctx, c) {
         ctx.beginPath();
         ctx.arc(c.x, c.y, this.range, 0, Math.PI * 2);
-        ctx.strokeStyle = this.color === 'red'
-            ? 'rgba(255,0,0,0.3)'
-            : 'rgba(0,0,255,0.3)';
+        ctx.strokeStyle = this.color === 'red' ? 'rgba(255,0,0,0.3)' : 'rgba(0,0,255,0.3)';
         ctx.stroke();
     }
 
@@ -113,7 +104,6 @@ export default class Tower {
             console.warn(`No sprite found for property name: ${propertyName}`);
             return;
         }
-
         ctx.drawImage(sprite, this.x, this.y, this.w, this.h);
     }
 
