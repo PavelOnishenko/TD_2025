@@ -25,26 +25,16 @@ function resizeCanvas() {
 
 const LOGICAL_W = 540;
 const LOGICAL_H = 960;
-
 await initializeCrazyGamesIntegration();
 console.log("CrazyGames integration kinda finished..");
 callCrazyGamesEvent('sdkGameLoadingStart');
-
 initializeAudio();
-
 const canvas = document.getElementById('game');
-console.log("Canvas element:", canvas);
 const assets = await loadAssets();
-console.log("Assets loaded:", assets);
 const game = new Game(canvas, { width: LOGICAL_W, height: LOGICAL_H, assets });
-console.log("Game instance created:", game);
-console.log("Game assets:", game.assets);
 bindUI(game);
-
 callCrazyGamesEvent('sdkGameLoadingStop');
-
 resizeCanvas();
 window.addEventListener('resize', resizeCanvas);
-
 game.run();
 

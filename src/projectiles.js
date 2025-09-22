@@ -53,10 +53,5 @@ function calculateDamage(projectile, enemy) {
 }
 
 function isProjectileOffscreen(game, p) {
-    return (
-        p.x < 0 ||
-        p.x > game.canvas.width ||
-        p.y < 0 ||
-        p.y > game.canvas.height
-    );
+    return p.x < 0 || p.x > game.canvas.width || p.y < 0 || p.y > game.canvas.height;
 }
