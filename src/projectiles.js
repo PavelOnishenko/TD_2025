@@ -11,7 +11,6 @@ export function moveProjectiles(game, dt) {
 export function hitEnemy(game, projectile, index) {
     const enemyIndex = findCollidingEnemy(projectile, game.enemies);
     if (enemyIndex === -1) return false;
-
     const enemy = game.enemies[enemyIndex];
     enemy.hp -= calculateDamage(projectile, enemy);
     game.projectiles.splice(index, 1);
@@ -38,12 +37,7 @@ export function handleProjectileHits(game) {
 }
 
 function findCollidingEnemy(projectile, enemies) {
-    return enemies.findIndex(e =>
-        projectile.x >= e.x &&
-        projectile.x <= e.x + e.w &&
-        projectile.y >= e.y &&
-        projectile.y <= e.y + e.h
-    );
+    return enemies.findIndex(e => projectile.x >= e.x && projectile.x <= e.x + e.w && projectile.y >= e.y && projectile.y <= e.y + e.h );
 }
 
 function calculateDamage(projectile, enemy) {
