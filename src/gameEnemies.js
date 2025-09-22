@@ -88,7 +88,7 @@ export const enemyActions = {
             e.update(dt);
             if (e.x + e.w >= this.base.x) {
                 this.enemies.splice(i, 1);
-                this.lives -= 1;
+                this.lives--;
                 updateHUD(this);
                 if (this.lives <= 0) {
                     endGame(this, 'LOSE');

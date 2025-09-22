@@ -12,42 +12,19 @@ class GameGrid {
     }
 
     buildGrid() {
-        this.topCells = this.createRow(this.topOrigin, [
-            { x: 0, y: 0 },
-            { x: 40, y: 50 },
-            { x: 100, y: 110 },
-            { x: 170, y: 165 },
-            { x: 230, y: 200 },
-            { x: 300, y: 225 }
-        ]);
+        const topCells = [ { x: 0, y: 0 }, { x: 40, y: 50 }, { x: 100, y: 110 }, { x: 170, y: 165 }, { x: 230, y: 200 }, { x: 300, y: 225 }];
+        this.topCells = this.createRow(this.topOrigin, topCells);
 
-        this.bottomCells = this.createRow(this.bottomOrigin, [
-            { x: 0, y: 0 },
-            { x: 75, y: 25 },
-            { x: 155, y: 65 },
-            { x: 220, y: 115 },
-            { x: 290, y: 170 },
-            { x: 325, y: 250 }
-        ]);
+        const bottomCells = [ { x: 0, y: 0 }, { x: 75, y: 25 }, { x: 155, y: 65 }, { x: 220, y: 115 }, { x: 290, y: 170 }, { x: 325, y: 250 }];
+        this.bottomCells = this.createRow(this.bottomOrigin, bottomCells);
     }
 
     createRow(origin, offsets) {
-        return offsets.map(offset => this.createCell(
-            origin.x + offset.x,
-            origin.y + offset.y
-        ));
+        return offsets.map(offset => this.createCell(origin.x + offset.x, origin.y + offset.y));
     }
 
     createCell(x, y) {
-        return {
-            x,
-            y,
-            w: this.cellWidth,
-            h: this.cellHeight,
-            occupied: false,
-            highlight: 0,
-            tower: null
-        };
+        return {x,y,w: this.cellWidth,h: this.cellHeight,occupied: false,highlight: 0,tower: null};
     }
 
     getAllCells() {
