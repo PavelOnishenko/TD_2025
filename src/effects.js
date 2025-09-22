@@ -92,31 +92,33 @@ export function drawExplosions(ctx, explosions = []) {
     ctx.restore();
 }
 
-export function drawEnemyEngineGlow(ctx, enemy) {
-    if (!enemy || typeof enemy.canRenderGlow !== 'function' || !enemy.canRenderGlow(ctx)) {
-        return;
-    }
+function shouldRenderGlow(enemy, ctx) {
+    return (
+        enemy &&
+        typeof enemy.canRenderGlow === 'function' &&
+        enemy.canRenderGlow(ctx)
+    );
+}
 
-    const palette = typeof enemy.getGlowPalette === 'function' ? enemy.getGlowPalette() : null;
-    if (!palette) {
-        return;
+function resolveGlowPalette(enemy) {
+    if (typeof enemy.getGlowPalette === 'function') {
+        return enemy.getGlowPalette();
     }
+    return null;
+}
+
+function computeGlowState(enemy) {
     const anchorX = enemy.x + enemy.engineFlame.anchor.x + enemy.engineFlame.offset.x;
     const anchorY = enemy.y + enemy.engineFlame.anchor.y + enemy.engineFlame.offset.y;
-    const now = typeof performance !== 'undefined' && typeof performance.now === 'function'
+    const timeSource = typeof performance !== 'undefined' && typeof performance.now === 'function'
         ? performance.now()
         : Date.now();
-    const flicker = 0.75 + Math.sin(now / 180 + enemy.glowPhase) * 0.25;
-    const stretch = 1.15 + Math.sin(now / 260 + enemy.glowPhase * 0.6) * 0.2;
+    const flicker = 0.75 + Math.sin(timeSource / 180 + enemy.glowPhase) * 0.25;
+    const stretch = 1.15 + Math.sin(timeSource / 260 + enemy.glowPhase * 0.6) * 0.2;
+    return { anchorX, anchorY, flicker, stretch };
+}
 
-    ctx.save();
-    ctx.globalCompositeOperation = 'lighter';
-
-    ctx.save();
-    ctx.translate(anchorX, anchorY);
-    ctx.rotate(enemy.engineFlame.angle);
-
-    // Soft halo hugging the ship's hull
+function drawGlowHalo(ctx, enemy, palette, flicker, stretch) {
     ctx.save();
     ctx.scale(1, 1.25 * stretch);
     ctx.globalAlpha = 0.55;
@@ -130,8 +132,9 @@ export function drawEnemyEngineGlow(ctx, enemy) {
     ctx.arc(0, 0, haloRadius, 0, Math.PI * 2);
     ctx.fill();
     ctx.restore();
+}
 
-    // Main flame body trailing behind the ship
+function drawGlowFlame(ctx, enemy, palette, flicker, stretch) {
     ctx.save();
     ctx.translate(0, -enemy.h * 0.05);
     ctx.scale(1, stretch * 1.5);
@@ -147,11 +150,11 @@ export function drawEnemyEngineGlow(ctx, enemy) {
     ctx.moveTo(0, 0);
     ctx.quadraticCurveTo(flameWidth, -flameHeight * 0.35, 0, -flameHeight);
     ctx.quadraticCurveTo(-flameWidth, -flameHeight * 0.35, 0, 0);
-    ctx.closePath();
     ctx.fill();
     ctx.restore();
+}
 
-    // Bright sparkle at the exhaust center for a hot core
+function drawGlowSpark(ctx, enemy, palette, flicker) {
     ctx.save();
     ctx.translate(0, -enemy.h * 0.1);
     ctx.scale(1, 1 + 0.3 * flicker);
@@ -165,7 +168,21 @@ export function drawEnemyEngineGlow(ctx, enemy) {
     ctx.arc(0, 0, sparkRadius, 0, Math.PI * 2);
     ctx.fill();
     ctx.restore();
+}
 
+export function drawEnemyEngineGlow(ctx, enemy) {
+    if (!shouldRenderGlow(enemy, ctx)) return;
+    const palette = resolveGlowPalette(enemy);
+    if (!palette) return;
+    const { anchorX, anchorY, flicker, stretch } = computeGlowState(enemy);
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.save();
+    ctx.translate(anchorX, anchorY);
+    ctx.rotate(enemy.engineFlame.angle);
+    drawGlowHalo(ctx, enemy, palette, flicker, stretch);
+    drawGlowFlame(ctx, enemy, palette, flicker, stretch);
+    drawGlowSpark(ctx, enemy, palette, flicker);
     ctx.restore();
     ctx.restore();
 }
