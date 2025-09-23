@@ -51,10 +51,10 @@ class Game {
 
     initStats() {
         this.initialLives = 5;
-        this.initialGold = 50;
+        this.initialGold = 100;
         this.lives = this.initialLives;
         this.gold = this.initialGold;
-        this.wave = 1;
+        this.wave = 3;
         this.maxWaves = 10;
         this.towerCost = 12;
         this.switchCost = 4;
@@ -65,7 +65,7 @@ class Game {
         this.enemiesPerWave = cfg.cycles;
         this.spawned = 0;
         this.spawnTimer = 0;
-        this.enemyHpPerWave = [2, 3, 4, 5];
+        this.enemyHpPerWave = [2, 3, 4, 5, 5, 6, 6, 7, 7, 8];
         this.gameOver = false;
         this.shootingInterval = 500;
         this.switchCooldownDuration = 0.5;
