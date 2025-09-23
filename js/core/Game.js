@@ -201,7 +201,23 @@ class Game {
         this.spawned = 0;
         this.spawnTimer = 0;
         this.gameOver = false;
-        this.statusEl.textContent = '';
+        if (this.statusEl) {
+            this.statusEl.textContent = '';
+            this.statusEl.style.color = '';
+        }
+        if (this.endOverlay) {
+            this.endOverlay.classList.add('hidden');
+        }
+        if (this.endMenu) {
+            this.endMenu.classList.remove('win');
+            this.endMenu.classList.remove('lose');
+        }
+        if (this.endMessageEl) {
+            this.endMessageEl.textContent = '';
+        }
+        if (this.endDetailEl) {
+            this.endDetailEl.textContent = '';
+        }
         this.switchCooldown = 0;
         updateHUD(this);
         updateSwitchIndicator(this);
