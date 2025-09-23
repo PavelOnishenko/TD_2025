@@ -51,21 +51,25 @@ class Game {
 
     initStats() {
         this.initialLives = 5;
-        this.initialGold = 100;
+        this.initialGold = 50;
         this.lives = this.initialLives;
         this.gold = this.initialGold;
-        this.wave = 3;
+        this.wave = 1;
         this.maxWaves = 10;
         this.towerCost = 12;
         this.switchCost = 4;
         this.waveInProgress = false;
         this.waveConfigs = this.getWaveConfigs();
+        this.tankBurstSchedule = [];
+        this.tankBurstSet = new Set();
+        this.tankScheduleWave = 0;
         const cfg = this.waveConfigs[0];
+        this.prepareTankScheduleForWave(cfg, 1);
         this.spawnInterval = cfg.interval;
         this.enemiesPerWave = cfg.cycles;
         this.spawned = 0;
         this.spawnTimer = 0;
-        this.enemyHpPerWave = [2, 3, 4, 5, 5, 6, 6, 7, 7, 8];
+        this.enemyHpPerWave = [2, 3, 4, 5, 6, 7, 8, 9, 10, 12];
         this.gameOver = false;
         this.shootingInterval = 500;
         this.switchCooldownDuration = 0.5;
@@ -76,17 +80,48 @@ class Game {
 
     getWaveConfigs() {
         return [
-            { interval: 1, cycles: 20, tankChance: 0 },
-            { interval: 1, cycles: 25, tankChance: 0 },
-            { interval: 1, cycles: 22, tankChance: 0.1 },
-            { interval: 1, cycles: 25, tankChance: 0.12 },
-            { interval: 1, cycles: 28, tankChance: 0.15 },
-            { interval: 1, cycles: 30, tankChance: 0.18 },
-            { interval: 1, cycles: 32, tankChance: 0.2 },
-            { interval: 1, cycles: 35, tankChance: 0.25 },
-            { interval: 1, cycles: 38, tankChance: 0.3 },
-            { interval: 1, cycles: 40, tankChance: 0.4 }
+            { interval: 1, cycles: 20, tanksCount: 0 },
+            { interval: 1, cycles: 25, tanksCount: 0 },
+            { interval: 1, cycles: 22, tanksCount: 2 },
+            { interval: 1, cycles: 25, tanksCount: 3 },
+            { interval: 1, cycles: 28, tanksCount: 4 },
+            { interval: 1, cycles: 30, tanksCount: 5 },
+            { interval: 1, cycles: 32, tanksCount: 6 },
+            { interval: 1, cycles: 35, tanksCount: 9 },
+            { interval: 1, cycles: 38, tanksCount: 11 },
+            { interval: 1, cycles: 40, tanksCount: 16 }
         ];
+    }
+
+    prepareTankScheduleForWave(cfg, waveNumber) {
+        if (!cfg) {
+            this.tankBurstSchedule = [];
+            this.tankBurstSet = new Set();
+            this.tankScheduleWave = waveNumber;
+            return;
+        }
+        this.tankBurstSchedule = this.generateTankBurstSchedule(cfg.cycles, cfg.tanksCount ?? 0);
+        this.tankBurstSet = new Set(this.tankBurstSchedule);
+        this.tankScheduleWave = waveNumber;
+    }
+
+    generateTankBurstSchedule(totalCycles, tanksCount) {
+        const total = Math.max(0, Math.floor(totalCycles ?? 0));
+        const requested = Math.max(0, Math.floor(tanksCount ?? 0));
+        if (total === 0 || requested === 0) {
+            return [];
+        }
+
+        const clampedCount = Math.min(requested, total);
+        const positions = Array.from({ length: total }, (_, i) => i + 1);
+        for (let i = positions.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [positions[i], positions[j]] = [positions[j], positions[i]];
+        }
+
+        const selection = positions.slice(0, clampedCount);
+        selection.sort((a, b) => a - b);
+        return selection;
     }
 
     getAllCells() {
@@ -161,6 +196,7 @@ class Game {
         const cfg = this.waveConfigs[0];
         this.spawnInterval = cfg.interval;
         this.enemiesPerWave = cfg.cycles;
+        this.prepareTankScheduleForWave(cfg, 1);
         this.grid.resetCells();
         this.spawned = 0;
         this.spawnTimer = 0;

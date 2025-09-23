@@ -15,6 +15,7 @@ export const waveActions = {
             this.colorProbStart = Math.random();
             this.colorProbEnd = Math.random();
         } while (Math.abs(this.colorProbStart - this.colorProbEnd) <= 0.35);
+        this.prepareTankScheduleForWave(cfg, this.wave);
         this.spawnEnemy();
     },
 
