@@ -1,4 +1,5 @@
 import Tower from '../entities/Tower.js';
+import { callCrazyGamesEvent } from './crazyGamesIntegration.js';
 
 function getMousePos(canvas, e) {
     const rect = canvas.getBoundingClientRect();
@@ -40,11 +41,20 @@ function bindHUD(game) {
     game.restartBtn = document.getElementById('restart');
     game.startOverlay = document.getElementById('startOverlay');
     game.startBtn = document.getElementById('startGame');
+    game.endOverlay = document.getElementById('endOverlay');
+    game.endMenu = document.getElementById('endMenu');
+    game.endMessageEl = document.getElementById('endMessage');
+    game.endDetailEl = document.getElementById('endDetail');
+    game.endRestartBtn = document.getElementById('endRestart');
 }
 
 function bindButtons(game) {
     game.nextWaveBtn.addEventListener('click', () => game.startWave());
-    game.restartBtn.addEventListener('click', () => game.restart());
+    const handleRestart = () => {
+        game.restart();
+        hideEndScreen(game);
+    };
+    game.restartBtn.addEventListener('click', handleRestart);
     if (game.startBtn) {
         game.startBtn.addEventListener('click', () => {
             if (game.startOverlay) {
@@ -58,6 +68,9 @@ function bindButtons(game) {
             }
         }, { once: true });
     }
+    if (game.endRestartBtn) {
+        game.endRestartBtn.addEventListener('click', handleRestart);
+    }
 }
 
 function setupStartMenu(game) {
@@ -68,6 +81,36 @@ function setupStartMenu(game) {
         game.nextWaveBtn.disabled = true;
     if (game.restartBtn)
         game.restartBtn.disabled = true;
+    hideEndScreen(game);
+}
+
+function hideEndScreen(game) {
+    if (!game.endOverlay)
+        return;
+    game.endOverlay.classList.add('hidden');
+    if (game.endMenu) {
+        game.endMenu.classList.remove('win');
+        game.endMenu.classList.remove('lose');
+    }
+}
+
+function showEndScreen(game, outcome) {
+    if (!game.endOverlay)
+        return;
+    const isWin = outcome === 'WIN';
+    game.endOverlay.classList.remove('hidden');
+    if (game.endMenu) {
+        game.endMenu.classList.toggle('win', isWin);
+        game.endMenu.classList.toggle('lose', !isWin);
+    }
+    if (game.endMessageEl) {
+        game.endMessageEl.textContent = isWin ? 'Victory!' : 'Defeat!';
+    }
+    if (game.endDetailEl) {
+        game.endDetailEl.textContent = isWin
+            ? 'All waves cleared. Great job!'
+            : 'The base was overrun. Try again!';
+    }
 }
 
 function bindCanvasClick(game) {
@@ -118,8 +161,18 @@ export function updateSwitchIndicator(game) {
 }
 
 export function endGame(game, text) {
-    game.statusEl.textContent = text;
-    game.statusEl.style.color = 'red';
-    game.nextWaveBtn.disabled = true;
+    const isWin = text === 'WIN';
+    if (game.statusEl) {
+        game.statusEl.textContent = isWin ? 'All waves cleared!' : 'Base destroyed!';
+        game.statusEl.style.color = isWin ? '#4ade80' : '#f87171';
+    }
+    if (game.nextWaveBtn) {
+        game.nextWaveBtn.disabled = true;
+    }
+    if (game.restartBtn) {
+        game.restartBtn.disabled = false;
+    }
+    showEndScreen(game, text);
     game.gameOver = true;
+    callCrazyGamesEvent('gameplayStop');
 }

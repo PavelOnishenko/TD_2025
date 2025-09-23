@@ -65,3 +65,26 @@ body {
 .start-menu button:hover {
     background: #ffd266;
 }
+
+.end-menu {
+    min-width: 280px;
+}
+
+.end-menu h2 {
+    margin: 0 0 12px;
+    font-size: 30px;
+}
+
+.end-menu p {
+    margin: 0 0 20px;
+    line-height: 1.4;
+    color: #dfe7ef;
+}
+
+.end-menu.win h2 {
+    color: #4ade80;
+}
+
+.end-menu.lose h2 {
+    color: #f87171;
+}
