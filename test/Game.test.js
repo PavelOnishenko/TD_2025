@@ -198,6 +198,73 @@ test('calcDelta returns delta time in seconds and updates lastTime', () => {
     assert.equal(game.lastTime, 2000);
 });
 
+test('generateTankBurstSchedule produces sorted unique indices', () => {
+    const game = new Game(makeFakeCanvas());
+    const originalRandom = Math.random;
+    const sequence = [0.91, 0.35, 0.72, 0.18, 0.54, 0.27];
+    let i = 0;
+    Math.random = () => sequence[i++ % sequence.length];
+    try {
+        const bursts = game.generateTankBurstSchedule(6, 3);
+        assert.equal(bursts.length, 3);
+        assert.equal([...new Set(bursts)].length, 3);
+        assert.deepEqual([...bursts].sort((a, b) => a - b), bursts);
+        assert.ok(bursts.every(index => index >= 1 && index <= 6));
+    } finally {
+        Math.random = originalRandom;
+    }
+});
+
+test('startWave schedules tank bursts based on wave config', () => {
+    const game = new Game(makeFakeCanvas());
+    attachDomStubs(game);
+    game.wave = 3;
+    const cfg = game.waveConfigs[game.wave - 1];
+    const originalSpawnEnemy = game.spawnEnemy;
+    game.spawnEnemy = function(type) {
+        this.lastSpawnType = this.determineEnemyType(type);
+        this.spawned += 1;
+    };
+    try {
+        game.startWave();
+    } finally {
+        game.spawnEnemy = originalSpawnEnemy;
+    }
+
+    assert.equal(game.tankBurstSchedule.length, cfg.tanksCount);
+    assert.equal(new Set(game.tankBurstSchedule).size, cfg.tanksCount);
+    assert.ok(game.tankBurstSchedule.every(index => index >= 1 && index <= cfg.cycles));
+    assert.equal(game.tankScheduleWave, game.wave);
+});
+
+test('determineEnemyType follows scheduled tank bursts', () => {
+    const game = new Game(makeFakeCanvas());
+    const waveIndex = 3;
+    const cfg = game.waveConfigs[waveIndex - 1];
+    const stubSchedule = [1, cfg.cycles];
+    const originalGenerator = game.generateTankBurstSchedule;
+    game.generateTankBurstSchedule = () => stubSchedule.slice();
+    game.wave = waveIndex;
+    game.spawned = 0;
+    game.enemiesPerWave = cfg.cycles;
+    game.prepareTankScheduleForWave(cfg, waveIndex);
+
+    const types = [];
+    for (let i = 0; i < cfg.cycles; i++) {
+        types.push(game.determineEnemyType());
+        game.spawned += 1;
+    }
+
+    game.generateTankBurstSchedule = originalGenerator;
+
+    const tankIndices = types
+        .map((type, idx) => (type === 'tank' ? idx + 1 : null))
+        .filter(Boolean);
+
+    assert.deepEqual(tankIndices, stubSchedule);
+    assert.equal(tankIndices.length, cfg.tanksCount);
+});
+
 test('spawnEnemiesIfNeeded spawns when timer exceeds interval', () => {
     const game = new Game(makeFakeCanvas());
     game.waveInProgress = true;

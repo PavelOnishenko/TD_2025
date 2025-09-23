@@ -34,8 +34,13 @@ export const enemyActions = {
             return type;
         }
 
-        const cfg = this.waveConfigs[this.wave - 1] ?? this.waveConfigs.at(-1);
-        return Math.random() < cfg.tankChance ? 'tank' : 'swarm';
+        if (!this.tankBurstSet || this.tankScheduleWave !== this.wave) {
+            const cfg = this.waveConfigs[this.wave - 1] ?? this.waveConfigs.at(-1);
+            this.prepareTankScheduleForWave(cfg, this.wave);
+        }
+
+        const spawnIndex = this.spawned + 1;
+        return this.tankBurstSet.has(spawnIndex) ? 'tank' : 'swarm';
     },
 
     spawnTankEnemy(baseHp, startY) {
