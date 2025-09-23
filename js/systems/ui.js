@@ -26,6 +26,7 @@ export function bindUI(game) {
     bindCanvasClick(game);
     updateHUD(game);
     updateSwitchIndicator(game);
+    setupStartMenu(game);
 }
 
 function bindHUD(game) {
@@ -37,11 +38,36 @@ function bindHUD(game) {
     game.tipEl = document.getElementById('tip');
     game.nextWaveBtn = document.getElementById('nextWave');
     game.restartBtn = document.getElementById('restart');
+    game.startOverlay = document.getElementById('startOverlay');
+    game.startBtn = document.getElementById('startGame');
 }
 
 function bindButtons(game) {
     game.nextWaveBtn.addEventListener('click', () => game.startWave());
     game.restartBtn.addEventListener('click', () => game.restart());
+    if (game.startBtn) {
+        game.startBtn.addEventListener('click', () => {
+            if (game.startOverlay) {
+                game.startOverlay.classList.add('hidden');
+            }
+            game.nextWaveBtn.disabled = false;
+            game.restartBtn.disabled = false;
+            if (!game.hasStarted) {
+                game.hasStarted = true;
+                game.run();
+            }
+        }, { once: true });
+    }
+}
+
+function setupStartMenu(game) {
+    if (!game.startOverlay)
+        return;
+    game.startOverlay.classList.remove('hidden');
+    if (game.nextWaveBtn)
+        game.nextWaveBtn.disabled = true;
+    if (game.restartBtn)
+        game.restartBtn.disabled = true;
 }
 
 function bindCanvasClick(game) {

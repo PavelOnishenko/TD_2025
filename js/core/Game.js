@@ -22,6 +22,7 @@ class Game {
         this.projectileRadius = 6;
         this.projectileSpawnInterval = 500;
         this.lastTime = 0;
+        this.hasStarted = false;
         this.initStats();
         this.base = { x: this.logicalW, y: this.logicalH - 60, w: 40, h: 40 };
         this.grid = new GameGrid();
@@ -182,6 +183,7 @@ class Game {
     }
 
     run() {
+        this.hasStarted = true;
         callCrazyGamesEvent('gameplayStart');
         this.audio.playMusic();
         this.lastTime = performance.now();

@@ -36,5 +36,4 @@ bindUI(game);
 callCrazyGamesEvent('sdkGameLoadingStop');
 resizeCanvas();
 window.addEventListener('resize', resizeCanvas);
-game.run();
 
