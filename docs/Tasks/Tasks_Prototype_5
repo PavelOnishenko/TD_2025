@@ -1,4 +1,4 @@
-001 | TODO | Rebalance enemy HP and gold income so that all 10 waves are beatable but still challenging. | —  
+001 | DONE | Rebalance enemy HP and gold income so that all 10 waves are beatable but still challenging. | —  
 002 | DONE | Add start menu with “Start Game” button shown before first wave. | —
 003 | TODO | Add end screen (Win/Lose) with “Restart” button. | 002  
 004 | TODO | Add visual or sound feedback when placing a tower (flash on cell or short SFX). | —  
