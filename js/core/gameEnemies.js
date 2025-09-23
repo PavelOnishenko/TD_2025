@@ -45,7 +45,7 @@ export const enemyActions = {
 
     spawnTankEnemy(baseHp, startY) {
         const color = this.getEnemyColor();
-        const tankEnemy = new TankEnemy(baseHp * 5, color, 0, startY);
+        const tankEnemy = new TankEnemy(baseHp * 4, color, 0, startY);
         tankEnemy.setEngineFlamePlacement({
             anchorX:tankEnemy.engineFlame.anchor.x, anchorY:tankEnemy.engineFlame.anchor.y,
             offsetX:tankEnemy.engineFlame.offset.x, offsetY:tankEnemy.engineFlame.offset.y,

@@ -13,7 +13,7 @@ export default class Tower {
         this.y = y;
         this.w = 60;
         this.h = 90;
-        this.baseRange = 120;
+        this.baseRange = 150;
         this.baseDamage = 1;
         this.lastShot = 0;
         this.color = color;
