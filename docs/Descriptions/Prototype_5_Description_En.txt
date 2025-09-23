@@ -1,0 +1,31 @@
+Prototype 5 — Balance, UX polish, and CrazyGames readiness
+
+Main Goal:
+Make the game feel more complete and ready for publishing on CrazyGames by fixing the balance, adding start/end screens, polishing user feedback, and integrating a minimal ad flow. The work should fit within 3–4 hours of joint development with Codex.
+
+Balance
+
+Adjust enemy HP and gold rewards so that all 10 waves are beatable but still challenging.
+
+Ensure wave 10 is hard but fair.
+
+UX & UI
+
+Add a Start Menu with a “Start Game” button before the first wave.
+
+Add a simple End Screen (Win/Lose) with a “Restart” button.
+
+Make the loop (start → play → end → restart) clear and intuitive.
+
+Feedback & Effects
+
+Add a short visual or sound effect when placing a tower (flash on cell or small SFX).
+
+Play an error SFX when the player tries to build without enough gold.
+
+CrazyGames Integration
+
+On Game Over, trigger a CrazyGames interstitial ad to test monetization flow.
+
+Result:
+The game becomes playable through all waves with a balanced difficulty curve. Players experience clear start and end points, better feedback for their actions, and a first working ad integration. This version looks and feels “finished enough” to be shown to CrazyGames as a minimal but complete prototype.
