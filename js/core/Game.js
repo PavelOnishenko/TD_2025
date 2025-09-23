@@ -64,7 +64,7 @@ class Game {
         this.enemiesPerWave = cfg.cycles;
         this.spawned = 0;
         this.spawnTimer = 0;
-        this.enemyHpPerWave = [2, 3, 4, 5, 6];
+        this.enemyHpPerWave = [2, 3, 4, 5];
         this.gameOver = false;
         this.shootingInterval = 500;
         this.switchCooldownDuration = 0.5;
@@ -78,13 +78,13 @@ class Game {
             { interval: 1, cycles: 20, tankChance: 0 },
             { interval: 1, cycles: 25, tankChance: 0 },
             { interval: 1, cycles: 22, tankChance: 0.1 },
-            { interval: 1, cycles: 25, tankChance: 0.15 },
-            { interval: 1, cycles: 28, tankChance: 0.2 },
-            { interval: 1, cycles: 30, tankChance: 0.25 },
-            { interval: 1, cycles: 32, tankChance: 0.3 },
-            { interval: 1, cycles: 35, tankChance: 0.35 },
-            { interval: 1, cycles: 38, tankChance: 0.4 },
-            { interval: 1, cycles: 40, tankChance: 0.45 }
+            { interval: 1, cycles: 25, tankChance: 0.12 },
+            { interval: 1, cycles: 28, tankChance: 0.15 },
+            { interval: 1, cycles: 30, tankChance: 0.18 },
+            { interval: 1, cycles: 32, tankChance: 0.2 },
+            { interval: 1, cycles: 35, tankChance: 0.25 },
+            { interval: 1, cycles: 38, tankChance: 0.3 },
+            { interval: 1, cycles: 40, tankChance: 0.4 }
         ];
     }
 
