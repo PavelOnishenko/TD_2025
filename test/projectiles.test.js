@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { moveProjectiles, hitEnemy, handleProjectileHits } from '../src/js/core/projectiles.js';
+import { moveProjectiles, hitEnemy, handleProjectileHits } from '../js/core/projectiles.js';
 
 function makeGame() {
     return {

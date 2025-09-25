@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import Game from '../src/js/core/Game.js';
-import { updateSwitchIndicator } from '../src/js/systems/ui.js';
+import Game from '../js/core/Game.js';
+import { updateSwitchIndicator } from '../js/systems/ui.js';
 
 function makeFakeCanvas() {
     return {

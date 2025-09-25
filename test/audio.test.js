@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { createSound, getHowler, initializeAudio, isAudioSupported } from '../src/js/systems/audio.js';
+import { createSound, getHowler, initializeAudio, isAudioSupported } from '../js/systems/audio.js';
 
 test('initializeAudio returns false when howler is missing', () => {
     const originalHowl = globalThis.Howl;

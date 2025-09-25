@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { bindUI } from '../src/js/systems/ui.js';
+import { bindUI } from '../js/systems/ui.js';
 
 test('bindUI attaches tip element with text', () => {
   const elements = {};

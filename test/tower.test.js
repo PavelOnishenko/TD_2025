@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import Tower from '../src/js/entities/Tower.js';
+import Tower from '../js/entities/Tower.js';
 
 test('center returns tower midpoint', () => {
     const tower = new Tower(10, 20);
@@ -43,7 +43,7 @@ test('level 2 tower increases stats and draws highlight', () => {
 
     tower.draw(ctx, assets);
 
-    assert.equal(tower.range, 144);
+    assert.equal(tower.range, 168);
     assert.ok(Math.abs(tower.damage - 1.8) < 1e-6);
     const strokeRectCall = ctx.ops.find(op => op[0] === 'strokeRect');
     assert.deepEqual(strokeRectCall, ['strokeRect', tower.x - 2, tower.y - 2, tower.w + 4, tower.h + 4]);

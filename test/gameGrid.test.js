@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import GameGrid from '../src/js/core/gameGrid.js';
+import GameGrid from '../js/core/gameGrid.js';
 
 test('constructor builds grid with expected cell positions', () => {
     const grid = new GameGrid();

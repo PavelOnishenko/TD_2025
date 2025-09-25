@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import Game from '../src/js/core/Game.js';
-import Tower from '../src/js/entities/Tower.js';
+import Game from '../js/core/Game.js';
+import Tower from '../js/entities/Tower.js';
 
 function makeFakeCanvas() {
     return {

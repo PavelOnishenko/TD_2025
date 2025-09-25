@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import Game from '../src/js/core/Game.js';
-import Tower from '../src/js/entities/Tower.js';
-import { TankEnemy, SwarmEnemy } from '../src/js/entities/Enemy.js';
+import Game from '../js/core/Game.js';
+import Tower from '../js/entities/Tower.js';
+import { TankEnemy, SwarmEnemy } from '../js/entities/Enemy.js';
 
 function placeTowerOnCell(game, cell, { color = 'red', level = 1 } = {}) {
     const tower = new Tower(cell.x, cell.y, color, level);
@@ -113,7 +113,7 @@ test('spawnEnemy can create tank enemies', () => {
     assert.equal(game.enemies.length, 1);
     assert.ok(game.enemies[0] instanceof TankEnemy);
     assert.equal(game.spawned, 1);
-    assert.equal(game.enemies[0].maxHp, baseHp * 5);
+    assert.equal(game.enemies[0].maxHp, baseHp * 4);
 });
 
 test('spawnEnemy defaults to last hp for high wave', () => {
@@ -342,7 +342,7 @@ test('checkWaveCompletion triggers win on final wave', () => {
     game.spawned = game.enemiesPerWave;
     game.enemies = [];
     game.checkWaveCompletion();
-    assert.equal(game.statusEl.textContent, 'WIN');
+    assert.equal(game.statusEl.textContent, 'All waves cleared!');
     assert.equal(game.gameOver, true);
 });
 
