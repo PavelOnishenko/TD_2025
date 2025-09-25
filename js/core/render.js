@@ -29,9 +29,10 @@ function drawGrid(game) {
 
         if (cell.highlight > 0) {
             const alpha = Math.min(1, cell.highlight * 3);
+            const color = cell.highlightColor ?? 'red';
             ctx.save();
             ctx.globalAlpha = alpha;
-            ctx.fillStyle = 'red';
+            ctx.fillStyle = color;
             ctx.fillRect(cell.x, cell.y, cell.w, cell.h);
             ctx.restore();
         }

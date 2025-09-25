@@ -1,7 +1,7 @@
 001 | DONE | Rebalance enemy HP and gold income so that all 10 waves are beatable but still challenging. | —  
 002 | DONE | Add start menu with “Start Game” button shown before first wave. | —
 003 | DONE | Add end screen (Win/Lose) with “Restart” button. | 002  
-004 | TODO | Add visual or sound feedback when placing a tower (flash on cell and SFX, I will add a sound file myself). | —  
+004 | DONE | Add visual or sound feedback when placing a tower (flash on cell and SFX, I will add a sound file myself). | —
 005 | TODO | Make the game look good on both PC and mobile devices. On any device it should be aligned to the screen, cover all of it or most of it. | —  
 006 | TODO | Add error SFX (will add sound file myself) when trying to build without enough gold. | 004  
 007 | TODO | Show CrazyGames interstitial ad on game over. | 003  

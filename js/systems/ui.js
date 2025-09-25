@@ -129,7 +129,7 @@ function bindCanvasClick(game) {
     });
 }
 
-function tryShoot(game, cell) {
+export function tryShoot(game, cell) {
     if (!cell.occupied) {
         if (game.gold >= game.towerCost) {
             const tower = new Tower(cell.x, cell.y);
@@ -139,9 +139,13 @@ function tryShoot(game, cell) {
             cell.tower = tower;
             tower.cell = cell;
             game.gold -= game.towerCost;
+            cell.highlight = 0.5;
+            cell.highlightColor = 'rgba(255, 255, 255, 1)';
+            game.audio.playPlace();
             updateHUD(game);
         } else {
             cell.highlight = 0.3;
+            cell.highlightColor = 'rgba(248, 113, 113, 1)';
         }
     }
 }

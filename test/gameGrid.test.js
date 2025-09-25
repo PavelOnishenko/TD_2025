@@ -17,6 +17,7 @@ test('constructor builds grid with expected cell positions', () => {
         h: 24,
         occupied: false,
         highlight: 0,
+        highlightColor: null,
         tower: null,
     });
 
@@ -28,6 +29,7 @@ test('constructor builds grid with expected cell positions', () => {
         h: 24,
         occupied: false,
         highlight: 0,
+        highlightColor: null,
         tower: null,
     });
 });
@@ -48,8 +50,26 @@ test('createRow positions cells relative to origin', () => {
     const row = grid.createRow(origin, offsets);
 
     assert.deepEqual(row, [
-        { x: 110, y: 205, w: 30, h: 20, occupied: false, highlight: 0, tower: null },
-        { x: 95, y: 215, w: 30, h: 20, occupied: false, highlight: 0, tower: null },
+        {
+            x: 110,
+            y: 205,
+            w: 30,
+            h: 20,
+            occupied: false,
+            highlight: 0,
+            highlightColor: null,
+            tower: null
+        },
+        {
+            x: 95,
+            y: 215,
+            w: 30,
+            h: 20,
+            occupied: false,
+            highlight: 0,
+            highlightColor: null,
+            tower: null
+        },
     ]);
 });
 
@@ -85,12 +105,14 @@ test('resetCells clears occupancy, highlight and tower references', () => {
     const target = grid.topCells[0];
     target.occupied = true;
     target.highlight = 0.5;
+    target.highlightColor = 'red';
     target.tower = {};
 
     grid.resetCells();
 
     assert.equal(target.occupied, false);
     assert.equal(target.highlight, 0);
+    assert.equal(target.highlightColor, null);
     assert.equal(target.tower, null);
 });
 
@@ -99,10 +121,14 @@ test('fadeHighlights decreases highlight values but never below zero', () => {
     grid.topCells[0].highlight = 0.3;
     grid.topCells[1].highlight = 0.05;
     grid.topCells[2].highlight = 0;
+    grid.topCells[0].highlightColor = 'blue';
+    grid.topCells[1].highlightColor = 'green';
 
     grid.fadeHighlights(0.1);
 
     assert.ok(Math.abs(grid.topCells[0].highlight - 0.2) < 1e-6);
     assert.equal(grid.topCells[1].highlight, 0);
     assert.equal(grid.topCells[2].highlight, 0);
+    assert.equal(grid.topCells[0].highlightColor, 'blue');
+    assert.equal(grid.topCells[1].highlightColor, null);
 });

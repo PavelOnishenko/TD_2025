@@ -24,6 +24,11 @@ const SOUND_OPTIONS = {
         volume: 0.05,
         preload: true
     },
+    place: {
+        src: ['assets/place.wav'],
+        volume: 0.4,
+        preload: true
+    },
     backgroundMusic: {
         src: ['assets/background_music.mp3'],
         volume: 0.25,
