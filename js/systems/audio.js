@@ -5,7 +5,8 @@ const NOOP_AUDIO = {
     playExplosion() {},
     playPlacement() {},
     playMusic() {},
-    stopMusic() {}
+    stopMusic() {},
+    playError() {}
 };
 
 function hasHowler() {
@@ -51,6 +52,7 @@ export function createGameAudio(sounds = {}) {
     const explosion = sounds.explosion ?? null;
     const placement = sounds.placement ?? null;
     const backgroundMusic = sounds.backgroundMusic ?? null;
+    const error = sounds.error ?? null;
 
     return {
         playFire() {
@@ -80,6 +82,11 @@ export function createGameAudio(sounds = {}) {
         stopMusic() {
             if (backgroundMusic && typeof backgroundMusic.playing === 'function' && backgroundMusic.playing()) {
                 backgroundMusic.stop();
+            }
+        },
+        playError() {
+            if (error) {
+                error.play();
             }
         }
     };

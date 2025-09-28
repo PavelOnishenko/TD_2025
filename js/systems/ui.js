@@ -146,6 +146,9 @@ function tryShoot(game, cell) {
             }
         } else {
             cell.highlight = 0.3;
+            if (typeof game.audio?.playError === 'function') {
+                game.audio.playError();
+            }
         }
     }
 }
