@@ -142,6 +142,9 @@ function tryShoot(game, cell) {
             updateHUD(game);
         } else {
             cell.highlight = 0.3;
+            if (typeof game.audio?.playError === 'function') {
+                game.audio.playError();
+            }
         }
     }
 }

@@ -24,6 +24,11 @@ const SOUND_OPTIONS = {
         volume: 0.05,
         preload: true
     },
+    error: {
+        src: ['assets/error.wav'],
+        volume: 0.5,
+        preload: true
+    },
     backgroundMusic: {
         src: ['assets/background_music.mp3'],
         volume: 0.25,
