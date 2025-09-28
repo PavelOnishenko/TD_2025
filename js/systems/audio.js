@@ -3,6 +3,7 @@ const globalScope = typeof globalThis !== 'undefined' ? globalThis : window;
 const NOOP_AUDIO = {
     playFire() {},
     playExplosion() {},
+    playPlacement() {},
     playMusic() {},
     stopMusic() {},
     playError() {}
@@ -49,6 +50,7 @@ export function createGameAudio(sounds = {}) {
 
     const fire = sounds.fire ?? null;
     const explosion = sounds.explosion ?? null;
+    const placement = sounds.placement ?? null;
     const backgroundMusic = sounds.backgroundMusic ?? null;
     const error = sounds.error ?? null;
 
@@ -63,6 +65,12 @@ export function createGameAudio(sounds = {}) {
             if (explosion) {
                 console.log('Playing explosion sound');
                 explosion.play();
+            }
+        },
+        playPlacement() {
+            if (placement) {
+                console.log('Playing placement sound');
+                placement.play();
             }
         },
         playMusic() {

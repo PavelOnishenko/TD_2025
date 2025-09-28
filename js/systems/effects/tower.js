@@ -41,6 +41,66 @@ function getTowerGlowPulse(tower) {
     return 0.5 + 0.5 * Math.sin(tower.glowTime);
 }
 
+function getPlacementFlashIntensity(tower) {
+    if (!tower || !tower.placementFlashDuration) {
+        return 0;
+    }
+    const ratio = tower.placementFlashTimer / tower.placementFlashDuration;
+    return Math.max(0, Math.min(1, ratio));
+}
+
+function getPlacementFlashPalette(tower) {
+    const redPalette = {
+        inner: [255, 200, 170],
+        outer: [255, 120, 80],
+    };
+    const bluePalette = {
+        inner: [180, 210, 255],
+        outer: [90, 150, 255],
+    };
+    if (!tower) {
+        return {
+            inner: [255, 255, 255],
+            outer: [255, 255, 255],
+        };
+    }
+    return tower.color === 'red' ? redPalette : bluePalette;
+}
+
+export function drawTowerPlacementFlash(ctx, tower) {
+    const intensity = getPlacementFlashIntensity(tower);
+    if (intensity <= 0) return;
+    if (typeof ctx.createRadialGradient !== 'function') return;
+
+    const center = tower.center();
+    const radius = Math.max(tower.w, tower.h) * 0.75;
+    const palette = getPlacementFlashPalette(tower);
+    const innerAlpha = 0.45 + 0.35 * intensity;
+    const outerAlpha = 0.15 * intensity;
+    const innerColor = `rgba(${palette.inner[0]},${palette.inner[1]},${palette.inner[2]},${innerAlpha})`;
+    const outerColor = `rgba(${palette.outer[0]},${palette.outer[1]},${palette.outer[2]},${outerAlpha})`;
+    const gradient = ctx.createRadialGradient(
+        center.x,
+        center.y,
+        radius * 0.25,
+        center.x,
+        center.y,
+        radius
+    );
+    gradient.addColorStop(0, `rgba(255,255,255,${0.75 * intensity})`);
+    gradient.addColorStop(0.45, innerColor);
+    gradient.addColorStop(1, outerColor);
+
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.globalAlpha = 0.9 * intensity;
+    ctx.beginPath();
+    ctx.fillStyle = gradient;
+    ctx.arc(center.x, center.y, radius, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+}
+
 function getTowerGlowProfile(tower, pulse) {
     const levelProfiles = {
         1: {

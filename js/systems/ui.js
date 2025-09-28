@@ -134,12 +134,16 @@ function tryShoot(game, cell) {
         if (game.gold >= game.towerCost) {
             const tower = new Tower(cell.x, cell.y);
             tower.alignToCell(cell);
+            tower.triggerPlacementFlash();
             game.towers.push(tower);
             cell.occupied = true;
             cell.tower = tower;
             tower.cell = cell;
             game.gold -= game.towerCost;
             updateHUD(game);
+            if (game.audio && typeof game.audio.playPlacement === 'function') {
+                game.audio.playPlacement();
+            }
         } else {
             cell.highlight = 0.3;
             if (typeof game.audio?.playError === 'function') {
