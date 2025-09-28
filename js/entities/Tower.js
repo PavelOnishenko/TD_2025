@@ -1,4 +1,4 @@
-import { drawTowerMuzzleFlash, drawTowerTopGlow } from '../systems/effects.js';
+import { drawTowerMuzzleFlash, drawTowerPlacementFlash, drawTowerTopGlow } from '../systems/effects.js';
 
 const DEFAULT_PLACEMENT_ANCHOR = Object.freeze({
     // The anchor describes the fraction of the sprite width/height between the
@@ -20,6 +20,8 @@ export default class Tower {
         this.level = level;
         this.flashDuration = 0.12;
         this.flashTimer = 0;
+        this.placementFlashDuration = 0.35;
+        this.placementFlashTimer = 0;
         this.glowTime = Math.random() * Math.PI * 2;
         this.glowSpeed = 2.4;
         this.updateStats();
@@ -40,11 +42,18 @@ export default class Tower {
         if (this.flashTimer > 0) {
             this.flashTimer = Math.max(0, this.flashTimer - dt);
         }
+        if (this.placementFlashTimer > 0) {
+            this.placementFlashTimer = Math.max(0, this.placementFlashTimer - dt);
+        }
         this.glowTime = (this.glowTime + dt * this.glowSpeed) % (Math.PI * 2);
     }
 
     triggerFlash() {
         this.flashTimer = this.flashDuration;
+    }
+
+    triggerPlacementFlash() {
+        this.placementFlashTimer = this.placementFlashDuration;
     }
 
     center() {
@@ -79,6 +88,7 @@ export default class Tower {
         this.drawRange(ctx, c);
         ctx.fillStyle = this.color;
         this.drawBody(ctx, c, assets);
+        drawTowerPlacementFlash(ctx, this);
         drawTowerTopGlow(ctx, this);
 
         if (this.flashTimer > 0) {

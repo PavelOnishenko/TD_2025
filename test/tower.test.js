@@ -74,6 +74,29 @@ test('flash timer decays over time', () => {
     assert.equal(tower.flashTimer, 0);
 });
 
+test('triggerPlacementFlash overlays tower with glow', () => {
+    const tower = new Tower(10, 20);
+    const ctx = makeFakeCtx();
+    const assets = { tower_1r: {} };
+
+    tower.triggerPlacementFlash();
+    tower.draw(ctx, assets);
+
+    const hasPlacementGlow = ctx.ops.some(op => op[0] === 'globalAlpha');
+    assert.ok(hasPlacementGlow);
+});
+
+test('placement flash timer decays over time', () => {
+    const tower = new Tower(0, 0);
+    tower.triggerPlacementFlash();
+
+    const initial = tower.placementFlashTimer;
+    tower.update(0.1);
+    assert.ok(tower.placementFlashTimer < initial);
+    tower.update(10);
+    assert.equal(tower.placementFlashTimer, 0);
+});
+
 function makeFakeCtx() {
     const ops = [];
     return {
@@ -91,6 +114,7 @@ function makeFakeCtx() {
         set font(v) { ops.push(['font', v]); },
         fillText(text, x, y) { ops.push(['fillText', text, x, y]); },
         set globalCompositeOperation(value) { ops.push(['globalCompositeOperation', value]); },
+        set globalAlpha(value) { ops.push(['globalAlpha', value]); },
         createRadialGradient(x0, y0, r0, x1, y1, r1) {
             ops.push(['createRadialGradient', x0, y0, r0, x1, y1, r1]);
             return {
