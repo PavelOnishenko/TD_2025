@@ -26,6 +26,10 @@ function resizeCanvas() {
 const LOGICAL_W = 540;
 const LOGICAL_H = 960;
 await initializeCrazyGamesIntegration();
+const user = await getCrazyGamesUser();
+if (user) {
+    console.log("Logged in as:", user.username);
+}
 console.log("CrazyGames integration kinda finished..");
 callCrazyGamesEvent('sdkGameLoadingStart');
 initializeAudio();
@@ -37,3 +41,13 @@ callCrazyGamesEvent('sdkGameLoadingStop');
 resizeCanvas();
 window.addEventListener('resize', resizeCanvas);
 
+async function getCrazyGamesUser() {
+    const available = window.CrazyGames?.SDK?.user?.isUserAccountAvailable;
+    console.log("User account system available?", available);
+    if (available) {
+        const user = await window.CrazyGames.SDK.user.getUser();
+        console.log("User info:", user);
+        return { username: user.username, profilePictureUrl: user.profilePictureUrl };
+    }
+    return Promise.reject();
+}
