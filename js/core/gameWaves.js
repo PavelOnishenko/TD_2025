@@ -53,6 +53,9 @@ export const waveActions = {
         }
         cellB.occupied = false;
         cellB.tower = null;
+        if (typeof this.persistState === 'function') {
+            this.persistState();
+        }
     },
 
     checkWaveCompletion() {

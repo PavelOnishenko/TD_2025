@@ -7,6 +7,8 @@ import { callCrazyGamesEvent } from '../systems/crazyGamesIntegration.js';
 import { createGameAudio } from '../systems/audio.js';
 import { updateExplosions } from '../systems/effects.js';
 import GameGrid from './gameGrid.js';
+import Tower from '../entities/Tower.js';
+import { clearGameState, loadGameState, saveGameState } from '../systems/dataStore.js';
 
 class Game {
     constructor(canvas, { width = 540, height = 960, assets = null } = {}) {
@@ -33,7 +35,10 @@ class Game {
         if (assets) {
             this.assets = assets;
         }
+        this.isRestoringState = false;
+        this.persistenceEnabled = true;
         this.update = this.update.bind(this);
+        this.restoreSavedState();
     }
 
     get assets() {
@@ -76,6 +81,133 @@ class Game {
         this.switchCooldown = 0;
         this.colorProbStart = 0.5;
         this.colorProbEnd = 0.5;
+    }
+
+    restoreSavedState() {
+        const savedState = loadGameState();
+        if (!savedState || typeof savedState !== 'object') {
+            return;
+        }
+
+        if (savedState.version && savedState.version !== 1) {
+            return;
+        }
+
+        this.isRestoringState = true;
+
+        const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+        const toInt = (value, fallback) => {
+            const num = Number(value);
+            return Number.isFinite(num) ? Math.floor(num) : fallback;
+        };
+        const targetWave = clamp(toInt(savedState.wave, 1), 1, this.maxWaves);
+
+        this.lives = clamp(toInt(savedState.lives, this.initialLives), 0, 99);
+        this.gold = clamp(toInt(savedState.gold, this.initialGold), 0, 9999);
+        this.wave = targetWave;
+        this.waveInProgress = false;
+        this.spawned = 0;
+        this.spawnTimer = 0;
+        this.enemies = [];
+        this.projectiles = [];
+        this.explosions = [];
+
+        const cfg = this.waveConfigs[this.wave - 1] ?? this.waveConfigs.at(-1);
+        this.spawnInterval = cfg.interval;
+        this.enemiesPerWave = cfg.cycles;
+        this.prepareTankScheduleForWave(cfg, this.wave);
+
+        this.restoreTowers(savedState.towers);
+
+        this.isRestoringState = false;
+    }
+
+    restoreTowers(towersState) {
+        this.towers = [];
+        this.grid.resetCells();
+        if (!Array.isArray(towersState)) {
+            return;
+        }
+
+        for (const towerState of towersState) {
+            const cell = this.resolveCellFromState(towerState?.cellId);
+            if (!cell) {
+                continue;
+            }
+
+            const color = typeof towerState?.color === 'string' ? towerState.color : 'red';
+            const level = Number(towerState?.level) || 1;
+            const tower = new Tower(cell.x, cell.y, color, level);
+            tower.alignToCell(cell);
+            tower.cell = cell;
+            tower.lastShot = 0;
+            tower.flashTimer = 0;
+            tower.placementFlashTimer = 0;
+            cell.occupied = true;
+            cell.tower = tower;
+            this.towers.push(tower);
+        }
+    }
+
+    resolveCellFromState(identifier) {
+        if (typeof identifier !== 'string') {
+            return null;
+        }
+        const [group, indexRaw] = identifier.split(':');
+        const index = Number(indexRaw);
+        if (!Number.isInteger(index) || index < 0) {
+            return null;
+        }
+        if (group === 'top') {
+            return this.topCells[index] ?? null;
+        }
+        if (group === 'bottom') {
+            return this.bottomCells[index] ?? null;
+        }
+        return null;
+    }
+
+    createCellIdentifier(cell) {
+        const topIndex = this.topCells.indexOf(cell);
+        if (topIndex !== -1) {
+            return `top:${topIndex}`;
+        }
+        const bottomIndex = this.bottomCells.indexOf(cell);
+        if (bottomIndex !== -1) {
+            return `bottom:${bottomIndex}`;
+        }
+        return null;
+    }
+
+    getPersistentState() {
+        const towerState = this.towers
+            .filter(tower => tower?.cell)
+            .map(tower => ({
+                cellId: this.createCellIdentifier(tower.cell),
+                color: tower.color,
+                level: tower.level
+            }))
+            .filter(entry => entry.cellId !== null);
+
+        return {
+            version: 1,
+            lives: this.lives,
+            gold: this.gold,
+            wave: this.wave,
+            towers: towerState
+        };
+    }
+
+    persistState() {
+        if (!this.persistenceEnabled || this.isRestoringState || this.gameOver) {
+            return;
+        }
+        const snapshot = this.getPersistentState();
+        saveGameState(snapshot);
+    }
+
+    clearSavedState() {
+        clearGameState();
     }
 
     getWaveConfigs() {
@@ -221,6 +353,7 @@ class Game {
         this.switchCooldown = 0;
         updateHUD(this);
         updateSwitchIndicator(this);
+        this.persistState();
     }
 
     restart() {

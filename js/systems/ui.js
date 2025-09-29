@@ -157,6 +157,9 @@ export function updateHUD(game) {
     game.livesEl.textContent = `Lives: ${game.lives}`;
     game.goldEl.textContent = `Gold: ${game.gold}`;
     game.waveEl.textContent = `Wave: ${game.wave}/${game.maxWaves}`;
+    if (typeof game.persistState === 'function') {
+        game.persistState();
+    }
 }
 
 export function updateSwitchIndicator(game) {
@@ -182,4 +185,7 @@ export function endGame(game, text) {
     showEndScreen(game, text);
     game.gameOver = true;
     callCrazyGamesEvent('gameplayStop');
+    if (typeof game.clearSavedState === 'function') {
+        game.clearSavedState();
+    }
 }
