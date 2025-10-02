@@ -24,6 +24,11 @@ const SOUND_OPTIONS = {
         volume: 0.05,
         preload: true
     },
+    placement: {
+        src: ['assets/placement.wav'],
+        volume: 0.4,
+        preload: true
+    },
     error: {
         src: ['assets/error.wav'],
         volume: 0.5,
