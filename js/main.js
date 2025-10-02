@@ -21,6 +21,7 @@ function resizeCanvas() {
 
     canvas.width = LOGICAL_W;
     canvas.height = LOGICAL_H;
+    canvas.style.backgroundColor = '#000';
 }
 
 const LOGICAL_W = 540;
