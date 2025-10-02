@@ -26,9 +26,31 @@ function resizeCanvas() {
 const LOGICAL_W = 540;
 const LOGICAL_H = 960;
 await initializeCrazyGamesIntegration();
-const user = await getCrazyGamesUser();
+let user = null;
+try {
+    user = await getCrazyGamesUser();
+} catch (error) {
+    console.warn("Failed to fetch CrazyGames user", error);
+}
 if (user) {
     console.log("Logged in as:", user.username);
+    const userContainer = document.getElementById('crazyGamesUser');
+    const usernameEl = document.getElementById('crazyGamesUsername');
+    const avatarEl = document.getElementById('crazyGamesUserAvatar');
+    if (usernameEl) {
+        usernameEl.textContent = user.username ?? 'CrazyGames Player';
+    }
+    if (avatarEl) {
+        if (user.profilePictureUrl) {
+            avatarEl.src = user.profilePictureUrl;
+            avatarEl.style.display = 'block';
+        } else {
+            avatarEl.style.display = 'none';
+        }
+    }
+    if (userContainer) {
+        userContainer.classList.remove('hidden');
+    }
 }
 console.log("CrazyGames integration kinda finished..");
 callCrazyGamesEvent('sdkGameLoadingStart');
@@ -44,10 +66,15 @@ window.addEventListener('resize', resizeCanvas);
 async function getCrazyGamesUser() {
     const available = window.CrazyGames?.SDK?.user?.isUserAccountAvailable;
     console.log("User account system available?", available);
-    if (available) {
+    if (!available) {
+        return null;
+    }
+    try {
         const user = await window.CrazyGames.SDK.user.getUser();
         console.log("User info:", user);
         return { username: user.username, profilePictureUrl: user.profilePictureUrl };
+    } catch (error) {
+        console.warn("CrazyGames SDK getUser failed", error);
+        return null;
     }
-    return Promise.reject();
 }

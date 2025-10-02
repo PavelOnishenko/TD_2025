@@ -16,6 +16,26 @@ body {
     font-family: sans-serif;
 }
 
+#crazyGamesUser {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+}
+
+#crazyGamesUser.hidden {
+    display: none;
+}
+
+#crazyGamesUserAvatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: #d1d5db;
+    display: none;
+}
+
 #tip {
     flex-basis: 100%;
 }
