@@ -22,21 +22,23 @@
                 <button id="endRestart">Restart</button>
             </div>
         </div>
-        <div id="hud">
-            <div id="crazyGamesUser" class="user-info hidden">
-                <img id="crazyGamesUserAvatar" alt="CrazyGames profile picture" />
-                <span id="crazyGamesUsername"></span>
+        <div id="gameContainer">
+            <canvas id="game" width="450" height="800"></canvas>
+            <div id="hud">
+                <div id="crazyGamesUser" class="user-info hidden">
+                    <img id="crazyGamesUserAvatar" alt="CrazyGames profile picture" />
+                    <span id="crazyGamesUsername"></span>
+                </div>
+                <span id="lives">Lives: 10</span>
+                <span id="gold">Gold: 20</span>
+                <span id="wave">Wave: 1/10</span>
+                <span id="cooldown">Switch: Ready</span>
+                <span id="status"></span>
+                <button id="nextWave">Next Wave</button>
+                <button id="restart">Restart</button>
+                <span id="tip">Tap slot to build. Tap tower to switch (1 gold).</span>
             </div>
-            <span id="lives">Lives: 10</span>
-            <span id="gold">Gold: 20</span>
-            <span id="wave">Wave: 1/10</span>
-            <span id="cooldown">Switch: Ready</span>
-            <span id="status"></span>
-            <button id="nextWave">Next Wave</button>
-            <button id="restart">Restart</button>
-            <span id="tip">Tap slot to build. Tap tower to switch (1 gold).</span>
         </div>
-        <canvas id="game" width="450" height="800"></canvas>
         <script type="module" src="js/main.js"></script>
     </body>
 </html>
