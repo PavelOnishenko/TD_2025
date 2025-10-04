@@ -64,6 +64,35 @@ callCrazyGamesEvent('sdkGameLoadingStop');
 resizeCanvas();
 window.addEventListener('resize', resizeCanvas);
 
+const startEvents = 'PointerEvent' in window ? ['pointerdown'] : ['mousedown', 'touchstart'];
+
+const startGameOnce = () => {
+    if (game.hasStarted) {
+        cleanupStartListeners();
+        return;
+    }
+
+    if (game.startOverlay) {
+        game.startOverlay.classList.add('hidden');
+    }
+    if (game.nextWaveBtn) {
+        game.nextWaveBtn.disabled = false;
+    }
+    if (game.restartBtn) {
+        game.restartBtn.disabled = false;
+    }
+
+    game.run();
+    game.audio?.playMusic?.();
+    cleanupStartListeners();
+};
+
+function cleanupStartListeners() {
+    startEvents.forEach(evt => canvas.removeEventListener(evt, startGameOnce));
+}
+
+startEvents.forEach(evt => canvas.addEventListener(evt, startGameOnce, { passive: true }));
+
 async function getCrazyGamesUser() {
     const available = window.CrazyGames?.SDK?.user?.isUserAccountAvailable;
     console.log("User account system available?", available);
