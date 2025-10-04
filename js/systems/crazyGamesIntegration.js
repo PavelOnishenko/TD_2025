@@ -25,6 +25,12 @@ export function callCrazyGamesEvent(fnName) {
 export async function initializeCrazyGamesIntegration() {
     await window.CrazyGames.SDK.init();
 
+    if (window.CrazyGames?.SDK?.environment === 'disabled') {
+        console.warn('CrazyGames SDK is disabled on this domain.');
+        crazyGamesWorks = false;
+        return false;
+    }
+
     window.addEventListener("wheel", (event) => event.preventDefault(), {
         passive: false,
     });
