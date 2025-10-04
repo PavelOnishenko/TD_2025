@@ -23,14 +23,16 @@ export function callCrazyGamesEvent(fnName) {
 }
 
 export async function initializeCrazyGamesIntegration() {
+    preventDefaultMouseBehabior();
     await window.CrazyGames.SDK.init();
+    const integrationWorks = checkCrazyGamesIntegration();
+    if (integrationWorks) {
+        crazyGamesWorks = true;
+        console.log("CrazyGames integration initialized.");
+    } 
+}
 
-    if (window.CrazyGames?.SDK?.environment === 'disabled') {
-        console.warn('CrazyGames SDK is disabled on this domain.');
-        crazyGamesWorks = false;
-        return false;
-    }
-
+function preventDefaultMouseBehabior() {
     window.addEventListener("wheel", (event) => event.preventDefault(), {
         passive: false,
     });
@@ -39,15 +41,17 @@ export async function initializeCrazyGamesIntegration() {
             event.preventDefault();
         }
     });
-
-    const integrationWorks = checkCrazyGamesIntegration();
-    if (integrationWorks) {
-        crazyGamesWorks = true;
-        console.log("CrazyGames integration initialized.");
-    } 
 }
 
 export function checkCrazyGamesIntegration() {
+
+    console.log(`Environment: ${window.CrazyGames?.SDK?.environment}`);
+    if (window.CrazyGames?.SDK?.environment === 'disabled') {
+        console.warn('CrazyGames SDK is disabled on this domain.');
+        crazyGamesWorks = false;
+        return false;
+    }
+
     if (window.CrazyGames && window.CrazyGames.SDK) {
         console.log("CrazyGames SDK loaded (v3)");
         return true;

@@ -1,4 +1,4 @@
-import { callCrazyGamesEvent, checkCrazyGamesIntegration, initializeCrazyGamesIntegration } from './systems/crazyGamesIntegration.js';
+import { callCrazyGamesEvent, checkCrazyGamesIntegration, crazyGamesWorks, initializeCrazyGamesIntegration } from './systems/crazyGamesIntegration.js';
 import Game from './core/Game.js';
 import { bindUI } from './systems/ui.js';
 import { loadAssets } from './systems/assets.js';
@@ -65,6 +65,10 @@ resizeCanvas();
 window.addEventListener('resize', resizeCanvas);
 
 async function getCrazyGamesUser() {
+    if (!crazyGamesWorks) {
+        return null;
+    }
+
     const available = window.CrazyGames?.SDK?.user?.isUserAccountAvailable;
     console.log("User account system available?", available);
     if (!available) {
