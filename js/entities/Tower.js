@@ -3,8 +3,8 @@ import { drawTowerMuzzleFlash, drawTowerPlacementFlash, drawTowerTopGlow } from 
 const DEFAULT_PLACEMENT_ANCHOR = Object.freeze({
     // The anchor describes the fraction of the sprite width/height between the
     // top-left corner and the point that should sit on the cell origin.
-    x: 0.25,
-    y: 0.8,
+    x: -0.5,
+    y: 0,
 });
 
 export default class Tower {
