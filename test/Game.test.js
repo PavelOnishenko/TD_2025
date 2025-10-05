@@ -31,6 +31,7 @@ function makeFakeCanvas() {
             fillText: () => {},
             save: () => {},
             restore: () => {},
+            setTransform: () => {},
             set globalCompositeOperation(_) {},
         }),
     };
