@@ -2,12 +2,22 @@ import { drawExplosions } from '../systems/effects.js';
 
 export function draw(game) {
     const ctx = game.ctx;
+    const { scale = 1, offsetX = 0, offsetY = 0 } = game.viewport ?? {};
+
+    ctx.save();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.clearRect(0, 0, game.canvas.width, game.canvas.height);
+    ctx.restore();
+
+    ctx.save();
+    ctx.setTransform(scale, 0, 0, scale, offsetX, offsetY);
 
     drawBase(game);
     drawPlatforms(game);
     drawGrid(game);
     drawEntities(game);
+
+    ctx.restore();
 }
 
 function drawBase(game) {

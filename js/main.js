@@ -5,16 +5,35 @@ import { loadAssets } from './systems/assets.js';
 import { initializeAudio } from './systems/audio.js';
 
 function resizeCanvas() {
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
+    if (!canvas)
+        return;
 
-    canvas.style.width = `${vw}px`;
-    canvas.style.height = `${vh}px`;
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    const dpr = window.devicePixelRatio || 1;
 
-    canvas.width = LOGICAL_W;
-    canvas.height = LOGICAL_H;
-    canvas.style.backgroundColor = '#000';
-    canvas.style.backgroundSize = 'cover';
+    canvas.style.width = `${viewportWidth}px`;
+    canvas.style.height = `${viewportHeight}px`;
+
+    const displayWidth = Math.round(viewportWidth * dpr);
+    const displayHeight = Math.round(viewportHeight * dpr);
+
+    if (canvas.width !== displayWidth || canvas.height !== displayHeight) {
+        canvas.width = displayWidth;
+        canvas.height = displayHeight;
+    }
+
+    const scale = Math.min(displayWidth / LOGICAL_W, displayHeight / LOGICAL_H) || 1;
+    const renderWidth = LOGICAL_W * scale;
+    const renderHeight = LOGICAL_H * scale;
+    const offsetX = (displayWidth - renderWidth) / 2;
+    const offsetY = (displayHeight - renderHeight) / 2;
+
+    const viewport = { scale, offsetX, offsetY, dpr };
+    canvas.viewportTransform = viewport;
+    if (game) {
+        game.viewport = viewport;
+    }
 }
 
 const LOGICAL_W = 540;
@@ -55,8 +74,9 @@ if (crazyGamesIntegrationAllowed) {
 }
 initializeAudio();
 const canvas = document.getElementById('game');
+let game = null;
 const assets = await loadAssets();
-const game = new Game(canvas, { width: LOGICAL_W, height: LOGICAL_H, assets });
+game = new Game(canvas, { width: LOGICAL_W, height: LOGICAL_H, assets });
 bindUI(game);
 if (crazyGamesIntegrationAllowed) {
     callCrazyGamesEvent('sdkGameLoadingStop');
