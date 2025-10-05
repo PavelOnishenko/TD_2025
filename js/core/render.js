@@ -4,10 +4,6 @@ export function draw(game) {
     const ctx = game.ctx;
     ctx.clearRect(0, 0, game.canvas.width, game.canvas.height);
 
-    if (game.assets?.bg) {
-        ctx.drawImage(game.assets.bg, 0, 0, game.logicalW, game.logicalH);
-    }
-
     drawBase(game);
     drawGrid(game);
     drawEntities(game);

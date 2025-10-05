@@ -71,7 +71,11 @@ body {
 
 canvas {
     display: block;
-    background: #000;
+    background-color: #000;
+    background-image: url('assets/bg_anim.gif');
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
 }
 
 #crazyGamesUser {
