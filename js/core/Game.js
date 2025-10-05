@@ -9,6 +9,7 @@ import { updateExplosions } from '../systems/effects.js';
 import GameGrid from './gameGrid.js';
 import Tower from '../entities/Tower.js';
 import { clearGameState, loadGameState, saveGameState } from '../systems/dataStore.js';
+import { createPlatforms } from './platforms.js';
 
 class Game {
     constructor(canvas, { width = 540, height = 960, assets = null } = {}) {
@@ -27,6 +28,7 @@ class Game {
         this.hasStarted = false;
         this.initStats();
         this.base = { x: this.logicalW, y: this.logicalH - 60, w: 40, h: 40 };
+        this.platforms = createPlatforms({ width: this.logicalW, height: this.logicalH });
         this.grid = new GameGrid();
         this.topCells = this.grid.topCells;
         this.bottomCells = this.grid.bottomCells;

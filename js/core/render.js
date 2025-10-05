@@ -5,6 +5,7 @@ export function draw(game) {
     ctx.clearRect(0, 0, game.canvas.width, game.canvas.height);
 
     drawBase(game);
+    drawPlatforms(game);
     drawGrid(game);
     drawEntities(game);
 }
@@ -13,6 +14,19 @@ function drawBase(game) {
     const ctx = game.ctx;
     ctx.fillStyle = 'green';
     ctx.fillRect(game.base.x, game.base.y, game.base.w, game.base.h);
+}
+
+function drawPlatforms(game) {
+    const { platforms = [], assets } = game;
+    const platformImage = assets?.platform;
+
+    if (!platformImage || platforms.length === 0) {
+        return;
+    }
+
+    platforms.forEach(platform => {
+        platform.draw(game.ctx, platformImage);
+    });
 }
 
 function drawGrid(game) {
