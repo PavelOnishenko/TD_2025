@@ -2,13 +2,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { bindUI } from '../js/systems/ui.js';
 
-test('bindUI attaches tip element with text', () => {
+test('bindUI attaches core HUD elements without tip text', () => {
   const elements = {};
-  const ids = ['lives','energy','wave','cooldown','status','nextWave','restart','tip'];
+  const ids = ['lives','energy','wave','cooldown','status','nextWave','restart'];
   for (const id of ids) {
     elements[id] = { textContent: '', addEventListener: () => {} };
   }
-  elements['tip'].textContent = 'Tap slot to build. Tap tower to switch (1 energy).';
   const doc = {
     getElementById: id => elements[id]
   };
@@ -25,6 +24,8 @@ test('bindUI attaches tip element with text', () => {
   };
   global.document = doc;
   bindUI(game);
-  assert.equal(game.tipEl.textContent, 'Tap slot to build. Tap tower to switch (1 energy).');
+  assert.equal(game.livesEl, elements['lives']);
+  assert.equal(game.energyEl, elements['energy']);
+  assert.ok(!('tipEl' in game));
   delete global.document;
 });
