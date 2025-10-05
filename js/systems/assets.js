@@ -2,7 +2,7 @@ import { createSound, isAudioSupported } from './audio.js';
 
 const IMAGE_SOURCES = {
     cell: 'assets/cell_cut.png',
-    platform: 'assets/platform_gpt.png',
+    platform: 'assets/platform.png',
     tower_1r: 'assets/tower_1R.png',
     tower_1b: 'assets/tower_1B.png',
     tower_2r: 'assets/tower_2R.png',
