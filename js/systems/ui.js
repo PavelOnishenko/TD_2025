@@ -50,7 +50,6 @@ function bindHUD(game) {
     game.waveEl = document.getElementById('wave');
     game.cooldownEl = document.getElementById('cooldown');
     game.statusEl = document.getElementById('status');
-    game.tipEl = document.getElementById('tip');
     game.nextWaveBtn = document.getElementById('nextWave');
     game.restartBtn = document.getElementById('restart');
     game.startOverlay = document.getElementById('startOverlay');

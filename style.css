@@ -121,6 +121,7 @@ canvas {
     align-items: center;
     gap: 8px;
     font-weight: 600;
+    flex-basis: 100%;
 }
 
 #crazyGamesUser.hidden {
@@ -134,10 +135,6 @@ canvas {
     object-fit: cover;
     background: #d1d5db;
     display: none;
-}
-
-#tip {
-    flex-basis: 100%;
 }
 
 .overlay {
