@@ -51,6 +51,31 @@ body {
     gap: 6px;
 }
 
+#energy {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 600;
+}
+
+.resource-label {
+    letter-spacing: 0.02em;
+}
+
+.resource-value {
+    color: #ffe066;
+    font-weight: 700;
+    text-shadow: 0 0 6px rgba(255, 224, 102, 0.65);
+}
+
+.resource-icon {
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
+    image-rendering: pixelated;
+    filter: drop-shadow(0 0 4px rgba(255, 224, 102, 0.55));
+}
+
 .life-heart {
     width: 24px;
     height: 24px;

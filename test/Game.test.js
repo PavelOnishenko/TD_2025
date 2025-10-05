@@ -38,7 +38,7 @@ function makeFakeCanvas() {
 
 function attachDomStubs(game) {
     game.livesEl = { textContent: '' };
-    game.goldEl = { textContent: '' };
+    game.energyEl = { textContent: '' };
     game.waveEl = { textContent: '' };
     game.statusEl = { textContent: '', style: {} };
     game.nextWaveBtn = { disabled: false };
@@ -300,7 +300,7 @@ test('updateEnemies removes enemies reaching base and reduces lives', () => {
     assert.equal(game.lives, livesBefore - 1);
 });
 
-test('checkWaveCompletion increments wave and gold', () => {
+test('checkWaveCompletion increments wave and energy', () => {
     const game = new Game(makeFakeCanvas());
     attachDomStubs(game);
     game.waveInProgress = true;
@@ -310,7 +310,7 @@ test('checkWaveCompletion increments wave and gold', () => {
     game.checkWaveCompletion();
     assert.equal(game.waveInProgress, false);
     assert.equal(game.wave, 2);
-    assert.equal(game.gold, game.initialGold + 3);
+    assert.equal(game.energy, game.initialEnergy + 3);
     assert.equal(game.nextWaveBtn.disabled, false);
 });
 
@@ -350,7 +350,7 @@ test('resetState restores initial game values', () => {
     const game = new Game(makeFakeCanvas());
     attachDomStubs(game);
     game.lives = 1;
-    game.gold = 0;
+    game.energy = 0;
     game.wave = 3;
     game.towers.push({});
     game.enemies.push({});
@@ -364,7 +364,7 @@ test('resetState restores initial game values', () => {
     game.statusEl.textContent = 'status';
     game.resetState();
     assert.equal(game.lives, game.initialLives);
-    assert.equal(game.gold, game.initialGold);
+    assert.equal(game.energy, game.initialEnergy);
     assert.equal(game.wave, 1);
     assert.equal(game.towers.length, 0);
     assert.equal(game.enemies.length, 0);
