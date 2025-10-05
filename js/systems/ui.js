@@ -1,6 +1,9 @@
 import Tower from '../entities/Tower.js';
 import { callCrazyGamesEvent } from './crazyGamesIntegration.js';
 
+const HEART_FILLED_SRC = 'assets/heart_filled.png';
+const HEART_EMPTY_SRC = 'assets/heart_empty.png';
+
 function getMousePos(canvas, e) {
     const rect = canvas.getBoundingClientRect();
     // Map from CSS pixels to canvas logical coordinates for precise hit testing
@@ -154,11 +157,52 @@ function tryShoot(game, cell) {
 }
 
 export function updateHUD(game) {
-    game.livesEl.textContent = `Lives: ${game.lives}`;
+    renderLives(game);
     game.goldEl.textContent = `Gold: ${game.gold}`;
     game.waveEl.textContent = `Wave: ${game.wave}/${game.maxWaves}`;
     if (typeof game.persistState === 'function') {
         game.persistState();
+    }
+}
+
+function renderLives(game) {
+    if (!game.livesEl)
+        return;
+    const configuredLives = Number.isFinite(game.initialLives) ? game.initialLives : game.lives;
+    const totalLives = Math.max(configuredLives, game.lives);
+    const canRenderHearts = typeof document !== 'undefined'
+        && typeof document.createElement === 'function'
+        && typeof game.livesEl.replaceChildren === 'function';
+    if (canRenderHearts) {
+        const hearts = [];
+        for (let i = 0; i < totalLives; i++) {
+            const heart = document.createElement('img');
+            heart.src = i < game.lives ? HEART_FILLED_SRC : HEART_EMPTY_SRC;
+            heart.alt = '';
+            heart.className = 'life-heart';
+            heart.setAttribute('aria-hidden', 'true');
+            heart.draggable = false;
+            hearts.push(heart);
+        }
+        const fragment = typeof document.createDocumentFragment === 'function'
+            ? document.createDocumentFragment()
+            : null;
+        if (fragment) {
+            hearts.forEach(heart => fragment.appendChild(heart));
+            game.livesEl.replaceChildren(fragment);
+        }
+        else {
+            game.livesEl.replaceChildren(...hearts);
+        }
+        if (typeof game.livesEl.setAttribute === 'function') {
+            game.livesEl.setAttribute('aria-label', `Lives: ${game.lives}`);
+        }
+    }
+    else {
+        game.livesEl.textContent = `Lives: ${game.lives}`;
+        if (typeof game.livesEl.setAttribute === 'function') {
+            game.livesEl.setAttribute('aria-label', `Lives: ${game.lives}`);
+        }
     }
 }
 
