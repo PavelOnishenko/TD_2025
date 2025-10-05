@@ -1,8 +1,8 @@
 class GameGrid {
     constructor({
-        cellSize = { w: 40, h: 24 },
-        topOrigin = { x: 70, y: 140 },
-        bottomOrigin = { x: 80, y: 480 }
+        cellSize = { w: 120, h: 160 },
+        topOrigin = { x: -300, y: 400 },
+        bottomOrigin = { x: -210, y: 680 }
     } = {}) {
         this.cellWidth = cellSize.w;
         this.cellHeight = cellSize.h;
@@ -12,10 +12,10 @@ class GameGrid {
     }
 
     buildGrid() {
-        const topCells = [ { x: 0, y: 0 }, { x: 40, y: 50 }, { x: 100, y: 110 }, { x: 170, y: 165 }, { x: 230, y: 200 }, { x: 300, y: 225 }];
+        const topCells = [ { x: 0, y: 0 }, { x: 210, y: 30 }, { x: 420, y: 50 }, { x: 600, y: 52 }, { x: 750, y: 40 }, { x: 910, y: 18 }];
         this.topCells = this.createRow(this.topOrigin, topCells);
 
-        const bottomCells = [ { x: 0, y: 0 }, { x: 75, y: 25 }, { x: 155, y: 65 }, { x: 220, y: 115 }, { x: 290, y: 170 }, { x: 325, y: 250 }];
+        const bottomCells = [ { x: 0, y: 0 }, { x: 190, y: -35 }, { x: 380, y: -45 }, { x: 600, y: -45 }, { x: 750, y: -25 }, { x: 910, y: 0 }];
         this.bottomCells = this.createRow(this.bottomOrigin, bottomCells);
     }
 
