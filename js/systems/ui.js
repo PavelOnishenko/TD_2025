@@ -35,7 +35,7 @@ export function bindUI(game) {
 
 function bindHUD(game) {
     game.livesEl = document.getElementById('lives');
-    game.goldEl = document.getElementById('gold');
+    game.energyEl = document.getElementById('energy');
     game.waveEl = document.getElementById('wave');
     game.cooldownEl = document.getElementById('cooldown');
     game.statusEl = document.getElementById('status');
@@ -134,7 +134,7 @@ function bindCanvasClick(game) {
 
 function tryShoot(game, cell) {
     if (!cell.occupied) {
-        if (game.gold >= game.towerCost) {
+        if (game.energy >= game.towerCost) {
             const tower = new Tower(cell.x, cell.y);
             tower.alignToCell(cell);
             tower.triggerPlacementFlash();
@@ -142,7 +142,7 @@ function tryShoot(game, cell) {
             cell.occupied = true;
             cell.tower = tower;
             tower.cell = cell;
-            game.gold -= game.towerCost;
+            game.energy -= game.towerCost;
             updateHUD(game);
             if (game.audio && typeof game.audio.playPlacement === 'function') {
                 game.audio.playPlacement();
@@ -158,7 +158,7 @@ function tryShoot(game, cell) {
 
 export function updateHUD(game) {
     renderLives(game);
-    game.goldEl.textContent = `Gold: ${game.gold}`;
+    renderEnergy(game);
     game.waveEl.textContent = `Wave: ${game.wave}/${game.maxWaves}`;
     if (typeof game.persistState === 'function') {
         game.persistState();
@@ -212,6 +212,49 @@ export function updateSwitchIndicator(game) {
         game.switchCooldown > 0
             ? `Switch: ${game.switchCooldown.toFixed(1)}s`
             : 'Switch: Ready';
+}
+
+function renderEnergy(game) {
+    if (!game.energyEl)
+        return;
+    const amount = Number.isFinite(game.energy) ? game.energy : 0;
+    const canRender = typeof document !== 'undefined'
+        && typeof document.createElement === 'function'
+        && typeof game.energyEl.replaceChildren === 'function';
+    if (canRender) {
+        const fragment = typeof document.createDocumentFragment === 'function'
+            ? document.createDocumentFragment()
+            : null;
+        const label = document.createElement('span');
+        label.className = 'resource-label';
+        label.textContent = 'Energy:';
+        const value = document.createElement('span');
+        value.className = 'resource-value';
+        value.textContent = `${amount}`;
+        const icon = document.createElement('img');
+        icon.className = 'resource-icon';
+        icon.src = 'assets/energy_sign.png';
+        icon.alt = '';
+        icon.setAttribute('aria-hidden', 'true');
+        if (fragment) {
+            fragment.appendChild(label);
+            fragment.appendChild(value);
+            fragment.appendChild(icon);
+            game.energyEl.replaceChildren(fragment);
+        }
+        else {
+            game.energyEl.replaceChildren(label, value, icon);
+        }
+        if (typeof game.energyEl.setAttribute === 'function') {
+            game.energyEl.setAttribute('aria-label', `Energy: ${amount}`);
+        }
+    }
+    else {
+        game.energyEl.textContent = `Energy: ${amount}`;
+        if (typeof game.energyEl.setAttribute === 'function') {
+            game.energyEl.setAttribute('aria-label', `Energy: ${amount}`);
+        }
+    }
 }
 
 export function endGame(game, text) {

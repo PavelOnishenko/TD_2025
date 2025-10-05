@@ -58,9 +58,9 @@ class Game {
 
     initStats() {
         this.initialLives = 5;
-        this.initialGold = 50;
+        this.initialEnergy = 50;
         this.lives = this.initialLives;
-        this.gold = this.initialGold;
+        this.energy = this.initialEnergy;
         this.wave = 1;
         this.maxWaves = 10;
         this.towerCost = 12;
@@ -105,7 +105,8 @@ class Game {
         const targetWave = clamp(toInt(savedState.wave, 1), 1, this.maxWaves);
 
         this.lives = clamp(toInt(savedState.lives, this.initialLives), 0, 99);
-        this.gold = clamp(toInt(savedState.gold, this.initialGold), 0, 9999);
+        const savedEnergy = savedState.energy ?? savedState.gold;
+        this.energy = clamp(toInt(savedEnergy, this.initialEnergy), 0, 9999);
         this.wave = targetWave;
         this.waveInProgress = false;
         this.spawned = 0;
@@ -194,7 +195,7 @@ class Game {
         return {
             version: 1,
             lives: this.lives,
-            gold: this.gold,
+            energy: this.energy,
             wave: this.wave,
             towers: towerState
         };
@@ -272,10 +273,10 @@ class Game {
     }
 
     switchTowerColor(tower) {
-        if (this.switchCooldown > 0 || this.gold < this.switchCost) 
+        if (this.switchCooldown > 0 || this.energy < this.switchCost)
             return false;
         tower.color = tower.color === 'red' ? 'blue' : 'red';
-        this.gold -= this.switchCost;
+        this.energy -= this.switchCost;
         updateHUD(this);
         this.switchCooldown = this.switchCooldownDuration;
         updateSwitchIndicator(this);
@@ -319,7 +320,7 @@ class Game {
 
     resetState() {
         this.lives = this.initialLives;
-        this.gold = this.initialGold;
+        this.energy = this.initialEnergy;
         this.wave = 1;
         this.towers = [];
         this.enemies = [];

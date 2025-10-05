@@ -8,12 +8,12 @@ function makeGame() {
         enemies: [],
         explosions: [],
         canvas: { width: 450, height: 800 },
-        gold: 0,
+        energy: 0,
         wave: 1,
         maxWaves: 5,
         lives: 3,
         livesEl: { textContent: '' },
-        goldEl: { textContent: '' },
+        energyEl: { textContent: '' },
         waveEl: { textContent: '' },
     };
 }
@@ -42,12 +42,12 @@ test('hitEnemy damages enemy and removes projectile when enemy survives', () => 
     assert.equal(enemy.hp, 1);
     assert.equal(game.projectiles.length, 0);
     assert.equal(game.enemies.length, 1);
-    assert.equal(game.gold, 0);
+    assert.equal(game.energy, 0);
     assert.equal(game.explosions.length, 1);
     assert.ok(game.explosions[0].particles.length > 0);
 });
 
-test('hitEnemy removes enemy and updates gold when enemy dies', () => {
+test('hitEnemy removes enemy and updates energy when enemy dies', () => {
     const game = makeGame();
     const enemy = { x: 10, y: 10, w: 20, h: 20, hp: 1, color: 'red' };
     const projectile = { x: 15, y: 15, color: 'red', damage: 1 };
@@ -59,8 +59,8 @@ test('hitEnemy removes enemy and updates gold when enemy dies', () => {
     assert.equal(result, true);
     assert.equal(game.projectiles.length, 0);
     assert.equal(game.enemies.length, 0);
-    assert.equal(game.gold, 1);
-    assert.equal(game.goldEl.textContent, 'Gold: 1');
+    assert.equal(game.energy, 1);
+    assert.equal(game.energyEl.textContent, 'Energy: 1');
     assert.equal(game.explosions.length, 1);
 });
 
@@ -78,7 +78,7 @@ test('handleProjectileHits removes offscreen and hit projectiles', () => {
     assert.equal(game.projectiles.length, 1);
     assert.deepEqual(game.projectiles[0], pMiss);
     assert.equal(game.enemies.length, 0);
-    assert.equal(game.gold, 1);
+    assert.equal(game.energy, 1);
     assert.equal(game.explosions.length, 1);
 });
 
@@ -95,6 +95,6 @@ test('hitEnemy deals reduced damage when colors differ', () => {
     assert.ok(Math.abs(enemy.hp - 0.6) < 1e-6);
     assert.equal(game.projectiles.length, 0);
     assert.equal(game.enemies.length, 1);
-    assert.equal(game.gold, 0);
+    assert.equal(game.energy, 0);
     assert.equal(game.explosions.length, 1);
 });

@@ -29,13 +29,17 @@
                     <span id="crazyGamesUsername"></span>
                 </div>
                 <div id="lives" class="lives" aria-label="Lives"></div>
-                <span id="gold">Gold: 20</span>
+                <div id="energy" class="resource" aria-label="Energy">
+                    <span class="resource-label">Energy:</span>
+                    <span class="resource-value">20</span>
+                    <img class="resource-icon" src="assets/energy_sign.png" alt="" aria-hidden="true" />
+                </div>
                 <span id="wave">Wave: 1/10</span>
                 <span id="cooldown">Switch: Ready</span>
                 <span id="status"></span>
                 <button id="nextWave">Next Wave</button>
                 <button id="restart">Restart</button>
-                <span id="tip">Tap slot to build. Tap tower to switch (1 gold).</span>
+                <span id="tip">Tap slot to build. Tap tower to switch (1 energy).</span>
             </div>
         </div>
         <script type="module" src="js/main.js"></script>

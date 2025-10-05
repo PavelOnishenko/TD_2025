@@ -69,7 +69,7 @@ export const waveActions = {
                 this.nextWaveBtn.disabled = false;
             }
             this.wave += 1;
-            this.gold += 3;
+            this.energy += 3;
             updateHUD(this);
         }
     }

@@ -4,11 +4,11 @@ import { bindUI } from '../js/systems/ui.js';
 
 test('bindUI attaches tip element with text', () => {
   const elements = {};
-  const ids = ['lives','gold','wave','cooldown','status','nextWave','restart','tip'];
+  const ids = ['lives','energy','wave','cooldown','status','nextWave','restart','tip'];
   for (const id of ids) {
     elements[id] = { textContent: '', addEventListener: () => {} };
   }
-  elements['tip'].textContent = 'Tap slot to build. Tap tower to switch (1 gold).';
+  elements['tip'].textContent = 'Tap slot to build. Tap tower to switch (1 energy).';
   const doc = {
     getElementById: id => elements[id]
   };
@@ -17,7 +17,7 @@ test('bindUI attaches tip element with text', () => {
     towers: [],
     grid: [],
     lives: 5,
-    gold: 20,
+    energy: 20,
     wave: 1,
     maxWaves: 10,
     switchCooldown: 0,
@@ -25,6 +25,6 @@ test('bindUI attaches tip element with text', () => {
   };
   global.document = doc;
   bindUI(game);
-  assert.equal(game.tipEl.textContent, 'Tap slot to build. Tap tower to switch (1 gold).');
+  assert.equal(game.tipEl.textContent, 'Tap slot to build. Tap tower to switch (1 energy).');
   delete global.document;
 });

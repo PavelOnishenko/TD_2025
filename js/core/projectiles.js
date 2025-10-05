@@ -21,7 +21,7 @@ export function hitEnemy(game, projectile, index) {
 
     if (enemy.hp <= 0) {
         game.enemies.splice(enemyIndex, 1);
-        game.gold += 1;
+        game.energy += 1;
         updateHUD(game);
     }
 
