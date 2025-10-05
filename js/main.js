@@ -1,4 +1,4 @@
-import { callCrazyGamesEvent, checkCrazyGamesIntegration, crazyGamesWorks, initializeCrazyGamesIntegration } from './systems/crazyGamesIntegration.js';
+import { callCrazyGamesEvent, crazyGamesIntegrationAllowed, crazyGamesWorks, initializeCrazyGamesIntegration } from './systems/crazyGamesIntegration.js';
 import Game from './core/Game.js';
 import { bindUI } from './systems/ui.js';
 import { loadAssets } from './systems/assets.js';
@@ -26,41 +26,48 @@ function resizeCanvas() {
 
 const LOGICAL_W = 540;
 const LOGICAL_H = 960;
-await initializeCrazyGamesIntegration();
-let user = null;
-try {
-    user = await getCrazyGamesUser();
-} catch (error) {
-    console.warn("Failed to fetch CrazyGames user", error);
-}
-if (user) {
-    console.log("Logged in as:", user.username);
-    const userContainer = document.getElementById('crazyGamesUser');
-    const usernameEl = document.getElementById('crazyGamesUsername');
-    const avatarEl = document.getElementById('crazyGamesUserAvatar');
-    if (usernameEl) {
-        usernameEl.textContent = user.username ?? 'CrazyGames Player';
+
+if (crazyGamesIntegrationAllowed) {
+    await initializeCrazyGamesIntegration();
+    let user = null;
+    try {
+        user = await getCrazyGamesUser();
+    } catch (error) {
+        console.warn("Failed to fetch CrazyGames user", error);
     }
-    if (avatarEl) {
-        if (user.profilePictureUrl) {
-            avatarEl.src = user.profilePictureUrl;
-            avatarEl.style.display = 'block';
-        } else {
-            avatarEl.style.display = 'none';
+    if (user) {
+        console.log("Logged in as:", user.username);
+        const userContainer = document.getElementById('crazyGamesUser');
+        const usernameEl = document.getElementById('crazyGamesUsername');
+        const avatarEl = document.getElementById('crazyGamesUserAvatar');
+        if (usernameEl) {
+            usernameEl.textContent = user.username ?? 'CrazyGames Player';
+        }
+        if (avatarEl) {
+            if (user.profilePictureUrl) {
+                avatarEl.src = user.profilePictureUrl;
+                avatarEl.style.display = 'block';
+            } else {
+                avatarEl.style.display = 'none';
+            }
+        }
+        if (userContainer) {
+            userContainer.classList.remove('hidden');
         }
     }
-    if (userContainer) {
-        userContainer.classList.remove('hidden');
-    }
+    console.log("CrazyGames integration kinda finished..");
+    callCrazyGamesEvent('sdkGameLoadingStart');
+} else {
+    console.log('CrazyGames integration disabled for this host.');
 }
-console.log("CrazyGames integration kinda finished..");
-callCrazyGamesEvent('sdkGameLoadingStart');
 initializeAudio();
 const canvas = document.getElementById('game');
 const assets = await loadAssets();
 const game = new Game(canvas, { width: LOGICAL_W, height: LOGICAL_H, assets });
 bindUI(game);
-callCrazyGamesEvent('sdkGameLoadingStop');
+if (crazyGamesIntegrationAllowed) {
+    callCrazyGamesEvent('sdkGameLoadingStop');
+}
 resizeCanvas();
 window.addEventListener('resize', resizeCanvas);
 
