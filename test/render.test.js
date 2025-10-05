@@ -18,6 +18,7 @@ function makeFakeCtx() {
         drawImage(img, x, y, w, h) { ops.push(['drawImage', img, x, y, w, h]); },
         save() { ops.push(['save']); },
         restore() { ops.push(['restore']); },
+        setTransform(...args) { ops.push(['setTransform', ...args]); },
     };
 }
 

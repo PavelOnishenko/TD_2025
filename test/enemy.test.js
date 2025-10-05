@@ -40,14 +40,21 @@ test('tank enemy has more hp and slower advance than swarm', () => {
     const tank = new TankEnemy();
     const swarm = new SwarmEnemy();
     assert.ok(tank.maxHp > swarm.maxHp);
-    assert.ok(tank.speedY < swarm.speedY);
+    assert.ok(tank.speedX < swarm.speedX);
 });
 
 test('swarm enemy has less hp and moves faster than tank', () => {
     const swarm = new SwarmEnemy();
     const tank = new TankEnemy();
     assert.ok(swarm.maxHp < tank.maxHp);
-    assert.ok(swarm.speedY > tank.speedY);
+    assert.ok(swarm.speedX > tank.speedX);
+});
+
+test('horizontal flight keeps vertical speed at zero', () => {
+    const swarm = new SwarmEnemy();
+    const tank = new TankEnemy();
+    assert.equal(swarm.speedY, 0);
+    assert.equal(tank.speedY, 0);
 });
 
 function makeFakeCtx() {

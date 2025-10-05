@@ -17,6 +17,9 @@ function makeFakeCanvas() {
             strokeRect: () => {},
             drawImage: () => {},
             fillText: () => {},
+            save: () => {},
+            restore: () => {},
+            setTransform: () => {},
         }),
     };
 }

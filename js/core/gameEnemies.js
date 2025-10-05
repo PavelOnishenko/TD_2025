@@ -12,14 +12,13 @@ export const enemyActions = {
     spawnEnemy(type) {
         const hp = this.determineEnemyHp();
         const enemyType = this.determineEnemyType(type);
-        const startY = 200;
 
         if (enemyType === 'tank') {
-            this.spawnTankEnemy(hp, startY);
+            this.spawnTankEnemy(hp);
         } else if (enemyType === 'swarm') {
-            this.spawnSwarmGroup(hp, startY);
+            this.spawnSwarmGroup(hp);
         } else {
-            this.spawnDefaultEnemy(hp, startY);
+            this.spawnDefaultEnemy(hp);
         }
 
         this.spawned += 1;
@@ -43,9 +42,12 @@ export const enemyActions = {
         return this.tankBurstSet.has(spawnIndex) ? 'tank' : 'swarm';
     },
 
-    spawnTankEnemy(baseHp, startY) {
+    spawnTankEnemy(baseHp) {
         const color = this.getEnemyColor();
-        const tankEnemy = new TankEnemy(baseHp * 4, color, 0, startY);
+        const tankEnemy = new TankEnemy(baseHp * 4, color, 0, 0);
+        tankEnemy.x = -tankEnemy.w;
+        const canvasHeight = this.logicalH ?? this.canvas?.height ?? 0;
+        tankEnemy.y = (canvasHeight - tankEnemy.h) / 2;
         tankEnemy.setEngineFlamePlacement({
             anchorX:tankEnemy.engineFlame.anchor.x, anchorY:tankEnemy.engineFlame.anchor.y,
             offsetX:tankEnemy.engineFlame.offset.x, offsetY:tankEnemy.engineFlame.offset.y,
@@ -54,15 +56,21 @@ export const enemyActions = {
         this.enemies.push(tankEnemy);
     },
 
-    spawnSwarmGroup(baseHp, startY) {
+    spawnSwarmGroup(baseHp) {
         const groupSize = 3;
         const swarmHp = Math.max(1, Math.floor(baseHp / 2));
         const spacing = 40;
+        const canvasHeight = this.logicalH ?? this.canvas?.height ?? 0;
+        const verticalCenter = canvasHeight / 2;
+        const centerOffsetBase = (groupSize - 1) / 2;
 
         for (let i = 0; i < groupSize; i++) {
             const color = this.getEnemyColor();
-            const y = startY + i * spacing;
-            const swarmEnemy = new SwarmEnemy(swarmHp, color, 0, y);
+            const swarmEnemy = new SwarmEnemy(swarmHp, color, 0, 0);
+            swarmEnemy.x = -swarmEnemy.w;
+            const centerOffset = (i - centerOffsetBase) * spacing;
+            const centerY = verticalCenter + centerOffset;
+            swarmEnemy.y = centerY - swarmEnemy.h / 2;
             swarmEnemy.setEngineFlamePlacement({
                 anchorX:swarmEnemy.engineFlame.anchor.x, anchorY:swarmEnemy.engineFlame.anchor.y,
                 offsetX:swarmEnemy.engineFlame.offset.x-10, offsetY:swarmEnemy.engineFlame.offset.y,
@@ -72,9 +80,13 @@ export const enemyActions = {
         }
     },
 
-    spawnDefaultEnemy(hp, startY) {
+    spawnDefaultEnemy(hp) {
         const color = this.getEnemyColor();
-        this.enemies.push(new Enemy(hp, color, this.pathX, startY));
+        const enemy = new Enemy(hp, color, 0, 0, 80, 0);
+        enemy.x = -enemy.w;
+        const canvasHeight = this.logicalH ?? this.canvas?.height ?? 0;
+        enemy.y = (canvasHeight - enemy.h) / 2;
+        this.enemies.push(enemy);
     },
 
     spawnEnemiesIfNeeded(dt) {
