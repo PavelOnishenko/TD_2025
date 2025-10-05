@@ -23,6 +23,13 @@ export function callCrazyGamesEvent(fnName) {
 }
 
 export async function initializeCrazyGamesIntegration() {
+    console.log(`Environment: ${window.CrazyGames?.SDK?.environment}`);
+    if (window.CrazyGames?.SDK?.environment === 'disabled') {
+        console.warn('CrazyGames SDK is disabled on this domain.');
+        crazyGamesWorks = false;
+        return;
+    }
+
     preventDefaultMouseBehabior();
     await window.CrazyGames.SDK.init();
     const integrationWorks = checkCrazyGamesIntegration();
