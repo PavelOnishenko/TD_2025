@@ -6,12 +6,23 @@ const HEART_EMPTY_SRC = 'assets/heart_empty.png';
 
 function getMousePos(canvas, e) {
     const rect = canvas.getBoundingClientRect();
-    // Map from CSS pixels to canvas logical coordinates for precise hit testing
     const scaleX = canvas.width / rect.width;
     const scaleY = canvas.height / rect.height;
+    const canvasX = (e.clientX - rect.left) * scaleX;
+    const canvasY = (e.clientY - rect.top) * scaleY;
+
+    const transform = canvas.viewportTransform;
+    if (transform) {
+        const { scale = 1, offsetX = 0, offsetY = 0 } = transform;
+        return {
+            x: (canvasX - offsetX) / scale,
+            y: (canvasY - offsetY) / scale,
+        };
+    }
+
     return {
-        x: (e.clientX - rect.left) * scaleX,
-        y: (e.clientY - rect.top) * scaleY,
+        x: canvasX,
+        y: canvasY,
     };
 }
 

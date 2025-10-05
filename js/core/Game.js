@@ -17,6 +17,7 @@ class Game {
         this.logicalW = width;
         this.logicalH = height;
         this.ctx = canvas.getContext('2d');
+        this.viewport = { scale: 1, offsetX: 0, offsetY: 0, dpr: 1 };
         this.enemies = [];
         this.towers = [];
         this.projectiles = [];
