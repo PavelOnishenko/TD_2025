@@ -7,21 +7,14 @@ import { initializeAudio } from './systems/audio.js';
 function resizeCanvas() {
     const vw = window.innerWidth;
     const vh = window.innerHeight;
-    const aspect = 9 / 16;
-    let targetW, targetH;
-    if (vw / vh > aspect) {
-        targetH = vh;
-        targetW = vh * aspect;
-    } else {
-        targetW = vw;
-        targetH = vw / aspect;
-    }
-    canvas.style.width = `${targetW}px`;
-    canvas.style.height = `${targetH}px`;
+
+    canvas.style.width = `${vw}px`;
+    canvas.style.height = `${vh}px`;
 
     canvas.width = LOGICAL_W;
     canvas.height = LOGICAL_H;
     canvas.style.backgroundColor = '#000';
+    canvas.style.backgroundSize = 'cover';
 }
 
 const LOGICAL_W = 540;
