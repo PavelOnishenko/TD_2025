@@ -42,12 +42,14 @@ export const enemyActions = {
         return this.tankBurstSet.has(spawnIndex) ? 'tank' : 'swarm';
     },
 
+    getDefaultEnemyCoords() {
+        return { x: -600, y: 600 };
+    },
+
     spawnTankEnemy(baseHp) {
         const color = this.getEnemyColor();
-        const tankEnemy = new TankEnemy(baseHp * 4, color, 0, 0);
-        tankEnemy.x = -tankEnemy.w;
-        const canvasHeight = this.logicalH ?? this.canvas?.height ?? 0;
-        tankEnemy.y = (canvasHeight - tankEnemy.h) / 2;
+        const defaultCoords = this.getDefaultEnemyCoords();
+        const tankEnemy = new TankEnemy(baseHp * 4, color, defaultCoords.x, defaultCoords.y);
         tankEnemy.setEngineFlamePlacement({
             anchorX:tankEnemy.engineFlame.anchor.x, anchorY:tankEnemy.engineFlame.anchor.y,
             offsetX:tankEnemy.engineFlame.offset.x, offsetY:tankEnemy.engineFlame.offset.y,
@@ -61,16 +63,14 @@ export const enemyActions = {
         const swarmHp = Math.max(1, Math.floor(baseHp / 2));
         const spacing = 40;
         const canvasHeight = this.logicalH ?? this.canvas?.height ?? 0;
-        const verticalCenter = canvasHeight / 2;
         const centerOffsetBase = (groupSize - 1) / 2;
 
         for (let i = 0; i < groupSize; i++) {
             const color = this.getEnemyColor();
-            const swarmEnemy = new SwarmEnemy(swarmHp, color, 0, 0);
-            swarmEnemy.x = -swarmEnemy.w;
+            const defaultCoords = this.getDefaultEnemyCoords();
+            const swarmEnemy = new SwarmEnemy(swarmHp, color, defaultCoords.x, defaultCoords.y);
             const centerOffset = (i - centerOffsetBase) * spacing;
-            const centerY = verticalCenter + centerOffset;
-            swarmEnemy.y = centerY - swarmEnemy.h / 2;
+            swarmEnemy.y += centerOffset;
             swarmEnemy.setEngineFlamePlacement({
                 anchorX:swarmEnemy.engineFlame.anchor.x, anchorY:swarmEnemy.engineFlame.anchor.y,
                 offsetX:swarmEnemy.engineFlame.offset.x-10, offsetY:swarmEnemy.engineFlame.offset.y,
