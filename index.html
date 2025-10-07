@@ -24,10 +24,6 @@
         <div id="gameContainer">
             <canvas id="game" width="450" height="800"></canvas>
             <div id="hud">
-                <div id="crazyGamesUser" class="user-info hidden">
-                    <img id="crazyGamesUserAvatar" alt="CrazyGames profile picture" />
-                    <span id="crazyGamesUsername"></span>
-                </div>
                 <div id="lives" class="lives" aria-label="Lives"></div>
                 <div id="energy" class="resource" aria-label="Energy">
                     <span class="resource-label">Energy:</span>
@@ -39,7 +35,10 @@
                 <span id="status"></span>
                 <button id="nextWave">Next Wave</button>
                 <button id="restart">Restart</button>
-                <span id="tip">Tap slot to build. Tap tower to switch (1 energy).</span>
+                <div id="crazyGamesUser" class="user-info hidden" aria-live="polite">
+                    <img id="crazyGamesUserAvatar" alt="CrazyGames profile picture" />
+                    <span id="crazyGamesUsername"></span>
+                </div>
             </div>
         </div>
         <script type="module" src="js/main.js"></script>
