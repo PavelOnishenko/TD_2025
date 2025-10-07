@@ -17,8 +17,6 @@ export const enemyActions = {
             this.spawnTankEnemy(hp);
         } else if (enemyType === 'swarm') {
             this.spawnSwarmGroup(hp);
-        } else {
-            this.spawnDefaultEnemy(hp);
         }
 
         this.spawned += 1;
@@ -62,7 +60,6 @@ export const enemyActions = {
         const groupSize = 3;
         const swarmHp = Math.max(1, Math.floor(baseHp / 2));
         const spacing = 40;
-        const canvasHeight = this.logicalH ?? this.canvas?.height ?? 0;
         const centerOffsetBase = (groupSize - 1) / 2;
 
         for (let i = 0; i < groupSize; i++) {
@@ -78,15 +75,6 @@ export const enemyActions = {
             });
             this.enemies.push(swarmEnemy);
         }
-    },
-
-    spawnDefaultEnemy(hp) {
-        const color = this.getEnemyColor();
-        const enemy = new Enemy(hp, color, 0, 0, 80, 0);
-        enemy.x = -enemy.w;
-        const canvasHeight = this.logicalH ?? this.canvas?.height ?? 0;
-        enemy.y = (canvasHeight - enemy.h) / 2;
-        this.enemies.push(enemy);
     },
 
     spawnEnemiesIfNeeded(dt) {
