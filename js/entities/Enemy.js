@@ -109,6 +109,6 @@ export class TankEnemy extends Enemy {
 
 export class SwarmEnemy extends Enemy {
     constructor(maxHp = 1, color = 'red', x = 0, y = 0) {
-        super(maxHp, color, x, y, 100, 0);
+        super(maxHp, color, x, y, 200, 0);
     }
 }
