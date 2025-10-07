@@ -18,6 +18,7 @@ export const enemyActions = {
         } else if (enemyType === 'swarm') {
             this.spawnSwarmGroup(hp);
         }
+        // todo else throw error
 
         this.spawned += 1;
     },

@@ -58,10 +58,6 @@ body {
     font-weight: 600;
 }
 
-.resource-label {
-    letter-spacing: 0.02em;
-}
-
 .resource-value {
     color: #ffe066;
     font-weight: 700;

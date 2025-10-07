@@ -235,9 +235,6 @@ function renderEnergy(game) {
         const fragment = typeof document.createDocumentFragment === 'function'
             ? document.createDocumentFragment()
             : null;
-        const label = document.createElement('span');
-        label.className = 'resource-label';
-        label.textContent = 'Energy:';
         const value = document.createElement('span');
         value.className = 'resource-value';
         value.textContent = `${amount}`;
@@ -247,20 +244,19 @@ function renderEnergy(game) {
         icon.alt = '';
         icon.setAttribute('aria-hidden', 'true');
         if (fragment) {
-            fragment.appendChild(label);
             fragment.appendChild(value);
             fragment.appendChild(icon);
             game.energyEl.replaceChildren(fragment);
         }
         else {
-            game.energyEl.replaceChildren(label, value, icon);
+            game.energyEl.replaceChildren(value, icon);
         }
         if (typeof game.energyEl.setAttribute === 'function') {
             game.energyEl.setAttribute('aria-label', `Energy: ${amount}`);
         }
     }
     else {
-        game.energyEl.textContent = `Energy: ${amount}`;
+        game.energyEl.textContent = `${amount}`;
         if (typeof game.energyEl.setAttribute === 'function') {
             game.energyEl.setAttribute('aria-label', `Energy: ${amount}`);
         }

@@ -60,7 +60,7 @@ test('hitEnemy removes enemy and updates energy when enemy dies', () => {
     assert.equal(game.projectiles.length, 0);
     assert.equal(game.enemies.length, 0);
     assert.equal(game.energy, 1);
-    assert.equal(game.energyEl.textContent, 'Energy: 1');
+    assert.equal(game.energyEl.textContent, '1');
     assert.equal(game.explosions.length, 1);
 });
 
