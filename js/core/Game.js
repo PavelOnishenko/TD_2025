@@ -28,7 +28,8 @@ class Game {
         this.lastTime = 0;
         this.hasStarted = false;
         this.initStats();
-        this.base = { x: this.logicalW, y: this.logicalH - 60, w: 40, h: 40 };
+        this.base = { x: 1100, y: this.logicalH - 60, w: 40, h: 40 };
+        console.log('Base position:', this.base.x, this.base.y);
         this.platforms = createPlatforms({ width: this.logicalW, height: this.logicalH });
         this.grid = new GameGrid();
         this.topCells = this.grid.topCells;
