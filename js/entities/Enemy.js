@@ -4,8 +4,8 @@ export default class Enemy {
     constructor(maxHp, color, x, y, speedX, speedY) {
         this.x = x;
         this.y = y;
-        this.w = 45;
-        this.h = 45;
+        this.w = 80;
+        this.h = 80;
         this.speedX = speedX;
         this.speedY = speedY;
         this.maxHp = maxHp;
@@ -16,7 +16,7 @@ export default class Enemy {
         }
         this.glowPhase = Enemy._glowPhaseCursor;
         Enemy._glowPhaseCursor = (Enemy._glowPhaseCursor + Math.PI * 0.85) % (Math.PI * 2);
-        this.engineFlame = { anchor: {x: this.w * 0.5, y: this.h * 0.18}, offset: {x: 0, y: 0}, angle: 0 };
+        this.engineFlame = { anchor: {x: this.w * 0.5, y: this.h * 0.5}, offset: {x: 0, y: 0}, angle: -35 };
     }
 
     update(dt) {
