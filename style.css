@@ -18,8 +18,8 @@ body {
 
 #gameContainer {
     position: relative;
-    width: 100%;
-    height: 100%;
+    width: 907px;
+    height: 510px;
     max-width: 100vw;
     max-height: 100vh;
     display: flex;
@@ -30,16 +30,9 @@ body {
 
 #hud {
     position: absolute;
-    top: 10px;
-    left: 10px;
-    right: 10px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    align-items: center;
-    padding: 10px;
-    font-family: sans-serif;
-    font-size: clamp(0.8rem, 1.5vw, 1.2rem);
+    inset: 0;
+    font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+    font-size: 1.1rem;
     color: #fff;
     pointer-events: none;
     z-index: 2;
@@ -49,6 +42,9 @@ body {
     display: flex;
     align-items: center;
     gap: 6px;
+    position: absolute;
+    top: 26px;
+    left: 28px;
 }
 
 #energy {
@@ -56,6 +52,13 @@ body {
     align-items: center;
     gap: 6px;
     font-weight: 600;
+    position: absolute;
+    top: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 1.75rem;
+    color: #ffe066;
+    text-shadow: 0 0 10px rgba(255, 224, 102, 0.7);
 }
 
 .resource-value {
@@ -72,6 +75,34 @@ body {
     filter: drop-shadow(0 0 4px rgba(255, 224, 102, 0.55));
 }
 
+#wave {
+    position: absolute;
+    top: 26px;
+    right: 32px;
+    font-size: 1.4rem;
+    font-weight: 600;
+    text-shadow: 0 0 12px rgba(80, 160, 255, 0.75);
+}
+
+#cooldown {
+    position: absolute;
+    top: 110px;
+    right: 32px;
+    font-size: 1rem;
+    text-align: right;
+    color: #a0c9ff;
+}
+
+#status {
+    position: absolute;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+    font-size: 1rem;
+    color: #f8f7ff;
+}
+
 .life-heart {
     width: 24px;
     height: 24px;
@@ -83,6 +114,21 @@ body {
 
 #hud button {
     pointer-events: auto;
+    background: rgba(21, 117, 255, 0.2);
+    color: #b9d8ff;
+    border: 2px solid rgba(102, 188, 255, 0.8);
+    border-radius: 16px;
+    padding: 10px 24px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 0 12px rgba(33, 125, 255, 0.45);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+#hud button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 18px rgba(86, 173, 255, 0.7);
 }
 
 @media (max-width: 600px) {
@@ -107,8 +153,8 @@ body {
 
 canvas {
     display: block;
-    width: 100vw;
-    height: 100vh;
+    width: 100%;
+    height: 100%;
     background-color: #000;
     background-image: url('assets/bg_anim.gif');
     background-position: center;
@@ -116,12 +162,44 @@ canvas {
     background-repeat: no-repeat;
 }
 
+#nextWave {
+    position: absolute;
+    top: 78px;
+    right: 24px;
+    min-width: 150px;
+    text-align: center;
+}
+
+#restart {
+    position: absolute;
+    bottom: 30px;
+    left: 32px;
+    background: rgba(50, 110, 255, 0.15);
+    color: #d6e6ff;
+    border-color: rgba(102, 188, 255, 0.65);
+    min-width: 140px;
+}
+
 #crazyGamesUser {
     display: flex;
     align-items: center;
-    gap: 8px;
     font-weight: 600;
     flex-basis: 100%;
+    position: absolute;
+    top: 90px;
+    left: 28px;
+    gap: 10px;
+    background: rgba(0, 0, 0, 0.35);
+    padding: 6px 12px;
+    border-radius: 999px;
+    box-shadow: 0 0 12px rgba(0, 0, 0, 0.45);
+}
+
+#crazyGamesUser span {
+    max-width: 220px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 #crazyGamesUser.hidden {
