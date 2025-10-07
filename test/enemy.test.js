@@ -27,13 +27,13 @@ test('draw uses sprites and health bar proportions', () => {
 
     enemy.draw(ctx, assets);
 
-    assert.deepEqual(ctx.ops[0], ['drawImage', assets.swarm_b, 0, 50, 45, 45]);
+    assert.deepEqual(ctx.ops[0], ['drawImage', assets.swarm_b, 0, 50, 80, 80]);
     assert.deepEqual(ctx.ops[1], ['fillStyle', 'red']);
-    assert.deepEqual(ctx.ops[2], ['fillRect', 0, 44, 45, 4]);
+    assert.deepEqual(ctx.ops[2], ['fillRect', 0, 44, 80, 4]);
     assert.deepEqual(ctx.ops[3], ['fillStyle', 'green']);
-    assert.deepEqual(ctx.ops[4], ['fillRect', 0, 44, 22.5, 4]);
+    assert.deepEqual(ctx.ops[4], ['fillRect', 0, 44, 40, 4]);
     assert.deepEqual(ctx.ops[5], ['strokeStyle', 'black']);
-    assert.deepEqual(ctx.ops[6], ['strokeRect', 0, 44, 45, 4]);
+    assert.deepEqual(ctx.ops[6], ['strokeRect', 0, 44, 80, 4]);
 });
 
 test('tank enemy has more hp and slower advance than swarm', () => {

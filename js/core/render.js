@@ -59,13 +59,41 @@ function drawGrid(game) {
 }
 
 export function drawEntities(game) {
-    game.towers.forEach(t => t.draw(game.ctx, game.assets));
-    game.enemies.forEach(e => e.draw(game.ctx, game.assets));
-    game.ctx.fillStyle = 'black';
+    const ctx = game.ctx;
+    const assets = game.assets;
+
+    const layeredEntities = [];
+
+    for (const tower of game.towers) {
+        layeredEntities.push({
+            sortKey: computeSortKey(tower),
+            draw: () => tower.draw(ctx, assets),
+        });
+    }
+
+    for (const enemy of game.enemies) {
+        layeredEntities.push({
+            sortKey: computeSortKey(enemy),
+            draw: () => enemy.draw(ctx, assets),
+        });
+    }
+
+    layeredEntities
+        .sort((a, b) => a.sortKey - b.sortKey)
+        .forEach(layer => layer.draw());
+
+    ctx.fillStyle = 'black';
     game.projectiles.forEach(p => {
-        game.ctx.beginPath();
-        game.ctx.arc(p.x, p.y, game.projectileRadius, 0, Math.PI * 2);
-        game.ctx.fill();
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, game.projectileRadius, 0, Math.PI * 2);
+        ctx.fill();
     });
-    drawExplosions(game.ctx, game.explosions ?? []);
+
+    drawExplosions(ctx, game.explosions ?? []);
+}
+
+function computeSortKey(entity) {
+    const y = typeof entity.y === 'number' ? entity.y : 0;
+    const height = typeof entity.h === 'number' ? entity.h : 0;
+    return y + height;
 }
