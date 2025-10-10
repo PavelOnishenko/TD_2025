@@ -1,5 +1,56 @@
 import { drawExplosions } from '../systems/effects.js';
 
+const ENERGY_PALETTES = {
+    red: {
+        core: '#fff4f6',
+        mid: '#ff6d6d',
+        outer: '#ff2f45',
+        sparkle: '#ffd1dc',
+    },
+    blue: {
+        core: '#ecfbff',
+        mid: '#4cb9ff',
+        outer: '#2e63ff',
+        sparkle: '#bde4ff',
+    },
+    green: {
+        core: '#f2fff0',
+        mid: '#63ff9a',
+        outer: '#00c95a',
+        sparkle: '#cbffd8',
+    },
+    purple: {
+        core: '#f9f1ff',
+        mid: '#c76bff',
+        outer: '#7f3dff',
+        sparkle: '#efd4ff',
+    },
+    default: {
+        core: '#fff9f0',
+        mid: '#ffb347',
+        outer: '#ff7a18',
+        sparkle: '#ffe0b2',
+    },
+};
+
+function getEnergyPalette(color) {
+    if (!color) return ENERGY_PALETTES.default;
+    return ENERGY_PALETTES[color] ?? ENERGY_PALETTES.default;
+}
+
+function getProjectileAnimationState(projectile) {
+    const anim = projectile?.anim && typeof projectile.anim === 'object' ? projectile.anim : {};
+    return {
+        time: anim.time ?? 0,
+        pulseOffset: anim.pulseOffset ?? 0,
+        sparkleOffset: anim.sparkleOffset ?? 0,
+        jitterAngle: anim.jitterAngle ?? 0,
+        pulseSpeed: anim.pulseSpeed ?? 9,
+        shimmerSpeed: anim.shimmerSpeed ?? 7,
+        vibrationStrength: anim.vibrationStrength ?? 0,
+    };
+}
+
 export function draw(game) {
     const ctx = game.ctx;
     const { scale = 1, offsetX = 0, offsetY = 0 } = game.viewport ?? {};
@@ -82,11 +133,57 @@ export function drawEntities(game) {
         .sort((a, b) => a.sortKey - b.sortKey)
         .forEach(layer => layer.draw());
 
-    ctx.fillStyle = 'black';
+    const radius = game.projectileRadius ?? 6;
     game.projectiles.forEach(p => {
+        const palette = getEnergyPalette(p.color);
+        const anim = getProjectileAnimationState(p);
+        const pulse = Math.sin(anim.time * anim.pulseSpeed + anim.pulseOffset);
+        const shimmer = Math.sin(anim.time * anim.shimmerSpeed + anim.sparkleOffset);
+        const vibration = radius * anim.vibrationStrength * Math.sin(anim.time * (anim.pulseSpeed * 1.4) + anim.pulseOffset);
+        const jitterX = Math.cos(anim.jitterAngle) * vibration;
+        const jitterY = Math.sin(anim.jitterAngle) * vibration;
+        const centerX = p.x + jitterX;
+        const centerY = p.y + jitterY;
+
+        const outerRadius = radius * (1.8 + 0.35 * pulse);
+        const midRadius = radius * (1.1 + 0.18 * Math.sin(anim.time * (anim.pulseSpeed * 0.6) + anim.pulseOffset + Math.PI / 4));
+        const coreRadius = radius * (0.55 + 0.1 * Math.sin(anim.time * (anim.shimmerSpeed * 1.3) + anim.sparkleOffset));
+        const sparkleRadius = radius * (0.28 + 0.05 * Math.sin(anim.time * (anim.shimmerSpeed * 1.8) + anim.sparkleOffset * 0.5));
+        const sparkleOrbit = radius * (0.8 + 0.1 * shimmer);
+
+        ctx.save();
+        ctx.globalCompositeOperation = 'lighter';
+
+        ctx.globalAlpha = 0.45 + 0.25 * pulse;
+        ctx.fillStyle = palette.outer;
         ctx.beginPath();
-        ctx.arc(p.x, p.y, game.projectileRadius, 0, Math.PI * 2);
+        ctx.arc(centerX, centerY, outerRadius, 0, Math.PI * 2);
         ctx.fill();
+
+        ctx.globalAlpha = 0.85;
+        ctx.fillStyle = palette.mid;
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, midRadius, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = palette.core;
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, coreRadius, 0, Math.PI * 2);
+        ctx.fill();
+
+        for (let i = 0; i < 2; i++) {
+            const sparklePhase = anim.sparkleOffset + anim.time * anim.shimmerSpeed + i * Math.PI;
+            const sparkleX = centerX + Math.cos(sparklePhase) * sparkleOrbit;
+            const sparkleY = centerY + Math.sin(sparklePhase) * sparkleOrbit;
+            ctx.globalAlpha = 0.8 + 0.15 * Math.sin(sparklePhase * 2);
+            ctx.fillStyle = palette.sparkle;
+            ctx.beginPath();
+            ctx.arc(sparkleX, sparkleY, sparkleRadius, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        ctx.restore();
     });
 
     drawExplosions(ctx, game.explosions ?? []);

@@ -9,6 +9,7 @@ function makeFakeCtx() {
         set fillStyle(v) { ops.push(['fillStyle', v]); },
         set strokeStyle(v) { ops.push(['strokeStyle', v]); },
         set globalCompositeOperation(v) { ops.push(['globalCompositeOperation', v]); },
+        set globalAlpha(v) { ops.push(['globalAlpha', v]); },
         fillRect(x, y, w, h) { ops.push(['fillRect', x, y, w, h]); },
         strokeRect(x, y, w, h) { ops.push(['strokeRect', x, y, w, h]); },
         clearRect(x, y, w, h) { ops.push(['clearRect', x, y, w, h]); },
@@ -35,8 +36,8 @@ test('drawEntities draws towers, enemies and projectiles', () => {
         { draw: (c, a) => { assert.equal(c, ctx); assert.equal(a, assets); enemyCalls++; } },
     ];
     const projectiles = [
-        { x: 5, y: 6 },
-        { x: 15, y: 26 },
+        { x: 5, y: 6, color: 'red', anim: { time: 0, pulseOffset: 0, sparkleOffset: 0, jitterAngle: 0, vibrationStrength: 0 } },
+        { x: 15, y: 26, color: 'blue', anim: { time: 0.1, pulseOffset: 0.3, sparkleOffset: 0.6, jitterAngle: 1.2, vibrationStrength: 0.25 } },
     ];
     const game = { ctx, towers, enemies, projectiles, projectileRadius: 3, assets, explosions: [] };
 
@@ -44,14 +45,17 @@ test('drawEntities draws towers, enemies and projectiles', () => {
 
     assert.equal(towerCalls, towers.length);
     assert.equal(enemyCalls, enemies.length);
-    const twoPi = Math.PI * 2;
-    assert.deepEqual(
-        ctx.ops.filter(op => op[0] === 'arc'),
-        [
-            ['arc', 5, 6, 3, 0, twoPi],
-            ['arc', 15, 26, 3, 0, twoPi],
-        ],
-    );
+    const arcs = ctx.ops.filter(op => op[0] === 'arc');
+    assert.equal(arcs.length, projectiles.length * 5);
+    const [_, x, y] = arcs[0];
+    assert.ok(Math.abs(x - projectiles[0].x) < 1e-6);
+    assert.ok(Math.abs(y - projectiles[0].y) < 1e-6);
+    const blendModes = ctx.ops.filter(op => op[0] === 'globalCompositeOperation');
+    assert.equal(blendModes.length, projectiles.length);
+    blendModes.forEach(([_, mode]) => assert.equal(mode, 'lighter'));
+    const fillStyles = ctx.ops.filter(op => op[0] === 'fillStyle').map(op => op[1]);
+    assert.ok(fillStyles.includes('#ff2f45'));
+    assert.ok(fillStyles.includes('#4cb9ff'));
 });
 
 test('draw clears canvas, draws grid and entities', () => {
@@ -60,7 +64,7 @@ test('draw clears canvas, draws grid and entities', () => {
     let enemyCalled = false;
     const tower = { draw: () => { towerCalled = true; } };
     const enemy = { draw: () => { enemyCalled = true; } };
-    const projectile = { x: 25, y: 35 };
+    const projectile = { x: 25, y: 35, color: 'red', anim: { time: 0.2, pulseOffset: 0.5, sparkleOffset: 0.8, jitterAngle: 0.4, vibrationStrength: 0 } };
     const cellSprite = {};
     const game = {
         ctx,
@@ -84,8 +88,10 @@ test('draw clears canvas, draws grid and entities', () => {
     assert.ok(ctx.ops.some(op => op[0] === 'drawImage' && op[1] === cellSprite));
     assert.ok(towerCalled);
     assert.ok(enemyCalled);
-    const twoPi = Math.PI * 2;
-    assert.ok(ctx.ops.some(op => op[0] === 'arc' && op[1] === 25 && op[2] === 35 && op[3] === 4 && op[4] === 0 && op[5] === twoPi));
+    const arcsAtCenter = ctx.ops.filter(op => op[0] === 'arc' && Math.abs(op[1] - 25) < 1e-6 && Math.abs(op[2] - 35) < 1e-6);
+    assert.ok(arcsAtCenter.length >= 1);
+    assert.ok(arcsAtCenter.some(op => op[3] > game.projectileRadius));
+    assert.ok(ctx.ops.some(op => op[0] === 'globalCompositeOperation' && op[1] === 'lighter'));
 });
 
 test('drawEntities renders explosion particles', () => {
