@@ -330,6 +330,9 @@ class Game {
         this.explosions = [];
         this.waveInProgress = false;
         this.nextWaveBtn.disabled = false;
+        if (this.mergeBtn) {
+            this.mergeBtn.disabled = false;
+        }
         const cfg = this.waveConfigs[0];
         this.spawnInterval = cfg.interval;
         this.enemiesPerWave = cfg.cycles;

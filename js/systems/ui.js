@@ -52,6 +52,7 @@ function bindHUD(game) {
     game.statusEl = document.getElementById('status');
     game.nextWaveBtn = document.getElementById('nextWave');
     game.restartBtn = document.getElementById('restart');
+    game.mergeBtn = document.getElementById('mergeTowers');
     game.startOverlay = document.getElementById('startOverlay');
     game.startBtn = document.getElementById('startGame');
     game.endOverlay = document.getElementById('endOverlay');
@@ -63,9 +64,23 @@ function bindHUD(game) {
 
 function bindButtons(game) {
     game.nextWaveBtn.addEventListener('click', () => game.startWave());
+    if (game.mergeBtn) {
+        const handleMerge = () => {
+            if (game.waveInProgress)
+                return;
+            if (typeof game.manualMergeTowers === 'function') {
+                game.manualMergeTowers();
+            }
+        };
+        game.mergeBtn.addEventListener('click', handleMerge);
+        game.mergeBtn.disabled = game.waveInProgress;
+    }
     const handleRestart = () => {
         game.restart();
         hideEndScreen(game);
+        if (game.mergeBtn) {
+            game.mergeBtn.disabled = false;
+        }
     };
     game.restartBtn.addEventListener('click', handleRestart);
     if (game.startBtn) {
@@ -75,6 +90,9 @@ function bindButtons(game) {
             }
             game.nextWaveBtn.disabled = false;
             game.restartBtn.disabled = false;
+            if (game.mergeBtn) {
+                game.mergeBtn.disabled = false;
+            }
             if (!game.hasStarted) {
                 game.hasStarted = true;
                 game.run();
@@ -94,6 +112,8 @@ function setupStartMenu(game) {
         game.nextWaveBtn.disabled = true;
     if (game.restartBtn)
         game.restartBtn.disabled = true;
+    if (game.mergeBtn)
+        game.mergeBtn.disabled = true;
     hideEndScreen(game);
 }
 
@@ -274,6 +294,9 @@ export function endGame(game, text) {
     }
     if (game.restartBtn) {
         game.restartBtn.disabled = false;
+    }
+    if (game.mergeBtn) {
+        game.mergeBtn.disabled = true;
     }
     showEndScreen(game, text);
     game.gameOver = true;
