@@ -50,5 +50,14 @@ function calculateDamage(projectile, enemy) {
 }
 
 function isProjectileOffscreen(game, p) {
+    const bounds = game?.worldBounds;
+    if (bounds) {
+        return (
+            p.x < bounds.minX ||
+            p.x > bounds.maxX ||
+            p.y < bounds.minY ||
+            p.y > bounds.maxY
+        );
+    }
     return p.x < 0 || p.x > game.canvas.width || p.y < 0 || p.y > game.canvas.height;
 }
