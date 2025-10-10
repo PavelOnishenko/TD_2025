@@ -103,7 +103,7 @@ export default class Enemy {
 
 export class TankEnemy extends Enemy {
     constructor(maxHp = 15, color = 'red', x = 0, y = 0) {
-        super(maxHp, color, x, y, 50, 0);
+        super(maxHp, color, x, y, 100, 0);
     }
 }
 
