@@ -43,7 +43,7 @@ test('level 2 tower increases stats and draws highlight', () => {
 
     tower.draw(ctx, assets);
 
-    assert.equal(tower.range, 168);
+    assert.ok(Math.abs(tower.range - 218.4) < 1e-6);
     assert.ok(Math.abs(tower.damage - 1.8) < 1e-6);
     const strokeRectCall = ctx.ops.find(op => op[0] === 'strokeRect');
     assert.deepEqual(strokeRectCall, ['strokeRect', tower.x - 2, tower.y - 2, tower.w + 4, tower.h + 4]);

@@ -30,7 +30,8 @@ export default class Tower {
     updateStats() {
         const rangeMultiplier = 1 + 0.2 * (this.level - 1);
         const damageMultiplier = 1 + 0.8 * (this.level - 1);
-        this.range = this.baseRange * rangeMultiplier;
+        const rangeIncreaseFactor = 1.3;
+        this.range = this.baseRange * rangeMultiplier * rangeIncreaseFactor;
         this.damage = this.baseDamage * damageMultiplier;
         const glowSpeeds = [1.8, 2.1, 2.4];
         const clampedLevel = Math.max(1, Math.min(this.level, glowSpeeds.length));
