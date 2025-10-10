@@ -49,6 +49,7 @@ class Game {
         this.grid = new GameGrid();
         this.topCells = this.grid.topCells;
         this.bottomCells = this.grid.bottomCells;
+        this.worldBounds = this.computeWorldBounds();
         this._assets = null;
         this.audio = createGameAudio();
         if (assets) {
@@ -306,6 +307,60 @@ class Game {
         const dt = (timestamp - this.lastTime) / 1000;
         this.lastTime = timestamp;
         return dt;
+    }
+
+    computeWorldBounds() {
+        const bounds = {
+            minX: Number.POSITIVE_INFINITY,
+            maxX: Number.NEGATIVE_INFINITY,
+            minY: Number.POSITIVE_INFINITY,
+            maxY: Number.NEGATIVE_INFINITY,
+        };
+
+        const expand = (x, y, w = 0, h = 0) => {
+            bounds.minX = Math.min(bounds.minX, x);
+            bounds.minY = Math.min(bounds.minY, y);
+            bounds.maxX = Math.max(bounds.maxX, x + w);
+            bounds.maxY = Math.max(bounds.maxY, y + h);
+        };
+
+        const cells = this.grid?.getAllCells?.();
+        if (Array.isArray(cells)) {
+            cells.forEach(cell => {
+                if (cell && typeof cell.x === 'number' && typeof cell.y === 'number') {
+                    expand(cell.x, cell.y, cell.w ?? 0, cell.h ?? 0);
+                }
+            });
+        }
+
+        if (this.base) {
+            expand(this.base.x, this.base.y, this.base.w ?? 0, this.base.h ?? 0);
+        }
+
+        if (typeof this.getDefaultEnemyCoords === 'function') {
+            const spawn = this.getDefaultEnemyCoords();
+            if (spawn && typeof spawn.x === 'number' && typeof spawn.y === 'number') {
+                expand(spawn.x, spawn.y, 0, 0);
+            }
+        }
+
+        const hasFiniteBounds = [bounds.minX, bounds.maxX, bounds.minY, bounds.maxY].every(Number.isFinite);
+        if (!hasFiniteBounds) {
+            return {
+                minX: 0,
+                maxX: this.canvas?.width ?? this.logicalW,
+                minY: 0,
+                maxY: this.canvas?.height ?? this.logicalH,
+            };
+        }
+
+        const margin = Math.max(40, (this.projectileRadius ?? 0) * 2);
+        return {
+            minX: bounds.minX - margin,
+            maxX: bounds.maxX + margin,
+            minY: bounds.minY - margin,
+            maxY: bounds.maxY + margin,
+        };
     }
 
     getTowerAt(cell) {
