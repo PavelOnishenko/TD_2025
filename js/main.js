@@ -12,6 +12,11 @@ function resizeCanvas() {
     const viewportHeight = window.innerHeight;
     const dpr = window.devicePixelRatio || 1;
 
+    if (gameContainer) {
+        gameContainer.style.width = `${viewportWidth}px`;
+        gameContainer.style.height = `${viewportHeight}px`;
+    }
+
     canvas.style.width = `${viewportWidth}px`;
     canvas.style.height = `${viewportHeight}px`;
 
@@ -73,6 +78,7 @@ if (crazyGamesIntegrationAllowed) {
     console.log('CrazyGames integration disabled for this host.');
 }
 initializeAudio();
+const gameContainer = document.getElementById('gameContainer');
 const canvas = document.getElementById('game');
 let game = null;
 const assets = await loadAssets();
