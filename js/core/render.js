@@ -51,6 +51,31 @@ function getProjectileAnimationState(projectile) {
     };
 }
 
+function traceEllipse(ctx, cx, cy, rx, ry) {
+    if (!ctx) return;
+    if (typeof ctx.ellipse === 'function') {
+        ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
+        return;
+    }
+
+    const canTransform = typeof ctx.save === 'function'
+        && typeof ctx.restore === 'function'
+        && typeof ctx.translate === 'function'
+        && typeof ctx.scale === 'function';
+
+    if (canTransform) {
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.scale(rx, ry);
+        ctx.arc(0, 0, 1, 0, Math.PI * 2);
+        ctx.restore();
+        return;
+    }
+
+    const radius = Math.max(rx, ry);
+    ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+}
+
 export function draw(game) {
     const ctx = game.ctx;
     const { scale = 1, offsetX = 0, offsetY = 0 } = game.viewport ?? {};
@@ -93,9 +118,69 @@ function drawPlatforms(game) {
 function drawGrid(game) {
     const ctx = game.ctx;
     const grid = game.getAllCells();
+    const cellImage = game.assets?.cell;
+    const isPreparationPhase = !game.waveInProgress;
+    const elapsed = game.elapsedTime ?? 0;
     grid.forEach(cell => {
-        if (!cell.occupied) {
-            ctx.drawImage(game.assets.cell, cell.x, cell.y, cell.w, cell.h);
+        const centerX = cell.x + cell.w / 2;
+        const centerY = cell.y + cell.h / 2;
+        let pulseIntensity = 0;
+        let scaledX = cell.x;
+        let scaledY = cell.y;
+        let scaledW = cell.w;
+        let scaledH = cell.h;
+
+        if (isPreparationPhase && !cell.occupied) {
+            const offset = (cell.x + cell.y) * 0.01;
+            const pulse = Math.sin(elapsed * 3 + offset);
+            pulseIntensity = (pulse + 1) / 2;
+            const scale = 1 + pulseIntensity * 0.02;
+            scaledW = cell.w * scale;
+            scaledH = cell.h * scale;
+            scaledX = centerX - scaledW / 2;
+            scaledY = centerY - scaledH / 2;
+        }
+
+        if (!cell.occupied && cellImage) {
+            ctx.drawImage(cellImage, scaledX, scaledY, scaledW, scaledH);
+        }
+
+        if (isPreparationPhase && !cell.occupied) {
+            const haloScale = 1.06 + pulseIntensity * 0.14;
+            const ringScale = 0.7 + pulseIntensity * 0.16;
+
+            ctx.save();
+            ctx.globalCompositeOperation = 'lighter';
+
+            ctx.globalAlpha = 0.12 + pulseIntensity * 0.18;
+            ctx.fillStyle = '#7de3ff';
+            ctx.beginPath();
+            traceEllipse(
+                ctx,
+                centerX,
+                centerY,
+                (cell.w / 2) * haloScale,
+                (cell.h / 2) * haloScale
+            );
+            if (typeof ctx.fill === 'function') {
+                ctx.fill();
+            }
+
+            ctx.globalAlpha = 0.28 + pulseIntensity * 0.22;
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+            ctx.beginPath();
+            traceEllipse(
+                ctx,
+                centerX,
+                centerY,
+                (cell.w / 2) * ringScale,
+                (cell.h / 2) * ringScale
+            );
+            if (typeof ctx.stroke === 'function') {
+                ctx.stroke();
+            }
+            ctx.restore();
         }
 
         if (cell.highlight > 0) {
