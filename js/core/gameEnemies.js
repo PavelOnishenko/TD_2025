@@ -50,9 +50,11 @@ export const enemyActions = {
         const defaultCoords = this.getDefaultEnemyCoords();
         const tankEnemy = new TankEnemy(baseHp * 4, color, defaultCoords.x, defaultCoords.y);
         tankEnemy.setEngineFlamePlacement({
-            anchorX:tankEnemy.engineFlame.anchor.x, anchorY:tankEnemy.engineFlame.anchor.y,
-            offsetX:tankEnemy.engineFlame.offset.x, offsetY:tankEnemy.engineFlame.offset.y,
-            angle:tankEnemy.engineFlame.angle+Math.PI
+            anchorX: tankEnemy.engineFlame.anchor.x,
+            anchorY: tankEnemy.engineFlame.anchor.y,
+            offsetX: tankEnemy.engineFlame.offset.x - 10,
+            offsetY: tankEnemy.engineFlame.offset.y,
+            angleDegrees: tankEnemy.engineFlame.angle - 55,
         });
         this.enemies.push(tankEnemy);
     },

@@ -1,4 +1,4 @@
-import { updateHUD, updateSwitchIndicator } from '../systems/ui.js';
+import { updateHUD } from '../systems/ui.js';
 import { draw } from './render.js';
 import { moveProjectiles, handleProjectileHits } from './projectiles.js';
 import { enemyActions } from './gameEnemies.js';
@@ -81,8 +81,6 @@ class Game {
         this.enemyHpPerWave = [2, 3, 4, 5, 6, 7, 8, 9, 10, 12];
         this.gameOver = false;
         this.shootingInterval = 500;
-        this.switchCooldownDuration = 0.5;
-        this.switchCooldown = 0;
         this.colorProbStart = 0.5;
         this.colorProbEnd = 0.5;
     }
@@ -275,13 +273,11 @@ class Game {
     }
 
     switchTowerColor(tower) {
-        if (this.switchCooldown > 0 || this.energy < this.switchCost)
+        if (this.energy < this.switchCost)
             return false;
         tower.color = tower.color === 'red' ? 'blue' : 'red';
         this.energy -= this.switchCost;
         updateHUD(this);
-        this.switchCooldown = this.switchCooldownDuration;
-        updateSwitchIndicator(this);
         return true;
     }
 
@@ -298,7 +294,6 @@ class Game {
     update(timestamp) {
         if (this.gameOver) return;
         const dt = this.calcDelta(timestamp);
-        this.updateSwitchCooldown(dt);
         this.towers.forEach(tower => tower.update(dt));
         this.spawnEnemiesIfNeeded(dt);
         this.updateEnemies(dt);
@@ -311,13 +306,6 @@ class Game {
         draw(this);
         if (!this.gameOver) 
             requestAnimationFrame(this.update);
-    }
-
-    updateSwitchCooldown(dt) {
-        if (this.switchCooldown > 0) {
-            this.switchCooldown = Math.max(0, this.switchCooldown - dt);
-            updateSwitchIndicator(this);
-        }
     }
 
     resetState() {
@@ -358,9 +346,7 @@ class Game {
         if (this.endDetailEl) {
             this.endDetailEl.textContent = '';
         }
-        this.switchCooldown = 0;
         updateHUD(this);
-        updateSwitchIndicator(this);
         this.persistState();
     }
 

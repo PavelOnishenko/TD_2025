@@ -4,7 +4,7 @@ import { bindUI } from '../js/systems/ui.js';
 
 test('bindUI attaches core HUD elements without tip text', () => {
   const elements = {};
-  const ids = ['lives','energy','wave','cooldown','status','nextWave','restart'];
+  const ids = ['lives','energy','wave','status','nextWave','restart'];
   for (const id of ids) {
     elements[id] = { textContent: '', addEventListener: () => {} };
   }
@@ -19,7 +19,6 @@ test('bindUI attaches core HUD elements without tip text', () => {
     energy: 20,
     wave: 1,
     maxWaves: 10,
-    switchCooldown: 0,
     towerCost: 10
   };
   global.document = doc;
