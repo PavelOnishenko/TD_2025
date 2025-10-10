@@ -117,6 +117,17 @@ body {
     transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
+#hud button:disabled {
+    background: rgba(40, 60, 90, 0.45);
+    color: rgba(185, 216, 255, 0.45);
+    border-color: rgba(102, 188, 255, 0.3);
+    box-shadow: none;
+    cursor: not-allowed;
+    transform: none;
+    pointer-events: none;
+    transition: none;
+}
+
 #hud button:hover {
     transform: translateY(-2px);
     box-shadow: 0 0 18px rgba(86, 173, 255, 0.7);
