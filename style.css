@@ -95,8 +95,8 @@ body {
 }
 
 .life-heart {
-    width: 24px;
-    height: 24px;
+    width: 31.2px;
+    height: 31.2px;
     object-fit: contain;
     image-rendering: pixelated;
     filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.4));
