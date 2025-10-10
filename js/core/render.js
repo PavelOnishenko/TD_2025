@@ -133,10 +133,11 @@ export function drawEntities(game) {
         .sort((a, b) => a.sortKey - b.sortKey)
         .forEach(layer => layer.draw());
 
-    const radius = game.projectileRadius ?? 6;
+    const defaultRadius = game.projectileRadius ?? 6;
     game.projectiles.forEach(p => {
         const palette = getEnergyPalette(p.color);
         const anim = getProjectileAnimationState(p);
+        const radius = p.radius ?? defaultRadius;
         const pulse = Math.sin(anim.time * anim.pulseSpeed + anim.pulseOffset);
         const shimmer = Math.sin(anim.time * anim.shimmerSpeed + anim.sparkleOffset);
         const vibration = radius * anim.vibrationStrength * Math.sin(anim.time * (anim.pulseSpeed * 1.4) + anim.pulseOffset);
