@@ -40,7 +40,6 @@ export function bindUI(game) {
     bindButtons(game);
     bindCanvasClick(game);
     updateHUD(game);
-    updateSwitchIndicator(game);
     setupStartMenu(game);
 }
 
@@ -48,7 +47,6 @@ function bindHUD(game) {
     game.livesEl = document.getElementById('lives');
     game.energyEl = document.getElementById('energy');
     game.waveEl = document.getElementById('wave');
-    game.cooldownEl = document.getElementById('cooldown');
     game.statusEl = document.getElementById('status');
     game.nextWaveBtn = document.getElementById('nextWave');
     game.restartBtn = document.getElementById('restart');
@@ -214,14 +212,6 @@ function renderLives(game) {
             game.livesEl.setAttribute('aria-label', `Lives: ${game.lives}`);
         }
     }
-}
-
-export function updateSwitchIndicator(game) {
-    if (!game.cooldownEl) return;
-    game.cooldownEl.textContent =
-        game.switchCooldown > 0
-            ? `Switch: ${game.switchCooldown.toFixed(1)}s`
-            : 'Switch: Ready';
 }
 
 function renderEnergy(game) {

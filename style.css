@@ -84,15 +84,6 @@ body {
     text-shadow: 0 0 12px rgba(80, 160, 255, 0.75);
 }
 
-#cooldown {
-    position: absolute;
-    top: 110px;
-    right: 32px;
-    font-size: 1rem;
-    text-align: right;
-    color: #a0c9ff;
-}
-
 #status {
     position: absolute;
     bottom: 40px;
