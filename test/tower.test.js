@@ -35,7 +35,7 @@ test('draw renders range circle, sprite and level text', () => {
     assert.deepEqual(fillTextCall, ['fillText', '1', tower.x + tower.w + 2, tower.y + 10]);
 });
 
-test('level 2 tower increases stats and draws highlight', () => {
+test('level 2 tower increases stats without drawing highlight', () => {
     const tower = new Tower(50, 60, 'blue', 2);
     const ctx = makeFakeCtx();
     const sprite = {};
@@ -46,7 +46,7 @@ test('level 2 tower increases stats and draws highlight', () => {
     assert.ok(Math.abs(tower.range - 218.4) < 1e-6);
     assert.ok(Math.abs(tower.damage - 1.8) < 1e-6);
     const strokeRectCall = ctx.ops.find(op => op[0] === 'strokeRect');
-    assert.deepEqual(strokeRectCall, ['strokeRect', tower.x - 2, tower.y - 2, tower.w + 4, tower.h + 4]);
+    assert.equal(strokeRectCall, undefined);
     const arcCall = ctx.ops[1];
     assert.deepEqual(arcCall, ['arc', 80, 105, tower.range, 0, Math.PI * 2]);
 });

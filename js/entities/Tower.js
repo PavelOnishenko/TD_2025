@@ -96,10 +96,6 @@ export default class Tower {
             drawTowerMuzzleFlash(ctx, this);
         }
 
-        if (this.level > 1) {
-            this.highlight(ctx);
-        }
-
         this.drawLevelIndicator(ctx);
     }
 
@@ -118,11 +114,6 @@ export default class Tower {
             return;
         }
         ctx.drawImage(sprite, this.x, this.y, this.w, this.h);
-    }
-
-    highlight(ctx) {
-        ctx.strokeStyle = 'yellow';
-        ctx.strokeRect(this.x - 2, this.y - 2, this.w + 4, this.h + 4);
     }
 
     drawLevelIndicator(ctx) {
