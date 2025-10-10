@@ -43,6 +43,8 @@ function attachDomStubs(game) {
     game.waveEl = { textContent: '' };
     game.statusEl = { textContent: '', style: {} };
     game.nextWaveBtn = { disabled: false };
+    game.mergeBtn = { disabled: false };
+    game.cooldownEl = { textContent: '' };
     const assetProxy = new Proxy({ cell: {} }, {
         get(target, prop) {
             if (!(prop in target)) {
@@ -307,14 +309,16 @@ test('checkWaveCompletion increments wave and energy', () => {
     game.spawned = game.enemiesPerWave;
     game.enemies = [];
     game.nextWaveBtn.disabled = true;
+    game.mergeBtn.disabled = true;
     game.checkWaveCompletion();
     assert.equal(game.waveInProgress, false);
     assert.equal(game.wave, 2);
     assert.equal(game.energy, game.initialEnergy + 3);
     assert.equal(game.nextWaveBtn.disabled, false);
+    assert.equal(game.mergeBtn.disabled, false);
 });
 
-test('checkWaveCompletion merges adjacent towers of same color and level', () => {
+test('manualMergeTowers merges adjacent towers of same color and level', () => {
     const game = new Game(makeFakeCanvas());
     attachDomStubs(game);
     const cellA = game.bottomCells[0];
@@ -324,7 +328,11 @@ test('checkWaveCompletion merges adjacent towers of same color and level', () =>
     game.waveInProgress = true;
     game.spawned = game.enemiesPerWave;
     game.enemies = [];
+    game.mergeBtn.disabled = true;
     game.checkWaveCompletion();
+    assert.equal(game.mergeBtn.disabled, false);
+    assert.equal(game.towers.length, 2);
+    game.manualMergeTowers();
     assert.equal(game.towers.length, 1);
     assert.equal(game.towers[0], t1);
     assert.equal(t1.level, 2);
@@ -341,9 +349,11 @@ test('checkWaveCompletion triggers win on final wave', () => {
     game.waveInProgress = true;
     game.spawned = game.enemiesPerWave;
     game.enemies = [];
+    game.mergeBtn.disabled = false;
     game.checkWaveCompletion();
     assert.equal(game.statusEl.textContent, 'All waves cleared!');
     assert.equal(game.gameOver, true);
+    assert.equal(game.mergeBtn.disabled, true);
 });
 
 test('resetState restores initial game values', () => {

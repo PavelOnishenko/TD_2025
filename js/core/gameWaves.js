@@ -5,6 +5,13 @@ export const waveActions = {
         if (this.waveInProgress) return;
         this.waveInProgress = true;
         this.nextWaveBtn.disabled = true;
+        if (this.mergeBtn) {
+            this.mergeBtn.disabled = true;
+        }
+        if (this.statusEl) {
+            this.statusEl.textContent = '';
+            this.statusEl.style.color = '';
+        }
         const cfg = this.waveConfigs[this.wave - 1] ?? this.waveConfigs.at(-1);
         this.spawnInterval = cfg.interval;
         this.enemiesPerWave = cfg.cycles;
@@ -34,6 +41,14 @@ export const waveActions = {
         }
     },
 
+    manualMergeTowers() {
+        if (this.waveInProgress) {
+            return;
+        }
+        this.mergeTowers(this.bottomCells);
+        this.mergeTowers(this.topCells);
+    },
+
     canMergeCells(cellA, cellB) {
         return cellA.occupied && cellB.occupied;
     },
@@ -61,8 +76,9 @@ export const waveActions = {
     checkWaveCompletion() {
         if (this.waveInProgress && this.spawned === this.enemiesPerWave && this.enemies.length === 0) {
             this.waveInProgress = false;
-            this.mergeTowers(this.bottomCells);
-            this.mergeTowers(this.topCells);
+            if (this.mergeBtn) {
+                this.mergeBtn.disabled = false;
+            }
             if (this.wave === this.maxWaves) {
                 endGame(this, 'WIN');
             } else {
