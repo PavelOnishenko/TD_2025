@@ -75,13 +75,66 @@ body {
     filter: drop-shadow(0 0 4px rgba(255, 224, 102, 0.55));
 }
 
-#wave {
+#wavePanel {
     position: absolute;
     top: 26px;
     right: 32px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+}
+
+#wave {
     font-size: 1.4rem;
     font-weight: 600;
     text-shadow: 0 0 12px rgba(80, 160, 255, 0.75);
+}
+
+.wave-phase {
+    font-size: 0.9rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: rgba(42, 60, 92, 0.65);
+    box-shadow: 0 0 8px rgba(64, 118, 255, 0.35);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.wave-phase::before {
+    content: '';
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: currentColor;
+    box-shadow: 0 0 6px currentColor;
+}
+
+.wave-phase--prep {
+    color: #8ecbff;
+}
+
+.wave-phase--active {
+    color: #ff8888;
+    background: rgba(143, 32, 32, 0.65);
+    box-shadow: 0 0 10px rgba(255, 72, 72, 0.45);
+    animation: wavePhasePulse 1.4s ease-in-out infinite;
+}
+
+@keyframes wavePhasePulse {
+    0%,
+    100% {
+        transform: scale(1);
+        opacity: 0.95;
+    }
+    50% {
+        transform: scale(1.05);
+        opacity: 1;
+    }
 }
 
 #status {

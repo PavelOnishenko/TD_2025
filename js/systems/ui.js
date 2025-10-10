@@ -46,7 +46,9 @@ export function bindUI(game) {
 function bindHUD(game) {
     game.livesEl = document.getElementById('lives');
     game.energyEl = document.getElementById('energy');
+    game.wavePanelEl = document.getElementById('wavePanel');
     game.waveEl = document.getElementById('wave');
+    game.wavePhaseEl = document.getElementById('wavePhase');
     game.statusEl = document.getElementById('status');
     game.nextWaveBtn = document.getElementById('nextWave');
     game.restartBtn = document.getElementById('restart');
@@ -187,9 +189,24 @@ function tryShoot(game, cell) {
 export function updateHUD(game) {
     renderLives(game);
     renderEnergy(game);
-    game.waveEl.textContent = `Wave: ${game.wave}/${game.maxWaves}`;
+    if (game.waveEl) {
+        game.waveEl.textContent = `Wave: ${game.wave}/${game.maxWaves}`;
+    }
+    updateWavePhaseIndicator(game);
     if (typeof game.persistState === 'function') {
         game.persistState();
+    }
+}
+
+export function updateWavePhaseIndicator(game) {
+    const isInProgress = Boolean(game.waveInProgress);
+    if (game.wavePhaseEl) {
+        game.wavePhaseEl.textContent = isInProgress ? 'Wave in progress' : 'Preparation phase';
+        game.wavePhaseEl.classList.toggle('wave-phase--active', isInProgress);
+        game.wavePhaseEl.classList.toggle('wave-phase--prep', !isInProgress);
+    }
+    if (game.wavePanelEl && game.wavePanelEl.dataset) {
+        game.wavePanelEl.dataset.phase = isInProgress ? 'active' : 'prep';
     }
 }
 
@@ -275,6 +292,8 @@ function renderEnergy(game) {
 
 export function endGame(game, text) {
     const isWin = text === 'WIN';
+    game.waveInProgress = false;
+    updateWavePhaseIndicator(game);
     if (game.statusEl) {
         game.statusEl.textContent = isWin ? 'All waves cleared!' : 'Base destroyed!';
         game.statusEl.style.color = isWin ? '#4ade80' : '#f87171';

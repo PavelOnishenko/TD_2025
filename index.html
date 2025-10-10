@@ -29,7 +29,10 @@
                     <span class="resource-value">20</span>
                     <img class="resource-icon" src="assets/energy_sign.png" alt="" aria-hidden="true" />
                 </div>
-                <span id="wave">Wave: 1/10</span>
+                <div id="wavePanel" aria-live="polite">
+                    <span id="wave" class="wave-label">Wave: 1/10</span>
+                    <span id="wavePhase" class="wave-phase wave-phase--prep">Preparation phase</span>
+                </div>
                 <span id="status"></span>
                 <button id="nextWave">Next Wave</button>
                 <button id="mergeTowers" disabled>Merge Towers</button>

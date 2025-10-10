@@ -1,4 +1,4 @@
-import { updateHUD, endGame } from '../systems/ui.js';
+import { updateHUD, endGame, updateWavePhaseIndicator } from '../systems/ui.js';
 
 export const waveActions = {
     startWave() {
@@ -8,6 +8,7 @@ export const waveActions = {
         if (this.mergeBtn) {
             this.mergeBtn.disabled = true;
         }
+        updateWavePhaseIndicator(this);
         if (this.statusEl) {
             this.statusEl.textContent = '';
             this.statusEl.style.color = '';
@@ -76,6 +77,7 @@ export const waveActions = {
     checkWaveCompletion() {
         if (this.waveInProgress && this.spawned === this.enemiesPerWave && this.enemies.length === 0) {
             this.waveInProgress = false;
+            updateWavePhaseIndicator(this);
             if (this.mergeBtn) {
                 this.mergeBtn.disabled = false;
             }
