@@ -82,7 +82,7 @@ body {
     display: flex;
     flex-direction: column;
     align-items: flex-end;
-    gap: 4px;
+    gap: 10px;
 }
 
 #wave {
@@ -96,7 +96,7 @@ body {
     letter-spacing: 0.04em;
     text-transform: uppercase;
     font-weight: 700;
-    padding: 4px 10px;
+    padding: 7px 10px;
     border-radius: 999px;
     background: rgba(42, 60, 92, 0.65);
     box-shadow: 0 0 8px rgba(64, 118, 255, 0.35);
@@ -219,7 +219,7 @@ canvas {
 
 #nextWave {
     position: absolute;
-    top: calc(78px * 1.3);
+    top: calc(108px * 1.3);
     right: calc(24px * 1.3);
     min-width: calc(150px * 1.3);
     text-align: center;
@@ -227,7 +227,7 @@ canvas {
 
 #mergeTowers {
     position: absolute;
-    top: calc(128px * 1.3);
+    top: calc(168px * 1.3);
     right: calc(24px * 1.3);
     min-width: calc(150px * 1.3);
     text-align: center;
