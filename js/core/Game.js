@@ -11,6 +11,21 @@ import Tower from '../entities/Tower.js';
 import { clearGameState, loadGameState, saveGameState } from '../systems/dataStore.js';
 import { createPlatforms } from './platforms.js';
 
+function createProjectileVisualState() {
+    const pulseOffset = Math.random() * Math.PI * 2;
+    const sparkleOffset = Math.random() * Math.PI * 2;
+    const jitterAngle = Math.random() * Math.PI * 2;
+    return {
+        time: 0,
+        pulseOffset,
+        sparkleOffset,
+        jitterAngle,
+        pulseSpeed: 8 + Math.random() * 4,
+        shimmerSpeed: 6 + Math.random() * 4,
+        vibrationStrength: 0.35 + Math.random() * 0.15,
+    };
+}
+
 class Game {
     constructor(canvas, { width = 540, height = 960, assets = null } = {}) {
         this.canvas = canvas;
@@ -266,7 +281,13 @@ class Game {
     spawnProjectile(angle, tower) {
         const c = tower.center();
         this.projectiles.push({
-            x: c.x, y: c.y, vx: Math.cos(angle) * this.projectileSpeed, vy: Math.sin(angle) * this.projectileSpeed, color: tower.color, damage: tower.damage
+            x: c.x,
+            y: c.y,
+            vx: Math.cos(angle) * this.projectileSpeed,
+            vy: Math.sin(angle) * this.projectileSpeed,
+            color: tower.color,
+            damage: tower.damage,
+            anim: createProjectileVisualState(),
         });
         tower.triggerFlash();
         this.audio.playFire();

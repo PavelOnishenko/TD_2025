@@ -5,6 +5,9 @@ export function moveProjectiles(game, dt) {
     game.projectiles.forEach(p => {
         p.x += p.vx * dt;
         p.y += p.vy * dt;
+        if (p.anim && typeof p.anim === 'object') {
+            p.anim.time = (p.anim.time ?? 0) + dt;
+        }
     });
 }
 
