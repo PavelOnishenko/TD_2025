@@ -71,6 +71,7 @@ test('spawnProjectile main', () => {
     assert.ok(Math.abs(projectile.vy - 673.18) < 0.01);
     assert.equal(projectile.color, tower.color);
     assert.equal(projectile.damage, 1);
+    assert.equal(projectile.radius, 6);
     assert.equal(tower.flashTimer, tower.flashDuration);
 });
 
@@ -83,6 +84,17 @@ test('spawnProjectile uses tower damage', () => {
 
     assert.equal(game.projectiles[0].damage, tower.damage);
     assert.ok(Math.abs(game.projectiles[0].damage - 1.8) < 1e-6);
+    assert.equal(game.projectiles[0].radius, 8);
+});
+
+test('spawnProjectile clamps projectile size to level 3', () => {
+    const fakeCanvas = makeFakeCanvas();
+    const game = new Game(fakeCanvas);
+    const tower = new Tower(0, 0, 'blue', 5);
+
+    game.spawnProjectile(0, tower);
+
+    assert.equal(game.projectiles[0].radius, 10);
 });
 
 test('spawnEnemy main', () => {

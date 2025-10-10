@@ -39,6 +39,7 @@ class Game {
         this.explosions = [];
         this.projectileSpeed = 800;
         this.projectileRadius = 6;
+        this.maxProjectileRadius = this.projectileRadius;
         this.projectileSpawnInterval = 500;
         this.lastTime = 0;
         this.hasStarted = false;
@@ -130,6 +131,7 @@ class Game {
         this.enemies = [];
         this.projectiles = [];
         this.explosions = [];
+        this.maxProjectileRadius = this.projectileRadius;
 
         const cfg = this.waveConfigs[this.wave - 1] ?? this.waveConfigs.at(-1);
         this.spawnInterval = cfg.interval;
@@ -279,8 +281,17 @@ class Game {
         return this.grid.getAllCells();
     }
 
+    getProjectileRadiusForLevel(level) {
+        const baseRadius = this.projectileRadius ?? 6;
+        const normalizedLevel = Math.max(1, Math.min(Number(level) || 1, 3));
+        const radiusIncrease = (normalizedLevel - 1) * 2;
+        return baseRadius + radiusIncrease;
+    }
+
     spawnProjectile(angle, tower) {
         const c = tower.center();
+        const previousMaxRadius = this.maxProjectileRadius ?? this.projectileRadius ?? 0;
+        const radius = this.getProjectileRadiusForLevel(tower?.level);
         this.projectiles.push({
             x: c.x,
             y: c.y,
@@ -289,7 +300,12 @@ class Game {
             color: tower.color,
             damage: tower.damage,
             anim: createProjectileVisualState(),
+            radius,
         });
+        this.maxProjectileRadius = Math.max(previousMaxRadius, radius);
+        if (this.maxProjectileRadius !== previousMaxRadius) {
+            this.worldBounds = this.computeWorldBounds();
+        }
         tower.triggerFlash();
         this.audio.playFire();
     }
@@ -354,7 +370,11 @@ class Game {
             };
         }
 
-        const margin = Math.max(40, (this.projectileRadius ?? 0) * 2);
+        const effectiveRadius = Math.max(
+            this.projectileRadius ?? 0,
+            this.maxProjectileRadius ?? 0,
+        );
+        const margin = Math.max(40, effectiveRadius * 2);
         return {
             minX: bounds.minX - margin,
             maxX: bounds.maxX + margin,
@@ -392,6 +412,7 @@ class Game {
         this.enemies = [];
         this.projectiles = [];
         this.explosions = [];
+        this.maxProjectileRadius = this.projectileRadius;
         this.waveInProgress = false;
         this.nextWaveBtn.disabled = false;
         if (this.mergeBtn) {
