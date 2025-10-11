@@ -51,6 +51,31 @@ function getProjectileAnimationState(projectile) {
     };
 }
 
+function traceEllipse(ctx, cx, cy, rx, ry) {
+    if (!ctx) return;
+    if (typeof ctx.ellipse === 'function') {
+        ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
+        return;
+    }
+
+    const canTransform = typeof ctx.save === 'function'
+        && typeof ctx.restore === 'function'
+        && typeof ctx.translate === 'function'
+        && typeof ctx.scale === 'function';
+
+    if (canTransform) {
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.scale(rx, ry);
+        ctx.arc(0, 0, 1, 0, Math.PI * 2);
+        ctx.restore();
+        return;
+    }
+
+    const radius = Math.max(rx, ry);
+    ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+}
+
 export function draw(game) {
     const ctx = game.ctx;
     const { scale = 1, offsetX = 0, offsetY = 0 } = game.viewport ?? {};
@@ -93,9 +118,57 @@ function drawPlatforms(game) {
 function drawGrid(game) {
     const ctx = game.ctx;
     const grid = game.getAllCells();
+    const cellImage = game.assets?.cell;
+    const isPreparationPhase = !game.waveInProgress;
+    const elapsed = game.elapsedTime ?? 0;
     grid.forEach(cell => {
-        if (!cell.occupied) {
-            ctx.drawImage(game.assets.cell, cell.x, cell.y, cell.w, cell.h);
+        const centerX = cell.x + cell.w / 2;
+        const centerY = cell.y + cell.h / 2;
+        let pulseIntensity = 0;
+
+        if (!cell.occupied && cellImage) {
+            ctx.drawImage(cellImage, cell.x, cell.y, cell.w, cell.h);
+        }
+
+        if (isPreparationPhase && !cell.occupied) {
+            const offset = (cell.x + cell.y) * 0.008;
+            const pulse = Math.sin(elapsed * 2.8 + offset);
+            pulseIntensity = (pulse + 1) / 2;
+
+            const easedPulse = Math.pow(pulseIntensity, 0.7);
+            const baseRadius = Math.min(cell.w, cell.h) / 2;
+            const innerRadius = baseRadius * 0.4;
+            const glowRadius = baseRadius * (0.9 + easedPulse * 0.12);
+            const glowOpacity = 0.12 + easedPulse * 0.22;
+
+            ctx.save();
+            ctx.globalCompositeOperation = 'lighter';
+            ctx.globalAlpha = glowOpacity;
+
+            if (typeof ctx.createRadialGradient === 'function') {
+                const gradient = ctx.createRadialGradient(
+                    centerX,
+                    centerY,
+                    innerRadius,
+                    centerX,
+                    centerY,
+                    glowRadius
+                );
+                gradient.addColorStop(0, 'rgba(150, 245, 255, 0.98)');
+                gradient.addColorStop(0.55, 'rgba(128, 234, 255, 0.6)');
+                gradient.addColorStop(1, 'rgba(128, 234, 255, 0)');
+                ctx.fillStyle = gradient;
+            } else {
+                ctx.fillStyle = 'rgba(128, 234, 255, 0.45)';
+            }
+
+            ctx.fillRect(
+                centerX - glowRadius,
+                centerY - glowRadius,
+                glowRadius * 2,
+                glowRadius * 2
+            );
+            ctx.restore();
         }
 
         if (cell.highlight > 0) {
