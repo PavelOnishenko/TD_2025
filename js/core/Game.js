@@ -42,6 +42,7 @@ class Game {
         this.maxProjectileRadius = this.projectileRadius;
         this.projectileSpawnInterval = 500;
         this.lastTime = 0;
+        this.elapsedTime = 0;
         this.hasStarted = false;
         this.initStats();
         this.base = { x: 1100, y: this.logicalH - 60, w: 40, h: 40 };
@@ -320,8 +321,10 @@ class Game {
     }
 
     calcDelta(timestamp) {
-        const dt = (timestamp - this.lastTime) / 1000;
+        const rawDt = (timestamp - this.lastTime) / 1000;
         this.lastTime = timestamp;
+        const dt = Number.isFinite(rawDt) ? Math.max(0, rawDt) : 0;
+        this.elapsedTime = (this.elapsedTime ?? 0) + dt;
         return dt;
     }
 
@@ -426,6 +429,7 @@ class Game {
         this.spawned = 0;
         this.spawnTimer = 0;
         this.gameOver = false;
+        this.elapsedTime = 0;
         if (this.statusEl) {
             this.statusEl.textContent = '';
             this.statusEl.style.color = '';
@@ -462,6 +466,7 @@ class Game {
         this.hasStarted = true;
         callCrazyGamesEvent('gameplayStart');
         this.audio.playMusic();
+        this.elapsedTime = 0;
         this.lastTime = performance.now();
         requestAnimationFrame(this.update);
     }
