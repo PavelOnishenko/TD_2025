@@ -2,20 +2,14 @@ import { updateHUD, endGame, updateWavePhaseIndicator } from '../systems/ui.js';
 
 export const waveActions = {
     startWave() {
-        if (this.waveInProgress) return;
-        this.waveInProgress = true;
-        this.nextWaveBtn.disabled = true;
+        this.setupWaveStuff();
         if (this.mergeBtn) {
             this.mergeBtn.disabled = true;
         }
-        updateWavePhaseIndicator(this);
         if (this.statusEl) {
             this.statusEl.textContent = '';
             this.statusEl.style.color = '';
         }
-        const cfg = this.waveConfigs[this.wave - 1] ?? this.waveConfigs.at(-1);
-        this.spawnInterval = cfg.interval;
-        this.enemiesPerWave = cfg.cycles;
         this.enemies = [];
         this.spawned = 0;
         this.spawnTimer = 0;
@@ -23,8 +17,20 @@ export const waveActions = {
             this.colorProbStart = Math.random();
             this.colorProbEnd = Math.random();
         } while (Math.abs(this.colorProbStart - this.colorProbEnd) <= 0.35);
-        this.prepareTankScheduleForWave(cfg, this.wave);
         this.spawnEnemy();
+    },
+
+    setupWaveStuff() {
+        if (this.waveInProgress) 
+            return;
+
+        this.waveInProgress = true;
+        this.nextWaveBtn.disabled = true;
+        updateWavePhaseIndicator(this);
+        const cfg = this.waveConfigs[this.wave - 1] ?? this.waveConfigs.at(-1);
+        this.spawnInterval = cfg.interval;
+        this.enemiesPerWave = cfg.cycles;
+        this.prepareTankScheduleForWave(cfg, this.wave);
     },
 
     mergeTowers(row) {
