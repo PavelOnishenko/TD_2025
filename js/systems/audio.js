@@ -13,6 +13,52 @@ function hasHowler() {
     return Boolean(globalScope && globalScope.Howl && globalScope.Howler);
 }
 
+function createSoundTrigger(sound) {
+    return function triggerSound() {
+        if (!sound) {
+            return;
+        }
+        sound.play();
+    };
+}
+
+function hasCallable(target, methodName) {
+    return Boolean(target && typeof target[methodName] === 'function');
+}
+
+function createPlayMusic(backgroundMusic, hasPlayMethod, hasPlayingMethod) {
+    return function playMusic() {
+        if (!hasPlayMethod || !hasPlayingMethod) {
+            return;
+        }
+        if (backgroundMusic.playing()) {
+            return;
+        }
+        backgroundMusic.play();
+    };
+}
+
+function createStopMusic(backgroundMusic, hasStopMethod, hasPlayingMethod) {
+    return function stopMusic() {
+        if (!hasStopMethod || !hasPlayingMethod) {
+            return;
+        }
+        if (!backgroundMusic.playing()) {
+            return;
+        }
+        backgroundMusic.stop();
+    };
+}
+
+function createMusicActions(backgroundMusic) {
+    const hasPlayMethod = hasCallable(backgroundMusic, 'play');
+    const hasPlayingMethod = hasCallable(backgroundMusic, 'playing');
+    const hasStopMethod = hasCallable(backgroundMusic, 'stop');
+    const playMusic = createPlayMusic(backgroundMusic, hasPlayMethod, hasPlayingMethod);
+    const stopMusic = createStopMusic(backgroundMusic, hasStopMethod, hasPlayingMethod);
+    return { playMusic, stopMusic };
+}
+
 export function isAudioSupported() {
     return hasHowler();
 }
@@ -48,46 +94,18 @@ export function createGameAudio(sounds = {}) {
         return NOOP_AUDIO;
     }
 
-    const fire = sounds.fire ?? null;
-    const explosion = sounds.explosion ?? null;
-    const placement = sounds.placement ?? null;
-    const backgroundMusic = sounds.backgroundMusic ?? null;
-    const error = sounds.error ?? null;
+    const fireSound = createSoundTrigger(sounds.fire ?? null);
+    const explosionSound = createSoundTrigger(sounds.explosion ?? null);
+    const placementSound = createSoundTrigger(sounds.placement ?? null);
+    const errorSound = createSoundTrigger(sounds.error ?? null);
+    const { playMusic, stopMusic } = createMusicActions(sounds.backgroundMusic ?? null);
 
     return {
-        playFire() {
-            if (fire) {
-                console.log('Playing fire sound');
-                fire.play();
-            }
-        },
-        playExplosion() {
-            if (explosion) {
-                console.log('Playing explosion sound');
-                explosion.play();
-            }
-        },
-        playPlacement() {
-            if (placement) {
-                console.log('Playing placement sound');
-                placement.play();
-            }
-        },
-        playMusic() {
-            if (backgroundMusic && typeof backgroundMusic.play === 'function' &&
-                typeof backgroundMusic.playing === 'function' && !backgroundMusic.playing()) {
-                backgroundMusic.play();
-            }
-        },
-        stopMusic() {
-            if (backgroundMusic && typeof backgroundMusic.playing === 'function' && backgroundMusic.playing()) {
-                backgroundMusic.stop();
-            }
-        },
-        playError() {
-            if (error) {
-                error.play();
-            }
-        }
+        playFire: fireSound,
+        playExplosion: explosionSound,
+        playPlacement: placementSound,
+        playMusic,
+        stopMusic,
+        playError: errorSound
     };
 }
