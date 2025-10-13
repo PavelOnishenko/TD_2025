@@ -3,26 +3,102 @@ import assert from 'node:assert/strict';
 
 import { createGameAudio, createSound, getHowler, initializeAudio, isAudioSupported } from '../js/systems/audio.js';
 
-test('initializeAudio returns false when howler is missing', () => {
-    const originalHowl = globalThis.Howl;
-    const originalHowler = globalThis.Howler;
-    delete globalThis.Howl;
-    delete globalThis.Howler;
+function captureHowlerState() {
+    return {
+        hasHowl: Object.prototype.hasOwnProperty.call(globalThis, 'Howl'),
+        howl: globalThis.Howl,
+        hasHowler: Object.prototype.hasOwnProperty.call(globalThis, 'Howler'),
+        howler: globalThis.Howler
+    };
+}
 
-    assert.equal(isAudioSupported(), false);
-    assert.equal(initializeAudio(), false);
-    assert.equal(getHowler(), null);
-
-    if (originalHowl) {
-        globalThis.Howl = originalHowl;
+function restoreHowlerState(state) {
+    if (state.hasHowl) {
+        globalThis.Howl = state.howl;
     } else {
         delete globalThis.Howl;
     }
-    if (originalHowler) {
-        globalThis.Howler = originalHowler;
+    if (state.hasHowler) {
+        globalThis.Howler = state.howler;
     } else {
         delete globalThis.Howler;
     }
+}
+
+function runWithHowler(howl, howler, runner) {
+    const snapshot = captureHowlerState();
+    if (typeof howl === 'undefined') {
+        delete globalThis.Howl;
+    } else {
+        globalThis.Howl = howl;
+    }
+    if (typeof howler === 'undefined') {
+        delete globalThis.Howler;
+    } else {
+        globalThis.Howler = howler;
+    }
+    try {
+        return runner();
+    } finally {
+        restoreHowlerState(snapshot);
+    }
+}
+
+function runWithoutHowler(runner) {
+    return runWithHowler(undefined, undefined, runner);
+}
+
+test('initializeAudio returns false when howler is missing', () => {
+    return runWithoutHowler(() => {
+        let warnCalls = 0;
+        const originalWarn = console.warn;
+        console.warn = () => {
+            warnCalls += 1;
+        };
+
+        try {
+            assert.equal(isAudioSupported(), false);
+            assert.equal(initializeAudio(), false);
+            assert.equal(getHowler(), null);
+            assert.equal(warnCalls, 1);
+        } finally {
+            console.warn = originalWarn;
+        }
+    });
+});
+
+test('initializeAudio configures howler when available', () => {
+    class FakeHowl {
+        constructor(options) {
+            this.options = options;
+        }
+    }
+    const volumeCalls = [];
+    const fakeHowler = {
+        autoSuspend: false,
+        volume(value) {
+            volumeCalls.push(value);
+        }
+    };
+
+    return runWithHowler(FakeHowl, fakeHowler, () => {
+        assert.equal(isAudioSupported(), true);
+        assert.equal(getHowler(), fakeHowler);
+
+        const initialized = initializeAudio({ autoSuspend: true, volume: 0.5 });
+
+        assert.equal(initialized, true);
+        assert.equal(fakeHowler.autoSuspend, true);
+        assert.deepEqual(volumeCalls, [0.5]);
+    });
+});
+
+test('createSound throws when howler is not available', () => {
+    return runWithoutHowler(() => {
+        assert.throws(() => {
+            createSound({ src: ['missing.ogg'] });
+        }, new Error('Howler.js is not loaded'));
+    });
 });
 
 test('createSound uses the active Howl constructor', () => {
@@ -36,138 +112,92 @@ test('createSound uses the active Howl constructor', () => {
         volume: () => {}
     };
 
-    const originalHowl = globalThis.Howl;
-    const originalHowler = globalThis.Howler;
-    globalThis.Howl = FakeHowl;
-    globalThis.Howler = fakeHowler;
-
-    try {
+    return runWithHowler(FakeHowl, fakeHowler, () => {
         assert.equal(isAudioSupported(), true);
         assert.equal(initializeAudio(), true);
+
         const sound = createSound({ src: ['sound.ogg'], loop: true });
+
         assert.ok(sound instanceof FakeHowl);
         assert.deepEqual(sound.options, { src: ['sound.ogg'], loop: true });
         assert.equal(fakeHowler.autoSuspend, false);
-    } finally {
-        if (originalHowl) {
-            globalThis.Howl = originalHowl;
-        } else {
-            delete globalThis.Howl;
-        }
-        if (originalHowler) {
-            globalThis.Howler = originalHowler;
-        } else {
-            delete globalThis.Howler;
-        }
-    }
-});
-
-test('createGameAudio exposes playError when howler is available', () => {
-    class FakeHowl {}
-    const fakeHowler = {};
-
-    const originalHowl = globalThis.Howl;
-    const originalHowler = globalThis.Howler;
-    globalThis.Howl = FakeHowl;
-    globalThis.Howler = fakeHowler;
-
-    const errorSound = { played: false, play() { this.played = true; } };
-    const fireSound = { played: false, play() { this.played = true; } };
-
-    try {
-        const audio = createGameAudio({ error: errorSound, fire: fireSound });
-        assert.equal(typeof audio.playError, 'function');
-        audio.playError();
-        assert.equal(errorSound.played, true);
-        audio.playFire();
-        assert.equal(fireSound.played, true);
-    } finally {
-        if (originalHowl) {
-            globalThis.Howl = originalHowl;
-        } else {
-            delete globalThis.Howl;
-        }
-        if (originalHowler) {
-            globalThis.Howler = originalHowler;
-        } else {
-            delete globalThis.Howler;
-        }
-    }
+    });
 });
 
 test('createGameAudio returns noop audio when howler is unavailable', () => {
-    const originalHowl = globalThis.Howl;
-    const originalHowler = globalThis.Howler;
-    delete globalThis.Howl;
-    delete globalThis.Howler;
+    return runWithoutHowler(() => {
+        const fireSound = { play() { throw new Error('Should not play'); } };
 
-    const audio = createGameAudio({
-        fire: { play() { throw new Error('Should not be called'); } }
+        const audio = createGameAudio({ fire: fireSound });
+
+        assert.equal(typeof audio.playFire, 'function');
+        assert.equal(typeof audio.playMusic, 'function');
+        assert.equal(typeof audio.stopMusic, 'function');
+        assert.equal(typeof audio.playError, 'function');
+
+        audio.playFire();
+        audio.playMusic();
+        audio.stopMusic();
+        audio.playError();
     });
+});
 
-    assert.equal(typeof audio.playFire, 'function');
-    audio.playFire();
+test('createGameAudio triggers available sounds only', () => {
+    class FakeHowl {}
+    const fakeHowler = {};
 
-    if (originalHowl) {
-        globalThis.Howl = originalHowl;
-    } else {
-        delete globalThis.Howl;
-    }
-    if (originalHowler) {
-        globalThis.Howler = originalHowler;
-    } else {
-        delete globalThis.Howler;
-    }
+    return runWithHowler(FakeHowl, fakeHowler, () => {
+        const fireSound = { playCalls: 0, play() { this.playCalls += 1; } };
+        const explosionSound = { playCalls: 0, play() { this.playCalls += 1; } };
+        const errorSound = { playCalls: 0, play() { this.playCalls += 1; } };
+        const audio = createGameAudio({
+            fire: fireSound,
+            explosion: explosionSound,
+            error: errorSound
+        });
+
+        audio.playFire();
+        audio.playExplosion();
+        audio.playPlacement();
+        audio.playError();
+
+        assert.equal(fireSound.playCalls, 1);
+        assert.equal(explosionSound.playCalls, 1);
+        assert.equal(errorSound.playCalls, 1);
+    });
 });
 
 test('createGameAudio controls background music lifecycle', () => {
     class FakeHowl {}
     const fakeHowler = {};
 
-    const originalHowl = globalThis.Howl;
-    const originalHowler = globalThis.Howler;
-    globalThis.Howl = FakeHowl;
-    globalThis.Howler = fakeHowler;
+    return runWithHowler(FakeHowl, fakeHowler, () => {
+        let playCount = 0;
+        let stopCount = 0;
+        let playingState = false;
+        const backgroundMusic = {
+            play() {
+                playCount += 1;
+                playingState = true;
+            },
+            playing() {
+                return playingState;
+            },
+            stop() {
+                stopCount += 1;
+                playingState = false;
+            }
+        };
 
-    let playCount = 0;
-    let stopCount = 0;
-    let playingState = false;
-    const backgroundMusic = {
-        play() {
-            playCount += 1;
-            playingState = true;
-        },
-        playing() {
-            return playingState;
-        },
-        stop() {
-            stopCount += 1;
-            playingState = false;
-        }
-    };
-
-    try {
         const audio = createGameAudio({ backgroundMusic });
+
         audio.playMusic();
-        assert.equal(playCount, 1);
         audio.playMusic();
-        assert.equal(playCount, 1);
         audio.stopMusic();
-        assert.equal(stopCount, 1);
         audio.stopMusic();
-        assert.equal(stopCount, 1);
         audio.playMusic();
+
         assert.equal(playCount, 2);
-    } finally {
-        if (originalHowl) {
-            globalThis.Howl = originalHowl;
-        } else {
-            delete globalThis.Howl;
-        }
-        if (originalHowler) {
-            globalThis.Howler = originalHowler;
-        } else {
-            delete globalThis.Howler;
-        }
-    }
+        assert.equal(stopCount, 1);
+    });
 });
