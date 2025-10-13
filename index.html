@@ -1,48 +1,54 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8" />
-        <title>Minimal Tower Defense</title>
-        <link rel="stylesheet" href="style.css" />
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js"></script>
-    </head>
-    <body>
-        <div id="startOverlay" class="overlay">
-            <div class="start-menu">
-                <h1>Minimal Tower Defense</h1>
-                <p>Protect the base from incoming waves of enemies.</p>
-                <button id="startGame">Start Game</button>
-            </div>
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Minimal Tower Defense</title>
+    <link rel="stylesheet" href="style.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js"></script>
+</head>
+<body>
+    <div id="startOverlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="startTitle">
+        <div class="start-menu">
+            <h1 id="startTitle">Minimal Tower Defense</h1>
+            <p>Protect the base from incoming waves of enemies.</p>
+            <button id="startGame" type="button">Start Game</button>
         </div>
-        <div id="endOverlay" class="overlay hidden">
-            <div id="endMenu" class="start-menu end-menu">
-                <h2 id="endMessage">Game Over</h2>
-                <p id="endDetail">The base was destroyed. Try again!</p>
-                <button id="endRestart">Restart</button>
-            </div>
+    </div>
+
+    <div id="endOverlay" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="endMessage" aria-describedby="endDetail">
+        <div id="endMenu" class="start-menu end-menu">
+            <h2 id="endMessage">Game Over</h2>
+            <p id="endDetail">The base was destroyed. Try again!</p>
+            <button id="endRestart" type="button">Restart</button>
         </div>
-        <div id="gameContainer">
-            <canvas id="game" width="907" height="510"></canvas>
-            <div id="hud">
-                <div id="lives" class="lives" aria-label="Lives"></div>
-                <div id="energy" class="resource" aria-label="Energy: 20">
-                    <span class="resource-value">20</span>
-                    <img class="resource-icon" src="assets/energy_sign.png" alt="" aria-hidden="true" />
-                </div>
-                <div id="wavePanel" aria-live="polite">
-                    <span id="wave" class="wave-label">Wave: 1/10</span>
-                    <span id="wavePhase" class="wave-phase wave-phase--prep">Preparation phase</span>
-                </div>
-                <span id="status"></span>
-                <button id="nextWave">Next Wave</button>
-                <button id="mergeTowers" disabled>Merge Towers</button>
-                <button id="restart">Restart</button>
-                <div id="crazyGamesUser" class="user-info hidden" aria-live="polite">
-                    <img id="crazyGamesUserAvatar" alt="CrazyGames profile picture" />
-                    <span id="crazyGamesUsername"></span>
-                </div>
+    </div>
+
+    <main id="gameContainer">
+        <canvas id="game" width="907" height="510"></canvas>
+        <section id="hud" aria-label="Game controls and stats">
+            <div id="lives" class="lives" aria-label="Lives"></div>
+            <div id="energy" class="resource" aria-label="Energy: 20">
+                <span class="resource-value">20</span>
+                <img class="resource-icon" src="assets/energy_sign.png" alt="" aria-hidden="true" />
             </div>
-        </div>
-        <script type="module" src="js/main.js"></script>
-    </body>
+            <div id="wavePanel" aria-live="polite">
+                <span id="wave" class="wave-label">Wave: 1/10</span>
+                <span id="wavePhase" class="wave-phase wave-phase--prep">Preparation phase</span>
+            </div>
+            <span id="status" aria-live="polite"></span>
+            <div class="hud-controls">
+                <button id="nextWave" type="button">Next Wave</button>
+                <button id="mergeTowers" type="button" disabled>Merge Towers</button>
+                <button id="restart" type="button">Restart</button>
+            </div>
+            <div id="crazyGamesUser" class="user-info hidden" aria-live="polite">
+                <img id="crazyGamesUserAvatar" alt="CrazyGames profile picture" />
+                <span id="crazyGamesUsername"></span>
+            </div>
+        </section>
+    </main>
+
+    <script type="module" src="js/main.js"></script>
+</body>
 </html>
