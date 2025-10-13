@@ -1,4 +1,4 @@
-import { drawTowerMuzzleFlash, drawTowerPlacementFlash, drawTowerTopGlow } from '../systems/effects.js';
+import { drawTowerMuzzleFlashIfNeeded, drawTowerPlacementFlash, drawTowerTopGlowIfNeeded } from '../systems/effects.js';
 
 const DEFAULT_PLACEMENT_ANCHOR = Object.freeze({
     // The anchor describes the fraction of the sprite width/height between the
@@ -90,10 +90,10 @@ export default class Tower {
         ctx.fillStyle = this.color;
         this.drawBody(ctx, c, assets);
         drawTowerPlacementFlash(ctx, this);
-        drawTowerTopGlow(ctx, this);
+        drawTowerTopGlowIfNeeded(ctx, this);
 
         if (this.flashTimer > 0) {
-            drawTowerMuzzleFlash(ctx, this);
+            drawTowerMuzzleFlashIfNeeded(ctx, this);
         }
 
         this.drawLevelIndicator(ctx);
