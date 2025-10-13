@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import Tower from '../js/entities/Tower.js';
+import Tower from '../../js/entities/Tower.js';
 
 test('constructor applies defaults and derives stats', () => {
     const tower = new Tower(12, 18);
