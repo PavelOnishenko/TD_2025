@@ -42,25 +42,44 @@ const SOUND_OPTIONS = {
     }
 };
 
-export async function loadAssets() {
+const DEFAULT_IMAGE_FACTORY = () => {
+    if (typeof Image === 'undefined') {
+        throw new Error('Image constructor is not available');
+    }
+    return new Image();
+};
+
+export async function loadAssets({
+    loadImageFn = loadImage,
+    audioSupportChecker = isAudioSupported,
+    soundCreator = createSound
+} = {}) {
     const imageEntries = await Promise.all(
-        Object.entries(IMAGE_SOURCES).map(async ([key, url]) => [key, await loadImage(url)])
+        Object.entries(IMAGE_SOURCES).map(async ([key, url]) => {
+            const image = await loadImageFn(url);
+            return [key, image];
+        })
     );
     const images = Object.fromEntries(imageEntries);
 
-    let sounds = {};
-    if (isAudioSupported()) {
-        sounds = Object.fromEntries(
-            Object.entries(SOUND_OPTIONS).map(([key, options]) => [key, createSound(options)])
-        );
+    const audioSupported = audioSupportChecker();
+    if (!audioSupported) {
+        return { ...images, sounds: {} };
     }
 
-    return {...images, sounds};
+    const sounds = Object.fromEntries(
+        Object.entries(SOUND_OPTIONS).map(([key, options]) => {
+            const sound = soundCreator(options);
+            return [key, sound];
+        })
+    );
+
+    return { ...images, sounds };
 }
 
-function loadImage(url) {
+export function loadImage(url, createImage = DEFAULT_IMAGE_FACTORY) {
     return new Promise((resolve, reject) => {
-        const img = new Image();
+        const img = createImage();
         img.onload = () => resolve(img);
         img.onerror = reject;
         img.src = url;
