@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { createGameAudio, createSound, getHowler, initializeAudio, isAudioSupported } from '../js/systems/audio.js';
+import { createGameAudio, createSound, getHowler, initializeAudio, isAudioSupported } from '../../js/systems/audio.js';
 
 function captureHowlerState() {
     return {
