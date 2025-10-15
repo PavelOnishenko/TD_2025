@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { TankEnemy, SwarmEnemy } from '../../js/entities/Enemy.js';
-import { createGame, withMockedRandom } from './helpers.js';
+import { createGame, withMockedRandom, withReplacedMethod } from './helpers.js';
 
 function spawnAndCollect(game, type) {
     game.spawnEnemy(type);
@@ -33,7 +33,9 @@ test('spawnEnemy defaults to last hp when wave exceeds table', () => {
     const game = createGame();
     game.wave = game.enemyHpPerWave.length + 5;
 
-    const enemies = spawnAndCollect(game);
+    const enemies = withReplacedMethod(game, 'determineEnemyType', () => 'swarm', () => {
+        return spawnAndCollect(game);
+    });
 
     const expected = Math.max(1, Math.floor(game.enemyHpPerWave.at(-1) / 2));
     enemies.forEach(enemy => assert.equal(enemy.maxHp, expected));

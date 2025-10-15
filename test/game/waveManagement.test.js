@@ -21,14 +21,23 @@ test('startWave initializes counters and spawns first enemies', () => {
     assert.ok(Math.abs(game.colorProbStart - game.colorProbEnd) > 0.35);
 });
 
-test('startWave exits early when already in progress', () => {
+test('startWave restarts current wave state when already in progress', () => {
     const game = createGame();
     game.waveInProgress = true;
-    game.enemies.push({});
+    game.enemies.push({}, {});
+    game.spawnInterval = 123;
+    game.enemiesPerWave = 456;
+    game.spawned = 7;
+    game.spawnTimer = 5;
 
     game.startWave();
 
-    assert.equal(game.enemies.length, 1);
+    assert.equal(game.waveInProgress, true);
+    assert.equal(game.spawnInterval, 123);
+    assert.equal(game.enemiesPerWave, 456);
+    assert.equal(game.spawned, 1);
+    assert.equal(game.spawnTimer, 0);
+    assert.equal(game.enemies.length, 3);
 });
 
 test('manualMergeTowers merges adjacent towers of same color and level', () => {
