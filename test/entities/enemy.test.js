@@ -34,14 +34,11 @@ test('draw renders sprite and health bar proportions', () => {
     const restoreGlow = test.mock.method(Enemy, 'engineGlowDrawer', () => {});
     const enemy = new Enemy(10, 'blue', 0, 50, 0, 0);
     enemy.hp = 5;
+    enemy.canRenderGlow = () => false;
     const ctx = createDrawingContext();
     const assets = { swarm_b: {} };
 
-    try {
-        enemy.draw(ctx, assets);
-    } finally {
-        restoreGlow.mock.restore();
-    }
+    enemy.draw(ctx, assets);
 
     assert.deepStrictEqual(ctx.ops[0], ['drawImage', assets.swarm_b, 0, 50, 80, 80]);
     assert.deepStrictEqual(ctx.ops[1], ['fillStyle', 'red']);

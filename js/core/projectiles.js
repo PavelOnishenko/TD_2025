@@ -15,11 +15,28 @@ export function hitEnemy(game, projectile, index) {
     const enemyIndex = findCollidingEnemy(projectile, game.enemies);
     if (enemyIndex === -1) return false;
     const enemy = game.enemies[enemyIndex];
+    const isColorMatch = projectile.color === enemy.color;
     enemy.hp -= calculateDamage(projectile, enemy);
     game.projectiles.splice(index, 1);
-    game.audio?.playExplosion();
+    const audio = game.audio;
+    if (isColorMatch) {
+        if (typeof audio?.playMatchingHit === 'function') {
+            audio.playMatchingHit();
+        } else {
+            (audio?.playExplosion)?.();
+        }
+    } else if (typeof audio?.playMismatchingHit === 'function') {
+        audio.playMismatchingHit();
+    } else {
+        (audio?.playExplosion)?.();
+    }
     if (game.explosions) {
-        game.explosions.push(createExplosion(projectile.x, projectile.y, projectile.color));
+        game.explosions.push(
+            createExplosion(projectile.x, projectile.y, {
+                color: projectile.color,
+                variant: isColorMatch ? 'match' : 'mismatch'
+            })
+        );
     }
 
     if (enemy.hp <= 0) {
