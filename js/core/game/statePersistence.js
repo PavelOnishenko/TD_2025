@@ -36,6 +36,7 @@ function applySavedResources(game, savedState) {
     game.enemies = [];
     game.projectiles = [];
     game.explosions = [];
+    game.mergeAnimations = [];
     game.maxProjectileRadius = game.projectileRadius;
     return targetWave;
 }

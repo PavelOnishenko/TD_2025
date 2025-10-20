@@ -10,6 +10,7 @@ function primeGameForReset(game) {
     game.enemies.push({});
     game.projectiles.push({});
     game.explosions.push({ particles: [{}] });
+    game.mergeAnimations.push({});
     const cell = game.getAllCells()[0];
     cell.occupied = true;
     cell.tower = {};
@@ -130,6 +131,7 @@ test('resetState restores defaults and clears overlays', () => {
     assert.equal(game.enemies.length, 0);
     assert.equal(game.projectiles.length, 0);
     assert.equal(game.explosions.length, 0);
+    assert.equal(game.mergeAnimations.length, 0);
     assert.equal(cell.occupied, false);
     assert.equal(cell.tower, null);
     assert.equal(game.statusEl.textContent, '');
