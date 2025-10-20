@@ -179,7 +179,47 @@ function drawGrid(game) {
             ctx.fillRect(cell.x, cell.y, cell.w, cell.h);
             ctx.restore();
         }
+
+        if (cell.mergeHint > 0 && cell.occupied) {
+            const pulse = Math.sin(elapsed * 4 + (cell.x + cell.y) * 0.01);
+            const normalized = (pulse + 1) / 2;
+            const alpha = 0.35 + normalized * 0.35;
+            const thickness = 3 + normalized * 2;
+            const color = cell.tower?.color === 'blue'
+                ? `rgba(130, 180, 255, ${alpha})`
+                : `rgba(255, 180, 120, ${alpha})`;
+
+            ctx.save();
+            ctx.globalCompositeOperation = 'lighter';
+            ctx.lineWidth = thickness;
+            ctx.strokeStyle = color;
+            ctx.strokeRect(cell.x + thickness, cell.y + thickness, cell.w - thickness * 2, cell.h - thickness * 2);
+            ctx.restore();
+        }
     });
+
+    if (Array.isArray(game.mergeHintPairs) && game.mergeHintPairs.length > 0) {
+        const pairPulse = (Math.sin(elapsed * 4.2) + 1) / 2;
+        game.mergeHintPairs.forEach(({ cellA, cellB, color }) => {
+            const startX = cellA.x + cellA.w / 2;
+            const startY = cellA.y + cellA.h / 2;
+            const endX = cellB.x + cellB.w / 2;
+            const endY = cellB.y + cellB.h / 2;
+            const hue = color === 'blue'
+                ? `rgba(130, 180, 255, ${0.35 + pairPulse * 0.45})`
+                : `rgba(255, 180, 120, ${0.35 + pairPulse * 0.45})`;
+
+            ctx.save();
+            ctx.globalCompositeOperation = 'lighter';
+            ctx.lineWidth = 4 + pairPulse * 3;
+            ctx.strokeStyle = hue;
+            ctx.beginPath();
+            ctx.moveTo(startX, startY);
+            ctx.lineTo(endX, endY);
+            ctx.stroke();
+            ctx.restore();
+        });
+    }
 }
 
 export function drawEntities(game) {

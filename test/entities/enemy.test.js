@@ -1,7 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import Enemy, { TankEnemy, SwarmEnemy } from '../../js/entities/Enemy.js';
-import * as effects from '../../js/systems/effects.js';
 
 test('update moves enemy based on dt and both speed components', () => {
     const enemy = new Enemy(3, 'red', 0, 100, 120, 80);
@@ -32,7 +31,7 @@ test('isOutOfBounds only flags positions beyond the bottom edge', () => {
 });
 
 test('draw renders sprite and health bar proportions', () => {
-    const restoreGlow = test.mock.method(effects, 'drawEnemyEngineGlow', () => {});
+    const restoreGlow = test.mock.method(Enemy, 'engineGlowDrawer', () => {});
     const enemy = new Enemy(10, 'blue', 0, 50, 0, 0);
     enemy.hp = 5;
     const ctx = createDrawingContext();

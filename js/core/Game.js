@@ -47,6 +47,7 @@ class Game {
         this.hasStarted = false;
         this.isRestoringState = false;
         this.persistenceEnabled = true;
+        this.mergeHintPairs = [];
     }
 
     setupEnvironment() {
@@ -97,6 +98,8 @@ class Game {
         handleProjectileHits(this);
         updateExplosions(this.explosions, dt);
         this.grid.fadeHighlights(dt);
+        this.grid.fadeMergeHints(dt);
+        this.updateMergeHints();
         this.checkWaveCompletion();
         draw(this);
         if (!this.gameOver) {
