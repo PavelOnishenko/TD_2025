@@ -31,8 +31,10 @@ test('isOutOfBounds only flags positions beyond the bottom edge', () => {
 });
 
 test('draw renders sprite and health bar proportions', () => {
+    const restoreGlow = test.mock.method(Enemy, 'engineGlowDrawer', () => {});
     const enemy = new Enemy(10, 'blue', 0, 50, 0, 0);
     enemy.hp = 5;
+    enemy.canRenderGlow = () => false;
     const ctx = createDrawingContext();
     const assets = { swarm_b: {} };
 

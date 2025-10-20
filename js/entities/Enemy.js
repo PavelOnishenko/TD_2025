@@ -1,7 +1,7 @@
 import { drawEnemyEngineGlow } from '../systems/effects.js';
 
 export default class Enemy {
-    constructor(maxHp, color, x, y, speedX, speedY) {
+    constructor(maxHp, color, x, y, speedX, speedY, spriteKey = 'swarm') {
         this.x = x;
         this.y = y;
         this.w = 80;
@@ -11,6 +11,7 @@ export default class Enemy {
         this.maxHp = maxHp;
         this.hp = this.maxHp;
         this.color = color;
+        this.spriteKey = spriteKey;
         if (typeof Enemy._glowPhaseCursor !== 'number') {
             Enemy._glowPhaseCursor = 0;
         }
@@ -25,9 +26,11 @@ export default class Enemy {
     }
 
     draw(ctx, assets) {
-        const propertyName = `swarm_${this.color.charAt(0)}`;
+        const propertyName = `${this.spriteKey}_${this.color.charAt(0)}`;
         const sprite = assets[propertyName];
-        drawEnemyEngineGlow(ctx, this);
+        if (typeof Enemy.engineGlowDrawer === 'function') {
+            Enemy.engineGlowDrawer(ctx, this);
+        }
         ctx.drawImage(sprite, this.x, this.y, this.w, this.h);
 
         const barWidth = this.w;
@@ -103,12 +106,14 @@ export default class Enemy {
 
 export class TankEnemy extends Enemy {
     constructor(maxHp = 15, color = 'red', x = 0, y = 0) {
-        super(maxHp, color, x, y, 100, 0);
+        super(maxHp, color, x, y, 100, 0, 'tank');
     }
 }
 
 export class SwarmEnemy extends Enemy {
     constructor(maxHp = 1, color = 'red', x = 0, y = 0) {
-        super(maxHp, color, x, y, 200, 0);
+        super(maxHp, color, x, y, 200, 0, 'swarm');
     }
 }
+
+Enemy.engineGlowDrawer = drawEnemyEngineGlow;

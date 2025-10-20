@@ -13,6 +13,17 @@ import world from './game/world.js';
 import statePersistence from './game/statePersistence.js';
 import stateSetup from './game/stateSetup.js';
 
+function createScreenShakeState() {
+    return {
+        duration: 0,
+        elapsed: 0,
+        intensity: 0,
+        frequency: 42,
+        seedX: Math.random() * Math.PI * 2,
+        seedY: Math.random() * Math.PI * 2,
+    };
+}
+
 class Game {
     constructor(canvas, options = {}) {
         const { width = 540, height = 960, assets = null } = options;
@@ -48,6 +59,8 @@ class Game {
         this.hasStarted = false;
         this.isRestoringState = false;
         this.persistenceEnabled = true;
+        this.mergeHintPairs = [];
+        this.screenShake = createScreenShakeState();
     }
 
     setupEnvironment() {
@@ -99,7 +112,10 @@ class Game {
         this.updateMergeAnimations(dt);
         updateExplosions(this.explosions, dt);
         this.grid.fadeHighlights(dt);
+        this.grid.fadeMergeHints(dt);
+        this.updateMergeHints();
         this.checkWaveCompletion();
+        this.updateScreenShake(dt);
         draw(this);
         if (!this.gameOver) {
             requestAnimationFrame(this.update);
@@ -183,6 +199,50 @@ class Game {
         this.explosions.push(explosion);
         if (this.audio && typeof this.audio.playExplosion === 'function') {
             this.audio.playExplosion();
+        }
+    }
+  
+    updateScreenShake(dt) {
+        const shake = this.screenShake;
+        if (!shake || shake.duration <= 0) {
+            return;
+        }
+
+        shake.elapsed = Math.min(shake.elapsed + dt, shake.duration);
+        if (shake.elapsed >= shake.duration) {
+            this.resetScreenShake();
+        }
+    }
+
+    resetScreenShake() {
+        const shake = this.screenShake ?? createScreenShakeState();
+        shake.duration = 0;
+        shake.elapsed = 0;
+        shake.intensity = 0;
+        shake.frequency = 42;
+        shake.seedX = Math.random() * Math.PI * 2;
+        shake.seedY = Math.random() * Math.PI * 2;
+        this.screenShake = shake;
+    }
+
+    triggerBaseHitEffects() {
+        if (!this.screenShake) {
+            this.screenShake = createScreenShakeState();
+        }
+
+        const shake = this.screenShake;
+        const baseDuration = 0.4;
+        const baseIntensity = 18;
+        shake.duration = baseDuration;
+        shake.elapsed = 0;
+        const stackedIntensity = Math.min(30, (shake.intensity ?? 0) * 0.35 + baseIntensity);
+        shake.intensity = stackedIntensity;
+        shake.frequency = 44;
+        shake.seedX = Math.random() * Math.PI * 2;
+        shake.seedY = Math.random() * Math.PI * 2;
+
+        if (typeof this.audio?.playBaseHit === 'function') {
+            this.audio.playBaseHit();
         }
     }
 

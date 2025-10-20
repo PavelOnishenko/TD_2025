@@ -47,6 +47,27 @@ const MERGE_PALETTES = {
         glow: [255, 240, 226],
     },
 };
+function getScreenShakeOffset(game) {
+    const shake = game?.screenShake;
+    if (!shake || shake.duration <= 0 || shake.intensity <= 0) {
+        return { x: 0, y: 0 };
+    }
+
+    const time = shake.elapsed ?? 0;
+    const progress = Math.min(1, shake.duration > 0 ? time / shake.duration : 1);
+    const falloff = Math.pow(1 - progress, 2);
+    const baseIntensity = shake.intensity * falloff;
+    if (baseIntensity <= 0.01) {
+        return { x: 0, y: 0 };
+    }
+
+    const frequency = shake.frequency ?? 42;
+    const phaseX = (time * frequency) + (shake.seedX ?? 0);
+    const phaseY = (time * (frequency * 0.82)) + (shake.seedY ?? 0);
+    const offsetX = Math.sin(phaseX) * baseIntensity;
+    const offsetY = Math.cos(phaseY) * baseIntensity;
+    return { x: offsetX, y: offsetY };
+}
 
 function getEnergyPalette(color) {
     if (!color) return ENERGY_PALETTES.default;
@@ -132,6 +153,7 @@ function traceEllipse(ctx, cx, cy, rx, ry) {
 export function draw(game) {
     const ctx = game.ctx;
     const { scale = 1, offsetX = 0, offsetY = 0 } = game.viewport ?? {};
+    const shakeOffset = getScreenShakeOffset(game);
 
     ctx.save();
     ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -139,7 +161,7 @@ export function draw(game) {
     ctx.restore();
 
     ctx.save();
-    ctx.setTransform(scale, 0, 0, scale, offsetX, offsetY);
+    ctx.setTransform(scale, 0, 0, scale, offsetX + shakeOffset.x, offsetY + shakeOffset.y);
 
     drawBase(game);
     drawPlatforms(game);
@@ -232,7 +254,47 @@ function drawGrid(game) {
             ctx.fillRect(cell.x, cell.y, cell.w, cell.h);
             ctx.restore();
         }
+
+        if (cell.mergeHint > 0 && cell.occupied) {
+            const pulse = Math.sin(elapsed * 4 + (cell.x + cell.y) * 0.01);
+            const normalized = (pulse + 1) / 2;
+            const alpha = 0.35 + normalized * 0.35;
+            const thickness = 3 + normalized * 2;
+            const color = cell.tower?.color === 'blue'
+                ? `rgba(130, 180, 255, ${alpha})`
+                : `rgba(255, 180, 120, ${alpha})`;
+
+            ctx.save();
+            ctx.globalCompositeOperation = 'lighter';
+            ctx.lineWidth = thickness;
+            ctx.strokeStyle = color;
+            ctx.strokeRect(cell.x + thickness, cell.y + thickness, cell.w - thickness * 2, cell.h - thickness * 2);
+            ctx.restore();
+        }
     });
+
+    if (Array.isArray(game.mergeHintPairs) && game.mergeHintPairs.length > 0) {
+        const pairPulse = (Math.sin(elapsed * 4.2) + 1) / 2;
+        game.mergeHintPairs.forEach(({ cellA, cellB, color }) => {
+            const startX = cellA.x + cellA.w / 2;
+            const startY = cellA.y + cellA.h / 2;
+            const endX = cellB.x + cellB.w / 2;
+            const endY = cellB.y + cellB.h / 2;
+            const hue = color === 'blue'
+                ? `rgba(130, 180, 255, ${0.35 + pairPulse * 0.45})`
+                : `rgba(255, 180, 120, ${0.35 + pairPulse * 0.45})`;
+
+            ctx.save();
+            ctx.globalCompositeOperation = 'lighter';
+            ctx.lineWidth = 4 + pairPulse * 3;
+            ctx.strokeStyle = hue;
+            ctx.beginPath();
+            ctx.moveTo(startX, startY);
+            ctx.lineTo(endX, endY);
+            ctx.stroke();
+            ctx.restore();
+        });
+    }
 }
 
 export function drawEntities(game) {
