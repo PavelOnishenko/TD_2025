@@ -81,6 +81,8 @@ test('loadAssets returns sounds only when audio is supported', async () => {
         'assets/tower_2B.png',
         'assets/tower_3R.png',
         'assets/tower_3B.png',
+        'assets/tank_R.png',
+        'assets/tank_B.png',
         'assets/swarm_R.png',
         'assets/swarm_B.png'
     ]);
