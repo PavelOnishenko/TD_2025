@@ -83,7 +83,7 @@ function bindButtons(game) {
         if (game.mergeBtn) {
             game.mergeBtn.disabled = false;
         }
-        if (game.tutorial) {
+        if (game.tutorial && !game.tutorial.isComplete()) {
             game.tutorial.reset();
             game.tutorial.start();
         }
@@ -101,7 +101,9 @@ function bindButtons(game) {
             }
             if (!game.hasStarted) {
                 game.hasStarted = true;
-                game.tutorial?.start();
+                if (!game.tutorial?.isComplete?.()) {
+                    game.tutorial?.start();
+                }
                 game.run();
             }
         }, { once: true });

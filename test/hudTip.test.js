@@ -27,6 +27,7 @@ test('bindUI attaches HUD and tutorial tip when available', () => {
   };
   const doc = {
     getElementById: id => elements[id],
+    addEventListener: () => {},
   };
   const game = {
     canvas: {

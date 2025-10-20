@@ -32,8 +32,11 @@ export function createTutorial(options = {}) {
         steps = DEFAULT_TUTORIAL_STEPS,
         renderTip,
         hideTip,
+        onComplete,
+        onProgressReset,
     } = options;
     const state = createState(steps);
+    state.completionNotified = false;
 
     function getCurrentStep() {
         return state.steps[state.currentIndex] ?? null;
@@ -46,9 +49,14 @@ export function createTutorial(options = {}) {
         const current = getCurrentStep();
         if (!current) {
             hideTip?.();
+            if (!state.completionNotified) {
+                state.completionNotified = true;
+                onComplete?.();
+            }
             return;
         }
         renderTip?.(current.text, current);
+        state.completionNotified = false;
     }
 
     function complete(id) {
@@ -77,6 +85,22 @@ export function createTutorial(options = {}) {
                 step.done = false;
             });
             state.currentIndex = 0;
+            state.completionNotified = false;
+            hideTip?.();
+        },
+
+        forceResetProgress() {
+            onProgressReset?.();
+            this.reset();
+        },
+
+        markComplete() {
+            state.steps.forEach(step => {
+                step.done = true;
+            });
+            state.currentIndex = state.steps.length;
+            state.started = false;
+            state.completionNotified = true;
             hideTip?.();
         },
 
@@ -146,14 +170,62 @@ export function attachTutorial(game, options = {}) {
     const doc = options.document
         ?? (typeof document !== 'undefined' ? document : null);
     const tipElement = options.tipElement ?? doc?.getElementById?.('tutorialTip') ?? null;
+    const storage = options.storage ?? (typeof window !== 'undefined' ? window.localStorage : null);
     const renderer = createDomRenderer(tipElement);
+    const completionKey = options.completionKey ?? 'td2025:tutorialCompleted';
+    const markPersistedComplete = () => {
+        try {
+            storage?.setItem?.(completionKey, '1');
+        } catch {
+            // Ignore persistence errors
+        }
+    };
+    const clearPersistedComplete = () => {
+        try {
+            storage?.removeItem?.(completionKey);
+        } catch {
+            // Ignore persistence errors
+        }
+    };
     const tutorial = createTutorial({
         steps: options.steps ?? DEFAULT_TUTORIAL_STEPS,
         renderTip: renderer.show,
         hideTip: renderer.hide,
+        onComplete: markPersistedComplete,
+        onProgressReset: clearPersistedComplete,
     });
     tutorial.reset();
     tutorial.syncWithGame(game);
+    const shouldSkip = (() => {
+        try {
+            return storage?.getItem?.(completionKey) === '1';
+        } catch {
+            return false;
+        }
+    })();
+    if (shouldSkip) {
+        tutorial.markComplete();
+    }
+    if (doc?.addEventListener) {
+        const secretSequence = options.secretSequence ?? ['KeyT', 'KeyD', 'KeyR'];
+        let secretIndex = 0;
+        doc.addEventListener('keydown', event => {
+            if (!event.shiftKey || !event.altKey) {
+                secretIndex = 0;
+                return;
+            }
+            if (event.code === secretSequence[secretIndex]) {
+                secretIndex += 1;
+                if (secretIndex >= secretSequence.length) {
+                    secretIndex = 0;
+                    tutorial.forceResetProgress();
+                    tutorial.start();
+                }
+            } else {
+                secretIndex = 0;
+            }
+        });
+    }
     game.tutorial = tutorial;
     game.tutorialTipEl = tipElement;
     return tutorial;

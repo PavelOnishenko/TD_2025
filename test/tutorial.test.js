@@ -52,3 +52,41 @@ test('tutorial sync skips steps when game already progressed', () => {
   assert.deepEqual(events.at(-1), ['hide']);
   assert.ok(tutorial.isComplete());
 });
+
+test('tutorial persistence helpers mark completion and reset progress', () => {
+  const events = [];
+  let completionCount = 0;
+  let resetCount = 0;
+  const tutorial = createTutorial({
+    renderTip: text => events.push(['show', text]),
+    hideTip: () => events.push(['hide']),
+    onComplete: () => {
+      completionCount += 1;
+    },
+    onProgressReset: () => {
+      resetCount += 1;
+    },
+  });
+
+  tutorial.markComplete();
+  assert.ok(tutorial.isComplete());
+  assert.equal(completionCount, 0);
+
+  tutorial.start();
+  assert.deepEqual(events.at(-1), ['hide']);
+  assert.equal(completionCount, 0);
+
+  tutorial.forceResetProgress();
+  assert.equal(resetCount, 1);
+  events.length = 0;
+  tutorial.start();
+  assert.deepEqual(events.at(-1), ['show', DEFAULT_TUTORIAL_STEPS[0].text]);
+
+  tutorial.handleTowerPlaced();
+  tutorial.handleColorSwitch();
+  tutorial.handleWaveStarted();
+  assert.equal(completionCount, 1);
+
+  tutorial.start();
+  assert.equal(completionCount, 1);
+});
