@@ -1,4 +1,5 @@
 import { updateHUD } from '../../systems/ui.js';
+import { createColorSwitchBurstFromTower } from '../../systems/effects.js';
 import { createProjectileVisualState } from './projectileVisualState.js';
 
 function normalizeLevel(level) {
@@ -55,6 +56,11 @@ const projectileManagement = {
         const nextColor = tower.color === 'red' ? 'blue' : 'red';
         tower.color = nextColor;
         this.energy -= this.switchCost;
+        const burst = createColorSwitchBurstFromTower(tower, nextColor);
+        if (burst) {
+            this.colorSwitchBursts.push(burst);
+        }
+        this.audio.playColorSwitch();
         updateHUD(this);
         return true;
     },

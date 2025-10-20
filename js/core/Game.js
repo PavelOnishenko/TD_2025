@@ -4,7 +4,7 @@ import { enemyActions } from './gameEnemies.js';
 import { waveActions } from './gameWaves.js';
 import { callCrazyGamesEvent } from '../systems/crazyGamesIntegration.js';
 import { createGameAudio } from '../systems/audio.js';
-import { updateExplosions } from '../systems/effects.js';
+import { updateExplosions, updateColorSwitchBursts } from '../systems/effects.js';
 import GameGrid from './gameGrid.js';
 import { createPlatforms } from './platforms.js';
 import projectileManagement from './game/projectileManagement.js';
@@ -38,6 +38,7 @@ class Game {
         this.towers = [];
         this.projectiles = [];
         this.explosions = [];
+        this.colorSwitchBursts = [];
         this.projectileSpeed = 800;
         this.projectileRadius = 6;
         this.maxProjectileRadius = this.projectileRadius;
@@ -96,6 +97,7 @@ class Game {
         moveProjectiles(this, dt);
         handleProjectileHits(this);
         updateExplosions(this.explosions, dt);
+        updateColorSwitchBursts(this.colorSwitchBursts, dt);
         this.grid.fadeHighlights(dt);
         this.checkWaveCompletion();
         draw(this);

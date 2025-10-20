@@ -4,7 +4,7 @@
 003 | TODO | Show visual hint that 2 towers will merge at the end of the wave (when they are same color and same level). 
     It should work by the same algorithm that performs merging. 
     Possibility of these algorithms working even slightly differently must be eliminated.
-004 | TODO | VFX and SFX for switching color
+004 | DONE | VFX and SFX for switching color
 005 | TODO | SFX and VFX for "wrong color" hit should be different from "correct color" hit
 006 | TODO | Add tutorial
 007 | TODO | Animation (like shake of the screen) and SFX when the base is hit

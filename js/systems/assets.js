@@ -29,6 +29,11 @@ const SOUND_OPTIONS = {
         volume: 0.4,
         preload: true
     },
+    colorSwitch: {
+        src: ['assets/color_switch.wav'],
+        volume: 0.35,
+        preload: true
+    },
     error: {
         src: ['assets/error.wav'],
         volume: 0.5,

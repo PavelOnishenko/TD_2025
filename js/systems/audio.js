@@ -4,6 +4,7 @@ const NOOP_AUDIO = {
     playFire() {},
     playExplosion() {},
     playPlacement() {},
+    playColorSwitch() {},
     playMusic() {},
     stopMusic() {},
     playError() {}
@@ -97,6 +98,7 @@ export function createGameAudio(sounds = {}) {
     const fireSound = createSoundTrigger(sounds.fire ?? null);
     const explosionSound = createSoundTrigger(sounds.explosion ?? null);
     const placementSound = createSoundTrigger(sounds.placement ?? null);
+    const colorSwitchSound = createSoundTrigger(sounds.colorSwitch ?? null);
     const errorSound = createSoundTrigger(sounds.error ?? null);
     const { playMusic, stopMusic } = createMusicActions(sounds.backgroundMusic ?? null);
 
@@ -104,6 +106,7 @@ export function createGameAudio(sounds = {}) {
         playFire: fireSound,
         playExplosion: explosionSound,
         playPlacement: placementSound,
+        playColorSwitch: colorSwitchSound,
         playMusic,
         stopMusic,
         playError: errorSound
