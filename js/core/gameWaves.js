@@ -68,6 +68,12 @@ export const waveActions = {
         cellA.tower = towerA;
         towerA.level += 1;
         towerA.updateStats();
+        if (typeof this.startTowerMergeAnimation === 'function') {
+            this.startTowerMergeAnimation(towerA, towerB);
+        }
+        if (typeof towerA.triggerPlacementFlash === 'function') {
+            towerA.triggerPlacementFlash();
+        }
         this.towers = this.towers.filter(t => t !== towerB);
         if (towerB.cell) {
             towerB.cell.tower = null;
