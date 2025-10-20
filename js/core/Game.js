@@ -4,7 +4,7 @@ import { enemyActions } from './gameEnemies.js';
 import { waveActions } from './gameWaves.js';
 import { callCrazyGamesEvent } from '../systems/crazyGamesIntegration.js';
 import { createGameAudio } from '../systems/audio.js';
-import { updateExplosions, updateColorSwitchBursts } from '../systems/effects.js';
+import { createExplosion, updateExplosions, updateColorSwitchBursts } from '../systems/effects.js';
 import GameGrid from './gameGrid.js';
 import { createPlatforms } from './platforms.js';
 import projectileManagement from './game/projectileManagement.js';
@@ -12,6 +12,17 @@ import tankSchedule from './game/tankSchedule.js';
 import world from './game/world.js';
 import statePersistence from './game/statePersistence.js';
 import stateSetup from './game/stateSetup.js';
+
+function createScreenShakeState() {
+    return {
+        duration: 0,
+        elapsed: 0,
+        intensity: 0,
+        frequency: 42,
+        seedX: Math.random() * Math.PI * 2,
+        seedY: Math.random() * Math.PI * 2,
+    };
+}
 
 class Game {
     constructor(canvas, options = {}) {
@@ -39,6 +50,7 @@ class Game {
         this.projectiles = [];
         this.explosions = [];
         this.colorSwitchBursts = [];
+        this.mergeAnimations = [];
         this.projectileSpeed = 800;
         this.projectileRadius = 6;
         this.maxProjectileRadius = this.projectileRadius;
@@ -48,6 +60,8 @@ class Game {
         this.hasStarted = false;
         this.isRestoringState = false;
         this.persistenceEnabled = true;
+        this.mergeHintPairs = [];
+        this.screenShake = createScreenShakeState();
     }
 
     setupEnvironment() {
@@ -96,13 +110,141 @@ class Game {
         this.towerAttacks(timestamp);
         moveProjectiles(this, dt);
         handleProjectileHits(this);
+        this.updateMergeAnimations(dt);
         updateExplosions(this.explosions, dt);
         updateColorSwitchBursts(this.colorSwitchBursts, dt);
         this.grid.fadeHighlights(dt);
+        this.grid.fadeMergeHints(dt);
+        this.updateMergeHints();
         this.checkWaveCompletion();
+        this.updateScreenShake(dt);
         draw(this);
         if (!this.gameOver) {
             requestAnimationFrame(this.update);
+        }
+    }
+
+    startTowerMergeAnimation(targetTower, consumedTower) {
+        if (!targetTower || !consumedTower) {
+            return;
+        }
+
+        const duration = 0.48;
+        const startPosition = { x: consumedTower.x, y: consumedTower.y };
+        const endPosition = { x: targetTower.x, y: targetTower.y };
+        const startCenter = consumedTower.center();
+        const endCenter = targetTower.center();
+        const color = targetTower.color ?? 'red';
+        const fromLevel = Math.max(1, consumedTower.level ?? 1);
+        const colorKey = (color[0] ?? 'r').toLowerCase();
+        const spriteKey = `tower_${fromLevel}${colorKey}`;
+        const width = consumedTower.w ?? targetTower.w ?? 0;
+        const height = consumedTower.h ?? targetTower.h ?? 0;
+        const maxDimension = Math.max(width, height);
+
+        const animation = {
+            elapsed: 0,
+            duration,
+            start: startPosition,
+            end: endPosition,
+            startCenter,
+            endCenter,
+            width,
+            height,
+            color,
+            spriteKey,
+            targetTower,
+            orbRadius: maxDimension * 0.26,
+            trailWidth: maxDimension * 0.24,
+            explosionTriggered: false,
+        };
+
+        if (!Array.isArray(this.mergeAnimations)) {
+            this.mergeAnimations = [];
+        }
+        this.mergeAnimations.push(animation);
+    }
+
+    updateMergeAnimations(dt) {
+        if (!Array.isArray(this.mergeAnimations) || this.mergeAnimations.length === 0) {
+            return;
+        }
+
+        for (let i = this.mergeAnimations.length - 1; i >= 0; i--) {
+            const animation = this.mergeAnimations[i];
+            animation.elapsed = (animation.elapsed ?? 0) + dt;
+
+            if (!animation.explosionTriggered && animation.elapsed >= animation.duration * 0.85) {
+                this.triggerMergeExplosion(animation);
+            }
+
+            if (animation.elapsed >= animation.duration) {
+                this.mergeAnimations.splice(i, 1);
+            }
+        }
+    }
+
+    triggerMergeExplosion(animation) {
+        if (!animation || animation.explosionTriggered) {
+            return;
+        }
+
+        animation.explosionTriggered = true;
+        const targetTower = animation.targetTower;
+        if (!targetTower || typeof targetTower.center !== 'function') {
+            return;
+        }
+
+        const center = targetTower.center();
+        const yOffset = (targetTower.h ?? 0) * 0.1;
+        const explosion = createExplosion(center.x, center.y - yOffset, animation.color);
+        this.explosions.push(explosion);
+        if (this.audio && typeof this.audio.playExplosion === 'function') {
+            this.audio.playExplosion();
+        }
+    }
+  
+    updateScreenShake(dt) {
+        const shake = this.screenShake;
+        if (!shake || shake.duration <= 0) {
+            return;
+        }
+
+        shake.elapsed = Math.min(shake.elapsed + dt, shake.duration);
+        if (shake.elapsed >= shake.duration) {
+            this.resetScreenShake();
+        }
+    }
+
+    resetScreenShake() {
+        const shake = this.screenShake ?? createScreenShakeState();
+        shake.duration = 0;
+        shake.elapsed = 0;
+        shake.intensity = 0;
+        shake.frequency = 42;
+        shake.seedX = Math.random() * Math.PI * 2;
+        shake.seedY = Math.random() * Math.PI * 2;
+        this.screenShake = shake;
+    }
+
+    triggerBaseHitEffects() {
+        if (!this.screenShake) {
+            this.screenShake = createScreenShakeState();
+        }
+
+        const shake = this.screenShake;
+        const baseDuration = 0.4;
+        const baseIntensity = 18;
+        shake.duration = baseDuration;
+        shake.elapsed = 0;
+        const stackedIntensity = Math.min(30, (shake.intensity ?? 0) * 0.35 + baseIntensity);
+        shake.intensity = stackedIntensity;
+        shake.frequency = 44;
+        shake.seedX = Math.random() * Math.PI * 2;
+        shake.seedY = Math.random() * Math.PI * 2;
+
+        if (typeof this.audio?.playBaseHit === 'function') {
+            this.audio.playBaseHit();
         }
     }
 

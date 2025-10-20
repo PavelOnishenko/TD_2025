@@ -24,7 +24,7 @@ class GameGrid {
     }
 
     createCell(x, y) {
-        return {x,y,w: this.cellWidth,h: this.cellHeight,occupied: false,highlight: 0,tower: null};
+        return {x,y,w: this.cellWidth,h: this.cellHeight,occupied: false,highlight: 0,mergeHint: 0,tower: null};
     }
 
     getAllCells() {
@@ -39,6 +39,7 @@ class GameGrid {
         this.forEachCell(cell => {
             cell.occupied = false;
             cell.highlight = 0;
+            cell.mergeHint = 0;
             cell.tower = null;
         });
     }
@@ -47,6 +48,14 @@ class GameGrid {
         this.forEachCell(cell => {
             if (cell.highlight > 0) {
                 cell.highlight = Math.max(0, cell.highlight - dt);
+            }
+        });
+    }
+
+    fadeMergeHints(dt) {
+        this.forEachCell(cell => {
+            if (cell.mergeHint > 0) {
+                cell.mergeHint = Math.max(0, cell.mergeHint - dt * 2.5);
             }
         });
     }

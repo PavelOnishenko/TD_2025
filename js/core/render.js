@@ -33,9 +33,83 @@ const ENERGY_PALETTES = {
     },
 };
 
+const MERGE_PALETTES = {
+    red: {
+        trail: [255, 168, 136],
+        glow: [255, 230, 214],
+    },
+    blue: {
+        trail: [150, 205, 255],
+        glow: [205, 235, 255],
+    },
+    default: {
+        trail: [255, 210, 190],
+        glow: [255, 240, 226],
+    },
+};
+function getScreenShakeOffset(game) {
+    const shake = game?.screenShake;
+    if (!shake || shake.duration <= 0 || shake.intensity <= 0) {
+        return { x: 0, y: 0 };
+    }
+
+    const time = shake.elapsed ?? 0;
+    const progress = Math.min(1, shake.duration > 0 ? time / shake.duration : 1);
+    const falloff = Math.pow(1 - progress, 2);
+    const baseIntensity = shake.intensity * falloff;
+    if (baseIntensity <= 0.01) {
+        return { x: 0, y: 0 };
+    }
+
+    const frequency = shake.frequency ?? 42;
+    const phaseX = (time * frequency) + (shake.seedX ?? 0);
+    const phaseY = (time * (frequency * 0.82)) + (shake.seedY ?? 0);
+    const offsetX = Math.sin(phaseX) * baseIntensity;
+    const offsetY = Math.cos(phaseY) * baseIntensity;
+    return { x: offsetX, y: offsetY };
+}
+
 function getEnergyPalette(color) {
     if (!color) return ENERGY_PALETTES.default;
     return ENERGY_PALETTES[color] ?? ENERGY_PALETTES.default;
+}
+
+function getMergePalette(color) {
+    if (!color) return MERGE_PALETTES.default;
+    return MERGE_PALETTES[color] ?? MERGE_PALETTES.default;
+}
+
+function clamp(value, min, max) {
+    return Math.max(min, Math.min(max, value));
+}
+
+function clamp01(value) {
+    return clamp(value, 0, 1);
+}
+
+function lerp(a, b, t) {
+    return a + (b - a) * t;
+}
+
+function easeInOutCubic(t) {
+    const clamped = clamp01(t);
+    if (clamped < 0.5) {
+        return 4 * clamped * clamped * clamped;
+    }
+    const normalized = -2 * clamped + 2;
+    return 1 - (normalized * normalized * normalized) / 2;
+}
+
+function easeOutCubic(t) {
+    const clamped = clamp01(t);
+    const inverted = 1 - clamped;
+    return 1 - inverted * inverted * inverted;
+}
+
+function toMergeColor(rgb, alpha) {
+    const safeAlpha = clamp01(alpha);
+    const [r, g, b] = rgb ?? [255, 255, 255];
+    return `rgba(${r}, ${g}, ${b}, ${safeAlpha})`;
 }
 
 function getProjectileAnimationState(projectile) {
@@ -79,6 +153,7 @@ function traceEllipse(ctx, cx, cy, rx, ry) {
 export function draw(game) {
     const ctx = game.ctx;
     const { scale = 1, offsetX = 0, offsetY = 0 } = game.viewport ?? {};
+    const shakeOffset = getScreenShakeOffset(game);
 
     ctx.save();
     ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -86,7 +161,7 @@ export function draw(game) {
     ctx.restore();
 
     ctx.save();
-    ctx.setTransform(scale, 0, 0, scale, offsetX, offsetY);
+    ctx.setTransform(scale, 0, 0, scale, offsetX + shakeOffset.x, offsetY + shakeOffset.y);
 
     drawBase(game);
     drawPlatforms(game);
@@ -179,7 +254,47 @@ function drawGrid(game) {
             ctx.fillRect(cell.x, cell.y, cell.w, cell.h);
             ctx.restore();
         }
+
+        if (cell.mergeHint > 0 && cell.occupied) {
+            const pulse = Math.sin(elapsed * 4 + (cell.x + cell.y) * 0.01);
+            const normalized = (pulse + 1) / 2;
+            const alpha = 0.35 + normalized * 0.35;
+            const thickness = 3 + normalized * 2;
+            const color = cell.tower?.color === 'blue'
+                ? `rgba(130, 180, 255, ${alpha})`
+                : `rgba(255, 180, 120, ${alpha})`;
+
+            ctx.save();
+            ctx.globalCompositeOperation = 'lighter';
+            ctx.lineWidth = thickness;
+            ctx.strokeStyle = color;
+            ctx.strokeRect(cell.x + thickness, cell.y + thickness, cell.w - thickness * 2, cell.h - thickness * 2);
+            ctx.restore();
+        }
     });
+
+    if (Array.isArray(game.mergeHintPairs) && game.mergeHintPairs.length > 0) {
+        const pairPulse = (Math.sin(elapsed * 4.2) + 1) / 2;
+        game.mergeHintPairs.forEach(({ cellA, cellB, color }) => {
+            const startX = cellA.x + cellA.w / 2;
+            const startY = cellA.y + cellA.h / 2;
+            const endX = cellB.x + cellB.w / 2;
+            const endY = cellB.y + cellB.h / 2;
+            const hue = color === 'blue'
+                ? `rgba(130, 180, 255, ${0.35 + pairPulse * 0.45})`
+                : `rgba(255, 180, 120, ${0.35 + pairPulse * 0.45})`;
+
+            ctx.save();
+            ctx.globalCompositeOperation = 'lighter';
+            ctx.lineWidth = 4 + pairPulse * 3;
+            ctx.strokeStyle = hue;
+            ctx.beginPath();
+            ctx.moveTo(startX, startY);
+            ctx.lineTo(endX, endY);
+            ctx.stroke();
+            ctx.restore();
+        });
+    }
 }
 
 export function drawEntities(game) {
@@ -207,6 +322,8 @@ export function drawEntities(game) {
     layeredEntities
         .sort((a, b) => a.sortKey - b.sortKey)
         .forEach(layer => layer.draw());
+
+    drawMergeAnimations(ctx, game.mergeAnimations ?? [], assets);
 
     const defaultRadius = game.projectileRadius ?? 6;
     game.projectiles.forEach(p => {
@@ -269,4 +386,131 @@ function computeSortKey(entity) {
     const y = typeof entity.y === 'number' ? entity.y : 0;
     const height = typeof entity.h === 'number' ? entity.h : 0;
     return y + height;
+}
+
+function drawMergeAnimations(ctx, animations, assets) {
+    if (!Array.isArray(animations) || animations.length === 0) {
+        return;
+    }
+
+    animations.forEach(animation => {
+        const progress = animation.duration ? clamp01(animation.elapsed / animation.duration) : 1;
+        drawMergeTrail(ctx, animation, progress);
+        drawMergeTraveler(ctx, animation, progress, assets);
+        drawMergeTargetGlow(ctx, animation, progress);
+    });
+}
+
+function drawMergeTrail(ctx, animation, progress) {
+    const start = animation.startCenter;
+    const end = animation.endCenter;
+    if (!start || !end) {
+        return;
+    }
+
+    const palette = getMergePalette(animation.color);
+    const outerAlpha = 0.55 * (1 - progress * 0.9);
+    const innerAlpha = 0.85 * (1 - progress * 0.95);
+    const width = (animation.trailWidth ?? 30) * (1 - progress * 0.8);
+
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.lineCap = 'round';
+
+    ctx.strokeStyle = toMergeColor(palette.trail, outerAlpha);
+    ctx.lineWidth = width;
+    ctx.beginPath();
+    ctx.moveTo(start.x, start.y);
+    ctx.lineTo(end.x, end.y);
+    ctx.stroke();
+
+    ctx.strokeStyle = `rgba(255,255,255,${innerAlpha})`;
+    ctx.lineWidth = width * 0.45;
+    ctx.beginPath();
+    ctx.moveTo(start.x, start.y);
+    ctx.lineTo(end.x, end.y);
+    ctx.stroke();
+
+    const orbProgress = easeInOutCubic(progress);
+    const orbX = lerp(start.x, end.x, orbProgress);
+    const orbY = lerp(start.y, end.y, orbProgress);
+    const orbRadius = (animation.orbRadius ?? width * 0.6) * (1 - progress * 0.4);
+    const orbAlpha = 0.8 * (1 - progress * 0.6);
+
+    ctx.fillStyle = toMergeColor(palette.glow, orbAlpha);
+    ctx.beginPath();
+    ctx.arc(orbX, orbY, orbRadius, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = `rgba(255,255,255,${Math.min(1, orbAlpha + 0.2)})`;
+    ctx.beginPath();
+    ctx.arc(orbX, orbY, orbRadius * 0.55, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
+}
+
+function drawMergeTraveler(ctx, animation, progress, assets) {
+    const sprite = assets?.[animation.spriteKey];
+    if (!sprite) {
+        return;
+    }
+
+    const start = animation.start;
+    const end = animation.end;
+    if (!start || !end) {
+        return;
+    }
+
+    const baseWidth = animation.width ?? sprite.width;
+    const baseHeight = animation.height ?? sprite.height;
+    if (!baseWidth || !baseHeight) {
+        return;
+    }
+
+    const eased = easeInOutCubic(progress);
+    const posX = lerp(start.x, end.x, eased);
+    const posY = lerp(start.y, end.y, eased);
+    const scale = 1 + 0.12 * (1 - progress);
+    const width = baseWidth * scale;
+    const height = baseHeight * scale;
+    const drawX = posX + (baseWidth - width) / 2;
+    const drawY = posY + (baseHeight - height) / 2;
+    const alpha = clamp01(easeOutCubic(1 - progress));
+
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.drawImage(sprite, drawX, drawY, width, height);
+    ctx.restore();
+}
+
+function drawMergeTargetGlow(ctx, animation, progress) {
+    const targetTower = animation.targetTower;
+    if (!targetTower || typeof targetTower.center !== 'function') {
+        return;
+    }
+
+    const center = targetTower.center();
+    const palette = getMergePalette(animation.color);
+    const radiusBase = Math.max(targetTower.w ?? 0, targetTower.h ?? 0) * 0.42;
+    const glowStrength = easeOutCubic(1 - progress);
+    const radius = radiusBase * (1 + 0.3 * glowStrength);
+    const alpha = 0.5 * glowStrength;
+    const yOffset = (targetTower.h ?? 0) * 0.25;
+
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.lineWidth = 5 * (0.65 + 0.35 * glowStrength);
+    ctx.strokeStyle = toMergeColor(palette.glow, alpha);
+    ctx.beginPath();
+    ctx.arc(center.x, center.y - yOffset, radius, 0, Math.PI * 2);
+    ctx.stroke();
+
+    const coreStrength = clamp01(glowStrength * 1.1);
+    ctx.globalAlpha = 0.7 * coreStrength;
+    ctx.fillStyle = `rgba(255,255,255,${0.45 * coreStrength})`;
+    ctx.beginPath();
+    ctx.arc(center.x, center.y - yOffset, radius * 0.45, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
 }
