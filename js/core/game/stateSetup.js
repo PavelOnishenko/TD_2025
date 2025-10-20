@@ -77,6 +77,9 @@ function resetGame(game) {
     resetEndMessages(game);
     updateHUD(game);
     game.persistState();
+    if (game.tutorial) {
+        game.tutorial.reset();
+    }
 }
 
 const stateSetup = {
