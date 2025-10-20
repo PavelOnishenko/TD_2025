@@ -3,6 +3,9 @@ import { updateHUD, endGame, updateWavePhaseIndicator } from '../systems/ui.js';
 export const waveActions = {
     startWave() {
         this.setupWaveStuff();
+        if (this.tutorial) {
+            this.tutorial.handleWaveStarted();
+        }
         if (this.mergeBtn) {
             this.mergeBtn.disabled = true;
         }

@@ -1,5 +1,6 @@
 import Tower from '../entities/Tower.js';
 import { callCrazyGamesEvent } from './crazyGamesIntegration.js';
+import { attachTutorial } from './tutorial.js';
 
 const HEART_FILLED_SRC = 'assets/heart_filled.png';
 const HEART_EMPTY_SRC = 'assets/heart_empty.png';
@@ -37,6 +38,7 @@ function isInside(pos, rect) {
 
 export function bindUI(game) {
     bindHUD(game);
+    attachTutorial(game);
     bindButtons(game);
     bindCanvasClick(game);
     updateHUD(game);
@@ -81,6 +83,10 @@ function bindButtons(game) {
         if (game.mergeBtn) {
             game.mergeBtn.disabled = false;
         }
+        if (game.tutorial) {
+            game.tutorial.reset();
+            game.tutorial.start();
+        }
     };
     game.restartBtn.addEventListener('click', handleRestart);
     if (game.startBtn) {
@@ -95,6 +101,7 @@ function bindButtons(game) {
             }
             if (!game.hasStarted) {
                 game.hasStarted = true;
+                game.tutorial?.start();
                 game.run();
             }
         }, { once: true });
@@ -151,7 +158,10 @@ function bindCanvasClick(game) {
         const pos = getMousePos(game.canvas, e);
         const tower = game.towers.find(t => isInside(pos, t));
         if (tower) {
-            game.switchTowerColor(tower);
+            const switched = game.switchTowerColor(tower);
+            if (switched && game.tutorial) {
+                game.tutorial.handleColorSwitch();
+            }
             return;
         }
 
@@ -176,6 +186,9 @@ function tryShoot(game, cell) {
             updateHUD(game);
             if (game.audio && typeof game.audio.playPlacement === 'function') {
                 game.audio.playPlacement();
+            }
+            if (game.tutorial) {
+                game.tutorial.handleTowerPlaced();
             }
         } else {
             cell.highlight = 0.3;

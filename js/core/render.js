@@ -493,9 +493,13 @@ function drawMergeTargetGlow(ctx, animation, progress) {
     const center = targetTower.center();
     const palette = getMergePalette(animation.color);
     const radiusBase = Math.max(targetTower.w ?? 0, targetTower.h ?? 0) * 0.42;
-    const glowStrength = easeOutCubic(1 - progress);
-    const radius = radiusBase * (1 + 0.3 * glowStrength);
-    const alpha = 0.5 * glowStrength;
+    const animationGlow = easeOutCubic(1 - progress);
+    const towerPulse = typeof targetTower.getMergePulseStrength === 'function'
+        ? targetTower.getMergePulseStrength()
+        : 0;
+    const glowStrength = Math.max(animationGlow, towerPulse);
+    const radius = radiusBase * (1 + 0.32 * glowStrength);
+    const alpha = 0.55 * glowStrength;
     const yOffset = (targetTower.h ?? 0) * 0.25;
 
     ctx.save();
@@ -512,5 +516,24 @@ function drawMergeTargetGlow(ctx, animation, progress) {
     ctx.beginPath();
     ctx.arc(center.x, center.y - yOffset, radius * 0.45, 0, Math.PI * 2);
     ctx.fill();
+
+    const ringProgress = clamp01((progress - 0.35) / 0.65);
+    if (ringProgress > 0) {
+        const ringRadius = radiusBase * (1.15 + ringProgress * 1.35);
+        const ringFade = 1 - ringProgress;
+        ctx.globalAlpha = 0.45 * ringFade;
+        ctx.lineWidth = 3 * (0.8 + 0.2 * ringFade);
+        ctx.strokeStyle = toMergeColor(palette.glow, 0.4 * ringFade);
+        ctx.beginPath();
+        ctx.arc(center.x, center.y - yOffset, ringRadius, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.globalAlpha = 0.25 * ringFade;
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+        ctx.beginPath();
+        ctx.arc(center.x, center.y - yOffset, ringRadius * 0.92, 0, Math.PI * 2);
+        ctx.stroke();
+    }
     ctx.restore();
 }
