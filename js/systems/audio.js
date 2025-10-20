@@ -6,7 +6,8 @@ const NOOP_AUDIO = {
     playPlacement() {},
     playMusic() {},
     stopMusic() {},
-    playError() {}
+    playError() {},
+    playBaseHit() {}
 };
 
 function hasHowler() {
@@ -98,6 +99,7 @@ export function createGameAudio(sounds = {}) {
     const explosionSound = createSoundTrigger(sounds.explosion ?? null);
     const placementSound = createSoundTrigger(sounds.placement ?? null);
     const errorSound = createSoundTrigger(sounds.error ?? null);
+    const baseHitSound = createSoundTrigger(sounds.baseHit ?? null);
     const { playMusic, stopMusic } = createMusicActions(sounds.backgroundMusic ?? null);
 
     return {
@@ -106,6 +108,7 @@ export function createGameAudio(sounds = {}) {
         playPlacement: placementSound,
         playMusic,
         stopMusic,
-        playError: errorSound
+        playError: errorSound,
+        playBaseHit: baseHitSound
     };
 }

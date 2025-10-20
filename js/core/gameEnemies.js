@@ -97,6 +97,9 @@ export const enemyActions = {
             if (e.x + e.w >= this.base.x) {
                 this.enemies.splice(i, 1);
                 this.lives--;
+                if (typeof this.triggerBaseHitEffects === 'function') {
+                    this.triggerBaseHitEffects();
+                }
                 updateHUD(this);
                 if (this.lives <= 0) {
                     endGame(this, 'LOSE');

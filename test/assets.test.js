@@ -88,6 +88,7 @@ test('loadAssets returns sounds only when audio is supported', async () => {
         'assets/fire.wav',
         'assets/explosion.wav',
         'assets/placement.wav',
+        'assets/explosion.wav',
         'assets/error.wav',
         'assets/background_music.mp3'
     ]);
@@ -96,10 +97,12 @@ test('loadAssets returns sounds only when audio is supported', async () => {
         'fire',
         'explosion',
         'placement',
+        'baseHit',
         'error',
         'backgroundMusic'
     ]);
     assert.deepEqual(assets.sounds.fire, { sound: 'assets/fire.wav' });
+    assert.deepEqual(assets.sounds.baseHit, { sound: 'assets/explosion.wav' });
 });
 
 test('loadAssets skips sounds when audio is not supported', async () => {
