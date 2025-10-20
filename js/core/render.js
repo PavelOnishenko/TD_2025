@@ -1,4 +1,4 @@
-import { drawExplosions } from '../systems/effects.js';
+import { drawExplosions, drawColorSwitchBursts } from '../systems/effects.js';
 
 const ENERGY_PALETTES = {
     red: {
@@ -300,6 +300,8 @@ function drawGrid(game) {
 export function drawEntities(game) {
     const ctx = game.ctx;
     const assets = game.assets;
+
+    drawColorSwitchBursts(ctx, game.colorSwitchBursts ?? []);
 
     const layeredEntities = [];
 

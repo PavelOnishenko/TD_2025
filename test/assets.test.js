@@ -92,6 +92,7 @@ test('loadAssets returns sounds only when audio is supported', async () => {
         'assets/explosion.wav',
         'assets/explosion.wav',
         'assets/placement.wav',
+        'assets/color_switch.wav',
         'assets/explosion.wav',
         'assets/error.wav',
         'assets/background_music.mp3'
@@ -103,6 +104,7 @@ test('loadAssets returns sounds only when audio is supported', async () => {
         'mismatchingHit',
         'explosion',
         'placement',
+        'colorSwitch',
         'baseHit',
         'error',
         'backgroundMusic'

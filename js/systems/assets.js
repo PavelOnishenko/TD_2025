@@ -43,6 +43,10 @@ const SOUND_OPTIONS = {
         volume: 0.4,
         preload: true
     },
+    colorSwitch: {
+        src: ['assets/color_switch.wav'],
+        volume: 0.35,
+    },
     baseHit: {
         src: ['assets/explosion.wav'],
         volume: 0.18,

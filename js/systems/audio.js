@@ -6,6 +6,7 @@ const NOOP_AUDIO = {
     playMatchingHit() {},
     playMismatchingHit() {},
     playPlacement() {},
+    playColorSwitch() {},
     playMusic() {},
     stopMusic() {},
     playError() {},
@@ -101,6 +102,7 @@ export function createGameAudio(sounds = {}) {
     const matchingHitSound = createSoundTrigger(sounds.matchingHit ?? sounds.explosion ?? null);
     const mismatchingHitSound = createSoundTrigger(sounds.mismatchingHit ?? null);
     const placementSound = createSoundTrigger(sounds.placement ?? null);
+    const colorSwitchSound = createSoundTrigger(sounds.colorSwitch ?? null);
     const errorSound = createSoundTrigger(sounds.error ?? null);
     const baseHitSound = createSoundTrigger(sounds.baseHit ?? null);
     const { playMusic, stopMusic } = createMusicActions(sounds.backgroundMusic ?? null);
@@ -111,6 +113,7 @@ export function createGameAudio(sounds = {}) {
         playMatchingHit: matchingHitSound,
         playMismatchingHit: mismatchingHitSound,
         playPlacement: placementSound,
+        playColorSwitch: colorSwitchSound,
         playMusic,
         stopMusic,
         playError: errorSound,
