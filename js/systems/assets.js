@@ -51,7 +51,7 @@ const SOUND_OPTIONS = {
     },
     colorSwitch: {
         src: ['assets/color_switch.mp3'],
-        volume: 0.35,
+        volume: 1,
     },
     baseHit: {
         src: ['assets/explosion.wav'],
