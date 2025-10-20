@@ -3,6 +3,7 @@ const globalScope = typeof globalThis !== 'undefined' ? globalThis : window;
 const NOOP_AUDIO = {
     playFire() {},
     playExplosion() {},
+    playMerge() {},
     playMatchingHit() {},
     playMismatchingHit() {},
     playPlacement() {},
@@ -99,7 +100,12 @@ export function createGameAudio(sounds = {}) {
     }
 
     const fireSound = createSoundTrigger(sounds.fire ?? null);
-    const matchingHitSound = createSoundTrigger(sounds.matchingHit ?? sounds.explosion ?? null);
+    const explosionSource = sounds.explosion ?? sounds.matchingHit ?? null;
+    const matchingHitSource = sounds.matchingHit ?? sounds.explosion ?? null;
+    const mergeSource = sounds.merge ?? explosionSource;
+    const explosionSound = createSoundTrigger(explosionSource);
+    const matchingHitSound = createSoundTrigger(matchingHitSource);
+    const mergeSound = createSoundTrigger(mergeSource);
     const mismatchingHitSound = createSoundTrigger(sounds.mismatchingHit ?? null);
     const placementSound = createSoundTrigger(sounds.placement ?? null);
     const colorSwitchSound = createSoundTrigger(sounds.colorSwitch ?? null);
@@ -109,7 +115,8 @@ export function createGameAudio(sounds = {}) {
 
     return {
         playFire: fireSound,
-        playExplosion: matchingHitSound,
+        playExplosion: explosionSound,
+        playMerge: mergeSound,
         playMatchingHit: matchingHitSound,
         playMismatchingHit: mismatchingHitSound,
         playPlacement: placementSound,

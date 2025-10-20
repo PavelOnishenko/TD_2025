@@ -43,9 +43,15 @@ const SOUND_OPTIONS = {
         volume: 0.4,
         preload: true
     },
+    merge: {
+        src: ['assets/merge.mp3'],
+        volume: 1,
+        rate: 1.6,
+        preload: true
+    },
     colorSwitch: {
         src: ['assets/color_switch.mp3'],
-        volume: 0.35,
+        volume: 1,
     },
     baseHit: {
         src: ['assets/explosion.wav'],
