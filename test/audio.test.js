@@ -134,11 +134,15 @@ test('createGameAudio returns noop audio when howler is unavailable', () => {
         assert.equal(typeof audio.playMusic, 'function');
         assert.equal(typeof audio.stopMusic, 'function');
         assert.equal(typeof audio.playError, 'function');
+        assert.equal(typeof audio.playMatchingHit, 'function');
+        assert.equal(typeof audio.playMismatchingHit, 'function');
 
         audio.playFire();
         audio.playMusic();
         audio.stopMusic();
         audio.playError();
+        audio.playMatchingHit();
+        audio.playMismatchingHit();
     });
 });
 
@@ -148,21 +152,26 @@ test('createGameAudio triggers available sounds only', () => {
 
     return runWithHowler(FakeHowl, fakeHowler, () => {
         const fireSound = { playCalls: 0, play() { this.playCalls += 1; } };
-        const explosionSound = { playCalls: 0, play() { this.playCalls += 1; } };
+        const matchingHitSound = { playCalls: 0, play() { this.playCalls += 1; } };
+        const mismatchingHitSound = { playCalls: 0, play() { this.playCalls += 1; } };
         const errorSound = { playCalls: 0, play() { this.playCalls += 1; } };
         const audio = createGameAudio({
             fire: fireSound,
-            explosion: explosionSound,
+            matchingHit: matchingHitSound,
+            mismatchingHit: mismatchingHitSound,
             error: errorSound
         });
 
         audio.playFire();
         audio.playExplosion();
+        audio.playMatchingHit();
+        audio.playMismatchingHit();
         audio.playPlacement();
         audio.playError();
 
         assert.equal(fireSound.playCalls, 1);
-        assert.equal(explosionSound.playCalls, 1);
+        assert.equal(matchingHitSound.playCalls, 2);
+        assert.equal(mismatchingHitSound.playCalls, 1);
         assert.equal(errorSound.playCalls, 1);
     });
 });

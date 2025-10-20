@@ -87,6 +87,8 @@ test('loadAssets returns sounds only when audio is supported', async () => {
     assert.deepEqual(soundCreatorCalls, [
         'assets/fire.wav',
         'assets/explosion.wav',
+        'assets/explosion.wav',
+        'assets/explosion.wav',
         'assets/placement.wav',
         'assets/error.wav',
         'assets/background_music.mp3'
@@ -94,6 +96,8 @@ test('loadAssets returns sounds only when audio is supported', async () => {
     assert.equal(typeof assets.sounds, 'object');
     assert.deepEqual(Object.keys(assets.sounds), [
         'fire',
+        'matchingHit',
+        'mismatchingHit',
         'explosion',
         'placement',
         'error',

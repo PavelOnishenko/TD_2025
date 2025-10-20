@@ -19,6 +19,18 @@ const SOUND_OPTIONS = {
         volume: 0.8,
         preload: true
     },
+    matchingHit: {
+        src: ['assets/explosion.wav'],
+        volume: 0.05,
+        rate: 1.1,
+        preload: true
+    },
+    mismatchingHit: {
+        src: ['assets/explosion.wav'],
+        volume: 0.04,
+        rate: 0.75,
+        preload: true
+    },
     explosion: {
         src: ['assets/explosion.wav'],
         volume: 0.05,
