@@ -44,7 +44,7 @@ const SOUND_OPTIONS = {
         preload: true
     },
     colorSwitch: {
-        src: ['assets/color_switch.wav'],
+        src: ['assets/color_switch.mp3'],
         volume: 0.35,
     },
     baseHit: {
