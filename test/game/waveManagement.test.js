@@ -68,6 +68,23 @@ test('manualMergeTowers skips merging during wave', () => {
     assert.equal(game.towers.length, 2);
 });
 
+test('updateMergeHints does not apply hints during active wave', () => {
+    const game = createGame();
+    const cellA = game.bottomCells[0];
+    const cellB = game.bottomCells[1];
+    const towerA = placeTowerOnCell(game, cellA);
+    const towerB = placeTowerOnCell(game, cellB);
+
+    game.waveInProgress = true;
+    game.updateMergeHints();
+
+    assert.equal(game.mergeHintPairs.length, 0);
+    assert.equal(cellA.mergeHint, 0);
+    assert.equal(cellB.mergeHint, 0);
+    assert.equal(towerA.mergeHint, 0);
+    assert.equal(towerB.mergeHint, 0);
+});
+
 test('checkWaveCompletion unlocks merge and next wave buttons', () => {
     const game = createGame({ attachDom: true });
     game.waveInProgress = true;
