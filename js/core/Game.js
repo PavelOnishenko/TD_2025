@@ -129,6 +129,10 @@ class Game {
             return;
         }
 
+        if (typeof targetTower.triggerMergePulse === 'function') {
+            targetTower.triggerMergePulse();
+        }
+
         const duration = 0.48;
         const startPosition = { x: consumedTower.x, y: consumedTower.y };
         const endPosition = { x: targetTower.x, y: targetTower.y };
@@ -197,10 +201,17 @@ class Game {
 
         const center = targetTower.center();
         const yOffset = (targetTower.h ?? 0) * 0.1;
-        const explosion = createExplosion(center.x, center.y - yOffset, animation.color);
+        const explosion = createExplosion(center.x, center.y - yOffset, {
+            color: animation.color,
+            variant: 'merge'
+        });
         this.explosions.push(explosion);
-        if (this.audio && typeof this.audio.playExplosion === 'function') {
-            this.audio.playExplosion();
+        if (this.audio) {
+            if (typeof this.audio.playMerge === 'function') {
+                this.audio.playMerge();
+            } else if (typeof this.audio.playExplosion === 'function') {
+                this.audio.playExplosion();
+            }
         }
     }
   
