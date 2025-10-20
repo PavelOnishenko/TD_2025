@@ -9,6 +9,8 @@ const IMAGE_SOURCES = {
     tower_2b: 'assets/tower_2B.png',
     tower_3r: 'assets/tower_3R.png',
     tower_3b: 'assets/tower_3B.png',
+    tank_r: 'assets/tank_R.png',
+    tank_b: 'assets/tank_B.png',
     swarm_r: 'assets/swarm_R.png',
     swarm_b: 'assets/swarm_B.png'
 };

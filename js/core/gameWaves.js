@@ -64,6 +64,7 @@ export const waveActions = {
         return towerA && towerB && towerA.color === towerB.color && towerA.level === towerB.level;
     },
 
+    // TODO Merge isn't related to waves, move all merge related stuff from this file to a better place like  towers module
     mergeTowerPair(cellA, cellB, towerA, towerB) {
         cellA.tower = towerA;
         towerA.level += 1;
