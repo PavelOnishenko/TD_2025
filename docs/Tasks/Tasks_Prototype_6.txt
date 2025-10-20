@@ -6,6 +6,6 @@
     Possibility of these algorithms working even slightly differently must be eliminated.
 004 | TODO | VFX and SFX for switching color
 005 | TODO | SFX and VFX for "wrong color" hit should be different from "correct color" hit
-006 | TODO | Add tutorial
+006 | DONE | Add tutorial
 007 | TODO | Animation (like shake of the screen) and SFX when the base is hit
 008 | TODO | Make different sprite for tanks
