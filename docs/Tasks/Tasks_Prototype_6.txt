@@ -5,7 +5,7 @@
     It should work by the same algorithm that performs merging. 
     Possibility of these algorithms working even slightly differently must be eliminated.
 004 | TODO | VFX and SFX for switching color
-005 | TODO | SFX and VFX for "wrong color" hit should be different from "correct color" hit
+005 | DONE | SFX and VFX for "wrong color" hit should be different from "correct color" hit
 006 | TODO | Add tutorial
-007 | TODO | Animation (like shake of the screen) and SFX when the base is hit
+007 | DONE | Animation (like shake of the screen) and SFX when the base is hit
 008 | DONE | Make different sprite for tanks
