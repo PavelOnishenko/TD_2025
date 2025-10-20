@@ -25,6 +25,9 @@ function resetCollections(game) {
     game.spawned = 0;
     game.spawnTimer = 0;
     game.grid.resetCells();
+    if (typeof game.resetScreenShake === 'function') {
+        game.resetScreenShake();
+    }
 }
 
 function resetButtons(game) {

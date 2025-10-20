@@ -29,6 +29,11 @@ const SOUND_OPTIONS = {
         volume: 0.4,
         preload: true
     },
+    baseHit: {
+        src: ['assets/explosion.wav'],
+        volume: 0.18,
+        preload: true
+    },
     error: {
         src: ['assets/error.wav'],
         volume: 0.5,

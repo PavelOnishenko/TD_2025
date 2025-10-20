@@ -33,6 +33,28 @@ const ENERGY_PALETTES = {
     },
 };
 
+function getScreenShakeOffset(game) {
+    const shake = game?.screenShake;
+    if (!shake || shake.duration <= 0 || shake.intensity <= 0) {
+        return { x: 0, y: 0 };
+    }
+
+    const time = shake.elapsed ?? 0;
+    const progress = Math.min(1, shake.duration > 0 ? time / shake.duration : 1);
+    const falloff = Math.pow(1 - progress, 2);
+    const baseIntensity = shake.intensity * falloff;
+    if (baseIntensity <= 0.01) {
+        return { x: 0, y: 0 };
+    }
+
+    const frequency = shake.frequency ?? 42;
+    const phaseX = (time * frequency) + (shake.seedX ?? 0);
+    const phaseY = (time * (frequency * 0.82)) + (shake.seedY ?? 0);
+    const offsetX = Math.sin(phaseX) * baseIntensity;
+    const offsetY = Math.cos(phaseY) * baseIntensity;
+    return { x: offsetX, y: offsetY };
+}
+
 function getEnergyPalette(color) {
     if (!color) return ENERGY_PALETTES.default;
     return ENERGY_PALETTES[color] ?? ENERGY_PALETTES.default;
@@ -79,6 +101,7 @@ function traceEllipse(ctx, cx, cy, rx, ry) {
 export function draw(game) {
     const ctx = game.ctx;
     const { scale = 1, offsetX = 0, offsetY = 0 } = game.viewport ?? {};
+    const shakeOffset = getScreenShakeOffset(game);
 
     ctx.save();
     ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -86,7 +109,7 @@ export function draw(game) {
     ctx.restore();
 
     ctx.save();
-    ctx.setTransform(scale, 0, 0, scale, offsetX, offsetY);
+    ctx.setTransform(scale, 0, 0, scale, offsetX + shakeOffset.x, offsetY + shakeOffset.y);
 
     drawBase(game);
     drawPlatforms(game);
