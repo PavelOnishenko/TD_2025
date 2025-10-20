@@ -4,7 +4,7 @@ import { enemyActions } from './gameEnemies.js';
 import { waveActions } from './gameWaves.js';
 import { callCrazyGamesEvent } from '../systems/crazyGamesIntegration.js';
 import { createGameAudio } from '../systems/audio.js';
-import { updateExplosions } from '../systems/effects.js';
+import { createExplosion, updateExplosions } from '../systems/effects.js';
 import GameGrid from './gameGrid.js';
 import { createPlatforms } from './platforms.js';
 import projectileManagement from './game/projectileManagement.js';
@@ -38,6 +38,7 @@ class Game {
         this.towers = [];
         this.projectiles = [];
         this.explosions = [];
+        this.mergeAnimations = [];
         this.projectileSpeed = 800;
         this.projectileRadius = 6;
         this.maxProjectileRadius = this.projectileRadius;
@@ -95,12 +96,93 @@ class Game {
         this.towerAttacks(timestamp);
         moveProjectiles(this, dt);
         handleProjectileHits(this);
+        this.updateMergeAnimations(dt);
         updateExplosions(this.explosions, dt);
         this.grid.fadeHighlights(dt);
         this.checkWaveCompletion();
         draw(this);
         if (!this.gameOver) {
             requestAnimationFrame(this.update);
+        }
+    }
+
+    startTowerMergeAnimation(targetTower, consumedTower) {
+        if (!targetTower || !consumedTower) {
+            return;
+        }
+
+        const duration = 0.48;
+        const startPosition = { x: consumedTower.x, y: consumedTower.y };
+        const endPosition = { x: targetTower.x, y: targetTower.y };
+        const startCenter = consumedTower.center();
+        const endCenter = targetTower.center();
+        const color = targetTower.color ?? 'red';
+        const fromLevel = Math.max(1, consumedTower.level ?? 1);
+        const colorKey = (color[0] ?? 'r').toLowerCase();
+        const spriteKey = `tower_${fromLevel}${colorKey}`;
+        const width = consumedTower.w ?? targetTower.w ?? 0;
+        const height = consumedTower.h ?? targetTower.h ?? 0;
+        const maxDimension = Math.max(width, height);
+
+        const animation = {
+            elapsed: 0,
+            duration,
+            start: startPosition,
+            end: endPosition,
+            startCenter,
+            endCenter,
+            width,
+            height,
+            color,
+            spriteKey,
+            targetTower,
+            orbRadius: maxDimension * 0.26,
+            trailWidth: maxDimension * 0.24,
+            explosionTriggered: false,
+        };
+
+        if (!Array.isArray(this.mergeAnimations)) {
+            this.mergeAnimations = [];
+        }
+        this.mergeAnimations.push(animation);
+    }
+
+    updateMergeAnimations(dt) {
+        if (!Array.isArray(this.mergeAnimations) || this.mergeAnimations.length === 0) {
+            return;
+        }
+
+        for (let i = this.mergeAnimations.length - 1; i >= 0; i--) {
+            const animation = this.mergeAnimations[i];
+            animation.elapsed = (animation.elapsed ?? 0) + dt;
+
+            if (!animation.explosionTriggered && animation.elapsed >= animation.duration * 0.85) {
+                this.triggerMergeExplosion(animation);
+            }
+
+            if (animation.elapsed >= animation.duration) {
+                this.mergeAnimations.splice(i, 1);
+            }
+        }
+    }
+
+    triggerMergeExplosion(animation) {
+        if (!animation || animation.explosionTriggered) {
+            return;
+        }
+
+        animation.explosionTriggered = true;
+        const targetTower = animation.targetTower;
+        if (!targetTower || typeof targetTower.center !== 'function') {
+            return;
+        }
+
+        const center = targetTower.center();
+        const yOffset = (targetTower.h ?? 0) * 0.1;
+        const explosion = createExplosion(center.x, center.y - yOffset, animation.color);
+        this.explosions.push(explosion);
+        if (this.audio && typeof this.audio.playExplosion === 'function') {
+            this.audio.playExplosion();
         }
     }
 
