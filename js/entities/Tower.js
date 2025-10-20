@@ -24,6 +24,7 @@ export default class Tower {
         this.placementFlashTimer = 0;
         this.glowTime = Math.random() * Math.PI * 2;
         this.glowSpeed = 2.4;
+        this.mergeHint = 0;
         this.updateStats();
     }
 
@@ -47,6 +48,9 @@ export default class Tower {
             this.placementFlashTimer = Math.max(0, this.placementFlashTimer - dt);
         }
         this.glowTime = (this.glowTime + dt * this.glowSpeed) % (Math.PI * 2);
+        if (this.mergeHint > 0) {
+            this.mergeHint = Math.max(0, this.mergeHint - dt * 2.5);
+        }
     }
 
     triggerFlash() {
@@ -89,6 +93,7 @@ export default class Tower {
         this.drawRange(ctx, c);
         ctx.fillStyle = this.color;
         this.drawBody(ctx, c, assets);
+        this.drawMergeHint(ctx, c);
         drawTowerPlacementFlash(ctx, this);
         drawTowerTopGlowIfNeeded(ctx, this);
 
@@ -114,6 +119,30 @@ export default class Tower {
             return;
         }
         ctx.drawImage(sprite, this.x, this.y, this.w, this.h);
+    }
+
+    drawMergeHint(ctx, center) {
+        if (this.mergeHint <= 0) {
+            return;
+        }
+
+        const pulse = (Math.sin(this.glowTime * 2) + 1) / 2;
+        const intensity = Math.min(1, this.mergeHint);
+        const baseRadius = Math.max(this.w, this.h) * 0.6;
+        const radius = baseRadius * (0.9 + 0.15 * pulse);
+        const alpha = 0.35 + 0.4 * pulse;
+        const color = this.color === 'red'
+            ? `rgba(255, 180, 120, ${alpha})`
+            : `rgba(130, 180, 255, ${alpha})`;
+
+        ctx.save();
+        ctx.globalCompositeOperation = 'lighter';
+        ctx.globalAlpha = intensity;
+        ctx.beginPath();
+        ctx.arc(center.x, center.y + this.h * 0.05, radius, 0, Math.PI * 2);
+        ctx.fillStyle = color;
+        ctx.fill();
+        ctx.restore();
     }
 
     drawLevelIndicator(ctx) {

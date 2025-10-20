@@ -9,6 +9,8 @@ const IMAGE_SOURCES = {
     tower_2b: 'assets/tower_2B.png',
     tower_3r: 'assets/tower_3R.png',
     tower_3b: 'assets/tower_3B.png',
+    tank_r: 'assets/tank_R.png',
+    tank_b: 'assets/tank_B.png',
     swarm_r: 'assets/swarm_R.png',
     swarm_b: 'assets/swarm_B.png'
 };
@@ -16,17 +18,38 @@ const IMAGE_SOURCES = {
 const SOUND_OPTIONS = {
     fire: {
         src: ['assets/fire.wav'],
-        volume: 0.8,
+        volume: 0.6,
+        preload: true
+    },
+    matchingHit: {
+        src: ['assets/explosion.wav'],
+        volume: 0.25,
+        rate: 3.5,
+        preload: true
+    },
+    mismatchingHit: {
+        src: ['assets/explosion.wav'],
+        volume: 0.2,
+        rate: 0.5,
         preload: true
     },
     explosion: {
         src: ['assets/explosion.wav'],
-        volume: 0.05,
+        volume: 0.25,
         preload: true
     },
     placement: {
         src: ['assets/placement.wav'],
         volume: 0.4,
+        preload: true
+    },
+    colorSwitch: {
+        src: ['assets/color_switch.mp3'],
+        volume: 0.35,
+    },
+    baseHit: {
+        src: ['assets/explosion.wav'],
+        volume: 0.18,
         preload: true
     },
     error: {
