@@ -16,12 +16,24 @@ const IMAGE_SOURCES = {
 const SOUND_OPTIONS = {
     fire: {
         src: ['assets/fire.wav'],
-        volume: 0.8,
+        volume: 0.6,
+        preload: true
+    },
+    matchingHit: {
+        src: ['assets/explosion.wav'],
+        volume: 0.25,
+        rate: 3.5,
+        preload: true
+    },
+    mismatchingHit: {
+        src: ['assets/explosion.wav'],
+        volume: 0.2,
+        rate: 0.5,
         preload: true
     },
     explosion: {
         src: ['assets/explosion.wav'],
-        volume: 0.05,
+        volume: 0.25,
         preload: true
     },
     placement: {
