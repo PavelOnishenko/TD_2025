@@ -44,8 +44,8 @@ const SOUND_OPTIONS = {
         preload: true
     },
     merge: {
-        src: ['assets/explosion.wav'],
-        volume: 0.28,
+        src: ['assets/merge.mp3'],
+        volume: 1,
         rate: 1.6,
         preload: true
     },
