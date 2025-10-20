@@ -58,6 +58,7 @@ class Game {
         this.hasStarted = false;
         this.isRestoringState = false;
         this.persistenceEnabled = true;
+        this.mergeHintPairs = [];
         this.screenShake = createScreenShakeState();
     }
 
@@ -109,6 +110,8 @@ class Game {
         handleProjectileHits(this);
         updateExplosions(this.explosions, dt);
         this.grid.fadeHighlights(dt);
+        this.grid.fadeMergeHints(dt);
+        this.updateMergeHints();
         this.checkWaveCompletion();
         this.updateScreenShake(dt);
         draw(this);

@@ -28,7 +28,9 @@ export default class Enemy {
     draw(ctx, assets) {
         const propertyName = `${this.spriteKey}_${this.color.charAt(0)}`;
         const sprite = assets[propertyName];
-        drawEnemyEngineGlow(ctx, this);
+        if (typeof Enemy.engineGlowDrawer === 'function') {
+            Enemy.engineGlowDrawer(ctx, this);
+        }
         ctx.drawImage(sprite, this.x, this.y, this.w, this.h);
 
         const barWidth = this.w;
@@ -113,3 +115,5 @@ export class SwarmEnemy extends Enemy {
         super(maxHp, color, x, y, 200, 0, 'swarm');
     }
 }
+
+Enemy.engineGlowDrawer = drawEnemyEngineGlow;
