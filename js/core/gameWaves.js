@@ -100,6 +100,10 @@ export const waveActions = {
             this.mergeHintPairs.length = 0;
         }
 
+        if (this.waveInProgress) {
+            return;
+        }
+
         const applyHint = (cellA, cellB, towerA, towerB) => {
             cellA.mergeHint = Math.min(1, (cellA.mergeHint ?? 0) + 0.9);
             cellB.mergeHint = Math.min(1, (cellB.mergeHint ?? 0) + 0.9);
