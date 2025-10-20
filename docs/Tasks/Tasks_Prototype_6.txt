@@ -1,4 +1,4 @@
-001 | TODO | VFX marking vacant cells - make it less distracting
+001 | CANCEL | VFX marking vacant cells - make it less distracting
 002 | TODO | Merge animation. Two towers should visually merge into one. 
     This should be accompanied by light explosion of some kind and SFX. 
 003 | TODO | Show visual hint that 2 towers will merge at the end of the wave (when they are same color and same level). 
