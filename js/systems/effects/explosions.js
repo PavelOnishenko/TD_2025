@@ -38,6 +38,17 @@ const VARIANT_CONFIGS = {
         alphaScale: 0.6,
         resolveColor: () => 'mismatch',
     },
+    merge: {
+        particleCount: Math.round(BASE_PARTICLE_COUNT * 1.1),
+        minLife: BASE_MIN_LIFE * 0.9,
+        maxLife: BASE_MAX_LIFE * 1.25,
+        minSpeed: BASE_MIN_SPEED * 0.5,
+        maxSpeed: BASE_MAX_SPEED * 0.85,
+        minRadius: BASE_MIN_RADIUS * 0.8,
+        maxRadius: BASE_MAX_RADIUS * 1.45,
+        alphaScale: 1.2,
+        resolveColor: color => color ?? 'default',
+    },
 };
 
 function getVariantConfig(variant = 'match') {

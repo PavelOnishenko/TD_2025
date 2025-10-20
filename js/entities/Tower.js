@@ -25,6 +25,10 @@ export default class Tower {
         this.glowTime = Math.random() * Math.PI * 2;
         this.glowSpeed = 2.4;
         this.mergeHint = 0;
+        this.mergePulseDuration = 0.45;
+        this.mergePulseTimer = 0;
+        this.mergePulseWaveDuration = 0.6;
+        this.mergePulseWaveTimer = 0;
         this.updateStats();
     }
 
@@ -51,6 +55,12 @@ export default class Tower {
         if (this.mergeHint > 0) {
             this.mergeHint = Math.max(0, this.mergeHint - dt * 2.5);
         }
+        if (this.mergePulseTimer > 0) {
+            this.mergePulseTimer = Math.max(0, this.mergePulseTimer - dt);
+        }
+        if (this.mergePulseWaveTimer > 0) {
+            this.mergePulseWaveTimer = Math.max(0, this.mergePulseWaveTimer - dt);
+        }
     }
 
     triggerFlash() {
@@ -59,6 +69,19 @@ export default class Tower {
 
     triggerPlacementFlash() {
         this.placementFlashTimer = this.placementFlashDuration;
+    }
+
+    triggerMergePulse() {
+        this.mergePulseTimer = this.mergePulseDuration;
+        this.mergePulseWaveTimer = this.mergePulseWaveDuration;
+    }
+
+    getMergePulseStrength() {
+        if (this.mergePulseDuration <= 0) {
+            return 0;
+        }
+        const normalized = this.mergePulseTimer / this.mergePulseDuration;
+        return Math.max(0, Math.min(1, normalized));
     }
 
     center() {
@@ -93,6 +116,7 @@ export default class Tower {
         this.drawRange(ctx, c);
         ctx.fillStyle = this.color;
         this.drawBody(ctx, c, assets);
+        this.drawMergePulseWave(ctx, c);
         this.drawMergeHint(ctx, c);
         drawTowerPlacementFlash(ctx, this);
         drawTowerTopGlowIfNeeded(ctx, this);
@@ -118,7 +142,23 @@ export default class Tower {
             console.warn(`No sprite found for property name: ${propertyName}`);
             return;
         }
-        ctx.drawImage(sprite, this.x, this.y, this.w, this.h);
+        const hasMergePulse = this.mergePulseTimer > 0;
+        if (!hasMergePulse) {
+            ctx.drawImage(sprite, this.x, this.y, this.w, this.h);
+            return;
+        }
+
+        const centerX = this.x + this.w / 2;
+        const centerY = this.y + this.h / 2;
+        const strength = this.getMergePulseStrength();
+        const eased = easeOutCubic(1 - strength);
+        const scale = 1 + 0.18 * (1 - eased);
+
+        ctx.save();
+        ctx.translate(centerX, centerY);
+        ctx.scale(scale, scale);
+        ctx.drawImage(sprite, -this.w / 2, -this.h / 2, this.w, this.h);
+        ctx.restore();
     }
 
     drawMergeHint(ctx, center) {
@@ -145,10 +185,49 @@ export default class Tower {
         ctx.restore();
     }
 
+    drawMergePulseWave(ctx, center) {
+        if (this.mergePulseWaveTimer <= 0) {
+            return;
+        }
+
+        const progress = 1 - (this.mergePulseWaveTimer / this.mergePulseWaveDuration);
+        const eased = easeOutCubic(progress);
+        const intensity = 1 - progress;
+        const baseRadius = Math.max(this.w, this.h) * 0.65;
+        const radius = baseRadius * (1 + eased * 1.1);
+        const alpha = 0.4 * intensity;
+        const lineWidth = 4 * (0.7 + 0.3 * intensity);
+        const yOffset = this.h * 0.05;
+        const color = this.color === 'red'
+            ? `rgba(255, 205, 160, ${alpha})`
+            : `rgba(160, 210, 255, ${alpha})`;
+
+        ctx.save();
+        ctx.globalCompositeOperation = 'lighter';
+        ctx.lineWidth = lineWidth;
+        ctx.strokeStyle = color;
+        ctx.beginPath();
+        ctx.arc(center.x, center.y + yOffset, radius, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.globalAlpha = Math.min(0.55, alpha + 0.15);
+        ctx.fillStyle = `rgba(255,255,255,${0.35 * intensity})`;
+        ctx.beginPath();
+        ctx.arc(center.x, center.y + yOffset, radius * 0.35, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+    }
+
     drawLevelIndicator(ctx) {
         ctx.fillStyle = 'black';
         ctx.font = '10px sans-serif';
         ctx.fillText(String(this.level), this.x + this.w + 2, this.y + 10);
     }
 
+}
+
+function easeOutCubic(t) {
+    const clamped = Math.max(0, Math.min(1, t));
+    const inverted = 1 - clamped;
+    return 1 - inverted * inverted * inverted;
 }

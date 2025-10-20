@@ -43,6 +43,12 @@ const SOUND_OPTIONS = {
         volume: 0.4,
         preload: true
     },
+    merge: {
+        src: ['assets/explosion.wav'],
+        volume: 0.28,
+        rate: 1.6,
+        preload: true
+    },
     colorSwitch: {
         src: ['assets/color_switch.mp3'],
         volume: 0.35,
