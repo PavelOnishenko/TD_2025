@@ -1,0 +1,23 @@
+001 | TODO | Integrate CrazyGames ads
+Add ad requests using window.CrazyGames.SDK.ad.requestAd. Show an ad after wave 5 and on restart. Pause the game during ads. Avoid multiple ads within 2 minutes and handle SDK absence safely.
+
+002 | TODO | Add Pause system
+Add pause button and Esc toggle. Use a flag in Game.update() to freeze gameplay. Include overlay with Resume option. Resume automatically after ads if paused by them.
+
+003 | TODO | Add Mute button and auto-mute, and ALSO separate button for music
+Add mute/unmute toggle in HUD using Howler.mute(). Save mute setting in data storage. Stop music when window loses focus, resume if not muted when focus returns.
+
+004 | TODO | Adjust difficulty and pacing
+Tune waves to last 3–5 minutes total. Start easy, scale HP and spawn rate each wave. Balance energy rewards to allow upgrades without stalling.
+
+005 | TODO | Prevent freezes after ads or restart
+Ensure game loop always resumes after ads or restart. Centralize RAF scheduling and reset timers correctly.
+
+006 | TODO | Add simple score system
+Give score for kills and cleared waves, reduce on base hit. Show score in HUD and on end screen. Save best score persistently.
+
+007 | TODO | Improve color switch feedback
+When tower color changes, show floating "-4" energy text. If not enough energy, pulse tower red and play error sound.
+
+008 | TODO | Improve asset loading safety
+Wrap image and sound loading in try/catch. Use fallback transparent image if loading fails. Log a single warning per missing asset.
