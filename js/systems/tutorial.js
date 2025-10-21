@@ -1,3 +1,9 @@
+import {
+    clearTutorialProgress,
+    isTutorialMarkedComplete,
+    markTutorialComplete,
+} from './tutorialProgress.js';
+
 const DEFAULT_TUTORIAL_STEPS = [
     {
         id: 'build-tower',
@@ -32,8 +38,27 @@ export function createTutorial(options = {}) {
         steps = DEFAULT_TUTORIAL_STEPS,
         renderTip,
         hideTip,
+        onComplete,
+        initiallyComplete = false,
     } = options;
     const state = createState(steps);
+    let persistentComplete = Boolean(initiallyComplete);
+
+    if (persistentComplete) {
+        state.steps.forEach(step => {
+            step.done = true;
+        });
+        state.currentIndex = state.steps.length;
+    }
+
+    function finalizeCompletion() {
+        const complete = state.steps.every(entry => entry.done);
+        if (complete) {
+            persistentComplete = true;
+            onComplete?.(state.steps);
+        }
+        return complete;
+    }
 
     function getCurrentStep() {
         return state.steps[state.currentIndex] ?? null;
@@ -60,23 +85,41 @@ export function createTutorial(options = {}) {
         if (state.steps[state.currentIndex]?.id === id) {
             advanceIndex(state);
         }
-        updateDisplay();
+        const finished = finalizeCompletion();
+        if (finished) {
+            hideTip?.();
+        } else {
+            updateDisplay();
+        }
         return true;
     }
 
     return {
         start() {
+            if (persistentComplete) {
+                state.started = false;
+                hideTip?.();
+                return;
+            }
             state.started = true;
             advanceIndex(state);
             updateDisplay();
         },
 
-        reset() {
+        reset(options = {}) {
+            const force = Boolean(options.force);
             state.started = false;
-            state.steps.forEach(step => {
-                step.done = false;
-            });
-            state.currentIndex = 0;
+            if (force || !persistentComplete) {
+                state.steps.forEach(step => {
+                    step.done = false;
+                });
+                state.currentIndex = 0;
+                if (persistentComplete && force) {
+                    persistentComplete = false;
+                }
+            } else {
+                state.currentIndex = state.steps.length;
+            }
             hideTip?.();
         },
 
@@ -114,6 +157,15 @@ export function createTutorial(options = {}) {
 
         getCurrentStep,
 
+        clearProgress() {
+            persistentComplete = false;
+            state.steps.forEach(step => {
+                step.done = false;
+            });
+            state.currentIndex = 0;
+            hideTip?.();
+        },
+
         _state: state,
     };
 }
@@ -147,15 +199,23 @@ export function attachTutorial(game, options = {}) {
         ?? (typeof document !== 'undefined' ? document : null);
     const tipElement = options.tipElement ?? doc?.getElementById?.('tutorialTip') ?? null;
     const renderer = createDomRenderer(tipElement);
+    const alreadyComplete = isTutorialMarkedComplete();
     const tutorial = createTutorial({
         steps: options.steps ?? DEFAULT_TUTORIAL_STEPS,
         renderTip: renderer.show,
         hideTip: renderer.hide,
+        onComplete: markTutorialComplete,
+        initiallyComplete: alreadyComplete,
     });
     tutorial.reset();
     tutorial.syncWithGame(game);
     game.tutorial = tutorial;
     game.tutorialTipEl = tipElement;
+    game.resetTutorialProgress = () => {
+        clearTutorialProgress();
+        tutorial.clearProgress();
+        tutorial.reset({ force: true });
+    };
     return tutorial;
 }
 

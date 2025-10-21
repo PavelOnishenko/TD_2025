@@ -41,6 +41,7 @@ export function bindUI(game) {
     attachTutorial(game);
     bindButtons(game);
     bindCanvasClick(game);
+    bindDeveloperReset(game);
     updateHUD(game);
     setupStartMenu(game);
 }
@@ -62,6 +63,7 @@ function bindHUD(game) {
     game.endMessageEl = document.getElementById('endMessage');
     game.endDetailEl = document.getElementById('endDetail');
     game.endRestartBtn = document.getElementById('endRestart');
+    game.tutorialResetHint = document.getElementById('tutorialResetHint');
 }
 
 function bindButtons(game) {
@@ -109,6 +111,30 @@ function bindButtons(game) {
     if (game.endRestartBtn) {
         game.endRestartBtn.addEventListener('click', handleRestart);
     }
+}
+
+function bindDeveloperReset(game) {
+    const hint = game.tutorialResetHint;
+    if (!hint) {
+        return;
+    }
+
+    const giveFeedback = className => {
+        hint.classList.add(className);
+        setTimeout(() => hint.classList.remove(className), 400);
+    };
+
+    hint.addEventListener('click', event => {
+        if (!(event.altKey && event.shiftKey)) {
+            giveFeedback('tutorial-reset-hint--nudge');
+            return;
+        }
+        game.resetTutorialProgress?.();
+        if (game.hasStarted) {
+            game.tutorial?.start();
+        }
+        giveFeedback('tutorial-reset-hint--activated');
+    });
 }
 
 function setupStartMenu(game) {

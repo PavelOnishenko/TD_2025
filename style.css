@@ -184,6 +184,51 @@ body {
     display: none;
 }
 
+.tutorial-reset-hint {
+    position: absolute;
+    bottom: calc(22px * var(--scale));
+    right: calc(26px * var(--scale));
+    width: calc(14px * var(--scale));
+    height: calc(14px * var(--scale));
+    border-radius: 50%;
+    border: none;
+    padding: 0;
+    background: rgba(92, 176, 255, 0.12);
+    color: rgba(156, 210, 255, 0.85);
+    font-size: calc(12px * var(--scale));
+    line-height: 1;
+    cursor: pointer;
+    pointer-events: auto;
+    opacity: 0.6;
+    box-shadow: 0 0 calc(8px * var(--scale)) rgba(92, 176, 255, 0.35);
+    transition: transform 0.3s ease, opacity 0.3s ease, box-shadow 0.3s ease;
+}
+
+.tutorial-reset-hint:hover {
+    opacity: 0.85;
+}
+
+.tutorial-reset-hint--nudge {
+    animation: tutorialResetHintNudge 0.4s ease;
+}
+
+.tutorial-reset-hint--activated {
+    opacity: 1;
+    box-shadow: 0 0 calc(18px * var(--scale)) rgba(94, 255, 206, 0.75);
+}
+
+@keyframes tutorialResetHintNudge {
+    0% {
+        transform: scale(1);
+    }
+    40% {
+        transform: scale(1.25);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
 .life-heart {
     width: calc(24px * var(--scale));
     height: calc(24px * var(--scale));
