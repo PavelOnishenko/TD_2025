@@ -5,6 +5,7 @@ import { waveActions } from './gameWaves.js';
 import { callCrazyGamesEvent } from '../systems/crazyGamesIntegration.js';
 import { createGameAudio } from '../systems/audio.js';
 import { createExplosion, updateExplosions, updateColorSwitchBursts } from '../systems/effects.js';
+import { saveBestScore } from '../systems/dataStore.js';
 import GameGrid from './gameGrid.js';
 import { createPlatforms } from './platforms.js';
 import projectileManagement from './game/projectileManagement.js';
@@ -81,6 +82,35 @@ class Game {
             return;
         }
         this.assets = assets;
+    }
+
+    getCurrentScore() {
+        const current = Number.isFinite(this.score) ? this.score : 0;
+        if (current < 0) {
+            this.score = 0;
+            return 0;
+        }
+        return current;
+    }
+
+    addScore(amount) {
+        return this.changeScore(amount);
+    }
+
+    changeScore(amount) {
+        const delta = Number.isFinite(amount) ? amount : 0;
+        if (!Number.isFinite(delta) || delta === 0) {
+            return this.getCurrentScore();
+        }
+        const current = this.getCurrentScore();
+        const next = Math.max(0, Math.floor(current + delta));
+        this.score = next;
+        const best = Number.isFinite(this.bestScore) ? this.bestScore : 0;
+        if (next > best) {
+            this.bestScore = next;
+            saveBestScore(next);
+        }
+        return next;
     }
 
     get assets() {

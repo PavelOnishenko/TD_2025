@@ -1,6 +1,8 @@
 import Enemy, { TankEnemy, SwarmEnemy } from '../entities/Enemy.js';
 import { updateHUD, endGame } from '../systems/ui.js';
 
+const SCORE_BASE_HIT_PENALTY = 25;
+
 export const enemyActions = {
     getEnemyColor() {
         const denom = this.enemiesPerWave - 1;
@@ -97,6 +99,9 @@ export const enemyActions = {
             if (e.x + e.w >= this.base.x) {
                 this.enemies.splice(i, 1);
                 this.lives--;
+                if (typeof this.addScore === 'function') {
+                    this.addScore(-SCORE_BASE_HIT_PENALTY);
+                }
                 if (typeof this.triggerBaseHitEffects === 'function') {
                     this.triggerBaseHitEffects();
                 }

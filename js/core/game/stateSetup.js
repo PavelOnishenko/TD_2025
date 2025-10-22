@@ -1,4 +1,5 @@
 import { updateHUD } from '../../systems/ui.js';
+import { loadBestScore } from '../../systems/dataStore.js';
 
 function configureFirstWave(game) {
     const cfg = game.waveConfigs[0];
@@ -14,6 +15,7 @@ function resetResources(game) {
     game.waveInProgress = false;
     game.gameOver = false;
     game.elapsedTime = 0;
+    game.score = 0;
 }
 
 function resetCollections(game) {
@@ -109,6 +111,8 @@ const stateSetup = {
         this.shootingInterval = 500;
         this.colorProbStart = 0.5;
         this.colorProbEnd = 0.5;
+        this.score = 0;
+        this.bestScore = loadBestScore();
     },
 
     resetState() {
