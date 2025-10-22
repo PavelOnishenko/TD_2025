@@ -341,6 +341,16 @@ canvas {
     min-width: calc(140px * var(--scale));
 }
 
+#pause {
+    position: absolute;
+    bottom: calc(30px * var(--scale));
+    right: calc(32px * var(--scale));
+    background: rgba(40, 160, 255, 0.15);
+    color: #d6e6ff;
+    border-color: rgba(102, 188, 255, 0.65);
+    min-width: calc(140px * var(--scale));
+}
+
 #crazyGamesUser {
     display: flex;
     align-items: center;
@@ -432,6 +442,41 @@ canvas {
     box-shadow: 0 12px 24px rgba(0, 0, 0, 0.35);
     text-align: center;
     max-width: 320px;
+}
+
+.pause-menu {
+    background: #0f172a;
+    color: #e2e8f0;
+    padding: 24px 32px;
+    border-radius: 18px;
+    box-shadow: 0 12px 24px rgba(15, 23, 42, 0.45);
+    text-align: center;
+    max-width: min(360px, 80vw);
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    border: 1px solid rgba(94, 234, 212, 0.35);
+}
+
+#pauseMessage {
+    margin: 0;
+    font-size: 0.95em;
+    line-height: 1.5;
+    color: #cbd5f5;
+}
+
+#resumeGame {
+    align-self: center;
+    min-width: 180px;
+    background: rgba(59, 130, 246, 0.4);
+    border-color: rgba(96, 165, 250, 0.85);
+}
+
+#resumeGame:disabled {
+    background: rgba(71, 85, 105, 0.65);
+    border-color: rgba(148, 163, 184, 0.45);
+    color: rgba(226, 232, 240, 0.6);
+    cursor: wait;
 }
 
 .start-menu h1 {

@@ -64,6 +64,9 @@ class Game {
         this.persistenceEnabled = true;
         this.mergeHintPairs = [];
         this.screenShake = createScreenShakeState();
+        this.isPaused = false;
+        this.pauseReason = null;
+        this.pauseListeners = new Set();
     }
 
     setupEnvironment() {
@@ -126,12 +129,98 @@ class Game {
         }
     }
 
+    addPauseListener(listener) {
+        if (typeof listener !== 'function') {
+            return () => {};
+        }
+        this.pauseListeners.add(listener);
+        return () => {
+            this.pauseListeners.delete(listener);
+        };
+    }
+
+    emitPauseState(paused, reason) {
+        if (!this.pauseListeners || this.pauseListeners.size === 0) {
+            return;
+        }
+        for (const listener of this.pauseListeners) {
+            try {
+                listener(paused, reason);
+            } catch (error) {
+                console.warn('Pause listener failed', error);
+            }
+        }
+    }
+
+    pause(reason = 'manual') {
+        if (this.gameOver) {
+            return false;
+        }
+        const wasPaused = this.isPaused;
+        const previousReason = this.pauseReason;
+        this.isPaused = true;
+        this.pauseReason = reason;
+        if (typeof this.audio?.stopMusic === 'function') {
+            this.audio.stopMusic();
+        }
+        if (!wasPaused || previousReason !== reason) {
+            this.emitPauseState(true, reason);
+        }
+        return !wasPaused || previousReason !== reason;
+    }
+
+    resume(options = {}) {
+        const { expectedReason = null, force = false, reason = null } = options;
+        const wasPaused = this.isPaused;
+        const previousReason = this.pauseReason;
+        if (!wasPaused) {
+            if (force) {
+                this.pauseReason = null;
+                this.emitPauseState(false, reason ?? expectedReason ?? previousReason ?? 'manual');
+            }
+            return false;
+        }
+        if (!force && expectedReason && previousReason !== expectedReason) {
+            return false;
+        }
+        this.isPaused = false;
+        this.pauseReason = null;
+        this.emitPauseState(false, reason ?? expectedReason ?? previousReason ?? 'manual');
+        if (typeof this.audio?.playMusic === 'function' && this.hasStarted && !this.gameOver) {
+            this.audio.playMusic();
+        }
+        return true;
+    }
+
+    togglePause() {
+        if (this.isPaused) {
+            if (this.pauseReason === 'ad') {
+                return false;
+            }
+            return this.resume();
+        }
+        return this.pause();
+    }
+
+    pauseForAd() {
+        return this.pause('ad');
+    }
+
+    resumeAfterAd() {
+        return this.resume({ expectedReason: 'ad', reason: 'ad' });
+    }
+
     getTowerAt(cell) {
         return cell?.tower ?? null;
     }
 
     update(timestamp) {
         if (this.gameOver) {
+            return;
+        }
+        if (this.isPaused) {
+            this.lastTime = timestamp;
+            requestAnimationFrame(this.update);
             return;
         }
         const dt = this.calcDelta(timestamp);
@@ -328,6 +417,7 @@ class Game {
     }
 
     restart() {
+        this.resume({ force: true, reason: 'system' });
         const wasGameOver = this.gameOver;
         this.resetState();
         this.audio.playMusic();
@@ -340,6 +430,7 @@ class Game {
 
     run() {
         this.hasStarted = true;
+        this.resume({ force: true, reason: 'system' });
         callCrazyGamesEvent('gameplayStart');
         this.audio.playMusic();
         this.elapsedTime = 0;

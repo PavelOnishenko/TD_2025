@@ -43,11 +43,15 @@ export function attachDomStubs(game) {
     game.statusEl = { textContent: '', style: {} };
     game.nextWaveBtn = { disabled: false };
     game.mergeBtn = { disabled: false };
+    game.pauseBtn = { disabled: false, textContent: '', setAttribute: () => {} };
     game.cooldownEl = { textContent: '' };
     game.endOverlay = { classList: createClassList() };
     game.endMenu = { classList: createClassList() };
     game.endMessageEl = { textContent: '' };
     game.endDetailEl = { textContent: '' };
+    game.pauseOverlay = { classList: createClassList() };
+    game.pauseMessageEl = { textContent: '' };
+    game.resumeBtn = { disabled: false, textContent: '' };
     game.endScoreEl = { textContent: '' };
     game.endBestScoreEl = { textContent: '' };
 }
