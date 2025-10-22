@@ -34,6 +34,9 @@ export function makeFakeCanvas({ width = 450, height = 800 } = {}) {
 export function attachDomStubs(game) {
     game.livesEl = { textContent: '' };
     game.energyEl = { textContent: '' };
+    game.scorePanelEl = { setAttribute: () => {} };
+    game.scoreEl = { textContent: '', setAttribute: () => {} };
+    game.bestScoreEl = { textContent: '', setAttribute: () => {} };
     game.waveEl = { textContent: '' };
     game.wavePhaseEl = { textContent: '', classList: createClassList() };
     game.wavePanelEl = { dataset: {}, classList: createClassList() };
@@ -49,6 +52,8 @@ export function attachDomStubs(game) {
     game.pauseOverlay = { classList: createClassList() };
     game.pauseMessageEl = { textContent: '' };
     game.resumeBtn = { disabled: false, textContent: '' };
+    game.endScoreEl = { textContent: '' };
+    game.endBestScoreEl = { textContent: '' };
 }
 
 export function createGame({ attachDom = false } = {}) {

@@ -1,5 +1,7 @@
 import { updateHUD, endGame, updateWavePhaseIndicator } from '../systems/ui.js';
 
+const SCORE_WAVE_CLEAR = 150;
+
 export const waveActions = {
     startWave() {
         this.setupWaveStuff();
@@ -134,6 +136,9 @@ export const waveActions = {
                 endGame(this, 'WIN');
             } else {
                 this.nextWaveBtn.disabled = false;
+            }
+            if (typeof this.addScore === 'function') {
+                this.addScore(SCORE_WAVE_CLEAR);
             }
             this.wave += 1;
             this.energy += 3;

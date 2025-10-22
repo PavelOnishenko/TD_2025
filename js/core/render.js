@@ -380,6 +380,49 @@ export function drawEntities(game) {
     });
 
     drawExplosions(ctx, game.explosions ?? []);
+    drawEnergyPopups(ctx, game.energyPopups ?? []);
+}
+
+function drawEnergyPopups(ctx, popups) {
+    if (!Array.isArray(popups) || popups.length === 0) {
+        return;
+    }
+
+    popups.forEach(popup => {
+        const duration = popup.duration && popup.duration > 0 ? popup.duration : 0.8;
+        const progress = clamp01((popup.elapsed ?? 0) / duration);
+        if (progress >= 1) {
+            return;
+        }
+
+        const eased = easeOutCubic(progress);
+        const x = (popup.startX ?? 0) + (popup.driftX ?? 0) * eased;
+        const y = (popup.startY ?? 0) + (popup.driftY ?? -60) * eased;
+        const alpha = clamp01(1 - progress);
+        const font = typeof popup.font === 'string' ? popup.font : '600 26px "Baloo 2", sans-serif';
+        const fillStyle = popup.color ?? '#facc15';
+        const strokeStyle = typeof popup.stroke === 'string' ? popup.stroke : null;
+        const text = typeof popup.text === 'string' ? popup.text : `${popup.text ?? ''}`;
+
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.font = font;
+
+        if (strokeStyle && typeof ctx.strokeText === 'function') {
+            ctx.lineWidth = 4;
+            ctx.strokeStyle = strokeStyle;
+            ctx.strokeText(text, x, y);
+        }
+
+        if (typeof ctx.fillText === 'function') {
+            ctx.fillStyle = fillStyle;
+            ctx.fillText(text, x, y);
+        }
+
+        ctx.restore();
+    });
 }
 
 function computeSortKey(entity) {

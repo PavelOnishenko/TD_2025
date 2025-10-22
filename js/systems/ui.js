@@ -50,6 +50,9 @@ export function bindUI(game) {
 function bindHUD(game) {
     game.livesEl = document.getElementById('lives');
     game.energyEl = document.getElementById('energy');
+    game.scorePanelEl = document.getElementById('scorePanel');
+    game.scoreEl = document.getElementById('score');
+    game.bestScoreEl = document.getElementById('bestScore');
     game.wavePanelEl = document.getElementById('wavePanel');
     game.waveEl = document.getElementById('wave');
     game.wavePhaseEl = document.getElementById('wavePhase');
@@ -64,6 +67,8 @@ function bindHUD(game) {
     game.endMenu = document.getElementById('endMenu');
     game.endMessageEl = document.getElementById('endMessage');
     game.endDetailEl = document.getElementById('endDetail');
+    game.endScoreEl = document.getElementById('endScore');
+    game.endBestScoreEl = document.getElementById('endBestScore');
     game.endRestartBtn = document.getElementById('endRestart');
     game.pauseOverlay = document.getElementById('pauseOverlay');
     game.pauseMessageEl = document.getElementById('pauseMessage');
@@ -190,6 +195,17 @@ function showEndScreen(game, outcome) {
             ? 'All waves cleared. Great job!'
             : 'The base was overrun. Try again!';
     }
+    updateEndScreenScore(game);
+}
+
+function updateEndScreenScore(game) {
+    const { current, best } = resolveScorePair(game);
+    if (game.endScoreEl && typeof game.endScoreEl.textContent !== 'undefined') {
+        game.endScoreEl.textContent = `Score: ${current}`;
+    }
+    if (game.endBestScoreEl && typeof game.endBestScoreEl.textContent !== 'undefined') {
+        game.endBestScoreEl.textContent = `Best: ${best}`;
+    }
 }
 
 function bindCanvasClick(game) {
@@ -241,12 +257,43 @@ function tryShoot(game, cell) {
 export function updateHUD(game) {
     renderLives(game);
     renderEnergy(game);
+    renderScore(game);
     if (game.waveEl) {
         game.waveEl.textContent = `Wave: ${game.wave}/${game.maxWaves}`;
     }
     updateWavePhaseIndicator(game);
     if (typeof game.persistState === 'function') {
         game.persistState();
+    }
+}
+
+function resolveScorePair(game) {
+    const current = Number.isFinite(game.score) ? Math.max(0, Math.floor(game.score)) : 0;
+    const bestCandidate = Number.isFinite(game.bestScore) ? Math.max(0, Math.floor(game.bestScore)) : 0;
+    const best = Math.max(current, bestCandidate);
+    return { current, best };
+}
+
+function renderScore(game) {
+    const { current, best } = resolveScorePair(game);
+    if (game.scoreEl) {
+        if (typeof game.scoreEl.textContent !== 'undefined') {
+            game.scoreEl.textContent = `Score: ${current}`;
+        }
+        if (typeof game.scoreEl.setAttribute === 'function') {
+            game.scoreEl.setAttribute('aria-label', `Score: ${current}`);
+        }
+    }
+    if (game.bestScoreEl) {
+        if (typeof game.bestScoreEl.textContent !== 'undefined') {
+            game.bestScoreEl.textContent = `Best: ${best}`;
+        }
+        if (typeof game.bestScoreEl.setAttribute === 'function') {
+            game.bestScoreEl.setAttribute('aria-label', `Best score: ${best}`);
+        }
+    }
+    if (game.scorePanelEl && typeof game.scorePanelEl.setAttribute === 'function') {
+        game.scorePanelEl.setAttribute('aria-live', 'polite');
     }
 }
 
