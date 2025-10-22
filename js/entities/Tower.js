@@ -29,6 +29,8 @@ export default class Tower {
         this.mergePulseTimer = 0;
         this.mergePulseWaveDuration = 0.6;
         this.mergePulseWaveTimer = 0;
+        this.errorPulseDuration = 0.45;
+        this.errorPulseTimer = 0;
         this.updateStats();
     }
 
@@ -61,6 +63,9 @@ export default class Tower {
         if (this.mergePulseWaveTimer > 0) {
             this.mergePulseWaveTimer = Math.max(0, this.mergePulseWaveTimer - dt);
         }
+        if (this.errorPulseTimer > 0) {
+            this.errorPulseTimer = Math.max(0, this.errorPulseTimer - dt);
+        }
     }
 
     triggerFlash() {
@@ -76,11 +81,23 @@ export default class Tower {
         this.mergePulseWaveTimer = this.mergePulseWaveDuration;
     }
 
+    triggerErrorPulse() {
+        this.errorPulseTimer = this.errorPulseDuration;
+    }
+
     getMergePulseStrength() {
         if (this.mergePulseDuration <= 0) {
             return 0;
         }
         const normalized = this.mergePulseTimer / this.mergePulseDuration;
+        return Math.max(0, Math.min(1, normalized));
+    }
+
+    getErrorPulseStrength() {
+        if (this.errorPulseDuration <= 0) {
+            return 0;
+        }
+        const normalized = this.errorPulseTimer / this.errorPulseDuration;
         return Math.max(0, Math.min(1, normalized));
     }
 
@@ -116,6 +133,7 @@ export default class Tower {
         this.drawRange(ctx, c);
         ctx.fillStyle = this.color;
         this.drawBody(ctx, c, assets);
+        this.drawErrorPulse(ctx, c);
         this.drawMergePulseWave(ctx, c);
         this.drawMergeHint(ctx, c);
         drawTowerPlacementFlash(ctx, this);
@@ -215,6 +233,38 @@ export default class Tower {
         ctx.beginPath();
         ctx.arc(center.x, center.y + yOffset, radius * 0.35, 0, Math.PI * 2);
         ctx.fill();
+        ctx.restore();
+    }
+
+    drawErrorPulse(ctx, center) {
+        if (this.errorPulseTimer <= 0) {
+            return;
+        }
+
+        const strength = this.getErrorPulseStrength();
+        if (strength <= 0) {
+            return;
+        }
+
+        const eased = easeOutCubic(strength);
+        const scale = 1 + 0.08 * eased;
+        const baseAlpha = 0.42 * eased;
+
+        ctx.save();
+        ctx.translate(center.x, center.y);
+        ctx.scale(scale, scale);
+        ctx.globalAlpha = baseAlpha;
+        ctx.fillStyle = 'rgba(255, 64, 64, 0.95)';
+        ctx.fillRect(-this.w / 2, -this.h / 2, this.w, this.h);
+        ctx.restore();
+
+        ctx.save();
+        ctx.translate(center.x, center.y);
+        ctx.scale(scale, scale);
+        ctx.globalAlpha = Math.min(1, baseAlpha * 1.6);
+        ctx.strokeStyle = 'rgba(255, 160, 160, 0.95)';
+        ctx.lineWidth = 5;
+        ctx.strokeRect(-this.w / 2 + 3, -this.h / 2 + 3, this.w - 6, this.h - 6);
         ctx.restore();
     }
 
