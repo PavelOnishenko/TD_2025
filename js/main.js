@@ -5,9 +5,10 @@ import {
     initializeCrazyGamesIntegration,
 } from './systems/crazyGamesIntegration.js';
 import Game from './core/Game.js';
-import { bindUI } from './systems/ui.js';
+import { bindUI, updateAudioControls } from './systems/ui.js';
 import { loadAssets } from './systems/assets.js';
 import { initializeAudio } from './systems/audio.js';
+import { loadAudioSettings } from './systems/dataStore.js';
 const LOGICAL_W = 540;
 const LOGICAL_H = 960;
 export function getViewportMetrics(windowRef = window) {
@@ -162,6 +163,8 @@ async function startGame(context) {
     const game = new Game(context.canvasElement, { width: LOGICAL_W, height: LOGICAL_H, assets });
     context.gameInstance = game;
     bindUI(game);
+    applySavedAudioSettings(game);
+    attachAudioFocusHandlers(game);
     resizeCanvas(context);
     const resizeHandler = () => resizeCanvas(context);
     window.addEventListener('resize', resizeHandler);
@@ -169,6 +172,42 @@ async function startGame(context) {
         callCrazyGamesEvent('sdkGameLoadingStop');
     }
     return { game, resizeHandler };
+}
+
+function applySavedAudioSettings(game) {
+    const settings = loadAudioSettings();
+    const muted = typeof settings?.muted === 'boolean' ? settings.muted : false;
+    const musicEnabled = typeof settings?.musicEnabled === 'boolean' ? settings.musicEnabled : true;
+    game.setAudioMuted(muted);
+    game.setMusicEnabled(musicEnabled);
+    updateAudioControls(game);
+}
+
+function attachAudioFocusHandlers(game) {
+    if (typeof window === 'undefined') {
+        return;
+    }
+    window.addEventListener('blur', () => handleWindowBlur(game));
+    window.addEventListener('focus', () => handleWindowFocus(game));
+}
+
+function handleWindowBlur(game) {
+    if (!game) {
+        return;
+    }
+    const resumeLater = Boolean(game.musicEnabled && !game.audioMuted && game.shouldPlayMusic());
+    game.musicPausedByFocus = resumeLater;
+    if (typeof game.audio?.stopMusic === 'function') {
+        game.audio.stopMusic();
+    }
+}
+
+function handleWindowFocus(game) {
+    if (!game?.musicPausedByFocus) {
+        return;
+    }
+    game.musicPausedByFocus = false;
+    game.playMusicIfAllowed();
 }
 async function bootstrapGame() {
     initializeAudio();

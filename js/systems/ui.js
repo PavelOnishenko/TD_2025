@@ -1,5 +1,6 @@
 import Tower from '../entities/Tower.js';
 import { callCrazyGamesEvent } from './crazyGamesIntegration.js';
+import { saveAudioSettings } from './dataStore.js';
 import { attachTutorial } from './tutorial.js';
 
 const HEART_FILLED_SRC = 'assets/heart_filled.png';
@@ -40,10 +41,12 @@ export function bindUI(game) {
     bindHUD(game);
     attachTutorial(game);
     bindButtons(game);
+    bindAudioButtons(game);
     bindCanvasClick(game);
     bindDeveloperReset(game);
     updateHUD(game);
     setupStartMenu(game);
+    updateAudioControls(game);
 }
 
 function bindHUD(game) {
@@ -55,6 +58,8 @@ function bindHUD(game) {
     game.statusEl = document.getElementById('status');
     game.nextWaveBtn = document.getElementById('nextWave');
     game.restartBtn = document.getElementById('restart');
+    game.muteBtn = document.getElementById('muteToggle');
+    game.musicBtn = document.getElementById('musicToggle');
     game.mergeBtn = document.getElementById('mergeTowers');
     game.startOverlay = document.getElementById('startOverlay');
     game.startBtn = document.getElementById('startGame');
@@ -111,6 +116,53 @@ function bindButtons(game) {
     if (game.endRestartBtn) {
         game.endRestartBtn.addEventListener('click', handleRestart);
     }
+}
+
+function bindAudioButtons(game) {
+    if (game.muteBtn) {
+        game.muteBtn.addEventListener('click', () => {
+            game.setAudioMuted(!game.audioMuted);
+            persistAudioSettings(game);
+            updateAudioControls(game);
+        });
+    }
+    if (game.musicBtn) {
+        game.musicBtn.addEventListener('click', () => {
+            game.setMusicEnabled(!game.musicEnabled);
+            persistAudioSettings(game);
+            updateAudioControls(game);
+        });
+    }
+}
+
+function persistAudioSettings(game) {
+    saveAudioSettings({
+        muted: Boolean(game.audioMuted),
+        musicEnabled: Boolean(game.musicEnabled),
+    });
+}
+
+export function updateAudioControls(game) {
+    updateMuteButton(game);
+    updateMusicButton(game);
+}
+
+function updateMuteButton(game) {
+    if (!game.muteBtn) {
+        return;
+    }
+    const muted = Boolean(game.audioMuted);
+    game.muteBtn.textContent = muted ? 'Unmute' : 'Mute';
+    game.muteBtn.setAttribute('aria-pressed', muted ? 'true' : 'false');
+}
+
+function updateMusicButton(game) {
+    if (!game.musicBtn) {
+        return;
+    }
+    const enabled = Boolean(game.musicEnabled);
+    game.musicBtn.textContent = enabled ? 'Music On' : 'Music Off';
+    game.musicBtn.setAttribute('aria-pressed', enabled ? 'true' : 'false');
 }
 
 function bindDeveloperReset(game) {
