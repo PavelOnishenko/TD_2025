@@ -8,6 +8,8 @@ import {
     loadGameState,
     saveAudioSettings,
     saveGameState,
+    loadBestScore,
+    saveBestScore
 } from '../js/systems/dataStore.js';
 
 function createDataClient(overrides = {}) {
@@ -36,11 +38,27 @@ const originalConsoleError = console.error;
 
 beforeEach(() => {
     delete globalThis.CrazyGames;
+    delete globalThis.localStorage;
 });
 
 afterEach(() => {
     console.error = originalConsoleError;
+    delete globalThis.localStorage;
 });
+
+function createLocalStorage() {
+    const store = new Map();
+    return {
+        store,
+        getItem: key => (store.has(key) ? store.get(key) : null),
+        setItem: (key, value) => {
+            store.set(key, value);
+        },
+        removeItem: key => {
+            store.delete(key);
+        },
+    };
+}
 
 test('loadGameState returns null when CrazyGames data client is missing', () => {
     assert.equal(loadGameState(), null);
@@ -185,5 +203,37 @@ test('clearAudioSettings logs client failures', () => {
     assert.equal(result, false);
     assert.equal(calls.length, 1);
     assert.equal(calls[0][0], 'Failed to clear CrazyGames audio settings:');
+    assert.ok(calls[0][1] instanceof Error);
+});
+
+test('loadBestScore returns 0 when no storage is available', () => {
+    assert.equal(loadBestScore(), 0);
+});
+
+test('saveBestScore writes to CrazyGames storage when available', () => {
+    const client = createDataClient();
+    globalThis.CrazyGames = { SDK: { data: client } };
+    const result = saveBestScore(327);
+    assert.equal(result, true);
+    assert.equal(client.store.get('towerDefenseBestScore'), '327');
+    assert.equal(loadBestScore(), 327);
+});
+
+test('best score falls back to localStorage when CrazyGames is missing', () => {
+    const localStorage = createLocalStorage();
+    globalThis.localStorage = localStorage;
+    assert.equal(saveBestScore(1285), true);
+    assert.equal(localStorage.store.get('towerDefenseBestScore'), '1285');
+    assert.equal(loadBestScore(), 1285);
+});
+
+test('loadBestScore handles invalid stored values gracefully', () => {
+    const localStorage = createLocalStorage();
+    localStorage.setItem('towerDefenseBestScore', 'not-a-number');
+    globalThis.localStorage = localStorage;
+    const calls = trackConsoleErrors();
+    assert.equal(loadBestScore(), 0);
+    assert.equal(calls.length, 1);
+    assert.equal(calls[0][0], 'Failed to load best score:');
     assert.ok(calls[0][1] instanceof Error);
 });

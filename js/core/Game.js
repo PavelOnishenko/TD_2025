@@ -5,6 +5,7 @@ import { waveActions } from './gameWaves.js';
 import { callCrazyGamesEvent } from '../systems/crazyGamesIntegration.js';
 import { createGameAudio, getHowler } from '../systems/audio.js';
 import { createExplosion, updateExplosions, updateColorSwitchBursts } from '../systems/effects.js';
+import { saveBestScore } from '../systems/dataStore.js';
 import GameGrid from './gameGrid.js';
 import { createPlatforms } from './platforms.js';
 import projectileManagement from './game/projectileManagement.js';
@@ -51,6 +52,7 @@ class Game {
         this.explosions = [];
         this.colorSwitchBursts = [];
         this.mergeAnimations = [];
+        this.energyPopups = [];
         this.projectileSpeed = 800;
         this.projectileRadius = 6;
         this.maxProjectileRadius = this.projectileRadius;
@@ -65,6 +67,9 @@ class Game {
         this.audioMuted = false;
         this.musicEnabled = true;
         this.musicPausedByFocus = false;
+        this.isPaused = false;
+        this.pauseReason = null;
+        this.pauseListeners = new Set();
     }
 
     setupEnvironment() {
@@ -86,6 +91,35 @@ class Game {
         this.assets = assets;
     }
 
+    getCurrentScore() {
+        const current = Number.isFinite(this.score) ? this.score : 0;
+        if (current < 0) {
+            this.score = 0;
+            return 0;
+        }
+        return current;
+    }
+
+    addScore(amount) {
+        return this.changeScore(amount);
+    }
+
+    changeScore(amount) {
+        const delta = Number.isFinite(amount) ? amount : 0;
+        if (!Number.isFinite(delta) || delta === 0) {
+            return this.getCurrentScore();
+        }
+        const current = this.getCurrentScore();
+        const next = Math.max(0, Math.floor(current + delta));
+        this.score = next;
+        const best = Number.isFinite(this.bestScore) ? this.bestScore : 0;
+        if (next > best) {
+            this.bestScore = next;
+            saveBestScore(next);
+        }
+        return next;
+    }
+
     get assets() {
         return this._assets;
     }
@@ -97,12 +131,98 @@ class Game {
         this.applyAudioPreferences();
     }
 
+    addPauseListener(listener) {
+        if (typeof listener !== 'function') {
+            return () => {};
+        }
+        this.pauseListeners.add(listener);
+        return () => {
+            this.pauseListeners.delete(listener);
+        };
+    }
+
+    emitPauseState(paused, reason) {
+        if (!this.pauseListeners || this.pauseListeners.size === 0) {
+            return;
+        }
+        for (const listener of this.pauseListeners) {
+            try {
+                listener(paused, reason);
+            } catch (error) {
+                console.warn('Pause listener failed', error);
+            }
+        }
+    }
+
+    pause(reason = 'manual') {
+        if (this.gameOver) {
+            return false;
+        }
+        const wasPaused = this.isPaused;
+        const previousReason = this.pauseReason;
+        this.isPaused = true;
+        this.pauseReason = reason;
+        if (typeof this.audio?.stopMusic === 'function') {
+            this.audio.stopMusic();
+        }
+        if (!wasPaused || previousReason !== reason) {
+            this.emitPauseState(true, reason);
+        }
+        return !wasPaused || previousReason !== reason;
+    }
+
+    resume(options = {}) {
+        const { expectedReason = null, force = false, reason = null } = options;
+        const wasPaused = this.isPaused;
+        const previousReason = this.pauseReason;
+        if (!wasPaused) {
+            if (force) {
+                this.pauseReason = null;
+                this.emitPauseState(false, reason ?? expectedReason ?? previousReason ?? 'manual');
+            }
+            return false;
+        }
+        if (!force && expectedReason && previousReason !== expectedReason) {
+            return false;
+        }
+        this.isPaused = false;
+        this.pauseReason = null;
+        this.emitPauseState(false, reason ?? expectedReason ?? previousReason ?? 'manual');
+        if (typeof this.audio?.playMusic === 'function' && this.hasStarted && !this.gameOver) {
+            this.audio.playMusic();
+        }
+        return true;
+    }
+
+    togglePause() {
+        if (this.isPaused) {
+            if (this.pauseReason === 'ad') {
+                return false;
+            }
+            return this.resume();
+        }
+        return this.pause();
+    }
+
+    pauseForAd() {
+        return this.pause('ad');
+    }
+
+    resumeAfterAd() {
+        return this.resume({ expectedReason: 'ad', reason: 'ad' });
+    }
+
     getTowerAt(cell) {
         return cell?.tower ?? null;
     }
 
     update(timestamp) {
         if (this.gameOver) {
+            return;
+        }
+        if (this.isPaused) {
+            this.lastTime = timestamp;
+            requestAnimationFrame(this.update);
             return;
         }
         const dt = this.calcDelta(timestamp);
@@ -115,6 +235,7 @@ class Game {
         this.updateMergeAnimations(dt);
         updateExplosions(this.explosions, dt);
         updateColorSwitchBursts(this.colorSwitchBursts, dt);
+        this.updateEnergyPopups(dt);
         this.grid.fadeHighlights(dt);
         this.grid.fadeMergeHints(dt);
         this.updateMergeHints();
@@ -123,6 +244,42 @@ class Game {
         draw(this);
         if (!this.gameOver) {
             requestAnimationFrame(this.update);
+        }
+    }
+
+    addEnergyPopup(text, x, y, options = {}) {
+        if (!Array.isArray(this.energyPopups)) {
+            this.energyPopups = [];
+        }
+
+        const duration = Math.max(0.2, Number.isFinite(options.duration) ? options.duration : 1);
+        const popup = {
+            text: typeof text === 'string' ? text : `${text ?? ''}`,
+            startX: Number.isFinite(x) ? x : 0,
+            startY: Number.isFinite(y) ? y : 0,
+            elapsed: 0,
+            duration,
+            driftX: Number.isFinite(options.driftX) ? options.driftX : 0,
+            driftY: Number.isFinite(options.driftY) ? options.driftY : -60,
+            color: options.color ?? '#facc15',
+            stroke: options.stroke ?? 'rgba(0,0,0,0.5)',
+            font: options.font ?? '600 26px "Baloo 2", sans-serif',
+        };
+
+        this.energyPopups.push(popup);
+    }
+
+    updateEnergyPopups(dt) {
+        if (!Array.isArray(this.energyPopups) || this.energyPopups.length === 0) {
+            return;
+        }
+
+        for (let i = this.energyPopups.length - 1; i >= 0; i--) {
+            const popup = this.energyPopups[i];
+            popup.elapsed = (popup.elapsed ?? 0) + dt;
+            if (popup.elapsed >= (popup.duration ?? 0.8)) {
+                this.energyPopups.splice(i, 1);
+            }
         }
     }
 
@@ -262,6 +419,7 @@ class Game {
     }
 
     restart() {
+        this.resume({ force: true, reason: 'system' });
         const wasGameOver = this.gameOver;
         this.resetState();
         this.playMusicIfAllowed();
@@ -274,6 +432,7 @@ class Game {
 
     run() {
         this.hasStarted = true;
+        this.resume({ force: true, reason: 'system' });
         callCrazyGamesEvent('gameplayStart');
         this.playMusicIfAllowed();
         this.elapsedTime = 0;

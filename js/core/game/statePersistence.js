@@ -1,5 +1,5 @@
 import Tower from '../../entities/Tower.js';
-import { clearGameState, loadGameState, saveGameState } from '../../systems/dataStore.js';
+import { clearGameState, loadGameState, saveGameState, saveBestScore } from '../../systems/dataStore.js';
 
 function loadValidatedState() {
     const savedState = loadGameState();
@@ -29,6 +29,12 @@ function applySavedResources(game, savedState) {
     game.lives = clamp(toInt(savedState.lives, game.initialLives), 0, 99);
     const savedEnergy = savedState.energy ?? savedState.gold;
     game.energy = clamp(toInt(savedEnergy, game.initialEnergy), 0, 9999);
+    game.score = clamp(toInt(savedState.score, 0), 0, 9999999);
+    const savedBestScore = clamp(toInt(savedState.bestScore, game.bestScore ?? 0), 0, 9999999);
+    if (!Number.isFinite(game.bestScore) || savedBestScore > game.bestScore) {
+        game.bestScore = savedBestScore;
+        saveBestScore(game.bestScore);
+    }
     game.wave = targetWave;
     game.waveInProgress = false;
     game.spawned = 0;
@@ -163,6 +169,8 @@ const statePersistence = {
             lives: this.lives,
             energy: this.energy,
             wave: this.wave,
+            score: Number.isFinite(this.score) ? this.score : 0,
+            bestScore: Number.isFinite(this.bestScore) ? this.bestScore : 0,
             towers: snapshotTowers(this),
         };
     },

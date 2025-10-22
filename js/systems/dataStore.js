@@ -1,5 +1,6 @@
 const STORAGE_KEY = 'towerDefenseGameState';
 const AUDIO_SETTINGS_KEY = 'towerDefenseAudioSettings';
+const BEST_SCORE_KEY = 'towerDefenseBestScore';
 
 function getDataClient() {
     const root = typeof globalThis !== 'undefined' ? globalThis : undefined;
@@ -8,6 +9,22 @@ function getDataClient() {
         return null;
     }
     return dataClient;
+}
+
+function getLocalStorage() {
+    const root = typeof globalThis !== 'undefined' ? globalThis : undefined;
+    const storage = root?.localStorage ?? null;
+    if (!storage) {
+        return null;
+    }
+    const hasMethods = typeof storage.getItem === 'function'
+        && typeof storage.setItem === 'function'
+        && typeof storage.removeItem === 'function';
+    return hasMethods ? storage : null;
+}
+
+function getScoreStorage() {
+    return getDataClient() ?? getLocalStorage();
 }
 
 export function loadGameState() {
@@ -79,6 +96,46 @@ function clearStoredValue(client, key, errorLabel) {
         return true;
     } catch (error) {
         console.error(errorLabel, error);
+        return false;
+    }
+}
+
+function toScoreValue(score) {
+    const numeric = Number(score);
+    if (!Number.isFinite(numeric)) {
+        throw new Error('Invalid score value');
+    }
+    return Math.max(0, Math.floor(numeric));
+}
+
+export function loadBestScore() {
+    const storage = getScoreStorage();
+    if (!storage) {
+        return 0;
+    }
+    try {
+        const raw = storage.getItem(BEST_SCORE_KEY);
+        if (raw === null || raw === undefined || raw === '') {
+            return 0;
+        }
+        return toScoreValue(raw);
+    } catch (error) {
+        console.error('Failed to load best score:', error);
+        return 0;
+    }
+}
+
+export function saveBestScore(score) {
+    const storage = getScoreStorage();
+    if (!storage) {
+        return false;
+    }
+    try {
+        const value = toScoreValue(score);
+        storage.setItem(BEST_SCORE_KEY, String(value));
+        return true;
+    } catch (error) {
+        console.error('Failed to save best score:', error);
         return false;
     }
 }
