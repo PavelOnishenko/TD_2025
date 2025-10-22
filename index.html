@@ -16,6 +16,14 @@
         </div>
     </div>
 
+    <div id="pauseOverlay" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="pauseTitle">
+        <div class="pause-menu">
+            <h2 id="pauseTitle">Paused</h2>
+            <p id="pauseMessage">Take a breather. The battle will wait.</p>
+            <button id="resumeGame" type="button">Resume</button>
+        </div>
+    </div>
+
     <div id="endOverlay" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="endMessage" aria-describedby="endDetail">
         <div id="endMenu" class="start-menu end-menu">
             <h2 id="endMessage">Game Over</h2>
@@ -43,6 +51,7 @@
                 <button id="nextWave" type="button">Next Wave</button>
                 <button id="mergeTowers" type="button" disabled>Merge Towers</button>
                 <button id="restart" type="button">Restart</button>
+                <button id="pause" type="button">Pause</button>
             </div>
             <div id="crazyGamesUser" class="user-info hidden" aria-live="polite">
                 <img id="crazyGamesUserAvatar" alt="CrazyGames profile picture" />
