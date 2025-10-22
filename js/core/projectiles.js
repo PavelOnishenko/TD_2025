@@ -1,6 +1,8 @@
 import { updateHUD } from '../systems/ui.js';
 import { createExplosion } from '../systems/effects.js';
 
+const SCORE_PER_KILL = 10;
+
 export function moveProjectiles(game, dt) {
     game.projectiles.forEach(p => {
         p.x += p.vx * dt;
@@ -42,6 +44,9 @@ export function hitEnemy(game, projectile, index) {
     if (enemy.hp <= 0) {
         game.enemies.splice(enemyIndex, 1);
         game.energy += 1;
+        if (typeof game.addScore === 'function') {
+            game.addScore(SCORE_PER_KILL);
+        }
         updateHUD(game);
     }
 

@@ -1,5 +1,6 @@
 import Tower from '../entities/Tower.js';
 import { callCrazyGamesEvent } from './crazyGamesIntegration.js';
+import { saveAudioSettings } from './dataStore.js';
 import { attachTutorial } from './tutorial.js';
 import { showCrazyGamesAd } from './crazyGamesAds.js';
 
@@ -41,29 +42,43 @@ export function bindUI(game) {
     bindHUD(game);
     attachTutorial(game);
     bindButtons(game);
+    bindAudioButtons(game);
+    bindPauseSystem(game);
     bindCanvasClick(game);
     bindDeveloperReset(game);
     updateHUD(game);
     setupStartMenu(game);
+    updateAudioControls(game);
 }
 
 function bindHUD(game) {
     game.livesEl = document.getElementById('lives');
     game.energyEl = document.getElementById('energy');
+    game.scorePanelEl = document.getElementById('scorePanel');
+    game.scoreEl = document.getElementById('score');
+    game.bestScoreEl = document.getElementById('bestScore');
     game.wavePanelEl = document.getElementById('wavePanel');
     game.waveEl = document.getElementById('wave');
     game.wavePhaseEl = document.getElementById('wavePhase');
     game.statusEl = document.getElementById('status');
     game.nextWaveBtn = document.getElementById('nextWave');
     game.restartBtn = document.getElementById('restart');
+    game.muteBtn = document.getElementById('muteToggle');
+    game.musicBtn = document.getElementById('musicToggle');
     game.mergeBtn = document.getElementById('mergeTowers');
+    game.pauseBtn = document.getElementById('pause');
     game.startOverlay = document.getElementById('startOverlay');
     game.startBtn = document.getElementById('startGame');
     game.endOverlay = document.getElementById('endOverlay');
     game.endMenu = document.getElementById('endMenu');
     game.endMessageEl = document.getElementById('endMessage');
     game.endDetailEl = document.getElementById('endDetail');
+    game.endScoreEl = document.getElementById('endScore');
+    game.endBestScoreEl = document.getElementById('endBestScore');
     game.endRestartBtn = document.getElementById('endRestart');
+    game.pauseOverlay = document.getElementById('pauseOverlay');
+    game.pauseMessageEl = document.getElementById('pauseMessage');
+    game.resumeBtn = document.getElementById('resumeGame');
     game.tutorialResetHint = document.getElementById('tutorialResetHint');
 }
 
@@ -96,6 +111,9 @@ function bindButtons(game) {
         if (game.mergeBtn) {
             game.mergeBtn.disabled = false;
         }
+        if (game.pauseBtn) {
+            game.pauseBtn.disabled = false;
+        }
         if (game.tutorial) {
             game.tutorial.reset();
             game.tutorial.start();
@@ -113,6 +131,9 @@ function bindButtons(game) {
             if (game.mergeBtn) {
                 game.mergeBtn.disabled = false;
             }
+            if (game.pauseBtn) {
+                game.pauseBtn.disabled = false;
+            }
             if (!game.hasStarted) {
                 game.hasStarted = true;
                 game.tutorial?.start();
@@ -123,6 +144,53 @@ function bindButtons(game) {
     if (game.endRestartBtn) {
         game.endRestartBtn.addEventListener('click', handleRestart);
     }
+}
+
+function bindAudioButtons(game) {
+    if (game.muteBtn) {
+        game.muteBtn.addEventListener('click', () => {
+            game.setAudioMuted(!game.audioMuted);
+            persistAudioSettings(game);
+            updateAudioControls(game);
+        });
+    }
+    if (game.musicBtn) {
+        game.musicBtn.addEventListener('click', () => {
+            game.setMusicEnabled(!game.musicEnabled);
+            persistAudioSettings(game);
+            updateAudioControls(game);
+        });
+    }
+}
+
+function persistAudioSettings(game) {
+    saveAudioSettings({
+        muted: Boolean(game.audioMuted),
+        musicEnabled: Boolean(game.musicEnabled),
+    });
+}
+
+export function updateAudioControls(game) {
+    updateMuteButton(game);
+    updateMusicButton(game);
+}
+
+function updateMuteButton(game) {
+    if (!game.muteBtn) {
+        return;
+    }
+    const muted = Boolean(game.audioMuted);
+    game.muteBtn.textContent = muted ? 'Unmute' : 'Mute';
+    game.muteBtn.setAttribute('aria-pressed', muted ? 'true' : 'false');
+}
+
+function updateMusicButton(game) {
+    if (!game.musicBtn) {
+        return;
+    }
+    const enabled = Boolean(game.musicEnabled);
+    game.musicBtn.textContent = enabled ? 'Music On' : 'Music Off';
+    game.musicBtn.setAttribute('aria-pressed', enabled ? 'true' : 'false');
 }
 
 function bindDeveloperReset(game) {
@@ -159,6 +227,8 @@ function setupStartMenu(game) {
         game.restartBtn.disabled = true;
     if (game.mergeBtn)
         game.mergeBtn.disabled = true;
+    if (game.pauseBtn)
+        game.pauseBtn.disabled = true;
     hideEndScreen(game);
 }
 
@@ -188,6 +258,17 @@ function showEndScreen(game, outcome) {
         game.endDetailEl.textContent = isWin
             ? 'All waves cleared. Great job!'
             : 'The base was overrun. Try again!';
+    }
+    updateEndScreenScore(game);
+}
+
+function updateEndScreenScore(game) {
+    const { current, best } = resolveScorePair(game);
+    if (game.endScoreEl && typeof game.endScoreEl.textContent !== 'undefined') {
+        game.endScoreEl.textContent = `Score: ${current}`;
+    }
+    if (game.endBestScoreEl && typeof game.endBestScoreEl.textContent !== 'undefined') {
+        game.endBestScoreEl.textContent = `Best: ${best}`;
     }
 }
 
@@ -240,12 +321,43 @@ function tryShoot(game, cell) {
 export function updateHUD(game) {
     renderLives(game);
     renderEnergy(game);
+    renderScore(game);
     if (game.waveEl) {
         game.waveEl.textContent = `Wave: ${game.wave}/${game.maxWaves}`;
     }
     updateWavePhaseIndicator(game);
     if (typeof game.persistState === 'function') {
         game.persistState();
+    }
+}
+
+function resolveScorePair(game) {
+    const current = Number.isFinite(game.score) ? Math.max(0, Math.floor(game.score)) : 0;
+    const bestCandidate = Number.isFinite(game.bestScore) ? Math.max(0, Math.floor(game.bestScore)) : 0;
+    const best = Math.max(current, bestCandidate);
+    return { current, best };
+}
+
+function renderScore(game) {
+    const { current, best } = resolveScorePair(game);
+    if (game.scoreEl) {
+        if (typeof game.scoreEl.textContent !== 'undefined') {
+            game.scoreEl.textContent = `Score: ${current}`;
+        }
+        if (typeof game.scoreEl.setAttribute === 'function') {
+            game.scoreEl.setAttribute('aria-label', `Score: ${current}`);
+        }
+    }
+    if (game.bestScoreEl) {
+        if (typeof game.bestScoreEl.textContent !== 'undefined') {
+            game.bestScoreEl.textContent = `Best: ${best}`;
+        }
+        if (typeof game.bestScoreEl.setAttribute === 'function') {
+            game.bestScoreEl.setAttribute('aria-label', `Best score: ${best}`);
+        }
+    }
+    if (game.scorePanelEl && typeof game.scorePanelEl.setAttribute === 'function') {
+        game.scorePanelEl.setAttribute('aria-live', 'polite');
     }
 }
 
@@ -358,10 +470,99 @@ export function endGame(game, text) {
     if (game.mergeBtn) {
         game.mergeBtn.disabled = true;
     }
+    if (game.pauseBtn) {
+        game.pauseBtn.disabled = true;
+    }
     showEndScreen(game, text);
     game.gameOver = true;
+    if (typeof game.resume === 'function') {
+        game.resume({ force: true, reason: 'system' });
+    }
     callCrazyGamesEvent('gameplayStop');
     if (typeof game.clearSavedState === 'function') {
         game.clearSavedState();
+    }
+}
+
+function bindPauseSystem(game) {
+    if (game.pauseBtn) {
+        game.pauseBtn.disabled = true;
+    }
+
+    const updatePauseUi = (paused, reason) => {
+        const isAdPause = reason === 'ad';
+        if (game.pauseOverlay) {
+            game.pauseOverlay.classList.toggle('hidden', !paused);
+        }
+        if (game.pauseMessageEl) {
+            if (paused) {
+                game.pauseMessageEl.textContent = isAdPause
+                    ? 'Ad break in progress. The game will resume automatically.'
+                    : 'Game paused. Take a moment before resuming the defense.';
+            }
+            else {
+                game.pauseMessageEl.textContent = 'Take a breather. The battle will wait.';
+            }
+        }
+        if (game.resumeBtn) {
+            game.resumeBtn.disabled = isAdPause;
+            game.resumeBtn.textContent = isAdPause ? 'Ad in progress…' : 'Resume';
+        }
+        if (game.pauseBtn) {
+            game.pauseBtn.textContent = paused ? 'Resume' : 'Pause';
+            game.pauseBtn.setAttribute('aria-pressed', paused ? 'true' : 'false');
+            const shouldDisable = !game.hasStarted || game.gameOver || (paused && isAdPause);
+            game.pauseBtn.disabled = shouldDisable;
+        }
+    };
+
+    if (typeof game.addPauseListener === 'function') {
+        game.addPauseListener(updatePauseUi);
+    }
+    updatePauseUi(Boolean(game.isPaused), game.pauseReason);
+
+    if (game.resumeBtn) {
+        game.resumeBtn.addEventListener('click', () => {
+            if (game.pauseReason === 'ad') {
+                return;
+            }
+            game.resume();
+        });
+    }
+
+    if (game.pauseBtn) {
+        game.pauseBtn.addEventListener('click', () => {
+            if (!game.hasStarted || game.gameOver) {
+                return;
+            }
+            if (game.isPaused && game.pauseReason !== 'ad') {
+                game.resume();
+            }
+            else if (!game.isPaused) {
+                game.pause();
+            }
+        });
+    }
+
+    const handleKeydown = event => {
+        if (event.key !== 'Escape') {
+            return;
+        }
+        if (!game.hasStarted || game.gameOver) {
+            return;
+        }
+        if (game.pauseReason === 'ad') {
+            return;
+        }
+        if (game.isPaused) {
+            game.resume();
+        }
+        else {
+            game.pause();
+        }
+    };
+
+    if (typeof window !== 'undefined') {
+        window.addEventListener('keydown', handleKeydown);
     }
 }

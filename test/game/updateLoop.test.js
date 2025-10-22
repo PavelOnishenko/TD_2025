@@ -116,5 +116,34 @@ test('resumeAfterAd refreshes timing and schedules next frame', () => {
     assert.equal(game.animationFrameId, 33);
     assert.equal(game.pausedForAd, false);
     assert.equal(game.lastTime, 54321);
+  });
+
+test('update keeps scheduling while paused without advancing time', () => {
+    const game = createGame({ attachDom: true });
+    game.pause();
+    game.elapsedTime = 0;
+    let scheduled = false;
+
+    withReplacedMethod(globalThis, 'requestAnimationFrame', () => { scheduled = true; }, () => {
+        game.update(1200);
+    });
+
+    assert.equal(scheduled, true);
+    assert.equal(game.lastTime, 1200);
+    assert.equal(game.elapsedTime, 0);
+});
+
+test('resumeAfterAd resumes only when paused for ad', () => {
+    const game = createGame();
+
+    assert.equal(game.resumeAfterAd(), false);
+
+    game.pauseForAd();
+    assert.equal(game.isPaused, true);
+    assert.equal(game.pauseReason, 'ad');
+
+    assert.equal(game.resumeAfterAd(), true);
+    assert.equal(game.isPaused, false);
+    assert.equal(game.pauseReason, null);
 });
 
