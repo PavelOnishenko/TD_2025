@@ -3,7 +3,7 @@ import { moveProjectiles, handleProjectileHits } from './projectiles.js';
 import { enemyActions } from './gameEnemies.js';
 import { waveActions } from './gameWaves.js';
 import { callCrazyGamesEvent } from '../systems/crazyGamesIntegration.js';
-import { createGameAudio } from '../systems/audio.js';
+import { createGameAudio, getHowler } from '../systems/audio.js';
 import { createExplosion, updateExplosions, updateColorSwitchBursts } from '../systems/effects.js';
 import { saveBestScore } from '../systems/dataStore.js';
 import GameGrid from './gameGrid.js';
@@ -64,6 +64,9 @@ class Game {
         this.persistenceEnabled = true;
         this.mergeHintPairs = [];
         this.screenShake = createScreenShakeState();
+        this.audioMuted = false;
+        this.musicEnabled = true;
+        this.musicPausedByFocus = false;
         this.isPaused = false;
         this.pauseReason = null;
         this.pauseListeners = new Set();
@@ -81,6 +84,7 @@ class Game {
     configureAssets(assets) {
         this._assets = null;
         this.audio = createGameAudio();
+        this.applyAudioPreferences();
         if (!assets) {
             return;
         }
@@ -122,11 +126,9 @@ class Game {
 
     set assets(value) {
         this._assets = value;
-        if (value?.sounds) {
-            this.audio = createGameAudio(value.sounds);
-        } else {
-            this.audio = createGameAudio();
-        }
+        const sounds = value?.sounds ?? null;
+        this.audio = sounds ? createGameAudio(sounds) : createGameAudio();
+        this.applyAudioPreferences();
     }
 
     addPauseListener(listener) {
@@ -420,7 +422,7 @@ class Game {
         this.resume({ force: true, reason: 'system' });
         const wasGameOver = this.gameOver;
         this.resetState();
-        this.audio.playMusic();
+        this.playMusicIfAllowed();
         if (wasGameOver) {
             this.lastTime = performance.now();
             requestAnimationFrame(this.update);
@@ -432,10 +434,55 @@ class Game {
         this.hasStarted = true;
         this.resume({ force: true, reason: 'system' });
         callCrazyGamesEvent('gameplayStart');
-        this.audio.playMusic();
+        this.playMusicIfAllowed();
         this.elapsedTime = 0;
         this.lastTime = performance.now();
         requestAnimationFrame(this.update);
+    }
+
+    setAudioMuted(muted) {
+        this.audioMuted = Boolean(muted);
+        const howler = getHowler();
+        if (howler && typeof howler.mute === 'function') {
+            howler.mute(this.audioMuted);
+        }
+        if (this.audioMuted && typeof this.audio?.stopMusic === 'function') {
+            this.audio.stopMusic();
+        }
+        if (!this.audioMuted) {
+            this.playMusicIfAllowed();
+        }
+    }
+
+    setMusicEnabled(enabled) {
+        this.musicEnabled = Boolean(enabled);
+        if (!this.musicEnabled && typeof this.audio?.stopMusic === 'function') {
+            this.audio.stopMusic();
+        }
+        if (this.musicEnabled) {
+            this.playMusicIfAllowed();
+        }
+    }
+
+    playMusicIfAllowed() {
+        if (!this.musicEnabled || this.audioMuted) {
+            return;
+        }
+        if (!this.shouldPlayMusic()) {
+            return;
+        }
+        if (typeof this.audio?.playMusic === 'function') {
+            this.audio.playMusic();
+        }
+    }
+
+    shouldPlayMusic() {
+        return Boolean(this.hasStarted && !this.gameOver);
+    }
+
+    applyAudioPreferences() {
+        this.setAudioMuted(this.audioMuted);
+        this.setMusicEnabled(this.musicEnabled);
     }
 }
 

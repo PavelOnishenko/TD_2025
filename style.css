@@ -341,6 +341,21 @@ canvas {
     min-width: calc(140px * var(--scale));
 }
 
+.audio-controls {
+    position: absolute;
+    bottom: calc(30px * var(--scale));
+    right: calc(24px * var(--scale));
+    display: flex;
+    flex-direction: column;
+    gap: calc(12px * var(--scale));
+}
+
+#muteToggle,
+#musicToggle {
+    min-width: calc(150px * var(--scale));
+    text-align: center;
+}
+
 #pause {
     position: absolute;
     bottom: calc(30px * var(--scale));
