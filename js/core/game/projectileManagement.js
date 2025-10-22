@@ -51,11 +51,30 @@ const projectileManagement = {
 
     switchTowerColor(tower) {
         if (this.energy < this.switchCost) {
+            if (tower && typeof tower.triggerErrorPulse === 'function') {
+                tower.triggerErrorPulse();
+            }
+            if (this.audio && typeof this.audio.playError === 'function') {
+                this.audio.playError();
+            }
             return false;
         }
         const nextColor = tower.color === 'red' ? 'blue' : 'red';
         tower.color = nextColor;
         this.energy -= this.switchCost;
+        if (typeof this.addEnergyPopup === 'function' && tower) {
+            const center = typeof tower.center === 'function'
+                ? tower.center()
+                : { x: (tower.x ?? 0) + (tower.w ?? 0) / 2, y: (tower.y ?? 0) + (tower.h ?? 0) / 2 };
+            const rawCost = Number.isFinite(this.switchCost) ? this.switchCost : 0;
+            const cost = Math.max(0, Math.round(rawCost));
+            const text = `-${cost}`;
+            const popupY = center.y - (tower.h ?? 0) * 0.4;
+            this.addEnergyPopup(text, center.x, popupY, {
+                color: '#facc15',
+                stroke: 'rgba(0,0,0,0.5)',
+            });
+        }
         const burst = createColorSwitchBurstFromTower(tower, nextColor);
         if (burst) {
             this.colorSwitchBursts.push(burst);

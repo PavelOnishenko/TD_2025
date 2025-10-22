@@ -22,6 +22,7 @@ function resetCollections(game) {
     game.projectiles = [];
     game.explosions = [];
     game.mergeAnimations = [];
+    game.energyPopups = [];
     game.maxProjectileRadius = game.projectileRadius;
     game.spawned = 0;
     game.spawnTimer = 0;
