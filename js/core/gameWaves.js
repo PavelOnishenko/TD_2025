@@ -1,4 +1,5 @@
 import { updateHUD, endGame, updateWavePhaseIndicator } from '../systems/ui.js';
+import { showCrazyGamesAd } from '../systems/crazyGamesAds.js';
 
 export const waveActions = {
     startWave() {
@@ -125,6 +126,7 @@ export const waveActions = {
 
     checkWaveCompletion() {
         if (this.waveInProgress && this.spawned === this.enemiesPerWave && this.enemies.length === 0) {
+            const completedWave = this.wave;
             this.waveInProgress = false;
             updateWavePhaseIndicator(this);
             if (this.mergeBtn) {
@@ -138,6 +140,9 @@ export const waveActions = {
             this.wave += 1;
             this.energy += 3;
             updateHUD(this);
+            if (completedWave === 5) {
+                void showCrazyGamesAd({ game: this });
+            }
         }
     }
 };

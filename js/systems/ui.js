@@ -1,6 +1,7 @@
 import Tower from '../entities/Tower.js';
 import { callCrazyGamesEvent } from './crazyGamesIntegration.js';
 import { attachTutorial } from './tutorial.js';
+import { showCrazyGamesAd } from './crazyGamesAds.js';
 
 const HEART_FILLED_SRC = 'assets/heart_filled.png';
 const HEART_EMPTY_SRC = 'assets/heart_empty.png';
@@ -79,7 +80,17 @@ function bindButtons(game) {
         game.mergeBtn.addEventListener('click', handleMerge);
         game.mergeBtn.disabled = game.waveInProgress;
     }
-    const handleRestart = () => {
+    let restartInProgress = false;
+    const handleRestart = async () => {
+        if (restartInProgress) {
+            return;
+        }
+        restartInProgress = true;
+        try {
+            await showCrazyGamesAd({ game });
+        } catch (error) {
+            console.warn('Failed to show CrazyGames ad before restart', error);
+        }
         game.restart();
         hideEndScreen(game);
         if (game.mergeBtn) {
@@ -89,6 +100,7 @@ function bindButtons(game) {
             game.tutorial.reset();
             game.tutorial.start();
         }
+        restartInProgress = false;
     };
     game.restartBtn.addEventListener('click', handleRestart);
     if (game.startBtn) {

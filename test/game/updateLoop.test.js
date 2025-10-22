@@ -65,3 +65,56 @@ test('update returns early when game over', () => {
     assert.equal(game.lastTime, 0);
 });
 
+test('pauseForAd cancels scheduled frame and blocks new frames', () => {
+    const game = createGame({ attachDom: true });
+    let cancelCalledWith = null;
+    let scheduledCallback = null;
+
+    withReplacedMethod(globalThis, 'requestAnimationFrame', cb => {
+        scheduledCallback = cb;
+        return 77;
+    }, () => {
+        withReplacedMethod(globalThis, 'cancelAnimationFrame', id => {
+            cancelCalledWith = id;
+        }, () => {
+            game.run();
+            assert.equal(game.animationFrameId, 77);
+            game.pauseForAd();
+            assert.equal(cancelCalledWith, 77);
+            assert.equal(game.animationFrameId, null);
+            assert.equal(game.pausedForAd, true);
+            scheduledCallback(1000);
+            assert.equal(game.animationFrameId, null);
+        });
+    });
+});
+
+test('resumeAfterAd refreshes timing and schedules next frame', () => {
+    const game = createGame({ attachDom: true });
+    let scheduledCallback = null;
+
+    withReplacedMethod(globalThis, 'requestAnimationFrame', cb => {
+        scheduledCallback = cb;
+        return 33;
+    }, () => {
+        const originalPerformance = globalThis.performance;
+        globalThis.performance = { now: () => 54321 };
+        try {
+            game.pauseForAd();
+            assert.equal(game.animationFrameId, null);
+            game.resumeAfterAd();
+        } finally {
+            if (originalPerformance) {
+                globalThis.performance = originalPerformance;
+            } else {
+                delete globalThis.performance;
+            }
+        }
+    });
+
+    assert.equal(typeof scheduledCallback, 'function');
+    assert.equal(game.animationFrameId, 33);
+    assert.equal(game.pausedForAd, false);
+    assert.equal(game.lastTime, 54321);
+});
+

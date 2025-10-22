@@ -1,4 +1,4 @@
-001 | TODO | Integrate CrazyGames ads
+001 | DONE | Integrate CrazyGames ads
 Add ad requests using window.CrazyGames.SDK.ad.requestAd. Show an ad after wave 5 and on restart. Pause the game during ads. Avoid multiple ads within 2 minutes and handle SDK absence safely.
 
 002 | TODO | Add Pause system

@@ -24,6 +24,13 @@ function createScreenShakeState() {
     };
 }
 
+function getLoopTimestamp() {
+    if (typeof performance !== 'undefined' && typeof performance.now === 'function') {
+        return performance.now();
+    }
+    return Date.now();
+}
+
 class Game {
     constructor(canvas, options = {}) {
         const { width = 540, height = 960, assets = null } = options;
@@ -62,6 +69,8 @@ class Game {
         this.persistenceEnabled = true;
         this.mergeHintPairs = [];
         this.screenShake = createScreenShakeState();
+        this.animationFrameId = null;
+        this.pausedForAd = false;
     }
 
     setupEnvironment() {
@@ -101,6 +110,11 @@ class Game {
 
     update(timestamp) {
         if (this.gameOver) {
+            this.animationFrameId = null;
+            return;
+        }
+        if (this.pausedForAd) {
+            this.animationFrameId = null;
             return;
         }
         const dt = this.calcDelta(timestamp);
@@ -119,8 +133,43 @@ class Game {
         this.checkWaveCompletion();
         this.updateScreenShake(dt);
         draw(this);
+        if (!this.gameOver && !this.pausedForAd) {
+            this.scheduleNextFrame();
+        } else {
+            this.animationFrameId = null;
+        }
+    }
+
+    scheduleNextFrame() {
+        if (typeof requestAnimationFrame !== 'function') {
+            return;
+        }
+        this.animationFrameId = requestAnimationFrame(this.update);
+    }
+
+    pauseForAd() {
+        if (this.pausedForAd) {
+            return;
+        }
+        this.pausedForAd = true;
+        if (typeof cancelAnimationFrame === 'function' && this.animationFrameId !== null) {
+            try {
+                cancelAnimationFrame(this.animationFrameId);
+            } catch (error) {
+                console.warn('Failed to cancel animation frame during ad pause', error);
+            }
+        }
+        this.animationFrameId = null;
+    }
+
+    resumeAfterAd() {
+        if (!this.pausedForAd) {
+            return;
+        }
+        this.pausedForAd = false;
+        this.lastTime = getLoopTimestamp();
         if (!this.gameOver) {
-            requestAnimationFrame(this.update);
+            this.scheduleNextFrame();
         }
     }
 
@@ -262,10 +311,19 @@ class Game {
     restart() {
         const wasGameOver = this.gameOver;
         this.resetState();
+        if (typeof cancelAnimationFrame === 'function' && this.animationFrameId !== null) {
+            try {
+                cancelAnimationFrame(this.animationFrameId);
+            } catch (error) {
+                console.warn('Failed to cancel animation frame during restart', error);
+            }
+        }
+        this.animationFrameId = null;
+        this.pausedForAd = false;
         this.audio.playMusic();
         if (wasGameOver) {
-            this.lastTime = performance.now();
-            requestAnimationFrame(this.update);
+            this.lastTime = getLoopTimestamp();
+            this.scheduleNextFrame();
         }
         callCrazyGamesEvent('gameplayStart');
     }
@@ -275,8 +333,8 @@ class Game {
         callCrazyGamesEvent('gameplayStart');
         this.audio.playMusic();
         this.elapsedTime = 0;
-        this.lastTime = performance.now();
-        requestAnimationFrame(this.update);
+        this.lastTime = getLoopTimestamp();
+        this.scheduleNextFrame();
     }
 }
 
