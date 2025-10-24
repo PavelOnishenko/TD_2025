@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { TankEnemy, SwarmEnemy } from '../../js/entities/Enemy.js';
 import { createGame, withMockedRandom, withReplacedMethod } from './helpers.js';
+import gameConfig from '../../js/config/gameConfig.js';
 
 function spawnAndCollect(game, type) {
     game.spawnEnemy(type);
@@ -13,7 +14,7 @@ test('spawnEnemy spawns swarm group with shared hp', () => {
 
     const enemies = spawnAndCollect(game);
 
-    assert.equal(enemies.length, 3);
+    assert.equal(enemies.length, gameConfig.enemies.swarm.groupSize);
     enemies.forEach(enemy => assert.ok(enemy instanceof SwarmEnemy));
     assert.equal(game.spawned, 1);
 });
@@ -26,7 +27,7 @@ test('spawnEnemy supports tank enemies and scales hp', () => {
 
     assert.equal(enemies.length, 1);
     assert.ok(enemies[0] instanceof TankEnemy);
-    assert.equal(enemies[0].maxHp, baseHp * 4);
+    assert.equal(enemies[0].maxHp, baseHp * gameConfig.enemies.tank.hpMultiplier);
 });
 
 test('spawnEnemy defaults to last hp when wave exceeds table', () => {
@@ -37,7 +38,10 @@ test('spawnEnemy defaults to last hp when wave exceeds table', () => {
         return spawnAndCollect(game);
     });
 
-    const expected = Math.max(1, Math.floor(game.enemyHpPerWave.at(-1) / 2));
+    const expected = Math.max(
+        1,
+        Math.floor(game.enemyHpPerWave.at(-1) * gameConfig.enemies.swarm.hpFactor),
+    );
     enemies.forEach(enemy => assert.equal(enemy.maxHp, expected));
 });
 
@@ -65,7 +69,11 @@ test('spawnEnemy chooses random colors per enemy', () => {
         return game.enemies.map(enemy => enemy.color);
     });
 
-    assert.deepEqual(colors, ['red', 'blue', 'red']);
+    const expectedColors = Array.from(
+        { length: gameConfig.enemies.swarm.groupSize },
+        (_, index) => (index % 2 === 0 ? 'red' : 'blue'),
+    );
+    assert.deepEqual(colors, expectedColors);
 });
 
 test('generateTankBurstSchedule returns sorted unique indices', () => {

@@ -1,3 +1,5 @@
+import gameConfig from '../../config/gameConfig.js';
+
 function createEmptyBounds() {
     return {
         minX: Number.POSITIVE_INFINITY,
@@ -58,7 +60,8 @@ function computeMargin(game) {
     const baseRadius = game.projectileRadius ?? 0;
     const maxRadius = game.maxProjectileRadius ?? 0;
     const effective = Math.max(baseRadius, maxRadius);
-    return Math.max(40, effective * 2);
+    const { minMargin, projectileRadiusFactor } = gameConfig.world.bounds;
+    return Math.max(minMargin, effective * projectileRadiusFactor);
 }
 
 function applyMargin(bounds, margin) {

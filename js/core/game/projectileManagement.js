@@ -1,6 +1,7 @@
 import { updateHUD } from '../../systems/ui.js';
 import { createColorSwitchBurstFromTower } from '../../systems/effects.js';
 import { createProjectileVisualState } from './projectileVisualState.js';
+import gameConfig from '../../config/gameConfig.js';
 
 function normalizeLevel(level) {
     const parsed = Number(level);
@@ -35,9 +36,11 @@ function updateMaxProjectileRadius(game, radius) {
 
 const projectileManagement = {
     getProjectileRadiusForLevel(level) {
-        const base = this.projectileRadius ?? 6;
+        const base = Number.isFinite(this.projectileRadius)
+            ? this.projectileRadius
+            : gameConfig.projectiles.baseRadius;
         const normalizedLevel = normalizeLevel(level);
-        const increase = (normalizedLevel - 1) * 2;
+        const increase = (normalizedLevel - 1) * gameConfig.projectiles.radiusPerLevel;
         return base + increase;
     },
 

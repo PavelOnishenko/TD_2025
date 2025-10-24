@@ -9,8 +9,9 @@ import { bindUI, updateAudioControls } from './systems/ui.js';
 import { loadAssets } from './systems/assets.js';
 import { initializeAudio } from './systems/audio.js';
 import { loadAudioSettings } from './systems/dataStore.js';
-const LOGICAL_W = 540;
-const LOGICAL_H = 960;
+import gameConfig from './config/gameConfig.js';
+
+const { width: LOGICAL_W, height: LOGICAL_H } = gameConfig.world.logicalSize;
 export function getViewportMetrics(windowRef = window) {
     const width = windowRef.innerWidth;
     const height = windowRef.innerHeight;

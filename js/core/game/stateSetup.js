@@ -1,5 +1,6 @@
 import { updateHUD } from '../../systems/ui.js';
 import { loadBestScore } from '../../systems/dataStore.js';
+import gameConfig from '../../config/gameConfig.js';
 
 function configureFirstWave(game) {
     const cfg = game.waveConfigs[0];
@@ -87,14 +88,15 @@ function resetGame(game) {
 
 const stateSetup = {
     initStats() {
-        this.initialLives = 5;
-        this.initialEnergy = 50;
+        const { player, waves, scoring } = gameConfig;
+        this.initialLives = player.initialLives;
+        this.initialEnergy = player.initialEnergy;
         this.lives = this.initialLives;
         this.energy = this.initialEnergy;
         this.wave = 1;
-        this.maxWaves = 10;
-        this.towerCost = 12;
-        this.switchCost = 4;
+        this.maxWaves = player.maxWaves;
+        this.towerCost = player.towerCost;
+        this.switchCost = player.switchCost;
         this.waveInProgress = false;
         this.waveConfigs = this.getWaveConfigs();
         this.tankBurstSchedule = [];
@@ -106,13 +108,16 @@ const stateSetup = {
         this.enemiesPerWave = cfg.cycles;
         this.spawned = 0;
         this.spawnTimer = 0;
-        this.enemyHpPerWave = [2, 3, 4, 5, 6, 7, 8, 9, 10, 12];
+        this.enemyHpPerWave = [...waves.enemyHpByWave];
         this.gameOver = false;
-        this.shootingInterval = 500;
-        this.colorProbStart = 0.5;
-        this.colorProbEnd = 0.5;
+        this.shootingInterval = player.shootingInterval;
+        this.colorProbStart = player.colorProbability.start;
+        this.colorProbEnd = player.colorProbability.end;
         this.score = 0;
         this.bestScore = loadBestScore();
+        this.scorePerKill = scoring.perKill;
+        this.waveClearScore = scoring.waveClear;
+        this.baseHitPenalty = scoring.baseHitPenalty;
     },
 
     resetState() {

@@ -1,16 +1,7 @@
-function createWaveConfigs() {
-    return [
-        { interval: 1, cycles: 20, tanksCount: 0 },
-        { interval: 1, cycles: 25, tanksCount: 0 },
-        { interval: 1, cycles: 22, tanksCount: 2 },
-        { interval: 1, cycles: 25, tanksCount: 3 },
-        { interval: 1, cycles: 28, tanksCount: 4 },
-        { interval: 1, cycles: 30, tanksCount: 5 },
-        { interval: 1, cycles: 32, tanksCount: 6 },
-        { interval: 1, cycles: 35, tanksCount: 9 },
-        { interval: 1, cycles: 38, tanksCount: 11 },
-        { interval: 1, cycles: 40, tanksCount: 16 },
-    ];
+import gameConfig from '../../config/gameConfig.js';
+
+function cloneWaveConfigs() {
+    return gameConfig.waves.schedule.map(cfg => ({ ...cfg }));
 }
 
 function shufflePositions(count) {
@@ -51,7 +42,7 @@ function prepareSchedule(game, cfg, waveNumber) {
 
 const tankSchedule = {
     getWaveConfigs() {
-        return createWaveConfigs();
+        return cloneWaveConfigs();
     },
 
     prepareTankScheduleForWave(cfg, waveNumber) {

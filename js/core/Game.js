@@ -13,13 +13,15 @@ import tankSchedule from './game/tankSchedule.js';
 import world from './game/world.js';
 import statePersistence from './game/statePersistence.js';
 import stateSetup from './game/stateSetup.js';
+import gameConfig from '../config/gameConfig.js';
 
 function createScreenShakeState() {
+    const { frequency } = gameConfig.world.screenShake;
     return {
         duration: 0,
         elapsed: 0,
         intensity: 0,
-        frequency: 42,
+        frequency,
         seedX: Math.random() * Math.PI * 2,
         seedY: Math.random() * Math.PI * 2,
     };
@@ -27,7 +29,11 @@ function createScreenShakeState() {
 
 class Game {
     constructor(canvas, options = {}) {
-        const { width = 540, height = 960, assets = null } = options;
+        const {
+            width = gameConfig.world.logicalSize.width,
+            height = gameConfig.world.logicalSize.height,
+            assets = null,
+        } = options;
         this.setupCanvas(canvas, width, height);
         this.setupCollections();
         this.setupEnvironment();
@@ -53,10 +59,10 @@ class Game {
         this.colorSwitchBursts = [];
         this.mergeAnimations = [];
         this.energyPopups = [];
-        this.projectileSpeed = 800;
-        this.projectileRadius = 6;
+        this.projectileSpeed = gameConfig.projectiles.speed;
+        this.projectileRadius = gameConfig.projectiles.baseRadius;
         this.maxProjectileRadius = this.projectileRadius;
-        this.projectileSpawnInterval = 500;
+        this.projectileSpawnInterval = gameConfig.projectiles.spawnInterval;
         this.lastTime = 0;
         this.elapsedTime = 0;
         this.hasStarted = false;
@@ -73,9 +79,19 @@ class Game {
     }
 
     setupEnvironment() {
-        this.base = { x: 1100, y: this.logicalH - 60, w: 40, h: 40 };
-        this.platforms = createPlatforms({ width: this.logicalW, height: this.logicalH });
-        this.grid = new GameGrid();
+        const baseConfig = gameConfig.world.base;
+        this.base = {
+            x: baseConfig.x,
+            y: this.logicalH - baseConfig.bottomOffset,
+            w: baseConfig.width,
+            h: baseConfig.height,
+        };
+        this.platforms = createPlatforms({
+            width: this.logicalW,
+            height: this.logicalH,
+            platformConfigs: gameConfig.world.platforms,
+        });
+        this.grid = new GameGrid(gameConfig.world.grid);
         this.topCells = this.grid.topCells;
         this.bottomCells = this.grid.bottomCells;
         this.worldBounds = this.computeWorldBounds();

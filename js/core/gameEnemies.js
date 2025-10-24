@@ -1,7 +1,6 @@
 import Enemy, { TankEnemy, SwarmEnemy } from '../entities/Enemy.js';
 import { updateHUD, endGame } from '../systems/ui.js';
-
-const SCORE_BASE_HIT_PENALTY = 25;
+import gameConfig from '../config/gameConfig.js';
 
 export const enemyActions = {
     getEnemyColor() {
@@ -44,13 +43,14 @@ export const enemyActions = {
     },
 
     getDefaultEnemyCoords() {
-        return { x: -600, y: 600 };
+        return { ...gameConfig.enemies.defaultSpawn };
     },
 
     spawnTankEnemy(baseHp) {
         const color = this.getEnemyColor();
         const defaultCoords = this.getDefaultEnemyCoords();
-        const tankEnemy = new TankEnemy(baseHp * 4, color, defaultCoords.x, defaultCoords.y);
+        const hpMultiplier = gameConfig.enemies.tank.hpMultiplier;
+        const tankEnemy = new TankEnemy(baseHp * hpMultiplier, color, defaultCoords.x, defaultCoords.y);
         tankEnemy.setEngineFlamePlacement({
             anchorX: tankEnemy.engineFlame.anchor.x,
             anchorY: tankEnemy.engineFlame.anchor.y,
@@ -62,9 +62,9 @@ export const enemyActions = {
     },
 
     spawnSwarmGroup(baseHp) {
-        const groupSize = 3;
-        const swarmHp = Math.max(1, Math.floor(baseHp / 2));
-        const spacing = 40;
+        const groupSize = gameConfig.enemies.swarm.groupSize;
+        const swarmHp = Math.max(1, Math.floor(baseHp * gameConfig.enemies.swarm.hpFactor));
+        const spacing = gameConfig.enemies.swarm.spacing;
         const centerOffsetBase = (groupSize - 1) / 2;
 
         for (let i = 0; i < groupSize; i++) {
@@ -100,7 +100,10 @@ export const enemyActions = {
                 this.enemies.splice(i, 1);
                 this.lives--;
                 if (typeof this.addScore === 'function') {
-                    this.addScore(-SCORE_BASE_HIT_PENALTY);
+                    const penalty = Number.isFinite(this.baseHitPenalty)
+                        ? this.baseHitPenalty
+                        : gameConfig.scoring.baseHitPenalty;
+                    this.addScore(-penalty);
                 }
                 if (typeof this.triggerBaseHitEffects === 'function') {
                     this.triggerBaseHitEffects();

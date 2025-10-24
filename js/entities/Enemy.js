@@ -1,11 +1,21 @@
 import { drawEnemyEngineGlow } from '../systems/effects.js';
+import gameConfig from '../config/gameConfig.js';
 
 export default class Enemy {
-    constructor(maxHp, color, x, y, speedX, speedY, spriteKey = 'swarm') {
+    constructor(
+        maxHp,
+        color,
+        x,
+        y,
+        speedX = gameConfig.enemies.swarm.speed.x,
+        speedY = gameConfig.enemies.swarm.speed.y,
+        spriteKey = 'swarm'
+    ) {
         this.x = x;
         this.y = y;
-        this.w = 80;
-        this.h = 80;
+        const { width, height } = gameConfig.enemies.dimensions;
+        this.w = width;
+        this.h = height;
         this.speedX = speedX;
         this.speedY = speedY;
         this.maxHp = maxHp;
@@ -105,14 +115,28 @@ export default class Enemy {
 }
 
 export class TankEnemy extends Enemy {
-    constructor(maxHp = 15, color = 'red', x = 0, y = 0) {
-        super(maxHp, color, x, y, 100, 0, 'tank');
+    constructor(
+        maxHp = 15,
+        color = 'red',
+        x = 0,
+        y = 0,
+        speedX = gameConfig.enemies.tank.speed.x,
+        speedY = gameConfig.enemies.tank.speed.y
+    ) {
+        super(maxHp, color, x, y, speedX, speedY, 'tank');
     }
 }
 
 export class SwarmEnemy extends Enemy {
-    constructor(maxHp = 1, color = 'red', x = 0, y = 0) {
-        super(maxHp, color, x, y, 200, 0, 'swarm');
+    constructor(
+        maxHp = 1,
+        color = 'red',
+        x = 0,
+        y = 0,
+        speedX = gameConfig.enemies.swarm.speed.x,
+        speedY = gameConfig.enemies.swarm.speed.y
+    ) {
+        super(maxHp, color, x, y, speedX, speedY, 'swarm');
     }
 }
 
