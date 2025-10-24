@@ -1,15 +1,13 @@
 export let crazyGamesWorks = false;
 
-const blockedCrazyGamesHosts = new Set([
-    'pavelonishenko.github.io',
-]);
+const blockedCrazyGamesHosts = new Set([ 'pavelonishenko.github.io' ]);
 
 function getNormalizedHost() {
     if (typeof window === 'undefined') {
         return '';
     }
-    const rawHost = window.location?.hostname || '';
-    return rawHost.trim().toLowerCase();
+
+    return (window.location?.hostname || '').trim().toLowerCase();
 }
 
 function isGithubPagesHost(host) {
@@ -30,57 +28,64 @@ export const crazyGamesIntegrationAllowed = (() => {
     return true;
 })();
 
-export const crazyMap = {
-  sdkGameLoadingStart: "loadingStart",
-  sdkGameLoadingStop: "loadingStop",
-  gameplayStart: "gameplayStart",
-  gameplayStop: "gameplayStop"
-};
+export const crazyMap = { sdkGameLoadingStart: "loadingStart", sdkGameLoadingStop: "loadingStop", gameplayStart: "gameplayStart", gameplayStop: "gameplayStop" };
 
 let crazyGamesSdkPromise = null;
 
 function ensureCrazyGamesSdkLoaded() {
-    if (!crazyGamesIntegrationAllowed) {
+    if (!crazyGamesIntegrationAllowed) 
         return Promise.resolve(false);
-    }
-    if (window.CrazyGames?.SDK) {
+
+    if (window.CrazyGames?.SDK) 
         return Promise.resolve(true);
-    }
-    if (!crazyGamesSdkPromise) {
-        crazyGamesSdkPromise = new Promise(resolve => {
-            const handleResult = (success) => {
-                resolve(Boolean(success));
-            };
 
-            const existingScript = document.querySelector('script[data-crazygames-sdk]');
-            if (existingScript) {
-                if (existingScript.dataset.crazygamesSdkLoaded === 'true') {
-                    handleResult(true);
-                    return;
-                }
-                const state = existingScript.readyState;
-                if (state === 'complete' || state === 'loaded') {
-                    handleResult(true);
-                    return;
-                }
-                existingScript.addEventListener('load', () => handleResult(true), { once: true });
-                existingScript.addEventListener('error', () => handleResult(false), { once: true });
-                return;
-            }
-
-            const script = document.createElement('script');
-            script.src = 'https://sdk.crazygames.com/crazygames-sdk-v3.js';
-            script.async = true;
-            script.dataset.crazygamesSdk = 'true';
-            script.addEventListener('load', () => {
-                script.dataset.crazygamesSdkLoaded = 'true';
-                handleResult(true);
-            }, { once: true });
-            script.addEventListener('error', () => handleResult(false), { once: true });
-            document.head.appendChild(script);
-        });
-    }
+    if (!crazyGamesSdkPromise) 
+        crazyGamesSdkPromise = loadCrazyGamesSdk();
     return crazyGamesSdkPromise;
+}
+
+function loadCrazyGamesSdk() {
+    return new Promise(resolve => {
+        const handleResult = success => resolve(Boolean(success));
+        const existing = findExistingCrazyGamesScript(handleResult);
+        if (existing) 
+            return;
+
+        injectCrazyGamesScript(handleResult);
+    });
+}
+
+function findExistingCrazyGamesScript(handleResult) {
+    const script = document.querySelector('script[data-crazygames-sdk]');
+    if (!script) return false;
+
+    if (script.dataset.crazygamesSdkLoaded === 'true') {
+        handleResult(true);
+        return true;
+    }
+
+    const state = script.readyState;
+    if (state === 'complete' || state === 'loaded') {
+        handleResult(true);
+        return true;
+    }
+
+    script.addEventListener('load', () => handleResult(true), { once: true });
+    script.addEventListener('error', () => handleResult(false), { once: true });
+    return true;
+}
+
+function injectCrazyGamesScript(handleResult) {
+    const script = document.createElement('script');
+    script.src = 'https://sdk.crazygames.com/crazygames-sdk-v3.js';
+    script.async = true;
+    script.dataset.crazygamesSdk = 'true';
+    script.addEventListener('load', () => {
+        script.dataset.crazygamesSdkLoaded = 'true';
+        handleResult(true);
+    }, { once: true });
+    script.addEventListener('error', () => handleResult(false), { once: true });
+    document.head.appendChild(script);
 }
 
 export function callCrazyGamesEvent(fnName) {
@@ -120,9 +125,7 @@ export async function initializeCrazyGamesIntegration() {
 }
 
 function preventDefaultMouseBehabior() {
-    window.addEventListener("wheel", (event) => event.preventDefault(), {
-        passive: false,
-    });
+    window.addEventListener("wheel", (event) => event.preventDefault(), { passive: false, });
     window.addEventListener("keydown", (event) => {
         if (["ArrowUp", "ArrowDown", " "].includes(event.key)) {
             event.preventDefault();

@@ -1,5 +1,6 @@
 import { updateHUD } from '../systems/ui.js';
 import { createExplosion } from '../systems/effects.js';
+import gameConfig from '../config/gameConfig.js';
 
 export function moveProjectiles(game, dt) {
     game.projectiles.forEach(p => {
@@ -15,16 +16,39 @@ export function hitEnemy(game, projectile, index) {
     const enemyIndex = findCollidingEnemy(projectile, game.enemies);
     if (enemyIndex === -1) return false;
     const enemy = game.enemies[enemyIndex];
+    const isColorMatch = projectile.color === enemy.color;
     enemy.hp -= calculateDamage(projectile, enemy);
     game.projectiles.splice(index, 1);
-    game.audio?.playExplosion();
+    const audio = game.audio;
+    if (isColorMatch) {
+        if (typeof audio?.playMatchingHit === 'function') {
+            audio.playMatchingHit();
+        } else {
+            (audio?.playExplosion)?.();
+        }
+    } else if (typeof audio?.playMismatchingHit === 'function') {
+        audio.playMismatchingHit();
+    } else {
+        (audio?.playExplosion)?.();
+    }
     if (game.explosions) {
-        game.explosions.push(createExplosion(projectile.x, projectile.y, projectile.color));
+        game.explosions.push(
+            createExplosion(projectile.x, projectile.y, {
+                color: projectile.color,
+                variant: isColorMatch ? 'match' : 'mismatch'
+            })
+        );
     }
 
     if (enemy.hp <= 0) {
         game.enemies.splice(enemyIndex, 1);
-        game.energy += 1;
+        game.energy += gameConfig.player.energyPerKill;
+        if (typeof game.addScore === 'function') {
+            const scoreValue = Number.isFinite(game.scorePerKill)
+                ? game.scorePerKill
+                : gameConfig.scoring.perKill;
+            game.addScore(scoreValue);
+        }
         updateHUD(game);
     }
 
@@ -45,7 +69,8 @@ function findCollidingEnemy(projectile, enemies) {
 
 function calculateDamage(projectile, enemy) {
     const base = projectile.damage ?? 1;
-    const multiplier = projectile.color === enemy.color ? 1 : 0.4;
+    const mismatchMultiplier = gameConfig.projectiles.colorMismatchMultiplier;
+    const multiplier = projectile.color === enemy.color ? 1 : mismatchMultiplier;
     return base * multiplier;
 }
 

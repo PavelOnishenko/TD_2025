@@ -2,8 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { pathToFileURL } from 'node:url';
 import { resolve } from 'node:path';
-
-const moduleUrl = pathToFileURL(resolve('js/systems/crazyGamesIntegration.js')).href;
+const moduleUrl = new URL('../js/systems/crazyGamesIntegration.js', import.meta.url).href;
 let importCounter = 0;
 
 async function importFresh(env = {}) {

@@ -1,16 +1,27 @@
 import { drawEnemyEngineGlow } from '../systems/effects.js';
+import gameConfig from '../config/gameConfig.js';
 
 export default class Enemy {
-    constructor(maxHp, color, x, y, speedX, speedY) {
+    constructor(
+        maxHp,
+        color,
+        x,
+        y,
+        speedX = gameConfig.enemies.swarm.speed.x,
+        speedY = gameConfig.enemies.swarm.speed.y,
+        spriteKey = 'swarm'
+    ) {
         this.x = x;
         this.y = y;
-        this.w = 80;
-        this.h = 80;
+        const { width, height } = gameConfig.enemies.dimensions;
+        this.w = width;
+        this.h = height;
         this.speedX = speedX;
         this.speedY = speedY;
         this.maxHp = maxHp;
         this.hp = this.maxHp;
         this.color = color;
+        this.spriteKey = spriteKey;
         if (typeof Enemy._glowPhaseCursor !== 'number') {
             Enemy._glowPhaseCursor = 0;
         }
@@ -25,9 +36,11 @@ export default class Enemy {
     }
 
     draw(ctx, assets) {
-        const propertyName = `swarm_${this.color.charAt(0)}`;
+        const propertyName = `${this.spriteKey}_${this.color.charAt(0)}`;
         const sprite = assets[propertyName];
-        drawEnemyEngineGlow(ctx, this);
+        if (typeof Enemy.engineGlowDrawer === 'function') {
+            Enemy.engineGlowDrawer(ctx, this);
+        }
         ctx.drawImage(sprite, this.x, this.y, this.w, this.h);
 
         const barWidth = this.w;
@@ -102,13 +115,29 @@ export default class Enemy {
 }
 
 export class TankEnemy extends Enemy {
-    constructor(maxHp = 15, color = 'red', x = 0, y = 0) {
-        super(maxHp, color, x, y, 100, 0);
+    constructor(
+        maxHp = 15,
+        color = 'red',
+        x = 0,
+        y = 0,
+        speedX = gameConfig.enemies.tank.speed.x,
+        speedY = gameConfig.enemies.tank.speed.y
+    ) {
+        super(maxHp, color, x, y, speedX, speedY, 'tank');
     }
 }
 
 export class SwarmEnemy extends Enemy {
-    constructor(maxHp = 1, color = 'red', x = 0, y = 0) {
-        super(maxHp, color, x, y, 200, 0);
+    constructor(
+        maxHp = 1,
+        color = 'red',
+        x = 0,
+        y = 0,
+        speedX = gameConfig.enemies.swarm.speed.x,
+        speedY = gameConfig.enemies.swarm.speed.y
+    ) {
+        super(maxHp, color, x, y, speedX, speedY, 'swarm');
     }
 }
+
+Enemy.engineGlowDrawer = drawEnemyEngineGlow;

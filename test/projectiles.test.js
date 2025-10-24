@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { moveProjectiles, hitEnemy, handleProjectileHits } from '../js/core/projectiles.js';
+import gameConfig from '../js/config/gameConfig.js';
 
 function makeGame() {
     return {
@@ -98,8 +99,8 @@ test('hitEnemy removes enemy and updates energy when enemy dies', () => {
     assert.equal(result, true);
     assert.equal(game.projectiles.length, 0);
     assert.equal(game.enemies.length, 0);
-    assert.equal(game.energy, 1);
-    assert.equal(game.energyEl.textContent, '1');
+    assert.equal(game.energy, gameConfig.player.energyPerKill);
+    assert.equal(game.energyEl.textContent, String(gameConfig.player.energyPerKill));
     assert.equal(game.explosions.length, 1);
 });
 
@@ -117,7 +118,7 @@ test('handleProjectileHits removes offscreen and hit projectiles', () => {
     assert.equal(game.projectiles.length, 1);
     assert.strictEqual(game.projectiles[0], pMiss);
     assert.equal(game.enemies.length, 0);
-    assert.equal(game.energy, 1);
+    assert.equal(game.energy, gameConfig.player.energyPerKill);
     assert.equal(game.explosions.length, 1);
 });
 
@@ -131,7 +132,8 @@ test('hitEnemy deals reduced damage when colors differ', () => {
     const result = hitEnemy(game, projectile, 0);
 
     assert.equal(result, true);
-    assert.ok(Math.abs(enemy.hp - 0.6) < 1e-6);
+    const expectedHp = 1 - (projectile.damage ?? 1) * gameConfig.projectiles.colorMismatchMultiplier;
+    assert.ok(Math.abs(enemy.hp - expectedHp) < 1e-6);
     assert.equal(game.projectiles.length, 0);
     assert.equal(game.enemies.length, 1);
     assert.equal(game.energy, 0);

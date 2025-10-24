@@ -1,66 +1,142 @@
-import { updateHUD } from '../systems/ui.js';
 import { draw } from './render.js';
 import { moveProjectiles, handleProjectileHits } from './projectiles.js';
 import { enemyActions } from './gameEnemies.js';
 import { waveActions } from './gameWaves.js';
 import { callCrazyGamesEvent } from '../systems/crazyGamesIntegration.js';
-import { createGameAudio } from '../systems/audio.js';
-import { updateExplosions } from '../systems/effects.js';
+import { createGameAudio, getHowler } from '../systems/audio.js';
+import { createExplosion, updateExplosions, updateColorSwitchBursts } from '../systems/effects.js';
+import { saveBestScore } from '../systems/dataStore.js';
 import GameGrid from './gameGrid.js';
-import Tower from '../entities/Tower.js';
-import { clearGameState, loadGameState, saveGameState } from '../systems/dataStore.js';
 import { createPlatforms } from './platforms.js';
+import projectileManagement from './game/projectileManagement.js';
+import tankSchedule from './game/tankSchedule.js';
+import world from './game/world.js';
+import statePersistence from './game/statePersistence.js';
+import stateSetup from './game/stateSetup.js';
+import gameConfig from '../config/gameConfig.js';
 
-function createProjectileVisualState() {
-    const pulseOffset = Math.random() * Math.PI * 2;
-    const sparkleOffset = Math.random() * Math.PI * 2;
-    const jitterAngle = Math.random() * Math.PI * 2;
+function createScreenShakeState() {
+    const { frequency } = gameConfig.world.screenShake;
     return {
-        time: 0,
-        pulseOffset,
-        sparkleOffset,
-        jitterAngle,
-        pulseSpeed: 8 + Math.random() * 4,
-        shimmerSpeed: 6 + Math.random() * 4,
-        vibrationStrength: 0.35 + Math.random() * 0.15,
+        duration: 0,
+        elapsed: 0,
+        intensity: 0,
+        frequency,
+        seedX: Math.random() * Math.PI * 2,
+        seedY: Math.random() * Math.PI * 2,
     };
 }
 
 class Game {
-    constructor(canvas, { width = 540, height = 960, assets = null } = {}) {
+    constructor(canvas, options = {}) {
+        const {
+            width = gameConfig.world.logicalSize.width,
+            height = gameConfig.world.logicalSize.height,
+            assets = null,
+        } = options;
+        this.setupCanvas(canvas, width, height);
+        this.setupCollections();
+        this.setupEnvironment();
+        this.initStats();
+        this.configureAssets(assets);
+        this.update = this.update.bind(this);
+        this.restoreSavedState();
+    }
+
+    setupCanvas(canvas, width, height) {
         this.canvas = canvas;
         this.logicalW = width;
         this.logicalH = height;
         this.ctx = canvas.getContext('2d');
         this.viewport = { scale: 1, offsetX: 0, offsetY: 0, dpr: 1 };
+    }
+
+    setupCollections() {
         this.enemies = [];
         this.towers = [];
         this.projectiles = [];
         this.explosions = [];
-        this.projectileSpeed = 800;
-        this.projectileRadius = 6;
+        this.colorSwitchBursts = [];
+        this.mergeAnimations = [];
+        this.energyPopups = [];
+        this.projectileSpeed = gameConfig.projectiles.speed;
+        this.projectileRadius = gameConfig.projectiles.baseRadius;
         this.maxProjectileRadius = this.projectileRadius;
-        this.projectileSpawnInterval = 500;
+        this.projectileSpawnInterval = gameConfig.projectiles.spawnInterval;
         this.lastTime = 0;
         this.elapsedTime = 0;
         this.hasStarted = false;
-        this.initStats();
-        this.base = { x: 1100, y: this.logicalH - 60, w: 40, h: 40 };
-        console.log('Base position:', this.base.x, this.base.y);
-        this.platforms = createPlatforms({ width: this.logicalW, height: this.logicalH });
-        this.grid = new GameGrid();
+        this.isRestoringState = false;
+        this.persistenceEnabled = true;
+        this.mergeHintPairs = [];
+        this.screenShake = createScreenShakeState();
+        this.audioMuted = false;
+        this.musicEnabled = true;
+        this.musicPausedByFocus = false;
+        this.isPaused = false;
+        this.pauseReason = null;
+        this.pauseListeners = new Set();
+        this.wave5AdShown = false;
+        this.wave5AdPending = false;
+        this.wave5AdRetryHandle = null;
+    }
+
+    setupEnvironment() {
+        const baseConfig = gameConfig.world.base;
+        this.base = {
+            x: baseConfig.x,
+            y: this.logicalH - baseConfig.bottomOffset,
+            w: baseConfig.width,
+            h: baseConfig.height,
+        };
+        this.platforms = createPlatforms({
+            width: this.logicalW,
+            height: this.logicalH,
+            platformConfigs: gameConfig.world.platforms,
+        });
+        this.grid = new GameGrid(gameConfig.world.grid);
         this.topCells = this.grid.topCells;
         this.bottomCells = this.grid.bottomCells;
         this.worldBounds = this.computeWorldBounds();
+    }
+
+    configureAssets(assets) {
         this._assets = null;
         this.audio = createGameAudio();
-        if (assets) {
-            this.assets = assets;
+        this.applyAudioPreferences();
+        if (!assets) {
+            return;
         }
-        this.isRestoringState = false;
-        this.persistenceEnabled = true;
-        this.update = this.update.bind(this);
-        this.restoreSavedState();
+        this.assets = assets;
+    }
+
+    getCurrentScore() {
+        const current = Number.isFinite(this.score) ? this.score : 0;
+        if (current < 0) {
+            this.score = 0;
+            return 0;
+        }
+        return current;
+    }
+
+    addScore(amount) {
+        return this.changeScore(amount);
+    }
+
+    changeScore(amount) {
+        const delta = Number.isFinite(amount) ? amount : 0;
+        if (!Number.isFinite(delta) || delta === 0) {
+            return this.getCurrentScore();
+        }
+        const current = this.getCurrentScore();
+        const next = Math.max(0, Math.floor(current + delta));
+        this.score = next;
+        const best = Number.isFinite(this.bestScore) ? this.bestScore : 0;
+        if (next > best) {
+            this.bestScore = next;
+            saveBestScore(next);
+        }
+        return next;
     }
 
     get assets() {
@@ -69,321 +145,90 @@ class Game {
 
     set assets(value) {
         this._assets = value;
-        if (value?.sounds) {
-            this.audio = createGameAudio(value.sounds);
-        } else {
-            this.audio = createGameAudio();
-        }
+        const sounds = value?.sounds ?? null;
+        this.audio = sounds ? createGameAudio(sounds) : createGameAudio();
+        this.applyAudioPreferences();
     }
 
-    initStats() {
-        this.initialLives = 5;
-        this.initialEnergy = 50;
-        this.lives = this.initialLives;
-        this.energy = this.initialEnergy;
-        this.wave = 1;
-        this.maxWaves = 10;
-        this.towerCost = 12;
-        this.switchCost = 4;
-        this.waveInProgress = false;
-        this.waveConfigs = this.getWaveConfigs();
-        this.tankBurstSchedule = [];
-        this.tankBurstSet = new Set();
-        this.tankScheduleWave = 0;
-        const cfg = this.waveConfigs[0];
-        this.prepareTankScheduleForWave(cfg, 1);
-        this.spawnInterval = cfg.interval;
-        this.enemiesPerWave = cfg.cycles;
-        this.spawned = 0;
-        this.spawnTimer = 0;
-        this.enemyHpPerWave = [2, 3, 4, 5, 6, 7, 8, 9, 10, 12];
-        this.gameOver = false;
-        this.shootingInterval = 500;
-        this.colorProbStart = 0.5;
-        this.colorProbEnd = 0.5;
-    }
-
-    restoreSavedState() {
-        const savedState = loadGameState();
-        if (!savedState || typeof savedState !== 'object') {
-            return;
+    addPauseListener(listener) {
+        if (typeof listener !== 'function') {
+            return () => {};
         }
-
-        if (savedState.version && savedState.version !== 1) {
-            return;
-        }
-
-        this.isRestoringState = true;
-
-        const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
-        const toInt = (value, fallback) => {
-            const num = Number(value);
-            return Number.isFinite(num) ? Math.floor(num) : fallback;
+        this.pauseListeners.add(listener);
+        return () => {
+            this.pauseListeners.delete(listener);
         };
-        const targetWave = clamp(toInt(savedState.wave, 1), 1, this.maxWaves);
-
-        this.lives = clamp(toInt(savedState.lives, this.initialLives), 0, 99);
-        const savedEnergy = savedState.energy ?? savedState.gold;
-        this.energy = clamp(toInt(savedEnergy, this.initialEnergy), 0, 9999);
-        this.wave = targetWave;
-        this.waveInProgress = false;
-        this.spawned = 0;
-        this.spawnTimer = 0;
-        this.enemies = [];
-        this.projectiles = [];
-        this.explosions = [];
-        this.maxProjectileRadius = this.projectileRadius;
-
-        const cfg = this.waveConfigs[this.wave - 1] ?? this.waveConfigs.at(-1);
-        this.spawnInterval = cfg.interval;
-        this.enemiesPerWave = cfg.cycles;
-        this.prepareTankScheduleForWave(cfg, this.wave);
-
-        this.restoreTowers(savedState.towers);
-
-        this.isRestoringState = false;
     }
 
-    restoreTowers(towersState) {
-        this.towers = [];
-        this.grid.resetCells();
-        if (!Array.isArray(towersState)) {
+    emitPauseState(paused, reason) {
+        if (!this.pauseListeners || this.pauseListeners.size === 0) {
             return;
         }
-
-        for (const towerState of towersState) {
-            const cell = this.resolveCellFromState(towerState?.cellId);
-            if (!cell) {
-                continue;
+        for (const listener of this.pauseListeners) {
+            try {
+                listener(paused, reason);
+            } catch (error) {
+                console.warn('Pause listener failed', error);
             }
-
-            const color = typeof towerState?.color === 'string' ? towerState.color : 'red';
-            const level = Number(towerState?.level) || 1;
-            const tower = new Tower(cell.x, cell.y, color, level);
-            tower.alignToCell(cell);
-            tower.cell = cell;
-            tower.lastShot = 0;
-            tower.flashTimer = 0;
-            tower.placementFlashTimer = 0;
-            cell.occupied = true;
-            cell.tower = tower;
-            this.towers.push(tower);
         }
     }
 
-    resolveCellFromState(identifier) {
-        if (typeof identifier !== 'string') {
-            return null;
-        }
-        const [group, indexRaw] = identifier.split(':');
-        const index = Number(indexRaw);
-        if (!Number.isInteger(index) || index < 0) {
-            return null;
-        }
-        if (group === 'top') {
-            return this.topCells[index] ?? null;
-        }
-        if (group === 'bottom') {
-            return this.bottomCells[index] ?? null;
-        }
-        return null;
-    }
-
-    createCellIdentifier(cell) {
-        const topIndex = this.topCells.indexOf(cell);
-        if (topIndex !== -1) {
-            return `top:${topIndex}`;
-        }
-        const bottomIndex = this.bottomCells.indexOf(cell);
-        if (bottomIndex !== -1) {
-            return `bottom:${bottomIndex}`;
-        }
-        return null;
-    }
-
-    getPersistentState() {
-        const towerState = this.towers
-            .filter(tower => tower?.cell)
-            .map(tower => ({
-                cellId: this.createCellIdentifier(tower.cell),
-                color: tower.color,
-                level: tower.level
-            }))
-            .filter(entry => entry.cellId !== null);
-
-        return {
-            version: 1,
-            lives: this.lives,
-            energy: this.energy,
-            wave: this.wave,
-            towers: towerState
-        };
-    }
-
-    persistState() {
-        if (!this.persistenceEnabled || this.isRestoringState || this.gameOver) {
-            return;
-        }
-        const snapshot = this.getPersistentState();
-        saveGameState(snapshot);
-    }
-
-    clearSavedState() {
-        clearGameState();
-    }
-
-    getWaveConfigs() {
-        return [
-            { interval: 1, cycles: 20, tanksCount: 0 },
-            { interval: 1, cycles: 25, tanksCount: 0 },
-            { interval: 1, cycles: 22, tanksCount: 2 },
-            { interval: 1, cycles: 25, tanksCount: 3 },
-            { interval: 1, cycles: 28, tanksCount: 4 },
-            { interval: 1, cycles: 30, tanksCount: 5 },
-            { interval: 1, cycles: 32, tanksCount: 6 },
-            { interval: 1, cycles: 35, tanksCount: 9 },
-            { interval: 1, cycles: 38, tanksCount: 11 },
-            { interval: 1, cycles: 40, tanksCount: 16 }
-        ];
-    }
-
-    prepareTankScheduleForWave(cfg, waveNumber) {
-        if (!cfg) {
-            this.tankBurstSchedule = [];
-            this.tankBurstSet = new Set();
-            this.tankScheduleWave = waveNumber;
-            return;
-        }
-        this.tankBurstSchedule = this.generateTankBurstSchedule(cfg.cycles, cfg.tanksCount ?? 0);
-        this.tankBurstSet = new Set(this.tankBurstSchedule);
-        this.tankScheduleWave = waveNumber;
-    }
-
-    generateTankBurstSchedule(totalCycles, tanksCount) {
-        const total = Math.max(0, Math.floor(totalCycles ?? 0));
-        const requested = Math.max(0, Math.floor(tanksCount ?? 0));
-        if (total === 0 || requested === 0) {
-            return [];
-        }
-
-        const clampedCount = Math.min(requested, total);
-        const positions = Array.from({ length: total }, (_, i) => i + 1);
-        for (let i = positions.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [positions[i], positions[j]] = [positions[j], positions[i]];
-        }
-
-        const selection = positions.slice(0, clampedCount);
-        selection.sort((a, b) => a - b);
-        return selection;
-    }
-
-    getAllCells() {
-        return this.grid.getAllCells();
-    }
-
-    getProjectileRadiusForLevel(level) {
-        const baseRadius = this.projectileRadius ?? 6;
-        const normalizedLevel = Math.max(1, Math.min(Number(level) || 1, 3));
-        const radiusIncrease = (normalizedLevel - 1) * 2;
-        return baseRadius + radiusIncrease;
-    }
-
-    spawnProjectile(angle, tower) {
-        const c = tower.center();
-        const previousMaxRadius = this.maxProjectileRadius ?? this.projectileRadius ?? 0;
-        const radius = this.getProjectileRadiusForLevel(tower?.level);
-        this.projectiles.push({
-            x: c.x,
-            y: c.y,
-            vx: Math.cos(angle) * this.projectileSpeed,
-            vy: Math.sin(angle) * this.projectileSpeed,
-            color: tower.color,
-            damage: tower.damage,
-            anim: createProjectileVisualState(),
-            radius,
-        });
-        this.maxProjectileRadius = Math.max(previousMaxRadius, radius);
-        if (this.maxProjectileRadius !== previousMaxRadius) {
-            this.worldBounds = this.computeWorldBounds();
-        }
-        tower.triggerFlash();
-        this.audio.playFire();
-    }
-
-    switchTowerColor(tower) {
-        if (this.energy < this.switchCost)
+    pause(reason = 'manual') {
+        if (this.gameOver) {
             return false;
-        tower.color = tower.color === 'red' ? 'blue' : 'red';
-        this.energy -= this.switchCost;
-        updateHUD(this);
+        }
+        const wasPaused = this.isPaused;
+        const previousReason = this.pauseReason;
+        this.isPaused = true;
+        this.pauseReason = reason;
+        if (typeof this.audio?.stopMusic === 'function') {
+            this.audio.stopMusic();
+        }
+        if (!wasPaused || previousReason !== reason) {
+            this.emitPauseState(true, reason);
+        }
+        return !wasPaused || previousReason !== reason;
+    }
+
+    resume(options = {}) {
+        const { expectedReason = null, force = false, reason = null } = options;
+        const wasPaused = this.isPaused;
+        const previousReason = this.pauseReason;
+        if (!wasPaused) {
+            if (force) {
+                this.pauseReason = null;
+                this.emitPauseState(false, reason ?? expectedReason ?? previousReason ?? 'manual');
+            }
+            return false;
+        }
+        if (!force && expectedReason && previousReason !== expectedReason) {
+            return false;
+        }
+        this.isPaused = false;
+        this.pauseReason = null;
+        this.emitPauseState(false, reason ?? expectedReason ?? previousReason ?? 'manual');
+        if (typeof this.audio?.playMusic === 'function' && this.hasStarted && !this.gameOver) {
+            this.audio.playMusic();
+        }
         return true;
     }
 
-    calcDelta(timestamp) {
-        const rawDt = (timestamp - this.lastTime) / 1000;
-        this.lastTime = timestamp;
-        const dt = Number.isFinite(rawDt) ? Math.max(0, rawDt) : 0;
-        this.elapsedTime = (this.elapsedTime ?? 0) + dt;
-        return dt;
+    togglePause() {
+        if (this.isPaused) {
+            if (this.pauseReason === 'ad') {
+                return false;
+            }
+            return this.resume();
+        }
+        return this.pause();
     }
 
-    computeWorldBounds() {
-        const bounds = {
-            minX: Number.POSITIVE_INFINITY,
-            maxX: Number.NEGATIVE_INFINITY,
-            minY: Number.POSITIVE_INFINITY,
-            maxY: Number.NEGATIVE_INFINITY,
-        };
+    pauseForAd() {
+        return this.pause('ad');
+    }
 
-        const expand = (x, y, w = 0, h = 0) => {
-            bounds.minX = Math.min(bounds.minX, x);
-            bounds.minY = Math.min(bounds.minY, y);
-            bounds.maxX = Math.max(bounds.maxX, x + w);
-            bounds.maxY = Math.max(bounds.maxY, y + h);
-        };
-
-        const cells = this.grid?.getAllCells?.();
-        if (Array.isArray(cells)) {
-            cells.forEach(cell => {
-                if (cell && typeof cell.x === 'number' && typeof cell.y === 'number') {
-                    expand(cell.x, cell.y, cell.w ?? 0, cell.h ?? 0);
-                }
-            });
-        }
-
-        if (this.base) {
-            expand(this.base.x, this.base.y, this.base.w ?? 0, this.base.h ?? 0);
-        }
-
-        if (typeof this.getDefaultEnemyCoords === 'function') {
-            const spawn = this.getDefaultEnemyCoords();
-            if (spawn && typeof spawn.x === 'number' && typeof spawn.y === 'number') {
-                expand(spawn.x, spawn.y, 0, 0);
-            }
-        }
-
-        const hasFiniteBounds = [bounds.minX, bounds.maxX, bounds.minY, bounds.maxY].every(Number.isFinite);
-        if (!hasFiniteBounds) {
-            return {
-                minX: 0,
-                maxX: this.canvas?.width ?? this.logicalW,
-                minY: 0,
-                maxY: this.canvas?.height ?? this.logicalH,
-            };
-        }
-
-        const effectiveRadius = Math.max(
-            this.projectileRadius ?? 0,
-            this.maxProjectileRadius ?? 0,
-        );
-        const margin = Math.max(40, effectiveRadius * 2);
-        return {
-            minX: bounds.minX - margin,
-            maxX: bounds.maxX + margin,
-            minY: bounds.minY - margin,
-            maxY: bounds.maxY + margin,
-        };
+    resumeAfterAd() {
+        return this.resume({ expectedReason: 'ad', reason: 'ad' });
     }
 
     getTowerAt(cell) {
@@ -391,7 +236,14 @@ class Game {
     }
 
     update(timestamp) {
-        if (this.gameOver) return;
+        if (this.gameOver) {
+            return;
+        }
+        if (this.isPaused) {
+            this.lastTime = timestamp;
+            requestAnimationFrame(this.update);
+            return;
+        }
         const dt = this.calcDelta(timestamp);
         this.towers.forEach(tower => tower.update(dt));
         this.spawnEnemiesIfNeeded(dt);
@@ -399,62 +251,197 @@ class Game {
         this.towerAttacks(timestamp);
         moveProjectiles(this, dt);
         handleProjectileHits(this);
+        this.updateMergeAnimations(dt);
         updateExplosions(this.explosions, dt);
+        updateColorSwitchBursts(this.colorSwitchBursts, dt);
+        this.updateEnergyPopups(dt);
         this.grid.fadeHighlights(dt);
+        this.grid.fadeMergeHints(dt);
+        this.updateMergeHints();
         this.checkWaveCompletion();
+        this.updateScreenShake(dt);
         draw(this);
-        if (!this.gameOver) 
+        if (!this.gameOver) {
             requestAnimationFrame(this.update);
+        }
     }
 
-    resetState() {
-        this.lives = this.initialLives;
-        this.energy = this.initialEnergy;
-        this.wave = 1;
-        this.towers = [];
-        this.enemies = [];
-        this.projectiles = [];
-        this.explosions = [];
-        this.maxProjectileRadius = this.projectileRadius;
-        this.waveInProgress = false;
-        this.nextWaveBtn.disabled = false;
-        if (this.mergeBtn) {
-            this.mergeBtn.disabled = false;
+    addEnergyPopup(text, x, y, options = {}) {
+        if (!Array.isArray(this.energyPopups)) {
+            this.energyPopups = [];
         }
-        const cfg = this.waveConfigs[0];
-        this.spawnInterval = cfg.interval;
-        this.enemiesPerWave = cfg.cycles;
-        this.prepareTankScheduleForWave(cfg, 1);
-        this.grid.resetCells();
-        this.spawned = 0;
-        this.spawnTimer = 0;
-        this.gameOver = false;
-        this.elapsedTime = 0;
-        if (this.statusEl) {
-            this.statusEl.textContent = '';
-            this.statusEl.style.color = '';
+
+        const duration = Math.max(0.2, Number.isFinite(options.duration) ? options.duration : 1);
+        const popup = {
+            text: typeof text === 'string' ? text : `${text ?? ''}`,
+            startX: Number.isFinite(x) ? x : 0,
+            startY: Number.isFinite(y) ? y : 0,
+            elapsed: 0,
+            duration,
+            driftX: Number.isFinite(options.driftX) ? options.driftX : 0,
+            driftY: Number.isFinite(options.driftY) ? options.driftY : -60,
+            color: options.color ?? '#facc15',
+            stroke: options.stroke ?? 'rgba(0,0,0,0.5)',
+            font: options.font ?? '600 26px "Baloo 2", sans-serif',
+        };
+
+        this.energyPopups.push(popup);
+    }
+
+    updateEnergyPopups(dt) {
+        if (!Array.isArray(this.energyPopups) || this.energyPopups.length === 0) {
+            return;
         }
-        if (this.endOverlay) {
-            this.endOverlay.classList.add('hidden');
+
+        for (let i = this.energyPopups.length - 1; i >= 0; i--) {
+            const popup = this.energyPopups[i];
+            popup.elapsed = (popup.elapsed ?? 0) + dt;
+            if (popup.elapsed >= (popup.duration ?? 0.8)) {
+                this.energyPopups.splice(i, 1);
+            }
         }
-        if (this.endMenu) {
-            this.endMenu.classList.remove('win');
-            this.endMenu.classList.remove('lose');
+    }
+
+    startTowerMergeAnimation(targetTower, consumedTower) {
+        if (!targetTower || !consumedTower) {
+            return;
         }
-        if (this.endMessageEl) {
-            this.endMessageEl.textContent = '';
+
+        if (typeof targetTower.triggerMergePulse === 'function') {
+            targetTower.triggerMergePulse();
         }
-        if (this.endDetailEl) {
-            this.endDetailEl.textContent = '';
+
+        const duration = 0.48;
+        const startPosition = { x: consumedTower.x, y: consumedTower.y };
+        const endPosition = { x: targetTower.x, y: targetTower.y };
+        const startCenter = consumedTower.center();
+        const endCenter = targetTower.center();
+        const color = targetTower.color ?? 'red';
+        const fromLevel = Math.max(1, consumedTower.level ?? 1);
+        const colorKey = (color[0] ?? 'r').toLowerCase();
+        const spriteKey = `tower_${fromLevel}${colorKey}`;
+        const width = consumedTower.w ?? targetTower.w ?? 0;
+        const height = consumedTower.h ?? targetTower.h ?? 0;
+        const maxDimension = Math.max(width, height);
+
+        const animation = {
+            elapsed: 0,
+            duration,
+            start: startPosition,
+            end: endPosition,
+            startCenter,
+            endCenter,
+            width,
+            height,
+            color,
+            spriteKey,
+            targetTower,
+            orbRadius: maxDimension * 0.26,
+            trailWidth: maxDimension * 0.24,
+            explosionTriggered: false,
+        };
+
+        if (!Array.isArray(this.mergeAnimations)) {
+            this.mergeAnimations = [];
         }
-        updateHUD(this);
-        this.persistState();
+        this.mergeAnimations.push(animation);
+    }
+
+    updateMergeAnimations(dt) {
+        if (!Array.isArray(this.mergeAnimations) || this.mergeAnimations.length === 0) {
+            return;
+        }
+
+        for (let i = this.mergeAnimations.length - 1; i >= 0; i--) {
+            const animation = this.mergeAnimations[i];
+            animation.elapsed = (animation.elapsed ?? 0) + dt;
+
+            if (!animation.explosionTriggered && animation.elapsed >= animation.duration * 0.85) {
+                this.triggerMergeExplosion(animation);
+            }
+
+            if (animation.elapsed >= animation.duration) {
+                this.mergeAnimations.splice(i, 1);
+            }
+        }
+    }
+
+    triggerMergeExplosion(animation) {
+        if (!animation || animation.explosionTriggered) {
+            return;
+        }
+
+        animation.explosionTriggered = true;
+        const targetTower = animation.targetTower;
+        if (!targetTower || typeof targetTower.center !== 'function') {
+            return;
+        }
+
+        const center = targetTower.center();
+        const yOffset = (targetTower.h ?? 0) * 0.1;
+        const explosion = createExplosion(center.x, center.y - yOffset, {
+            color: animation.color,
+            variant: 'merge'
+        });
+        this.explosions.push(explosion);
+        if (this.audio) {
+            if (typeof this.audio.playMerge === 'function') {
+                this.audio.playMerge();
+            } else if (typeof this.audio.playExplosion === 'function') {
+                this.audio.playExplosion();
+            }
+        }
+    }
+  
+    updateScreenShake(dt) {
+        const shake = this.screenShake;
+        if (!shake || shake.duration <= 0) {
+            return;
+        }
+
+        shake.elapsed = Math.min(shake.elapsed + dt, shake.duration);
+        if (shake.elapsed >= shake.duration) {
+            this.resetScreenShake();
+        }
+    }
+
+    resetScreenShake() {
+        const shake = this.screenShake ?? createScreenShakeState();
+        shake.duration = 0;
+        shake.elapsed = 0;
+        shake.intensity = 0;
+        shake.frequency = 42;
+        shake.seedX = Math.random() * Math.PI * 2;
+        shake.seedY = Math.random() * Math.PI * 2;
+        this.screenShake = shake;
+    }
+
+    triggerBaseHitEffects() {
+        if (!this.screenShake) {
+            this.screenShake = createScreenShakeState();
+        }
+
+        const shake = this.screenShake;
+        const baseDuration = 0.4;
+        const baseIntensity = 18;
+        shake.duration = baseDuration;
+        shake.elapsed = 0;
+        const stackedIntensity = Math.min(30, (shake.intensity ?? 0) * 0.35 + baseIntensity);
+        shake.intensity = stackedIntensity;
+        shake.frequency = 44;
+        shake.seedX = Math.random() * Math.PI * 2;
+        shake.seedY = Math.random() * Math.PI * 2;
+
+        if (typeof this.audio?.playBaseHit === 'function') {
+            this.audio.playBaseHit();
+        }
     }
 
     restart() {
+        this.resume({ force: true, reason: 'system' });
         const wasGameOver = this.gameOver;
         this.resetState();
-        this.audio.playMusic();
+        this.playMusicIfAllowed();
         if (wasGameOver) {
             this.lastTime = performance.now();
             requestAnimationFrame(this.update);
@@ -464,14 +451,69 @@ class Game {
 
     run() {
         this.hasStarted = true;
+        this.resume({ force: true, reason: 'system' });
         callCrazyGamesEvent('gameplayStart');
-        this.audio.playMusic();
+        this.playMusicIfAllowed();
         this.elapsedTime = 0;
         this.lastTime = performance.now();
         requestAnimationFrame(this.update);
     }
+
+    setAudioMuted(muted) {
+        this.audioMuted = Boolean(muted);
+        const howler = getHowler();
+        if (howler && typeof howler.mute === 'function') {
+            howler.mute(this.audioMuted);
+        }
+        if (this.audioMuted && typeof this.audio?.stopMusic === 'function') {
+            this.audio.stopMusic();
+        }
+        if (!this.audioMuted) {
+            this.playMusicIfAllowed();
+        }
+    }
+
+    setMusicEnabled(enabled) {
+        this.musicEnabled = Boolean(enabled);
+        if (!this.musicEnabled && typeof this.audio?.stopMusic === 'function') {
+            this.audio.stopMusic();
+        }
+        if (this.musicEnabled) {
+            this.playMusicIfAllowed();
+        }
+    }
+
+    playMusicIfAllowed() {
+        if (!this.musicEnabled || this.audioMuted) {
+            return;
+        }
+        if (!this.shouldPlayMusic()) {
+            return;
+        }
+        if (typeof this.audio?.playMusic === 'function') {
+            this.audio.playMusic();
+        }
+    }
+
+    shouldPlayMusic() {
+        return Boolean(this.hasStarted && !this.gameOver);
+    }
+
+    applyAudioPreferences() {
+        this.setAudioMuted(this.audioMuted);
+        this.setMusicEnabled(this.musicEnabled);
+    }
 }
 
-Object.assign(Game.prototype, enemyActions, waveActions);
+Object.assign(
+    Game.prototype,
+    projectileManagement,
+    tankSchedule,
+    world,
+    statePersistence,
+    stateSetup,
+    enemyActions,
+    waveActions,
+);
 
 export default Game;

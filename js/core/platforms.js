@@ -1,16 +1,16 @@
 import Platform from '../entities/Platform.js';
+import gameConfig from '../config/gameConfig.js';
 
-const PLATFORM_CONFIGS = [
-    { xFactor: 0.4, yFactor: 0.55, scale: 1.2 },
-    { xFactor: 0.6, yFactor: 0.85, scale: 1.2 }
-];
+export function createPlatforms({ width, height, platformConfigs = gameConfig.world.platforms } = {}) {
+    if (!Array.isArray(platformConfigs)) {
+        return [];
+    }
 
-export function createPlatforms({ width, height }) {
-    return PLATFORM_CONFIGS.map(({ xFactor, yFactor, scale }) => (
+    return platformConfigs.map(({ xFactor, yFactor, scale }) => (
         new Platform({
             x: width * xFactor,
             y: height * yFactor,
-            scale
+            scale,
         })
     ));
 }
