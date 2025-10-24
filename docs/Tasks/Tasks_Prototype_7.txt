@@ -7,7 +7,7 @@ Add pause button and Esc toggle. Use a flag in Game.update() to freeze gameplay.
 003 | DONE | Add Mute button and auto-mute, and ALSO separate button for music
 Add mute/unmute toggle in HUD using Howler.mute(). Save mute setting in data storage. Stop music when window loses focus, resume if not muted when focus returns.
 
-004 | INPRO | Adjust difficulty and pacing
+004 | CANCEL | Adjust difficulty and pacing
 Tune waves to last 3–5 minutes total. Start easy, scale HP and spawn rate each wave. Balance energy rewards to allow upgrades without stalling.
 
 005 | CANCEL | Prevent freezes after ads or restart
