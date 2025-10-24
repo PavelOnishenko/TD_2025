@@ -117,7 +117,6 @@ const stateSetup = {
         this.spawnTimer = 0;
         this.enemyHpPerWave = [...waves.enemyHpByWave];
         this.gameOver = false;
-        this.shootingInterval = player.shootingInterval;
         this.colorProbStart = player.colorProbability.start;
         this.colorProbEnd = player.colorProbability.end;
         this.score = 0;

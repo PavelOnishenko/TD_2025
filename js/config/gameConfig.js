@@ -36,50 +36,44 @@ export const gameConfig = {
         towerCost: 12,
         switchCost: 4,
         maxWaves: 10,
-        shootingInterval: 500,
         energyPerKill: 1,
         energyPerWave: 3,
         colorProbability: {
+            // todo remove start and end, they are re-initialized with random numbers 
+            // at the beginning of each wave
             start: 0.5,
             end: 0.5,
             minDifference: 0.35,
         },
     },
     projectiles: {
-        speed: 800,
-        baseRadius: 6,
-        spawnInterval: 500,
-        radiusPerLevel: 2,
-        colorMismatchMultiplier: 0.4,
+        speed: 700,
+        baseRadius: 18,
+        spawnInterval: 60,
+        radiusPerLevel: 5,
+        colorMismatchMultiplier: 0.3,
     },
     towers: {
-        width: 60,
-        height: 90,
+        width: 70,
+        height: 105,
         baseRange: 140,
         rangePerLevel: 0.2,
         rangeBonusMultiplier: 1.3,
         baseDamage: 1,
         damagePerLevel: 0.8,
         flashDuration: 0.12,
-        placementFlashDuration: 0.35,
-        mergePulseDuration: 0.45,
-        mergePulseWaveDuration: 0.6,
-        errorPulseDuration: 0.45,
+        placementFlashDuration: 1.35,
+        mergePulseDuration: 0.45, // todo what does this influence?
+        mergePulseWaveDuration: 0.6, // todo what does this influence?
+        errorPulseDuration: 0.45, // todo what does this influence?
         glowSpeeds: [1.8, 2.1, 2.4],
     },
     enemies: {
         defaultSpawn: { x: -600, y: 600 },
         dimensions: { width: 80, height: 80 },
-        tank: {
-            hpMultiplier: 4,
-            speed: { x: 100, y: 0 },
-        },
-        swarm: {
-            groupSize: 3,
-            spacing: 40,
-            hpFactor: 0.5,
-            speed: { x: 200, y: 0 },
-        },
+        tank: { hpMultiplier: 50, speed: { x: 100, y: 0 }, },
+        // todo hpFactor and hpMultiplier should be the same thing
+        swarm: { groupSize: 3, spacing: 40, hpFactor: 5, speed: { x: 200, y: 0 }, },
     },
     waves: {
         schedule: [
