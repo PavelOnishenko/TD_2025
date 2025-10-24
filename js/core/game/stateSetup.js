@@ -78,6 +78,13 @@ function resetGame(game) {
     resetStatus(game);
     resetEndOverlay(game);
     resetEndMessages(game);
+    const timerHost = typeof window !== 'undefined' ? window : globalThis;
+    if (game.wave5AdRetryHandle && typeof timerHost?.clearTimeout === 'function') {
+        timerHost.clearTimeout(game.wave5AdRetryHandle);
+    }
+    game.wave5AdRetryHandle = null;
+    game.wave5AdPending = false;
+    game.wave5AdShown = false;
     updateHUD(game);
     game.persistState();
     if (game.tutorial) {

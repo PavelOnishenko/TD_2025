@@ -70,6 +70,9 @@ class Game {
         this.isPaused = false;
         this.pauseReason = null;
         this.pauseListeners = new Set();
+        this.wave5AdShown = false;
+        this.wave5AdPending = false;
+        this.wave5AdRetryHandle = null;
     }
 
     setupEnvironment() {
