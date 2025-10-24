@@ -1,5 +1,8 @@
 import { updateHUD, endGame, updateWavePhaseIndicator } from '../systems/ui.js';
 import gameConfig from '../config/gameConfig.js';
+import { showCrazyGamesAdWithPause } from '../systems/ads.js';
+
+const SCORE_WAVE_CLEAR = 150;
 
 export const waveActions = {
     startWave() {
@@ -140,9 +143,55 @@ export const waveActions = {
             if (typeof this.addScore === 'function') {
                 this.addScore(this.waveClearScore);
             }
+            const completedWave = this.wave;
             this.wave += 1;
             this.energy += gameConfig.player.energyPerWave;
             updateHUD(this);
+            this.triggerWaveAdIfNeeded(completedWave);
         }
-    }
+    },
+
+    triggerWaveAdIfNeeded(completedWave) {
+        if (completedWave !== 5) {
+            return;
+        }
+        if (this.wave5AdShown || this.wave5AdPending) {
+            return;
+        }
+        this.wave5AdPending = true;
+
+        const scheduleRetry = (delayMs) => {
+            const host = typeof window !== 'undefined' ? window : globalThis;
+            if (typeof host?.setTimeout !== 'function') {
+                this.wave5AdPending = false;
+                return;
+            }
+            if (this.wave5AdRetryHandle && typeof host?.clearTimeout === 'function') {
+                host.clearTimeout(this.wave5AdRetryHandle);
+            }
+            this.wave5AdRetryHandle = host.setTimeout(() => {
+                this.wave5AdRetryHandle = null;
+                this.wave5AdPending = false;
+                this.triggerWaveAdIfNeeded(5);
+            }, delayMs);
+        };
+
+        Promise.resolve()
+            .then(() => showCrazyGamesAdWithPause(this, { reason: 'wave-5', adType: 'midgame' }))
+            .then(result => {
+                if (result?.shown) {
+                    this.wave5AdShown = true;
+                    this.wave5AdPending = false;
+                } else if (result?.reason === 'cooldown') {
+                    const delay = Math.max(1000, Math.ceil(result.cooldownRemaining ?? 0));
+                    scheduleRetry(delay);
+                }
+            })
+            .catch(error => console.warn('Wave ad failed', error))
+            .finally(() => {
+                if (!this.wave5AdShown && !this.wave5AdRetryHandle) {
+                    this.wave5AdPending = false;
+                }
+            });
+    },
 };

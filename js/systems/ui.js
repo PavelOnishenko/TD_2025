@@ -1,5 +1,6 @@
 import Tower from '../entities/Tower.js';
 import { callCrazyGamesEvent } from './crazyGamesIntegration.js';
+import { showCrazyGamesAdWithPause } from './ads.js';
 import { saveAudioSettings } from './dataStore.js';
 import { attachTutorial } from './tutorial.js';
 
@@ -94,18 +95,44 @@ function bindButtons(game) {
         game.mergeBtn.addEventListener('click', handleMerge);
         game.mergeBtn.disabled = game.waveInProgress;
     }
-    const handleRestart = () => {
-        game.restart();
-        hideEndScreen(game);
-        if (game.mergeBtn) {
-            game.mergeBtn.disabled = false;
+    const handleRestart = async () => {
+        if (game.restartBtn && game.restartBtn.disabled) {
+            return;
         }
-        if (game.pauseBtn) {
-            game.pauseBtn.disabled = false;
+        if (game.restartBtn) {
+            game.restartBtn.disabled = true;
         }
-        if (game.tutorial) {
-            game.tutorial.reset();
-            game.tutorial.start();
+        const endRestartBtn = game.endRestartBtn;
+        if (endRestartBtn) {
+            endRestartBtn.disabled = true;
+        }
+
+        try {
+            await showCrazyGamesAdWithPause(game, { reason: 'restart', adType: 'midgame' });
+        } catch (error) {
+            console.warn('Restart ad failed', error);
+        }
+
+        try {
+            game.restart();
+            hideEndScreen(game);
+            if (game.mergeBtn) {
+                game.mergeBtn.disabled = false;
+            }
+            if (game.pauseBtn) {
+                game.pauseBtn.disabled = false;
+            }
+            if (game.tutorial) {
+                game.tutorial.reset();
+                game.tutorial.start();
+            }
+        } finally {
+            if (game.restartBtn) {
+                game.restartBtn.disabled = false;
+            }
+            if (endRestartBtn) {
+                endRestartBtn.disabled = false;
+            }
         }
     };
     game.restartBtn.addEventListener('click', handleRestart);
