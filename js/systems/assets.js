@@ -78,6 +78,44 @@ const DEFAULT_IMAGE_FACTORY = () => {
     return new Image();
 };
 
+const TRANSPARENT_PIXEL =
+    'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/58BAQMDgQm0n98AAAAASUVORK5CYII=';
+
+const loggedAssetWarnings = new Set();
+
+function logAssetWarning(assetType, key, error, action = 'Using fallback.') {
+    const cacheKey = `${assetType}:${key}`;
+    if (loggedAssetWarnings.has(cacheKey)) {
+        return;
+    }
+    loggedAssetWarnings.add(cacheKey);
+    const details = error && error.message ? ` (${error.message})` : '';
+    const suffix = action ? ` ${action}` : '';
+    console.warn(`Failed to load ${assetType} asset "${key}".${suffix}${details}`);
+}
+
+function createTransparentImage() {
+    try {
+        const image = DEFAULT_IMAGE_FACTORY();
+        image.src = TRANSPARENT_PIXEL;
+        return image;
+    } catch {
+        return { src: TRANSPARENT_PIXEL };
+    }
+}
+
+function getTransparentImage() {
+    if (!getTransparentImage.cached) {
+        getTransparentImage.cached = createTransparentImage();
+    }
+    return getTransparentImage.cached;
+}
+
+function handleImageLoadFailure(key, error) {
+    logAssetWarning('image', key, error);
+    return getTransparentImage();
+}
+
 export async function loadAssets({
     loadImageFn = loadImage,
     audioSupportChecker = isAudioSupported,
@@ -85,8 +123,13 @@ export async function loadAssets({
 } = {}) {
     const imageEntries = await Promise.all(
         Object.entries(IMAGE_SOURCES).map(async ([key, url]) => {
-            const image = await loadImageFn(url);
-            return [key, image];
+            try {
+                const image = await loadImageFn(url);
+                return [key, image];
+            } catch (error) {
+                const fallbackImage = handleImageLoadFailure(key, error);
+                return [key, fallbackImage];
+            }
         })
     );
     const images = Object.fromEntries(imageEntries);
@@ -96,12 +139,16 @@ export async function loadAssets({
         return { ...images, sounds: {} };
     }
 
-    const sounds = Object.fromEntries(
-        Object.entries(SOUND_OPTIONS).map(([key, options]) => {
+    const soundEntries = [];
+    for (const [key, options] of Object.entries(SOUND_OPTIONS)) {
+        try {
             const sound = soundCreator(options);
-            return [key, sound];
-        })
-    );
+            soundEntries.push([key, sound]);
+        } catch (error) {
+            logAssetWarning('sound', key, error, 'Sound will be disabled.');
+        }
+    }
+    const sounds = Object.fromEntries(soundEntries);
 
     return { ...images, sounds };
 }
