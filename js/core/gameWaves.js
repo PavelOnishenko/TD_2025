@@ -1,4 +1,5 @@
 import { updateHUD, endGame, updateWavePhaseIndicator } from '../systems/ui.js';
+import gameConfig from '../config/gameConfig.js';
 import { showCrazyGamesAdWithPause } from '../systems/ads.js';
 
 const SCORE_WAVE_CLEAR = 150;
@@ -19,10 +20,11 @@ export const waveActions = {
         this.enemies = [];
         this.spawned = 0;
         this.spawnTimer = 0;
+        const { minDifference } = gameConfig.player.colorProbability;
         do {
             this.colorProbStart = Math.random();
             this.colorProbEnd = Math.random();
-        } while (Math.abs(this.colorProbStart - this.colorProbEnd) <= 0.35);
+        } while (Math.abs(this.colorProbStart - this.colorProbEnd) <= minDifference);
         this.spawnEnemy();
     },
 
@@ -139,11 +141,11 @@ export const waveActions = {
                 this.nextWaveBtn.disabled = false;
             }
             if (typeof this.addScore === 'function') {
-                this.addScore(SCORE_WAVE_CLEAR);
+                this.addScore(this.waveClearScore);
             }
             const completedWave = this.wave;
             this.wave += 1;
-            this.energy += 3;
+            this.energy += gameConfig.player.energyPerWave;
             updateHUD(this);
             this.triggerWaveAdIfNeeded(completedWave);
         }

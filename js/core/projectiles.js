@@ -1,7 +1,6 @@
 import { updateHUD } from '../systems/ui.js';
 import { createExplosion } from '../systems/effects.js';
-
-const SCORE_PER_KILL = 10;
+import gameConfig from '../config/gameConfig.js';
 
 export function moveProjectiles(game, dt) {
     game.projectiles.forEach(p => {
@@ -43,9 +42,12 @@ export function hitEnemy(game, projectile, index) {
 
     if (enemy.hp <= 0) {
         game.enemies.splice(enemyIndex, 1);
-        game.energy += 1;
+        game.energy += gameConfig.player.energyPerKill;
         if (typeof game.addScore === 'function') {
-            game.addScore(SCORE_PER_KILL);
+            const scoreValue = Number.isFinite(game.scorePerKill)
+                ? game.scorePerKill
+                : gameConfig.scoring.perKill;
+            game.addScore(scoreValue);
         }
         updateHUD(game);
     }
@@ -67,7 +69,8 @@ function findCollidingEnemy(projectile, enemies) {
 
 function calculateDamage(projectile, enemy) {
     const base = projectile.damage ?? 1;
-    const multiplier = projectile.color === enemy.color ? 1 : 0.4;
+    const mismatchMultiplier = gameConfig.projectiles.colorMismatchMultiplier;
+    const multiplier = projectile.color === enemy.color ? 1 : mismatchMultiplier;
     return base * multiplier;
 }
 

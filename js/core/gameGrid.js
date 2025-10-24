@@ -1,22 +1,41 @@
+import gameConfig from '../config/gameConfig.js';
+
 class GameGrid {
-    constructor({
-        cellSize = { w: 120, h: 160 },
-        topOrigin = { x: -300, y: 400 },
-        bottomOrigin = { x: -210, y: 680 }
-    } = {}) {
+    constructor(config = gameConfig.world.grid) {
+        const {
+            cellSize = { w: 120, h: 160 },
+            topOrigin = { x: -300, y: 400 },
+            bottomOrigin = { x: -210, y: 680 },
+            topOffsets = [
+                { x: 0, y: 0 },
+                { x: 210, y: 30 },
+                { x: 420, y: 50 },
+                { x: 600, y: 52 },
+                { x: 750, y: 40 },
+                { x: 910, y: 18 },
+            ],
+            bottomOffsets = [
+                { x: 0, y: 0 },
+                { x: 190, y: -35 },
+                { x: 380, y: -45 },
+                { x: 600, y: -45 },
+                { x: 750, y: -25 },
+                { x: 910, y: 0 },
+            ],
+        } = config ?? {};
+
         this.cellWidth = cellSize.w;
         this.cellHeight = cellSize.h;
         this.topOrigin = { ...topOrigin };
         this.bottomOrigin = { ...bottomOrigin };
+        this.topOffsets = Array.isArray(topOffsets) ? topOffsets : [];
+        this.bottomOffsets = Array.isArray(bottomOffsets) ? bottomOffsets : [];
         this.buildGrid();
     }
 
     buildGrid() {
-        const topCells = [ { x: 0, y: 0 }, { x: 210, y: 30 }, { x: 420, y: 50 }, { x: 600, y: 52 }, { x: 750, y: 40 }, { x: 910, y: 18 }];
-        this.topCells = this.createRow(this.topOrigin, topCells);
-
-        const bottomCells = [ { x: 0, y: 0 }, { x: 190, y: -35 }, { x: 380, y: -45 }, { x: 600, y: -45 }, { x: 750, y: -25 }, { x: 910, y: 0 }];
-        this.bottomCells = this.createRow(this.bottomOrigin, bottomCells);
+        this.topCells = this.createRow(this.topOrigin, this.topOffsets);
+        this.bottomCells = this.createRow(this.bottomOrigin, this.bottomOffsets);
     }
 
     createRow(origin, offsets) {
