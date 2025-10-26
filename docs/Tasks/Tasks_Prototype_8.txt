@@ -29,3 +29,5 @@ Only some stub that I can easily make work
 Sometimes in battle it's hard to see where the towers are so I can click them and switch color.
 
 009 | TODO | Buttons are overlapping in right bottom corner. Fix this.
+
+010 | TODO | Remove tower ranges visual circles
