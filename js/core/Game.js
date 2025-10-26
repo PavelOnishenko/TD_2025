@@ -6,6 +6,7 @@ import { callCrazyGamesEvent } from '../systems/crazyGamesIntegration.js';
 import { createGameAudio, getHowler } from '../systems/audio.js';
 import { createExplosion, updateExplosions, updateColorSwitchBursts } from '../systems/effects.js';
 import { saveBestScore } from '../systems/dataStore.js';
+import { refreshDiagnosticsOverlay } from '../systems/ui.js';
 import GameGrid from './gameGrid.js';
 import { createPlatforms } from './platforms.js';
 import projectileManagement from './game/projectileManagement.js';
@@ -79,6 +80,8 @@ class Game {
         this.wave5AdShown = false;
         this.wave5AdPending = false;
         this.wave5AdRetryHandle = null;
+        this.diagnosticsOverlay = null;
+        this.diagnosticsState = { visible: false, fps: 0, lastCommit: 0 };
     }
 
     setupEnvironment() {
@@ -237,9 +240,11 @@ class Game {
 
     update(timestamp) {
         if (this.gameOver) {
+            refreshDiagnosticsOverlay(this, { dt: 0, timestamp });
             return;
         }
         if (this.isPaused) {
+            refreshDiagnosticsOverlay(this, { dt: 0, timestamp });
             this.lastTime = timestamp;
             requestAnimationFrame(this.update);
             return;
@@ -261,6 +266,7 @@ class Game {
         this.checkWaveCompletion();
         this.updateScreenShake(dt);
         draw(this);
+        refreshDiagnosticsOverlay(this, { dt, timestamp });
         if (!this.gameOver) {
             requestAnimationFrame(this.update);
         }
