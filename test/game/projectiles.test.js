@@ -29,18 +29,18 @@ test('spawnProjectile clamps projectile radius at level 3', () => {
 
     game.spawnProjectile(0, tower);
 
-    assert.equal(game.projectiles[0].radius, 10);
-    assert.equal(game.maxProjectileRadius, 10);
+    assert.equal(game.projectiles[0].radius, 28);
+    assert.equal(game.maxProjectileRadius, 28);
 });
 
 test('getProjectileRadiusForLevel respects bounds', () => {
     const game = createGame();
     const cases = [
-        { level: 1, radius: 6 },
-        { level: 2, radius: 8 },
-        { level: 3, radius: 10 },
-        { level: 4, radius: 10 },
-        { level: -1, radius: 6 },
+        { level: 1, radius: 18 },
+        { level: 2, radius: 23 },
+        { level: 3, radius: 28 },
+        { level: 4, radius: 28 },
+        { level: -1, radius: 18 },
     ];
 
     for (const entry of cases) {
