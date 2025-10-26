@@ -14,16 +14,18 @@ test('calcDelta returns delta in seconds and updates lastTime', () => {
 
 test('computeWorldBounds expands when projectile radius grows', () => {
     const game = createGame();
-    const originalMax = game.maxProjectileRadius;
     game.projectileRadius = 6;
     game.maxProjectileRadius = 6;
+    const originalMax = game.maxProjectileRadius;
     const cell = game.bottomCells[0];
     placeTowerOnCell(game, cell, { level: 3 });
 
     game.spawnProjectile(0, cell.tower);
     const bounds = game.computeWorldBounds();
+    const expectedRadius = game.getProjectileRadiusForLevel(3);
 
     assert.ok(bounds.maxX > game.base.x);
+    assert.equal(game.maxProjectileRadius, expectedRadius);
     assert.ok(game.maxProjectileRadius > originalMax);
 });
 

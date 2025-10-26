@@ -46,6 +46,7 @@ export function bindUI(game) {
     bindPauseSystem(game);
     bindCanvasClick(game);
     bindDeveloperReset(game);
+    bindDiagnosticsOverlay(game);
     updateHUD(game);
     setupStartMenu(game);
     updateAudioControls(game);
@@ -81,6 +82,125 @@ function bindHUD(game) {
     game.pauseMessageEl = document.getElementById('pauseMessage');
     game.resumeBtn = document.getElementById('resumeGame');
     game.tutorialResetHint = document.getElementById('tutorialResetHint');
+    game.diagnosticsOverlay = document.getElementById('diagnosticsOverlay');
+}
+
+function bindDiagnosticsOverlay(game) {
+    if (!game) {
+        return;
+    }
+
+    const overlay = game.diagnosticsOverlay;
+    const state = {
+        visible: false,
+        fps: 0,
+        lastCommit: 0,
+    };
+    game.diagnosticsState = state;
+
+    if (!overlay) {
+        return;
+    }
+
+    if (typeof window === 'undefined') {
+        return;
+    }
+
+    const updateVisibility = () => {
+        overlay.classList.toggle('diagnostics--hidden', !state.visible);
+    };
+
+    const toggleOverlay = () => {
+        state.visible = !state.visible;
+        if (!state.visible) {
+            updateVisibility();
+            return;
+        }
+        state.fps = 0;
+        state.lastCommit = 0;
+        updateVisibility();
+        refreshDiagnosticsOverlay(game, { dt: 0, force: true });
+    };
+
+    const handleKeyDown = (event) => {
+        if (event.code !== 'Backquote') {
+            return;
+        }
+        if (event.ctrlKey || event.metaKey || event.altKey) {
+            return;
+        }
+        event.preventDefault();
+        toggleOverlay();
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    updateVisibility();
+}
+
+export function refreshDiagnosticsOverlay(game, options = {}) {
+    const overlay = game?.diagnosticsOverlay;
+    const state = game?.diagnosticsState;
+    if (!overlay || !state) {
+        return;
+    }
+
+    const {
+        dt = 0,
+        timestamp = typeof performance !== 'undefined' && typeof performance.now === 'function'
+            ? performance.now()
+            : Date.now(),
+        force = false,
+    } = options;
+
+    if (!state.visible && !force) {
+        return;
+    }
+
+    if (Number.isFinite(dt) && dt > 0) {
+        const instantFps = 1 / dt;
+        const smoothing = 0.25;
+        state.fps = state.fps > 0 ? (state.fps * (1 - smoothing)) + (instantFps * smoothing) : instantFps;
+    }
+
+    const now = Number.isFinite(timestamp)
+        ? timestamp
+        : (typeof performance !== 'undefined' && typeof performance.now === 'function'
+            ? performance.now()
+            : Date.now());
+
+    const minInterval = 120;
+    if (!force && now - (state.lastCommit ?? 0) < minInterval) {
+        return;
+    }
+
+    state.lastCommit = now;
+
+    const fpsValue = state.fps > 0 ? state.fps : (Number.isFinite(dt) && dt > 0 ? 1 / dt : 0);
+    const fpsDisplay = fpsValue > 0 ? fpsValue.toFixed(1) : '—';
+    const waveNumber = Number.isFinite(game?.wave) ? game.wave : 0;
+    const maxWaves = Number.isFinite(game?.maxWaves) ? game.maxWaves : '∞';
+    const waveStatus = game?.waveInProgress ? 'In Progress' : 'Prep';
+    const enemies = Array.isArray(game?.enemies) ? game.enemies.length : 0;
+    const towers = Array.isArray(game?.towers) ? game.towers.length : 0;
+    const projectiles = Array.isArray(game?.projectiles) ? game.projectiles.length : 0;
+    const entities = enemies + towers + projectiles;
+    const paused = game?.isPaused ? 'Yes' : 'No';
+    const muted = game?.audioMuted ? 'Yes' : 'No';
+    const music = game?.musicEnabled ? 'Yes' : 'No';
+
+    const lines = [
+        `FPS: ${fpsDisplay}`,
+        `Wave: ${waveNumber}/${maxWaves} (${waveStatus})`,
+        `Enemies: ${enemies}`,
+        `Towers: ${towers}`,
+        `Projectiles: ${projectiles}`,
+        `Entities: ${entities}`,
+        `Paused: ${paused}`,
+        `Muted: ${muted}`,
+        `Music Enabled: ${music}`,
+    ];
+
+    overlay.textContent = lines.join('\n');
 }
 
 function bindButtons(game) {

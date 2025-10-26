@@ -4,14 +4,14 @@ After wave 10, continue spawning stronger enemies with scaling HP and spawn rate
 002 | TODO | Endless mode balance and scaling
 Fine-tune endless mode curve so difficulty increases steadily without spikes. Adjust wave rewards to keep progression stable.
 
-003 | TODO | Accessibility improvements
+003 | DONE | Accessibility improvements
 Add basic accessibility support using ARIA. 
 Add aria-pressed to all toggle buttons like Mute and Pause and update it dynamically when state changes. 
 Wrap HUD elements that change text (wave, phase, energy, status) inside aria-live="polite" 
 so screen readers announce updates. 
 Ensure all buttons are focusable with Tab and have visible focus outlines.
 
-004 | TODO | Add diagnostics overlay
+004 | DONE | Add diagnostics overlay
 Enable debug overlay toggle (key ~) showing FPS, wave, entities, and paused/muted flags. Hidden by default, useful for testing.
 
 005 | TODO | Balance and gameplay test
@@ -28,4 +28,9 @@ Only some stub that I can easily make work
 008 | TODO | Because of large shots and the fact that there are a lot of them, 
 Sometimes in battle it's hard to see where the towers are so I can click them and switch color.
 
-009 | TODO | Buttons are overlapping in right bottom corner. Fix this.
+009 | TODO | Buttons are overlapping in right bottom corner 
+(Pause, sound and music buttons, also there is seemingly unused button without a label 
+which PERHAPS can be safely removed 
+AND in right top corner - endless mode indicator shows in the same place as other elements). Fix this.
+
+010 | TODO | Remove tower ranges visual circles
