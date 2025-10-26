@@ -89,11 +89,21 @@ export const gameConfig = {
             { interval: 1, cycles: 40, tanksCount: 16 },
         ],
         enemyHpByWave: [2, 3, 4, 5, 6, 7, 8, 9, 10, 12],
+        endless: {
+            hpGrowth: 1.2,
+            intervalFactor: 0.94,
+            minInterval: 0.45,
+            cyclesIncrement: 4,
+            tanksIncrement: 2,
+        },
     },
     scoring: {
         perKill: 10,
         waveClear: 150,
         baseHitPenalty: 25,
+    },
+    ads: {
+        waveCadence: 5,
     },
 };
 

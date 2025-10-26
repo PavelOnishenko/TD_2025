@@ -148,6 +148,24 @@ body {
     text-shadow: 0 0 calc(12px * var(--scale)) rgba(80, 160, 255, 0.75);
 }
 
+.wave-endless {
+    font-size: calc(0.85rem * var(--scale));
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: #fbbf24;
+    background: rgba(251, 191, 36, 0.18);
+    border: 1px solid rgba(251, 191, 36, 0.35);
+    padding: calc(4px * var(--scale)) calc(12px * var(--scale));
+    border-radius: 999px;
+    box-shadow: 0 0 calc(12px * var(--scale)) rgba(251, 191, 36, 0.25);
+    text-shadow: 0 0 calc(10px * var(--scale)) rgba(251, 191, 36, 0.4);
+}
+
+.wave-endless.hidden {
+    display: none;
+}
+
 .wave-phase {
     font-size: 0.9rem;
     letter-spacing: 0.04em;

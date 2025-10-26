@@ -77,9 +77,9 @@ class Game {
         this.isPaused = false;
         this.pauseReason = null;
         this.pauseListeners = new Set();
-        this.wave5AdShown = false;
-        this.wave5AdPending = false;
-        this.wave5AdRetryHandle = null;
+        this.waveAdState = this.createWaveAdState();
+        this.endlessModeActive = false;
+        this.endlessWaveStart = 0;
         this.diagnosticsOverlay = null;
         this.diagnosticsState = { visible: false, fps: 0, lastCommit: 0 };
     }
@@ -111,6 +111,102 @@ class Game {
             return;
         }
         this.assets = assets;
+    }
+
+    createWaveAdState() {
+        return {
+            shownWaves: new Set(),
+            pendingWave: null,
+            retryHandle: null,
+        };
+    }
+
+    getWaveAdState() {
+        if (!this.waveAdState) {
+            this.waveAdState = this.createWaveAdState();
+        }
+        return this.waveAdState;
+    }
+
+    resetWaveAdState() {
+        const state = this.getWaveAdState();
+        const host = typeof window !== 'undefined' ? window : globalThis;
+        if (state.retryHandle && typeof host?.clearTimeout === 'function') {
+            host.clearTimeout(state.retryHandle);
+        }
+        state.retryHandle = null;
+        state.pendingWave = null;
+        state.shownWaves.clear();
+    }
+
+    ensureEndlessWaveTracking() {
+        if (this.endlessWaveStart) {
+            return;
+        }
+        const configuredMax = Number.isFinite(this.maxWaves)
+            ? this.maxWaves
+            : Number.isFinite(gameConfig.player?.maxWaves)
+                ? gameConfig.player.maxWaves
+                : 0;
+        this.endlessWaveStart = configuredMax + 1;
+    }
+
+    activateEndlessMode() {
+        this.ensureEndlessWaveTracking();
+        this.endlessModeActive = true;
+    }
+
+    isEndlessWave(waveNumber = this.wave) {
+        this.ensureEndlessWaveTracking();
+        if (!Number.isFinite(waveNumber)) {
+            return false;
+        }
+        return waveNumber >= this.endlessWaveStart;
+    }
+
+    getOrCreateWaveConfig(waveNumber) {
+        this.ensureEndlessWaveTracking();
+        const targetWave = Math.max(1, Math.floor(waveNumber));
+        const index = targetWave - 1;
+        if (index < this.waveConfigs.length) {
+            return this.waveConfigs[index];
+        }
+
+        const endless = gameConfig.waves?.endless ?? {};
+        const intervalFactor = Number.isFinite(endless.intervalFactor) ? endless.intervalFactor : 0.95;
+        const minInterval = Number.isFinite(endless.minInterval) ? endless.minInterval : 0.4;
+        const cyclesIncrement = Number.isFinite(endless.cyclesIncrement) ? endless.cyclesIncrement : 3;
+        const tanksIncrement = Number.isFinite(endless.tanksIncrement) ? endless.tanksIncrement : 2;
+
+        let previous = this.waveConfigs.at(-1) ?? { interval: 1, cycles: 30, tanksCount: 0 };
+        for (let wave = this.waveConfigs.length + 1; wave <= targetWave; wave += 1) {
+            const nextInterval = Math.max(minInterval, Number((previous.interval * intervalFactor).toFixed(3)));
+            const nextCycles = Math.max(1, Math.round(previous.cycles + cyclesIncrement));
+            const nextTanks = Math.max(0, Math.round(previous.tanksCount + tanksIncrement));
+            const nextConfig = { interval: nextInterval, cycles: nextCycles, tanksCount: nextTanks };
+            this.waveConfigs.push(nextConfig);
+            previous = nextConfig;
+        }
+
+        return this.waveConfigs[index];
+    }
+
+    getEnemyHpForWave(waveNumber) {
+        const targetWave = Math.max(1, Math.floor(waveNumber));
+        const index = targetWave - 1;
+        if (index < this.enemyHpPerWave.length) {
+            return this.enemyHpPerWave[index];
+        }
+
+        const endless = gameConfig.waves?.endless ?? {};
+        const hpGrowth = Number.isFinite(endless.hpGrowth) ? endless.hpGrowth : 1.15;
+        let previousHp = this.enemyHpPerWave.at(-1) ?? 1;
+        for (let wave = this.enemyHpPerWave.length + 1; wave <= targetWave; wave += 1) {
+            previousHp = Math.max(1, Math.round(previousHp * hpGrowth));
+            this.enemyHpPerWave.push(previousHp);
+        }
+
+        return this.enemyHpPerWave[index];
     }
 
     getCurrentScore() {

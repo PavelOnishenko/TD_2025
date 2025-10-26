@@ -102,7 +102,7 @@ test('checkWaveCompletion unlocks merge and next wave buttons', () => {
     assert.equal(game.mergeBtn.disabled, false);
 });
 
-test('checkWaveCompletion triggers win on final wave', () => {
+test('checkWaveCompletion transitions into endless mode after configured waves', () => {
     const game = createGame({ attachDom: true });
     game.wave = game.maxWaves;
     game.waveInProgress = true;
@@ -111,8 +111,10 @@ test('checkWaveCompletion triggers win on final wave', () => {
 
     game.checkWaveCompletion();
 
-    assert.equal(game.statusEl.textContent, 'All waves cleared!');
-    assert.equal(game.gameOver, true);
-    assert.equal(game.mergeBtn.disabled, true);
+    assert.equal(game.waveInProgress, false);
+    assert.equal(game.wave, game.maxWaves + 1);
+    assert.equal(game.endlessModeActive, true);
+    assert.equal(game.gameOver, false);
+    assert.equal(game.nextWaveBtn.disabled, false);
 });
 
