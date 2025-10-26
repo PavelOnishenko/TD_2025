@@ -1,4 +1,4 @@
-001 | TODO | Endless mode support
+001 | DONE | Endless mode support
 After wave 10, continue spawning stronger enemies with scaling HP and spawn rate. Add endless mode indicator in HUD and maintain ad cadence.
 
 002 | TODO | Endless mode balance and scaling
