@@ -288,6 +288,21 @@ body {
     transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
+button:focus-visible {
+    outline: 3px solid #facc15;
+    outline-offset: 3px;
+}
+
+#hud button:focus-visible {
+    box-shadow: 0 0 calc(18px * var(--scale)) rgba(250, 204, 21, 0.65);
+}
+
+.tutorial-reset-hint:focus-visible {
+    opacity: 1;
+    transform: none;
+    box-shadow: 0 0 calc(16px * var(--scale)) rgba(250, 204, 21, 0.75);
+}
+
 #hud button:disabled {
     background: rgba(40, 60, 90, 0.45);
     color: rgba(185, 216, 255, 0.45);
