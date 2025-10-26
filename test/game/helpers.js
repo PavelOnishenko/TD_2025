@@ -40,6 +40,7 @@ export function attachDomStubs(game) {
     game.waveEl = { textContent: '' };
     game.wavePhaseEl = { textContent: '', classList: createClassList() };
     game.wavePanelEl = { dataset: {}, classList: createClassList() };
+    game.endlessIndicatorEl = { classList: createClassList(), setAttribute: () => {} };
     game.statusEl = { textContent: '', style: {} };
     game.nextWaveBtn = { disabled: false };
     game.mergeBtn = { disabled: false };

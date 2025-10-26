@@ -60,6 +60,7 @@ function bindHUD(game) {
     game.wavePanelEl = document.getElementById('wavePanel');
     game.waveEl = document.getElementById('wave');
     game.wavePhaseEl = document.getElementById('wavePhase');
+    game.endlessIndicatorEl = document.getElementById('endlessIndicator');
     game.statusEl = document.getElementById('status');
     game.nextWaveBtn = document.getElementById('nextWave');
     game.restartBtn = document.getElementById('restart');
@@ -337,9 +338,7 @@ export function updateHUD(game) {
     renderLives(game);
     renderEnergy(game);
     renderScore(game);
-    if (game.waveEl) {
-        game.waveEl.textContent = `Wave: ${game.wave}/${game.maxWaves}`;
-    }
+    renderWaveInfo(game);
     updateWavePhaseIndicator(game);
     if (typeof game.persistState === 'function') {
         game.persistState();
@@ -374,6 +373,42 @@ function renderScore(game) {
     if (game.scorePanelEl && typeof game.scorePanelEl.setAttribute === 'function') {
         game.scorePanelEl.setAttribute('aria-live', 'polite');
     }
+}
+
+function toggleEndlessIndicator(game, isEndless) {
+    const indicator = game.endlessIndicatorEl;
+    if (!indicator) {
+        return;
+    }
+    if (indicator.classList && typeof indicator.classList.toggle === 'function') {
+        indicator.classList.toggle('hidden', !isEndless);
+    } else if (indicator.style) {
+        indicator.style.display = isEndless ? '' : 'none';
+    }
+    if (typeof indicator.setAttribute === 'function') {
+        indicator.setAttribute('aria-hidden', isEndless ? 'false' : 'true');
+    }
+}
+
+function renderWaveInfo(game) {
+    if (!game.waveEl) {
+        return;
+    }
+    const endlessActive = typeof game.isEndlessWave === 'function'
+        ? game.isEndlessWave()
+        : game.wave > game.maxWaves;
+    if (typeof game.waveEl.textContent !== 'undefined') {
+        game.waveEl.textContent = endlessActive
+            ? `Wave: ${game.wave}`
+            : `Wave: ${game.wave}/${game.maxWaves}`;
+    }
+    if (typeof game.waveEl.setAttribute === 'function') {
+        const label = endlessActive
+            ? `Wave ${game.wave}, endless mode`
+            : `Wave ${game.wave} of ${game.maxWaves}`;
+        game.waveEl.setAttribute('aria-label', label);
+    }
+    toggleEndlessIndicator(game, endlessActive);
 }
 
 export function updateWavePhaseIndicator(game) {

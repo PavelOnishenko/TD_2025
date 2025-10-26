@@ -25,6 +25,9 @@ export const enemyActions = {
     },
 
     determineEnemyHp() {
+        if (typeof this.getEnemyHpForWave === 'function') {
+            return this.getEnemyHpForWave(this.wave);
+        }
         return this.enemyHpPerWave[this.wave - 1] ?? this.enemyHpPerWave.at(-1);
     },
 
@@ -34,7 +37,9 @@ export const enemyActions = {
         }
 
         if (!this.tankBurstSet || this.tankScheduleWave !== this.wave) {
-            const cfg = this.waveConfigs[this.wave - 1] ?? this.waveConfigs.at(-1);
+            const cfg = typeof this.getOrCreateWaveConfig === 'function'
+                ? this.getOrCreateWaveConfig(this.wave)
+                : this.waveConfigs[this.wave - 1] ?? this.waveConfigs.at(-1);
             this.prepareTankScheduleForWave(cfg, this.wave);
         }
 
