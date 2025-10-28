@@ -22,8 +22,8 @@ Ensure no console errors or UI overlaps.
 covering towers which are interactable.
 
 007 | TODO | Base should be visible.
-Make some sprite that will represent it. Do not generate the image, I will put it in myself. 
-Only some stub that I can easily make work 
+Just draw it on the canvas using shapes for now. 
+The idea is that player will see where exactly the ships should not reach.
 
 008 | TODO | Because of large shots and the fact that there are a lot of them, 
 Sometimes in battle it's hard to see where the towers are so I can click them and switch color.
