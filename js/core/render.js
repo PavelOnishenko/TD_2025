@@ -172,9 +172,115 @@ export function draw(game) {
 }
 
 function drawBase(game) {
-    const ctx = game.ctx;
-    ctx.fillStyle = 'green';
-    ctx.fillRect(game.base.x, game.base.y, game.base.w, game.base.h);
+    const ctx = game?.ctx;
+    const base = game?.base;
+
+    if (!ctx || !base) {
+        return;
+    }
+
+    const baseCenterX = base.x + (base.w ?? 0) / 2;
+    const baseCenterY = base.y + (base.h ?? 0) / 2;
+    const padRadius = Math.max(base.w ?? 0, base.h ?? 0) * 0.7;
+    const baseImage = game.assets?.base;
+    const hasSprite = Boolean(baseImage && !baseImage.__tdFallback);
+
+    if (typeof ctx.save === 'function') {
+        ctx.save();
+    }
+
+    if (typeof ctx.createRadialGradient === 'function') {
+        const padGradient = ctx.createRadialGradient(
+            baseCenterX,
+            baseCenterY,
+            padRadius * 0.25,
+            baseCenterX,
+            baseCenterY,
+            padRadius,
+        );
+        padGradient.addColorStop(0, 'rgba(255, 255, 255, 0.85)');
+        padGradient.addColorStop(0.45, 'rgba(120, 210, 255, 0.55)');
+        padGradient.addColorStop(1, 'rgba(10, 60, 120, 0.15)');
+        ctx.fillStyle = padGradient;
+    } else {
+        ctx.fillStyle = 'rgba(120, 210, 255, 0.35)';
+    }
+
+    if (typeof ctx.beginPath === 'function') {
+        ctx.beginPath();
+    }
+    if (typeof ctx.arc === 'function') {
+        ctx.arc(baseCenterX, baseCenterY, padRadius, 0, Math.PI * 2);
+    }
+    if (typeof ctx.fill === 'function') {
+        ctx.fill();
+    }
+
+    if (typeof ctx.lineWidth !== 'undefined') {
+        ctx.lineWidth = Math.max(2, padRadius * 0.12);
+    }
+    ctx.strokeStyle = 'rgba(0, 110, 200, 0.45)';
+    if (typeof ctx.stroke === 'function') {
+        ctx.stroke();
+    }
+
+    if (hasSprite && typeof ctx.drawImage === 'function') {
+        const spriteWidth = baseImage.naturalWidth ?? baseImage.width ?? base.w;
+        const spriteHeight = baseImage.naturalHeight ?? baseImage.height ?? base.h;
+        const scale = Math.min(
+            spriteWidth ? base.w / spriteWidth : 1,
+            spriteHeight ? base.h / spriteHeight : 1,
+        );
+        const drawWidth = (spriteWidth || base.w) * scale;
+        const drawHeight = (spriteHeight || base.h) * scale;
+        const drawX = baseCenterX - drawWidth / 2;
+        const drawY = baseCenterY - drawHeight / 2;
+        ctx.drawImage(baseImage, drawX, drawY, drawWidth, drawHeight);
+    } else {
+        const radius = Math.min(base.w ?? 0, base.h ?? 0) * 0.45;
+        ctx.fillStyle = 'rgba(12, 62, 110, 0.95)';
+        if (typeof ctx.beginPath === 'function') {
+            ctx.beginPath();
+        }
+        if (typeof ctx.arc === 'function') {
+            ctx.arc(baseCenterX, baseCenterY, radius, 0, Math.PI * 2);
+        }
+        if (typeof ctx.fill === 'function') {
+            ctx.fill();
+        }
+
+        if (typeof ctx.lineWidth !== 'undefined') {
+            ctx.lineWidth = Math.max(2, radius * 0.22);
+        }
+        ctx.strokeStyle = 'rgba(160, 240, 255, 0.85)';
+        if (typeof ctx.stroke === 'function') {
+            ctx.stroke();
+        }
+
+        const turretWidth = radius * 1.05;
+        const turretHeight = radius * 0.55;
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+        if (typeof ctx.fillRect === 'function') {
+            ctx.fillRect(
+                baseCenterX - turretWidth / 2,
+                baseCenterY - turretHeight / 2,
+                turretWidth,
+                turretHeight,
+            );
+            const barrelWidth = turretWidth * 0.18;
+            const barrelHeight = radius * 0.9;
+            ctx.fillRect(
+                baseCenterX - barrelWidth / 2,
+                baseCenterY - radius * 0.95,
+                barrelWidth,
+                barrelHeight,
+            );
+        }
+    }
+
+    if (typeof ctx.restore === 'function') {
+        ctx.restore();
+    }
 }
 
 function drawPlatforms(game) {

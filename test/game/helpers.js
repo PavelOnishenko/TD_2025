@@ -15,6 +15,8 @@ function createContextStub() {
         save: () => {},
         restore: () => {},
         setTransform: () => {},
+        translate: () => {},
+        createRadialGradient: () => ({ addColorStop: () => {} }),
         set globalCompositeOperation(_) {},
     };
 }

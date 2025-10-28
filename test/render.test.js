@@ -84,7 +84,10 @@ test('draw clears canvas, draws grid and entities', () => {
     draw(game);
 
     assert.ok(ctx.ops.some(op => op[0] === 'clearRect' && op[1] === 0 && op[2] === 0 && op[3] === 450 && op[4] === 800));
-    assert.ok(ctx.ops.some(op => op[0] === 'fillRect' && op[1] === 10 && op[2] === 20 && op[3] === 30 && op[4] === 40));
+    const baseCenterX = game.base.x + game.base.w / 2;
+    const baseCenterY = game.base.y + game.base.h / 2;
+    const baseArcs = ctx.ops.filter(op => op[0] === 'arc' && Math.abs(op[1] - baseCenterX) < 1e-6 && Math.abs(op[2] - baseCenterY) < 1e-6);
+    assert.ok(baseArcs.length >= 1);
     assert.ok(ctx.ops.some(op => op[0] === 'drawImage' && op[1] === cellSprite));
     assert.ok(towerCalled);
     assert.ok(enemyCalled);

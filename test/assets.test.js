@@ -73,6 +73,7 @@ test('loadAssets returns sounds only when audio is supported', async () => {
     });
 
     assert.deepEqual(createdImages, [
+        'assets/base.png',
         'assets/cell_cut.png',
         'assets/platform.png',
         'assets/tower_1R.png',
@@ -152,6 +153,7 @@ test('loadAssets uses transparent fallback image and warns once when an image fa
         });
 
         assert.equal(assets.platform.src, 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/58BAQMDgQm0n98AAAAASUVORK5CYII=');
+        assert.equal(assets.platform.__tdFallback, true);
         assert.equal(warnings.filter((message) => message.includes('platform')).length, 1);
     } finally {
         console.warn = originalWarn;

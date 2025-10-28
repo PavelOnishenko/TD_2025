@@ -1,6 +1,7 @@
 import { createSound, isAudioSupported } from './audio.js';
 
 const IMAGE_SOURCES = {
+    base: 'assets/base.png',
     cell: 'assets/cell_cut.png',
     platform: 'assets/platform.png',
     tower_1r: 'assets/tower_1R.png',
@@ -98,9 +99,16 @@ function createTransparentImage() {
     try {
         const image = DEFAULT_IMAGE_FACTORY();
         image.src = TRANSPARENT_PIXEL;
+        image.__tdFallback = true;
+        if (!image.width) {
+            image.width = 1;
+        }
+        if (!image.height) {
+            image.height = 1;
+        }
         return image;
     } catch {
-        return { src: TRANSPARENT_PIXEL };
+        return { src: TRANSPARENT_PIXEL, __tdFallback: true, width: 1, height: 1 };
     }
 }
 
