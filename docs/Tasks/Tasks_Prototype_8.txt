@@ -18,7 +18,7 @@ Enable debug overlay toggle (key ~) showing FPS, wave, entities, and paused/mute
 Playtest on desktop and mobile. Verify average run time, win rate, ad timing, and responsiveness. 
 Ensure no console errors or UI overlaps.
 
-006 | TODO | Tutorial covers towers, not convenient. Need to make it so that it's easily visible but not 
+006 | DONE | Tutorial covers towers, not convenient. Need to make it so that it's easily visible but not
 covering towers which are interactable.
 
 007 | TODO | Base should be visible.
