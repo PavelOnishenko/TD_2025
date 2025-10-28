@@ -33,4 +33,4 @@ Sometimes in battle it's hard to see where the towers are so I can click them an
 which PERHAPS can be safely removed 
 AND in right top corner - endless mode indicator shows in the same place as other elements). Fix this.
 
-010 | TODO | Remove tower ranges visual circles
+010 | DONE | Remove tower ranges visual circles
