@@ -28,7 +28,7 @@ The idea is that player will see where exactly the ships should not reach.
 008 | TODO | Because of large shots and the fact that there are a lot of them, 
 Sometimes in battle it's hard to see where the towers are so I can click them and switch color.
 
-009 | TODO | Buttons are overlapping in right bottom corner 
+009 | DONE | Buttons are overlapping in right bottom corner 
 (Pause, sound and music buttons, also there is seemingly unused button without a label 
 which PERHAPS can be safely removed 
 AND in right top corner - endless mode indicator shows in the same place as other elements). Fix this.
