@@ -173,8 +173,128 @@ export function draw(game) {
 
 function drawBase(game) {
     const ctx = game.ctx;
-    ctx.fillStyle = 'green';
-    ctx.fillRect(game.base.x, game.base.y, game.base.w, game.base.h);
+    const base = game.base;
+
+    if (!ctx || !base) {
+        return;
+    }
+
+    const supportsAdvancedDrawing = typeof ctx.beginPath === 'function'
+        && typeof ctx.moveTo === 'function'
+        && typeof ctx.lineTo === 'function'
+        && typeof ctx.closePath === 'function'
+        && typeof ctx.createLinearGradient === 'function'
+        && typeof ctx.createRadialGradient === 'function';
+
+    if (!supportsAdvancedDrawing) {
+        ctx.fillStyle = '#1f6a78';
+        ctx.fillRect(base.x, base.y, base.w, base.h);
+        if (typeof ctx.strokeRect === 'function') {
+            ctx.strokeStyle = '#0b1f27';
+            ctx.strokeRect(base.x, base.y, base.w, base.h);
+        }
+        return;
+    }
+
+    const centerX = base.x + base.w / 2;
+    const centerY = base.y + base.h / 2;
+    const baseTop = base.y;
+    const baseBottom = base.y + base.h;
+
+    ctx.save();
+
+    // Grounded glow underneath the base to anchor it visually.
+    ctx.beginPath();
+    traceEllipse(ctx, centerX, baseBottom - base.h * 0.1, base.w * 0.7, base.h * 0.35);
+    const shadowGradient = ctx.createRadialGradient(
+        centerX,
+        baseBottom - base.h * 0.1,
+        base.w * 0.1,
+        centerX,
+        baseBottom - base.h * 0.1,
+        base.w
+    );
+    shadowGradient.addColorStop(0, 'rgba(32, 60, 61, 0.55)');
+    shadowGradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    ctx.fillStyle = shadowGradient;
+    ctx.fill();
+
+    // Outer armored hull — angular to match the sci-fi aesthetic.
+    const hullPoints = [
+        { x: base.x + base.w * 0.12, y: baseTop + base.h * 0.3 },
+        { x: centerX, y: baseTop },
+        { x: base.x + base.w * 0.88, y: baseTop + base.h * 0.3 },
+        { x: base.x + base.w, y: baseTop + base.h * 0.68 },
+        { x: centerX, y: baseBottom },
+        { x: base.x, y: baseTop + base.h * 0.68 },
+    ];
+
+    const hullGradient = ctx.createLinearGradient(centerX, baseTop, centerX, baseBottom);
+    hullGradient.addColorStop(0, '#2d7e86');
+    hullGradient.addColorStop(0.5, '#1d4f57');
+    hullGradient.addColorStop(1, '#122a34');
+
+    ctx.beginPath();
+    ctx.moveTo(hullPoints[0].x, hullPoints[0].y);
+    for (let i = 1; i < hullPoints.length; i += 1) {
+        ctx.lineTo(hullPoints[i].x, hullPoints[i].y);
+    }
+    ctx.closePath();
+    ctx.fillStyle = hullGradient;
+    ctx.fill();
+
+    ctx.lineJoin = 'round';
+    ctx.lineWidth = Math.max(2, base.w * 0.06);
+    ctx.strokeStyle = 'rgba(15, 40, 48, 0.9)';
+    ctx.stroke();
+
+    // Inner plating for extra depth.
+    const innerInset = base.w * 0.16;
+    const innerPoints = hullPoints.map(point => ({
+        x: point.x + Math.sign(centerX - point.x) * innerInset,
+        y: point.y + (point.y < centerY ? innerInset * 0.7 : -innerInset * 0.4),
+    }));
+
+    const innerGradient = ctx.createLinearGradient(centerX, baseTop, centerX, baseBottom);
+    innerGradient.addColorStop(0, '#42f2e5');
+    innerGradient.addColorStop(1, '#1f6a78');
+
+    ctx.beginPath();
+    ctx.moveTo(innerPoints[0].x, innerPoints[0].y);
+    for (let i = 1; i < innerPoints.length; i += 1) {
+        ctx.lineTo(innerPoints[i].x, innerPoints[i].y);
+    }
+    ctx.closePath();
+    ctx.fillStyle = innerGradient;
+    ctx.fill();
+
+    ctx.lineWidth = Math.max(1.2, base.w * 0.035);
+    ctx.strokeStyle = 'rgba(66, 228, 214, 0.45)';
+    ctx.stroke();
+
+    // Central energy core.
+    const coreRadius = base.w * 0.22;
+    const coreGradient = ctx.createRadialGradient(centerX, centerY, coreRadius * 0.2, centerX, centerY, coreRadius);
+    coreGradient.addColorStop(0, '#9fffe0');
+    coreGradient.addColorStop(0.5, '#45f0ff');
+    coreGradient.addColorStop(1, 'rgba(27, 198, 240, 0.1)');
+
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, coreRadius, 0, Math.PI * 2);
+    ctx.fillStyle = coreGradient;
+    ctx.fill();
+
+    // Radiating lines to suggest power conduits.
+    ctx.lineWidth = Math.max(0.8, base.w * 0.02);
+    ctx.strokeStyle = 'rgba(159, 255, 224, 0.55)';
+    ctx.beginPath();
+    ctx.moveTo(centerX, baseTop + base.h * 0.18);
+    ctx.lineTo(centerX, baseBottom - base.h * 0.18);
+    ctx.moveTo(base.x + base.w * 0.32, centerY);
+    ctx.lineTo(base.x + base.w * 0.68, centerY);
+    ctx.stroke();
+
+    ctx.restore();
 }
 
 function drawPlatforms(game) {
