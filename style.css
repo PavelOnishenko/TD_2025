@@ -225,8 +225,9 @@ body {
 .tutorial-tip {
     position: absolute;
     left: 50%;
-    bottom: calc(120px * var(--scale));
-    transform: translateX(-50%);
+    top: calc(160px * var(--scale));
+    bottom: auto;
+    transform: translate(-50%, 0);
     max-width: calc(360px * var(--scale));
     padding: calc(14px * var(--scale)) calc(18px * var(--scale));
     background: rgba(18, 32, 58, 0.8);
