@@ -1,7 +1,7 @@
 export const gameConfig = {
     world: {
         logicalSize: { width: 540, height: 960 },
-        base: { x: 1100, width: 40, height: 40, bottomOffset: 60 },
+        base: { x: 1100, width: 40, height: 40, bottomOffset: 350 },
         screenShake: { frequency: 42 },
         bounds: { minMargin: 40, projectileRadiusFactor: 2 },
         grid: {
