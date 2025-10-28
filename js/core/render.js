@@ -47,6 +47,33 @@ const MERGE_PALETTES = {
         glow: [255, 240, 226],
     },
 };
+
+const BASE_FLASH_PALETTES = {
+    red: {
+        hull: 'rgba(255, 176, 126, 0.9)',
+        gradient: [
+            { stop: 0, color: 'rgba(255, 246, 232, 0.98)' },
+            { stop: 0.45, color: 'rgba(255, 170, 110, 0.65)' },
+            { stop: 1, color: 'rgba(140, 40, 10, 0)' },
+        ],
+    },
+    blue: {
+        hull: 'rgba(150, 210, 255, 0.9)',
+        gradient: [
+            { stop: 0, color: 'rgba(232, 248, 255, 0.98)' },
+            { stop: 0.45, color: 'rgba(120, 195, 255, 0.6)' },
+            { stop: 1, color: 'rgba(20, 70, 140, 0)' },
+        ],
+    },
+    default: {
+        hull: 'rgba(255, 214, 170, 0.9)',
+        gradient: [
+            { stop: 0, color: 'rgba(255, 244, 224, 0.95)' },
+            { stop: 0.45, color: 'rgba(255, 200, 150, 0.6)' },
+            { stop: 1, color: 'rgba(120, 60, 20, 0)' },
+        ],
+    },
+};
 function getScreenShakeOffset(game) {
     const shake = game?.screenShake;
     if (!shake || shake.duration <= 0 || shake.intensity <= 0) {
@@ -77,6 +104,11 @@ function getEnergyPalette(color) {
 function getMergePalette(color) {
     if (!color) return MERGE_PALETTES.default;
     return MERGE_PALETTES[color] ?? MERGE_PALETTES.default;
+}
+
+function getBaseFlashPalette(color) {
+    if (!color) return BASE_FLASH_PALETTES.default;
+    return BASE_FLASH_PALETTES[color] ?? BASE_FLASH_PALETTES.default;
 }
 
 function clamp(value, min, max) {
@@ -293,6 +325,65 @@ function drawBase(game) {
     ctx.moveTo(base.x + base.w * 0.32, centerY);
     ctx.lineTo(base.x + base.w * 0.68, centerY);
     ctx.stroke();
+
+    const flash = game.baseHitFlash;
+    let flashStrength = 0;
+    if (flash?.active && (flash.duration ?? 0) > 0) {
+        const progress = clamp01((flash.elapsed ?? 0) / flash.duration);
+        const baseStrength = Number.isFinite(flash.strength) ? flash.strength : 1;
+        flashStrength = Math.max(0, baseStrength * Math.pow(1 - progress, 1.35));
+    }
+
+    if (flashStrength > 0.001) {
+        const palette = getBaseFlashPalette(flash?.color);
+        const impactX = Number.isFinite(flash?.impactX) ? flash.impactX : centerX;
+        const impactY = Number.isFinite(flash?.impactY) ? flash.impactY : centerY;
+        const glowRadius = Math.max(base.w, base.h) * (0.45 + 0.55 * flashStrength);
+
+        ctx.save();
+        ctx.globalCompositeOperation = 'lighter';
+
+        ctx.globalAlpha = 0.35 * flashStrength;
+        ctx.beginPath();
+        ctx.moveTo(hullPoints[0].x, hullPoints[0].y);
+        for (let i = 1; i < hullPoints.length; i += 1) {
+            ctx.lineTo(hullPoints[i].x, hullPoints[i].y);
+        }
+        ctx.closePath();
+        ctx.fillStyle = palette.hull;
+        ctx.fill();
+
+        if (typeof ctx.createRadialGradient === 'function') {
+            const innerRadius = Math.max(6, glowRadius * 0.18);
+            const gradient = ctx.createRadialGradient(impactX, impactY, innerRadius, impactX, impactY, glowRadius);
+            const stops = Array.isArray(palette.gradient) ? palette.gradient : [];
+            if (stops.length > 0) {
+                stops.forEach(stop => {
+                    const offset = Number.isFinite(stop?.stop) ? clamp01(stop.stop) : 0;
+                    const color = typeof stop?.color === 'string' ? stop.color : palette.hull;
+                    gradient.addColorStop(offset, color);
+                });
+            } else {
+                gradient.addColorStop(0, palette.hull);
+                gradient.addColorStop(1, 'rgba(0,0,0,0)');
+            }
+
+            ctx.globalAlpha = Math.min(1, 0.8 * flashStrength);
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            traceEllipse(ctx, centerX, centerY, glowRadius * 1.15, glowRadius * 0.9);
+            ctx.fill();
+        }
+
+        const sparkRadius = Math.max(base.w * 0.08, glowRadius * 0.3 * flashStrength);
+        ctx.globalAlpha = Math.min(1, 0.9 * flashStrength);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+        ctx.beginPath();
+        ctx.arc(impactX, impactY, sparkRadius * 0.45, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.restore();
+    }
 
     ctx.restore();
 }

@@ -28,6 +28,18 @@ function createScreenShakeState() {
     };
 }
 
+function createBaseHitFlashState() {
+    return {
+        active: false,
+        elapsed: 0,
+        duration: 0,
+        strength: 0,
+        color: 'default',
+        impactX: null,
+        impactY: null,
+    };
+}
+
 class Game {
     constructor(canvas, options = {}) {
         const {
@@ -71,6 +83,7 @@ class Game {
         this.persistenceEnabled = true;
         this.mergeHintPairs = [];
         this.screenShake = createScreenShakeState();
+        this.baseHitFlash = createBaseHitFlashState();
         this.audioMuted = false;
         this.musicEnabled = true;
         this.musicPausedByFocus = false;
@@ -361,6 +374,7 @@ class Game {
         this.updateMergeHints();
         this.checkWaveCompletion();
         this.updateScreenShake(dt);
+        this.updateBaseHitFlash(dt);
         draw(this);
         refreshDiagnosticsOverlay(this, { dt, timestamp });
         if (!this.gameOver) {
@@ -507,6 +521,19 @@ class Game {
         }
     }
 
+    updateBaseHitFlash(dt) {
+        const flash = this.baseHitFlash;
+        if (!flash || !flash.active) {
+            return;
+        }
+
+        flash.elapsed = (flash.elapsed ?? 0) + dt;
+        if (flash.elapsed >= (flash.duration ?? 0)) {
+            flash.active = false;
+            flash.strength = 0;
+        }
+    }
+
     resetScreenShake() {
         const shake = this.screenShake ?? createScreenShakeState();
         shake.duration = 0;
@@ -518,7 +545,7 @@ class Game {
         this.screenShake = shake;
     }
 
-    triggerBaseHitEffects() {
+    triggerBaseHitEffects(enemy = null) {
         if (!this.screenShake) {
             this.screenShake = createScreenShakeState();
         }
@@ -534,9 +561,75 @@ class Game {
         shake.seedX = Math.random() * Math.PI * 2;
         shake.seedY = Math.random() * Math.PI * 2;
 
+        this.spawnBaseHitExplosion(enemy);
+        this.activateBaseHitFlash(enemy);
+
         if (typeof this.audio?.playBaseHit === 'function') {
             this.audio.playBaseHit();
         }
+    }
+
+    spawnBaseHitExplosion(enemy) {
+        if (!enemy) {
+            return;
+        }
+
+        const width = Number.isFinite(enemy.w) ? enemy.w : 0;
+        const height = Number.isFinite(enemy.h) ? enemy.h : 0;
+        const baseCenterX = this.base ? this.base.x + (this.base.w ?? 0) / 2 : 0;
+        const baseCenterY = this.base ? this.base.y + (this.base.h ?? 0) / 2 : 0;
+        const centerX = Number.isFinite(enemy.x) ? enemy.x + width / 2 : baseCenterX;
+        const centerY = Number.isFinite(enemy.y) ? enemy.y + height / 2 : baseCenterY;
+        const explosion = createExplosion(centerX, centerY, {
+            color: enemy.color ?? 'default',
+            variant: 'match',
+        });
+
+        if (!Array.isArray(this.explosions)) {
+            this.explosions = [];
+        }
+
+        this.explosions.push(explosion);
+    }
+
+    activateBaseHitFlash(enemy) {
+        const base = this.base;
+        if (!base) {
+            return;
+        }
+
+        if (!this.baseHitFlash) {
+            this.baseHitFlash = createBaseHitFlashState();
+        }
+
+        const flash = this.baseHitFlash;
+        const baseRight = base.x + (base.w ?? 0);
+        const baseBottom = base.y + (base.h ?? 0);
+        const defaultImpactX = base.x + (base.w ?? 0) * 0.2;
+        const defaultImpactY = base.y + (base.h ?? 0) * 0.5;
+
+        let impactX = defaultImpactX;
+        let impactY = defaultImpactY;
+
+        if (enemy) {
+            const enemyFrontX = Number.isFinite(enemy.x)
+                ? enemy.x + (Number.isFinite(enemy.w) ? enemy.w : 0)
+                : defaultImpactX;
+            const enemyCenterY = Number.isFinite(enemy.y)
+                ? enemy.y + (Number.isFinite(enemy.h) ? enemy.h : 0) / 2
+                : defaultImpactY;
+            impactX = Math.min(Math.max(enemyFrontX, base.x), baseRight);
+            impactY = Math.min(Math.max(enemyCenterY, base.y), baseBottom);
+        }
+
+        flash.color = enemy?.color ?? 'default';
+        flash.impactX = impactX;
+        flash.impactY = impactY;
+        flash.duration = 0.45;
+        flash.elapsed = 0;
+        flash.active = true;
+        const previousStrength = Number.isFinite(flash.strength) ? flash.strength : 0;
+        flash.strength = Math.min(1.35, previousStrength * 0.45 + 1);
     }
 
     restart() {
