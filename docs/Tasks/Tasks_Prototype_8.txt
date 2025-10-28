@@ -21,7 +21,7 @@ Ensure no console errors or UI overlaps.
 006 | DONE | Tutorial covers towers, not convenient. Need to make it so that it's easily visible but not
 covering towers which are interactable.
 
-007 | TODO | Base should be visible.
+007 | DONE | Base should be visible.
 Just draw it on the canvas using shapes for now. 
 The idea is that player will see where exactly the ships should not reach.
 
