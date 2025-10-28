@@ -111,7 +111,7 @@ export const enemyActions = {
                     this.addScore(-penalty);
                 }
                 if (typeof this.triggerBaseHitEffects === 'function') {
-                    this.triggerBaseHitEffects();
+                    this.triggerBaseHitEffects(e);
                 }
                 updateHUD(this);
                 if (this.lives <= 0) {
