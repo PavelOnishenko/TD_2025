@@ -133,7 +133,6 @@ export default class Tower {
 
     draw(ctx, assets) {
         const c = this.center();
-        this.drawRange(ctx, c);
         ctx.fillStyle = this.color;
         this.drawBody(ctx, c, assets);
         this.drawErrorPulse(ctx, c);
@@ -147,13 +146,6 @@ export default class Tower {
         }
 
         this.drawLevelIndicator(ctx);
-    }
-
-    drawRange(ctx, c) {
-        ctx.beginPath();
-        ctx.arc(c.x, c.y, this.range, 0, Math.PI * 2);
-        ctx.strokeStyle = this.color === 'red' ? 'rgba(255,0,0,0.3)' : 'rgba(0,0,255,0.3)';
-        ctx.stroke();
     }
 
     drawBody(ctx, c, assets) {
