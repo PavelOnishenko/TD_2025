@@ -172,9 +172,116 @@ export function draw(game) {
 }
 
 function drawBase(game) {
-    const ctx = game.ctx;
-    ctx.fillStyle = 'green';
-    ctx.fillRect(game.base.x, game.base.y, game.base.w, game.base.h);
+    const { ctx, base } = game;
+
+    if (!ctx || !base) {
+        return;
+    }
+
+    const bodyWidth = base.w;
+    const bodyHeight = base.h;
+    const baseX = base.x;
+    const baseY = base.y;
+    const centerX = baseX + bodyWidth / 2;
+    const centerY = baseY + bodyHeight / 2;
+
+    ctx.save();
+
+    // Draw soft shadow beneath the base to anchor it to the ground.
+    if (typeof ctx.ellipse === 'function') {
+        ctx.save();
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.18)';
+        ctx.beginPath();
+        ctx.ellipse(
+            centerX,
+            baseY + bodyHeight * 1.02,
+            bodyWidth * 0.7,
+            bodyHeight * 0.28,
+            0,
+            0,
+            Math.PI * 2
+        );
+        ctx.fill();
+        ctx.restore();
+    }
+
+    // Helper to draw rounded rectangles on older browsers that support Canvas.
+    const drawRoundedRect = (x, y, width, height, radius) => {
+        const clampedRadius = Math.min(radius, width / 2, height / 2);
+        ctx.beginPath();
+        ctx.moveTo(x + clampedRadius, y);
+        ctx.lineTo(x + width - clampedRadius, y);
+        ctx.quadraticCurveTo(x + width, y, x + width, y + clampedRadius);
+        ctx.lineTo(x + width, y + height - clampedRadius);
+        ctx.quadraticCurveTo(
+            x + width,
+            y + height,
+            x + width - clampedRadius,
+            y + height
+        );
+        ctx.lineTo(x + clampedRadius, y + height);
+        ctx.quadraticCurveTo(x, y + height, x, y + height - clampedRadius);
+        ctx.lineTo(x, y + clampedRadius);
+        ctx.quadraticCurveTo(x, y, x + clampedRadius, y);
+        ctx.closePath();
+    };
+
+    // Main bunker body.
+    const bodyGradient = ctx.createLinearGradient(0, baseY, 0, baseY + bodyHeight);
+    bodyGradient.addColorStop(0, '#4c6fa6');
+    bodyGradient.addColorStop(0.55, '#2f3f5a');
+    bodyGradient.addColorStop(1, '#1a2332');
+    ctx.fillStyle = bodyGradient;
+    drawRoundedRect(baseX, baseY, bodyWidth, bodyHeight, bodyWidth * 0.22);
+    ctx.fill();
+
+    // Metallic rim around the bunker.
+    ctx.strokeStyle = 'rgba(193, 213, 255, 0.55)';
+    ctx.lineWidth = Math.max(2, bodyWidth * 0.08);
+    ctx.stroke();
+
+    // Reinforced door at the center.
+    const doorWidth = bodyWidth * 0.42;
+    const doorHeight = bodyHeight * 0.55;
+    const doorX = centerX - doorWidth / 2;
+    const doorY = baseY + bodyHeight - doorHeight - bodyHeight * 0.08;
+    const doorGradient = ctx.createLinearGradient(doorX, doorY, doorX, doorY + doorHeight);
+    doorGradient.addColorStop(0, '#a8b2c6');
+    doorGradient.addColorStop(1, '#6f7c92');
+    ctx.fillStyle = doorGradient;
+    drawRoundedRect(doorX, doorY, doorWidth, doorHeight, bodyWidth * 0.08);
+    ctx.fill();
+
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
+    ctx.lineWidth = Math.max(1.5, bodyWidth * 0.04);
+    ctx.stroke();
+
+    // Status lights to hint that this is the protected zone.
+    const lightRadius = Math.max(2, bodyWidth * 0.08);
+    const lightYOffset = bodyHeight * 0.25;
+    const lights = [-1, 0, 1];
+    lights.forEach(offset => {
+        const lightX = centerX + offset * bodyWidth * 0.22;
+        const lightY = baseY + lightYOffset;
+        ctx.beginPath();
+        ctx.fillStyle = offset === 0 ? '#8bffdd' : '#52d3ff';
+        ctx.globalAlpha = offset === 0 ? 0.9 : 0.75;
+        ctx.arc(lightX, lightY, lightRadius, 0, Math.PI * 2);
+        ctx.fill();
+    });
+
+    ctx.globalAlpha = 1;
+
+    // Draw a protective shield arc showing the danger threshold.
+    if (typeof ctx.arc === 'function') {
+        ctx.beginPath();
+        ctx.strokeStyle = 'rgba(82, 207, 255, 0.35)';
+        ctx.lineWidth = bodyWidth * 0.12;
+        ctx.arc(centerX, baseY + bodyHeight * 0.2, bodyWidth * 0.75, Math.PI, 0, false);
+        ctx.stroke();
+    }
+
+    ctx.restore();
 }
 
 function drawPlatforms(game) {
