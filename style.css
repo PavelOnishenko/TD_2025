@@ -396,13 +396,20 @@ canvas {
     min-width: calc(140px * var(--scale));
 }
 
-.audio-controls {
+.audio-pause-controls {
     position: absolute;
     bottom: calc(30px * var(--scale));
     right: calc(24px * var(--scale));
     display: flex;
     flex-direction: column;
+    align-items: stretch;
     gap: calc(12px * var(--scale));
+}
+
+.audio-controls {
+    display: flex;
+    gap: calc(12px * var(--scale));
+    justify-content: flex-end;
 }
 
 #muteToggle,
@@ -412,13 +419,10 @@ canvas {
 }
 
 #pause {
-    position: absolute;
-    bottom: calc(30px * var(--scale));
-    right: calc(32px * var(--scale));
     background: rgba(40, 160, 255, 0.15);
     color: #d6e6ff;
     border-color: rgba(102, 188, 255, 0.65);
-    min-width: calc(140px * var(--scale));
+    min-width: calc(150px * var(--scale));
 }
 
 #crazyGamesUser {
