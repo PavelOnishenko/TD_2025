@@ -45,7 +45,6 @@ export function bindUI(game) {
     bindAudioButtons(game);
     bindPauseSystem(game);
     bindCanvasClick(game);
-    bindDeveloperReset(game);
     bindDiagnosticsOverlay(game);
     updateHUD(game);
     setupStartMenu(game);
@@ -81,7 +80,6 @@ function bindHUD(game) {
     game.pauseOverlay = document.getElementById('pauseOverlay');
     game.pauseMessageEl = document.getElementById('pauseMessage');
     game.resumeBtn = document.getElementById('resumeGame');
-    game.tutorialResetHint = document.getElementById('tutorialResetHint');
     game.diagnosticsOverlay = document.getElementById('diagnosticsOverlay');
 }
 
@@ -327,30 +325,6 @@ function updateMusicButton(game) {
     const enabled = Boolean(game.musicEnabled);
     game.musicBtn.textContent = enabled ? 'Music On' : 'Music Off';
     game.musicBtn.setAttribute('aria-pressed', enabled ? 'true' : 'false');
-}
-
-function bindDeveloperReset(game) {
-    const hint = game.tutorialResetHint;
-    if (!hint) {
-        return;
-    }
-
-    const giveFeedback = className => {
-        hint.classList.add(className);
-        setTimeout(() => hint.classList.remove(className), 400);
-    };
-
-    hint.addEventListener('click', event => {
-        if (!(event.altKey && event.shiftKey)) {
-            giveFeedback('tutorial-reset-hint--nudge');
-            return;
-        }
-        game.resetTutorialProgress?.();
-        if (game.hasStarted) {
-            game.tutorial?.start();
-        }
-        giveFeedback('tutorial-reset-hint--activated');
-    });
 }
 
 function setupStartMenu(game) {

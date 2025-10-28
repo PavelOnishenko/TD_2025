@@ -48,38 +48,32 @@
                 <span id="score" class="score-value">Score: 0</span>
                 <span id="bestScore" class="score-best">Best: 0</span>
             </div>
-            <div id="wavePanel" aria-live="polite">
-                <span id="wave" class="wave-label">Wave: 1/10</span>
-                <span id="wavePhase" class="wave-phase wave-phase--prep">Preparation phase</span>
-                <span id="endlessIndicator" class="wave-endless hidden" aria-hidden="true">Endless Mode</span>
-            </div>
-            <div class="hud-live-region" aria-live="polite">
-                <div id="wavePanel">
-                    <span id="wave" class="wave-label">Wave: 1/10</span>
-                    <span id="wavePhase" class="wave-phase wave-phase--prep">Preparation phase</span>
+            <div class="wave-controls">
+                <div class="hud-live-region" aria-live="polite">
+                    <div id="wavePanel">
+                        <span id="wave" class="wave-label">Wave: 1/10</span>
+                        <span id="wavePhase" class="wave-phase wave-phase--prep">Preparation phase</span>
+                        <span id="endlessIndicator" class="wave-endless hidden" aria-hidden="true">Endless Mode</span>
+                    </div>
+                </div>
+                <div class="wave-controls__buttons" role="group" aria-label="Wave actions">
+                    <button id="nextWave" type="button">Next Wave</button>
+                    <button id="mergeTowers" type="button" disabled>Merge Towers</button>
                 </div>
             </div>
             <div class="hud-live-region hud-live-region--status" aria-live="polite">
                 <span id="status"></span>
             </div>
             <div id="tutorialTip" class="tutorial-tip hidden" aria-live="polite"></div>
-            <button
-                id="tutorialResetHint"
-                type="button"
-                class="tutorial-reset-hint"
-                aria-label="Reset tutorial progress (Alt+Shift+Click)"
-            >
-                •
-            </button>
             <div class="hud-controls">
-                <button id="nextWave" type="button">Next Wave</button>
-                <button id="mergeTowers" type="button" disabled>Merge Towers</button>
                 <button id="restart" type="button">Restart</button>
-                <div class="audio-controls" role="group" aria-label="Audio controls">
-                    <button id="muteToggle" type="button" aria-pressed="false">Mute</button>
-                    <button id="musicToggle" type="button" aria-pressed="true">Music On</button>
+                <div class="audio-pause-controls">
+                    <div class="audio-controls" role="group" aria-label="Audio controls">
+                        <button id="muteToggle" type="button" aria-pressed="false">Mute</button>
+                        <button id="musicToggle" type="button" aria-pressed="true">Music On</button>
+                    </div>
+                    <button id="pause" type="button" aria-pressed="false">Pause</button>
                 </div>
-                <button id="pause" type="button" aria-pressed="false">Pause</button>
             </div>
             <div id="crazyGamesUser" class="user-info hidden" aria-live="polite">
                 <img id="crazyGamesUserAvatar" alt="CrazyGames profile picture" />
