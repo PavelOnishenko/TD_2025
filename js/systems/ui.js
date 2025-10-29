@@ -81,6 +81,10 @@ function bindHUD(game) {
     game.pauseMessageEl = document.getElementById('pauseMessage');
     game.resumeBtn = document.getElementById('resumeGame');
     game.diagnosticsOverlay = document.getElementById('diagnosticsOverlay');
+    game.saveControlsEl = document.getElementById('saveControls');
+    game.saveBtn = document.getElementById('saveGame');
+    game.loadBtn = document.getElementById('loadGame');
+    game.deleteSaveBtn = document.getElementById('deleteSave');
 }
 
 function bindDiagnosticsOverlay(game) {

@@ -55,6 +55,11 @@ export function attachDomStubs(game) {
     game.resumeBtn = { disabled: false, textContent: '' };
     game.endScoreEl = { textContent: '' };
     game.endBestScoreEl = { textContent: '' };
+    game.saveControlsEl = { classList: createClassList(), dataset: {} };
+    const createSaveButton = () => ({ disabled: false, addEventListener: () => {} });
+    game.saveBtn = createSaveButton();
+    game.loadBtn = createSaveButton();
+    game.deleteSaveBtn = createSaveButton();
 }
 
 export function createGame({ attachDom = false } = {}) {
