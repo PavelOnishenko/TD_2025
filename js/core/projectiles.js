@@ -49,6 +49,18 @@ export function hitEnemy(game, projectile, index) {
                 : gameConfig.scoring.perKill;
             game.addScore(scoreValue);
         }
+        if (game.explosions) {
+            const width = Number.isFinite(enemy.w) ? enemy.w : 0;
+            const height = Number.isFinite(enemy.h) ? enemy.h : 0;
+            const centerX = Number.isFinite(enemy.x) ? enemy.x + width / 2 : projectile.x;
+            const centerY = Number.isFinite(enemy.y) ? enemy.y + height / 2 : projectile.y;
+            game.explosions.push(
+                createExplosion(centerX, centerY, {
+                    color: enemy.color ?? projectile.color ?? 'default',
+                    variant: 'kill',
+                })
+            );
+        }
         updateHUD(game);
     }
 
