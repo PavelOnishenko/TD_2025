@@ -101,7 +101,10 @@ test('hitEnemy removes enemy and updates energy when enemy dies', () => {
     assert.equal(game.enemies.length, 0);
     assert.equal(game.energy, gameConfig.player.energyPerKill);
     assert.equal(game.energyEl.textContent, String(gameConfig.player.energyPerKill));
-    assert.equal(game.explosions.length, 1);
+    assert.equal(game.explosions.length, 2);
+    const [impactExplosion, killExplosion] = game.explosions;
+    assert.ok(impactExplosion.particles.length > 0);
+    assert.ok(killExplosion.particles.length > impactExplosion.particles.length);
 });
 
 test('handleProjectileHits removes offscreen and hit projectiles', () => {
@@ -119,7 +122,7 @@ test('handleProjectileHits removes offscreen and hit projectiles', () => {
     assert.strictEqual(game.projectiles[0], pMiss);
     assert.equal(game.enemies.length, 0);
     assert.equal(game.energy, gameConfig.player.energyPerKill);
-    assert.equal(game.explosions.length, 1);
+    assert.equal(game.explosions.length, 2);
 });
 
 test('hitEnemy deals reduced damage when colors differ', () => {
@@ -168,9 +171,11 @@ test('hitEnemy triggers explosion audio when available', () => {
     hitEnemy(game, projectile, 0);
 
     assert.equal(wasCalled, true);
-    assert.equal(game.explosions.length, 1);
+    assert.equal(game.explosions.length, 2);
     assert.ok(Array.isArray(game.explosions[0].particles));
     assert.ok(game.explosions[0].particles.length > 0);
+    assert.ok(Array.isArray(game.explosions[1].particles));
+    assert.ok(game.explosions[1].particles.length > game.explosions[0].particles.length);
 });
 
 test('handleProjectileHits respects configured world bounds', () => {
