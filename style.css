@@ -356,6 +356,34 @@ canvas {
     min-width: calc(140px * var(--scale));
 }
 
+.save-controls {
+    position: absolute;
+    bottom: calc(30px * var(--scale));
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-wrap: wrap;
+    gap: calc(12px * var(--scale));
+    align-items: center;
+    justify-content: center;
+    pointer-events: auto;
+}
+
+.save-controls button {
+    min-width: calc(140px * var(--scale));
+    text-align: center;
+}
+
+.save-controls--hidden {
+    display: none;
+}
+
+.save-controls__delete {
+    background: rgba(255, 92, 92, 0.18);
+    border-color: rgba(248, 113, 113, 0.65);
+    color: #fecaca;
+}
+
 .audio-pause-controls {
     position: absolute;
     bottom: calc(30px * var(--scale));
