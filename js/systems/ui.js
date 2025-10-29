@@ -1,4 +1,5 @@
 import Tower from '../entities/Tower.js';
+import gameConfig from '../config/gameConfig.js';
 import { callCrazyGamesEvent } from './crazyGamesIntegration.js';
 import { showCrazyGamesAdWithPause } from './ads.js';
 import { saveAudioSettings } from './dataStore.js';
@@ -44,7 +45,7 @@ export function bindUI(game) {
     bindButtons(game);
     bindAudioButtons(game);
     bindPauseSystem(game);
-    bindCanvasClick(game);
+    bindCanvasInteractions(game);
     bindDiagnosticsOverlay(game);
     updateHUD(game);
     setupStartMenu(game);
@@ -382,23 +383,286 @@ function updateEndScreenScore(game) {
     }
 }
 
-function bindCanvasClick(game) {
-    game.canvas.addEventListener('click', e => {
-        const pos = getMousePos(game.canvas, e);
-        const tower = game.towers.find(t => isInside(pos, t));
+function bindCanvasInteractions(game) {
+    if (!game?.canvas) {
+        return;
+    }
+
+    const pointerState = {
+        pointerId: null,
+        tower: null,
+        downPos: null,
+        movedTooFar: false,
+        cancelled: false,
+        removalTriggered: false,
+        startedRemoval: false,
+        chargeSoundHandle: null,
+    };
+
+    const removalDuration = Math.max(0.1, Number(gameConfig.towers?.removalHoldDuration) || 2);
+    const colorSwitchThreshold = 0.28;
+    const dragThreshold = 12;
+    const cancelMarginFactor = 0.25;
+    const host = typeof window !== 'undefined'
+        ? window
+        : (typeof globalThis !== 'undefined' ? globalThis : null);
+
+    const cancelChargeSoundTimer = () => {
+        if (pointerState.chargeSoundHandle && host && typeof host.clearTimeout === 'function') {
+            host.clearTimeout(pointerState.chargeSoundHandle);
+        }
+        pointerState.chargeSoundHandle = null;
+    };
+
+    const isTowerInGame = (tower) => Array.isArray(game?.towers) && game.towers.includes(tower);
+
+    const resetPointerState = () => {
+        if (pointerState.pointerId !== null && typeof game.canvas?.releasePointerCapture === 'function') {
+            try {
+                game.canvas.releasePointerCapture(pointerState.pointerId);
+            } catch {
+                // ignore release failures
+            }
+        }
+        cancelChargeSoundTimer();
+        pointerState.pointerId = null;
+        pointerState.tower = null;
+        pointerState.downPos = null;
+        pointerState.movedTooFar = false;
+        pointerState.cancelled = false;
+        pointerState.removalTriggered = false;
+        pointerState.startedRemoval = false;
+    };
+
+    const scheduleChargeSound = (pointerId) => {
+        if (!pointerState.startedRemoval) {
+            return;
+        }
+        cancelChargeSoundTimer();
+        if (!host || typeof host.setTimeout !== 'function') {
+            if (typeof game.audio?.playTowerRemoveCharge === 'function') {
+                game.audio.playTowerRemoveCharge();
+            }
+            return;
+        }
+        const delay = Math.max(150, Math.min(removalDuration * 250, 360));
+        pointerState.chargeSoundHandle = host.setTimeout(() => {
+            pointerState.chargeSoundHandle = null;
+            if (
+                pointerState.pointerId === pointerId &&
+                pointerState.tower &&
+                pointerState.startedRemoval &&
+                pointerState.tower.isRemovalCharging?.()
+            ) {
+                if (typeof game.audio?.playTowerRemoveCharge === 'function') {
+                    game.audio.playTowerRemoveCharge();
+                }
+            }
+        }, delay);
+    };
+
+    const cancelTowerRemovalAttempt = (playSound) => {
+        const tower = pointerState.tower;
+        if (!tower || pointerState.removalTriggered || !isTowerInGame(tower)) {
+            return;
+        }
+        const progress = typeof tower.getRemovalChargeProgress === 'function'
+            ? tower.getRemovalChargeProgress()
+            : 0;
+        if (typeof tower.cancelRemovalCharge === 'function') {
+            tower.cancelRemovalCharge();
+        }
+        if (playSound && pointerState.startedRemoval && progress > 0.08 && typeof game.audio?.playTowerRemoveCancel === 'function') {
+            game.audio.playTowerRemoveCancel();
+        }
+    };
+
+    const findTowerAtPosition = (pos) => {
+        if (!Array.isArray(game?.towers)) {
+            return null;
+        }
+        return game.towers.find(tower => isInside(pos, tower)) ?? null;
+    };
+
+    const findCellAtPosition = (pos) => {
+        const cells = typeof game.getAllCells === 'function' ? game.getAllCells() : [];
+        return cells.find(cell => isInside(pos, cell)) ?? null;
+    };
+
+    const isWithinTowerWithMargin = (tower, pos, marginFactor) => {
+        const width = tower.w ?? 0;
+        const height = tower.h ?? 0;
+        const marginX = width * marginFactor;
+        const marginY = height * marginFactor;
+        return (
+            pos.x >= tower.x - marginX &&
+            pos.x <= tower.x + width + marginX &&
+            pos.y >= tower.y - marginY &&
+            pos.y <= tower.y + height + marginY
+        );
+    };
+
+    const handlePointerDown = (event) => {
+        if (event.button !== undefined && event.button !== 0) {
+            return;
+        }
+        const pointerId = typeof event.pointerId === 'number' ? event.pointerId : 0;
+        const pos = getMousePos(game.canvas, event);
+
+        pointerState.pointerId = pointerId;
+        pointerState.downPos = pos;
+        pointerState.movedTooFar = false;
+        pointerState.cancelled = false;
+        pointerState.removalTriggered = false;
+        pointerState.startedRemoval = false;
+        pointerState.tower = null;
+        cancelChargeSoundTimer();
+
+        const tower = findTowerAtPosition(pos);
         if (tower) {
-            const switched = game.switchTowerColor(tower);
-            if (switched && game.tutorial) {
-                game.tutorial.handleColorSwitch();
+            pointerState.tower = tower;
+            const started = typeof tower.beginRemovalCharge === 'function'
+                ? tower.beginRemovalCharge()
+                : false;
+            pointerState.startedRemoval = started || Boolean(tower.isRemovalCharging?.());
+            pointerState.removalTriggered = !isTowerInGame(tower);
+            if (typeof game.canvas?.setPointerCapture === 'function') {
+                try {
+                    game.canvas.setPointerCapture(pointerId);
+                } catch {
+                    // ignore capture failures
+                }
+            }
+            if (pointerState.startedRemoval) {
+                scheduleChargeSound(pointerId);
+            }
+            event.preventDefault();
+            return;
+        }
+
+        if (typeof game.canvas?.setPointerCapture === 'function') {
+            try {
+                game.canvas.setPointerCapture(pointerId);
+            } catch {
+                // ignore capture failures
+            }
+        }
+    };
+
+    const handlePointerMove = (event) => {
+        const pointerId = typeof event.pointerId === 'number' ? event.pointerId : 0;
+        if (pointerState.pointerId !== pointerId) {
+            return;
+        }
+        const pos = getMousePos(game.canvas, event);
+
+        if (pointerState.tower) {
+            if (!pointerState.removalTriggered && !isTowerInGame(pointerState.tower)) {
+                pointerState.removalTriggered = true;
+                cancelChargeSoundTimer();
+                return;
+            }
+            if (pointerState.cancelled || pointerState.removalTriggered) {
+                return;
+            }
+            const within = isWithinTowerWithMargin(pointerState.tower, pos, cancelMarginFactor);
+            if (!within) {
+                pointerState.cancelled = true;
+                cancelChargeSoundTimer();
+                cancelTowerRemovalAttempt(true);
             }
             return;
         }
 
-        const cell = game.getAllCells().find(c => isInside(pos, c));
-        if (cell) {
-            tryShoot(game, cell);
+        if (!pointerState.downPos) {
+            return;
         }
-    });
+
+        const distance = Math.hypot(pos.x - pointerState.downPos.x, pos.y - pointerState.downPos.y);
+        if (distance > dragThreshold) {
+            pointerState.movedTooFar = true;
+        }
+    };
+
+    const handlePointerUp = (event) => {
+        const pointerId = typeof event.pointerId === 'number' ? event.pointerId : 0;
+        if (pointerState.pointerId !== pointerId) {
+            return;
+        }
+        const pos = getMousePos(game.canvas, event);
+        cancelChargeSoundTimer();
+
+        if (pointerState.tower) {
+            const tower = pointerState.tower;
+            const towerInGame = isTowerInGame(tower);
+            const progress = typeof tower.getRemovalChargeProgress === 'function'
+                ? tower.getRemovalChargeProgress()
+                : 0;
+            const removalTriggered = pointerState.removalTriggered || !towerInGame || progress >= 0.999;
+
+            if (!removalTriggered) {
+                if (pointerState.cancelled) {
+                    cancelTowerRemovalAttempt(true);
+                } else {
+                    const playCancelSound = progress > colorSwitchThreshold;
+                    cancelTowerRemovalAttempt(playCancelSound);
+                    if (progress <= colorSwitchThreshold) {
+                        handleTowerColorSwitch(game, tower);
+                    }
+                }
+            }
+
+            resetPointerState();
+            return;
+        }
+
+        if (!pointerState.movedTooFar) {
+            handleCellTap(game, pos);
+        }
+        resetPointerState();
+    };
+
+    const handlePointerCancel = (event) => {
+        const pointerId = typeof event.pointerId === 'number' ? event.pointerId : 0;
+        if (pointerState.pointerId !== pointerId) {
+            return;
+        }
+        cancelChargeSoundTimer();
+        if (pointerState.tower && !pointerState.removalTriggered) {
+            cancelTowerRemovalAttempt(true);
+        }
+        resetPointerState();
+    };
+
+    const preventContextMenu = (event) => {
+        event.preventDefault();
+    };
+
+    game.canvas.addEventListener('pointerdown', handlePointerDown);
+    game.canvas.addEventListener('pointermove', handlePointerMove);
+    game.canvas.addEventListener('pointerup', handlePointerUp);
+    game.canvas.addEventListener('pointerleave', handlePointerCancel);
+    game.canvas.addEventListener('pointercancel', handlePointerCancel);
+    game.canvas.addEventListener('contextmenu', preventContextMenu);
+}
+
+function handleTowerColorSwitch(game, tower) {
+    if (!tower || typeof game?.switchTowerColor !== 'function') {
+        return;
+    }
+    const switched = game.switchTowerColor(tower);
+    if (switched && game.tutorial && typeof game.tutorial.handleColorSwitch === 'function') {
+        game.tutorial.handleColorSwitch();
+    }
+}
+
+function handleCellTap(game, pos) {
+    const cell = typeof game.getAllCells === 'function'
+        ? game.getAllCells().find(c => isInside(pos, c))
+        : null;
+    if (cell) {
+        tryShoot(game, cell);
+    }
 }
 
 function tryShoot(game, cell) {

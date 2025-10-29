@@ -33,6 +33,11 @@ export default class Tower {
         this.mergePulseWaveTimer = 0;
         this.errorPulseDuration = config.errorPulseDuration;
         this.errorPulseTimer = 0;
+        this.removalChargeDuration = config.removalHoldDuration ?? 2;
+        this.removalChargeTimer = 0;
+        this.removalChargeActive = false;
+        this.removalChargePending = false;
+        this.removalChargeDecayRate = config.removalIndicatorDecay ?? 3.2;
         this.updateStats();
     }
 
@@ -69,6 +74,7 @@ export default class Tower {
         if (this.errorPulseTimer > 0) {
             this.errorPulseTimer = Math.max(0, this.errorPulseTimer - dt);
         }
+        this.updateRemovalCharge(dt);
     }
 
     triggerFlash() {
@@ -131,6 +137,47 @@ export default class Tower {
         return DEFAULT_PLACEMENT_ANCHOR;
     }
 
+    beginRemovalCharge() {
+        if (this.removalChargePending) {
+            return false;
+        }
+        this.removalChargeTimer = 0;
+        this.removalChargeActive = true;
+        this.removalChargePending = false;
+        return true;
+    }
+
+    cancelRemovalCharge() {
+        this.removalChargeActive = false;
+        if (!this.removalChargePending) {
+            if (!Number.isFinite(this.removalChargeDuration) || this.removalChargeDuration <= 0) {
+                this.removalChargeTimer = 0;
+            }
+        }
+    }
+
+    isRemovalCharging() {
+        return Boolean(this.removalChargeActive);
+    }
+
+    shouldTriggerRemoval() {
+        return Boolean(this.removalChargePending);
+    }
+
+    acknowledgeRemoval() {
+        this.removalChargePending = false;
+        this.removalChargeActive = false;
+        this.removalChargeTimer = 0;
+    }
+
+    getRemovalChargeProgress() {
+        if (!Number.isFinite(this.removalChargeDuration) || this.removalChargeDuration <= 0) {
+            return 0;
+        }
+        const normalized = this.removalChargeTimer / this.removalChargeDuration;
+        return Math.max(0, Math.min(1, normalized));
+    }
+
     draw(ctx, assets) {
         const c = this.center();
         this.drawRange(ctx, c);
@@ -146,6 +193,7 @@ export default class Tower {
             drawTowerMuzzleFlashIfNeeded(ctx, this);
         }
 
+        this.drawRemovalChargeIndicator(ctx, c);
         this.drawLevelIndicator(ctx);
     }
 
@@ -280,6 +328,107 @@ export default class Tower {
         ctx.fillText(String(this.level), this.x + this.w + 2, this.y + 10);
     }
 
+    updateRemovalCharge(dt) {
+        if (!Number.isFinite(this.removalChargeDuration) || this.removalChargeDuration <= 0) {
+            this.removalChargeActive = false;
+            this.removalChargePending = false;
+            this.removalChargeTimer = 0;
+            return;
+        }
+
+        if (this.removalChargeActive) {
+            this.removalChargeTimer = Math.min(
+                this.removalChargeDuration,
+                this.removalChargeTimer + dt
+            );
+            if (this.removalChargeTimer >= this.removalChargeDuration) {
+                this.removalChargeTimer = this.removalChargeDuration;
+                this.removalChargeActive = false;
+                this.removalChargePending = true;
+            }
+            return;
+        }
+
+        if (this.removalChargePending) {
+            return;
+        }
+
+        if (this.removalChargeTimer <= 0) {
+            return;
+        }
+
+        const decayRate = Number.isFinite(this.removalChargeDecayRate)
+            ? Math.max(0, this.removalChargeDecayRate)
+            : 0;
+        if (decayRate <= 0) {
+            this.removalChargeTimer = 0;
+            return;
+        }
+        this.removalChargeTimer = Math.max(0, this.removalChargeTimer - decayRate * dt);
+    }
+
+    drawRemovalChargeIndicator(ctx, center) {
+        const progress = this.getRemovalChargeProgress();
+        if (progress <= 0) {
+            return;
+        }
+
+        const pulse = 0.6 + 0.4 * Math.sin(this.glowTime * 2.1);
+        const intensity = this.removalChargeActive ? 1 : progress;
+        const radius = Math.max(this.w, this.h) * (0.45 + 0.08 * pulse * intensity);
+        const startAngle = -Math.PI / 2;
+        const endAngle = startAngle + Math.PI * 2 * progress;
+
+        const arcOuterAlpha = 0.28 + 0.45 * intensity;
+        const arcInnerAlpha = 0.18 + 0.35 * intensity;
+        const arcColor = this.color === 'red'
+            ? `rgba(255, 140, 90, ${arcOuterAlpha})`
+            : `rgba(120, 190, 255, ${arcOuterAlpha})`;
+        const innerArcColor = this.color === 'red'
+            ? `rgba(255, 220, 200, ${arcInnerAlpha})`
+            : `rgba(190, 225, 255, ${arcInnerAlpha})`;
+
+        ctx.save();
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.lineWidth = Math.max(3, this.w * 0.08);
+        ctx.strokeStyle = arcColor;
+        ctx.beginPath();
+        ctx.arc(center.x, center.y, radius, startAngle, endAngle, false);
+        ctx.stroke();
+
+        ctx.lineWidth = Math.max(2, this.w * 0.045);
+        ctx.strokeStyle = innerArcColor;
+        ctx.beginPath();
+        ctx.arc(center.x, center.y, radius * 0.8, startAngle, endAngle, false);
+        ctx.stroke();
+
+        const columnWidth = this.w * 0.62;
+        const columnHeight = this.h * progress;
+        const columnX = this.x + (this.w - columnWidth) / 2;
+        const columnBottom = this.y + this.h;
+        const columnTop = columnBottom - columnHeight;
+        const gradient = ctx.createLinearGradient(0, columnTop, 0, columnBottom);
+        if (this.color === 'red') {
+            gradient.addColorStop(0, `rgba(255, 150, 80, ${0.82 * intensity})`);
+            gradient.addColorStop(0.45, `rgba(255, 90, 60, ${0.55 * intensity})`);
+            gradient.addColorStop(1, `rgba(255, 200, 150, ${0.32 * intensity})`);
+        } else {
+            gradient.addColorStop(0, `rgba(140, 200, 255, ${0.85 * intensity})`);
+            gradient.addColorStop(0.45, `rgba(90, 150, 255, ${0.55 * intensity})`);
+            gradient.addColorStop(1, `rgba(210, 235, 255, ${0.34 * intensity})`);
+        }
+        ctx.globalCompositeOperation = 'lighter';
+        ctx.fillStyle = gradient;
+        ctx.fillRect(columnX, columnTop, columnWidth, columnHeight);
+
+        const frameAlpha = 0.2 + 0.3 * intensity;
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.strokeStyle = `rgba(255, 255, 255, ${frameAlpha})`;
+        ctx.lineWidth = Math.max(1.5, this.w * 0.035);
+        ctx.strokeRect(columnX, this.y + this.h * 0.05, columnWidth, this.h * 0.95);
+        ctx.restore();
+    }
 }
 
 function easeOutCubic(t) {

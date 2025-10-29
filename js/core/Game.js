@@ -6,7 +6,7 @@ import { callCrazyGamesEvent } from '../systems/crazyGamesIntegration.js';
 import { createGameAudio, getHowler } from '../systems/audio.js';
 import { createExplosion, updateExplosions, updateColorSwitchBursts } from '../systems/effects.js';
 import { saveBestScore } from '../systems/dataStore.js';
-import { refreshDiagnosticsOverlay } from '../systems/ui.js';
+import { refreshDiagnosticsOverlay, updateHUD } from '../systems/ui.js';
 import GameGrid from './gameGrid.js';
 import { createPlatforms } from './platforms.js';
 import projectileManagement from './game/projectileManagement.js';
@@ -359,7 +359,18 @@ class Game {
             return;
         }
         const dt = this.calcDelta(timestamp);
-        this.towers.forEach(tower => tower.update(dt));
+        const towersPendingRemoval = [];
+        for (const tower of this.towers) {
+            tower.update(dt);
+            if (typeof tower.shouldTriggerRemoval === 'function' && tower.shouldTriggerRemoval()) {
+                towersPendingRemoval.push(tower);
+            }
+        }
+        if (towersPendingRemoval.length > 0) {
+            towersPendingRemoval.forEach(tower => {
+                this.removeTower(tower, { cause: 'long-press' });
+            });
+        }
         this.spawnEnemiesIfNeeded(dt);
         this.updateEnemies(dt);
         this.towerAttacks(timestamp);
@@ -380,6 +391,64 @@ class Game {
         if (!this.gameOver) {
             requestAnimationFrame(this.update);
         }
+    }
+
+    removeTower(tower, options = {}) {
+        if (!tower) {
+            return false;
+        }
+
+        const index = this.towers.indexOf(tower);
+        if (index === -1) {
+            return false;
+        }
+
+        this.towers.splice(index, 1);
+
+        if (tower.cell) {
+            tower.cell.occupied = false;
+            tower.cell.tower = null;
+            tower.cell = null;
+        }
+
+        if (typeof tower.acknowledgeRemoval === 'function') {
+            tower.acknowledgeRemoval();
+        }
+
+        if (Array.isArray(this.mergeAnimations) && this.mergeAnimations.length > 0) {
+            this.mergeAnimations = this.mergeAnimations.filter(animation => animation?.targetTower !== tower);
+        }
+
+        const center = typeof tower.center === 'function'
+            ? tower.center()
+            : {
+                x: (tower.x ?? 0) + (tower.w ?? 0) / 2,
+                y: (tower.y ?? 0) + (tower.h ?? 0) / 2,
+            };
+        const yOffset = (tower.h ?? 0) * 0.18;
+        const explosion = createExplosion(center.x, center.y - yOffset, {
+            color: tower.color ?? 'default',
+            variant: 'dismantle',
+        });
+
+        if (explosion) {
+            if (!Array.isArray(this.explosions)) {
+                this.explosions = [];
+            }
+            this.explosions.push(explosion);
+        }
+
+        const playAudio = options?.silent !== true;
+        if (playAudio && this.audio) {
+            if (typeof this.audio.playTowerRemoveExplosion === 'function') {
+                this.audio.playTowerRemoveExplosion();
+            } else if (typeof this.audio.playExplosion === 'function') {
+                this.audio.playExplosion();
+            }
+        }
+
+        updateHUD(this);
+        return true;
     }
 
     addEnergyPopup(text, x, y, options = {}) {
