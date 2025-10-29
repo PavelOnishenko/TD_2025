@@ -137,6 +137,9 @@ test('createGameAudio returns noop audio when howler is unavailable', () => {
         assert.equal(typeof audio.playMatchingHit, 'function');
         assert.equal(typeof audio.playMerge, 'function');
         assert.equal(typeof audio.playMismatchingHit, 'function');
+        assert.equal(typeof audio.playTowerRemoveCharge, 'function');
+        assert.equal(typeof audio.playTowerRemoveCancel, 'function');
+        assert.equal(typeof audio.playTowerRemoveExplosion, 'function');
 
         audio.playFire();
         audio.playMusic();
@@ -145,6 +148,9 @@ test('createGameAudio returns noop audio when howler is unavailable', () => {
         audio.playMatchingHit();
         audio.playMerge();
         audio.playMismatchingHit();
+        audio.playTowerRemoveCharge();
+        audio.playTowerRemoveCancel();
+        audio.playTowerRemoveExplosion();
     });
 });
 
@@ -158,12 +164,18 @@ test('createGameAudio triggers available sounds only', () => {
         const mismatchingHitSound = { playCalls: 0, play() { this.playCalls += 1; } };
         const errorSound = { playCalls: 0, play() { this.playCalls += 1; } };
         const mergeSound = { playCalls: 0, play() { this.playCalls += 1; } };
+        const removeChargeSound = { playCalls: 0, play() { this.playCalls += 1; } };
+        const removeCancelSound = { playCalls: 0, play() { this.playCalls += 1; } };
+        const removeExplosionSound = { playCalls: 0, play() { this.playCalls += 1; } };
         const audio = createGameAudio({
             fire: fireSound,
             matchingHit: matchingHitSound,
             mismatchingHit: mismatchingHitSound,
             error: errorSound,
-            merge: mergeSound
+            merge: mergeSound,
+            towerRemoveCharge: removeChargeSound,
+            towerRemoveCancel: removeCancelSound,
+            towerRemoveExplosion: removeExplosionSound
         });
 
         audio.playFire();
@@ -173,12 +185,18 @@ test('createGameAudio triggers available sounds only', () => {
         audio.playPlacement();
         audio.playError();
         audio.playMerge();
+        audio.playTowerRemoveCharge();
+        audio.playTowerRemoveCancel();
+        audio.playTowerRemoveExplosion();
 
         assert.equal(fireSound.playCalls, 1);
         assert.equal(matchingHitSound.playCalls, 2);
         assert.equal(mismatchingHitSound.playCalls, 1);
         assert.equal(errorSound.playCalls, 1);
         assert.equal(mergeSound.playCalls, 1);
+        assert.equal(removeChargeSound.playCalls, 1);
+        assert.equal(removeCancelSound.playCalls, 1);
+        assert.equal(removeExplosionSound.playCalls, 1);
     });
 });
 

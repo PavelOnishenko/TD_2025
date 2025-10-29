@@ -67,6 +67,8 @@ export const gameConfig = {
         mergePulseWaveDuration: 0.6, // todo what does this influence?
         errorPulseDuration: 0.45, // todo what does this influence?
         glowSpeeds: [1.8, 2.1, 2.4],
+        removalHoldDuration: 2,
+        removalIndicatorDecay: 3.2,
     },
     enemies: {
         defaultSpawn: { x: -600, y: 600 },

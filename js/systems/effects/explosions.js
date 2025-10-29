@@ -60,6 +60,17 @@ const VARIANT_CONFIGS = {
         alphaScale: 1.45,
         resolveColor: color => color ?? 'default',
     },
+    dismantle: {
+        particleCount: Math.round(BASE_PARTICLE_COUNT * 1.45),
+        minLife: BASE_MIN_LIFE * 1.05,
+        maxLife: BASE_MAX_LIFE * 1.65,
+        minSpeed: BASE_MIN_SPEED * 0.6,
+        maxSpeed: BASE_MAX_SPEED * 1.05,
+        minRadius: BASE_MIN_RADIUS * 1.15,
+        maxRadius: BASE_MAX_RADIUS * 1.95,
+        alphaScale: 1.5,
+        resolveColor: color => color ?? 'default',
+    },
 };
 
 function getVariantConfig(variant = 'match') {
