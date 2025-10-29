@@ -1,7 +1,7 @@
 001 | DONE | Endless mode support
 After wave 10, continue spawning stronger enemies with scaling HP and spawn rate. Add endless mode indicator in HUD and maintain ad cadence.
 
-002 | TODO | Endless mode balance and scaling
+002 | INPRO | Endless mode balance and scaling
 Fine-tune endless mode curve so difficulty increases steadily without spikes. Adjust wave rewards to keep progression stable.
 
 003 | DONE | Accessibility improvements
