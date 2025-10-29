@@ -34,3 +34,6 @@ which PERHAPS can be safely removed
 AND in right top corner - endless mode indicator shows in the same place as other elements). Fix this.
 
 010 | DONE | Remove tower ranges visual circles
+
+011 | TODO | Add sound files we lack, look by list of required sound files in the code. 
+Need human involvement
