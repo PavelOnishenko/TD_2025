@@ -63,6 +63,21 @@ const SOUND_OPTIONS = {
         volume: 0.5,
         preload: true
     },
+    towerRemoveCharge: {
+        src: ['assets/tower_remove_charge.mp3'],
+        volume: 0.55,
+        preload: false
+    },
+    towerRemoveCancel: {
+        src: ['assets/tower_remove_cancel.mp3'],
+        volume: 0.35,
+        preload: false
+    },
+    towerRemoveExplosion: {
+        src: ['assets/tower_remove_explosion.wav'],
+        volume: 0.45,
+        preload: true
+    },
     backgroundMusic: {
         src: ['assets/background_music.mp3'],
         volume: 0.25,

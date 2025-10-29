@@ -51,6 +51,28 @@ body {
     z-index: 2;
 }
 
+.diagnostics {
+    position: absolute;
+    top: calc(24px * var(--scale));
+    right: calc(24px * var(--scale));
+    padding: 12px 16px;
+    background: rgba(15, 23, 42, 0.88);
+    border-radius: 12px;
+    border: 1px solid rgba(148, 163, 184, 0.45);
+    color: #e2e8f0;
+    font-family: "Fira Code", "Source Code Pro", Menlo, Consolas, monospace;
+    font-size: 0.85rem;
+    line-height: 1.35;
+    white-space: pre;
+    pointer-events: none;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.45);
+    z-index: 3;
+}
+
+.diagnostics--hidden {
+    display: none;
+}
+
 #lives {
     display: flex;
     align-items: center;
@@ -111,19 +133,57 @@ body {
 }
 
 #wavePanel {
-    position: absolute;
-    top: calc(26px * var(--scale));
-    right: calc(32px * var(--scale));
     display: flex;
     flex-direction: column;
     align-items: flex-end;
-    gap: 10px;
+    gap: calc(10px * var(--scale));
+}
+
+.wave-controls {
+    position: absolute;
+    top: calc(26px * var(--scale));
+    right: calc(24px * var(--scale));
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: calc(18px * var(--scale));
+    max-width: calc(280px * var(--scale));
+}
+
+.wave-controls__buttons {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: calc(12px * var(--scale));
+    width: 100%;
+}
+
+.wave-controls__buttons button {
+    width: 100%;
 }
 
 #wave {
     font-size: calc(1.4rem * var(--scale));
     font-weight: 600;
     text-shadow: 0 0 calc(12px * var(--scale)) rgba(80, 160, 255, 0.75);
+}
+
+.wave-endless {
+    font-size: calc(0.85rem * var(--scale));
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: #fbbf24;
+    background: rgba(251, 191, 36, 0.18);
+    border: 1px solid rgba(251, 191, 36, 0.35);
+    padding: calc(4px * var(--scale)) calc(12px * var(--scale));
+    border-radius: 999px;
+    box-shadow: 0 0 calc(12px * var(--scale)) rgba(251, 191, 36, 0.25);
+    text-shadow: 0 0 calc(10px * var(--scale)) rgba(251, 191, 36, 0.4);
+}
+
+.wave-endless.hidden {
+    display: none;
 }
 
 .wave-phase {
@@ -185,8 +245,9 @@ body {
 .tutorial-tip {
     position: absolute;
     left: 50%;
-    bottom: calc(120px * var(--scale));
-    transform: translateX(-50%);
+    top: calc(160px * var(--scale));
+    bottom: auto;
+    transform: translate(-50%, 0);
     max-width: calc(360px * var(--scale));
     padding: calc(14px * var(--scale)) calc(18px * var(--scale));
     background: rgba(18, 32, 58, 0.8);
@@ -206,26 +267,6 @@ body {
     display: none;
 }
 
-.tutorial-reset-hint {
-    position: absolute;
-    bottom: calc(22px * var(--scale));
-    right: calc(26px * var(--scale));
-    width: calc(14px * var(--scale));
-    height: calc(14px * var(--scale));
-    border-radius: 50%;
-    border: none;
-    padding: 0;
-    background: rgba(92, 176, 255, 0.12);
-    color: rgba(156, 210, 255, 0.85);
-    font-size: calc(12px * var(--scale));
-    line-height: 1;
-    cursor: pointer;
-    pointer-events: auto;
-    opacity: 0.6;
-    box-shadow: 0 0 calc(8px * var(--scale)) rgba(92, 176, 255, 0.35);
-    transition: transform 0.3s ease, opacity 0.3s ease, box-shadow 0.3s ease;
-}
-
 .end-score,
 .end-best-score {
     margin: 0;
@@ -236,31 +277,6 @@ body {
 
 .end-best-score {
     color: #a4f4ff;
-}
-
-.tutorial-reset-hint:hover {
-    opacity: 0.85;
-}
-
-.tutorial-reset-hint--nudge {
-    animation: tutorialResetHintNudge 0.4s ease;
-}
-
-.tutorial-reset-hint--activated {
-    opacity: 1;
-    box-shadow: 0 0 calc(18px * var(--scale)) rgba(94, 255, 206, 0.75);
-}
-
-@keyframes tutorialResetHintNudge {
-    0% {
-        transform: scale(1);
-    }
-    40% {
-        transform: scale(1.25);
-    }
-    100% {
-        transform: scale(1);
-    }
 }
 
 .life-heart {
@@ -286,6 +302,15 @@ body {
     cursor: pointer;
     box-shadow: 0 0 calc(12px * var(--scale)) rgba(33, 125, 255, 0.45);
     transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+button:focus-visible {
+    outline: 3px solid #facc15;
+    outline-offset: 3px;
+}
+
+#hud button:focus-visible {
+    box-shadow: 0 0 calc(18px * var(--scale)) rgba(250, 204, 21, 0.65);
 }
 
 #hud button:disabled {
@@ -315,18 +340,8 @@ canvas {
     background-repeat: no-repeat;
 }
 
-#nextWave {
-    position: absolute;
-    top: calc(89px * var(--scale));
-    right: calc(24px * var(--scale));
-    min-width: calc(150px * var(--scale));
-    text-align: center;
-}
-
+#nextWave,
 #mergeTowers {
-    position: absolute;
-    top: calc(147px * var(--scale));
-    right: calc(24px * var(--scale));
     min-width: calc(150px * var(--scale));
     text-align: center;
 }
@@ -341,13 +356,48 @@ canvas {
     min-width: calc(140px * var(--scale));
 }
 
-.audio-controls {
+.save-controls {
+    position: absolute;
+    bottom: calc(30px * var(--scale));
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-wrap: wrap;
+    gap: calc(12px * var(--scale));
+    align-items: center;
+    justify-content: center;
+    pointer-events: auto;
+}
+
+.save-controls button {
+    min-width: calc(140px * var(--scale));
+    text-align: center;
+}
+
+.save-controls--hidden {
+    display: none;
+}
+
+.save-controls__delete {
+    background: rgba(255, 92, 92, 0.18);
+    border-color: rgba(248, 113, 113, 0.65);
+    color: #fecaca;
+}
+
+.audio-pause-controls {
     position: absolute;
     bottom: calc(30px * var(--scale));
     right: calc(24px * var(--scale));
     display: flex;
     flex-direction: column;
+    align-items: stretch;
     gap: calc(12px * var(--scale));
+}
+
+.audio-controls {
+    display: flex;
+    gap: calc(12px * var(--scale));
+    justify-content: flex-end;
 }
 
 #muteToggle,
@@ -357,13 +407,10 @@ canvas {
 }
 
 #pause {
-    position: absolute;
-    bottom: calc(30px * var(--scale));
-    right: calc(32px * var(--scale));
     background: rgba(40, 160, 255, 0.15);
     color: #d6e6ff;
     border-color: rgba(102, 188, 255, 0.65);
-    min-width: calc(140px * var(--scale));
+    min-width: calc(150px * var(--scale));
 }
 
 #crazyGamesUser {

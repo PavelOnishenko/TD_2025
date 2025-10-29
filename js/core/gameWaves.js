@@ -1,8 +1,6 @@
-import { updateHUD, endGame, updateWavePhaseIndicator } from '../systems/ui.js';
+import { updateHUD, updateWavePhaseIndicator } from '../systems/ui.js';
 import gameConfig from '../config/gameConfig.js';
 import { showCrazyGamesAdWithPause } from '../systems/ads.js';
-
-const SCORE_WAVE_CLEAR = 150;
 
 export const waveActions = {
     startWave() {
@@ -35,7 +33,9 @@ export const waveActions = {
         this.waveInProgress = true;
         this.nextWaveBtn.disabled = true;
         updateWavePhaseIndicator(this);
-        const cfg = this.waveConfigs[this.wave - 1] ?? this.waveConfigs.at(-1);
+        const cfg = typeof this.getOrCreateWaveConfig === 'function'
+            ? this.getOrCreateWaveConfig(this.wave)
+            : this.waveConfigs[this.wave - 1] ?? this.waveConfigs.at(-1);
         this.spawnInterval = cfg.interval;
         this.enemiesPerWave = cfg.cycles;
         this.prepareTankScheduleForWave(cfg, this.wave);
@@ -135,9 +135,7 @@ export const waveActions = {
             if (this.mergeBtn) {
                 this.mergeBtn.disabled = false;
             }
-            if (this.wave === this.maxWaves) {
-                endGame(this, 'WIN');
-            } else {
+            if (this.nextWaveBtn) {
                 this.nextWaveBtn.disabled = false;
             }
             if (typeof this.addScore === 'function') {
@@ -145,6 +143,9 @@ export const waveActions = {
             }
             const completedWave = this.wave;
             this.wave += 1;
+            if (completedWave >= this.maxWaves && typeof this.activateEndlessMode === 'function') {
+                this.activateEndlessMode();
+            }
             this.energy += gameConfig.player.energyPerWave;
             updateHUD(this);
             this.triggerWaveAdIfNeeded(completedWave);
@@ -152,36 +153,51 @@ export const waveActions = {
     },
 
     triggerWaveAdIfNeeded(completedWave) {
-        if (completedWave !== 5) {
+        const cadence = Math.max(1, Math.floor(gameConfig.ads?.waveCadence ?? 5));
+        if (completedWave < cadence || completedWave % cadence !== 0) {
             return;
         }
-        if (this.wave5AdShown || this.wave5AdPending) {
+        const state = typeof this.getWaveAdState === 'function'
+            ? this.getWaveAdState()
+            : (this.waveAdState ?? { shownWaves: new Set(), pendingWave: null, retryHandle: null });
+        this.waveAdState = state;
+        if (!state.shownWaves || typeof state.shownWaves.has !== 'function') {
+            state.shownWaves = new Set();
+        }
+        if (state.shownWaves.has(completedWave) || state.pendingWave === completedWave) {
             return;
         }
-        this.wave5AdPending = true;
+        state.pendingWave = completedWave;
 
         const scheduleRetry = (delayMs) => {
             const host = typeof window !== 'undefined' ? window : globalThis;
             if (typeof host?.setTimeout !== 'function') {
-                this.wave5AdPending = false;
+                state.pendingWave = null;
                 return;
             }
-            if (this.wave5AdRetryHandle && typeof host?.clearTimeout === 'function') {
-                host.clearTimeout(this.wave5AdRetryHandle);
+            if (state.retryHandle && typeof host?.clearTimeout === 'function') {
+                host.clearTimeout(state.retryHandle);
             }
-            this.wave5AdRetryHandle = host.setTimeout(() => {
-                this.wave5AdRetryHandle = null;
-                this.wave5AdPending = false;
-                this.triggerWaveAdIfNeeded(5);
+            state.retryHandle = host.setTimeout(() => {
+                state.retryHandle = null;
+                state.pendingWave = null;
+                this.triggerWaveAdIfNeeded(completedWave);
             }, delayMs);
         };
 
         Promise.resolve()
-            .then(() => showCrazyGamesAdWithPause(this, { reason: 'wave-5', adType: 'midgame' }))
+            .then(() => showCrazyGamesAdWithPause(this, { reason: 'wave-milestone', adType: 'midgame' }))
             .then(result => {
                 if (result?.shown) {
-                    this.wave5AdShown = true;
-                    this.wave5AdPending = false;
+                    state.shownWaves.add(completedWave);
+                    state.pendingWave = null;
+                    if (state.retryHandle) {
+                        const host = typeof window !== 'undefined' ? window : globalThis;
+                        if (typeof host?.clearTimeout === 'function') {
+                            host.clearTimeout(state.retryHandle);
+                        }
+                        state.retryHandle = null;
+                    }
                 } else if (result?.reason === 'cooldown') {
                     const delay = Math.max(1000, Math.ceil(result.cooldownRemaining ?? 0));
                     scheduleRetry(delay);
@@ -189,8 +205,8 @@ export const waveActions = {
             })
             .catch(error => console.warn('Wave ad failed', error))
             .finally(() => {
-                if (!this.wave5AdShown && !this.wave5AdRetryHandle) {
-                    this.wave5AdPending = false;
+                if (!state.shownWaves.has(completedWave) && !state.retryHandle) {
+                    state.pendingWave = null;
                 }
             });
     },

@@ -1,4 +1,5 @@
 import Tower from '../entities/Tower.js';
+import gameConfig from '../config/gameConfig.js';
 import { callCrazyGamesEvent } from './crazyGamesIntegration.js';
 import { showCrazyGamesAdWithPause } from './ads.js';
 import { saveAudioSettings } from './dataStore.js';
@@ -44,8 +45,8 @@ export function bindUI(game) {
     bindButtons(game);
     bindAudioButtons(game);
     bindPauseSystem(game);
-    bindCanvasClick(game);
-    bindDeveloperReset(game);
+    bindCanvasInteractions(game);
+    bindDiagnosticsOverlay(game);
     updateHUD(game);
     setupStartMenu(game);
     updateAudioControls(game);
@@ -60,6 +61,7 @@ function bindHUD(game) {
     game.wavePanelEl = document.getElementById('wavePanel');
     game.waveEl = document.getElementById('wave');
     game.wavePhaseEl = document.getElementById('wavePhase');
+    game.endlessIndicatorEl = document.getElementById('endlessIndicator');
     game.statusEl = document.getElementById('status');
     game.nextWaveBtn = document.getElementById('nextWave');
     game.restartBtn = document.getElementById('restart');
@@ -79,7 +81,129 @@ function bindHUD(game) {
     game.pauseOverlay = document.getElementById('pauseOverlay');
     game.pauseMessageEl = document.getElementById('pauseMessage');
     game.resumeBtn = document.getElementById('resumeGame');
-    game.tutorialResetHint = document.getElementById('tutorialResetHint');
+    game.diagnosticsOverlay = document.getElementById('diagnosticsOverlay');
+    game.saveControlsEl = document.getElementById('saveControls');
+    game.saveBtn = document.getElementById('saveGame');
+    game.loadBtn = document.getElementById('loadGame');
+    game.deleteSaveBtn = document.getElementById('deleteSave');
+}
+
+function bindDiagnosticsOverlay(game) {
+    if (!game) {
+        return;
+    }
+
+    const overlay = game.diagnosticsOverlay;
+    const state = {
+        visible: false,
+        fps: 0,
+        lastCommit: 0,
+    };
+    game.diagnosticsState = state;
+
+    if (!overlay) {
+        return;
+    }
+
+    if (typeof window === 'undefined') {
+        return;
+    }
+
+    const updateVisibility = () => {
+        overlay.classList.toggle('diagnostics--hidden', !state.visible);
+    };
+
+    const toggleOverlay = () => {
+        state.visible = !state.visible;
+        if (!state.visible) {
+            updateVisibility();
+            return;
+        }
+        state.fps = 0;
+        state.lastCommit = 0;
+        updateVisibility();
+        refreshDiagnosticsOverlay(game, { dt: 0, force: true });
+    };
+
+    const handleKeyDown = (event) => {
+        if (event.code !== 'Backquote') {
+            return;
+        }
+        if (event.ctrlKey || event.metaKey || event.altKey) {
+            return;
+        }
+        event.preventDefault();
+        toggleOverlay();
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    updateVisibility();
+}
+
+export function refreshDiagnosticsOverlay(game, options = {}) {
+    const overlay = game?.diagnosticsOverlay;
+    const state = game?.diagnosticsState;
+    if (!overlay || !state) {
+        return;
+    }
+
+    const {
+        dt = 0,
+        timestamp = typeof performance !== 'undefined' && typeof performance.now === 'function'
+            ? performance.now()
+            : Date.now(),
+        force = false,
+    } = options;
+
+    if (!state.visible && !force) {
+        return;
+    }
+
+    if (Number.isFinite(dt) && dt > 0) {
+        const instantFps = 1 / dt;
+        const smoothing = 0.25;
+        state.fps = state.fps > 0 ? (state.fps * (1 - smoothing)) + (instantFps * smoothing) : instantFps;
+    }
+
+    const now = Number.isFinite(timestamp)
+        ? timestamp
+        : (typeof performance !== 'undefined' && typeof performance.now === 'function'
+            ? performance.now()
+            : Date.now());
+
+    const minInterval = 120;
+    if (!force && now - (state.lastCommit ?? 0) < minInterval) {
+        return;
+    }
+
+    state.lastCommit = now;
+
+    const fpsValue = state.fps > 0 ? state.fps : (Number.isFinite(dt) && dt > 0 ? 1 / dt : 0);
+    const fpsDisplay = fpsValue > 0 ? fpsValue.toFixed(1) : '—';
+    const waveNumber = Number.isFinite(game?.wave) ? game.wave : 0;
+    const maxWaves = Number.isFinite(game?.maxWaves) ? game.maxWaves : '∞';
+    const waveStatus = game?.waveInProgress ? 'In Progress' : 'Prep';
+    const enemies = Array.isArray(game?.enemies) ? game.enemies.length : 0;
+    const towers = Array.isArray(game?.towers) ? game.towers.length : 0;
+    const projectiles = Array.isArray(game?.projectiles) ? game.projectiles.length : 0;
+    const entities = enemies + towers + projectiles;
+    const paused = game?.isPaused ? 'Yes' : 'No';
+    const muted = game?.audioMuted ? 'Yes' : 'No';
+    const music = game?.musicEnabled ? 'Yes' : 'No';
+
+    const lines = [
+        `FPS: ${fpsDisplay}`,
+        `Wave: ${waveNumber}/${maxWaves} (${waveStatus})`,
+        `Enemies: ${enemies}`,
+        `Towers: ${towers}`,
+        `Projectiles: ${projectiles}`,
+        `Entities: ${entities}`,
+        `Paused: ${paused}`,
+        `Muted: ${muted}`,
+        `Music Enabled: ${music}`,
+    ];
+
+    overlay.textContent = lines.join('\n');
 }
 
 function bindButtons(game) {
@@ -208,30 +332,6 @@ function updateMusicButton(game) {
     game.musicBtn.setAttribute('aria-pressed', enabled ? 'true' : 'false');
 }
 
-function bindDeveloperReset(game) {
-    const hint = game.tutorialResetHint;
-    if (!hint) {
-        return;
-    }
-
-    const giveFeedback = className => {
-        hint.classList.add(className);
-        setTimeout(() => hint.classList.remove(className), 400);
-    };
-
-    hint.addEventListener('click', event => {
-        if (!(event.altKey && event.shiftKey)) {
-            giveFeedback('tutorial-reset-hint--nudge');
-            return;
-        }
-        game.resetTutorialProgress?.();
-        if (game.hasStarted) {
-            game.tutorial?.start();
-        }
-        giveFeedback('tutorial-reset-hint--activated');
-    });
-}
-
 function setupStartMenu(game) {
     if (!game.startOverlay)
         return;
@@ -287,23 +387,286 @@ function updateEndScreenScore(game) {
     }
 }
 
-function bindCanvasClick(game) {
-    game.canvas.addEventListener('click', e => {
-        const pos = getMousePos(game.canvas, e);
-        const tower = game.towers.find(t => isInside(pos, t));
+function bindCanvasInteractions(game) {
+    if (!game?.canvas) {
+        return;
+    }
+
+    const pointerState = {
+        pointerId: null,
+        tower: null,
+        downPos: null,
+        movedTooFar: false,
+        cancelled: false,
+        removalTriggered: false,
+        startedRemoval: false,
+        chargeSoundHandle: null,
+    };
+
+    const removalDuration = Math.max(0.1, Number(gameConfig.towers?.removalHoldDuration) || 2);
+    const colorSwitchThreshold = 0.28;
+    const dragThreshold = 12;
+    const cancelMarginFactor = 0.25;
+    const host = typeof window !== 'undefined'
+        ? window
+        : (typeof globalThis !== 'undefined' ? globalThis : null);
+
+    const cancelChargeSoundTimer = () => {
+        if (pointerState.chargeSoundHandle && host && typeof host.clearTimeout === 'function') {
+            host.clearTimeout(pointerState.chargeSoundHandle);
+        }
+        pointerState.chargeSoundHandle = null;
+    };
+
+    const isTowerInGame = (tower) => Array.isArray(game?.towers) && game.towers.includes(tower);
+
+    const resetPointerState = () => {
+        if (pointerState.pointerId !== null && typeof game.canvas?.releasePointerCapture === 'function') {
+            try {
+                game.canvas.releasePointerCapture(pointerState.pointerId);
+            } catch {
+                // ignore release failures
+            }
+        }
+        cancelChargeSoundTimer();
+        pointerState.pointerId = null;
+        pointerState.tower = null;
+        pointerState.downPos = null;
+        pointerState.movedTooFar = false;
+        pointerState.cancelled = false;
+        pointerState.removalTriggered = false;
+        pointerState.startedRemoval = false;
+    };
+
+    const scheduleChargeSound = (pointerId) => {
+        if (!pointerState.startedRemoval) {
+            return;
+        }
+        cancelChargeSoundTimer();
+        if (!host || typeof host.setTimeout !== 'function') {
+            if (typeof game.audio?.playTowerRemoveCharge === 'function') {
+                game.audio.playTowerRemoveCharge();
+            }
+            return;
+        }
+        const delay = Math.max(150, Math.min(removalDuration * 250, 360));
+        pointerState.chargeSoundHandle = host.setTimeout(() => {
+            pointerState.chargeSoundHandle = null;
+            if (
+                pointerState.pointerId === pointerId &&
+                pointerState.tower &&
+                pointerState.startedRemoval &&
+                pointerState.tower.isRemovalCharging?.()
+            ) {
+                if (typeof game.audio?.playTowerRemoveCharge === 'function') {
+                    game.audio.playTowerRemoveCharge();
+                }
+            }
+        }, delay);
+    };
+
+    const cancelTowerRemovalAttempt = (playSound) => {
+        const tower = pointerState.tower;
+        if (!tower || pointerState.removalTriggered || !isTowerInGame(tower)) {
+            return;
+        }
+        const progress = typeof tower.getRemovalChargeProgress === 'function'
+            ? tower.getRemovalChargeProgress()
+            : 0;
+        if (typeof tower.cancelRemovalCharge === 'function') {
+            tower.cancelRemovalCharge();
+        }
+        if (playSound && pointerState.startedRemoval && progress > 0.08 && typeof game.audio?.playTowerRemoveCancel === 'function') {
+            game.audio.playTowerRemoveCancel();
+        }
+    };
+
+    const findTowerAtPosition = (pos) => {
+        if (!Array.isArray(game?.towers)) {
+            return null;
+        }
+        return game.towers.find(tower => isInside(pos, tower)) ?? null;
+    };
+
+    const findCellAtPosition = (pos) => {
+        const cells = typeof game.getAllCells === 'function' ? game.getAllCells() : [];
+        return cells.find(cell => isInside(pos, cell)) ?? null;
+    };
+
+    const isWithinTowerWithMargin = (tower, pos, marginFactor) => {
+        const width = tower.w ?? 0;
+        const height = tower.h ?? 0;
+        const marginX = width * marginFactor;
+        const marginY = height * marginFactor;
+        return (
+            pos.x >= tower.x - marginX &&
+            pos.x <= tower.x + width + marginX &&
+            pos.y >= tower.y - marginY &&
+            pos.y <= tower.y + height + marginY
+        );
+    };
+
+    const handlePointerDown = (event) => {
+        if (event.button !== undefined && event.button !== 0) {
+            return;
+        }
+        const pointerId = typeof event.pointerId === 'number' ? event.pointerId : 0;
+        const pos = getMousePos(game.canvas, event);
+
+        pointerState.pointerId = pointerId;
+        pointerState.downPos = pos;
+        pointerState.movedTooFar = false;
+        pointerState.cancelled = false;
+        pointerState.removalTriggered = false;
+        pointerState.startedRemoval = false;
+        pointerState.tower = null;
+        cancelChargeSoundTimer();
+
+        const tower = findTowerAtPosition(pos);
         if (tower) {
-            const switched = game.switchTowerColor(tower);
-            if (switched && game.tutorial) {
-                game.tutorial.handleColorSwitch();
+            pointerState.tower = tower;
+            const started = typeof tower.beginRemovalCharge === 'function'
+                ? tower.beginRemovalCharge()
+                : false;
+            pointerState.startedRemoval = started || Boolean(tower.isRemovalCharging?.());
+            pointerState.removalTriggered = !isTowerInGame(tower);
+            if (typeof game.canvas?.setPointerCapture === 'function') {
+                try {
+                    game.canvas.setPointerCapture(pointerId);
+                } catch {
+                    // ignore capture failures
+                }
+            }
+            if (pointerState.startedRemoval) {
+                scheduleChargeSound(pointerId);
+            }
+            event.preventDefault();
+            return;
+        }
+
+        if (typeof game.canvas?.setPointerCapture === 'function') {
+            try {
+                game.canvas.setPointerCapture(pointerId);
+            } catch {
+                // ignore capture failures
+            }
+        }
+    };
+
+    const handlePointerMove = (event) => {
+        const pointerId = typeof event.pointerId === 'number' ? event.pointerId : 0;
+        if (pointerState.pointerId !== pointerId) {
+            return;
+        }
+        const pos = getMousePos(game.canvas, event);
+
+        if (pointerState.tower) {
+            if (!pointerState.removalTriggered && !isTowerInGame(pointerState.tower)) {
+                pointerState.removalTriggered = true;
+                cancelChargeSoundTimer();
+                return;
+            }
+            if (pointerState.cancelled || pointerState.removalTriggered) {
+                return;
+            }
+            const within = isWithinTowerWithMargin(pointerState.tower, pos, cancelMarginFactor);
+            if (!within) {
+                pointerState.cancelled = true;
+                cancelChargeSoundTimer();
+                cancelTowerRemovalAttempt(true);
             }
             return;
         }
 
-        const cell = game.getAllCells().find(c => isInside(pos, c));
-        if (cell) {
-            tryShoot(game, cell);
+        if (!pointerState.downPos) {
+            return;
         }
-    });
+
+        const distance = Math.hypot(pos.x - pointerState.downPos.x, pos.y - pointerState.downPos.y);
+        if (distance > dragThreshold) {
+            pointerState.movedTooFar = true;
+        }
+    };
+
+    const handlePointerUp = (event) => {
+        const pointerId = typeof event.pointerId === 'number' ? event.pointerId : 0;
+        if (pointerState.pointerId !== pointerId) {
+            return;
+        }
+        const pos = getMousePos(game.canvas, event);
+        cancelChargeSoundTimer();
+
+        if (pointerState.tower) {
+            const tower = pointerState.tower;
+            const towerInGame = isTowerInGame(tower);
+            const progress = typeof tower.getRemovalChargeProgress === 'function'
+                ? tower.getRemovalChargeProgress()
+                : 0;
+            const removalTriggered = pointerState.removalTriggered || !towerInGame || progress >= 0.999;
+
+            if (!removalTriggered) {
+                if (pointerState.cancelled) {
+                    cancelTowerRemovalAttempt(true);
+                } else {
+                    const playCancelSound = progress > colorSwitchThreshold;
+                    cancelTowerRemovalAttempt(playCancelSound);
+                    if (progress <= colorSwitchThreshold) {
+                        handleTowerColorSwitch(game, tower);
+                    }
+                }
+            }
+
+            resetPointerState();
+            return;
+        }
+
+        if (!pointerState.movedTooFar) {
+            handleCellTap(game, pos);
+        }
+        resetPointerState();
+    };
+
+    const handlePointerCancel = (event) => {
+        const pointerId = typeof event.pointerId === 'number' ? event.pointerId : 0;
+        if (pointerState.pointerId !== pointerId) {
+            return;
+        }
+        cancelChargeSoundTimer();
+        if (pointerState.tower && !pointerState.removalTriggered) {
+            cancelTowerRemovalAttempt(true);
+        }
+        resetPointerState();
+    };
+
+    const preventContextMenu = (event) => {
+        event.preventDefault();
+    };
+
+    game.canvas.addEventListener('pointerdown', handlePointerDown);
+    game.canvas.addEventListener('pointermove', handlePointerMove);
+    game.canvas.addEventListener('pointerup', handlePointerUp);
+    game.canvas.addEventListener('pointerleave', handlePointerCancel);
+    game.canvas.addEventListener('pointercancel', handlePointerCancel);
+    game.canvas.addEventListener('contextmenu', preventContextMenu);
+}
+
+function handleTowerColorSwitch(game, tower) {
+    if (!tower || typeof game?.switchTowerColor !== 'function') {
+        return;
+    }
+    const switched = game.switchTowerColor(tower);
+    if (switched && game.tutorial && typeof game.tutorial.handleColorSwitch === 'function') {
+        game.tutorial.handleColorSwitch();
+    }
+}
+
+function handleCellTap(game, pos) {
+    const cell = typeof game.getAllCells === 'function'
+        ? game.getAllCells().find(c => isInside(pos, c))
+        : null;
+    if (cell) {
+        tryShoot(game, cell);
+    }
 }
 
 function tryShoot(game, cell) {
@@ -337,9 +700,7 @@ export function updateHUD(game) {
     renderLives(game);
     renderEnergy(game);
     renderScore(game);
-    if (game.waveEl) {
-        game.waveEl.textContent = `Wave: ${game.wave}/${game.maxWaves}`;
-    }
+    renderWaveInfo(game);
     updateWavePhaseIndicator(game);
     if (typeof game.persistState === 'function') {
         game.persistState();
@@ -374,6 +735,42 @@ function renderScore(game) {
     if (game.scorePanelEl && typeof game.scorePanelEl.setAttribute === 'function') {
         game.scorePanelEl.setAttribute('aria-live', 'polite');
     }
+}
+
+function toggleEndlessIndicator(game, isEndless) {
+    const indicator = game.endlessIndicatorEl;
+    if (!indicator) {
+        return;
+    }
+    if (indicator.classList && typeof indicator.classList.toggle === 'function') {
+        indicator.classList.toggle('hidden', !isEndless);
+    } else if (indicator.style) {
+        indicator.style.display = isEndless ? '' : 'none';
+    }
+    if (typeof indicator.setAttribute === 'function') {
+        indicator.setAttribute('aria-hidden', isEndless ? 'false' : 'true');
+    }
+}
+
+function renderWaveInfo(game) {
+    if (!game.waveEl) {
+        return;
+    }
+    const endlessActive = typeof game.isEndlessWave === 'function'
+        ? game.isEndlessWave()
+        : game.wave > game.maxWaves;
+    if (typeof game.waveEl.textContent !== 'undefined') {
+        game.waveEl.textContent = endlessActive
+            ? `Wave: ${game.wave}`
+            : `Wave: ${game.wave}/${game.maxWaves}`;
+    }
+    if (typeof game.waveEl.setAttribute === 'function') {
+        const label = endlessActive
+            ? `Wave ${game.wave}, endless mode`
+            : `Wave ${game.wave} of ${game.maxWaves}`;
+        game.waveEl.setAttribute('aria-label', label);
+    }
+    toggleEndlessIndicator(game, endlessActive);
 }
 
 export function updateWavePhaseIndicator(game) {

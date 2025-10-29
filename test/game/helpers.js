@@ -40,6 +40,7 @@ export function attachDomStubs(game) {
     game.waveEl = { textContent: '' };
     game.wavePhaseEl = { textContent: '', classList: createClassList() };
     game.wavePanelEl = { dataset: {}, classList: createClassList() };
+    game.endlessIndicatorEl = { classList: createClassList(), setAttribute: () => {} };
     game.statusEl = { textContent: '', style: {} };
     game.nextWaveBtn = { disabled: false };
     game.mergeBtn = { disabled: false };
@@ -54,6 +55,11 @@ export function attachDomStubs(game) {
     game.resumeBtn = { disabled: false, textContent: '' };
     game.endScoreEl = { textContent: '' };
     game.endBestScoreEl = { textContent: '' };
+    game.saveControlsEl = { classList: createClassList(), dataset: {} };
+    const createSaveButton = () => ({ disabled: false, addEventListener: () => {} });
+    game.saveBtn = createSaveButton();
+    game.loadBtn = createSaveButton();
+    game.deleteSaveBtn = createSaveButton();
 }
 
 export function createGame({ attachDom = false } = {}) {

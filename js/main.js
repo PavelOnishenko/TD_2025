@@ -10,6 +10,8 @@ import { loadAssets } from './systems/assets.js';
 import { initializeAudio } from './systems/audio.js';
 import { loadAudioSettings } from './systems/dataStore.js';
 import gameConfig from './config/gameConfig.js';
+import featureFlags from './config/featureFlags.js';
+import initSimpleSaveSystem from './systems/simpleSaveSystem.js';
 
 const { width: LOGICAL_W, height: LOGICAL_H } = gameConfig.world.logicalSize;
 export function getViewportMetrics(windowRef = window) {
@@ -164,6 +166,16 @@ async function startGame(context) {
     const game = new Game(context.canvasElement, { width: LOGICAL_W, height: LOGICAL_H, assets });
     context.gameInstance = game;
     bindUI(game);
+    const simpleSaveConfig = featureFlags?.simpleSaveSystem ?? {};
+    const simpleSaveEnabled = typeof simpleSaveConfig === 'object'
+        ? Boolean(simpleSaveConfig.enabled ?? true)
+        : Boolean(simpleSaveConfig);
+    if (simpleSaveEnabled) {
+        const saveOptions = typeof simpleSaveConfig === 'object'
+            ? { storageKey: simpleSaveConfig.storageKey, enabled: simpleSaveConfig.enabled }
+            : {};
+        initSimpleSaveSystem(game, saveOptions);
+    }
     applySavedAudioSettings(game);
     attachAudioFocusHandlers(game);
     resizeCanvas(context);

@@ -11,7 +11,10 @@ const NOOP_AUDIO = {
     playMusic() {},
     stopMusic() {},
     playError() {},
-    playBaseHit() {}
+    playBaseHit() {},
+    playTowerRemoveCharge() {},
+    playTowerRemoveCancel() {},
+    playTowerRemoveExplosion() {}
 };
 
 function hasHowler() {
@@ -103,6 +106,9 @@ export function createGameAudio(sounds = {}) {
     const explosionSource = sounds.explosion ?? sounds.matchingHit ?? null;
     const matchingHitSource = sounds.matchingHit ?? sounds.explosion ?? null;
     const mergeSource = sounds.merge ?? explosionSource;
+    const towerRemoveChargeSource = sounds.towerRemoveCharge ?? null;
+    const towerRemoveCancelSource = sounds.towerRemoveCancel ?? null;
+    const towerRemoveExplosionSource = sounds.towerRemoveExplosion ?? explosionSource;
     const explosionSound = createSoundTrigger(explosionSource);
     const matchingHitSound = createSoundTrigger(matchingHitSource);
     const mergeSound = createSoundTrigger(mergeSource);
@@ -111,6 +117,9 @@ export function createGameAudio(sounds = {}) {
     const colorSwitchSound = createSoundTrigger(sounds.colorSwitch ?? null);
     const errorSound = createSoundTrigger(sounds.error ?? null);
     const baseHitSound = createSoundTrigger(sounds.baseHit ?? null);
+    const towerRemoveChargeSound = createSoundTrigger(towerRemoveChargeSource);
+    const towerRemoveCancelSound = createSoundTrigger(towerRemoveCancelSource);
+    const towerRemoveExplosionSound = createSoundTrigger(towerRemoveExplosionSource);
     const { playMusic, stopMusic } = createMusicActions(sounds.backgroundMusic ?? null);
 
     return {
@@ -124,6 +133,9 @@ export function createGameAudio(sounds = {}) {
         playMusic,
         stopMusic,
         playError: errorSound,
-        playBaseHit: baseHitSound
+        playBaseHit: baseHitSound,
+        playTowerRemoveCharge: towerRemoveChargeSound,
+        playTowerRemoveCancel: towerRemoveCancelSound,
+        playTowerRemoveExplosion: towerRemoveExplosionSound
     };
 }

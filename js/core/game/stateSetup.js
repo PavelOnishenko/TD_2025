@@ -17,6 +17,10 @@ function resetResources(game) {
     game.gameOver = false;
     game.elapsedTime = 0;
     game.score = 0;
+    if (typeof game.ensureEndlessWaveTracking === 'function') {
+        game.ensureEndlessWaveTracking();
+    }
+    game.endlessModeActive = false;
 }
 
 function resetCollections(game) {
@@ -79,13 +83,21 @@ function resetGame(game) {
     resetStatus(game);
     resetEndOverlay(game);
     resetEndMessages(game);
-    const timerHost = typeof window !== 'undefined' ? window : globalThis;
-    if (game.wave5AdRetryHandle && typeof timerHost?.clearTimeout === 'function') {
-        timerHost.clearTimeout(game.wave5AdRetryHandle);
+    if (typeof game.resetWaveAdState === 'function') {
+        game.resetWaveAdState();
+    } else {
+        const timerHost = typeof window !== 'undefined' ? window : globalThis;
+        const state = game.waveAdState ?? { shownWaves: new Set(), pendingWave: null, retryHandle: null };
+        if (state.retryHandle && typeof timerHost?.clearTimeout === 'function') {
+            timerHost.clearTimeout(state.retryHandle);
+        }
+        state.retryHandle = null;
+        state.pendingWave = null;
+        if (state.shownWaves && typeof state.shownWaves.clear === 'function') {
+            state.shownWaves.clear();
+        }
+        game.waveAdState = state;
     }
-    game.wave5AdRetryHandle = null;
-    game.wave5AdPending = false;
-    game.wave5AdShown = false;
     updateHUD(game);
     game.persistState();
     if (game.tutorial) {
@@ -124,6 +136,20 @@ const stateSetup = {
         this.scorePerKill = scoring.perKill;
         this.waveClearScore = scoring.waveClear;
         this.baseHitPenalty = scoring.baseHitPenalty;
+        this.endlessModeActive = false;
+        this.ensureEndlessWaveTracking?.();
+        const hasShownWavesSet = this.waveAdState
+            && this.waveAdState.shownWaves
+            && typeof this.waveAdState.shownWaves.clear === 'function';
+        if (hasShownWavesSet) {
+            this.waveAdState.shownWaves.clear();
+            this.waveAdState.pendingWave = null;
+            const host = typeof window !== 'undefined' ? window : globalThis;
+            if (this.waveAdState.retryHandle && typeof host?.clearTimeout === 'function') {
+                host.clearTimeout(this.waveAdState.retryHandle);
+            }
+            this.waveAdState.retryHandle = null;
+        }
     },
 
     resetState() {

@@ -25,7 +25,8 @@ function toInt(value, fallback) {
 }
 
 function applySavedResources(game, savedState) {
-    const targetWave = clamp(toInt(savedState.wave, 1), 1, game.maxWaves);
+    const rawWave = toInt(savedState.wave, 1);
+    const targetWave = clamp(rawWave, 1, 9999);
     game.lives = clamp(toInt(savedState.lives, game.initialLives), 0, 99);
     const savedEnergy = savedState.energy ?? savedState.gold;
     game.energy = clamp(toInt(savedEnergy, game.initialEnergy), 0, 9999);
@@ -35,7 +36,21 @@ function applySavedResources(game, savedState) {
         game.bestScore = savedBestScore;
         saveBestScore(game.bestScore);
     }
+    if (typeof game.ensureEndlessWaveTracking === 'function') {
+        game.ensureEndlessWaveTracking();
+    }
     game.wave = targetWave;
+    if (typeof game.getOrCreateWaveConfig === 'function') {
+        game.getOrCreateWaveConfig(targetWave);
+    }
+    if (typeof game.getEnemyHpForWave === 'function') {
+        game.getEnemyHpForWave(targetWave);
+    }
+    if (typeof game.isEndlessWave === 'function') {
+        game.endlessModeActive = game.isEndlessWave(targetWave);
+    } else if (Number.isFinite(game.maxWaves)) {
+        game.endlessModeActive = targetWave > game.maxWaves;
+    }
     game.waveInProgress = false;
     game.spawned = 0;
     game.spawnTimer = 0;
@@ -50,7 +65,9 @@ function applySavedResources(game, savedState) {
 function configureWaveAfterRestore(game, waveNumber) {
     const index = waveNumber - 1;
     const fallback = game.waveConfigs.at(-1);
-    const cfg = game.waveConfigs[index] ?? fallback;
+    const cfg = typeof game.getOrCreateWaveConfig === 'function'
+        ? game.getOrCreateWaveConfig(waveNumber)
+        : game.waveConfigs[index] ?? fallback;
     game.spawnInterval = cfg.interval;
     game.enemiesPerWave = cfg.cycles;
     game.prepareTankScheduleForWave(cfg, waveNumber);

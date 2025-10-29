@@ -6,6 +6,7 @@ import { callCrazyGamesEvent } from '../systems/crazyGamesIntegration.js';
 import { createGameAudio, getHowler } from '../systems/audio.js';
 import { createExplosion, updateExplosions, updateColorSwitchBursts } from '../systems/effects.js';
 import { saveBestScore } from '../systems/dataStore.js';
+import { refreshDiagnosticsOverlay, updateHUD } from '../systems/ui.js';
 import GameGrid from './gameGrid.js';
 import { createPlatforms } from './platforms.js';
 import projectileManagement from './game/projectileManagement.js';
@@ -24,6 +25,18 @@ function createScreenShakeState() {
         frequency,
         seedX: Math.random() * Math.PI * 2,
         seedY: Math.random() * Math.PI * 2,
+    };
+}
+
+function createBaseHitFlashState() {
+    return {
+        active: false,
+        elapsed: 0,
+        duration: 0,
+        strength: 0,
+        color: 'default',
+        impactX: null,
+        impactY: null,
     };
 }
 
@@ -70,15 +83,18 @@ class Game {
         this.persistenceEnabled = true;
         this.mergeHintPairs = [];
         this.screenShake = createScreenShakeState();
+        this.baseHitFlash = createBaseHitFlashState();
         this.audioMuted = false;
         this.musicEnabled = true;
         this.musicPausedByFocus = false;
         this.isPaused = false;
         this.pauseReason = null;
         this.pauseListeners = new Set();
-        this.wave5AdShown = false;
-        this.wave5AdPending = false;
-        this.wave5AdRetryHandle = null;
+        this.waveAdState = this.createWaveAdState();
+        this.endlessModeActive = false;
+        this.endlessWaveStart = 0;
+        this.diagnosticsOverlay = null;
+        this.diagnosticsState = { visible: false, fps: 0, lastCommit: 0 };
     }
 
     setupEnvironment() {
@@ -108,6 +124,102 @@ class Game {
             return;
         }
         this.assets = assets;
+    }
+
+    createWaveAdState() {
+        return {
+            shownWaves: new Set(),
+            pendingWave: null,
+            retryHandle: null,
+        };
+    }
+
+    getWaveAdState() {
+        if (!this.waveAdState) {
+            this.waveAdState = this.createWaveAdState();
+        }
+        return this.waveAdState;
+    }
+
+    resetWaveAdState() {
+        const state = this.getWaveAdState();
+        const host = typeof window !== 'undefined' ? window : globalThis;
+        if (state.retryHandle && typeof host?.clearTimeout === 'function') {
+            host.clearTimeout(state.retryHandle);
+        }
+        state.retryHandle = null;
+        state.pendingWave = null;
+        state.shownWaves.clear();
+    }
+
+    ensureEndlessWaveTracking() {
+        if (this.endlessWaveStart) {
+            return;
+        }
+        const configuredMax = Number.isFinite(this.maxWaves)
+            ? this.maxWaves
+            : Number.isFinite(gameConfig.player?.maxWaves)
+                ? gameConfig.player.maxWaves
+                : 0;
+        this.endlessWaveStart = configuredMax + 1;
+    }
+
+    activateEndlessMode() {
+        this.ensureEndlessWaveTracking();
+        this.endlessModeActive = true;
+    }
+
+    isEndlessWave(waveNumber = this.wave) {
+        this.ensureEndlessWaveTracking();
+        if (!Number.isFinite(waveNumber)) {
+            return false;
+        }
+        return waveNumber >= this.endlessWaveStart;
+    }
+
+    getOrCreateWaveConfig(waveNumber) {
+        this.ensureEndlessWaveTracking();
+        const targetWave = Math.max(1, Math.floor(waveNumber));
+        const index = targetWave - 1;
+        if (index < this.waveConfigs.length) {
+            return this.waveConfigs[index];
+        }
+
+        const endless = gameConfig.waves?.endless ?? {};
+        const intervalFactor = Number.isFinite(endless.intervalFactor) ? endless.intervalFactor : 0.95;
+        const minInterval = Number.isFinite(endless.minInterval) ? endless.minInterval : 0.4;
+        const cyclesIncrement = Number.isFinite(endless.cyclesIncrement) ? endless.cyclesIncrement : 3;
+        const tanksIncrement = Number.isFinite(endless.tanksIncrement) ? endless.tanksIncrement : 2;
+
+        let previous = this.waveConfigs.at(-1) ?? { interval: 1, cycles: 30, tanksCount: 0 };
+        for (let wave = this.waveConfigs.length + 1; wave <= targetWave; wave += 1) {
+            const nextInterval = Math.max(minInterval, Number((previous.interval * intervalFactor).toFixed(3)));
+            const nextCycles = Math.max(1, Math.round(previous.cycles + cyclesIncrement));
+            const nextTanks = Math.max(0, Math.round(previous.tanksCount + tanksIncrement));
+            const nextConfig = { interval: nextInterval, cycles: nextCycles, tanksCount: nextTanks };
+            this.waveConfigs.push(nextConfig);
+            previous = nextConfig;
+        }
+
+        return this.waveConfigs[index];
+    }
+
+    getEnemyHpForWave(waveNumber) {
+        const targetWave = Math.max(1, Math.floor(waveNumber));
+        const index = targetWave - 1;
+        if (index < this.enemyHpPerWave.length) {
+            return this.enemyHpPerWave[index];
+        }
+
+        const endless = gameConfig.waves?.endless ?? {};
+        const hpGrowth = Number.isFinite(endless.hpGrowth) ? endless.hpGrowth : 1.15;
+        let previousHp = this.enemyHpPerWave.at(-1) ?? 1;
+        for (let wave = this.enemyHpPerWave.length + 1; wave <= targetWave; wave += 1) {
+            previousHp = Math.max(1, Math.round(previousHp * hpGrowth));
+            this.enemyHpPerWave.push(previousHp);
+        }
+
+        return this.enemyHpPerWave[index];
     }
 
     getCurrentScore() {
@@ -237,15 +349,28 @@ class Game {
 
     update(timestamp) {
         if (this.gameOver) {
+            refreshDiagnosticsOverlay(this, { dt: 0, timestamp });
             return;
         }
         if (this.isPaused) {
+            refreshDiagnosticsOverlay(this, { dt: 0, timestamp });
             this.lastTime = timestamp;
             requestAnimationFrame(this.update);
             return;
         }
         const dt = this.calcDelta(timestamp);
-        this.towers.forEach(tower => tower.update(dt));
+        const towersPendingRemoval = [];
+        for (const tower of this.towers) {
+            tower.update(dt);
+            if (typeof tower.shouldTriggerRemoval === 'function' && tower.shouldTriggerRemoval()) {
+                towersPendingRemoval.push(tower);
+            }
+        }
+        if (towersPendingRemoval.length > 0) {
+            towersPendingRemoval.forEach(tower => {
+                this.removeTower(tower, { cause: 'long-press' });
+            });
+        }
         this.spawnEnemiesIfNeeded(dt);
         this.updateEnemies(dt);
         this.towerAttacks(timestamp);
@@ -260,10 +385,70 @@ class Game {
         this.updateMergeHints();
         this.checkWaveCompletion();
         this.updateScreenShake(dt);
+        this.updateBaseHitFlash(dt);
         draw(this);
+        refreshDiagnosticsOverlay(this, { dt, timestamp });
         if (!this.gameOver) {
             requestAnimationFrame(this.update);
         }
+    }
+
+    removeTower(tower, options = {}) {
+        if (!tower) {
+            return false;
+        }
+
+        const index = this.towers.indexOf(tower);
+        if (index === -1) {
+            return false;
+        }
+
+        this.towers.splice(index, 1);
+
+        if (tower.cell) {
+            tower.cell.occupied = false;
+            tower.cell.tower = null;
+            tower.cell = null;
+        }
+
+        if (typeof tower.acknowledgeRemoval === 'function') {
+            tower.acknowledgeRemoval();
+        }
+
+        if (Array.isArray(this.mergeAnimations) && this.mergeAnimations.length > 0) {
+            this.mergeAnimations = this.mergeAnimations.filter(animation => animation?.targetTower !== tower);
+        }
+
+        const center = typeof tower.center === 'function'
+            ? tower.center()
+            : {
+                x: (tower.x ?? 0) + (tower.w ?? 0) / 2,
+                y: (tower.y ?? 0) + (tower.h ?? 0) / 2,
+            };
+        const yOffset = (tower.h ?? 0) * 0.18;
+        const explosion = createExplosion(center.x, center.y - yOffset, {
+            color: tower.color ?? 'default',
+            variant: 'dismantle',
+        });
+
+        if (explosion) {
+            if (!Array.isArray(this.explosions)) {
+                this.explosions = [];
+            }
+            this.explosions.push(explosion);
+        }
+
+        const playAudio = options?.silent !== true;
+        if (playAudio && this.audio) {
+            if (typeof this.audio.playTowerRemoveExplosion === 'function') {
+                this.audio.playTowerRemoveExplosion();
+            } else if (typeof this.audio.playExplosion === 'function') {
+                this.audio.playExplosion();
+            }
+        }
+
+        updateHUD(this);
+        return true;
     }
 
     addEnergyPopup(text, x, y, options = {}) {
@@ -405,6 +590,19 @@ class Game {
         }
     }
 
+    updateBaseHitFlash(dt) {
+        const flash = this.baseHitFlash;
+        if (!flash || !flash.active) {
+            return;
+        }
+
+        flash.elapsed = (flash.elapsed ?? 0) + dt;
+        if (flash.elapsed >= (flash.duration ?? 0)) {
+            flash.active = false;
+            flash.strength = 0;
+        }
+    }
+
     resetScreenShake() {
         const shake = this.screenShake ?? createScreenShakeState();
         shake.duration = 0;
@@ -416,7 +614,7 @@ class Game {
         this.screenShake = shake;
     }
 
-    triggerBaseHitEffects() {
+    triggerBaseHitEffects(enemy = null) {
         if (!this.screenShake) {
             this.screenShake = createScreenShakeState();
         }
@@ -432,9 +630,75 @@ class Game {
         shake.seedX = Math.random() * Math.PI * 2;
         shake.seedY = Math.random() * Math.PI * 2;
 
+        this.spawnBaseHitExplosion(enemy);
+        this.activateBaseHitFlash(enemy);
+
         if (typeof this.audio?.playBaseHit === 'function') {
             this.audio.playBaseHit();
         }
+    }
+
+    spawnBaseHitExplosion(enemy) {
+        if (!enemy) {
+            return;
+        }
+
+        const width = Number.isFinite(enemy.w) ? enemy.w : 0;
+        const height = Number.isFinite(enemy.h) ? enemy.h : 0;
+        const baseCenterX = this.base ? this.base.x + (this.base.w ?? 0) / 2 : 0;
+        const baseCenterY = this.base ? this.base.y + (this.base.h ?? 0) / 2 : 0;
+        const centerX = Number.isFinite(enemy.x) ? enemy.x + width / 2 : baseCenterX;
+        const centerY = Number.isFinite(enemy.y) ? enemy.y + height / 2 : baseCenterY;
+        const explosion = createExplosion(centerX, centerY, {
+            color: enemy.color ?? 'default',
+            variant: 'match',
+        });
+
+        if (!Array.isArray(this.explosions)) {
+            this.explosions = [];
+        }
+
+        this.explosions.push(explosion);
+    }
+
+    activateBaseHitFlash(enemy) {
+        const base = this.base;
+        if (!base) {
+            return;
+        }
+
+        if (!this.baseHitFlash) {
+            this.baseHitFlash = createBaseHitFlashState();
+        }
+
+        const flash = this.baseHitFlash;
+        const baseRight = base.x + (base.w ?? 0);
+        const baseBottom = base.y + (base.h ?? 0);
+        const defaultImpactX = base.x + (base.w ?? 0) * 0.2;
+        const defaultImpactY = base.y + (base.h ?? 0) * 0.5;
+
+        let impactX = defaultImpactX;
+        let impactY = defaultImpactY;
+
+        if (enemy) {
+            const enemyFrontX = Number.isFinite(enemy.x)
+                ? enemy.x + (Number.isFinite(enemy.w) ? enemy.w : 0)
+                : defaultImpactX;
+            const enemyCenterY = Number.isFinite(enemy.y)
+                ? enemy.y + (Number.isFinite(enemy.h) ? enemy.h : 0) / 2
+                : defaultImpactY;
+            impactX = Math.min(Math.max(enemyFrontX, base.x), baseRight);
+            impactY = Math.min(Math.max(enemyCenterY, base.y), baseBottom);
+        }
+
+        flash.color = enemy?.color ?? 'default';
+        flash.impactX = impactX;
+        flash.impactY = impactY;
+        flash.duration = 0.45;
+        flash.elapsed = 0;
+        flash.active = true;
+        const previousStrength = Number.isFinite(flash.strength) ? flash.strength : 0;
+        flash.strength = Math.min(1.35, previousStrength * 0.45 + 1);
     }
 
     restart() {

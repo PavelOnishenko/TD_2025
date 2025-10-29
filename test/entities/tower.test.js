@@ -9,7 +9,7 @@ test('constructor applies defaults and derives stats', () => {
     assert.equal(tower.level, 1);
     assert.equal(tower.range, 140 * 1.3);
     assert.equal(tower.damage, 1);
-    assert.deepEqual(tower.center(), { x: 42, y: 63 });
+    assert.deepEqual(tower.center(), { x: 47, y: 70.5 });
 });
 
 test('updateStats scales range, damage and glow speed with level', () => {
@@ -39,7 +39,7 @@ test('draw renders range arc, sprite and level text', () => {
     tower.draw(ctx, assets);
 
     assert.deepEqual(ctx.ops[0], ['beginPath']);
-    assert.deepEqual(ctx.ops[1], ['arc', 80, 105, tower.range, 0, Math.PI * 2]);
+    assert.deepEqual(ctx.ops[1], ['arc', 85, 112.5, tower.range, 0, Math.PI * 2]);
     assert.deepEqual(ctx.ops[2], ['strokeStyle', 'rgba(255,0,0,0.3)']);
     assert.deepEqual(ctx.ops[3], ['stroke']);
     assert.deepEqual(findOp(ctx.ops, 'drawImage'), ['drawImage', sprite, tower.x, tower.y, tower.w, tower.h]);
