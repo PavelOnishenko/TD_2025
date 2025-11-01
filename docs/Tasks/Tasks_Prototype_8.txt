@@ -58,3 +58,6 @@ difficulty ranking of all formaitons inside a wave should not exceed total diffi
 EXAMPLE: we have total of 100 for curent wave.
 We choose formation A with 34, B with 20, C with 15, D with 30, and we can't choose any more 
 because we only have 100 - 99 = 1 difficulty point to spend and there are no such cheap formations.
+
+015 | TODO | Instead of GIF background with space, draw stars algorithmically on the screen. 
+Make the stars lightly glitter like they do in reality.
