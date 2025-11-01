@@ -328,8 +328,8 @@ class Game {
         this.isPaused = false;
         this.pauseReason = null;
         this.emitPauseState(false, reason ?? expectedReason ?? previousReason ?? 'manual');
-        if (typeof this.audio?.playMusic === 'function' && this.hasStarted && !this.gameOver) {
-            this.audio.playMusic();
+        if (this.hasStarted && !this.gameOver) {
+            this.playMusicIfAllowed();
         }
         return true;
     }
