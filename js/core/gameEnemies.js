@@ -70,6 +70,10 @@ export const enemyActions = {
             angleDegrees: tankEnemy.engineFlame.angle - 55,
         });
         this.enemies.push(tankEnemy);
+        if (typeof this.triggerPortalEntry === 'function') {
+            const entryY = tankEnemy.y + (tankEnemy.h ?? 0) / 2;
+            this.triggerPortalEntry({ y: entryY, groupSize: 1, color });
+        }
     },
 
     spawnSwarmGroup(baseHp, overrides = {}) {
@@ -87,6 +91,8 @@ export const enemyActions = {
         }
         const offsets = Array.isArray(overrides.offsets) ? overrides.offsets : null;
         const centerOffsetBase = (groupSize - 1) / 2;
+        const spawnCenters = [];
+        const spawnColors = [];
 
         for (let i = 0; i < groupSize; i++) {
             const color = overrides.colors?.[i]
@@ -107,6 +113,15 @@ export const enemyActions = {
                 angleDegrees:swarmEnemy.engineFlame.angle - 55
             });
             this.enemies.push(swarmEnemy);
+            spawnCenters.push(swarmEnemy.y + (swarmEnemy.h ?? 0) / 2);
+            spawnColors.push(color);
+        }
+        if (typeof this.triggerPortalEntry === 'function') {
+            const entryY = spawnCenters.length > 0
+                ? spawnCenters.reduce((sum, value) => sum + value, 0) / spawnCenters.length
+                : coords.y;
+            const entryColor = spawnColors[0] ?? overrides.color ?? null;
+            this.triggerPortalEntry({ y: entryY, groupSize, color: entryColor });
         }
     },
 

@@ -1,5 +1,6 @@
 import { drawExplosions, drawColorSwitchBursts } from '../systems/effects.js';
 import { drawStarfield } from './starfield.js';
+import { drawPortal } from './portal.js';
 
 const ENERGY_PALETTES = {
     red: {
@@ -197,6 +198,7 @@ export function draw(game) {
     ctx.setTransform(scale, 0, 0, scale, offsetX + shakeOffset.x, offsetY + shakeOffset.y);
 
     drawStarfield(game);
+    drawPortal(ctx, game.portal);
     drawBase(game);
     drawPlatforms(game);
     drawGrid(game);

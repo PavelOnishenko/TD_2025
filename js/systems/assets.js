@@ -78,6 +78,11 @@ const SOUND_OPTIONS = {
         volume: 0.45,
         preload: true
     },
+    portalSpawn: {
+        src: ['assets/portal_spawn.mp3'],
+        volume: 0.7,
+        preload: true
+    },
     backgroundMusic: {
         src: ['assets/background_music.mp3'],
         volume: 0.25,

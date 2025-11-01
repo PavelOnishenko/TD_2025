@@ -14,7 +14,8 @@ const NOOP_AUDIO = {
     playBaseHit() {},
     playTowerRemoveCharge() {},
     playTowerRemoveCancel() {},
-    playTowerRemoveExplosion() {}
+    playTowerRemoveExplosion() {},
+    playPortalSpawn() {},
 };
 
 function hasHowler() {
@@ -109,6 +110,7 @@ export function createGameAudio(sounds = {}) {
     const towerRemoveChargeSource = sounds.towerRemoveCharge ?? null;
     const towerRemoveCancelSource = sounds.towerRemoveCancel ?? null;
     const towerRemoveExplosionSource = sounds.towerRemoveExplosion ?? explosionSource;
+    const portalSpawnSource = sounds.portalSpawn ?? null;
     const explosionSound = createSoundTrigger(explosionSource);
     const matchingHitSound = createSoundTrigger(matchingHitSource);
     const mergeSound = createSoundTrigger(mergeSource);
@@ -120,6 +122,7 @@ export function createGameAudio(sounds = {}) {
     const towerRemoveChargeSound = createSoundTrigger(towerRemoveChargeSource);
     const towerRemoveCancelSound = createSoundTrigger(towerRemoveCancelSource);
     const towerRemoveExplosionSound = createSoundTrigger(towerRemoveExplosionSource);
+    const portalSpawnSound = createSoundTrigger(portalSpawnSource);
     const { playMusic, stopMusic } = createMusicActions(sounds.backgroundMusic ?? null);
 
     return {
@@ -136,6 +139,7 @@ export function createGameAudio(sounds = {}) {
         playBaseHit: baseHitSound,
         playTowerRemoveCharge: towerRemoveChargeSound,
         playTowerRemoveCancel: towerRemoveCancelSound,
-        playTowerRemoveExplosion: towerRemoveExplosionSound
+        playTowerRemoveExplosion: towerRemoveExplosionSound,
+        playPortalSpawn: portalSpawnSound,
     };
 }

@@ -10,6 +10,7 @@ import { refreshDiagnosticsOverlay, updateHUD } from '../systems/ui.js';
 import GameGrid from './gameGrid.js';
 import { createPlatforms } from './platforms.js';
 import { createStarfield, resizeStarfield, updateStarfield as stepStarfield } from './starfield.js';
+import { createPortalState, updatePortalState, registerPortalBurst } from './portal.js';
 import projectileManagement from './game/projectileManagement.js';
 import tankSchedule from './game/tankSchedule.js';
 import world from './game/world.js';
@@ -102,6 +103,7 @@ class Game {
         this.waveSpawnSchedule = null;
         this.waveSpawnCursor = 0;
         this.waveElapsed = 0;
+        this.portal = null;
     }
 
     setupEnvironment() {
@@ -123,6 +125,14 @@ class Game {
         this.worldBounds = this.computeWorldBounds();
         const { width: starfieldWidth, height: starfieldHeight } = this.getStarfieldDimensions();
         this.starfield = createStarfield(starfieldWidth, starfieldHeight);
+        const spawn = typeof this.getDefaultEnemyCoords === 'function'
+            ? this.getDefaultEnemyCoords()
+            : { x: 0, y: 0 };
+        const portalConfig = gameConfig.world.portal ?? {};
+        this.portal = createPortalState({
+            ...portalConfig,
+            spawn,
+        });
     }
 
     configureAssets(assets) {
@@ -369,6 +379,7 @@ class Game {
         }
         const dt = this.calcDelta(timestamp);
         this.tickStarfield(dt);
+        this.tickPortal(dt);
         const towersPendingRemoval = [];
         for (const tower of this.towers) {
             tower.update(dt);
@@ -440,6 +451,46 @@ class Game {
         const starfield = this.ensureStarfield();
         this.syncStarfieldDimensions(starfield);
         stepStarfield(starfield, dt);
+    }
+
+    tickPortal(dt) {
+        if (!this.portal) {
+            return;
+        }
+        const spawn = typeof this.getDefaultEnemyCoords === 'function'
+            ? this.getDefaultEnemyCoords()
+            : null;
+        updatePortalState(this.portal, dt, { spawn });
+    }
+
+    triggerPortalEntry(options = {}) {
+        if (!this.portal) {
+            return;
+        }
+
+        const entryY = Number.isFinite(options.y)
+            ? options.y
+            : Number.isFinite(options.entryY)
+                ? options.entryY
+                : null;
+        const groupSize = Number.isFinite(options.groupSize)
+            ? options.groupSize
+            : Number.isFinite(options.count)
+                ? options.count
+                : 1;
+        const strength = Number.isFinite(options.strength)
+            ? options.strength
+            : 0.75 + Math.min(Math.max(groupSize, 1), 6) * 0.12;
+
+        registerPortalBurst(this.portal, {
+            y: entryY,
+            strength,
+            color: options.color ?? options.tint ?? 'default',
+        });
+
+        if (options.playSound !== false && typeof this.audio?.playPortalSpawn === 'function') {
+            this.audio.playPortalSpawn();
+        }
     }
 
     removeTower(tower, options = {}) {
