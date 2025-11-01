@@ -38,14 +38,14 @@ AND in right top corner - endless mode indicator shows in the same place as othe
 011 | TODO | Add sound files we lack, look by list of required sound files in the code. 
 Need human involvement
 
-012 | TODO | Bug - music turns midgame on when it is turned off in HUD
+012 | TODO | Bug - music turns on midgame when it is turned off in HUD
 
-013 | TODO | Make smaller buttons for mobile (cover the screen)
+013 | TODO | Make smaller buttons for mobile (they cover the screen)
 
-014 | TODO | Add new formations for enemy ships. Now they are coming in portions of 1 (tank) or 3 (swarm). 
+014 | TODO | Add new formations for enemy ships. Now they are coming in portions of 1 (tank) or 3 (swarm), 3 swarms always going with the same X coord. 
 I want to have a tool to easily add new formations in text form. They should be in game config. Formation is defined by:
 -list of ships
-    -each ship is defined by:
+    -where each ship is defined by:
     -type (tank/swarm); 
     -relative position/time from the beginning of the wave (X coord essentially);
     -y coord showing how high the ship will go;
@@ -56,8 +56,10 @@ Formations will go one after another, no intersections. Their list is defined be
 They are chosen at random, respecting probabilities. For each wave there should be total difficulty.
 difficulty ranking of all formaitons inside a wave should not exceed total difficulty of a wave.
 EXAMPLE: we have total of 100 for curent wave.
-We choose formation A with 34, B with 20, C with 15, D with 30, and we can't choose any more 
-because we only have 100 - 99 = 1 difficulty point to spend and there are no such cheap formations.
+We choose in random, getting: formation A with 34, B with 20, C with 15, D with 30, so we got 99 now, and we can't choose any more 
+because we only have 100 - 99 = 1 difficulty point to "spend" and there are no such cheap formations.
 
 015 | TODO | Instead of GIF background with space, draw stars algorithmically on the screen. 
 Make the stars lightly glitter like they do in reality.
+
+016 | TODO | Draw portal from which the ships will go, also draw VFX for their emergence from the portal, and SFX to accompany that.
