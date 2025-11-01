@@ -61,7 +61,7 @@ because we only have 100 - 99 = 1 difficulty point to "spend" and there are no s
 014 | DONE | Instead of GIF background with space, draw stars algorithmically on the screen. Simple procedural generation.
 Make the stars lightly glitter like they do in reality when u look at them.
 
-015 | TODO | Draw portal from which the ships will go, also draw VFX for their emergence from the portal, and SFX to accompany that.
+015 | DONE | Draw portal from which the ships will go, also draw VFX for their emergence from the portal, and SFX to accompany that.
 Don't put binary files in the repo, I will do it myself. Portal can be drawn with primitives I think.
 
 016 | TODO | Add sprites for tower level 4-6.
