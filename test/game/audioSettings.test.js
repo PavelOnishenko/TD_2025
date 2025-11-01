@@ -88,3 +88,18 @@ test('setMusicEnabled(true) plays music when game is active', () => {
     assert.equal(game.musicEnabled, true);
     assert.equal(audio.playCount, 1);
 });
+
+test('resume does not play music when disabled', () => {
+    const game = createGame();
+    const audio = createAudioStub();
+    game.audio = audio;
+    game.hasStarted = true;
+    game.gameOver = false;
+    game.audioMuted = false;
+    game.musicEnabled = false;
+
+    game.pause();
+    game.resume({ force: true });
+
+    assert.equal(audio.playCount, 0);
+});
