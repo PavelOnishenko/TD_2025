@@ -18,16 +18,22 @@ export const waveActions = {
         this.enemies = [];
         this.spawned = 0;
         this.spawnTimer = 0;
+        this.waveElapsed = 0;
+        this.waveSpawnCursor = 0;
         const { minDifference } = gameConfig.player.colorProbability;
         do {
             this.colorProbStart = Math.random();
             this.colorProbEnd = Math.random();
         } while (Math.abs(this.colorProbStart - this.colorProbEnd) <= minDifference);
-        this.spawnEnemy();
+        if (Array.isArray(this.waveSpawnSchedule) && this.waveSpawnSchedule.length > 0) {
+            this.spawnEnemiesIfNeeded(0);
+        } else {
+            this.spawnEnemy();
+        }
     },
 
     setupWaveStuff() {
-        if (this.waveInProgress) 
+        if (this.waveInProgress)
             return;
 
         this.waveInProgress = true;
@@ -37,8 +43,37 @@ export const waveActions = {
             ? this.getOrCreateWaveConfig(this.wave)
             : this.waveConfigs[this.wave - 1] ?? this.waveConfigs.at(-1);
         this.spawnInterval = cfg.interval;
-        this.enemiesPerWave = cfg.cycles;
+        const plan = this.prepareWaveFormationPlan?.(cfg, this.wave);
+        if (plan && plan.totalEnemies > 0) {
+            this.enemiesPerWave = plan.totalEnemies;
+        } else {
+            this.waveSpawnSchedule = null;
+            this.activeFormationPlan = null;
+            this.waveElapsed = 0;
+            this.waveSpawnCursor = 0;
+            this.enemiesPerWave = cfg.cycles;
+        }
         this.prepareTankScheduleForWave(cfg, this.wave);
+    },
+
+    prepareWaveFormationPlan(cfg, waveNumber) {
+        if (!this.formationManager || typeof this.formationManager.planWave !== 'function') {
+            this.activeFormationPlan = null;
+            this.waveSpawnSchedule = null;
+            return null;
+        }
+        const totalDifficulty = Number.isFinite(cfg?.cycles) ? cfg.cycles : undefined;
+        const plan = this.formationManager.planWave(waveNumber, { totalDifficulty });
+        if (!plan || !Array.isArray(plan.events) || plan.events.length === 0) {
+            this.activeFormationPlan = null;
+            this.waveSpawnSchedule = null;
+            return null;
+        }
+        this.activeFormationPlan = plan;
+        this.waveSpawnSchedule = plan.events.slice().sort((a, b) => a.time - b.time);
+        this.waveSpawnCursor = 0;
+        this.waveElapsed = 0;
+        return plan;
     },
 
     mergeTowers(row) {

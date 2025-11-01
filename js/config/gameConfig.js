@@ -111,6 +111,69 @@ export const gameConfig = {
             cyclesIncrement: 4,
             tanksIncrement: 2,
         },
+        formations: {
+            defaults: {
+                formationGap: 0.85,
+                minimumWeight: 0.02,
+            },
+            waveDifficulty: [
+                13, 13, 14, 14, 15,
+                15, 16, 16, 17, 17,
+                18, 18, 19, 19, 20,
+                20, 21, 21, 22, 22,
+            ],
+            endlessDifficulty: {
+                startWave: 21,
+                base: 24,
+                growth: 2.4,
+                max: 160,
+            },
+            definitions: `
+# Solo Scout | difficulty=1 | probability=Math.max(0.6, 1.4 - 0.05 * wave)
+swarm @0 y=600 color=red
+---
+# Twin Harass | difficulty=2 | probability=Math.max(0.4, 0.7 + 0.06 * (wave - 1))
+swarm @0 y=560 color=blue
+swarm @0.6 y=640 color=red
+---
+# Triple Column | difficulty=3 | probability=0.9 + 0.05 * (wave - 1)
+swarm @0 y=520 color=red
+swarm @0.5 y=600 color=blue
+swarm @1 y=680 color=red
+---
+# Tank Spearhead | difficulty=3 | probability=Math.max(0.15, 0.25 + 0.05 * Math.max(0, wave - 3))
+tank @0 y=590 color=blue
+swarm @0.8 y=540 color=red
+swarm @1.6 y=640 color=blue
+---
+# Escort Column | difficulty=4 | probability=Math.max(0.1, 0.2 + 0.05 * Math.max(0, wave - 5))
+swarm @0 y=620 color=red
+tank @0.7 y=580 color=blue
+swarm @1.4 y=560 color=red
+tank @2.1 y=600 color=blue
+---
+# Heavy Vanguard | difficulty=4 | probability=Math.max(0.05, 0.12 + 0.045 * Math.max(0, wave - 7))
+tank @0 y=600 color=red
+tank @0.9 y=580 color=blue
+swarm @1.6 y=640 color=red
+swarm @2.3 y=560 color=blue
+---
+# Swarm Wave | difficulty=5 | probability=0.4 + 0.05 * Math.max(0, wave - 1)
+swarm @0 y=500 color=blue
+swarm @0.4 y=550 color=red
+swarm @0.8 y=600 color=blue
+swarm @1.2 y=650 color=red
+swarm @1.6 y=700 color=blue
+---
+# Mixed Barrage | difficulty=6 | probability=Math.max(0.02, 0.08 + 0.05 * Math.max(0, wave - 9))
+swarm @0 y=540 color=red
+tank @0.6 y=590 color=blue
+swarm @1.2 y=640 color=red
+tank @1.8 y=610 color=blue
+swarm @2.4 y=560 color=red
+swarm @3 y=520 color=blue
+`,
+        },
     },
     scoring: {
         perKill: 10,
