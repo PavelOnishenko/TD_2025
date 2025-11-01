@@ -36,7 +36,8 @@ Need human involvement
 
 011 | TODO | Bug - music turns on midgame when it is turned off in HUD
 
-012 | TODO | Make smaller buttons for mobile (they cover the screen)
+012 | TODO | Make smaller buttons for mobile (they cover the screen), possibly with some icons or abbreviated text. 
+Icons can be sprites but may be svg as well.
 
 013 | TODO | Add new formations for enemy ships. Now they are coming in portions of 1 (tank) or 3 (swarm), 3 swarms always going with the same X coord. 
 I want to have a tool to easily add new formations in text form. They should be in game config. Formation is defined by:
@@ -55,10 +56,11 @@ EXAMPLE: we have total of 100 for curent wave.
 We choose in random, getting: formation A with 34, B with 20, C with 15, D with 30, so we got 99 now, and we can't choose any more 
 because we only have 100 - 99 = 1 difficulty point to "spend" and there are no such cheap formations.
 
-014 | TODO | Instead of GIF background with space, draw stars algorithmically on the screen. 
-Make the stars lightly glitter like they do in reality.
+014 | TODO | Instead of GIF background with space, draw stars algorithmically on the screen. Simple procedural generation.
+Make the stars lightly glitter like they do in reality when u look at them.
 
 015 | TODO | Draw portal from which the ships will go, also draw VFX for their emergence from the portal, and SFX to accompany that.
+Don't put binary files in the repo, I will do it myself. Portal can be drawn with primitives I think.
 
 016 | TODO | Add sprites for tower level 4-6.
 
