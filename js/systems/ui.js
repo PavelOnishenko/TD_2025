@@ -442,27 +442,11 @@ function bindCanvasInteractions(game) {
         if (!pointerState.startedRemoval) {
             return;
         }
+        // Preserve abrupt stop logic by clearing any pending timers
         cancelChargeSoundTimer();
-        if (!host || typeof host.setTimeout !== 'function') {
-            if (typeof game.audio?.playTowerRemoveCharge === 'function') {
-                game.audio.playTowerRemoveCharge();
-            }
-            return;
+        if (typeof game.audio?.playTowerRemoveCharge === 'function') {
+            game.audio.playTowerRemoveCharge();
         }
-        const delay = Math.max(150, Math.min(removalDuration * 250, 360));
-        pointerState.chargeSoundHandle = host.setTimeout(() => {
-            pointerState.chargeSoundHandle = null;
-            if (
-                pointerState.pointerId === pointerId &&
-                pointerState.tower &&
-                pointerState.startedRemoval &&
-                pointerState.tower.isRemovalCharging?.()
-            ) {
-                if (typeof game.audio?.playTowerRemoveCharge === 'function') {
-                    game.audio.playTowerRemoveCharge();
-                }
-            }
-        }, delay);
     };
 
     const cancelTowerRemovalAttempt = (playSound) => {
