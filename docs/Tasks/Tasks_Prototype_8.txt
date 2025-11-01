@@ -34,7 +34,8 @@ AND in right top corner - endless mode indicator shows in the same place as othe
 010 | DONE | Add sound files we lack, look by list of required sound files in the code. 
 Need human involvement
 
-011 | TODO | Bug - music turns on midgame when it is turned off in HUD
+011 | TODO | Bug - music turns on in some situations despite it being turned off in HUD.
+Situations include restart and ad display.
 
 012 | TODO | Make smaller buttons for mobile (they cover the screen), possibly with some icons or abbreviated text. 
 Icons can be sprites but may be svg as well.
