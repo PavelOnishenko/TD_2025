@@ -63,3 +63,8 @@ because we only have 100 - 99 = 1 difficulty point to "spend" and there are no s
 Make the stars lightly glitter like they do in reality.
 
 016 | TODO | Draw portal from which the ships will go, also draw VFX for their emergence from the portal, and SFX to accompany that.
+
+017 | TODO | Add sprites for tower level 4-6.
+
+018 | TODO | Each next tower level should be shooting more frequently. 1st level should shoot 2 times per second. 
+Level 3 should have spawnInterval of 60. Further levels - even less of this interval. 
