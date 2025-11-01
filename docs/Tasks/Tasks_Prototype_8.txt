@@ -38,7 +38,7 @@ Need human involvement
 Situations include restart and ad display.
 
 012 | TODO | Make smaller buttons for mobile (they cover the screen), possibly with some icons or abbreviated text. 
-Icons can be sprites but may be svg as well.
+Icons can be sprites but may be svg as well. try to cover all image needs yourself.
 
 013 | DONE | Add new formations for enemy ships. Now they are coming in portions of 1 (tank) or 3 (swarm), 3 swarms always going with the same X coord.
 I want to have a tool to easily add new formations in text form. They should be in game config. Formation is defined by:
