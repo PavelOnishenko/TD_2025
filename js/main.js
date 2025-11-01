@@ -55,7 +55,11 @@ function ensureCanvasResolution(canvasElement, displaySize) {
 function applyViewport(canvasElement, gameInstance, viewport) {
     canvasElement.viewportTransform = viewport;
     if (gameInstance) {
-        gameInstance.viewport = viewport;
+        if (typeof gameInstance.updateViewport === 'function') {
+            gameInstance.updateViewport(viewport);
+        } else {
+            gameInstance.viewport = viewport;
+        }
     }
 }
 export function resizeCanvas({ canvasElement, gameContainerElement, gameInstance, metrics }) {
