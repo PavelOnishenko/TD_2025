@@ -9,6 +9,7 @@ import { saveBestScore } from '../systems/dataStore.js';
 import { refreshDiagnosticsOverlay, updateHUD } from '../systems/ui.js';
 import GameGrid from './gameGrid.js';
 import { createPlatforms } from './platforms.js';
+import { createStarfield, updateStarfield as stepStarfield } from './starfield.js';
 import projectileManagement from './game/projectileManagement.js';
 import tankSchedule from './game/tankSchedule.js';
 import world from './game/world.js';
@@ -114,6 +115,7 @@ class Game {
         this.topCells = this.grid.topCells;
         this.bottomCells = this.grid.bottomCells;
         this.worldBounds = this.computeWorldBounds();
+        this.starfield = createStarfield(this.logicalW, this.logicalH);
     }
 
     configureAssets(assets) {
@@ -359,6 +361,7 @@ class Game {
             return;
         }
         const dt = this.calcDelta(timestamp);
+        this.tickStarfield(dt);
         const towersPendingRemoval = [];
         for (const tower of this.towers) {
             tower.update(dt);
@@ -391,6 +394,18 @@ class Game {
         if (!this.gameOver) {
             requestAnimationFrame(this.update);
         }
+    }
+
+    ensureStarfield() {
+        if (!this.starfield) {
+            this.starfield = createStarfield(this.logicalW, this.logicalH);
+        }
+        return this.starfield;
+    }
+
+    tickStarfield(dt) {
+        const starfield = this.ensureStarfield();
+        stepStarfield(starfield, dt);
     }
 
     removeTower(tower, options = {}) {
