@@ -302,6 +302,68 @@ body {
     cursor: pointer;
     box-shadow: 0 0 calc(12px * var(--scale)) rgba(33, 125, 255, 0.45);
     transition: transform 0.15s ease, box-shadow 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: calc(8px * var(--scale));
+    position: relative;
+}
+
+.hud-button-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: calc(20px * var(--scale));
+    height: calc(20px * var(--scale));
+}
+
+.hud-icon {
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.hud-button-text {
+    white-space: nowrap;
+    line-height: 1.2;
+}
+
+.hud-icon--mute .mute-slash,
+.hud-icon--pause .pause-icon--play,
+.hud-icon--music .music-off {
+    opacity: 0;
+}
+
+.hud-icon--mute .mute-wave,
+.hud-icon--mute .mute-slash,
+.hud-icon--pause .pause-icon,
+.hud-icon--music .music-note,
+.hud-icon--music .music-off {
+    transition: opacity 0.2s ease;
+}
+
+#muteToggle[aria-pressed='true'] .hud-icon--mute .mute-wave {
+    opacity: 0.25;
+}
+
+#muteToggle[aria-pressed='true'] .hud-icon--mute .mute-slash {
+    opacity: 1;
+}
+
+#musicToggle[aria-pressed='false'] .hud-icon--music .music-note {
+    opacity: 0.4;
+}
+
+#musicToggle[aria-pressed='false'] .hud-icon--music .music-off {
+    opacity: 1;
+}
+
+#pause[aria-pressed='true'] .hud-icon--pause .pause-icon--pause {
+    opacity: 0;
+}
+
+#pause[aria-pressed='true'] .hud-icon--pause .pause-icon--play {
+    opacity: 1;
 }
 
 button:focus-visible {
@@ -474,6 +536,67 @@ canvas {
         --hud-button-padding-x: calc(10px * var(--scale));
         --hud-button-min-height: calc(18px * var(--scale));
         --hud-button-min-width: calc(10px * var(--scale));
+    }
+}
+
+@media (max-width: 700px) {
+    :root {
+        --scale: 1;
+        --hud-button-font-size: calc(0.3em * var(--scale));
+        --hud-button-padding-y: calc(8px * var(--scale));
+        --hud-button-padding-x: calc(10px * var(--scale));
+        --hud-button-min-height: calc(18px * var(--scale));
+        --hud-button-min-width: calc(10px * var(--scale));
+        --hud-button-border-radius: calc(12px * var(--scale));
+    }
+
+    #hud button {
+        gap: calc(4px * var(--scale));
+        padding: calc(8px * var(--scale)) calc(10px * var(--scale));
+        min-width: calc(56px * var(--scale));
+    }
+
+    .hud-button-icon {
+        width: calc(18px * var(--scale));
+        height: calc(18px * var(--scale));
+    }
+
+    .hud-button-text {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        clip-path: inset(50%);
+        white-space: nowrap;
+        border: 0;
+    }
+
+    #nextWave,
+    #mergeTowers,
+    #restart,
+    .save-controls button,
+    #muteToggle,
+    #musicToggle,
+    #pause {
+        min-width: calc(56px * var(--scale));
+    }
+
+    .audio-pause-controls {
+        bottom: calc(18px * var(--scale));
+        right: calc(18px * var(--scale));
+        gap: calc(10px * var(--scale));
+    }
+
+    .audio-controls {
+        gap: calc(10px * var(--scale));
+    }
+
+    .save-controls {
+        bottom: calc(70px * var(--scale));
+        gap: calc(10px * var(--scale));
     }
 }
 

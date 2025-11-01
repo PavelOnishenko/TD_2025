@@ -88,6 +88,22 @@ function bindHUD(game) {
     game.deleteSaveBtn = document.getElementById('deleteSave');
 }
 
+function setButtonLabel(button, label) {
+    if (!button || typeof label !== 'string') {
+        return;
+    }
+    const textEl = button.querySelector('.hud-button-text');
+    if (textEl) {
+        textEl.textContent = label;
+    }
+    else if (typeof button.textContent !== 'undefined') {
+        button.textContent = label;
+    }
+    if (typeof button.setAttribute === 'function') {
+        button.setAttribute('aria-label', label);
+    }
+}
+
 function bindDiagnosticsOverlay(game) {
     if (!game) {
         return;
@@ -319,7 +335,8 @@ function updateMuteButton(game) {
         return;
     }
     const muted = Boolean(game.audioMuted);
-    game.muteBtn.textContent = muted ? 'Unmute' : 'Mute';
+    const label = muted ? 'Unmute' : 'Mute';
+    setButtonLabel(game.muteBtn, label);
     game.muteBtn.setAttribute('aria-pressed', muted ? 'true' : 'false');
 }
 
@@ -328,7 +345,8 @@ function updateMusicButton(game) {
         return;
     }
     const enabled = Boolean(game.musicEnabled);
-    game.musicBtn.textContent = enabled ? 'Music On' : 'Music Off';
+    const label = enabled ? 'Music On' : 'Music Off';
+    setButtonLabel(game.musicBtn, label);
     game.musicBtn.setAttribute('aria-pressed', enabled ? 'true' : 'false');
 }
 
@@ -905,7 +923,8 @@ function bindPauseSystem(game) {
             game.resumeBtn.textContent = isAdPause ? 'Ad in progress…' : 'Resume';
         }
         if (game.pauseBtn) {
-            game.pauseBtn.textContent = paused ? 'Resume' : 'Pause';
+            const label = paused ? 'Resume' : 'Pause';
+            setButtonLabel(game.pauseBtn, label);
             game.pauseBtn.setAttribute('aria-pressed', paused ? 'true' : 'false');
             const shouldDisable = !game.hasStarted || game.gameOver || (paused && isAdPause);
             game.pauseBtn.disabled = shouldDisable;
