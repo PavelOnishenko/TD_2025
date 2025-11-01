@@ -31,7 +31,7 @@ AND in right top corner - endless mode indicator shows in the same place as othe
 
 009 | DONE | Remove tower ranges visual circles
 
-010 | TODO | Add sound files we lack, look by list of required sound files in the code. 
+010 | INPRO ME | Add sound files we lack, look by list of required sound files in the code. 
 Need human involvement
 
 011 | TODO | Bug - music turns on midgame when it is turned off in HUD
