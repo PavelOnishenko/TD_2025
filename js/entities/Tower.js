@@ -1,4 +1,5 @@
 import { drawTowerMuzzleFlashIfNeeded, drawTowerPlacementFlash, drawTowerTopGlowIfNeeded } from '../systems/effects.js';
+import { getHowler } from '../systems/audio.js';
 import gameConfig from '../config/gameConfig.js';
 
 const DEFAULT_PLACEMENT_ANCHOR = Object.freeze({
@@ -152,6 +153,24 @@ export default class Tower {
         if (!this.removalChargePending) {
             if (!Number.isFinite(this.removalChargeDuration) || this.removalChargeDuration <= 0) {
                 this.removalChargeTimer = 0;
+            }
+        }
+        // Abruptly stop the removal charge sound if it is playing
+        const howler = getHowler();
+        const howls = howler && Array.isArray(howler._howls) ? howler._howls : null;
+        if (howls) {
+            for (const h of howls) {
+                try {
+                    const src = h && h._src;
+                    const sources = Array.isArray(src) ? src : (src ? [src] : []);
+                    if (sources.some(s => typeof s === 'string' && s.includes('tower_remove_charge'))) {
+                        if (typeof h.stop === 'function') {
+                            h.stop();
+                        }
+                    }
+                } catch {
+                    // ignore any Howler internals differences
+                }
             }
         }
     }

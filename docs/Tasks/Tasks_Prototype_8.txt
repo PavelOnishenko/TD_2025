@@ -31,7 +31,7 @@ AND in right top corner - endless mode indicator shows in the same place as othe
 
 009 | DONE | Remove tower ranges visual circles
 
-010 | TODO | Add sound files we lack, look by list of required sound files in the code. 
+010 | DONE | Add sound files we lack, look by list of required sound files in the code. 
 Need human involvement
 
 011 | TODO | Bug - music turns on midgame when it is turned off in HUD
@@ -73,3 +73,5 @@ This leads to losing. We need to fix this.
 019 | TODO | Balance and gameplay test
 Playtest on desktop and mobile. Verify average run time, win rate, ad timing, and responsiveness. 
 Ensure no console errors or UI overlaps.
+
+020 | TODO | Cool animated splash
