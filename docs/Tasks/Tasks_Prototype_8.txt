@@ -68,3 +68,6 @@ Make the stars lightly glitter like they do in reality.
 
 018 | TODO | Each next tower level should be shooting more frequently. 1st level should shoot 2 times per second. 
 Level 3 should have spawnInterval of 60. Further levels - even less of this interval. 
+
+019 | TODO | When I focus another window, ships continue flying while shooting is being halted. 
+This leads to losing. We need to fix this.
