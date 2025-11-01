@@ -16,11 +16,13 @@ import { saveBestScore } from '../systems/dataStore.js';
 import { refreshDiagnosticsOverlay, updateHUD } from '../systems/ui.js';
 import GameGrid from './gameGrid.js';
 import { createPlatforms } from './platforms.js';
+import { createStarfield, resizeStarfield, updateStarfield as stepStarfield } from './starfield.js';
 import projectileManagement from './game/projectileManagement.js';
 import tankSchedule from './game/tankSchedule.js';
 import world from './game/world.js';
 import statePersistence from './game/statePersistence.js';
 import stateSetup from './game/stateSetup.js';
+import createFormationManager from './game/formations.js';
 import gameConfig from '../config/gameConfig.js';
 
 function createScreenShakeState() {
@@ -104,6 +106,11 @@ class Game {
         this.diagnosticsOverlay = null;
         this.diagnosticsState = { visible: false, fps: 0, lastCommit: 0 };
         this.ensureBaseSpawnPortal();
+        this.formationManager = createFormationManager(gameConfig.waves?.formations ?? {});
+        this.activeFormationPlan = null;
+        this.waveSpawnSchedule = null;
+        this.waveSpawnCursor = 0;
+        this.waveElapsed = 0;
     }
 
     setupEnvironment() {
@@ -123,6 +130,8 @@ class Game {
         this.topCells = this.grid.topCells;
         this.bottomCells = this.grid.bottomCells;
         this.worldBounds = this.computeWorldBounds();
+        const { width: starfieldWidth, height: starfieldHeight } = this.getStarfieldDimensions();
+        this.starfield = createStarfield(starfieldWidth, starfieldHeight);
     }
 
     configureAssets(assets) {
@@ -442,6 +451,7 @@ class Game {
             return;
         }
         const dt = this.calcDelta(timestamp);
+        this.tickStarfield(dt);
         const towersPendingRemoval = [];
         for (const tower of this.towers) {
             tower.update(dt);
@@ -475,6 +485,45 @@ class Game {
         if (!this.gameOver) {
             requestAnimationFrame(this.update);
         }
+    }
+
+    getStarfieldDimensions() {
+        const canvas = this.ctx?.canvas;
+        if (canvas && canvas.width > 0 && canvas.height > 0) {
+            return { width: canvas.width, height: canvas.height };
+        }
+        return { width: Math.max(1, this.logicalW), height: Math.max(1, this.logicalH) };
+    }
+
+    ensureStarfield() {
+        if (!this.starfield) {
+            const { width, height } = this.getStarfieldDimensions();
+            this.starfield = createStarfield(width, height);
+        }
+        return this.starfield;
+    }
+
+    syncStarfieldDimensions(starfield = this.starfield) {
+        if (!starfield) {
+            return;
+        }
+        const { width, height } = this.getStarfieldDimensions();
+        const currentWidth = starfield.width ?? 0;
+        const currentHeight = starfield.height ?? 0;
+        if (Math.abs(currentWidth - width) > 0.5 || Math.abs(currentHeight - height) > 0.5) {
+            resizeStarfield(starfield, width, height);
+        }
+    }
+
+    updateViewport(viewport) {
+        this.viewport = viewport;
+        this.syncStarfieldDimensions();
+    }
+
+    tickStarfield(dt) {
+        const starfield = this.ensureStarfield();
+        this.syncStarfieldDimensions(starfield);
+        stepStarfield(starfield, dt);
     }
 
     removeTower(tower, options = {}) {

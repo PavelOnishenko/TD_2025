@@ -62,8 +62,13 @@ export function attachDomStubs(game) {
     game.deleteSaveBtn = createSaveButton();
 }
 
-export function createGame({ attachDom = false } = {}) {
+export function createGame({ attachDom = false, disableFormations = false } = {}) {
     const game = new Game(makeFakeCanvas());
+    if (disableFormations) {
+        game.formationManager = null;
+        game.activeFormationPlan = null;
+        game.waveSpawnSchedule = null;
+    }
     if (attachDom) {
         attachDomStubs(game);
     }

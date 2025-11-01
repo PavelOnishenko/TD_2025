@@ -99,7 +99,7 @@ test('loadAssets returns sounds only when audio is supported', async () => {
         'assets/error.wav',
         'assets/tower_remove_charge.mp3',
         'assets/tower_remove_cancel.mp3',
-        'assets/tower_remove_explosion.wav',
+        'assets/tower_remove_explosion.mp3',
         'assets/background_music.mp3'
     ]);
     assert.equal(typeof assets.sounds, 'object');
@@ -125,7 +125,7 @@ test('loadAssets returns sounds only when audio is supported', async () => {
     assert.deepEqual(assets.sounds.portalSpawn, { sound: 'assets/portal_spawn.mp3' });
     assert.deepEqual(assets.sounds.towerRemoveCharge, { sound: 'assets/tower_remove_charge.mp3' });
     assert.deepEqual(assets.sounds.towerRemoveCancel, { sound: 'assets/tower_remove_cancel.mp3' });
-    assert.deepEqual(assets.sounds.towerRemoveExplosion, { sound: 'assets/tower_remove_explosion.wav' });
+    assert.deepEqual(assets.sounds.towerRemoveExplosion, { sound: 'assets/tower_remove_explosion.mp3' });
 });
 
 test('loadAssets skips sounds when audio is not supported', async () => {

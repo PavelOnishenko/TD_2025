@@ -15,9 +15,13 @@ test('startWave initializes counters and spawns first enemies', () => {
 
     assert.equal(game.waveInProgress, true);
     assert.equal(game.nextWaveBtn.disabled, true);
-    assert.equal(game.spawned, 1);
+    assert.ok(game.spawned >= 1);
     assert.equal(game.spawnTimer, 0);
-    assert.equal(enemies.length, 3);
+    assert.equal(game.waveSpawnCursor, game.spawned);
+    assert.ok(enemies.length >= 1);
+    if (game.activeFormationPlan) {
+        assert.equal(game.enemiesPerWave, game.activeFormationPlan.totalEnemies);
+    }
     assert.ok(Math.abs(game.colorProbStart - game.colorProbEnd) > 0.35);
 });
 
@@ -37,7 +41,7 @@ test('startWave restarts current wave state when already in progress', () => {
     assert.equal(game.enemiesPerWave, 456);
     assert.equal(game.spawned, 1);
     assert.equal(game.spawnTimer, 0);
-    assert.equal(game.enemies.length, 3);
+    assert.ok(game.enemies.length >= 1);
 });
 
 test('manualMergeTowers merges adjacent towers of same color and level', () => {

@@ -142,6 +142,37 @@ test('spawnEnemiesIfNeeded accumulates timer below interval', () => {
     assert.equal(game.enemies.length, 0);
 });
 
+test('spawnEnemiesIfNeeded executes planned formations', () => {
+    const game = createGame({ disableFormations: true });
+    const plan = {
+        events: [
+            { time: 0, type: 'swarm', color: 'red', y: 540, groupSize: 1 },
+            { time: 0.8, type: 'tank', color: 'blue', y: 580 },
+        ],
+        totalEnemies: 2,
+        totalDifficulty: 2,
+    };
+    game.waveInProgress = true;
+    game.waveSpawnSchedule = plan.events.slice();
+    game.activeFormationPlan = plan;
+    game.enemiesPerWave = plan.totalEnemies;
+    game.waveSpawnCursor = 0;
+    game.waveElapsed = 0;
+    game.spawned = 0;
+
+    game.spawnEnemiesIfNeeded(0);
+
+    assert.equal(game.enemies.length, 1);
+    assert.ok(game.enemies[0] instanceof SwarmEnemy);
+    assert.equal(game.spawned, 1);
+
+    game.spawnEnemiesIfNeeded(0.8);
+
+    assert.equal(game.enemies.length, 2);
+    assert.ok(game.enemies.some(enemy => enemy instanceof TankEnemy));
+    assert.equal(game.spawned, 2);
+});
+
 test('updateEnemies removes enemies reaching the base', () => {
     const game = createGame();
     const enemy = {
