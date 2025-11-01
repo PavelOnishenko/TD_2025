@@ -51,11 +51,17 @@ export const enemyActions = {
         return { ...gameConfig.enemies.defaultSpawn };
     },
 
-    spawnTankEnemy(baseHp) {
-        const color = this.getEnemyColor();
-        const defaultCoords = this.getDefaultEnemyCoords();
+    spawnTankEnemy(baseHp, overrides = {}) {
+        const coords = this.getDefaultEnemyCoords();
+        if (Number.isFinite(overrides.x)) {
+            coords.x = overrides.x;
+        }
+        if (Number.isFinite(overrides.y)) {
+            coords.y = overrides.y;
+        }
         const hpMultiplier = gameConfig.enemies.tank.hpMultiplier;
-        const tankEnemy = new TankEnemy(baseHp * hpMultiplier, color, defaultCoords.x, defaultCoords.y);
+        const color = overrides.color ?? this.getEnemyColor();
+        const tankEnemy = new TankEnemy(baseHp * hpMultiplier, color, coords.x, coords.y);
         tankEnemy.setEngineFlamePlacement({
             anchorX: tankEnemy.engineFlame.anchor.x,
             anchorY: tankEnemy.engineFlame.anchor.y,
@@ -66,18 +72,35 @@ export const enemyActions = {
         this.enemies.push(tankEnemy);
     },
 
-    spawnSwarmGroup(baseHp) {
-        const groupSize = gameConfig.enemies.swarm.groupSize;
+    spawnSwarmGroup(baseHp, overrides = {}) {
+        const groupSize = Math.max(1, Math.floor(overrides.groupSize ?? gameConfig.enemies.swarm.groupSize));
         const swarmHp = Math.max(1, Math.floor(baseHp * gameConfig.enemies.swarm.hpFactor));
-        const spacing = gameConfig.enemies.swarm.spacing;
+        const spacing = Number.isFinite(overrides.spacing)
+            ? overrides.spacing
+            : gameConfig.enemies.swarm.spacing;
+        const coords = this.getDefaultEnemyCoords();
+        if (Number.isFinite(overrides.x)) {
+            coords.x = overrides.x;
+        }
+        if (Number.isFinite(overrides.y)) {
+            coords.y = overrides.y;
+        }
+        const offsets = Array.isArray(overrides.offsets) ? overrides.offsets : null;
         const centerOffsetBase = (groupSize - 1) / 2;
 
         for (let i = 0; i < groupSize; i++) {
-            const color = this.getEnemyColor();
-            const defaultCoords = this.getDefaultEnemyCoords();
-            const swarmEnemy = new SwarmEnemy(swarmHp, color, defaultCoords.x, defaultCoords.y);
-            const centerOffset = (i - centerOffsetBase) * spacing;
-            swarmEnemy.y += centerOffset;
+            const color = overrides.colors?.[i]
+                ?? overrides.color
+                ?? this.getEnemyColor();
+            const swarmEnemy = new SwarmEnemy(swarmHp, color, coords.x, coords.y);
+            if (offsets && Number.isFinite(offsets[i])) {
+                swarmEnemy.y = offsets[i];
+            } else if (groupSize > 1) {
+                const centerOffset = (i - centerOffsetBase) * spacing;
+                swarmEnemy.y = coords.y + centerOffset;
+            } else {
+                swarmEnemy.y = coords.y;
+            }
             swarmEnemy.setEngineFlamePlacement({
                 anchorX:swarmEnemy.engineFlame.anchor.x, anchorY:swarmEnemy.engineFlame.anchor.y,
                 offsetX:swarmEnemy.engineFlame.offset.x-10, offsetY:swarmEnemy.engineFlame.offset.y,
@@ -88,13 +111,65 @@ export const enemyActions = {
     },
 
     spawnEnemiesIfNeeded(dt) {
-        if (this.waveInProgress && this.spawned < this.enemiesPerWave) {
+        if (!this.waveInProgress) {
+            return;
+        }
+        if (Array.isArray(this.waveSpawnSchedule) && this.waveSpawnSchedule.length > 0) {
+            this.waveElapsed = (this.waveElapsed ?? 0) + dt;
+            while (this.waveSpawnCursor < this.waveSpawnSchedule.length) {
+                const event = this.waveSpawnSchedule[this.waveSpawnCursor];
+                if (!event || this.waveElapsed + 1e-6 < event.time) {
+                    break;
+                }
+                this.spawnEnemyFromPlan(event);
+                this.waveSpawnCursor += 1;
+            }
+            return;
+        }
+        if (this.spawned < this.enemiesPerWave) {
             this.spawnTimer += dt;
             if (this.spawnTimer >= this.spawnInterval) {
                 this.spawnEnemy();
                 this.spawnTimer = 0;
             }
         }
+    },
+
+    resolvePlannedColor(color) {
+        if (!color || typeof color !== 'string') {
+            return this.getEnemyColor();
+        }
+        const normalized = color.toLowerCase();
+        if (normalized === 'auto' || normalized === 'random') {
+            return this.getEnemyColor();
+        }
+        return normalized;
+    },
+
+    spawnEnemyFromPlan(event) {
+        if (!event) {
+            return;
+        }
+        const baseHp = this.determineEnemyHp();
+        const color = this.resolvePlannedColor(event.color);
+        const options = {
+            color,
+            x: Number.isFinite(event.x) ? event.x : undefined,
+            y: Number.isFinite(event.y) ? event.y : undefined,
+            groupSize: Number.isFinite(event.groupSize) ? event.groupSize : undefined,
+            spacing: Number.isFinite(event.spacing) ? event.spacing : undefined,
+            offsets: Array.isArray(event.offsets) ? event.offsets : undefined,
+            colors: Array.isArray(event.colors) ? event.colors : undefined,
+        };
+        if (event.type === 'tank') {
+            this.spawnTankEnemy(baseHp, options);
+        } else {
+            if (!options.groupSize) {
+                options.groupSize = 1;
+            }
+            this.spawnSwarmGroup(baseHp, options);
+        }
+        this.spawned += 1;
     },
 
     updateEnemies(dt) {

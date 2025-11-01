@@ -14,6 +14,7 @@ import tankSchedule from './game/tankSchedule.js';
 import world from './game/world.js';
 import statePersistence from './game/statePersistence.js';
 import stateSetup from './game/stateSetup.js';
+import createFormationManager from './game/formations.js';
 import gameConfig from '../config/gameConfig.js';
 
 function createScreenShakeState() {
@@ -95,6 +96,11 @@ class Game {
         this.endlessWaveStart = 0;
         this.diagnosticsOverlay = null;
         this.diagnosticsState = { visible: false, fps: 0, lastCommit: 0 };
+        this.formationManager = createFormationManager(gameConfig.waves?.formations ?? {});
+        this.activeFormationPlan = null;
+        this.waveSpawnSchedule = null;
+        this.waveSpawnCursor = 0;
+        this.waveElapsed = 0;
     }
 
     setupEnvironment() {
