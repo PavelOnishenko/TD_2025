@@ -4,7 +4,14 @@ import { enemyActions } from './gameEnemies.js';
 import { waveActions } from './gameWaves.js';
 import { callCrazyGamesEvent } from '../systems/crazyGamesIntegration.js';
 import { createGameAudio, getHowler } from '../systems/audio.js';
-import { createExplosion, updateExplosions, updateColorSwitchBursts } from '../systems/effects.js';
+import {
+    createExplosion,
+    updateExplosions,
+    updateColorSwitchBursts,
+    createSpawnPortalEffect,
+    updateSpawnPortals,
+    energizeSpawnPortal,
+} from '../systems/effects.js';
 import { saveBestScore } from '../systems/dataStore.js';
 import { refreshDiagnosticsOverlay, updateHUD } from '../systems/ui.js';
 import GameGrid from './gameGrid.js';
@@ -72,6 +79,7 @@ class Game {
         this.colorSwitchBursts = [];
         this.mergeAnimations = [];
         this.energyPopups = [];
+        this.spawnPortals = [];
         this.projectileSpeed = gameConfig.projectiles.speed;
         this.projectileRadius = gameConfig.projectiles.baseRadius;
         this.maxProjectileRadius = this.projectileRadius;
@@ -95,6 +103,7 @@ class Game {
         this.endlessWaveStart = 0;
         this.diagnosticsOverlay = null;
         this.diagnosticsState = { visible: false, fps: 0, lastCommit: 0 };
+        this.ensureBaseSpawnPortal();
     }
 
     setupEnvironment() {
@@ -124,6 +133,80 @@ class Game {
             return;
         }
         this.assets = assets;
+    }
+
+    ensureBaseSpawnPortal(options = {}) {
+        if (!Array.isArray(this.spawnPortals)) {
+            this.spawnPortals = [];
+        }
+        const spawnSource = typeof this.getDefaultEnemyCoords === 'function'
+            ? this.getDefaultEnemyCoords()
+            : (gameConfig.enemies?.defaultSpawn ?? { x: 0, y: 0 });
+        const spawnX = Number.isFinite(spawnSource?.x) ? spawnSource.x : 0;
+        const spawnY = Number.isFinite(spawnSource?.y) ? spawnSource.y : 0;
+        const endless = typeof this.isEndlessWave === 'function'
+            ? this.isEndlessWave(this.wave ?? 0)
+            : false;
+        const theme = options.theme ?? (endless ? 'endless' : 'default');
+        let portal = this.spawnPortals.find(effect => effect?.isPersistent);
+        const enemyWidth = Number(gameConfig.enemies?.dimensions?.width) || 80;
+        if (!portal) {
+            portal = createSpawnPortalEffect(spawnX, spawnY, {
+                persistent: true,
+                radius: enemyWidth * 1.45,
+                ellipseScale: 0.6,
+                skew: -0.18,
+                theme,
+                baseEnergy: 0.34,
+                energy: 0.42,
+                rotationSpeed: 0.55,
+                loopDuration: 4.6,
+                swirlCount: 5,
+            });
+            if (portal) {
+                this.spawnPortals.push(portal);
+            }
+        } else {
+            portal.x = spawnX;
+            portal.y = spawnY;
+            portal.theme = theme;
+        }
+        return portal;
+    }
+
+    triggerSpawnPortalEffect(spawnPoint, options = {}) {
+        const spawnTheme = options.theme ?? null;
+        const portal = this.ensureBaseSpawnPortal({ theme: spawnTheme });
+        const intensity = Number.isFinite(options.intensity) ? options.intensity : 1;
+        const extraHold = Number.isFinite(options.extraHold) ? options.extraHold : undefined;
+        const sparkCount = Number.isFinite(options.sparkCount) ? options.sparkCount : undefined;
+
+        if (portal) {
+            energizeSpawnPortal(portal, { intensity, extraHold, sparkCount, seed: options.seed });
+            return portal;
+        }
+
+        if (!spawnPoint || !Number.isFinite(spawnPoint.x) || !Number.isFinite(spawnPoint.y)) {
+            return null;
+        }
+
+        const fallbackTheme = spawnTheme ?? ((typeof this.isEndlessWave === 'function' && this.isEndlessWave(this.wave ?? 0)) ? 'endless' : 'default');
+        const effect = createSpawnPortalEffect(spawnPoint.x, spawnPoint.y, { theme: fallbackTheme, seed: options.seed });
+        if (!effect) {
+            return null;
+        }
+        this.spawnPortals.push(effect);
+        energizeSpawnPortal(effect, { intensity, extraHold, sparkCount, seed: options.seed });
+        return effect;
+    }
+
+    clearSpawnPortals() {
+        if (Array.isArray(this.spawnPortals)) {
+            this.spawnPortals.length = 0;
+        } else {
+            this.spawnPortals = [];
+        }
+        this.ensureBaseSpawnPortal();
     }
 
     createWaveAdState() {
@@ -379,6 +462,7 @@ class Game {
         this.updateMergeAnimations(dt);
         updateExplosions(this.explosions, dt);
         updateColorSwitchBursts(this.colorSwitchBursts, dt);
+        updateSpawnPortals(this.spawnPortals, dt);
         this.updateEnergyPopups(dt);
         this.grid.fadeHighlights(dt);
         this.grid.fadeMergeHints(dt);

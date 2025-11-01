@@ -13,11 +13,26 @@ export const enemyActions = {
     spawnEnemy(type) {
         const hp = this.determineEnemyHp();
         const enemyType = this.determineEnemyType(type);
+        const spawnCoords = this.getDefaultEnemyCoords();
+        const endless = typeof this.isEndlessWave === 'function'
+            ? this.isEndlessWave(this.wave ?? 0)
+            : false;
+        const intensity = enemyType === 'tank' ? 1.4 : 0.85;
+        if (typeof this.triggerSpawnPortalEffect === 'function') {
+            this.triggerSpawnPortalEffect(spawnCoords, {
+                intensity,
+                theme: endless ? 'endless' : undefined,
+                seed: (this.spawned ?? 0) + (this.wave ?? 0) * 37,
+            });
+        }
+        if (this.audio && typeof this.audio.playPortalSpawn === 'function') {
+            this.audio.playPortalSpawn();
+        }
 
         if (enemyType === 'tank') {
-            this.spawnTankEnemy(hp);
+            this.spawnTankEnemy(hp, spawnCoords);
         } else if (enemyType === 'swarm') {
-            this.spawnSwarmGroup(hp);
+            this.spawnSwarmGroup(hp, spawnCoords);
         }
         // todo else throw error
 
@@ -51,9 +66,9 @@ export const enemyActions = {
         return { ...gameConfig.enemies.defaultSpawn };
     },
 
-    spawnTankEnemy(baseHp) {
+    spawnTankEnemy(baseHp, spawnCoords = null) {
         const color = this.getEnemyColor();
-        const defaultCoords = this.getDefaultEnemyCoords();
+        const defaultCoords = spawnCoords ?? this.getDefaultEnemyCoords();
         const hpMultiplier = gameConfig.enemies.tank.hpMultiplier;
         const tankEnemy = new TankEnemy(baseHp * hpMultiplier, color, defaultCoords.x, defaultCoords.y);
         tankEnemy.setEngineFlamePlacement({
@@ -66,18 +81,20 @@ export const enemyActions = {
         this.enemies.push(tankEnemy);
     },
 
-    spawnSwarmGroup(baseHp) {
+    spawnSwarmGroup(baseHp, spawnCoords = null) {
         const groupSize = gameConfig.enemies.swarm.groupSize;
         const swarmHp = Math.max(1, Math.floor(baseHp * gameConfig.enemies.swarm.hpFactor));
         const spacing = gameConfig.enemies.swarm.spacing;
         const centerOffsetBase = (groupSize - 1) / 2;
 
+        const fallbackCoords = spawnCoords ?? this.getDefaultEnemyCoords();
+        const spawnX = Number.isFinite(spawnCoords?.x) ? spawnCoords.x : fallbackCoords.x;
+        const spawnYBase = Number.isFinite(spawnCoords?.y) ? spawnCoords.y : fallbackCoords.y;
+
         for (let i = 0; i < groupSize; i++) {
             const color = this.getEnemyColor();
-            const defaultCoords = this.getDefaultEnemyCoords();
-            const swarmEnemy = new SwarmEnemy(swarmHp, color, defaultCoords.x, defaultCoords.y);
             const centerOffset = (i - centerOffsetBase) * spacing;
-            swarmEnemy.y += centerOffset;
+            const swarmEnemy = new SwarmEnemy(swarmHp, color, spawnX, spawnYBase + centerOffset);
             swarmEnemy.setEngineFlamePlacement({
                 anchorX:swarmEnemy.engineFlame.anchor.x, anchorY:swarmEnemy.engineFlame.anchor.y,
                 offsetX:swarmEnemy.engineFlame.offset.x-10, offsetY:swarmEnemy.engineFlame.offset.y,

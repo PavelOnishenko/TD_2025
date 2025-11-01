@@ -1,4 +1,4 @@
-import { drawExplosions, drawColorSwitchBursts } from '../systems/effects.js';
+import { drawExplosions, drawColorSwitchBursts, drawSpawnPortals } from '../systems/effects.js';
 
 const ENERGY_PALETTES = {
     red: {
@@ -198,6 +198,7 @@ export function draw(game) {
     drawBase(game);
     drawPlatforms(game);
     drawGrid(game);
+    drawSpawnPortals(game.ctx, game.spawnPortals ?? []);
     drawEntities(game);
 
     ctx.restore();

@@ -30,6 +30,11 @@ function resetCollections(game) {
     game.explosions = [];
     game.mergeAnimations = [];
     game.energyPopups = [];
+    if (typeof game.clearSpawnPortals === 'function') {
+        game.clearSpawnPortals();
+    } else {
+        game.spawnPortals = [];
+    }
     game.maxProjectileRadius = game.projectileRadius;
     game.spawned = 0;
     game.spawnTimer = 0;

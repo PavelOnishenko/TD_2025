@@ -58,6 +58,11 @@ function applySavedResources(game, savedState) {
     game.projectiles = [];
     game.explosions = [];
     game.mergeAnimations = [];
+    if (typeof game.clearSpawnPortals === 'function') {
+        game.clearSpawnPortals();
+    } else {
+        game.spawnPortals = [];
+    }
     game.maxProjectileRadius = game.projectileRadius;
     return targetWave;
 }

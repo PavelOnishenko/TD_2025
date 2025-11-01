@@ -49,6 +49,11 @@ const SOUND_OPTIONS = {
         rate: 1.6,
         preload: true
     },
+    portalSpawn: {
+        src: ['assets/portal_spawn.mp3'],
+        volume: 0.55,
+        preload: true
+    },
     colorSwitch: {
         src: ['assets/color_switch.mp3'],
         volume: 1,

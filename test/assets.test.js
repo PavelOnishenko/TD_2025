@@ -93,6 +93,7 @@ test('loadAssets returns sounds only when audio is supported', async () => {
         'assets/explosion.wav',
         'assets/placement.wav',
         'assets/merge.mp3',
+        'assets/portal_spawn.mp3',
         'assets/color_switch.mp3',
         'assets/explosion.wav',
         'assets/error.wav',
@@ -109,6 +110,7 @@ test('loadAssets returns sounds only when audio is supported', async () => {
         'explosion',
         'placement',
         'merge',
+        'portalSpawn',
         'colorSwitch',
         'baseHit',
         'error',
@@ -120,6 +122,7 @@ test('loadAssets returns sounds only when audio is supported', async () => {
     assert.deepEqual(assets.sounds.fire, { sound: 'assets/fire.wav' });
     assert.deepEqual(assets.sounds.baseHit, { sound: 'assets/explosion.wav' });
     assert.deepEqual(assets.sounds.merge, { sound: 'assets/merge.mp3' });
+    assert.deepEqual(assets.sounds.portalSpawn, { sound: 'assets/portal_spawn.mp3' });
     assert.deepEqual(assets.sounds.towerRemoveCharge, { sound: 'assets/tower_remove_charge.mp3' });
     assert.deepEqual(assets.sounds.towerRemoveCancel, { sound: 'assets/tower_remove_cancel.mp3' });
     assert.deepEqual(assets.sounds.towerRemoveExplosion, { sound: 'assets/tower_remove_explosion.wav' });
