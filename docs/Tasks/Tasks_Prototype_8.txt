@@ -70,7 +70,7 @@ Don't put binary files in the repo, I will do it myself. Portal can be drawn wit
 Level 3 should have spawnInterval of 60. Further levels - even less of this interval. 
 The damage should be configured also so as not to change the difficulty of the game, it should remain like it was.
 
-018 | TODO | When I focus another window, ships continue flying while shooting is being halted. 
+018 | DONE | When I focus another window, ships continue flying while shooting is being halted. 
 This leads to losing. We need to fix this.
 
 019 | TODO | Balance and gameplay test
