@@ -45,14 +45,49 @@ export default class Tower {
     updateStats() {
         const config = gameConfig.towers;
         const rangeMultiplier = 1 + config.rangePerLevel * (this.level - 1);
-        const damageMultiplier = 1 + config.damagePerLevel * (this.level - 1);
+        const damageGrowth = config.damagePerLevel;
+        const damageMultiplier = typeof damageGrowth === 'number'
+            ? 1 + damageGrowth * (this.level - 1)
+            : 1;
         const rangeIncreaseFactor = config.rangeBonusMultiplier;
         this.range = this.baseRange * rangeMultiplier * rangeIncreaseFactor;
         this.damage = this.baseDamage * damageMultiplier;
+        const damageOverrides = Array.isArray(config.damageByLevel)
+            ? config.damageByLevel
+            : null;
+        if (damageOverrides) {
+            const index = Math.max(0, Math.min(this.level - 1, damageOverrides.length - 1));
+            const override = damageOverrides[index];
+            if (Number.isFinite(override)) {
+                this.damage = override;
+            }
+        }
         const glowSpeeds = config.glowSpeeds;
         const clampedLevel = Math.max(1, Math.min(this.level, glowSpeeds.length));
         const speedIndex = clampedLevel - 1;
         this.glowSpeed = glowSpeeds[speedIndex] ?? glowSpeeds[glowSpeeds.length - 1];
+        this.fireInterval = this.getConfiguredFireInterval();
+    }
+
+    getConfiguredFireInterval() {
+        const fireIntervals = gameConfig.towers?.fireIntervalPerLevel;
+        if (Array.isArray(fireIntervals)) {
+            const index = Math.max(0, Math.min(this.level - 1, fireIntervals.length - 1));
+            const interval = fireIntervals[index];
+            if (Number.isFinite(interval) && interval > 0) {
+                return interval;
+            }
+        }
+        return Number.isFinite(gameConfig.projectiles?.spawnInterval)
+            ? gameConfig.projectiles.spawnInterval
+            : 60;
+    }
+
+    getFireInterval() {
+        if (!Number.isFinite(this.fireInterval) || this.fireInterval <= 0) {
+            this.fireInterval = this.getConfiguredFireInterval();
+        }
+        return this.fireInterval;
     }
 
     update(dt) {
