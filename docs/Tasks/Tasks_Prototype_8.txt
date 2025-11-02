@@ -37,7 +37,7 @@ Need human involvement
 011 | DONE | Bug - music turns on in some situations despite it being turned off in HUD.
 Situations include restart and ad display.
 
-012 | TODO | Make smaller buttons for mobile (they cover the screen), possibly with some icons or abbreviated text. 
+012 | INPRO ME | Make smaller buttons for mobile (they cover the screen), possibly with some icons or abbreviated text. 
 Icons can be sprites but may be svg as well. try to cover all image needs yourself.
 Needs HUMAN.
 
