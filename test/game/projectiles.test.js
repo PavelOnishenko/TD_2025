@@ -54,23 +54,26 @@ test('towerAttacks fires projectile when enemy is in range', () => {
     const enemy = { x: tower.x + 5, y: tower.y + 5, w: 20, h: 20 };
     game.enemies.push(enemy);
 
-    game.towerAttacks(game.projectileSpawnInterval + 1);
+    const fireInterval = tower.getFireInterval();
+    game.towerAttacks(fireInterval + 1);
 
     assert.equal(game.projectiles.length, 1);
-    assert.equal(tower.lastShot, game.projectileSpawnInterval + 1);
+    assert.equal(tower.lastShot, fireInterval + 1);
 });
 
 test('towerAttacks respects firing cooldown', () => {
     const game = createGame();
     const tower = createTower(game);
     const enemy = { x: tower.x + 5, y: tower.y + 5, w: 20, h: 20 };
-    tower.lastShot = game.projectileSpawnInterval - 10;
+    const fireInterval = tower.getFireInterval();
+    tower.lastShot = Math.max(0, fireInterval - 10);
     game.enemies.push(enemy);
 
-    game.towerAttacks(game.projectileSpawnInterval + 1);
+    const timestamp = fireInterval + 1;
+    game.towerAttacks(timestamp);
 
     assert.equal(game.projectiles.length, 0);
-    assert.equal(tower.lastShot, game.projectileSpawnInterval - 10);
+    assert.equal(tower.lastShot, Math.max(0, fireInterval - 10));
 });
 
 test('spawnProjectile triggers audio fire sound', () => {

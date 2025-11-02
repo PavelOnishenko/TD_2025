@@ -220,7 +220,10 @@ export const enemyActions = {
                 const enemyCenter = { x: target.x + target.w / 2, y: target.y + target.h / 2 };
                 const dx = enemyCenter.x - towerCenter.x;
                 const dy = enemyCenter.y - towerCenter.y;
-                if (Math.hypot(dx, dy) <= tower.range && timestamp - tower.lastShot >= this.projectileSpawnInterval) {
+                const fireInterval = typeof tower.getFireInterval === 'function'
+                    ? tower.getFireInterval()
+                    : this.projectileSpawnInterval;
+                if (Math.hypot(dx, dy) <= tower.range && timestamp - tower.lastShot >= fireInterval) {
                     this.spawnProjectile(Math.atan2(dy, dx), tower);
                     tower.lastShot = timestamp;
                     break;
