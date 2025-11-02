@@ -76,5 +76,6 @@ This leads to losing. We need to fix this.
 019 | TODO | Balance and gameplay test
 Playtest on desktop and mobile. Verify average run time, win rate, ad timing, and responsiveness. 
 Ensure no console errors or UI overlaps.
+Need human.
 
 020 | TODO | Cool animated splash
