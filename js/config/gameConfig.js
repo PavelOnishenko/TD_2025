@@ -30,7 +30,7 @@ export const gameConfig = {
             { xFactor: 0.6, yFactor: 0.85, scale: 1.2 },
         ],
         portal: {
-            offset: { x: 320, y: 0 },
+            offset: { x: 0, y: 0 },
             radius: { x: 130, y: 270 },
             rotation: -0.18,
             pulseDuration: 1.05,
@@ -87,9 +87,9 @@ export const gameConfig = {
     enemies: {
         defaultSpawn: { x: -600, y: 600 },
         dimensions: { width: 80, height: 80 },
-        tank: { hpMultiplier: 50, speed: { x: 100, y: 0 }, },
+        tank: { hpMultiplier: 42, speed: { x: 100, y: 0 }, },
         // todo hpFactor and hpMultiplier should be the same thing
-        swarm: { groupSize: 3, spacing: 40, hpFactor: 5, speed: { x: 200, y: 0 }, },
+        swarm: { groupSize: 3, spacing: 40, hpFactor: 10, speed: { x: 200, y: 0 }, },
     },
     waves: {
         schedule: [
@@ -155,18 +155,18 @@ swarm @0 y=520 color=red
 swarm @0.5 y=600 color=blue
 swarm @1 y=680 color=red
 ---
-# Tank Spearhead | difficulty=3 | probability=Math.max(0.15, 0.25 + 0.05 * Math.max(0, wave - 3))
+# Tank Spearhead | difficulty=3 | probability=Math.max(0.15, 0.15 + 0.05 * Math.max(0, wave - 3))
 tank @0 y=590 color=blue
 swarm @0.8 y=540 color=red
 swarm @1.6 y=640 color=blue
 ---
-# Escort Column | difficulty=4 | probability=Math.max(0.1, 0.2 + 0.05 * Math.max(0, wave - 5))
+# Escort Column | difficulty=4 | probability=Math.max(0.1, 0.1 + 0.05 * Math.max(0, wave - 5))
 swarm @0 y=620 color=red
 tank @0.7 y=580 color=blue
 swarm @1.4 y=560 color=red
 tank @2.1 y=600 color=blue
 ---
-# Heavy Vanguard | difficulty=4 | probability=Math.max(0.05, 0.12 + 0.045 * Math.max(0, wave - 7))
+# Heavy Vanguard | difficulty=4 | probability=Math.max(0.05, 0.045 * Math.max(0, wave - 7))
 tank @0 y=600 color=red
 tank @0.9 y=580 color=blue
 swarm @1.6 y=640 color=red
@@ -179,7 +179,7 @@ swarm @0.8 y=600 color=blue
 swarm @1.2 y=650 color=red
 swarm @1.6 y=700 color=blue
 ---
-# Mixed Barrage | difficulty=6 | probability=Math.max(0.02, 0.08 + 0.05 * Math.max(0, wave - 9))
+# Mixed Barrage | difficulty=6 | probability=Math.max(0.02, 0.04 + 0.05 * Math.max(0, wave - 9))
 swarm @0 y=540 color=red
 tank @0.6 y=590 color=blue
 swarm @1.2 y=640 color=red
