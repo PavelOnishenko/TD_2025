@@ -213,18 +213,40 @@ function handleWindowBlur(game) {
         return;
     }
     const resumeLater = Boolean(game.musicEnabled && !game.audioMuted && game.shouldPlayMusic());
-    game.musicPausedByFocus = resumeLater;
-    if (typeof game.audio?.stopMusic === 'function') {
+    if (!game.isPaused && typeof game.pause === 'function') {
+        game.musicPausedByFocus = resumeLater;
+        game.pause('focus');
+        return;
+    }
+    if (game.pauseReason === 'focus') {
+        game.musicPausedByFocus = resumeLater;
+        if (resumeLater && typeof game.audio?.stopMusic === 'function') {
+            game.audio.stopMusic();
+        }
+        return;
+    }
+    if (resumeLater && typeof game.audio?.stopMusic === 'function') {
         game.audio.stopMusic();
     }
+    game.musicPausedByFocus = false;
 }
 
 function handleWindowFocus(game) {
-    if (!game?.musicPausedByFocus) {
+    if (!game) {
         return;
     }
+    const shouldResumeMusic = game.musicPausedByFocus;
     game.musicPausedByFocus = false;
-    game.playMusicIfAllowed();
+    if (game.pauseReason === 'focus' && typeof game.resume === 'function') {
+        const resumed = game.resume({ expectedReason: 'focus', reason: 'focus' });
+        if (!resumed && shouldResumeMusic) {
+            game.playMusicIfAllowed();
+        }
+        return;
+    }
+    if (shouldResumeMusic) {
+        game.playMusicIfAllowed();
+    }
 }
 async function bootstrapGame() {
     initializeAudio();
