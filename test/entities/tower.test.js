@@ -29,7 +29,7 @@ test('alignToCell positions tower anchor on target cell', () => {
     assert.deepEqual({ x: tower.x + offset.x, y: tower.y + offset.y }, { x: 100, y: 80 });
 });
 
-test('draw renders range arc, sprite and level text', () => {
+test('draw renders sprite and level text without range circle', () => {
     const tower = new Tower(50, 60);
     tower.glowTime = 0;
     const ctx = makeFakeCtx();
@@ -38,15 +38,14 @@ test('draw renders range arc, sprite and level text', () => {
 
     tower.draw(ctx, assets);
 
-    assert.deepEqual(ctx.ops[0], ['beginPath']);
-    assert.deepEqual(ctx.ops[1], ['arc', 85, 112.5, tower.range, 0, Math.PI * 2]);
-    assert.deepEqual(ctx.ops[2], ['strokeStyle', 'rgba(255,0,0,0.3)']);
-    assert.deepEqual(ctx.ops[3], ['stroke']);
+    const rangeArc = ctx.ops.find(op => op[0] === 'arc' && op[3] === tower.range);
+    assert.equal(rangeArc, undefined);
+    assert.deepEqual(findOp(ctx.ops, 'fillStyle'), ['fillStyle', 'red']);
     assert.deepEqual(findOp(ctx.ops, 'drawImage'), ['drawImage', sprite, tower.x, tower.y, tower.w, tower.h]);
     assert.deepEqual(findOp(ctx.ops, 'fillText'), ['fillText', '1', tower.x + tower.w + 2, tower.y + 10]);
 });
 
-test('draw uses blue styling when tower color is blue', () => {
+test('draw uses blue styling without emitting range stroke', () => {
     const tower = new Tower(30, 30, 'blue', 2);
     tower.glowTime = 0;
     const ctx = makeFakeCtx();
@@ -56,7 +55,8 @@ test('draw uses blue styling when tower color is blue', () => {
 
     assert.ok(Math.abs(tower.range - 218.4) < 1e-6);
     assert.ok(Math.abs(tower.damage - 1.8) < 1e-6);
-    assert.deepEqual(findOp(ctx.ops, 'strokeStyle'), ['strokeStyle', 'rgba(0,0,255,0.3)']);
+    assert.deepEqual(findOp(ctx.ops, 'fillStyle'), ['fillStyle', 'blue']);
+    assert.equal(findOp(ctx.ops, 'strokeStyle'), undefined);
 });
 
 test('draw warns and skips sprite rendering when asset missing', () => {
