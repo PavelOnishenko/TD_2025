@@ -68,6 +68,7 @@ Don't put binary files in the repo, I will do it myself. Portal can be drawn wit
 
 017 | TODO | Each next tower level should be shooting more frequently. 1st level should shoot 2 times per second. 
 Level 3 should have spawnInterval of 60. Further levels - even less of this interval. 
+The damage should be configured also so as not to change the difficulty of the game.
 
 018 | TODO | When I focus another window, ships continue flying while shooting is being halted. 
 This leads to losing. We need to fix this.
