@@ -8,11 +8,17 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js"></script>
 </head>
 <body>
-    <div id="startOverlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="startTitle">
-        <div class="start-menu">
-            <h1 id="startTitle">Minimal Tower Defense</h1>
-            <p>Protect the base from incoming waves of enemies.</p>
-            <button id="startGame" type="button">Start Game</button>
+    <div id="startOverlay" class="overlay start-overlay" role="dialog" aria-modal="true" aria-labelledby="startTitle">
+        <div class="start-overlay__visuals" aria-hidden="true">
+            <div class="start-overlay__aurora start-overlay__aurora--one"></div>
+            <div class="start-overlay__aurora start-overlay__aurora--two"></div>
+            <div class="start-overlay__stars"></div>
+            <div class="start-overlay__grid"></div>
+        </div>
+        <div class="start-menu start-menu--splash">
+            <h1 id="startTitle" class="start-menu__title">Minimal Tower Defense</h1>
+            <p class="start-menu__tagline">Strategize. Merge. Hold the line.</p>
+            <button id="startGame" class="start-menu__button" type="button">Enter the battlefield</button>
         </div>
     </div>
 
