@@ -78,4 +78,4 @@ Playtest on desktop and mobile. Verify average run time, win rate, ad timing, an
 Ensure no console errors or UI overlaps.
 Need human.
 
-020 | TODO | Cool animated splash
+020 | DONE | Cool animated splash screen for start overlay
