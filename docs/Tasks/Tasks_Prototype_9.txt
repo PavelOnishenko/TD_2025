@@ -1,2 +1,3 @@
-001 | TODO | Explosions for hits, not only kills
-002 | TODO | Towers should choose enemy by color
+001 | TODO | Explosions for hits, not only kills.
+002 | TODO | Towers should choose enemy by color.
+003 | TODO | Resolve all todos in the code.
