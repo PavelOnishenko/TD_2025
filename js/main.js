@@ -12,6 +12,7 @@ import { loadAudioSettings } from './systems/dataStore.js';
 import gameConfig from './config/gameConfig.js';
 import featureFlags from './config/featureFlags.js';
 import initSimpleSaveSystem from './systems/simpleSaveSystem.js';
+import { initializeHudController } from './systems/hudLayout.js';
 
 const { width: LOGICAL_W, height: LOGICAL_H } = gameConfig.world.logicalSize;
 export function getViewportMetrics(windowRef = window) {
@@ -308,6 +309,7 @@ function handleWindowFocus(game) {
 }
 async function bootstrapGame() {
     initializeAudio();
+    initializeHudController();
     await initializeCrazyGamesIfNeeded();
     const context = getCanvasContext();
     await startGame(context);
