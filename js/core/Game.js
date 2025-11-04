@@ -444,6 +444,12 @@ class Game {
 
     updateViewport(viewport) {
         this.viewport = viewport;
+        if (viewport && viewport.worldBounds) {
+            this.worldBounds = viewport.worldBounds;
+        } else if (typeof this.computeWorldBounds === 'function') {
+            this.worldBounds = this.computeWorldBounds();
+        }
+        this.worldScale = Number.isFinite(viewport?.scale) ? viewport.scale : 1;
         this.syncStarfieldDimensions();
     }
 
