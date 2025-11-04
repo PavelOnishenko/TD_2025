@@ -188,6 +188,15 @@ export const enemyActions = {
     },
 
     updateEnemies(dt) {
+        const logicalHeight = Number.isFinite(this.logicalH) ? this.logicalH : 0;
+        const canvasHeight = Number.isFinite(this.canvas?.height) ? this.canvas.height : logicalHeight;
+        const worldMaxY = Number.isFinite(this.worldBounds?.maxY) ? this.worldBounds.maxY : null;
+        const removalThreshold = Math.max(
+            worldMaxY ?? Number.NEGATIVE_INFINITY,
+            canvasHeight,
+            logicalHeight,
+        );
+
         for (let i = this.enemies.length - 1; i >= 0; i--) {
             const e = this.enemies[i];
             e.update(dt);
@@ -207,7 +216,7 @@ export const enemyActions = {
                 if (this.lives <= 0) {
                     endGame(this, 'LOSE');
                 }
-            } else if (e.isOutOfBounds(this.canvas.height)) {
+            } else if (e.isOutOfBounds(removalThreshold)) {
                 this.enemies.splice(i, 1);
             }
         }
