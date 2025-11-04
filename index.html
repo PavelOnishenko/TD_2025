@@ -43,7 +43,13 @@
     <main id="gameContainer">
         <canvas id="game" width="907" height="510"></canvas>
         <section id="hud" aria-label="Game controls and stats">
-            <div id="lives" class="lives" aria-label="Lives"></div>
+            <div class="hud-top-left">
+                <div id="lives" class="lives" aria-label="Lives"></div>
+                <div id="crazyGamesUser" class="user-info hidden" aria-live="polite">
+                    <img id="crazyGamesUserAvatar" alt="CrazyGames profile picture" />
+                    <span id="crazyGamesUsername"></span>
+                </div>
+            </div>
             <div class="hud-live-region" aria-live="polite">
                 <div id="energy" class="resource" aria-label="Energy: 20">
                     <span class="resource-value">20</span>
@@ -63,8 +69,8 @@
                     </div>
                 </div>
                 <div class="wave-controls__buttons" role="group" aria-label="Wave actions">
-                    <button id="nextWave" type="button">Next Wave</button>
-                    <button id="mergeTowers" type="button" disabled>Merge Towers</button>
+                    <button id="nextWave" class="hud-button" type="button" data-icon="N">Next Wave</button>
+                    <button id="mergeTowers" class="hud-button" type="button" data-icon="M" disabled>Merge Towers</button>
                 </div>
             </div>
             <div class="hud-live-region hud-live-region--status" aria-live="polite">
@@ -72,23 +78,19 @@
             </div>
             <div id="tutorialTip" class="tutorial-tip hidden" aria-live="polite"></div>
             <div class="hud-controls">
-                <button id="restart" type="button">Restart</button>
+                <button id="restart" class="hud-button" type="button" data-icon="R">Restart</button>
                 <div id="saveControls" class="save-controls save-controls--hidden" role="group" aria-label="Save controls">
-                    <button id="saveGame" type="button">Save Game</button>
-                    <button id="loadGame" type="button" disabled>Load Game</button>
-                    <button id="deleteSave" type="button" class="save-controls__delete">Delete Save</button>
+                    <button id="saveGame" class="hud-button" type="button" data-icon="S">Save Game</button>
+                    <button id="loadGame" class="hud-button" type="button" data-icon="L" disabled>Load Game</button>
+                    <button id="deleteSave" class="hud-button save-controls__delete" type="button" data-icon="D">Delete Save</button>
                 </div>
                 <div class="audio-pause-controls">
                     <div class="audio-controls" role="group" aria-label="Audio controls">
-                        <button id="muteToggle" type="button" aria-pressed="false">Mute</button>
-                        <button id="musicToggle" type="button" aria-pressed="true">Music On</button>
+                        <button id="muteToggle" class="hud-button" type="button" aria-pressed="false" data-icon="U">Mute</button>
+                        <button id="musicToggle" class="hud-button" type="button" aria-pressed="true" data-icon="B">Music On</button>
                     </div>
-                    <button id="pause" type="button" aria-pressed="false">Pause</button>
+                    <button id="pause" class="hud-button" type="button" aria-pressed="false" data-icon="P">Pause</button>
                 </div>
-            </div>
-            <div id="crazyGamesUser" class="user-info hidden" aria-live="polite">
-                <img id="crazyGamesUserAvatar" alt="CrazyGames profile picture" />
-                <span id="crazyGamesUsername"></span>
             </div>
         </section>
         <div id="diagnosticsOverlay" class="diagnostics diagnostics--hidden" aria-live="polite" aria-atomic="true"></div>
