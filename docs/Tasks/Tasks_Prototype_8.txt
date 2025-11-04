@@ -79,3 +79,8 @@ Ensure no console errors or UI overlaps.
 Need human.
 
 020 | DONE | Cool animated splash screen for start overlay
+
+021 | TODO | Tower level 4 shoots bullets like minigun, 
+level 5 slowly recharging RAILGUN (like in quake 3) piercing through many enemies in one shot, 
+level 6 shoots rockets that make cool LARGE EPIC EXPLOSIONS.
+Make code for new SFX for shooting and getting hit for all these 3 levels because they will have different weapons
