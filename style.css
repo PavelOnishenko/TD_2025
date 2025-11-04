@@ -209,13 +209,9 @@ body {
 .wave-controls__buttons {
     display: flex;
     flex-direction: column;
-    align-items: stretch;
+    align-items: flex-end;
     gap: calc(var(--hud-gap) * 0.6);
-    width: 100%;
-}
-
-.wave-controls__buttons button {
-    width: 100%;
+    width: auto;
 }
 
 .wave-phase::before {
@@ -342,6 +338,8 @@ body {
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    gap: calc(8px * var(--button-scale));
+    position: relative;
     cursor: pointer;
     box-shadow: 0 0 12px rgba(33, 125, 255, 0.45);
     transition: transform 0.15s ease, box-shadow 0.15s ease;
@@ -350,7 +348,42 @@ body {
     line-height: 1;
 }
 
-.wave-controls__buttons .hud-button,
+.hud-button__icon {
+    width: calc(20px * var(--button-scale));
+    height: calc(20px * var(--button-scale));
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.hud-button__icon svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+.hud-button__label {
+    white-space: nowrap;
+}
+
+
+.wave-controls__buttons .hud-button {
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    text-align: center;
+    min-width: calc(118px * var(--button-scale));
+    min-height: calc(118px * var(--button-scale));
+    padding: calc(16px * var(--button-scale)) calc(12px * var(--button-scale));
+    border-radius: calc(20px * var(--button-scale));
+    gap: calc(12px * var(--button-scale));
+}
+
+.wave-controls__buttons .hud-button__label {
+    white-space: normal;
+    line-height: 1.1;
+}
+
 .audio-controls .hud-button,
 .audio-pause-controls .hud-button {
     min-width: calc(150px * var(--button-scale));
@@ -397,19 +430,36 @@ body {
 }
 
 .hud--icon-buttons .hud-button {
-    color: transparent;
-    padding: 0;
+    padding: calc(10px * var(--button-scale));
     min-width: calc(44px * var(--button-scale));
     min-height: calc(44px * var(--button-scale));
     border-radius: calc(14px * var(--button-scale));
-    font-size: 0;
+    gap: 0;
 }
 
-.hud--icon-buttons .hud-button::after {
-    content: attr(data-icon);
-    font-size: calc(1.2rem * var(--button-scale));
-    line-height: 1;
-    color: #b9d8ff;
+.hud--icon-buttons .hud-button__icon {
+    width: calc(24px * var(--button-scale));
+    height: calc(24px * var(--button-scale));
+}
+
+.hud--icon-buttons .wave-controls__buttons .hud-button {
+    min-width: calc(58px * var(--button-scale));
+    min-height: calc(58px * var(--button-scale));
+    padding: calc(12px * var(--button-scale));
+    border-radius: calc(16px * var(--button-scale));
+}
+
+.hud--icon-buttons .hud-button__label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
 }
 
 .hud-controls .hud-button,
