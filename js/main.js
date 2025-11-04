@@ -25,14 +25,63 @@ export function computeDisplaySize(metrics) {
     const displayHeight = Math.round(metrics.height * metrics.dpr);
     return { displayWidth, displayHeight, dpr: metrics.dpr };
 }
-export function createViewport(displaySize, logicalWidth = LOGICAL_W, logicalHeight = LOGICAL_H) {
+function resolveDimension(value, fallback) {
+    return Number.isFinite(value) ? value : fallback;
+}
+
+function normalizeBounds(bounds, fallbackWidth, fallbackHeight) {
+    const defaultBounds = {
+        minX: 0,
+        maxX: fallbackWidth,
+        minY: 0,
+        maxY: fallbackHeight,
+    };
+
+    if (!bounds) {
+        return defaultBounds;
+    }
+
+    const widthValid = Number.isFinite(bounds.minX) && Number.isFinite(bounds.maxX) && bounds.maxX > bounds.minX;
+    const heightValid = Number.isFinite(bounds.minY) && Number.isFinite(bounds.maxY) && bounds.maxY > bounds.minY;
+
+    if (widthValid && heightValid) {
+        return {
+            minX: bounds.minX,
+            maxX: bounds.maxX,
+            minY: bounds.minY,
+            maxY: bounds.maxY,
+        };
+    }
+
+    return {
+        minX: widthValid ? bounds.minX : 0,
+        maxX: widthValid ? bounds.maxX : fallbackWidth,
+        minY: heightValid ? bounds.minY : 0,
+        maxY: heightValid ? bounds.maxY : fallbackHeight,
+    };
+}
+
+export function createViewport(displaySize, options = {}) {
     const { displayWidth, displayHeight, dpr } = displaySize;
-    const scale = Math.min(displayWidth / logicalWidth, displayHeight / logicalHeight) || 1;
-    const renderWidth = logicalWidth * scale;
-    const renderHeight = logicalHeight * scale;
-    const offsetX = (displayWidth - renderWidth) / 2;
-    const offsetY = (displayHeight - renderHeight) / 2;
-    return { scale, offsetX, offsetY, dpr };
+    const logicalWidth = resolveDimension(options.logicalWidth, LOGICAL_W);
+    const logicalHeight = resolveDimension(options.logicalHeight, LOGICAL_H);
+    const bounds = normalizeBounds(options.worldBounds, logicalWidth, logicalHeight);
+    const gameplayWidth = Math.max(1, bounds.maxX - bounds.minX);
+    const gameplayHeight = Math.max(1, bounds.maxY - bounds.minY);
+    const scale = Math.min(displayWidth / gameplayWidth, displayHeight / gameplayHeight) || 1;
+    const renderWidth = gameplayWidth * scale;
+    const renderHeight = gameplayHeight * scale;
+    const offsetX = (displayWidth - renderWidth) / 2 - bounds.minX * scale;
+    const offsetY = (displayHeight - renderHeight) / 2 - bounds.minY * scale;
+    return {
+        scale,
+        offsetX,
+        offsetY,
+        dpr,
+        worldBounds: bounds,
+        renderWidth,
+        renderHeight,
+    };
 }
 function updateContainerDimensions(container, metrics) {
     if (!container) {
@@ -72,8 +121,17 @@ export function resizeCanvas({ canvasElement, gameContainerElement, gameInstance
     applyCssSize(canvasElement, viewportMetrics);
     const displaySize = computeDisplaySize(viewportMetrics);
     ensureCanvasResolution(canvasElement, displaySize);
-    const viewport = createViewport(displaySize);
+    let worldBounds = null;
+    if (gameInstance && typeof gameInstance.computeWorldBounds === 'function') {
+        worldBounds = gameInstance.computeWorldBounds();
+    }
+    const logicalWidth = resolveDimension(gameInstance?.logicalW, LOGICAL_W);
+    const logicalHeight = resolveDimension(gameInstance?.logicalH, LOGICAL_H);
+    const viewport = createViewport(displaySize, { worldBounds, logicalWidth, logicalHeight });
     applyViewport(canvasElement, gameInstance, viewport);
+    if (gameInstance && viewport.worldBounds) {
+        gameInstance.worldBounds = viewport.worldBounds;
+    }
     return viewport;
 }
 export async function getCrazyGamesUser(options = {}) {
