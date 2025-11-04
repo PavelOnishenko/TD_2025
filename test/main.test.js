@@ -23,18 +23,35 @@ test('computeDisplaySize multiplies viewport metrics by dpr', () => {
 test('createViewport centers logical canvas inside display size', () => {
     const displaySize = { displayWidth: 800, displayHeight: 600, dpr: 2 };
 
-    const viewport = createViewport(displaySize, 400, 400);
+    const viewport = createViewport(displaySize, { logicalWidth: 400, logicalHeight: 400 });
 
     assert.equal(viewport.scale, 1.5);
     assert.equal(viewport.offsetX, 100);
     assert.equal(viewport.offsetY, 0);
     assert.equal(viewport.dpr, displaySize.dpr);
+    assert.deepEqual(viewport.worldBounds, { minX: 0, maxX: 400, minY: 0, maxY: 400 });
+});
+
+test('createViewport centers gameplay bounds and offsets world minimums', () => {
+    const displaySize = { displayWidth: 800, displayHeight: 600, dpr: 1 };
+    const worldBounds = { minX: -100, maxX: 500, minY: 200, maxY: 800 };
+
+    const viewport = createViewport(displaySize, { worldBounds, logicalWidth: 400, logicalHeight: 400 });
+
+    assert.equal(viewport.scale, 1);
+    assert.equal(viewport.offsetX, 200);
+    assert.equal(viewport.offsetY, -200);
+    assert.deepEqual(viewport.worldBounds, worldBounds);
 });
 
 test('resizeCanvas updates DOM elements and returns viewport', () => {
     const canvasElement = { style: {}, width: 0, height: 0 };
     const containerElement = { style: {} };
-    const gameInstance = {};
+    const gameInstance = {
+        computeWorldBounds: () => ({ minX: -100, maxX: 500, minY: 200, maxY: 800 }),
+        logicalW: 540,
+        logicalH: 960,
+    };
     const metrics = { width: 320, height: 640, dpr: 2 };
 
     const viewport = resizeCanvas({
@@ -52,8 +69,16 @@ test('resizeCanvas updates DOM elements and returns viewport', () => {
     assert.equal(canvasElement.height, Math.round(metrics.height * metrics.dpr));
     assert.deepEqual(canvasElement.viewportTransform, viewport);
     assert.deepEqual(gameInstance.viewport, viewport);
+    assert.deepEqual(gameInstance.worldBounds, viewport.worldBounds);
 
-    const expected = createViewport(computeDisplaySize(metrics));
+    const expected = createViewport(
+        computeDisplaySize(metrics),
+        {
+            worldBounds: gameInstance.worldBounds,
+            logicalWidth: gameInstance.logicalW,
+            logicalHeight: gameInstance.logicalH,
+        },
+    );
     assert.deepEqual(viewport, expected);
 });
 

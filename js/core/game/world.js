@@ -42,6 +42,49 @@ function expandWithSpawn(bounds, spawn) {
     expandBounds(bounds, spawn.x, spawn.y, 0, 0);
 }
 
+function expandWithPortal(bounds, portal) {
+    if (!portal || !portal.position) {
+        return;
+    }
+
+    const position = portal.position;
+    const radiusX = Number.isFinite(portal.radiusX) ? Math.max(0, portal.radiusX) : 0;
+    const radiusY = Number.isFinite(portal.radiusY) ? Math.max(0, portal.radiusY) : 0;
+    const rotation = Number.isFinite(portal.rotation) ? portal.rotation : 0;
+    const cos = Math.cos(rotation);
+    const sin = Math.sin(rotation);
+
+    if (radiusX > 0 || radiusY > 0) {
+        const extentX = Math.sqrt((radiusX * cos) ** 2 + (radiusY * sin) ** 2);
+        const extentY = Math.sqrt((radiusX * sin) ** 2 + (radiusY * cos) ** 2);
+        expandBounds(bounds, position.x - extentX, position.y - extentY, extentX * 2, extentY * 2);
+    } else {
+        expandBounds(bounds, position.x, position.y, 0, 0);
+    }
+
+    const tailLength = Number.isFinite(portal.config?.tailLength) ? Math.max(0, portal.config.tailLength) : 0;
+    const tailWidth = Number.isFinite(portal.config?.tailWidth) ? Math.max(0, portal.config.tailWidth) : 0;
+    if (tailLength <= 0 || tailWidth < 0) {
+        return;
+    }
+
+    const innerX = radiusX * 0.45;
+    const outerX = radiusX + tailLength;
+    const tailHalfHeight = tailWidth * 0.6;
+    const corners = [
+        { x: innerX, y: -tailHalfHeight },
+        { x: innerX, y: tailHalfHeight },
+        { x: outerX, y: -tailHalfHeight },
+        { x: outerX, y: tailHalfHeight },
+    ];
+
+    corners.forEach(point => {
+        const worldX = position.x + point.x * cos - point.y * sin;
+        const worldY = position.y + point.x * sin + point.y * cos;
+        expandBounds(bounds, worldX, worldY, 0, 0);
+    });
+}
+
 function ensureFiniteBounds(bounds, game) {
     const values = [bounds.minX, bounds.maxX, bounds.minY, bounds.maxY];
     const allFinite = values.every(Number.isFinite);
@@ -78,6 +121,9 @@ function computeBoundsForGame(game) {
     const cells = game.grid?.getAllCells?.();
     expandWithCells(bounds, cells);
     expandWithBase(bounds, game.base);
+    if (game.portal) {
+        expandWithPortal(bounds, game.portal);
+    }
     if (typeof game.getDefaultEnemyCoords === 'function') {
         expandWithSpawn(bounds, game.getDefaultEnemyCoords());
     }
