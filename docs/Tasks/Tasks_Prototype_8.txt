@@ -64,7 +64,8 @@ Make the stars lightly glitter like they do in reality when u look at them.
 015 | DONE | Draw portal from which the ships will go, also draw VFX for their emergence from the portal, and SFX to accompany that.
 Don't put binary files in the repo, I will do it myself. Portal can be drawn with primitives I think.
 
-016 | TODO | Add sprites for tower level 4-6. Needs human.
+016 | INPRO ME | Add sprites for tower level 4-6. Needs human.
+Branch: towers
 
 017 | DONE | Each next tower level should be shooting more frequently. 1st level should shoot 2 times per second. 
 Level 3 should have spawnInterval of 60. Further levels - even less of this interval. 
