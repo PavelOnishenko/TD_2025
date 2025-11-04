@@ -1,1 +1,2 @@
 001 | TODO | Explosions for hits, not only kills
+002 | TODO | Towers should choose enemy by color
