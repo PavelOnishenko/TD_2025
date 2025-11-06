@@ -52,8 +52,8 @@ const HUD_MILESTONES = [
         },
     },
     {
-        width: 1077,
-        height: 606,
+        width: 1050,
+        height: 591,
         profile: {
             crazyUserScale: 0.8,
             waveLabelScale: 0.8,
@@ -61,7 +61,7 @@ const HUD_MILESTONES = [
             hudGapScale: 0.75,
             hudFontScale: 1,
             pinToEdges: true,
-            iconButtons: true,
+            iconButtons: false,
         },
     },
     {
@@ -74,7 +74,7 @@ const HUD_MILESTONES = [
             hudGapScale: 0.75,
             hudFontScale: 1,
             pinToEdges: true,
-            iconButtons: true,
+            iconButtons: false,
         },
     },
     {
@@ -87,7 +87,7 @@ const HUD_MILESTONES = [
             hudGapScale: 0.8,
             hudFontScale: 1,
             pinToEdges: true,
-            iconButtons: true,
+            iconButtons: false,
         },
     },
     {
@@ -100,7 +100,7 @@ const HUD_MILESTONES = [
             hudGapScale: 0.82,
             hudFontScale: 1,
             pinToEdges: true,
-            iconButtons: true,
+            iconButtons: false,
         },
     },
     {
@@ -114,7 +114,7 @@ const HUD_MILESTONES = [
             hudGapScale: 0.95,
             hudFontScale: 1.1,
             pinToEdges: true,
-            iconButtons: true,
+            iconButtons: false,
         },
     },
     {
