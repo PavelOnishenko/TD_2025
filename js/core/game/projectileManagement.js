@@ -128,7 +128,7 @@ function ensureScreenShake(game) {
         game.screenShake = {
             duration: 0,
             elapsed: 0,
-            intensity: 0,
+            intensity: 0.1,
             frequency: (gameConfig.world?.screenShake?.frequency) ?? 42,
             seedX: Math.random() * Math.PI * 2,
             seedY: Math.random() * Math.PI * 2,
@@ -229,7 +229,7 @@ function spawnRocket(game, angle, tower) {
         animOptions: {
             pulseSpeed: 4,
             shimmerSpeed: 3,
-            vibrationStrength: 0.12,
+            vibrationStrength: 0.06,
         },
         extras: {
             explosionRadius: Math.max(180, tower.range * 0.75),

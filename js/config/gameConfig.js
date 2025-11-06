@@ -76,14 +76,14 @@ export const gameConfig = {
         baseDamage: 1,
         damagePerLevel: 0.8,
         flashDuration: 0.12,
-        fireIntervalPerLevel: [500, 200, 60, 45, 35, 25],
+        fireIntervalPerLevel: [500, 200, 60, 120, 1050, 1000],
         damageByLevel: [
             8.333333333333334,
             6,
             2.6,
-            2.55,
-            2.45,
-            2.0833333333333335,
+            6.8,
+            30,
+            84,
         ],
         placementFlashDuration: 1.35,
         mergePulseDuration: 0.45, // todo what does this influence?

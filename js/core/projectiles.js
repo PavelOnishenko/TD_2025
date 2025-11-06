@@ -200,7 +200,7 @@ function handleRocketImpact(game, projectile, index) {
         }));
     }
 
-    triggerScreenShake(game, 24, 0.42, 46);
+    triggerScreenShake(game, 2.4, 0.42, 46);
 
     if (projectile.trail) {
         projectile.trail.length = 0;
