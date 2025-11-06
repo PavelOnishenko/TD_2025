@@ -454,8 +454,8 @@ body {
     text-align: center;
     min-width: calc(96px * var(--button-scale));
     max-width: calc(128px * var(--button-scale));
-    min-height: calc(96px * var(--button-scale));
-    padding: calc(14px * var(--button-scale)) calc(12px * var(--button-scale));
+    min-height: calc(9px * var(--button-scale));
+    padding: calc(1px * var(--button-scale)) calc(12px * var(--button-scale));
     border-radius: calc(20px * var(--button-scale));
     gap: calc(12px * var(--button-scale));
 }
