@@ -76,6 +76,72 @@ const BASE_FLASH_PALETTES = {
         ],
     },
 };
+
+const MINIGUN_COLORS = {
+    red: {
+        trail: 'rgba(255, 108, 52, 0.5)',
+        glow: 'rgba(255, 158, 96, 0.45)',
+        core: 'rgba(255, 244, 232, 0.95)',
+        spark: 'rgba(255, 240, 200, 0.55)',
+    },
+    blue: {
+        trail: 'rgba(76, 184, 255, 0.5)',
+        glow: 'rgba(132, 216, 255, 0.45)',
+        core: 'rgba(232, 248, 255, 0.95)',
+        spark: 'rgba(210, 236, 255, 0.6)',
+    },
+    default: {
+        trail: 'rgba(255, 186, 110, 0.5)',
+        glow: 'rgba(255, 214, 158, 0.45)',
+        core: 'rgba(255, 244, 224, 0.95)',
+        spark: 'rgba(255, 245, 210, 0.55)',
+    },
+};
+
+const RAILGUN_COLORS = {
+    red: {
+        outer: [255, 120, 118],
+        mid: [255, 216, 176],
+        core: [255, 255, 255],
+        flare: [255, 226, 200],
+    },
+    blue: {
+        outer: [112, 184, 255],
+        mid: [176, 226, 255],
+        core: [255, 255, 255],
+        flare: [210, 236, 255],
+    },
+    default: {
+        outer: [255, 196, 132],
+        mid: [255, 228, 180],
+        core: [255, 255, 255],
+        flare: [255, 236, 210],
+    },
+};
+
+const ROCKET_COLORS = {
+    red: {
+        shell: '#fdfdfd',
+        stripe: '#ff6d6d',
+        trail: 'rgba(255, 124, 64, 0.32)',
+        flameCore: 'rgba(255, 228, 140, 0.95)',
+        flameEdge: 'rgba(255, 118, 64, 0)',
+    },
+    blue: {
+        shell: '#f6fbff',
+        stripe: '#4cb9ff',
+        trail: 'rgba(108, 204, 255, 0.32)',
+        flameCore: 'rgba(200, 240, 255, 0.95)',
+        flameEdge: 'rgba(64, 160, 255, 0)',
+    },
+    default: {
+        shell: '#ffffff',
+        stripe: '#ffb347',
+        trail: 'rgba(255, 200, 120, 0.32)',
+        flameCore: 'rgba(255, 220, 150, 0.95)',
+        flameEdge: 'rgba(255, 140, 70, 0)',
+    },
+};
 function getScreenShakeOffset(game) {
     const shake = game?.screenShake;
     if (!shake || shake.duration <= 0 || shake.intensity <= 0) {
@@ -113,6 +179,21 @@ function getBaseFlashPalette(color) {
     return BASE_FLASH_PALETTES[color] ?? BASE_FLASH_PALETTES.default;
 }
 
+function getMinigunPalette(color) {
+    if (!color) return MINIGUN_COLORS.default;
+    return MINIGUN_COLORS[color] ?? MINIGUN_COLORS.default;
+}
+
+function getRailgunPalette(color) {
+    if (!color) return RAILGUN_COLORS.default;
+    return RAILGUN_COLORS[color] ?? RAILGUN_COLORS.default;
+}
+
+function getRocketPalette(color) {
+    if (!color) return ROCKET_COLORS.default;
+    return ROCKET_COLORS[color] ?? ROCKET_COLORS.default;
+}
+
 function clamp(value, min, max) {
     return Math.max(min, Math.min(max, value));
 }
@@ -144,6 +225,202 @@ function toMergeColor(rgb, alpha) {
     const safeAlpha = clamp01(alpha);
     const [r, g, b] = rgb ?? [255, 255, 255];
     return `rgba(${r}, ${g}, ${b}, ${safeAlpha})`;
+}
+
+function toColorFromArray(rgb, alpha) {
+    const safeAlpha = clamp01(alpha);
+    const [r, g, b] = rgb ?? [255, 255, 255];
+    return `rgba(${r}, ${g}, ${b}, ${safeAlpha})`;
+}
+
+function drawMinigunProjectile(ctx, projectile, anim) {
+    const palette = getMinigunPalette(projectile.color);
+    const radius = projectile.radius ?? 12;
+    const length = projectile.trailLength ?? radius * 3.2;
+    const angle = Math.atan2(projectile.vy ?? 0, projectile.vx ?? 1);
+    const pulse = Math.sin(anim.time * anim.pulseSpeed + anim.pulseOffset);
+    const width = radius * (0.55 + 0.15 * Math.sin(anim.time * (anim.shimmerSpeed * 1.4) + anim.sparkleOffset));
+
+    ctx.save();
+    ctx.translate(projectile.x, projectile.y);
+    ctx.rotate(angle);
+    ctx.globalCompositeOperation = 'lighter';
+
+    const streakGradient = typeof ctx.createLinearGradient === 'function'
+        ? ctx.createLinearGradient(-length, 0, radius * 0.65, 0)
+        : null;
+    if (streakGradient) {
+        streakGradient.addColorStop(0, 'rgba(255, 255, 255, 0)');
+        streakGradient.addColorStop(0.18, palette.trail);
+        streakGradient.addColorStop(0.45, palette.glow);
+        streakGradient.addColorStop(1, palette.core);
+        ctx.fillStyle = streakGradient;
+    } else {
+        ctx.fillStyle = palette.core;
+    }
+
+    ctx.globalAlpha = 0.9 + 0.1 * pulse;
+    ctx.fillRect(-length, -width, length + radius * 0.65, width * 2);
+
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = palette.spark;
+    ctx.beginPath();
+    ctx.arc(-length * 0.35, 0, width * (0.7 + 0.2 * pulse), 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
+}
+
+function drawRailgunImpact(ctx, x, y, palette, fade) {
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    const radius = 26 * fade;
+    if (typeof ctx.createRadialGradient === 'function') {
+        const gradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
+        gradient.addColorStop(0, toColorFromArray(palette.core, 0.95 * fade));
+        gradient.addColorStop(0.45, toColorFromArray(palette.flare, 0.6 * fade));
+        gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+        ctx.fillStyle = gradient;
+    } else {
+        ctx.fillStyle = toColorFromArray(palette.core, 0.75 * fade);
+    }
+
+    ctx.beginPath();
+    if (typeof ctx.ellipse === 'function') {
+        ctx.ellipse(x, y, radius, radius * 0.65, 0, 0, Math.PI * 2);
+    } else {
+        ctx.arc(x, y, radius, 0, Math.PI * 2);
+    }
+    ctx.fill();
+    ctx.restore();
+}
+
+function drawRailgunBeam(ctx, beam, anim) {
+    const palette = getRailgunPalette(beam.color);
+    const duration = beam.duration ?? 0.25;
+    const elapsed = beam.elapsed ?? 0;
+    const fade = clamp01(1 - elapsed / duration);
+    if (fade <= 0) {
+        return;
+    }
+
+    const length = Math.max(beam.length ?? 260, 0);
+    const width = (beam.width ?? 16) * (0.9 + 0.08 * Math.sin((anim.time ?? 0) * 12));
+    const outerWidth = width * 1.8;
+    const midWidth = width * 1.05;
+    const coreWidth = width * 0.42;
+
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.translate(beam.x, beam.y);
+    ctx.rotate(beam.angle ?? 0);
+
+    if (typeof ctx.createLinearGradient === 'function') {
+        const outerGradient = ctx.createLinearGradient(0, 0, length, 0);
+        outerGradient.addColorStop(0, toColorFromArray(palette.outer, 0));
+        outerGradient.addColorStop(0.18, toColorFromArray(palette.outer, 0.3 * fade));
+        outerGradient.addColorStop(0.6, toColorFromArray(palette.outer, 0.18 * fade));
+        outerGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+        ctx.fillStyle = outerGradient;
+    } else {
+        ctx.fillStyle = toColorFromArray(palette.outer, 0.28 * fade);
+    }
+    ctx.fillRect(0, -outerWidth / 2, length, outerWidth);
+
+    if (typeof ctx.createLinearGradient === 'function') {
+        const midGradient = ctx.createLinearGradient(0, 0, length, 0);
+        midGradient.addColorStop(0, toColorFromArray(palette.mid, 0.6 * fade));
+        midGradient.addColorStop(0.4, toColorFromArray(palette.mid, 0.35 * fade));
+        midGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+        ctx.fillStyle = midGradient;
+    } else {
+        ctx.fillStyle = toColorFromArray(palette.mid, 0.55 * fade);
+    }
+    ctx.fillRect(0, -midWidth / 2, length, midWidth);
+
+    ctx.fillStyle = toColorFromArray(palette.core, 0.92 * fade);
+    ctx.fillRect(0, -coreWidth / 2, length, coreWidth);
+
+    ctx.restore();
+
+    if (Array.isArray(beam.hitPositions)) {
+        beam.hitPositions.forEach(hit => {
+            drawRailgunImpact(ctx, hit.x, hit.y, palette, fade);
+        });
+    }
+}
+
+function drawRocketTrail(ctx, projectile, palette) {
+    if (!Array.isArray(projectile.trail) || projectile.trail.length === 0) {
+        return;
+    }
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    for (let i = 0; i < projectile.trail.length; i++) {
+        const segment = projectile.trail[i];
+        const life = segment.life ?? 0;
+        const alpha = clamp01(0.3 - life * 0.35);
+        if (alpha <= 0) {
+            continue;
+        }
+        const radius = (projectile.radius ?? 16) * (0.45 + i / (projectile.trail.length * 1.7));
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = palette.trail;
+        ctx.beginPath();
+        ctx.arc(segment.x, segment.y, radius, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    ctx.restore();
+}
+
+function drawRocketProjectile(ctx, projectile) {
+    const palette = getRocketPalette(projectile.color);
+    drawRocketTrail(ctx, projectile, palette);
+
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.translate(projectile.x, projectile.y);
+    const angle = projectile.rotation ?? Math.atan2(projectile.vy ?? 0, projectile.vx ?? 1);
+    ctx.rotate(angle);
+
+    const baseRadius = projectile.radius ?? 18;
+    const bodyLength = baseRadius * 1.9;
+    const bodyWidth = baseRadius * 0.85;
+
+    ctx.fillStyle = palette.shell;
+    ctx.beginPath();
+    ctx.moveTo(bodyLength * 0.55, 0);
+    ctx.quadraticCurveTo(bodyLength * 0.08, -bodyWidth, -bodyLength * 0.55, -bodyWidth * 0.78);
+    ctx.quadraticCurveTo(-bodyLength * 0.75, 0, -bodyLength * 0.55, bodyWidth * 0.78);
+    ctx.quadraticCurveTo(bodyLength * 0.08, bodyWidth, bodyLength * 0.55, 0);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = palette.stripe;
+    ctx.fillRect(-bodyLength * 0.12, -bodyWidth * 0.6, bodyLength * 0.3, bodyWidth * 1.2);
+
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(bodyLength * 0.55, 0, bodyWidth * 0.35, 0, Math.PI * 2);
+    ctx.fill();
+
+    const flameGradient = typeof ctx.createLinearGradient === 'function'
+        ? ctx.createLinearGradient(-bodyLength * 0.55, 0, -bodyLength * 1.25, 0)
+        : null;
+    if (flameGradient) {
+        flameGradient.addColorStop(0, palette.flameCore);
+        flameGradient.addColorStop(1, palette.flameEdge);
+        ctx.fillStyle = flameGradient;
+    } else {
+        ctx.fillStyle = palette.flameCore;
+    }
+    ctx.beginPath();
+    ctx.moveTo(-bodyLength * 0.55, -bodyWidth * 0.6);
+    ctx.quadraticCurveTo(-bodyLength * 1.3, 0, -bodyLength * 0.55, bodyWidth * 0.6);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.restore();
 }
 
 function getProjectileAnimationState(projectile) {
@@ -542,8 +819,24 @@ export function drawEntities(game) {
 
     const defaultRadius = game.projectileRadius ?? 6;
     game.projectiles.forEach(p => {
-        const palette = getEnergyPalette(p.color);
         const anim = getProjectileAnimationState(p);
+
+        if (p.type === 'railgun-beam') {
+            drawRailgunBeam(ctx, p, anim);
+            return;
+        }
+
+        if (p.type === 'rocket') {
+            drawRocketProjectile(ctx, p);
+            return;
+        }
+
+        if (p.type === 'minigun') {
+            drawMinigunProjectile(ctx, p, anim);
+            return;
+        }
+
+        const palette = getEnergyPalette(p.color);
         const radius = p.radius ?? defaultRadius;
         const pulse = Math.sin(anim.time * anim.pulseSpeed + anim.pulseOffset);
         const shimmer = Math.sin(anim.time * anim.shimmerSpeed + anim.sparkleOffset);

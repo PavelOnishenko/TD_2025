@@ -131,23 +131,35 @@ test('createGameAudio returns noop audio when howler is unavailable', () => {
         const audio = createGameAudio({ fire: fireSound });
 
         assert.equal(typeof audio.playFire, 'function');
+        assert.equal(typeof audio.playMinigunFire, 'function');
+        assert.equal(typeof audio.playRailgunFire, 'function');
+        assert.equal(typeof audio.playRocketFire, 'function');
         assert.equal(typeof audio.playMusic, 'function');
         assert.equal(typeof audio.stopMusic, 'function');
         assert.equal(typeof audio.playError, 'function');
         assert.equal(typeof audio.playMatchingHit, 'function');
         assert.equal(typeof audio.playMerge, 'function');
         assert.equal(typeof audio.playMismatchingHit, 'function');
+        assert.equal(typeof audio.playMinigunHit, 'function');
+        assert.equal(typeof audio.playRailgunHit, 'function');
+        assert.equal(typeof audio.playRocketHit, 'function');
         assert.equal(typeof audio.playTowerRemoveCharge, 'function');
         assert.equal(typeof audio.playTowerRemoveCancel, 'function');
         assert.equal(typeof audio.playTowerRemoveExplosion, 'function');
 
         audio.playFire();
+        audio.playMinigunFire();
+        audio.playRailgunFire();
+        audio.playRocketFire();
         audio.playMusic();
         audio.stopMusic();
         audio.playError();
         audio.playMatchingHit();
         audio.playMerge();
         audio.playMismatchingHit();
+        audio.playMinigunHit();
+        audio.playRailgunHit();
+        audio.playRocketHit();
         audio.playTowerRemoveCharge();
         audio.playTowerRemoveCancel();
         audio.playTowerRemoveExplosion();
@@ -162,6 +174,12 @@ test('createGameAudio triggers available sounds only', () => {
         const fireSound = { playCalls: 0, play() { this.playCalls += 1; } };
         const matchingHitSound = { playCalls: 0, play() { this.playCalls += 1; } };
         const mismatchingHitSound = { playCalls: 0, play() { this.playCalls += 1; } };
+        const minigunFireSound = { playCalls: 0, play() { this.playCalls += 1; } };
+        const railgunFireSound = { playCalls: 0, play() { this.playCalls += 1; } };
+        const rocketFireSound = { playCalls: 0, play() { this.playCalls += 1; } };
+        const minigunHitSound = { playCalls: 0, play() { this.playCalls += 1; } };
+        const railgunHitSound = { playCalls: 0, play() { this.playCalls += 1; } };
+        const rocketHitSound = { playCalls: 0, play() { this.playCalls += 1; } };
         const errorSound = { playCalls: 0, play() { this.playCalls += 1; } };
         const mergeSound = { playCalls: 0, play() { this.playCalls += 1; } };
         const removeChargeSound = { playCalls: 0, play() { this.playCalls += 1; } };
@@ -171,6 +189,12 @@ test('createGameAudio triggers available sounds only', () => {
             fire: fireSound,
             matchingHit: matchingHitSound,
             mismatchingHit: mismatchingHitSound,
+            minigunFire: minigunFireSound,
+            railgunFire: railgunFireSound,
+            rocketFire: rocketFireSound,
+            minigunHit: minigunHitSound,
+            railgunHit: railgunHitSound,
+            rocketHit: rocketHitSound,
             error: errorSound,
             merge: mergeSound,
             towerRemoveCharge: removeChargeSound,
@@ -179,9 +203,15 @@ test('createGameAudio triggers available sounds only', () => {
         });
 
         audio.playFire();
+        audio.playMinigunFire();
+        audio.playRailgunFire();
+        audio.playRocketFire();
         audio.playExplosion();
         audio.playMatchingHit();
         audio.playMismatchingHit();
+        audio.playMinigunHit();
+        audio.playRailgunHit();
+        audio.playRocketHit();
         audio.playPlacement();
         audio.playError();
         audio.playMerge();
@@ -190,8 +220,14 @@ test('createGameAudio triggers available sounds only', () => {
         audio.playTowerRemoveExplosion();
 
         assert.equal(fireSound.playCalls, 1);
+        assert.equal(minigunFireSound.playCalls, 1);
+        assert.equal(railgunFireSound.playCalls, 1);
+        assert.equal(rocketFireSound.playCalls, 1);
         assert.equal(matchingHitSound.playCalls, 2);
         assert.equal(mismatchingHitSound.playCalls, 1);
+        assert.equal(minigunHitSound.playCalls, 1);
+        assert.equal(railgunHitSound.playCalls, 1);
+        assert.equal(rocketHitSound.playCalls, 1);
         assert.equal(errorSound.playCalls, 1);
         assert.equal(mergeSound.playCalls, 1);
         assert.equal(removeChargeSound.playCalls, 1);

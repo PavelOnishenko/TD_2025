@@ -27,6 +27,24 @@ const SOUND_OPTIONS = {
         volume: 0.6,
         preload: true
     },
+    minigunFire: {
+        src: ['assets/fire.wav'],
+        volume: 0.5,
+        rate: 1.65,
+        preload: true,
+    },
+    railgunFire: {
+        src: ['assets/explosion.wav'],
+        volume: 0.35,
+        rate: 0.42,
+        preload: true,
+    },
+    rocketFire: {
+        src: ['assets/fire.wav'],
+        volume: 0.75,
+        rate: 0.85,
+        preload: true,
+    },
     matchingHit: {
         src: ['assets/explosion.wav'],
         volume: 0.25,
@@ -38,6 +56,24 @@ const SOUND_OPTIONS = {
         volume: 0.2,
         rate: 0.5,
         preload: true
+    },
+    minigunHit: {
+        src: ['assets/explosion.wav'],
+        volume: 0.22,
+        rate: 2.1,
+        preload: true,
+    },
+    railgunHit: {
+        src: ['assets/explosion.wav'],
+        volume: 0.32,
+        rate: 0.35,
+        preload: true,
+    },
+    rocketHit: {
+        src: ['assets/explosion.wav'],
+        volume: 0.5,
+        rate: 0.9,
+        preload: true,
     },
     explosion: {
         src: ['assets/explosion.wav'],

@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import Tower from '../../js/entities/Tower.js';
+import { hitEnemy } from '../../js/core/projectiles.js';
 import { createGame, placeTowerOnCell, withReplacedMethod } from './helpers.js';
 
 function createTower(game, cellIndex = 0, options = {}) {
@@ -29,8 +30,10 @@ test('spawnProjectile clamps projectile radius at level 3', () => {
 
     game.spawnProjectile(0, tower);
 
-    assert.equal(game.projectiles[0].radius, 28);
-    assert.equal(game.maxProjectileRadius, 28);
+    const projectile = game.projectiles[0];
+    assert.equal(projectile.type, 'rocket');
+    assert.equal(projectile.radius, 34);
+    assert.equal(game.maxProjectileRadius, 34);
 });
 
 test('getProjectileRadiusForLevel respects bounds', () => {
@@ -84,5 +87,69 @@ test('spawnProjectile triggers audio fire sound', () => {
     });
 
     assert.equal(called, true);
+});
+
+test('level 4 tower fires a minigun burst', () => {
+    const game = createGame();
+    const tower = new Tower(0, 0, 'blue', 4);
+    let fireCalls = 0;
+
+    withReplacedMethod(game.audio, 'playMinigunFire', () => { fireCalls += 1; }, () => {
+        game.spawnProjectile(0, tower);
+    });
+
+    assert.ok(game.projectiles.length > 1);
+    const totalDamage = game.projectiles.reduce((sum, projectile) => {
+        assert.equal(projectile.type, 'minigun');
+        return sum + projectile.damage;
+    }, 0);
+    assert.ok(Math.abs(totalDamage - tower.damage) < 1e-6);
+    assert.equal(fireCalls, 1);
+});
+
+test('level 5 tower railgun beam pierces enemies', () => {
+    const game = createGame();
+    const tower = createTower(game, 0, { level: 5, color: 'red' });
+    const center = tower.center();
+    const enemyA = { x: center.x + 120, y: center.y - 20, w: 40, h: 40, hp: 1, color: 'red' };
+    const enemyB = { x: center.x + 220, y: center.y - 22, w: 40, h: 40, hp: 1, color: 'blue' };
+    game.enemies.push(enemyA, enemyB);
+    let fireCalls = 0;
+
+    withReplacedMethod(game.audio, 'playRailgunFire', () => { fireCalls += 1; }, () => {
+        game.spawnProjectile(0, tower);
+    });
+
+    assert.equal(fireCalls, 1);
+    assert.equal(game.projectiles[0].type, 'railgun-beam');
+    assert.ok(game.enemies.length <= 1);
+});
+
+test('level 6 rocket impact triggers explosive damage', () => {
+    const game = createGame();
+    const tower = new Tower(0, 0, 'red', 6);
+    const enemyA = { x: 200, y: 200, w: 40, h: 40, hp: 1, color: 'red' };
+    const enemyB = { x: 230, y: 215, w: 40, h: 40, hp: 1, color: 'red' };
+    game.enemies.push(enemyA, enemyB);
+    let fireCalls = 0;
+    let hitCalls = 0;
+
+    withReplacedMethod(game.audio, 'playRocketFire', () => { fireCalls += 1; }, () => {
+        game.spawnProjectile(Math.PI / 4, tower);
+    });
+
+    const projectileIndex = game.projectiles.findIndex(p => p.type === 'rocket');
+    assert.ok(projectileIndex >= 0);
+    const projectile = game.projectiles[projectileIndex];
+    projectile.x = enemyA.x + enemyA.w / 2;
+    projectile.y = enemyA.y + enemyA.h / 2;
+
+    withReplacedMethod(game.audio, 'playRocketHit', () => { hitCalls += 1; }, () => {
+        hitEnemy(game, projectile, projectileIndex);
+    });
+
+    assert.equal(fireCalls, 1);
+    assert.ok(hitCalls >= 1);
+    assert.equal(game.enemies.length, 0);
 });
 
