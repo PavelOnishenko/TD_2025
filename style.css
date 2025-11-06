@@ -368,16 +368,20 @@ body {
 
 
 .wave-controls__buttons .hud-button {
-    flex-direction: column;
-    justify-content: space-between;
+    flex-direction: row;
+    justify-content: center;
     align-items: center;
     text-align: center;
-    min-width: calc(96px * var(--button-scale));
-    max-width: calc(128px * var(--button-scale));
-    min-height: calc(96px * var(--button-scale));
-    padding: calc(14px * var(--button-scale)) calc(12px * var(--button-scale));
-    border-radius: calc(20px * var(--button-scale));
-    gap: calc(12px * var(--button-scale));
+    min-width: calc(180px * var(--button-scale));
+    max-width: none;
+    min-height: calc(52px * var(--button-scale));
+    padding: calc(12px * var(--button-scale)) calc(28px * var(--button-scale));
+    border-radius: calc(18px * var(--button-scale));
+    gap: calc(10px * var(--button-scale));
+}
+
+.wave-controls__buttons .hud-button__icon {
+    display: none;
 }
 
 .wave-controls__buttons .hud-button__label {
@@ -444,10 +448,20 @@ body {
 }
 
 .hud--icon-buttons .wave-controls__buttons .hud-button {
-    min-width: calc(58px * var(--button-scale));
-    min-height: calc(58px * var(--button-scale));
-    padding: calc(12px * var(--button-scale));
-    border-radius: calc(16px * var(--button-scale));
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    text-align: center;
+    min-width: calc(96px * var(--button-scale));
+    max-width: calc(128px * var(--button-scale));
+    min-height: calc(96px * var(--button-scale));
+    padding: calc(14px * var(--button-scale)) calc(12px * var(--button-scale));
+    border-radius: calc(20px * var(--button-scale));
+    gap: calc(12px * var(--button-scale));
+}
+
+.hud--icon-buttons .wave-controls__buttons .hud-button__icon {
+    display: inline-flex;
 }
 
 .hud--icon-buttons .hud-button__label {
