@@ -2,10 +2,16 @@ const globalScope = typeof globalThis !== 'undefined' ? globalThis : window;
 
 const NOOP_AUDIO = {
     playFire() {},
+    playMinigunFire() {},
+    playRailgunFire() {},
+    playRocketFire() {},
     playExplosion() {},
     playMerge() {},
     playMatchingHit() {},
     playMismatchingHit() {},
+    playMinigunHit() {},
+    playRailgunHit() {},
+    playRocketHit() {},
     playPlacement() {},
     playColorSwitch() {},
     playMusic() {},
@@ -104,6 +110,9 @@ export function createGameAudio(sounds = {}) {
     }
 
     const fireSound = createSoundTrigger(sounds.fire ?? null);
+    const minigunFireSound = createSoundTrigger(sounds.minigunFire ?? null);
+    const railgunFireSound = createSoundTrigger(sounds.railgunFire ?? null);
+    const rocketFireSound = createSoundTrigger(sounds.rocketFire ?? null);
     const explosionSource = sounds.explosion ?? sounds.matchingHit ?? null;
     const matchingHitSource = sounds.matchingHit ?? sounds.explosion ?? null;
     const mergeSource = sounds.merge ?? explosionSource;
@@ -115,6 +124,9 @@ export function createGameAudio(sounds = {}) {
     const matchingHitSound = createSoundTrigger(matchingHitSource);
     const mergeSound = createSoundTrigger(mergeSource);
     const mismatchingHitSound = createSoundTrigger(sounds.mismatchingHit ?? null);
+    const minigunHitSound = createSoundTrigger(sounds.minigunHit ?? null);
+    const railgunHitSound = createSoundTrigger(sounds.railgunHit ?? null);
+    const rocketHitSound = createSoundTrigger(sounds.rocketHit ?? null);
     const placementSound = createSoundTrigger(sounds.placement ?? null);
     const colorSwitchSound = createSoundTrigger(sounds.colorSwitch ?? null);
     const errorSound = createSoundTrigger(sounds.error ?? null);
@@ -127,10 +139,16 @@ export function createGameAudio(sounds = {}) {
 
     return {
         playFire: fireSound,
+        playMinigunFire: minigunFireSound,
+        playRailgunFire: railgunFireSound,
+        playRocketFire: rocketFireSound,
         playExplosion: explosionSound,
         playMerge: mergeSound,
         playMatchingHit: matchingHitSound,
         playMismatchingHit: mismatchingHitSound,
+        playMinigunHit: minigunHitSound,
+        playRailgunHit: railgunHitSound,
+        playRocketHit: rocketHitSound,
         playPlacement: placementSound,
         playColorSwitch: colorSwitchSound,
         playMusic,

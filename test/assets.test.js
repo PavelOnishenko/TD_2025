@@ -81,6 +81,12 @@ test('loadAssets returns sounds only when audio is supported', async () => {
         'assets/tower_2B.png',
         'assets/tower_3R.png',
         'assets/tower_3B.png',
+        'assets/tower_4R.png',
+        'assets/tower_4B.png',
+        'assets/tower_5R.png',
+        'assets/tower_5B.png',
+        'assets/tower_6R.png',
+        'assets/tower_6B.png',
         'assets/tank_R.png',
         'assets/tank_B.png',
         'assets/swarm_R.png',
@@ -88,6 +94,12 @@ test('loadAssets returns sounds only when audio is supported', async () => {
     ]);
     assert.deepEqual(soundCreatorCalls, [
         'assets/fire.wav',
+        'assets/fire.wav',
+        'assets/explosion.wav',
+        'assets/fire.wav',
+        'assets/explosion.wav',
+        'assets/explosion.wav',
+        'assets/explosion.wav',
         'assets/explosion.wav',
         'assets/explosion.wav',
         'assets/explosion.wav',
@@ -105,8 +117,14 @@ test('loadAssets returns sounds only when audio is supported', async () => {
     assert.equal(typeof assets.sounds, 'object');
     assert.deepEqual(Object.keys(assets.sounds), [
         'fire',
+        'minigunFire',
+        'railgunFire',
+        'rocketFire',
         'matchingHit',
         'mismatchingHit',
+        'minigunHit',
+        'railgunHit',
+        'rocketHit',
         'explosion',
         'placement',
         'merge',
@@ -120,7 +138,13 @@ test('loadAssets returns sounds only when audio is supported', async () => {
         'backgroundMusic'
     ]);
     assert.deepEqual(assets.sounds.fire, { sound: 'assets/fire.wav' });
+    assert.deepEqual(assets.sounds.minigunFire, { sound: 'assets/fire.wav' });
+    assert.deepEqual(assets.sounds.railgunFire, { sound: 'assets/explosion.wav' });
+    assert.deepEqual(assets.sounds.rocketFire, { sound: 'assets/fire.wav' });
     assert.deepEqual(assets.sounds.baseHit, { sound: 'assets/explosion.wav' });
+    assert.deepEqual(assets.sounds.minigunHit, { sound: 'assets/explosion.wav' });
+    assert.deepEqual(assets.sounds.railgunHit, { sound: 'assets/explosion.wav' });
+    assert.deepEqual(assets.sounds.rocketHit, { sound: 'assets/explosion.wav' });
     assert.deepEqual(assets.sounds.merge, { sound: 'assets/merge.mp3' });
     assert.deepEqual(assets.sounds.towerRemoveCharge, { sound: 'assets/tower_remove_charge.mp3' });
     assert.deepEqual(assets.sounds.towerRemoveCancel, { sound: 'assets/tower_remove_cancel.mp3' });
