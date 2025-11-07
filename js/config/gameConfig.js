@@ -83,7 +83,7 @@ export const gameConfig = {
         ],
         placementFlashDuration: 1.35,
         mergePulseDuration: 0.45, // todo what does this influence?
-        mergePulseWaveDuration: 0.6, // todo what does this influence?
+        mergePulseWaveDuration: 5,
         errorPulseDuration: 0.45, // todo what does this influence?
         glowSpeeds: [1.8, 2.1, 2.4],
         removalHoldDuration: 2,
