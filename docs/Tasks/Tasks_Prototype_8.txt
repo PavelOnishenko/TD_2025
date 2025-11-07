@@ -37,7 +37,7 @@ Need human involvement
 011 | DONE | Bug - music turns on in some situations despite it being turned off in HUD.
 Situations include restart and ad display.
 
-012 | TODO | Make smaller buttons for mobile (they cover the screen), possibly with some icons or abbreviated text. 
+012 | DONE | Make smaller buttons for mobile (they cover the screen), possibly with some icons or abbreviated text. 
 Icons can be sprites but may be svg as well. try to cover all image needs yourself.
 Needs HUMAN.
 
@@ -81,7 +81,7 @@ Need human.
 
 020 | DONE | Cool animated splash screen for start overlay
 
-021 | TODO | Tower level 4 shoots bullets like minigun, 
+021 | DONE | Tower level 4 shoots bullets like minigun, 
 level 5 slowly recharging RAILGUN (like in quake 3) piercing through many enemies in one shot, 
 level 6 shoots rockets that make cool LARGE EPIC EXPLOSIONS.
 Make code for new SFX for shooting and getting hit for all these 3 levels because they will have different weapons
