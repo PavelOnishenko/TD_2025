@@ -53,10 +53,6 @@ export const gameConfig = {
         energyPerKill: 1,
         energyPerWave: 3,
         colorProbability: {
-            // todo remove start and end, they are re-initialized with random numbers 
-            // at the beginning of each wave
-            start: 0.5,
-            end: 0.5,
             minDifference: 0.35,
         },
     },
