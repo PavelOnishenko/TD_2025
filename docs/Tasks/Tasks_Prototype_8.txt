@@ -74,7 +74,7 @@ The damage should be configured also so as not to change the difficulty of the g
 018 | DONE | When I focus another window, ships continue flying while shooting is being halted. 
 This leads to losing. We need to fix this.
 
-019 | TODO | Balance and gameplay test
+019 | DONE | Balance and gameplay test
 Playtest on desktop and mobile. Verify average run time, win rate, ad timing, and responsiveness. 
 Ensure no console errors or UI overlaps.
 Need human.
