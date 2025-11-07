@@ -40,7 +40,7 @@ test('spawnEnemy defaults to last hp when wave exceeds table', () => {
 
     const expected = Math.max(
         1,
-        Math.floor(game.enemyHpPerWave.at(-1) * gameConfig.enemies.swarm.hpFactor),
+        Math.floor(game.enemyHpPerWave.at(-1) * gameConfig.enemies.swarm.hpMultiplier),
     );
     enemies.forEach(enemy => assert.equal(enemy.maxHp, expected));
 });

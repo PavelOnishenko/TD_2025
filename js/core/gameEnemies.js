@@ -78,7 +78,7 @@ export const enemyActions = {
 
     spawnSwarmGroup(baseHp, overrides = {}) {
         const groupSize = Math.max(1, Math.floor(overrides.groupSize ?? gameConfig.enemies.swarm.groupSize));
-        const swarmHp = Math.max(1, Math.floor(baseHp * gameConfig.enemies.swarm.hpFactor));
+        const swarmHp = Math.max(1, Math.floor(baseHp * gameConfig.enemies.swarm.hpMultiplier));
         const spacing = Number.isFinite(overrides.spacing)
             ? overrides.spacing
             : gameConfig.enemies.swarm.spacing;
