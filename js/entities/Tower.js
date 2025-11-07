@@ -28,8 +28,6 @@ export default class Tower {
         this.glowTime = Math.random() * Math.PI * 2;
         this.glowSpeed = config.glowSpeeds.at(-1) ?? 2.4;
         this.mergeHint = 0;
-        this.mergePulseDuration = config.mergePulseDuration;
-        this.mergePulseTimer = 0;
         this.mergePulseWaveDuration = config.mergePulseWaveDuration;
         this.mergePulseWaveTimer = 0;
         this.errorPulseDuration = config.errorPulseDuration;
@@ -101,9 +99,6 @@ export default class Tower {
         if (this.mergeHint > 0) {
             this.mergeHint = Math.max(0, this.mergeHint - dt * 2.5);
         }
-        if (this.mergePulseTimer > 0) {
-            this.mergePulseTimer = Math.max(0, this.mergePulseTimer - dt);
-        }
         if (this.mergePulseWaveTimer > 0) {
             this.mergePulseWaveTimer = Math.max(0, this.mergePulseWaveTimer - dt);
         }
@@ -122,20 +117,11 @@ export default class Tower {
     }
 
     triggerMergePulse() {
-        this.mergePulseTimer = this.mergePulseDuration;
         this.mergePulseWaveTimer = this.mergePulseWaveDuration;
     }
 
     triggerErrorPulse() {
         this.errorPulseTimer = this.errorPulseDuration;
-    }
-
-    getMergePulseStrength() {
-        if (this.mergePulseDuration <= 0) {
-            return 0;
-        }
-        const normalized = this.mergePulseTimer / this.mergePulseDuration;
-        return Math.max(0, Math.min(1, normalized));
     }
 
     getErrorPulseStrength() {
@@ -235,7 +221,7 @@ export default class Tower {
     draw(ctx, assets) {
         const c = this.center();
         ctx.fillStyle = this.color;
-        this.drawBody(ctx, c, assets);
+        this.drawBody(ctx, assets);
         this.drawErrorPulse(ctx, c);
         this.drawMergePulseWave(ctx, c);
         this.drawMergeHint(ctx, c);
@@ -250,30 +236,14 @@ export default class Tower {
         this.drawLevelIndicator(ctx);
     }
 
-    drawBody(ctx, c, assets) {
+    drawBody(ctx, assets) {
         const propertyName = `tower_${this.level}${this.color.charAt(0)}`;
         const sprite = assets[propertyName];
         if (!sprite) {
             console.warn(`No sprite found for property name: ${propertyName}`);
             return;
         }
-        const hasMergePulse = this.mergePulseTimer > 0;
-        if (!hasMergePulse) {
-            ctx.drawImage(sprite, this.x, this.y, this.w, this.h);
-            return;
-        }
-
-        const centerX = this.x + this.w / 2;
-        const centerY = this.y + this.h / 2;
-        const strength = this.getMergePulseStrength();
-        const eased = easeOutCubic(1 - strength);
-        const scale = 1 + 0.18 * (1 - eased);
-
-        ctx.save();
-        ctx.translate(centerX, centerY);
-        ctx.scale(scale, scale);
-        ctx.drawImage(sprite, -this.w / 2, -this.h / 2, this.w, this.h);
-        ctx.restore();
+        ctx.drawImage(sprite, this.x, this.y, this.w, this.h);
     }
 
     drawMergeHint(ctx, center) {
