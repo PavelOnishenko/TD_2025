@@ -112,7 +112,7 @@ export async function initializeCrazyGamesIntegration() {
         return;
     }
 
-    preventDefaultMouseBehabior();
+    configureForCrazyGames();
     await window.CrazyGames.SDK.init();
     const integrationWorks = checkCrazyGamesIntegration();
     if (integrationWorks) {
@@ -120,13 +120,28 @@ export async function initializeCrazyGamesIntegration() {
     }
 }
 
-function preventDefaultMouseBehabior() {
+function configureForCrazyGames() {
     window.addEventListener("wheel", (event) => event.preventDefault(), { passive: false, });
     window.addEventListener("keydown", (event) => {
         if (["ArrowUp", "ArrowDown", " "].includes(event.key)) {
             event.preventDefault();
         }
     });
+
+    // This is a fix for handling visibility change
+    // on webview, it's for an issue reported for Samsung App.
+    document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState) {
+            if (document.visibilityState === "hidden") {
+                application.publishEvent("OnWebDocumentPause", "True");
+            } else if (document.visibilityState === "visible") {
+                application.publishEvent("OnWebDocumentPause", "False");
+            }
+        }
+    });
+
+    // Disable context menu appearing after right click outside of the canvas.
+    document.addEventListener("contextmenu", (event) => event.preventDefault());
 }
 
 export function checkCrazyGamesIntegration() {
