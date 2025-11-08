@@ -95,10 +95,9 @@ export function callCrazyGamesEvent(fnName) {
     try {
         const realFn = crazyMap[fnName] || fnName;
         window.CrazyGames.SDK.game[realFn]();
-        console.log(`[${fnName}] event called.`);
     }
     catch (e) {
-        console.log(`error while calling [${fnName}] event: [${e.message}].`);
+        console.error(`error while calling [${fnName}] event: [${e.message}].`);
     }
 }
 
@@ -114,13 +113,10 @@ export async function initializeCrazyGamesIntegration() {
     }
 
     preventDefaultMouseBehabior();
-    console.log("Calling CrazyGames SDK init...");
     await window.CrazyGames.SDK.init();
-    console.log("Finished awaiting CrazyGames SDK init.");
     const integrationWorks = checkCrazyGamesIntegration();
     if (integrationWorks) {
         crazyGamesWorks = true;
-        console.log("CrazyGames integration initialized.");
     }
 }
 

@@ -275,11 +275,6 @@ export function initializeHudController(options = {}) {
             .map((value) => (typeof value === 'number' ? value.toFixed(3) : String(value)))
             .join('|')}`;
         if (signature !== lastSignature) {
-            console.log('[HUD] applying profile', {
-                width,
-                height,
-                profile,
-            });
             lastSignature = signature;
         }
     };

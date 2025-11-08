@@ -146,7 +146,6 @@ export async function getCrazyGamesUser(options = {}) {
     }
     try {
         const user = await crazyGamesWindow.CrazyGames.SDK.user.getUser();
-        console.log('User info:', user);
         return { username: user.username, profilePictureUrl: user.profilePictureUrl };
     } catch (error) {
         console.warn('CrazyGames SDK getUser failed', error);
@@ -155,7 +154,6 @@ export async function getCrazyGamesUser(options = {}) {
 }
 function isCrazyGamesAccountAvailable(crazyGamesWindow) {
     const available = crazyGamesWindow.CrazyGames?.SDK?.user?.isUserAccountAvailable;
-    console.log('User account system available?', available);
     return Boolean(available);
 }
 function resolveCrazyGamesWindow(providedWindow) {
@@ -184,10 +182,8 @@ async function initializeCrazyGamesIfNeeded() {
     await initializeCrazyGamesIntegration();
     const user = await fetchCrazyGamesUserSafely();
     if (user) {
-        console.log('Logged in as:', user.username);
         updateCrazyGamesUserUI(user);
     }
-    console.log('CrazyGames integration kinda finished..');
     callCrazyGamesEvent('sdkGameLoadingStart');
 }
 function updateCrazyGamesUserUI(user) {
