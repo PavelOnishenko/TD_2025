@@ -141,16 +141,38 @@ function updateStatus(game, message, colorKey = 'info') {
     }
 }
 
-function ensureControls(container, options = {}) {
+function hideControlElement(element) {
+    if (!element) {
+        return;
+    }
+    element.hidden = true;
+    if (typeof element.setAttribute === 'function') {
+        element.setAttribute('aria-hidden', 'true');
+    }
+    element.tabIndex = -1;
+}
+
+function ensureControls(container, options = {}, controls = {}) {
     if (!container) {
         return false;
     }
+
+    container.classList.add(CONTROLS_HIDDEN_CLASS);
+    container.hidden = true;
+    if (typeof container.setAttribute === 'function') {
+        container.setAttribute('aria-hidden', 'true');
+        container.setAttribute('inert', '');
+    }
+
     const enabled = resolveOption(options, 'enabled', true);
     if (!enabled) {
-        container.classList.add(CONTROLS_HIDDEN_CLASS);
         return false;
     }
-    container.classList.remove(CONTROLS_HIDDEN_CLASS);
+
+    hideControlElement(controls.saveBtn);
+    hideControlElement(controls.loadBtn);
+    hideControlElement(controls.deleteBtn);
+
     return true;
 }
 
@@ -278,7 +300,7 @@ export function initSimpleSaveSystem(game, options = {}) {
     if (!container || !saveBtn || !loadBtn) {
         return;
     }
-    const controlsEnabled = ensureControls(container, resolvedOptions);
+    const controlsEnabled = ensureControls(container, resolvedOptions, { saveBtn, loadBtn, deleteBtn });
     if (!controlsEnabled) {
         return;
     }
