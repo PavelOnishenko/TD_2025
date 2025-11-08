@@ -19,7 +19,9 @@ export const enemyActions = {
         } else if (enemyType === 'swarm') {
             this.spawnSwarmGroup(hp);
         }
-        // todo else throw error
+        else {
+            throw new Error(`Unknown enemy type: ${enemyType}`);
+        }
 
         this.spawned += 1;
     },
