@@ -16,6 +16,7 @@ import tankSchedule from './game/tankSchedule.js';
 import world from './game/world.js';
 import statePersistence from './game/statePersistence.js';
 import stateSetup from './game/stateSetup.js';
+import towerManagement from './game/towerManagement.js';
 import createFormationManager from './game/formations.js';
 import gameConfig from '../config/gameConfig.js';
 
@@ -882,6 +883,7 @@ Object.assign(
     world,
     statePersistence,
     stateSetup,
+    towerManagement,
     enemyActions,
     waveActions,
 );
