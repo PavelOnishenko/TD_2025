@@ -122,7 +122,7 @@ const SOUND_OPTIONS = {
     },
     portalSpawn: {
         src: ['assets/portal_spawn.mp3'],
-        volume: 0.7,
+        volume: 0.1,
         preload: true
     },
     backgroundMusic: {
