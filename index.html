@@ -30,6 +30,28 @@
         </div>
     </div>
 
+    <div
+        id="tutorialOverlay"
+        class="tutorial-overlay hidden"
+        role="dialog"
+        aria-modal="true"
+        aria-live="polite"
+        aria-labelledby="tutorialTitle"
+    >
+        <div class="tutorial-overlay__backdrop" aria-hidden="true"></div>
+        <div class="tutorial-window" id="tutorialWindow" role="document">
+            <h2 id="tutorialTitle" class="tutorial-window__title"></h2>
+            <div class="tutorial-window__body">
+                <img id="tutorialImage" class="tutorial-window__image" alt="" hidden />
+                <p id="tutorialText" class="tutorial-window__text"></p>
+                <p id="tutorialSound" class="tutorial-window__sound" hidden>
+                    <span class="tutorial-window__sound-label">Sound:</span>
+                    <span id="tutorialSoundName"></span>
+                </p>
+            </div>
+        </div>
+    </div>
+
     <div id="endOverlay" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="endMessage" aria-describedby="endDetail">
         <div id="endMenu" class="start-menu end-menu">
             <h2 id="endMessage">Game Over</h2>
@@ -109,7 +131,6 @@
             <div class="hud-live-region hud-live-region--status" aria-live="polite">
                 <span id="status"></span>
             </div>
-            <div id="tutorialTip" class="tutorial-tip hidden" aria-live="polite"></div>
             <div class="hud-controls">
                 <button id="restart" class="hud-button" type="button">
                     <span class="hud-button__icon" aria-hidden="true">

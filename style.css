@@ -260,24 +260,116 @@ body {
     color: #f8f7ff;
 }
 
-.tutorial-tip {
-    position: absolute;
-    left: 50%;
-    top: calc(var(--hud-gap) * 6);
-    transform: translate(-50%, 0);
-    max-width: 360px;
-    padding: 14px 18px;
-    background: rgba(18, 32, 58, 0.8);
-    border: 2px solid rgba(92, 176, 255, 0.85);
-    border-radius: 18px;
-    font-size: calc(0.85rem * var(--hud-font-scale));
-    line-height: 1.45;
-    color: #e5f0ff;
-    text-align: center;
-    box-shadow: 0 0 16px rgba(58, 136, 255, 0.45);
+.tutorial-overlay {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     pointer-events: none;
-    transition: opacity 0.2s ease;
-    opacity: 0.95;
+    z-index: 20;
+}
+
+.tutorial-overlay.hidden {
+    display: none;
+}
+
+.tutorial-overlay__backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(3, 7, 18, 0.76);
+    backdrop-filter: blur(4px);
+}
+
+.tutorial-window {
+    position: relative;
+    z-index: 22;
+    pointer-events: auto;
+    background: linear-gradient(180deg, rgba(30, 58, 138, 0.92), rgba(15, 23, 42, 0.92));
+    border: 2px solid rgba(147, 197, 253, 0.65);
+    border-radius: 18px;
+    padding: 20px 24px;
+    max-width: min(90vw, 420px);
+    color: #e0f2fe;
+    box-shadow: 0 18px 48px rgba(15, 23, 42, 0.45);
+}
+
+.tutorial-window__title {
+    margin: 0 0 12px;
+    font-size: clamp(1.2rem, 1.5vw + 0.9rem, 1.6rem);
+    font-weight: 700;
+    color: #f8fafc;
+    text-align: center;
+    letter-spacing: 0.02em;
+    text-shadow: 0 0 12px rgba(96, 165, 250, 0.45);
+}
+
+.tutorial-window__body {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    align-items: center;
+}
+
+.tutorial-window__image {
+    width: min(100%, 220px);
+    max-height: 180px;
+    border-radius: 12px;
+    border: 1px solid rgba(191, 219, 254, 0.45);
+    box-shadow: 0 12px 28px rgba(30, 64, 175, 0.35);
+    object-fit: contain;
+    background: rgba(15, 23, 42, 0.65);
+}
+
+.tutorial-window__text {
+    margin: 0;
+    font-size: clamp(0.95rem, 1.2vw + 0.8rem, 1.05rem);
+    line-height: 1.6;
+    text-align: center;
+    color: #e2e8f0;
+}
+
+.tutorial-window__sound {
+    margin: 0;
+    font-size: 0.85rem;
+    letter-spacing: 0.01em;
+    color: #bae6fd;
+    text-transform: uppercase;
+}
+
+.tutorial-window__sound-label {
+    color: #f9a8d4;
+    font-weight: 600;
+    margin-right: 6px;
+}
+
+.tutorial-highlighted {
+    position: relative;
+    z-index: 24 !important;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.65), 0 0 28px rgba(59, 130, 246, 0.55);
+    border-radius: 16px;
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.tutorial-highlighted::after {
+    content: '';
+    position: absolute;
+    inset: -12px;
+    border-radius: 20px;
+    border: 2px dashed rgba(147, 197, 253, 0.7);
+    animation: tutorialHighlightPulse 1.6s ease-in-out infinite;
+}
+
+@keyframes tutorialHighlightPulse {
+    0%,
+    100% {
+        opacity: 0.45;
+        transform: scale(0.98);
+    }
+    50% {
+        opacity: 0.8;
+        transform: scale(1.02);
+    }
 }
 
 #restart {

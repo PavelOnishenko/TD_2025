@@ -92,6 +92,9 @@ export const waveActions = {
             }
             const completedWave = this.wave;
             this.wave += 1;
+            if (this.tutorial && typeof this.tutorial.handlePreparationPhase === 'function') {
+                this.tutorial.handlePreparationPhase(this.wave);
+            }
             if (completedWave >= this.maxWaves && typeof this.activateEndlessMode === 'function') {
                 this.activateEndlessMode();
             }

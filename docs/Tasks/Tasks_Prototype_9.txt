@@ -3,7 +3,7 @@
 002 | TODO | Towers should choose enemy matching by color when several are in range.
 003 | DONE | Resolve all todos in the code.
 
-004 | TODO | Tutorial system that gets tutorialStep objects from game config with these fields:
+004 | DONE | Tutorial system that gets tutorialStep objects from game config with these fields:
 -name (shown as the title of tutorial window);
 -wave number (at which wave's preparation phase to show the step);
 -objects to highlight (those should be above the dark overlay so clearly seen along with the tutorial window)

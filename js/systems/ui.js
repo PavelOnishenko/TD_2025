@@ -4,6 +4,7 @@ import { callCrazyGamesEvent } from './crazyGamesIntegration.js';
 import { showCrazyGamesAdWithPause } from './ads.js';
 import { saveAudioSettings } from './dataStore.js';
 import { attachTutorial } from './tutorial.js';
+import { registerTutorialTargets } from './tutorialTargets.js';
 
 const HEART_FILLED_SRC = 'assets/heart_filled.png';
 const HEART_EMPTY_SRC = 'assets/heart_empty.png';
@@ -86,6 +87,22 @@ function bindHUD(game) {
     game.saveBtn = document.getElementById('saveGame');
     game.loadBtn = document.getElementById('loadGame');
     game.deleteSaveBtn = document.getElementById('deleteSave');
+    game.tutorialOverlay = document.getElementById('tutorialOverlay');
+    game.tutorialWindow = document.getElementById('tutorialWindow');
+    game.tutorialTitleEl = document.getElementById('tutorialTitle');
+    game.tutorialTextEl = document.getElementById('tutorialText');
+    game.tutorialImageEl = document.getElementById('tutorialImage');
+    game.tutorialSoundEl = document.getElementById('tutorialSound');
+    game.tutorialSoundNameEl = document.getElementById('tutorialSoundName');
+
+    registerTutorialTargets({
+        'world.canvas': game.canvas ?? null,
+        'hud.nextWave': game.nextWaveBtn ?? null,
+        'hud.energy': game.energyEl ?? null,
+        'hud.restart': game.restartBtn ?? null,
+        'hud.pause': game.pauseBtn ?? null,
+        'hud.merge': game.mergeBtn ?? null,
+    });
 }
 
 function bindDiagnosticsOverlay(game) {
