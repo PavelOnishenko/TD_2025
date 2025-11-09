@@ -1,11 +1,11 @@
 001 | DONE | Explosions for kills should be MUCH more epic and large. There should be burning debris flying away in all directions.
     Also explosions when tanks die should be much larger than swarm's.
-002 | TODO | Towers should choose enemy matching by color when several are in range.
+002 | DONE | Towers should choose enemy matching by color when several are in range.
 003 | DONE | Resolve all todos in the code.
 
 004 | TODO | Tutorial system that gets tutorialStep objects from game config with these fields:
 -name (shown as the title of tutorial window);
--(optional) wave number (at which wave's preparation phase to show the step);
+-wave number (at which wave's preparation phase to show the step);
 -objects to highlight (those should be above the dark overlay so clearly seen along with the tutorial window)
     (mb we will have to create some simple global namespace where some program can pick objects from by name, 
     similar in idea to Unit's GameObjects and hierarchy. HUD elements should also be in that space)
@@ -15,6 +15,7 @@
 -text to show in the window;
 -picture asset to show in the window;
 -sound asset to show in the window.
+Also re-implement currently existing tutorial using this mechanism, NOT adding new steps to it for now.
 
 005 | TODO | Global high score stored in the cloud. Need human to figure out what to use for that, where to store etc. 
 
