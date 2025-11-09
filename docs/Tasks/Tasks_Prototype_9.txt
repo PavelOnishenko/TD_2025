@@ -1,5 +1,6 @@
-001 | TODO | Explosions for hits, not only kills.
-002 | TODO | Towers should choose enemy by color.
+001 | TODO | Explosions for kills should be MUCH more epic and large. There should be burning debris flying away in all directions. 
+    Also explosions when tanks die should be much larger than swarm's. 
+002 | TODO | Towers should choose enemy matching by color.
 003 | DONE | Resolve all todos in the code.
 
 004 | TODO | Tutorial system that gets tutorialStep objects from game config with these fields:
