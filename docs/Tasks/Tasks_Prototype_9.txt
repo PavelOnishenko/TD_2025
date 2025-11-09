@@ -53,6 +53,6 @@ Switching should be placed somewhere in the HUD. Mb in the pause menu? All texts
 
 013 | TODO | Mb speech for the tutorial?
     
-014 | TODO | (mb) Refactor for easier future use 
+014 | TODO | (mb) Refactor for code re-use (extract engine logic for fuure games).
 (when I will know what I am going to need for the next project, I am gonna separate those things as modules
 and use them as engine library to quickly get the next one on rails)
