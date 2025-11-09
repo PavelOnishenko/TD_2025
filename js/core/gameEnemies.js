@@ -226,19 +226,37 @@ export const enemyActions = {
 
     towerAttacks(timestamp) {
         for (const tower of this.towers) {
+            const fireInterval = typeof tower.getFireInterval === 'function'
+                ? tower.getFireInterval()
+                : this.projectileSpawnInterval;
+            if (timestamp - tower.lastShot < fireInterval) {
+                continue;
+            }
+
+            let chosenTarget = null;
+            const towerCenter = tower.center();
+
             for (const target of this.enemies) {
-                const towerCenter = tower.center();
                 const enemyCenter = { x: target.x + target.w / 2, y: target.y + target.h / 2 };
                 const dx = enemyCenter.x - towerCenter.x;
                 const dy = enemyCenter.y - towerCenter.y;
-                const fireInterval = typeof tower.getFireInterval === 'function'
-                    ? tower.getFireInterval()
-                    : this.projectileSpawnInterval;
-                if (Math.hypot(dx, dy) <= tower.range && timestamp - tower.lastShot >= fireInterval) {
-                    this.spawnProjectile(Math.atan2(dy, dx), tower);
-                    tower.lastShot = timestamp;
+                if (Math.hypot(dx, dy) > tower.range) {
+                    continue;
+                }
+
+                // Prefer enemies that match the tower color when several are in range.
+                if (!chosenTarget) {
+                    chosenTarget = { enemy: target, dx, dy };
+                }
+                if (target?.color === tower.color) {
+                    chosenTarget = { enemy: target, dx, dy };
                     break;
                 }
+            }
+
+            if (chosenTarget) {
+                this.spawnProjectile(Math.atan2(chosenTarget.dy, chosenTarget.dx), tower);
+                tower.lastShot = timestamp;
             }
         }
     }
