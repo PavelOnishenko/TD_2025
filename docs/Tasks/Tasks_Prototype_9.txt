@@ -1,5 +1,5 @@
-001 | TODO | Explosions for kills should be MUCH more epic and large. There should be burning debris flying away in all directions. 
-    Also explosions when tanks die should be much larger than swarm's. 
+001 | DONE | Explosions for kills should be MUCH more epic and large. There should be burning debris flying away in all directions.
+    Also explosions when tanks die should be much larger than swarm's.
 002 | TODO | Towers should choose enemy matching by color when several are in range.
 003 | DONE | Resolve all todos in the code.
 

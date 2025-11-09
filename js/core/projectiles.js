@@ -151,7 +151,10 @@ export function applyProjectileDamage(game, projectile, enemyIndex, options = {}
             const height = Number.isFinite(enemy.h) ? enemy.h : 0;
             const centerX = Number.isFinite(enemy.x) ? enemy.x + width / 2 : projectile.x;
             const centerY = Number.isFinite(enemy.y) ? enemy.y + height / 2 : projectile.y;
-            const variant = killVariant ?? 'kill';
+            let variant = killVariant ?? 'kill';
+            if (!killVariant && enemy?.spriteKey === 'tank') {
+                variant = 'tank-kill';
+            }
             game.explosions.push(createExplosion(centerX, centerY, {
                 color: enemy.color ?? projectile.color ?? 'default',
                 variant,

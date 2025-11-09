@@ -1,164 +1,25 @@
-const COLOR_PRESETS = {
-    red: { r: 255, g: 180, b: 120 },
-    blue: { r: 160, g: 210, b: 255 },
-    mismatch: { r: 210, g: 215, b: 225 },
-    default: { r: 255, g: 220, b: 170 },
-};
+import {
+    BASE_DEBRIS_ROT_SPEED,
+    getVariantConfig,
+    normalizeExplosionOptions,
+    getColorPreset,
+    toColor,
+    toDebrisPalette,
+} from './explosionConfig.js';
 
-const BASE_PARTICLE_COUNT = 16;
-const BASE_MIN_LIFE = 0.25;
-const BASE_MAX_LIFE = 0.45;
-const BASE_MIN_SPEED = 140;
-const BASE_MAX_SPEED = 260;
-const BASE_MIN_RADIUS = 2;
-const BASE_MAX_RADIUS = 4;
 const GRAVITY = 220;
 const DAMPING = 3;
-
-const VARIANT_CONFIGS = {
-    match: {
-        particleCount: BASE_PARTICLE_COUNT,
-        minLife: BASE_MIN_LIFE,
-        maxLife: BASE_MAX_LIFE,
-        minSpeed: BASE_MIN_SPEED,
-        maxSpeed: BASE_MAX_SPEED,
-        minRadius: BASE_MIN_RADIUS,
-        maxRadius: BASE_MAX_RADIUS,
-        alphaScale: 1,
-        resolveColor: color => color ?? 'default',
-    },
-    mismatch: {
-        particleCount: Math.max(8, Math.round(BASE_PARTICLE_COUNT * 0.65)),
-        minLife: BASE_MIN_LIFE * 0.65,
-        maxLife: BASE_MAX_LIFE * 0.8,
-        minSpeed: BASE_MIN_SPEED * 0.6,
-        maxSpeed: BASE_MAX_SPEED * 0.75,
-        minRadius: BASE_MIN_RADIUS * 0.5,
-        maxRadius: BASE_MAX_RADIUS * 0.65,
-        alphaScale: 0.6,
-        resolveColor: () => 'mismatch',
-    },
-    merge: {
-        particleCount: Math.round(BASE_PARTICLE_COUNT * 1.1),
-        minLife: BASE_MIN_LIFE * 0.9,
-        maxLife: BASE_MAX_LIFE * 1.25,
-        minSpeed: BASE_MIN_SPEED * 0.5,
-        maxSpeed: BASE_MAX_SPEED * 0.85,
-        minRadius: BASE_MIN_RADIUS * 0.8,
-        maxRadius: BASE_MAX_RADIUS * 1.45,
-        alphaScale: 1.2,
-        resolveColor: color => color ?? 'default',
-    },
-    kill: {
-        particleCount: Math.round(BASE_PARTICLE_COUNT * 1.6),
-        minLife: BASE_MIN_LIFE * 0.85,
-        maxLife: BASE_MAX_LIFE * 1.5,
-        minSpeed: BASE_MIN_SPEED * 0.85,
-        maxSpeed: BASE_MAX_SPEED * 1.3,
-        minRadius: BASE_MIN_RADIUS * 1.05,
-        maxRadius: BASE_MAX_RADIUS * 1.8,
-        alphaScale: 1.45,
-        resolveColor: color => color ?? 'default',
-    },
-    dismantle: {
-        particleCount: Math.round(BASE_PARTICLE_COUNT * 1.45),
-        minLife: BASE_MIN_LIFE * 1.05,
-        maxLife: BASE_MAX_LIFE * 1.65,
-        minSpeed: BASE_MIN_SPEED * 0.6,
-        maxSpeed: BASE_MAX_SPEED * 1.05,
-        minRadius: BASE_MIN_RADIUS * 1.15,
-        maxRadius: BASE_MAX_RADIUS * 1.95,
-        alphaScale: 1.5,
-        resolveColor: color => color ?? 'default',
-    },
-    'railgun-hit': {
-        particleCount: Math.round(BASE_PARTICLE_COUNT * 1.35),
-        minLife: BASE_MIN_LIFE * 0.6,
-        maxLife: BASE_MAX_LIFE * 0.95,
-        minSpeed: BASE_MIN_SPEED * 1.1,
-        maxSpeed: BASE_MAX_SPEED * 1.55,
-        minRadius: BASE_MIN_RADIUS * 0.9,
-        maxRadius: BASE_MAX_RADIUS * 1.35,
-        alphaScale: 1.25,
-        resolveColor: color => color ?? 'default',
-    },
-    'railgun-kill': {
-        particleCount: Math.round(BASE_PARTICLE_COUNT * 1.8),
-        minLife: BASE_MIN_LIFE * 0.95,
-        maxLife: BASE_MAX_LIFE * 1.45,
-        minSpeed: BASE_MIN_SPEED * 1.2,
-        maxSpeed: BASE_MAX_SPEED * 1.8,
-        minRadius: BASE_MIN_RADIUS * 1.1,
-        maxRadius: BASE_MAX_RADIUS * 2.1,
-        alphaScale: 1.6,
-        resolveColor: color => color ?? 'default',
-    },
-    'rocket-hit': {
-        particleCount: Math.round(BASE_PARTICLE_COUNT * 1.4),
-        minLife: BASE_MIN_LIFE * 0.9,
-        maxLife: BASE_MAX_LIFE * 1.35,
-        minSpeed: BASE_MIN_SPEED * 0.9,
-        maxSpeed: BASE_MAX_SPEED * 1.4,
-        minRadius: BASE_MIN_RADIUS * 1.2,
-        maxRadius: BASE_MAX_RADIUS * 1.9,
-        alphaScale: 1.5,
-        resolveColor: color => color ?? 'default',
-    },
-    'rocket-kill': {
-        particleCount: Math.round(BASE_PARTICLE_COUNT * 2.4),
-        minLife: BASE_MIN_LIFE * 1.1,
-        maxLife: BASE_MAX_LIFE * 2,
-        minSpeed: BASE_MIN_SPEED * 1.1,
-        maxSpeed: BASE_MAX_SPEED * 1.9,
-        minRadius: BASE_MIN_RADIUS * 1.4,
-        maxRadius: BASE_MAX_RADIUS * 2.6,
-        alphaScale: 1.85,
-        resolveColor: color => color ?? 'default',
-    },
-    rocket: {
-        particleCount: Math.round(BASE_PARTICLE_COUNT * 3.4),
-        minLife: BASE_MIN_LIFE * 1.3,
-        maxLife: BASE_MAX_LIFE * 2.4,
-        minSpeed: BASE_MIN_SPEED * 1.1,
-        maxSpeed: BASE_MAX_SPEED * 2.4,
-        minRadius: BASE_MIN_RADIUS * 1.6,
-        maxRadius: BASE_MAX_RADIUS * 3.2,
-        alphaScale: 2.15,
-        resolveColor: color => color ?? 'default',
-    },
-};
-
-function getVariantConfig(variant = 'match') {
-    return VARIANT_CONFIGS[variant] ?? VARIANT_CONFIGS.match;
+function randomBetween(min, max) {
+    return min + Math.random() * (max - min);
 }
-
-function normalizeExplosionOptions(input) {
-    if (typeof input === 'string' || !input) {
-        return { color: input ?? 'default', variant: 'match' };
-    }
-    const { color = 'default', variant = 'match' } = input;
-    return { color, variant };
-}
-
-function getColorPreset(color) {
-    return COLOR_PRESETS[color] ?? COLOR_PRESETS.default;
-}
-
-function toColor({ r, g, b }, alpha) {
-    const clamped = Math.max(0, Math.min(1, alpha));
-    return `rgba(${r}, ${g}, ${b}, ${clamped})`;
-}
-
-export function createExplosion(x, y, options) {
-    const { color, variant } = normalizeExplosionOptions(options);
-    const config = getVariantConfig(variant);
-    const resolvedColor = config.resolveColor(color);
-    const particles = Array.from({ length: config.particleCount }, () => {
+function createExplosionParticles(x, y, config, color) {
+    const particles = [];
+    for (let i = 0; i < config.particleCount; i++) {
         const angle = Math.random() * Math.PI * 2;
-        const speed = config.minSpeed + Math.random() * (config.maxSpeed - config.minSpeed);
-        const life = config.minLife + Math.random() * (config.maxLife - config.minLife);
-        const radius = config.minRadius + Math.random() * (config.maxRadius - config.minRadius);
-        return {
+        const speed = randomBetween(config.minSpeed, config.maxSpeed);
+        const life = randomBetween(config.minLife, config.maxLife);
+        const radius = randomBetween(config.minRadius, config.maxRadius);
+        particles.push({
             x,
             y,
             vx: Math.cos(angle) * speed,
@@ -166,62 +27,169 @@ export function createExplosion(x, y, options) {
             life,
             maxLife: life,
             radius,
-            color: resolvedColor,
+            color,
             alphaScale: config.alphaScale,
-        };
-    });
-
-    return { particles };
+        });
+    }
+    return particles;
 }
-
+function createDebris(x, y, config) {
+    if (!config) {
+        return [];
+    }
+    const count = Math.max(0, config.count ?? 0);
+    if (!count) {
+        return [];
+    }
+    const palette = toDebrisPalette();
+    const rotation = config.rotation ?? BASE_DEBRIS_ROT_SPEED;
+    const fragments = [];
+    for (let i = 0; i < count; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = randomBetween(config.minSpeed, config.maxSpeed);
+        const life = randomBetween(config.minLife, config.maxLife);
+        const length = randomBetween(config.minLength, config.maxLength);
+        const width = randomBetween(config.minWidth, config.maxWidth);
+        const rotationSpeed = randomBetween(rotation.min, rotation.max);
+        fragments.push({
+            x,
+            y,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed,
+            life,
+            maxLife: life,
+            rotation: Math.random() * Math.PI * 2,
+            rotationSpeed,
+            length,
+            width,
+            palette,
+        });
+    }
+    return fragments;
+}
+function advanceParticle(particle, dt, damping) {
+    particle.life -= dt;
+    if (particle.life <= 0) {
+        return false;
+    }
+    particle.x += particle.vx * dt;
+    particle.y += particle.vy * dt;
+    particle.vx *= damping;
+    particle.vy = particle.vy * damping + GRAVITY * dt;
+    return true;
+}
+function advanceFragment(fragment, dt, damping) {
+    fragment.life -= dt;
+    if (fragment.life <= 0) {
+        return false;
+    }
+    fragment.x += fragment.vx * dt;
+    fragment.y += fragment.vy * dt;
+    fragment.vx *= damping;
+    fragment.vy = fragment.vy * damping + GRAVITY * dt;
+    fragment.rotation += fragment.rotationSpeed * dt;
+    return true;
+}
+export function createExplosion(x, y, options) {
+    const { color, variant } = normalizeExplosionOptions(options);
+    const config = getVariantConfig(variant);
+    const resolvedColor = config.resolveColor(color);
+    const particles = createExplosionParticles(x, y, config, resolvedColor);
+    const debris = createDebris(x, y, config.debris);
+    return { particles, debris };
+}
 export function updateExplosions(explosions, dt) {
-    if (!explosions?.length) return;
+    if (!explosions?.length) {
+        return;
+    }
     const damping = Math.max(0, 1 - DAMPING * dt);
     for (let i = explosions.length - 1; i >= 0; i--) {
         const explosion = explosions[i];
-        const alive = [];
-        for (const particle of explosion.particles) {
-            particle.life -= dt;
-            if (particle.life <= 0) continue;
-            particle.x += particle.vx * dt;
-            particle.y += particle.vy * dt;
-            particle.vx *= damping;
-            particle.vy = particle.vy * damping + GRAVITY * dt;
-            alive.push(particle);
+        const particles = [];
+        for (const particle of explosion.particles ?? []) {
+            if (advanceParticle(particle, dt, damping)) {
+                particles.push(particle);
+            }
         }
-        explosion.particles = alive;
-        if (!alive.length) {
+        const fragments = [];
+        for (const fragment of explosion.debris ?? []) {
+            if (advanceFragment(fragment, dt, damping)) {
+                fragments.push(fragment);
+            }
+        }
+        explosion.particles = particles;
+        explosion.debris = fragments;
+        if (!particles.length && !fragments.length) {
             explosions.splice(i, 1);
         }
     }
 }
-
 export function drawExplosions(ctx, explosions = []) {
     const particles = [];
+    const debris = [];
     for (const explosion of explosions) {
-        if (!explosion?.particles) continue;
-        for (const particle of explosion.particles) {
-            if (particle.life > 0) particles.push(particle);
+        for (const particle of explosion?.particles ?? []) {
+            if (particle.life > 0) {
+                particles.push(particle);
+            }
+        }
+        for (const fragment of explosion?.debris ?? []) {
+            if (fragment.life > 0) {
+                debris.push(fragment);
+            }
         }
     }
-    if (!particles.length) return;
-
-    ctx.save();
-    ctx.globalCompositeOperation = 'lighter';
-    drawParticlesArray(particles, ctx);
-    ctx.restore();
+    if (!particles.length && !debris.length) {
+        return;
+    }
+    if (particles.length) {
+        ctx.save();
+        ctx.globalCompositeOperation = 'lighter';
+        drawParticlesArray(particles, ctx);
+        ctx.restore();
+    }
+    if (debris.length) {
+        drawDebrisArray(debris, ctx);
+    }
 }
-
 function drawParticlesArray(particles, ctx) {
     for (const particle of particles) {
         const preset = getColorPreset(particle.color);
         const progress = Math.max(0, Math.min(1, particle.life / particle.maxLife));
         const alpha = 0.75 * progress * (particle.alphaScale ?? 1);
         const radius = particle.radius * (0.35 + 0.65 * progress);
-
         ctx.beginPath();
         ctx.fillStyle = toColor(preset, alpha);
         ctx.arc(particle.x, particle.y, radius, 0, Math.PI * 2);
         ctx.fill();
+    }
+}
+function drawDebrisArray(debris, ctx) {
+    const palette = toDebrisPalette();
+    const canMakeGradient = typeof ctx.createLinearGradient === 'function';
+    for (const fragment of debris) {
+        const progress = Math.max(0, Math.min(1, fragment.life / fragment.maxLife));
+        const length = fragment.length * (0.6 + 0.4 * progress);
+        const width = fragment.width * (0.5 + 0.5 * progress);
+        const stroke = canMakeGradient
+            ? ctx.createLinearGradient(0, 0, -length, 0)
+            : palette.core;
+        if (canMakeGradient) {
+            stroke.addColorStop(0, palette.core);
+            stroke.addColorStop(0.45, palette.ember);
+            stroke.addColorStop(1, palette.smoke);
+        }
+
+        ctx.save();
+        ctx.translate(fragment.x, fragment.y);
+        ctx.rotate(fragment.rotation);
+        ctx.beginPath();
+        ctx.lineCap = 'round';
+        ctx.lineWidth = width;
+        ctx.strokeStyle = stroke;
+        ctx.moveTo(0, 0);
+        ctx.lineTo(-length, 0);
+        ctx.stroke();
+        ctx.restore();
     }
 }
