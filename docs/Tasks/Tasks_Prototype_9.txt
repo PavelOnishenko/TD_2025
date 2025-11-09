@@ -1,4 +1,57 @@
 001 | TODO | Explosions for hits, not only kills.
 002 | TODO | Towers should choose enemy by color.
-003 | TODO | Resolve all todos in the code.
-004 | TODO | (mb) Refactor for easier future use.
+003 | DONE | Resolve all todos in the code.
+
+004 | TODO | Tutorial system that gets tutorialStep objects from game config with these fields:
+-name (shown as the title of tutorial window);
+-(optional) wave number (at which wave's preparation phase to show the step);
+-objects to highlight (those should be above the dark overlay so clearly seen along with the tutorial window)
+    (mb we will have to create some simple global namespace where some program can pick objects from by name, 
+    similar in idea to Unit's GameObjects and hierarchy. HUD elements should also be in that space)
+-function to check whether the user has completed the tutorial step 
+    (should somehow run periodically. 
+    When it returns true, the tutorial is finished, the window and the dark overlay disappear)
+-text to show in the window;
+-picture asset to show in the window;
+-sound asset to show in the window.
+
+005 | TODO | Global high score stored in the cloud. Need human to figure out what to use for that, where to store etc. 
+
+006 | TODO | Make a tutorial using system implemented in p. 4.
+It should cover the following:
+-what it already covers - build, switch the color;
+-tower merging;
+-tower removal with long click;
+-enemies of matching color get more damage;
+-u get power for killing ships and finishing waves;
+-there is score you get for killing and finishing waves. There is local highscore and global score rating (eg. top 20)
+-plot point: Near Neon Empire capital planet a portal of unknown technology opened all of a sudden. 
+    Scientists were assured this is going to be an alien invasion!
+    Then it was decided to bring planetary defences up to the portal 
+    so any threat would be destroyed right there should it ever come through the portal.
+    New technology was used: living crystals. They are used to generate power and to form projectiles made from light.
+    They can produce power right in the space but it takes time. 
+    Living crystals also make good guns. if we put a laser ray through them, we get projectiles made of light.
+    They turned out to be effective against aliens when the first few scounts flew in. 
+    There were red and blue ships, so we prepared 2 kinds of living crystals - red and blue, tuned to different frequencies.
+    They are only 30% effective against ships of non-matching color!
+    Good luck in defending the Neon Empire!
+-plot point on like wave 10 (Scientists have figured out that ancient weapons that were not used for centuries, 
+    might work very well on aliens! Those are - machineguns, railguns and rockets!)
+
+007 | TODO | Change text on splash screen. It should show "Neon Void" instead of minimal td as it is now.
+
+008 | TODO | Add settings - sound, music, language - to the Pause menu.
+
+009 | TODO | Add localization system. Localizations should be read from text files in assets. 2 languages need to work right away - English and Russian.
+Switching should be placed somewhere in the HUD. Mb in the pause menu? All texts showing in the game should be subject to localization.
+
+011 | TODO | Quality sounds
+
+012 | TODO | Quality music
+
+013 | TODO | Mb speech for the tutorial?
+    
+014 | TODO | (mb) Refactor for easier future use 
+(when I will know what I am going to need for the next project, I am gonna separate those things as modules
+and use them as engine library to quickly get the next one on rails)
