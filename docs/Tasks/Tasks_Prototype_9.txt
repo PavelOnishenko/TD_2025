@@ -41,7 +41,7 @@ It should cover the following:
 -plot point on like wave 10 (Scientists have figured out that ancient weapons that were not used for centuries, 
     might work very well on aliens! Those are - machineguns, railguns and rockets!)
 
-007 | TODO | Change text on splash screen. It should show "Neon Void" instead of minimal td as it is now.
+007 | DONE | Change text on splash screen. It should show "Neon Void" instead of minimal td as it is now.
 
 008 | TODO | Add settings - sound, music, language - to the Pause menu.
 
