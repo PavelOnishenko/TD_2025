@@ -109,7 +109,23 @@
             <div class="hud-live-region hud-live-region--status" aria-live="polite">
                 <span id="status"></span>
             </div>
-            <div id="tutorialTip" class="tutorial-tip hidden" aria-live="polite"></div>
+            <div
+                id="tutorialOverlay"
+                class="tutorial-overlay hidden"
+                aria-live="polite"
+                aria-hidden="true"
+            >
+                <div class="tutorial-overlay__backdrop" aria-hidden="true"></div>
+                <div class="tutorial-overlay__panel" role="dialog" aria-modal="false">
+                    <div class="tutorial-overlay__media hidden">
+                        <img id="tutorialOverlayImage" alt="" draggable="false" />
+                    </div>
+                    <div class="tutorial-overlay__content">
+                        <h2 id="tutorialOverlayTitle" class="tutorial-overlay__title"></h2>
+                        <p id="tutorialOverlayText" class="tutorial-overlay__text"></p>
+                    </div>
+                </div>
+            </div>
             <div class="hud-controls">
                 <button id="restart" class="hud-button" type="button">
                     <span class="hud-button__icon" aria-hidden="true">

@@ -95,6 +95,9 @@ export const waveActions = {
             if (completedWave >= this.maxWaves && typeof this.activateEndlessMode === 'function') {
                 this.activateEndlessMode();
             }
+            if (this.tutorial && typeof this.tutorial.handleWavePreparation === 'function') {
+                this.tutorial.handleWavePreparation(this.wave);
+            }
             this.energy += gameConfig.player.energyPerWave;
             updateHUD(this);
             this.triggerWaveAdIfNeeded(completedWave);
