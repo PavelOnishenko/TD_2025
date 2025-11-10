@@ -17,7 +17,20 @@
 -sound asset to show in the window.
 Also re-implement currently existing tutorial using this mechanism, NOT adding new steps to it for now.
 
-005 | TODO | Global high score stored in the cloud. Need human to figure out what to use for that, where to store etc. 
+005 | TODO | Global high score. We have web service running on render.com:
+https://highscorewebservice.onrender.com
+It has methods:
+Submit a score:
+   ```bash
+   curl -X POST http://localhost:3000/submit \
+     -H 'Content-Type: application/json' \
+     -d '{"name":"Ada","score":1234}'
+   ```
+Fetch the leaderboard:
+   ```bash
+   curl GET http://localhost:3000/leaders
+   ```
+Need to implement some GUI showing leaderboard (top 10), accessible from Pause menu and also need to send highscore to the service when the game ends.
 
 006 | TODO | Make a tutorial using system implemented in p. 4.
 It should cover the following:
