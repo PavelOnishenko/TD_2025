@@ -22,13 +22,13 @@ https://highscorewebservice.onrender.com
 It has methods:
 Submit a score:
    ```bash
-   curl -X POST http://localhost:3000/submit \
+   curl -X POST https://highscorewebservice.onrender.com/submit \
      -H 'Content-Type: application/json' \
      -d '{"name":"Ada","score":1234}'
    ```
 Fetch the leaderboard:
    ```bash
-   curl GET http://localhost:3000/leaders
+   curl GET https://highscorewebservice.onrender.com/leaders
    ```
 Need to implement some GUI showing leaderboard (top 10), accessible from Pause menu 
 and also need to send highscore to the service when the game ends.
