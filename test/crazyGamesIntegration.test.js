@@ -29,14 +29,14 @@ test('crazyGamesIntegrationAllowed defaults to true without window', async () =>
     assert.equal(mod.crazyGamesIntegrationAllowed, true);
 });
 
-test('crazyGamesIntegrationAllowed blocks known hosts and GitHub pages', async () => {
-    const blockedWindow = { location: { hostname: 'pavelonishenko.github.io' } };
-    let mod = await importFresh({ window: blockedWindow });
-    assert.equal(mod.crazyGamesIntegrationAllowed, false, 'explicitly blocked host');
+test('crazyGamesIntegrationAllowed allows configured preview host while blocking others', async () => {
+    const previewWindow = { location: { hostname: 'pavelonishenko.github.io' } };
+    let mod = await importFresh({ window: previewWindow });
+    assert.equal(mod.crazyGamesIntegrationAllowed, true, 'preview host allowed for testing');
 
     const githubWindow = { location: { hostname: 'example.github.io' } };
     mod = await importFresh({ window: githubWindow });
-    assert.equal(mod.crazyGamesIntegrationAllowed, false, 'github pages host is blocked');
+    assert.equal(mod.crazyGamesIntegrationAllowed, false, 'other github pages hosts remain blocked');
 });
 
 test('crazyGamesIntegrationAllowed only permits CrazyGames or local development hosts', async () => {
@@ -93,6 +93,25 @@ test('callCrazyGamesEvent respects crazyGamesWorks and crazyGamesIntegrationAllo
     assert.equal(readyWindow.initCalls, 1);
     assert.ok(listeners.has('wheel'));
     assert.ok(listeners.has('keydown'));
+});
+
+test('initializeCrazyGamesIntegration handles sdkDisabled errors gracefully', async () => {
+    const disabledError = Object.assign(new Error('CrazySDK is disabled on this domain.'), { code: 'sdkDisabled' });
+    const disabledWindow = {
+        location: { hostname: 'cubes-2048-io.game-files.crazygames.com' },
+        addEventListener: () => {},
+        CrazyGames: {
+            SDK: {
+                environment: 'disabled',
+                init: async () => { throw disabledError; },
+                game: {},
+            },
+        },
+    };
+
+    const mod = await importFresh({ window: disabledWindow });
+    await mod.initializeCrazyGamesIntegration();
+    assert.equal(mod.crazyGamesWorks, false);
 });
 
 test('checkCrazyGamesIntegration logs and toggles crazyGamesWorks for disabled SDK', async () => {

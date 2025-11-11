@@ -132,11 +132,51 @@ export async function initializeCrazyGamesIntegration() {
     }
 
     configureForCrazyGames();
-    await window.CrazyGames.SDK.init();
+    const initFn = window.CrazyGames?.SDK?.init;
+    if (typeof initFn !== 'function') {
+        return;
+    }
+
+    try {
+        await initFn();
+    }
+    catch (error) {
+        handleCrazyGamesInitError(error);
+        return;
+    }
+
     const integrationWorks = checkCrazyGamesIntegration();
     if (integrationWorks) {
         crazyGamesWorks = true;
     }
+}
+
+function handleCrazyGamesInitError(error) {
+    crazyGamesWorks = false;
+    if (isSdkDisabledError(error)) {
+        console.warn('CrazyGames SDK init blocked for this domain.', error);
+        return;
+    }
+
+    console.warn('CrazyGames SDK init failed.', error);
+}
+
+function isSdkDisabledError(error) {
+    if (!error) {
+        return false;
+    }
+
+    if (typeof error === 'object') {
+        if (error.code === 'sdkDisabled') {
+            return true;
+        }
+
+        if (typeof error.message === 'string' && error.message.toLowerCase().includes('sdk is disabled')) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 function configureForCrazyGames() {
