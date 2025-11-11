@@ -30,7 +30,13 @@ Fetch the leaderboard:
    ```bash
    curl GET http://localhost:3000/leaders
    ```
-Need to implement some GUI showing leaderboard (top 10), accessible from Pause menu and also need to send highscore to the service when the game ends.
+Need to implement some GUI showing leaderboard (top 10), accessible from Pause menu 
+and also need to send highscore to the service when the game ends.
+Be very careful with exception handling. This feature is totally optional and should not break
+any of crucial functionality. Wait timeout of 3-5 seconds, don't get UI blocked or freezed while we are waiting.
+Show some kind of spinner while we are waiting. If timeout expired or other exception - 
+show message saying that we could not show leaderboard and put error message there too. 
+All this should be simple and not infuriating experience even if error happens. 
 
 006 | TODO | Make a tutorial using system implemented in p. 4.
 It should cover the following:
