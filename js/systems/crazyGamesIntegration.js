@@ -111,9 +111,21 @@ export function callCrazyGamesEvent(fnName) {
     if (!crazyGamesIntegrationAllowed || !crazyGamesWorks) {
         return;
     }
+
+    const realFn = crazyMap[fnName] || fnName;
+
     try {
-        const realFn = crazyMap[fnName] || fnName;
-        window.CrazyGames.SDK.game[realFn]();
+        const crazyGamesWindow = typeof window !== 'undefined' ? window : globalThis;
+        const sdk = crazyGamesWindow?.CrazyGames?.SDK;
+        const gameApi = sdk?.game;
+        const eventFn = typeof gameApi?.[realFn] === 'function' ? gameApi[realFn].bind(gameApi) : null;
+
+        if (!eventFn) {
+            console.warn(`CrazyGames SDK game event [${realFn}] is not available.`);
+            return;
+        }
+
+        eventFn();
     }
     catch (e) {
         console.error(`error while calling [${fnName}] event: [${e.message}].`);
@@ -132,11 +144,51 @@ export async function initializeCrazyGamesIntegration() {
     }
 
     configureForCrazyGames();
-    await window.CrazyGames.SDK.init();
+    const initFn = window.CrazyGames?.SDK?.init;
+    if (typeof initFn !== 'function') {
+        return;
+    }
+
+    try {
+        await initFn();
+    }
+    catch (error) {
+        handleCrazyGamesInitError(error);
+        return;
+    }
+
     const integrationWorks = checkCrazyGamesIntegration();
     if (integrationWorks) {
         crazyGamesWorks = true;
     }
+}
+
+function handleCrazyGamesInitError(error) {
+    crazyGamesWorks = false;
+    if (isSdkDisabledError(error)) {
+        console.warn('CrazyGames SDK init blocked for this domain.', error);
+        return;
+    }
+
+    console.warn('CrazyGames SDK init failed.', error);
+}
+
+function isSdkDisabledError(error) {
+    if (!error) {
+        return false;
+    }
+
+    if (typeof error === 'object') {
+        if (error.code === 'sdkDisabled') {
+            return true;
+        }
+
+        if (typeof error.message === 'string' && error.message.toLowerCase().includes('sdk is disabled')) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 function configureForCrazyGames() {
