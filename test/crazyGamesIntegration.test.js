@@ -29,14 +29,14 @@ test('crazyGamesIntegrationAllowed defaults to true without window', async () =>
     assert.equal(mod.crazyGamesIntegrationAllowed, true);
 });
 
-test('crazyGamesIntegrationAllowed blocks known hosts and GitHub pages', async () => {
-    const blockedWindow = { location: { hostname: 'pavelonishenko.github.io' } };
-    let mod = await importFresh({ window: blockedWindow });
-    assert.equal(mod.crazyGamesIntegrationAllowed, false, 'explicitly blocked host');
+test('crazyGamesIntegrationAllowed only blocks non-whitelisted GitHub pages hosts', async () => {
+    const whitelistedWindow = { location: { hostname: 'pavelonishenko.github.io' } };
+    let mod = await importFresh({ window: whitelistedWindow });
+    assert.equal(mod.crazyGamesIntegrationAllowed, true, 'explicitly whitelisted host allowed');
 
     const githubWindow = { location: { hostname: 'example.github.io' } };
     mod = await importFresh({ window: githubWindow });
-    assert.equal(mod.crazyGamesIntegrationAllowed, false, 'github pages host is blocked');
+    assert.equal(mod.crazyGamesIntegrationAllowed, false, 'non-whitelisted GitHub pages host is blocked');
 });
 
 test('crazyGamesIntegrationAllowed only permits CrazyGames or local development hosts', async () => {

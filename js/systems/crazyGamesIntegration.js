@@ -132,7 +132,14 @@ export async function initializeCrazyGamesIntegration() {
     }
 
     configureForCrazyGames();
-    await window.CrazyGames.SDK.init();
+    try {
+        await window.CrazyGames.SDK.init();
+    } catch (error) {
+        console.warn('CrazyGames SDK init failed', error);
+        crazyGamesWorks = false;
+        return;
+    }
+
     const integrationWorks = checkCrazyGamesIntegration();
     if (integrationWorks) {
         crazyGamesWorks = true;
