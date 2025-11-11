@@ -34,9 +34,10 @@ export const crazyGamesIntegrationAllowed = (() => {
     if (blockedCrazyGamesHosts.has(host)) {
         return false;
     }
-    if (isGithubPagesHost(host)) {
-        return false;
-    }
+    // TODO uncommment before final release
+    // if (isGithubPagesHost(host)) {
+    //     return false;
+    // }
     if (isCrazyGamesHost(host)) {
         return true;
     }
