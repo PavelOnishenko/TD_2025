@@ -324,7 +324,7 @@ async function bootstrapGame() {
     initializeAudio();
     initializeHudController();
     if (!crazyGamesIntegrationAllowed) {
-        showCrazyGamesSitelockOverlay();
+        // showCrazyGamesSitelockOverlay();
         return;
     }
     await initializeCrazyGamesIfNeeded();
