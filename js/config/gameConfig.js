@@ -197,6 +197,63 @@ swarm @3 y=520 color=blue
         waveClear: 150,
         baseHitPenalty: 25,
     },
+    tutorial: {
+        steps: [
+            {
+                id: 'build-tower',
+                name: 'Deploy Your First Tower',
+                wave: 1,
+                // todo figure out why highlighting the battlefield causes issues and how to do it properly
+                // highlightTargets: ['battlefield'],
+                highlightTargets: [],
+                text: 'Click on a glowing platform to build your first tower. Each tower costs 12 energy.',
+                picture: 'assets/tower_1B.png',
+                sound: 'assets/placement.wav',
+                checkComplete(game) {
+                    return Array.isArray(game?.towers) && game.towers.length > 0;
+                },
+            },
+            {
+                id: 'switch-color',
+                name: 'Match Enemy Colors',
+                wave: 1,
+                highlightTargets: [],
+                text: 'Select a tower to toggle its color. Matching enemies take full damage while mismatched colors are weaker.',
+                picture: 'assets/tower_1R.png',
+                sound: 'assets/color_switch.mp3',
+                checkComplete(game, context) {
+                    if ((context?.colorSwitches ?? 0) > 0) {
+                        return true;
+                    }
+                    const towers = Array.isArray(game?.towers) ? game.towers : [];
+                    if (towers.length > 0) {
+                        const uniqueColors = new Set(towers.map(tower => tower?.color ?? ''));
+                        if (uniqueColors.size > 1) {
+                            return true;
+                        }
+                    }
+                    return Boolean(game?.waveInProgress)
+                        || (typeof game?.wave === 'number' && game.wave > 1)
+                        || ((game?.spawned ?? 0) > 0);
+                },
+            },
+            {
+                id: 'start-wave',
+                name: 'Begin the Assault',
+                wave: 1,
+                highlightTargets: ['nextWaveButton'],
+                text: 'Press "Next Wave" when you are ready. Survive every wave to protect the base!',
+                picture: 'assets/swarm_R.png',
+                sound: 'assets/merge.mp3',
+                checkComplete(game, context) {
+                    if ((context?.wavesStarted ?? 0) > 0) {
+                        return true;
+                    }
+                    return Boolean(game?.waveInProgress) || ((game?.spawned ?? 0) > 0);
+                },
+            },
+        ],
+    },
     ads: {
         waveCadence: 5,
     },

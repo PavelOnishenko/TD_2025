@@ -4,6 +4,7 @@ import { callCrazyGamesEvent } from './crazyGamesIntegration.js';
 import { showCrazyGamesAdWithPause } from './ads.js';
 import { saveAudioSettings } from './dataStore.js';
 import { attachTutorial } from './tutorial.js';
+import { registerTutorialTarget } from './tutorialTargets.js';
 
 const HEART_FILLED_SRC = 'assets/heart_filled.png';
 const HEART_EMPTY_SRC = 'assets/heart_empty.png';
@@ -53,6 +54,7 @@ export function bindUI(game) {
 }
 
 function bindHUD(game) {
+    const tutorialTargetCleanups = [];
     game.livesEl = document.getElementById('lives');
     game.energyEl = document.getElementById('energy');
     game.scorePanelEl = document.getElementById('scorePanel');
@@ -86,6 +88,22 @@ function bindHUD(game) {
     game.saveBtn = document.getElementById('saveGame');
     game.loadBtn = document.getElementById('loadGame');
     game.deleteSaveBtn = document.getElementById('deleteSave');
+    if (game.canvas) {
+        tutorialTargetCleanups.push(registerTutorialTarget('battlefield', () => game.canvas));
+    }
+    if (game.nextWaveBtn) {
+        tutorialTargetCleanups.push(registerTutorialTarget('nextWaveButton', () => game.nextWaveBtn));
+    }
+    game.releaseTutorialTargets = () => {
+        while (tutorialTargetCleanups.length > 0) {
+            const cleanup = tutorialTargetCleanups.pop();
+            try {
+                cleanup?.();
+            } catch (error) {
+                console.warn('Failed to release tutorial target', error);
+            }
+        }
+    };
 }
 
 function bindDiagnosticsOverlay(game) {

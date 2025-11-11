@@ -102,6 +102,9 @@ function resetGame(game) {
     game.persistState();
     if (game.tutorial) {
         game.tutorial.reset();
+        if (typeof game.tutorial.handleWavePreparation === 'function') {
+            game.tutorial.handleWavePreparation(game.wave);
+        }
     }
 }
 
