@@ -1,6 +1,8 @@
 export let crazyGamesWorks = false;
 
-const blockedCrazyGamesHosts = new Set(['pavelonishenko.github.io']);
+const blockedCrazyGamesHosts = new Set([
+    // 'pavelonishenko.github.io', // TODO add github back here when not needed for testing
+]);
 const allowedLocalHosts = new Set(['localhost', '127.0.0.1', '0.0.0.0', '::1', 
     'pavelonishenko.github.io']); // TODO remove github when not needed for testing
 
