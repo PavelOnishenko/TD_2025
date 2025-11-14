@@ -230,23 +230,6 @@ function getCanvasContext() {
     const gameContainerElement = document.getElementById('gameContainer');
     return { canvasElement, gameContainerElement, gameInstance: null };
 }
-function showCrazyGamesSitelockOverlay() {
-    if (typeof document === 'undefined') {
-        return;
-    }
-    const overlay = document.getElementById('sitelockOverlay');
-    if (!overlay) {
-        return;
-    }
-    const host = typeof window !== 'undefined' ? window.location?.hostname : '';
-    const hostWrapper = overlay.querySelector('[data-sitelock-host-wrapper]');
-    const hostLabel = overlay.querySelector('[data-sitelock-host]');
-    if (host && hostWrapper && hostLabel) {
-        hostLabel.textContent = host;
-        hostWrapper.hidden = false;
-    }
-    overlay.classList.remove('hidden');
-}
 async function startGame(context) {
     if (!context.canvasElement) {
         return null;
@@ -347,10 +330,6 @@ function handleWindowFocus(game) {
 async function bootstrapGame() {
     initializeAudio();
     initializeHudController();
-    if (!crazyGamesIntegrationAllowed) {
-        showCrazyGamesSitelockOverlay();
-        return;
-    }
     await initializeCrazyGamesIfNeeded();
     const context = getCanvasContext();
     await startGame(context);

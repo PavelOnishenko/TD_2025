@@ -39,20 +39,6 @@ test('crazyGamesIntegrationAllowed blocks known hosts and GitHub pages', async (
     assert.equal(mod.crazyGamesIntegrationAllowed, false, 'github pages host is blocked');
 });
 
-test('crazyGamesIntegrationAllowed only permits CrazyGames or local development hosts', async () => {
-    const crazyGamesWindow = { location: { hostname: 'cubes-2048-io.game-files.crazygames.com' } };
-    let mod = await importFresh({ window: crazyGamesWindow });
-    assert.equal(mod.crazyGamesIntegrationAllowed, true, 'CrazyGames CDN host allowed');
-
-    const localWindow = { location: { hostname: 'localhost' } };
-    mod = await importFresh({ window: localWindow });
-    assert.equal(mod.crazyGamesIntegrationAllowed, true, 'localhost allowed for development');
-
-    const otherWindow = { location: { hostname: 'example.com' } };
-    mod = await importFresh({ window: otherWindow });
-    assert.equal(mod.crazyGamesIntegrationAllowed, false, 'non-approved host blocked');
-});
-
 test('callCrazyGamesEvent respects crazyGamesWorks and crazyGamesIntegrationAllowed flags', async () => {
     const windowStub = { location: { hostname: 'example.com' } };
     const mod = await importFresh({ window: windowStub });
@@ -66,7 +52,7 @@ test('callCrazyGamesEvent respects crazyGamesWorks and crazyGamesIntegrationAllo
     // Re-import with proper CrazyGames SDK setup and initialize integration.
     const listeners = new Map();
     const readyWindow = {
-        location: { hostname: 'cubes-2048-io.game-files.crazygames.com' },
+        location: { hostname: 'example.com' },
         addEventListener: (type, listener) => {
             listeners.set(type, listener);
         },
@@ -97,7 +83,7 @@ test('callCrazyGamesEvent respects crazyGamesWorks and crazyGamesIntegrationAllo
 
 test('checkCrazyGamesIntegration logs and toggles crazyGamesWorks for disabled SDK', async () => {
     const disabledWindow = {
-        location: { hostname: 'cubes-2048-io.game-files.crazygames.com' },
+        location: { hostname: 'example.com' },
         addEventListener: () => {},
         CrazyGames: {
             SDK: {

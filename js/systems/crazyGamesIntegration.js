@@ -1,9 +1,6 @@
 export let crazyGamesWorks = false;
 
-const blockedCrazyGamesHosts = new Set([
-    'pavelonishenko.github.io',
-]);
-const allowedLocalHosts = new Set(['localhost', '127.0.0.1', '0.0.0.0', '::1']);
+const blockedCrazyGamesHosts = new Set([ 'pavelonishenko.github.io' ]);
 
 function getNormalizedHost() {
     if (typeof window === 'undefined') {
@@ -17,14 +14,6 @@ function isGithubPagesHost(host) {
     return host.endsWith('.github.io');
 }
 
-function isCrazyGamesHost(host) {
-    return host === 'crazygames.com' || host.endsWith('.crazygames.com');
-}
-
-function isLocalDevelopmentHost(host) {
-    return allowedLocalHosts.has(host);
-}
-
 export const crazyGamesIntegrationAllowed = (() => {
     const host = getNormalizedHost();
     if (!host) {
@@ -36,13 +25,7 @@ export const crazyGamesIntegrationAllowed = (() => {
     if (isGithubPagesHost(host)) {
         return false;
     }
-    if (isCrazyGamesHost(host)) {
-        return true;
-    }
-    if (isLocalDevelopmentHost(host)) {
-        return true;
-    }
-    return false;
+    return true;
 })();
 
 export const crazyMap = { sdkGameLoadingStart: "loadingStart", sdkGameLoadingStop: "loadingStop", gameplayStart: "gameplayStart", gameplayStop: "gameplayStop" };
