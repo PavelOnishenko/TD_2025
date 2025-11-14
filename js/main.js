@@ -181,6 +181,9 @@ async function initializeCrazyGamesIfNeeded() {
 
     await initializeCrazyGamesIntegration();
     const user = await fetchCrazyGamesUserSafely();
+    if (typeof globalThis !== 'undefined') {
+        globalThis.__latestCrazyGamesUser = user ?? null;
+    }
     if (user) {
         updateCrazyGamesUserUI(user);
     }
@@ -201,6 +204,17 @@ function updateCrazyGamesUserUI(user) {
 
     if (userContainer) {
         userContainer.classList.remove('hidden');
+    }
+
+    if (typeof globalThis !== 'undefined') {
+        globalThis.__latestCrazyGamesUser = user ?? null;
+        const activeGame = globalThis.__towerDefenseActiveGame;
+        if (activeGame) {
+            activeGame.crazyGamesUser = user ?? null;
+            if (user?.username) {
+                activeGame.playerName = user.username;
+            }
+        }
     }
 }
 function toggleCrazyGamesAvatar(avatarEl, profilePictureUrl) {
@@ -241,6 +255,16 @@ async function startGame(context) {
     const assets = await loadAssets();
     const game = new Game(context.canvasElement, { width: LOGICAL_W, height: LOGICAL_H, assets });
     context.gameInstance = game;
+    if (typeof globalThis !== 'undefined') {
+        globalThis.__towerDefenseActiveGame = game;
+        const latestUser = globalThis.__latestCrazyGamesUser ?? null;
+        if (latestUser) {
+            game.crazyGamesUser = latestUser;
+            if (latestUser.username) {
+                game.playerName = latestUser.username;
+            }
+        }
+    }
     bindUI(game);
     const simpleSaveConfig = featureFlags?.simpleSaveSystem ?? {};
     const simpleSaveEnabled = typeof simpleSaveConfig === 'object'
