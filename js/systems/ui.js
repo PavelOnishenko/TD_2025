@@ -108,6 +108,18 @@ function bindHUD(game) {
     if (game.nextWaveBtn) {
         tutorialTargetCleanups.push(registerTutorialTarget('nextWaveButton', () => game.nextWaveBtn));
     }
+    if (game.mergeBtn) {
+        tutorialTargetCleanups.push(registerTutorialTarget('mergeButton', () => game.mergeBtn));
+    }
+    if (game.energyEl) {
+        tutorialTargetCleanups.push(registerTutorialTarget('energyPanel', () => game.energyEl));
+    }
+    if (game.scorePanelEl) {
+        tutorialTargetCleanups.push(registerTutorialTarget('scorePanel', () => game.scorePanelEl));
+    }
+    if (game.pauseBtn) {
+        tutorialTargetCleanups.push(registerTutorialTarget('pauseButton', () => game.pauseBtn));
+    }
     game.releaseTutorialTargets = () => {
         while (tutorialTargetCleanups.length > 0) {
             const cleanup = tutorialTargetCleanups.pop();

@@ -140,6 +140,18 @@ export function applyProjectileDamage(game, projectile, enemyIndex, options = {}
         enemyRemoved = true;
         game.enemies.splice(enemyIndex, 1);
         game.energy += gameConfig.player.energyPerKill;
+        if (game.tutorial) {
+            try {
+                if (typeof game.tutorial.handleEnergyGained === 'function') {
+                    game.tutorial.handleEnergyGained(gameConfig.player.energyPerKill);
+                }
+                if (typeof game.tutorial.handleEnemyKilled === 'function') {
+                    game.tutorial.handleEnemyKilled({ match: isColorMatch });
+                }
+            } catch (error) {
+                console.warn('Tutorial kill handler failed', error);
+            }
+        }
         if (typeof game.addScore === 'function') {
             const scoreValue = Number.isFinite(game.scorePerKill)
                 ? game.scorePerKill

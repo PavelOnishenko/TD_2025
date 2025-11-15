@@ -82,6 +82,68 @@ test('tutorial runs through configured steps and applies highlights', () => {
   clearTutorialTargets();
 });
 
+test('informational steps can be acknowledged through the overlay', () => {
+  const listeners = {};
+  const overlayElement = {
+    addEventListener: (type, handler) => {
+      listeners[type] = handler;
+    },
+  };
+  const tutorial = createTutorial({ wave: 1, waveInProgress: false }, {
+    steps: [
+      {
+        id: 'lore',
+        wave: 1,
+        checkComplete: (_, context) => Boolean(context?.acknowledgedSteps?.has?.('lore')),
+      },
+    ],
+    ui: {
+      show: () => {},
+      hide: () => {},
+      setHighlightState: () => {},
+      element: overlayElement,
+    },
+    scheduleCheck: () => () => {},
+  });
+
+  tutorial.start();
+  tutorial.handleWavePreparation(1);
+  assert.equal(tutorial.isComplete(), false);
+  listeners.click?.({});
+  assert.equal(tutorial.isComplete(), true);
+});
+
+test('merge and removal events advance the tutorial', () => {
+  const tutorial = createTutorial({ wave: 1, waveInProgress: false }, {
+    steps: [
+      {
+        id: 'merge',
+        wave: 1,
+        checkComplete: (_, context) => (context?.merges ?? 0) > 0,
+      },
+      {
+        id: 'remove',
+        wave: 1,
+        checkComplete: (_, context) => (context?.removals ?? 0) > 0,
+      },
+    ],
+    ui: {
+      show: () => {},
+      hide: () => {},
+      setHighlightState: () => {},
+    },
+    scheduleCheck: () => () => {},
+  });
+
+  tutorial.start();
+  tutorial.handleWavePreparation(1);
+  assert.equal(tutorial.getCurrentStep()?.id, 'merge');
+  tutorial.handleTowerMerged();
+  assert.equal(tutorial.getCurrentStep()?.id, 'remove');
+  tutorial.handleTowerRemoved();
+  assert.equal(tutorial.isComplete(), true);
+});
+
 test('reset clears completion and hides overlay', () => {
   const game = { wave: 1, waveInProgress: false, hasTower: false };
   let hideCount = 0;

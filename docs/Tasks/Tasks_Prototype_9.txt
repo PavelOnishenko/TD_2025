@@ -38,7 +38,7 @@ Show some kind of spinner while we are waiting. If timeout expired or other exce
 show message saying that we could not show leaderboard and put error message there too. 
 All this should be simple and not infuriating experience even if error happens. 
 
-006 | TODO | Make a tutorial using system implemented in p. 4.
+006 | DONE | Make a tutorial using system implemented in p. 4.
 It should cover the following:
 -what it already covers - build, switch the color;
 -tower merging;

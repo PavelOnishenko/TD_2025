@@ -91,6 +91,13 @@ export const waveActions = {
                 this.addScore(this.waveClearScore);
             }
             const completedWave = this.wave;
+            if (this.tutorial && typeof this.tutorial.handleWaveCompleted === 'function') {
+                try {
+                    this.tutorial.handleWaveCompleted(completedWave);
+                } catch (error) {
+                    console.warn('Tutorial wave completion handler failed', error);
+                }
+            }
             this.wave += 1;
             if (completedWave >= this.maxWaves && typeof this.activateEndlessMode === 'function') {
                 this.activateEndlessMode();
@@ -99,6 +106,13 @@ export const waveActions = {
                 this.tutorial.handleWavePreparation(this.wave);
             }
             this.energy += gameConfig.player.energyPerWave;
+            if (this.tutorial && typeof this.tutorial.handleEnergyGained === 'function') {
+                try {
+                    this.tutorial.handleEnergyGained(gameConfig.player.energyPerWave);
+                } catch (error) {
+                    console.warn('Tutorial energy handler failed', error);
+                }
+            }
             updateHUD(this);
             this.triggerWaveAdIfNeeded(completedWave);
         }
