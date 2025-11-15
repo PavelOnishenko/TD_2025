@@ -91,6 +91,8 @@ class Game {
         this.audioMuted = false;
         this.musicEnabled = true;
         this.musicPausedByFocus = false;
+        this.language = 'en';
+        this.languageListeners = new Set();
         this.isPaused = false;
         this.pauseReason = null;
         this.pauseListeners = new Set();
@@ -299,6 +301,19 @@ class Game {
         };
     }
 
+    addLanguageListener(listener) {
+        if (typeof listener !== 'function') {
+            return () => {};
+        }
+        if (!this.languageListeners) {
+            this.languageListeners = new Set();
+        }
+        this.languageListeners.add(listener);
+        return () => {
+            this.languageListeners.delete(listener);
+        };
+    }
+
     emitPauseState(paused, reason) {
         if (!this.pauseListeners || this.pauseListeners.size === 0) {
             return;
@@ -308,6 +323,19 @@ class Game {
                 listener(paused, reason);
             } catch (error) {
                 console.warn('Pause listener failed', error);
+            }
+        }
+    }
+
+    emitLanguageChanged(language) {
+        if (!this.languageListeners || this.languageListeners.size === 0) {
+            return;
+        }
+        for (const listener of this.languageListeners) {
+            try {
+                listener(language);
+            } catch (error) {
+                console.warn('Language listener failed', error);
             }
         }
     }
@@ -869,6 +897,19 @@ class Game {
         if (this.musicEnabled) {
             this.playMusicIfAllowed();
         }
+    }
+
+    setLanguage(language) {
+        const normalized = typeof language === 'string'
+            ? language.trim().toLowerCase()
+            : '';
+        const next = normalized || 'en';
+        if (this.language === next) {
+            return false;
+        }
+        this.language = next;
+        this.emitLanguageChanged(next);
+        return true;
     }
 
     playMusicIfAllowed() {

@@ -51,6 +51,7 @@ export function bindUI(game) {
     attachTutorial(game);
     bindButtons(game);
     bindAudioButtons(game);
+    bindPauseSettings(game);
     bindPauseSystem(game);
     bindLeaderboard(game);
     bindCanvasInteractions(game);
@@ -90,6 +91,9 @@ function bindHUD(game) {
     game.pauseOverlay = document.getElementById('pauseOverlay');
     game.pauseMessageEl = document.getElementById('pauseMessage');
     game.resumeBtn = document.getElementById('resumeGame');
+    game.pauseMuteBtn = document.getElementById('pauseSoundToggle');
+    game.pauseMusicBtn = document.getElementById('pauseMusicToggle');
+    game.pauseLanguageSelect = document.getElementById('pauseLanguageSelect');
     game.leaderboardToggleBtn = document.getElementById('leaderboardToggle');
     game.leaderboardPanel = document.getElementById('leaderboardPanel');
     game.leaderboardListEl = document.getElementById('leaderboardList');
@@ -330,18 +334,60 @@ function bindButtons(game) {
 }
 
 function bindAudioButtons(game) {
-    if (game.muteBtn) {
-        game.muteBtn.addEventListener('click', () => {
-            game.setAudioMuted(!game.audioMuted);
-            persistAudioSettings(game);
-            updateAudioControls(game);
+    const toggleMute = () => {
+        game.setAudioMuted(!game.audioMuted);
+        persistAudioSettings(game);
+        updateAudioControls(game);
+    };
+    const muteButtons = [game.muteBtn, game.pauseMuteBtn];
+    muteButtons.forEach(button => {
+        if (!button) {
+            return;
+        }
+        button.addEventListener('click', () => {
+            toggleMute();
+        });
+    });
+
+    const toggleMusic = () => {
+        game.setMusicEnabled(!game.musicEnabled);
+        persistAudioSettings(game);
+        updateAudioControls(game);
+    };
+    const musicButtons = [game.musicBtn, game.pauseMusicBtn];
+    musicButtons.forEach(button => {
+        if (!button) {
+            return;
+        }
+        button.addEventListener('click', () => {
+            toggleMusic();
+        });
+    });
+}
+
+function bindPauseSettings(game) {
+    updateLanguageControls(game);
+
+    if (typeof game.addLanguageListener === 'function') {
+        game.addLanguageListener(() => {
+            updateLanguageControls(game);
         });
     }
-    if (game.musicBtn) {
-        game.musicBtn.addEventListener('click', () => {
-            game.setMusicEnabled(!game.musicEnabled);
-            persistAudioSettings(game);
-            updateAudioControls(game);
+
+    const select = game.pauseLanguageSelect;
+    if (select) {
+        select.addEventListener('change', () => {
+            const selected = select.value || 'en';
+            if (typeof game.setLanguage === 'function') {
+                const changed = game.setLanguage(selected);
+                if (!changed) {
+                    updateLanguageControls(game);
+                }
+            }
+            else {
+                game.language = selected || 'en';
+            }
+            updateLanguageControls(game);
         });
     }
 }
@@ -359,21 +405,48 @@ export function updateAudioControls(game) {
 }
 
 function updateMuteButton(game) {
-    if (!game.muteBtn) {
+    const muted = Boolean(game.audioMuted);
+    const buttons = [game.muteBtn, game.pauseMuteBtn].filter(Boolean);
+    if (buttons.length === 0) {
         return;
     }
-    const muted = Boolean(game.audioMuted);
-    game.muteBtn.textContent = muted ? 'Unmute' : 'Mute';
-    game.muteBtn.setAttribute('aria-pressed', muted ? 'true' : 'false');
+    buttons.forEach(button => {
+        if (typeof button.textContent !== 'undefined') {
+            button.textContent = muted ? 'Unmute' : 'Mute';
+        }
+        if (typeof button.setAttribute === 'function') {
+            button.setAttribute('aria-pressed', muted ? 'true' : 'false');
+        }
+    });
 }
 
 function updateMusicButton(game) {
-    if (!game.musicBtn) {
+    const enabled = Boolean(game.musicEnabled);
+    const buttons = [game.musicBtn, game.pauseMusicBtn].filter(Boolean);
+    if (buttons.length === 0) {
         return;
     }
-    const enabled = Boolean(game.musicEnabled);
-    game.musicBtn.textContent = enabled ? 'Music On' : 'Music Off';
-    game.musicBtn.setAttribute('aria-pressed', enabled ? 'true' : 'false');
+    buttons.forEach(button => {
+        if (typeof button.textContent !== 'undefined') {
+            button.textContent = enabled ? 'Music On' : 'Music Off';
+        }
+        if (typeof button.setAttribute === 'function') {
+            button.setAttribute('aria-pressed', enabled ? 'true' : 'false');
+        }
+    });
+}
+
+function updateLanguageControls(game) {
+    const select = game.pauseLanguageSelect;
+    if (!select) {
+        return;
+    }
+    const current = typeof game.language === 'string' && game.language.trim()
+        ? game.language.trim().toLowerCase()
+        : 'en';
+    if (select.value !== current) {
+        select.value = current;
+    }
 }
 
 function setupStartMenu(game) {
@@ -954,6 +1027,16 @@ function bindPauseSystem(game) {
             game.pauseBtn.setAttribute('aria-pressed', paused ? 'true' : 'false');
             const shouldDisable = !game.hasStarted || game.gameOver || (paused && isAdPause);
             game.pauseBtn.disabled = shouldDisable;
+        }
+        const disableForAd = paused && isAdPause;
+        if (game.pauseMuteBtn) {
+            game.pauseMuteBtn.disabled = disableForAd;
+        }
+        if (game.pauseMusicBtn) {
+            game.pauseMusicBtn.disabled = disableForAd;
+        }
+        if (game.pauseLanguageSelect) {
+            game.pauseLanguageSelect.disabled = disableForAd;
         }
     };
 
