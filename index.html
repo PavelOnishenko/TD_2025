@@ -27,6 +27,33 @@
             <h2 id="pauseTitle">Paused</h2>
             <p id="pauseMessage">Take a breather. The battle will wait.</p>
             <button id="resumeGame" type="button">Resume</button>
+            <button
+                id="leaderboardToggle"
+                class="pause-menu__secondary"
+                type="button"
+                aria-controls="leaderboardPanel"
+                aria-expanded="false"
+            >
+                View Global Leaderboard
+            </button>
+            <div
+                id="leaderboardPanel"
+                class="leaderboard hidden"
+                aria-live="polite"
+                aria-busy="false"
+                hidden
+            >
+                <div id="leaderboardLoading" class="leaderboard__loading hidden">
+                    <span class="leaderboard__spinner" aria-hidden="true"></span>
+                    <span data-loading-text>Loading leaderboard…</span>
+                </div>
+                <ol id="leaderboardList" class="leaderboard__list" aria-busy="false"></ol>
+                <p id="leaderboardEmpty" class="leaderboard__empty hidden">
+                    No scores yet. Be the first to submit a score.
+                </p>
+                <p id="leaderboardError" class="leaderboard__error hidden" role="alert"></p>
+                <button id="leaderboardRetry" type="button" class="leaderboard__retry hidden">Try again</button>
+            </div>
         </div>
     </div>
 
@@ -37,20 +64,6 @@
             <p id="endScore" class="end-score">Score: 0</p>
             <p id="endBestScore" class="end-best-score">Best: 0</p>
             <button id="endRestart" type="button">Restart</button>
-        </div>
-    </div>
-
-    <div id="sitelockOverlay" class="overlay hidden" role="alert" aria-live="assertive">
-        <div class="sitelock-notice" role="presentation">
-            <h2 class="sitelock-notice__title">Available only on CrazyGames</h2>
-            <p class="sitelock-notice__message">
-                Play this game for free on
-                <a href="https://www.crazygames.com/" target="_blank" rel="noopener">CrazyGames.com</a>.
-            </p>
-            <p class="sitelock-notice__host" data-sitelock-host-wrapper hidden>
-                Current host:
-                <span data-sitelock-host></span>
-            </p>
         </div>
     </div>
 
