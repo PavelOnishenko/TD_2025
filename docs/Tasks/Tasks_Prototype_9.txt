@@ -67,12 +67,12 @@ It should cover the following:
 009 | TODO | Add localization system. Localizations should be read from text files in assets. 2 languages need to work right away - English and Russian.
 Switching should be placed somewhere in the HUD. Mb in the pause menu? All texts showing in the game should be subject to localization.
 
-011 | TODO | Quality sounds
+010 | TODO | Quality sounds
 
-012 | TODO | Quality music
+011 | TODO | Quality music
 
-013 | TODO | Mb speech for the tutorial?
+012 | TODO | Mb speech for the tutorial?
     
-014 | TODO | (mb) Refactor for code re-use (extract engine logic for fuure games).
+013 | TODO | (mb) Refactor for code re-use (extract engine logic for fuure games).
 (when I will know what I am going to need for the next project, I am gonna separate those things as modules
 and use them as engine library to quickly get the next one on rails)
