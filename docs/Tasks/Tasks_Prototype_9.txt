@@ -69,7 +69,7 @@ Switching should be placed somewhere in the HUD. Mb in the pause menu? All texts
 
 010 | TODO | Quality sounds
 
-011 | TODO | Quality music
+011 | DONE | Quality music
 
 012 | TODO | Mb speech for the tutorial?
     
