@@ -27,6 +27,27 @@
             <h2 id="pauseTitle">Paused</h2>
             <p id="pauseMessage">Take a breather. The battle will wait.</p>
             <button id="resumeGame" type="button">Resume</button>
+            <div class="pause-menu__settings" role="group" aria-label="Pause settings">
+                <div class="pause-menu__setting">
+                    <span class="pause-menu__setting-label">Sound</span>
+                    <button id="pauseSoundToggle" class="pause-menu__setting-button" type="button" aria-pressed="false">
+                        Mute
+                    </button>
+                </div>
+                <div class="pause-menu__setting">
+                    <span class="pause-menu__setting-label">Music</span>
+                    <button id="pauseMusicToggle" class="pause-menu__setting-button" type="button" aria-pressed="true">
+                        Music On
+                    </button>
+                </div>
+                <div class="pause-menu__setting">
+                    <label class="pause-menu__setting-label" for="pauseLanguageSelect">Language</label>
+                    <select id="pauseLanguageSelect" class="pause-menu__select">
+                        <option value="en">English</option>
+                        <option value="ru">Русский</option>
+                    </select>
+                </div>
+            </div>
             <button
                 id="leaderboardToggle"
                 class="pause-menu__secondary"
