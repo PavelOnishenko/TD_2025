@@ -17,7 +17,7 @@
 -sound asset to show in the window.
 Also re-implement currently existing tutorial using this mechanism, NOT adding new steps to it for now.
 
-005 | TODO | Global high score. We have web service running on render.com:
+005 | DONE | Global high score. We have web service running on render.com:
 https://highscorewebservice.onrender.com
 It has methods:
 Submit a score:
