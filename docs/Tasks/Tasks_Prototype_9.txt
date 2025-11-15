@@ -62,7 +62,7 @@ It should cover the following:
 
 007 | DONE | Change text on splash screen. It should show "Neon Void" instead of minimal td as it is now.
 
-008 | TODO | Add settings - sound, music, language - to the Pause menu.
+008 | DONE | Add settings - sound, music, language - to the Pause menu.
 
 009 | TODO | Add localization system. Localizations should be read from text files in assets. 2 languages need to work right away - English and Russian.
 Switching should be placed somewhere in the HUD. Mb in the pause menu? All texts showing in the game should be subject to localization.
