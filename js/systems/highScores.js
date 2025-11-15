@@ -1,3 +1,5 @@
+import { translate } from './localization.js';
+
 const SERVICE_BASE_URL = 'https://highscorewebservice.onrender.com';
 const DEFAULT_TIMEOUT = 4000;
 const MAX_LEADERBOARD_ENTRIES = 10;
@@ -5,7 +7,7 @@ const FALLBACK_PLAYER_NAME = 'Neon Defender';
 
 function toErrorMessage(error) {
     if (!error) {
-        return 'Unknown error';
+        return translate('highScores.unknownError', {}, 'Unknown error');
     }
     if (typeof error === 'string') {
         return error;
@@ -23,6 +25,10 @@ function toErrorMessage(error) {
     return String(error);
 }
 
+function getFallbackPlayerName() {
+    return translate('highScores.fallbackName', {}, FALLBACK_PLAYER_NAME);
+}
+
 function sanitizeTimeout(timeout) {
     if (!Number.isFinite(timeout)) {
         return DEFAULT_TIMEOUT;
@@ -33,11 +39,11 @@ function sanitizeTimeout(timeout) {
 
 function sanitizePlayerName(name) {
     if (typeof name !== 'string') {
-        return FALLBACK_PLAYER_NAME;
+        return getFallbackPlayerName();
     }
     const trimmed = name.trim();
     if (!trimmed) {
-        return FALLBACK_PLAYER_NAME;
+        return getFallbackPlayerName();
     }
     return trimmed.slice(0, 24);
 }

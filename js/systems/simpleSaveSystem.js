@@ -1,4 +1,5 @@
 import { updateHUD } from './ui.js';
+import { translate } from './localization.js';
 
 const DEFAULT_STORAGE_KEY = 'td_simple_save_v1';
 const CONTROLS_HIDDEN_CLASS = 'save-controls--hidden';
@@ -8,6 +9,10 @@ const STATUS_COLORS = {
     warning: '#facc15',
     error: '#fda4af',
 };
+
+function createStatusDescriptor(key, fallback, replacements = {}) {
+    return { key, fallback, replacements };
+}
 
 function resolveOption(options, key, fallback) {
     if (!options || typeof options !== 'object') {
@@ -129,10 +134,17 @@ function sanitizeSavePayload(raw) {
     return { version: 1, wave, energy, towers };
 }
 
-function updateStatus(game, message, colorKey = 'info') {
+function updateStatus(game, descriptor, colorKey = 'info') {
     const statusEl = game?.statusEl;
     if (!statusEl) {
         return;
+    }
+    const message = descriptor
+        ? translate(descriptor.key, descriptor.replacements ?? {}, descriptor.fallback ?? '')
+        : '';
+    if (game) {
+        game.lastSaveStatusDescriptor = descriptor ?? null;
+        game.lastSaveStatusColor = colorKey;
     }
     statusEl.textContent = message;
     const color = STATUS_COLORS[colorKey] ?? STATUS_COLORS.info;
@@ -187,10 +199,10 @@ function getControlElements(game) {
 
 function formatLoadButtonLabel(saved) {
     if (!saved) {
-        return 'Load Game';
+        return translate('simpleSave.loadButton', {}, 'Load Game');
     }
     const wave = sanitizeWaveValue(saved.wave);
-    return `Load Wave ${wave}`;
+    return translate('simpleSave.loadWaveButton', { wave }, `Load Wave ${wave}`);
 }
 
 function updateLoadControls({ loadBtn, deleteBtn }, saved) {
@@ -200,7 +212,7 @@ function updateLoadControls({ loadBtn, deleteBtn }, saved) {
         if (hasSave) {
             loadBtn.textContent = formatLoadButtonLabel(saved);
         } else {
-            loadBtn.textContent = 'Load Game';
+            loadBtn.textContent = translate('simpleSave.loadButton', {}, 'Load Game');
         }
     }
     if (deleteBtn) {
@@ -312,7 +324,7 @@ export function initSimpleSaveSystem(game, options = {}) {
         if (deleteBtn) {
             deleteBtn.disabled = true;
         }
-        updateStatus(game, 'Saving is unavailable in this browser.', 'error');
+        updateStatus(game, createStatusDescriptor('simpleSave.unavailable', 'Saving is unavailable in this browser.'), 'error');
         return;
     }
 
@@ -329,31 +341,41 @@ export function initSimpleSaveSystem(game, options = {}) {
             const payload = createSimpleSavePayload(game);
             const saved = writeSavedGame(storage, storageKey, payload);
             if (saved) {
-                updateStatus(game, `Game saved at wave ${payload.wave}.`, 'success');
+                const descriptor = createStatusDescriptor(
+                    'simpleSave.saved',
+                    `Game saved at wave ${payload.wave}.`,
+                    { wave: payload.wave }
+                );
+                updateStatus(game, descriptor, 'success');
             } else {
-                updateStatus(game, 'Failed to save game.', 'error');
+                updateStatus(game, createStatusDescriptor('simpleSave.saveFailed', 'Failed to save game.'), 'error');
             }
             refreshControls();
         };
         const handleLoad = () => {
             const savedState = refreshControls();
             if (!savedState) {
-                updateStatus(game, 'No saved game found.', 'warning');
+                updateStatus(game, createStatusDescriptor('simpleSave.notFound', 'No saved game found.'), 'warning');
                 return;
             }
             const applied = applySimpleSaveState(game, savedState);
             if (!applied) {
-                updateStatus(game, 'Saved game is invalid.', 'error');
+                updateStatus(game, createStatusDescriptor('simpleSave.invalid', 'Saved game is invalid.'), 'error');
                 return;
             }
-            updateStatus(game, `Loaded wave ${applied.wave}.`, 'success');
+            const descriptor = createStatusDescriptor(
+                'simpleSave.loaded',
+                `Loaded wave ${applied.wave}.`,
+                { wave: applied.wave }
+            );
+            updateStatus(game, descriptor, 'success');
         };
         const handleDelete = () => {
             const cleared = clearSavedGame(storage, storageKey);
             if (cleared) {
-                updateStatus(game, 'Saved game deleted.', 'info');
+                updateStatus(game, createStatusDescriptor('simpleSave.deleted', 'Saved game deleted.'), 'info');
             } else {
-                updateStatus(game, 'Failed to delete saved game.', 'error');
+                updateStatus(game, createStatusDescriptor('simpleSave.deleteFailed', 'Failed to delete saved game.'), 'error');
             }
             refreshControls();
         };

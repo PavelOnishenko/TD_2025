@@ -1,5 +1,6 @@
 import gameConfig from '../config/gameConfig.js';
 import { createSound } from './audio.js';
+import { translate } from './localization.js';
 import {
     clearTutorialProgress,
     isTutorialMarkedComplete,
@@ -137,10 +138,16 @@ function createDomOverlay(doc) {
                 root.dataset.stepId = step.id;
             }
             if (titleEl && typeof titleEl.textContent === 'string') {
-                titleEl.textContent = step?.name ?? '';
+                const title = step?.nameKey
+                    ? translate(step.nameKey, {}, step?.name ?? '')
+                    : (step?.name ?? '');
+                titleEl.textContent = title;
             }
             if (textEl && typeof textEl.textContent === 'string') {
-                textEl.textContent = step?.text ?? '';
+                const body = step?.textKey
+                    ? translate(step.textKey, {}, step?.text ?? '')
+                    : (step?.text ?? '');
+                textEl.textContent = body;
             }
             const picture = step?.picture;
             if (picture && imageEl) {
@@ -209,7 +216,9 @@ function normalizeSteps(steps) {
         ...step,
         id: step?.id ?? `step-${index}`,
         name: step?.name ?? step?.title ?? '',
+        nameKey: typeof step?.nameKey === 'string' ? step.nameKey : null,
         text: step?.text ?? '',
+        textKey: typeof step?.textKey === 'string' ? step.textKey : null,
         wave: Number.isFinite(step?.wave) ? step.wave : 1,
         highlightTargets: Array.isArray(step?.highlightTargets) ? [...step.highlightTargets] : [],
         picture: step?.picture ?? step?.image ?? null,

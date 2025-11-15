@@ -415,6 +415,34 @@ body {
     justify-content: flex-end;
 }
 
+.language-controls {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: calc(var(--hud-gap) * 0.25);
+    color: #c6dcff;
+    font-size: 0.9rem;
+}
+
+.language-controls__label {
+    font-weight: 600;
+}
+
+.language-controls__select {
+    background: rgba(30, 64, 175, 0.4);
+    border: 1px solid rgba(96, 165, 250, 0.6);
+    border-radius: 8px;
+    color: #e0f2ff;
+    padding: 6px 10px;
+    min-width: 140px;
+    font-family: inherit;
+}
+
+.language-controls__select:focus {
+    outline: 2px solid rgba(250, 204, 21, 0.85);
+    outline-offset: 2px;
+}
+
 .hud-button {
     --button-scale: var(--btn-scale);
     pointer-events: auto;

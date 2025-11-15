@@ -64,7 +64,7 @@ It should cover the following:
 
 008 | TODO | Add settings - sound, music, language - to the Pause menu.
 
-009 | TODO | Add localization system. Localizations should be read from text files in assets. 2 languages need to work right away - English and Russian.
+009 | DONE | Add localization system. Localizations should be read from text files in assets. 2 languages need to work right away - English and Russian.
 Switching should be placed somewhere in the HUD. Mb in the pause menu? All texts showing in the game should be subject to localization.
 
 011 | TODO | Quality sounds
