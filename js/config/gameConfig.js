@@ -1,3 +1,18 @@
+const hasAcknowledged = (context, id) => Boolean(context?.acknowledgedSteps?.has?.(id));
+const hasMerges = (context) => Number(context?.merges ?? 0) > 0;
+const hasRemovals = (context) => Number(context?.removals ?? 0) > 0;
+const hasEnergyGain = (context) => Number(context?.energyGained ?? 0) > 0;
+const hasEnergyGainFromGame = (game) => Number.isFinite(game?.energy)
+    && Number.isFinite(game?.initialEnergy)
+    && game.energy > game.initialEnergy;
+const hasScoreProgress = (game, context) => {
+    const scoreFromContext = Number(context?.scoreTotal ?? 0);
+    const gained = Number(context?.scoreGained ?? 0);
+    const score = Number.isFinite(game?.score) ? Math.max(0, Math.floor(game.score)) : 0;
+    const best = Number.isFinite(game?.bestScore) ? Math.max(0, Math.floor(game.bestScore)) : 0;
+    return scoreFromContext > 0 || gained > 0 || score > 0 || best > 0;
+};
+
 export const gameConfig = {
     world: {
         logicalSize: { width: 540, height: 960 },
@@ -200,13 +215,23 @@ swarm @3 y=520 color=blue
     tutorial: {
         steps: [
             {
+                id: 'story-intro',
+                name: 'Neon Empire Briefing',
+                wave: 1,
+                highlightTargets: [],
+                text: 'A portal ripped open beside the Neon Empire capital world. Deploy living crystal defences and stop the alien scouts before they pour through.',
+                picture: 'assets/swarm_B.png',
+                sound: 'assets/portal_spawn.mp3',
+                checkComplete(game, context) {
+                    return hasAcknowledged(context, 'story-intro');
+                },
+            },
+            {
                 id: 'build-tower',
                 name: 'Deploy Your First Tower',
                 wave: 1,
-                // todo figure out why highlighting the battlefield causes issues and how to do it properly
-                // highlightTargets: ['battlefield'],
                 highlightTargets: [],
-                text: 'Click on a glowing platform to build your first tower. Each tower costs 12 energy.',
+                text: 'Click on a glowing platform to build your first tower. Each tower costs 12 energy harvested from our living crystals.',
                 picture: 'assets/tower_1B.png',
                 sound: 'assets/placement.wav',
                 checkComplete(game) {
@@ -218,7 +243,7 @@ swarm @3 y=520 color=blue
                 name: 'Match Enemy Colors',
                 wave: 1,
                 highlightTargets: [],
-                text: 'Select a tower to toggle its color. Matching enemies take full damage while mismatched colors are weaker.',
+                text: 'Select a tower to toggle its color. Matching enemies take full damage while mismatched shots only hit with 30% power.',
                 picture: 'assets/tower_1R.png',
                 sound: 'assets/color_switch.mp3',
                 checkComplete(game, context) {
@@ -250,6 +275,68 @@ swarm @3 y=520 color=blue
                         return true;
                     }
                     return Boolean(game?.waveInProgress) || ((game?.spawned ?? 0) > 0);
+                },
+            },
+            {
+                id: 'energy-economy',
+                name: 'Harvest More Energy',
+                wave: 2,
+                highlightTargets: ['energyPanel'],
+                text: 'Every destroyed ship and completed wave feeds more energy into your reserves. Watch the meter to afford new towers and color switches.',
+                picture: 'assets/energy_sign.png',
+                sound: 'assets/placement.wav',
+                checkComplete(game, context) {
+                    return hasAcknowledged(context, 'energy-economy')
+                        || hasEnergyGain(context)
+                        || hasEnergyGainFromGame(game);
+                },
+            },
+            {
+                id: 'merge-towers',
+                name: 'Combine Towers',
+                wave: 2,
+                highlightTargets: ['mergeButton'],
+                text: 'Build two adjacent towers of the same color and level, then press Merge Towers to fuse them into a stronger crystal.',
+                picture: 'assets/tower_2B.png',
+                sound: 'assets/merge.mp3',
+                checkComplete(game, context) {
+                    return hasAcknowledged(context, 'merge-towers') || hasMerges(context);
+                },
+            },
+            {
+                id: 'remove-tower',
+                name: 'Dismantle with a Long Press',
+                wave: 2,
+                highlightTargets: [],
+                text: 'Press and hold on a tower to scrap it. Long presses free the platform whenever you need room or the wrong color.',
+                picture: 'assets/tower_1R.png',
+                sound: 'assets/tower_remove_charge.mp3',
+                checkComplete(game, context) {
+                    return hasAcknowledged(context, 'remove-tower') || hasRemovals(context);
+                },
+            },
+            {
+                id: 'score-system',
+                name: 'Chase High Scores',
+                wave: 2,
+                highlightTargets: ['scorePanel', 'pauseButton'],
+                text: 'You earn score for every kill and for clearing waves. The HUD tracks your local best, and the Pause menu links to the global top 20 leaderboard.',
+                picture: 'assets/swarm_R.png',
+                sound: 'assets/color_switch.mp3',
+                checkComplete(game, context) {
+                    return hasAcknowledged(context, 'score-system') || hasScoreProgress(game, context);
+                },
+            },
+            {
+                id: 'story-wave10',
+                name: 'Ancient Arsenal Unlocked',
+                wave: 10,
+                highlightTargets: [],
+                text: 'By wave 10 scientists re-arm old war relics—machineguns, railguns, and rockets—to bolster the line. Hold the portal at all costs!',
+                picture: 'assets/tank_R.png',
+                sound: 'assets/portal_spawn.mp3',
+                checkComplete(game, context) {
+                    return hasAcknowledged(context, 'story-wave10');
                 },
             },
         ],

@@ -5,6 +5,12 @@ import { showCrazyGamesAdWithPause } from './ads.js';
 import { saveAudioSettings } from './dataStore.js';
 import { attachTutorial } from './tutorial.js';
 import { registerTutorialTarget } from './tutorialTargets.js';
+import {
+    fetchLeaderboard,
+    submitHighScore,
+    resolvePlayerDisplayName,
+    normalizeScore,
+} from './highScores.js';
 
 const HEART_FILLED_SRC = 'assets/heart_filled.png';
 const HEART_EMPTY_SRC = 'assets/heart_empty.png';
@@ -46,6 +52,7 @@ export function bindUI(game) {
     bindButtons(game);
     bindAudioButtons(game);
     bindPauseSystem(game);
+    bindLeaderboard(game);
     bindCanvasInteractions(game);
     bindDiagnosticsOverlay(game);
     updateHUD(game);
@@ -83,6 +90,13 @@ function bindHUD(game) {
     game.pauseOverlay = document.getElementById('pauseOverlay');
     game.pauseMessageEl = document.getElementById('pauseMessage');
     game.resumeBtn = document.getElementById('resumeGame');
+    game.leaderboardToggleBtn = document.getElementById('leaderboardToggle');
+    game.leaderboardPanel = document.getElementById('leaderboardPanel');
+    game.leaderboardListEl = document.getElementById('leaderboardList');
+    game.leaderboardLoadingEl = document.getElementById('leaderboardLoading');
+    game.leaderboardErrorEl = document.getElementById('leaderboardError');
+    game.leaderboardEmptyEl = document.getElementById('leaderboardEmpty');
+    game.leaderboardRetryBtn = document.getElementById('leaderboardRetry');
     game.diagnosticsOverlay = document.getElementById('diagnosticsOverlay');
     game.saveControlsEl = document.getElementById('saveControls');
     game.saveBtn = document.getElementById('saveGame');
@@ -93,6 +107,18 @@ function bindHUD(game) {
     }
     if (game.nextWaveBtn) {
         tutorialTargetCleanups.push(registerTutorialTarget('nextWaveButton', () => game.nextWaveBtn));
+    }
+    if (game.mergeBtn) {
+        tutorialTargetCleanups.push(registerTutorialTarget('mergeButton', () => game.mergeBtn));
+    }
+    if (game.energyEl) {
+        tutorialTargetCleanups.push(registerTutorialTarget('energyPanel', () => game.energyEl));
+    }
+    if (game.scorePanelEl) {
+        tutorialTargetCleanups.push(registerTutorialTarget('scorePanel', () => game.scorePanelEl));
+    }
+    if (game.pauseBtn) {
+        tutorialTargetCleanups.push(registerTutorialTarget('pauseButton', () => game.pauseBtn));
     }
     game.releaseTutorialTargets = () => {
         while (tutorialTargetCleanups.length > 0) {
@@ -893,6 +919,7 @@ export function endGame(game, text) {
         game.resume({ force: true, reason: 'system' });
     }
     callCrazyGamesEvent('gameplayStop');
+    submitScoreToLeaderboard(game);
     if (typeof game.clearSavedState === 'function') {
         game.clearSavedState();
     }
@@ -979,4 +1006,269 @@ function bindPauseSystem(game) {
     if (typeof window !== 'undefined') {
         window.addEventListener('keydown', handleKeydown);
     }
+}
+
+function bindLeaderboard(game) {
+    if (!game) {
+        return;
+    }
+
+    const toggleBtn = game.leaderboardToggleBtn;
+    const panel = game.leaderboardPanel;
+    if (!toggleBtn || !panel) {
+        return;
+    }
+
+    const listEl = game.leaderboardListEl;
+    const loadingEl = game.leaderboardLoadingEl;
+    const errorEl = game.leaderboardErrorEl;
+    const emptyEl = game.leaderboardEmptyEl;
+    const retryBtn = game.leaderboardRetryBtn;
+
+    const state = {
+        visible: false,
+        loading: false,
+        loadPromise: null,
+        loadedOnce: false,
+    };
+    game.leaderboardState = state;
+
+    panel.hidden = true;
+    panel.classList.add('hidden');
+    toggleBtn.setAttribute('aria-expanded', 'false');
+    if (typeof toggleBtn.textContent === 'string') {
+        toggleBtn.textContent = 'View Global Leaderboard';
+    }
+
+    const getLoadingTextEl = () => {
+        if (!loadingEl) {
+            return null;
+        }
+        return loadingEl.querySelector('[data-loading-text]');
+    };
+
+    const clearList = () => {
+        if (!listEl) {
+            return;
+        }
+        if (typeof listEl.replaceChildren === 'function') {
+            listEl.replaceChildren();
+        }
+        else {
+            listEl.textContent = '';
+        }
+    };
+
+    const setLoading = (loading, message = 'Loading leaderboard…') => {
+        state.loading = loading;
+        if (loadingEl) {
+            loadingEl.classList.toggle('hidden', !loading);
+            const loadingTextEl = getLoadingTextEl();
+            if (loadingTextEl && typeof loadingTextEl.textContent !== 'undefined') {
+                loadingTextEl.textContent = message;
+            }
+        }
+        if (panel && typeof panel.setAttribute === 'function') {
+            panel.setAttribute('aria-busy', loading ? 'true' : 'false');
+        }
+        if (listEl && typeof listEl.setAttribute === 'function') {
+            listEl.setAttribute('aria-busy', loading ? 'true' : 'false');
+        }
+        if (retryBtn) {
+            retryBtn.classList.toggle('hidden', loading);
+            retryBtn.disabled = loading;
+        }
+        if (toggleBtn) {
+            toggleBtn.disabled = loading && state.visible;
+        }
+    };
+
+    const showError = (message) => {
+        if (!errorEl) {
+            return;
+        }
+        if (typeof errorEl.textContent !== 'undefined') {
+            errorEl.textContent = message ?? '';
+        }
+        errorEl.classList.toggle('hidden', !message);
+    };
+
+    const showEmpty = (visible) => {
+        if (!emptyEl) {
+            return;
+        }
+        emptyEl.classList.toggle('hidden', !visible);
+    };
+
+    const renderEntries = (entries) => {
+        if (!listEl) {
+            return;
+        }
+        const fragment = typeof document !== 'undefined' && typeof document.createDocumentFragment === 'function'
+            ? document.createDocumentFragment()
+            : null;
+        const target = fragment ?? listEl;
+        entries.forEach((entry, index) => {
+            const item = document.createElement('li');
+            item.className = 'leaderboard__item';
+
+            const position = document.createElement('span');
+            position.className = 'leaderboard__entry-position';
+            position.textContent = `${index + 1}.`;
+
+            const name = document.createElement('span');
+            name.className = 'leaderboard__entry-name';
+            name.textContent = entry.name;
+
+            const score = document.createElement('span');
+            score.className = 'leaderboard__entry-score';
+            const formattedScore = typeof entry.score?.toLocaleString === 'function'
+                ? entry.score.toLocaleString()
+                : (Number.isFinite(entry.score) ? entry.score.toString() : `${entry.score}`);
+            score.textContent = formattedScore;
+
+            item.append(position, name, score);
+            target.appendChild(item);
+        });
+        if (fragment) {
+            listEl.replaceChildren(fragment);
+        }
+    };
+
+    const hidePanel = () => {
+        state.visible = false;
+        panel.hidden = true;
+        panel.classList.add('hidden');
+        toggleBtn.textContent = 'View Global Leaderboard';
+        toggleBtn.setAttribute('aria-expanded', 'false');
+    };
+
+    const showPanel = () => {
+        state.visible = true;
+        panel.hidden = false;
+        panel.classList.remove('hidden');
+        toggleBtn.textContent = 'Hide Global Leaderboard';
+        toggleBtn.setAttribute('aria-expanded', 'true');
+    };
+
+    const handleResult = (result) => {
+        if (!result?.success) {
+            const message = result?.error ? `Unable to load leaderboard: ${result.error}` : 'Unable to load leaderboard.';
+            showError(message);
+            clearList();
+            showEmpty(false);
+            return;
+        }
+        state.loadedOnce = true;
+        const entries = Array.isArray(result.entries) ? result.entries : [];
+        if (entries.length === 0) {
+            clearList();
+            showError('');
+            showEmpty(true);
+            return;
+        }
+        showError('');
+        showEmpty(false);
+        renderEntries(entries);
+    };
+
+    const handleFailure = (error) => {
+        const message = error instanceof Error ? error.message : String(error ?? 'Unknown error');
+        console.warn('Leaderboard request failed', error);
+        showError(`Unable to load leaderboard: ${message}`);
+        clearList();
+        showEmpty(false);
+    };
+
+    const loadLeaderboard = (options = {}) => {
+        if (state.loadPromise) {
+            return state.loadPromise;
+        }
+        const { message = 'Loading leaderboard…' } = options;
+        setLoading(true, message);
+        showError('');
+        showEmpty(false);
+        state.loadPromise = fetchLeaderboard()
+            .then(handleResult)
+            .catch(handleFailure)
+            .finally(() => {
+                setLoading(false);
+                state.loadPromise = null;
+            });
+        return state.loadPromise;
+    };
+
+    const toggleLeaderboard = () => {
+        if (state.visible) {
+            hidePanel();
+            return;
+        }
+        showPanel();
+        void loadLeaderboard();
+    };
+
+    toggleBtn.addEventListener('click', toggleLeaderboard);
+
+    if (retryBtn) {
+        retryBtn.addEventListener('click', () => {
+            void loadLeaderboard({ message: state.loadedOnce ? 'Refreshing leaderboard…' : 'Loading leaderboard…' });
+        });
+    }
+
+    if (typeof game.addPauseListener === 'function') {
+        game.addPauseListener((paused, reason) => {
+            const disable = !paused || reason === 'ad';
+            toggleBtn.disabled = disable || (state.loading && state.visible);
+            if (!paused) {
+                hidePanel();
+            }
+        });
+    }
+
+    game.refreshLeaderboard = (options = {}) => {
+        const message = options?.message ?? (state.loadedOnce ? 'Refreshing leaderboard…' : 'Loading leaderboard…');
+        return loadLeaderboard({ message });
+    };
+
+    const initiallyDisabled = !game.isPaused || game.pauseReason === 'ad';
+    toggleBtn.disabled = initiallyDisabled;
+}
+
+function resolveLeaderboardPlayerName(game) {
+    const candidates = [
+        typeof game?.playerName === 'string' ? game.playerName : null,
+        typeof game?.crazyGamesUser?.username === 'string' ? game.crazyGamesUser.username : null,
+        typeof globalThis !== 'undefined' && typeof globalThis.__latestCrazyGamesUser?.username === 'string'
+            ? globalThis.__latestCrazyGamesUser.username
+            : null,
+    ];
+    const selected = candidates.find((value) => typeof value === 'string' && value.trim()) ?? undefined;
+    return resolvePlayerDisplayName(selected);
+}
+
+function submitScoreToLeaderboard(game) {
+    if (!game) {
+        return;
+    }
+    const currentScore = normalizeScore(game?.score);
+    if (currentScore <= 0) {
+        return;
+    }
+    const playerName = resolveLeaderboardPlayerName(game);
+    const handleFailure = (error) => {
+        console.warn('Failed to submit global high score', error);
+        return { success: false, error: error instanceof Error ? error.message : String(error ?? 'Unknown error') };
+    };
+    const submission = submitHighScore({ name: playerName, score: currentScore })
+        .then((result) => {
+            if (!result?.success) {
+                return handleFailure(result?.error ?? 'Request failed');
+            }
+            if (game.leaderboardState?.visible && typeof game.refreshLeaderboard === 'function') {
+                void game.refreshLeaderboard({ message: 'Refreshing leaderboard…' });
+            }
+            return result;
+        })
+        .catch(handleFailure);
+    game.lastHighScoreSubmission = submission;
 }

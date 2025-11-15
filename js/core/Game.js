@@ -268,6 +268,13 @@ class Game {
             this.bestScore = next;
             saveBestScore(next);
         }
+        if (this.tutorial && typeof this.tutorial.handleScoreChanged === 'function') {
+            try {
+                this.tutorial.handleScoreChanged(next, { delta });
+            } catch (error) {
+                console.warn('Tutorial score handler failed', error);
+            }
+        }
         return next;
     }
 
@@ -555,6 +562,16 @@ class Game {
         }
 
         updateHUD(this);
+        if (this.tutorial && typeof this.tutorial.handleTowerRemoved === 'function') {
+            try {
+                this.tutorial.handleTowerRemoved({
+                    cause: options?.cause ?? 'unknown',
+                    towerColor: tower?.color ?? null,
+                });
+            } catch (error) {
+                console.warn('Tutorial removal handler failed', error);
+            }
+        }
         return true;
     }
 
