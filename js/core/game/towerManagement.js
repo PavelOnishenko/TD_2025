@@ -56,6 +56,16 @@ const towerManagement = {
         if (typeof this.persistState === 'function') {
             this.persistState();
         }
+        if (this.tutorial && typeof this.tutorial.handleTowerMerged === 'function') {
+            try {
+                this.tutorial.handleTowerMerged({
+                    color: towerA?.color ?? towerB?.color ?? null,
+                    level: towerA?.level ?? null,
+                });
+            } catch (error) {
+                console.warn('Tutorial merge handler failed', error);
+            }
+        }
     },
 
     updateMergeHints() {

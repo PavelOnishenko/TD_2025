@@ -231,6 +231,27 @@ export function createTutorial(game, options = {}) {
     const onComplete = options.onComplete ?? markTutorialComplete;
     const steps = normalizeSteps(options.steps ?? getDefaultSteps());
 
+    const createInitialContext = () => ({
+        towersPlaced: 0,
+        colorSwitches: 0,
+        wavesStarted: 0,
+        merges: 0,
+        removals: 0,
+        enemyKills: 0,
+        matchingKills: 0,
+        energyGained: 0,
+        energyEvents: 0,
+        scoreGained: 0,
+        scoreEvents: 0,
+        scoreTotal: 0,
+        wavesCleared: 0,
+        currentStepId: null,
+        stepShownAt: 0,
+        lastAcknowledgedStepId: null,
+        lastAcknowledgedAt: 0,
+        acknowledgedSteps: new Set(),
+    });
+
     const state = {
         steps,
         started: false,
@@ -239,11 +260,7 @@ export function createTutorial(game, options = {}) {
         waveInProgress: Boolean(game?.waveInProgress),
         persistentComplete: Boolean(options.initiallyComplete),
         highlighted: [],
-        context: {
-            towersPlaced: 0,
-            colorSwitches: 0,
-            wavesStarted: 0,
-        },
+        context: createInitialContext(),
     };
 
     if (state.persistentComplete) {
@@ -253,6 +270,43 @@ export function createTutorial(game, options = {}) {
     }
 
     let cancelCheck = null;
+
+    const ensureAcknowledgedSteps = () => {
+        if (!(state.context?.acknowledgedSteps instanceof Set)) {
+            state.context.acknowledgedSteps = new Set();
+        }
+        return state.context.acknowledgedSteps;
+    };
+
+    const acknowledgeCurrentStep = () => {
+        const step = state.currentStep;
+        if (!step || !step.id) {
+            return;
+        }
+        const acknowledged = ensureAcknowledgedSteps();
+        if (!acknowledged.has(step.id)) {
+            acknowledged.add(step.id);
+            state.context.lastAcknowledgedStepId = step.id;
+            state.context.lastAcknowledgedAt = Date.now();
+        }
+        evaluateCurrentStep();
+    };
+
+    if (overlay?.element && typeof overlay.element.addEventListener === 'function') {
+        const handlePointer = () => acknowledgeCurrentStep();
+        const handleKey = (event) => {
+            if (!event) {
+                return;
+            }
+            const key = event.key;
+            if (key === 'Enter' || key === ' ' || key === 'Spacebar') {
+                acknowledgeCurrentStep();
+            }
+        };
+        overlay.element.addEventListener('click', handlePointer);
+        overlay.element.addEventListener('pointerdown', handlePointer);
+        overlay.element.addEventListener('keydown', handleKey);
+    }
 
     function stopCheckLoop() {
         if (typeof cancelCheck === 'function') {
@@ -291,6 +345,9 @@ export function createTutorial(game, options = {}) {
         overlay?.hide?.();
         clearHighlights();
         stopCheckLoop();
+        if (state.context) {
+            state.context.currentStepId = null;
+        }
     }
 
     function ensureCheckLoop() {
@@ -331,6 +388,9 @@ export function createTutorial(game, options = {}) {
         applyHighlights(step);
         playSound(step.sound);
         ensureCheckLoop();
+        ensureAcknowledgedSteps().delete(step.id);
+        state.context.currentStepId = step.id;
+        state.context.stepShownAt = Date.now();
         evaluateCurrentStep();
     }
 
@@ -383,24 +443,47 @@ export function createTutorial(game, options = {}) {
         if (!currentGame) {
             return;
         }
+        const context = state.context ?? createInitialContext();
+        state.context = context;
+
         const towersCount = Array.isArray(currentGame.towers) ? currentGame.towers.length : 0;
-        state.context.towersPlaced = Math.max(state.context.towersPlaced, towersCount);
+        context.towersPlaced = Math.max(context.towersPlaced, towersCount);
         const waveStarted = Boolean(currentGame.waveInProgress)
             || (typeof currentGame.wave === 'number' && currentGame.wave > 1)
             || ((currentGame.spawned ?? 0) > 0);
         if (waveStarted) {
-            state.context.wavesStarted = Math.max(state.context.wavesStarted, 1);
-            state.context.colorSwitches = Math.max(state.context.colorSwitches, 1);
+            context.wavesStarted = Math.max(context.wavesStarted, 1);
+            context.colorSwitches = Math.max(context.colorSwitches, 1);
         }
-        state.currentWave = Number.isFinite(currentGame.wave) ? currentGame.wave : state.currentWave;
+        const currentWave = Number.isFinite(currentGame.wave) ? currentGame.wave : state.currentWave;
+        state.currentWave = currentWave;
         state.waveInProgress = Boolean(currentGame.waveInProgress);
+
+        const currentEnergy = Number.isFinite(currentGame.energy) ? currentGame.energy : 0;
+        const initialEnergy = Number.isFinite(currentGame.initialEnergy) ? currentGame.initialEnergy : currentEnergy;
+        const energyDelta = Math.max(0, currentEnergy - initialEnergy);
+        context.energyGained = Math.max(context.energyGained, energyDelta);
+        if (context.energyGained > 0) {
+            context.energyEvents = Math.max(context.energyEvents, 1);
+        }
+
+        const score = Number.isFinite(currentGame.score) ? Math.max(0, Math.floor(currentGame.score)) : 0;
+        const bestScore = Number.isFinite(currentGame.bestScore) ? Math.max(0, Math.floor(currentGame.bestScore)) : 0;
+        context.scoreTotal = Math.max(context.scoreTotal, score, bestScore);
+        if (context.scoreTotal > 0) {
+            context.scoreEvents = Math.max(context.scoreEvents, 1);
+        }
+
+        const clearedWaves = Math.max(0, Math.floor(currentWave) - 1);
+        context.wavesCleared = Math.max(context.wavesCleared, clearedWaves);
+
         state.steps.forEach(step => {
             if (step.done || typeof step.checkComplete !== 'function') {
                 return;
             }
             let shouldComplete = false;
             try {
-                shouldComplete = Boolean(step.checkComplete(currentGame, state.context));
+                shouldComplete = Boolean(step.checkComplete(currentGame, context));
             } catch (error) {
                 console.warn(`Tutorial step "${step.id}" sync failed`, error);
             }
@@ -419,9 +502,7 @@ export function createTutorial(game, options = {}) {
     }
 
     function resetContext() {
-        state.context.towersPlaced = 0;
-        state.context.colorSwitches = 0;
-        state.context.wavesStarted = 0;
+        state.context = createInitialContext();
     }
 
     return {
@@ -467,6 +548,59 @@ export function createTutorial(game, options = {}) {
 
         handleColorSwitch() {
             state.context.colorSwitches += 1;
+            evaluateCurrentStep();
+        },
+
+        handleTowerMerged(details = {}) {
+            state.context.merges += 1;
+            if (details?.color) {
+                state.context.lastMergeColor = details.color;
+            }
+            evaluateCurrentStep();
+        },
+
+        handleTowerRemoved(details = {}) {
+            state.context.removals += 1;
+            if (details?.cause) {
+                state.context.lastRemovalCause = details.cause;
+            }
+            evaluateCurrentStep();
+        },
+
+        handleEnemyKilled(details = {}) {
+            state.context.enemyKills += 1;
+            if (details?.match) {
+                state.context.matchingKills += 1;
+            }
+            evaluateCurrentStep();
+        },
+
+        handleEnergyGained(amount = 0) {
+            const gain = Number.isFinite(amount) ? Math.max(0, amount) : 0;
+            if (gain > 0) {
+                state.context.energyGained += gain;
+                state.context.energyEvents += 1;
+            }
+            evaluateCurrentStep();
+        },
+
+        handleScoreChanged(total = 0, details = {}) {
+            const normalizedTotal = Number.isFinite(total) ? Math.max(0, Math.floor(total)) : 0;
+            state.context.scoreTotal = Math.max(state.context.scoreTotal, normalizedTotal);
+            const delta = Number.isFinite(details?.delta) ? details.delta : 0;
+            if (delta > 0) {
+                state.context.scoreGained += delta;
+                state.context.scoreEvents += 1;
+            } else if (normalizedTotal > 0) {
+                state.context.scoreEvents = Math.max(state.context.scoreEvents, 1);
+            }
+            evaluateCurrentStep();
+        },
+
+        handleWaveCompleted(waveNumber) {
+            if (Number.isFinite(waveNumber)) {
+                state.context.wavesCleared = Math.max(state.context.wavesCleared, waveNumber);
+            }
             evaluateCurrentStep();
         },
 
