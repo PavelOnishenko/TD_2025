@@ -7,13 +7,13 @@ test('update moves enemy based on dt and both speed components', () => {
 
     enemy.update(0.5);
 
-    assert.strictEqual(enemy.x, 48);
-    assert.strictEqual(enemy.y, 132);
+    assert.strictEqual(enemy.x, 39);
+    assert.strictEqual(enemy.y, 126);
 
     enemy.update(0.25);
 
-    assert.strictEqual(enemy.x, 72);
-    assert.strictEqual(enemy.y, 148);
+    assert.strictEqual(enemy.x, 58.5);
+    assert.strictEqual(enemy.y, 139);
 });
 
 test('isOutOfBounds only flags positions beyond the bottom edge', () => {
@@ -106,8 +106,8 @@ test('swarm enemy has less hp and moves faster than tank', () => {
 test('global speed multiplier applies to all enemies', () => {
     const enemy = new Enemy(3, 'red', 0, 0, 100, 50);
 
-    assert.strictEqual(enemy.speedX, 80);
-    assert.strictEqual(enemy.speedY, 40);
+    assert.strictEqual(enemy.speedX, 65);
+    assert.strictEqual(enemy.speedY, 32.5);
 });
 
 test('horizontal flight keeps vertical speed at zero', () => {
