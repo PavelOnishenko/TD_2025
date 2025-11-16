@@ -26,6 +26,8 @@
 
 13 | TODO | Hovering on towers and empty places should highlight tower/place. 
 
-14 | TODO | If we are ready for release: extract engine functionality that certainly would be used for next games.
+14 | TODO | Balance the game.
 
-15 | TODO | If we are ready for release: refactor everything with style guide.
+15 | TODO | If we are ready for release: extract engine functionality that certainly would be used for next games.
+
+16 | TODO | If we are ready for release: refactor everything with style guide.
