@@ -61,7 +61,7 @@ export const gameConfig = {
     },
     player: {
         initialLives: 5,
-        initialEnergy: 50,
+        initialEnergy: 100,
         towerCost: 12,
         switchCost: 4,
         maxWaves: 20,
