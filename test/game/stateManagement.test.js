@@ -43,6 +43,18 @@ test('switchTowerColor rejects change when energy insufficient', () => {
     assert.equal(tower.color, 'red');
 });
 
+test('switchTowerColor rejects change during active wave', () => {
+    const game = createGame({ attachDom: true });
+    const tower = placeTowerOnCell(game, game.bottomCells[0]);
+    game.waveInProgress = true;
+
+    const switched = game.switchTowerColor(tower);
+
+    assert.equal(switched, false);
+    assert.equal(tower.color, 'red');
+    assert.equal(game.energy, game.initialEnergy);
+});
+
 test('getPersistentState captures towers with identifiers', () => {
     const game = createGame();
     const cell = game.bottomCells[0];
