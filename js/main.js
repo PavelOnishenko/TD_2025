@@ -13,6 +13,7 @@ import gameConfig from './config/gameConfig.js';
 import featureFlags from './config/featureFlags.js';
 import initSimpleSaveSystem from './systems/simpleSaveSystem.js';
 import { initializeHudController } from './systems/hudLayout.js';
+import { translate } from './systems/localization.js';
 
 const { width: LOGICAL_W, height: LOGICAL_H } = gameConfig.world.logicalSize;
 export function getViewportMetrics(windowRef = window) {
@@ -195,7 +196,7 @@ function updateCrazyGamesUserUI(user) {
     const avatarEl = document.getElementById('crazyGamesUserAvatar');
 
     if (usernameEl) {
-        usernameEl.textContent = user.username ?? 'CrazyGames Player';
+        usernameEl.textContent = user.username ?? translate('crazyGames.defaultUser', {}, 'CrazyGames Player');
     }
 
     if (avatarEl) {

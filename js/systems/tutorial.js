@@ -6,6 +6,7 @@ import {
     markTutorialComplete,
 } from './tutorialProgress.js';
 import { resolveTutorialTargets } from './tutorialTargets.js';
+import { translate } from './localization.js';
 
 const DEFAULT_CHECK_INTERVAL = 320;
 const SOUND_CACHE = new Map();
@@ -210,6 +211,8 @@ function normalizeSteps(steps) {
         id: step?.id ?? `step-${index}`,
         name: step?.name ?? step?.title ?? '',
         text: step?.text ?? '',
+        nameKey: typeof step?.nameKey === 'string' ? step.nameKey : null,
+        textKey: typeof step?.textKey === 'string' ? step.textKey : null,
         wave: Number.isFinite(step?.wave) ? step.wave : 1,
         highlightTargets: Array.isArray(step?.highlightTargets) ? [...step.highlightTargets] : [],
         picture: step?.picture ?? step?.image ?? null,
@@ -221,6 +224,39 @@ function normalizeSteps(steps) {
 
 function getDefaultSteps() {
     return normalizeSteps(gameConfig?.tutorial?.steps ?? []);
+}
+
+function resolveStepName(step) {
+    if (!step) {
+        return '';
+    }
+    const fallback = typeof step.name === 'string' ? step.name : '';
+    if (typeof step.nameKey === 'string' && step.nameKey) {
+        return translate(step.nameKey, {}, fallback);
+    }
+    return fallback;
+}
+
+function resolveStepText(step) {
+    if (!step) {
+        return '';
+    }
+    const fallback = typeof step.text === 'string' ? step.text : '';
+    if (typeof step.textKey === 'string' && step.textKey) {
+        return translate(step.textKey, {}, fallback);
+    }
+    return fallback;
+}
+
+function createDisplayStep(step) {
+    if (!step) {
+        return null;
+    }
+    return {
+        ...step,
+        name: resolveStepName(step),
+        text: resolveStepText(step),
+    };
 }
 
 export function createTutorial(game, options = {}) {
@@ -256,6 +292,7 @@ export function createTutorial(game, options = {}) {
         steps,
         started: false,
         currentStep: null,
+        currentDisplayStep: null,
         currentWave: Number.isFinite(game?.wave) ? game.wave : 1,
         waveInProgress: Boolean(game?.waveInProgress),
         persistentComplete: Boolean(options.initiallyComplete),
@@ -348,6 +385,7 @@ export function createTutorial(game, options = {}) {
         if (state.context) {
             state.context.currentStepId = null;
         }
+        state.currentDisplayStep = null;
     }
 
     function ensureCheckLoop() {
@@ -384,7 +422,9 @@ export function createTutorial(game, options = {}) {
             return;
         }
         state.currentStep = step;
-        overlay?.show?.(step);
+        const displayStep = createDisplayStep(step);
+        state.currentDisplayStep = displayStep;
+        overlay?.show?.(displayStep);
         applyHighlights(step);
         playSound(step.sound);
         ensureCheckLoop();
@@ -411,6 +451,16 @@ export function createTutorial(game, options = {}) {
             return;
         }
         showStep(next);
+    }
+
+    function refreshCurrentStepLocalization() {
+        if (!state.currentStep || !state.currentDisplayStep) {
+            return;
+        }
+        const displayStep = createDisplayStep(state.currentStep);
+        state.currentDisplayStep = displayStep;
+        overlay?.show?.(displayStep);
+        applyHighlights(state.currentStep);
     }
 
     function evaluateCurrentStep() {
@@ -642,6 +692,10 @@ export function createTutorial(game, options = {}) {
             hideOverlay();
         },
 
+        refreshLocalization() {
+            refreshCurrentStepLocalization();
+        },
+
         _state: state,
     };
 }
@@ -670,6 +724,9 @@ export function attachTutorial(game, options = {}) {
         tutorial.clearProgress();
         tutorial.reset({ force: true });
         tutorial.handleWavePreparation?.(Number.isFinite(game?.wave) ? game.wave : 1);
+    };
+    game.refreshTutorialLocalization = () => {
+        tutorial.refreshLocalization?.();
     };
     return tutorial;
 }

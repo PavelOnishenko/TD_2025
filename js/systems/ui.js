@@ -2,7 +2,7 @@ import Tower from '../entities/Tower.js';
 import gameConfig from '../config/gameConfig.js';
 import { callCrazyGamesEvent } from './crazyGamesIntegration.js';
 import { showCrazyGamesAdWithPause } from './ads.js';
-import { saveAudioSettings } from './dataStore.js';
+import { saveAudioSettings, loadLanguagePreference, saveLanguagePreference } from './dataStore.js';
 import { attachTutorial } from './tutorial.js';
 import { registerTutorialTarget } from './tutorialTargets.js';
 import {
@@ -11,9 +11,68 @@ import {
     resolvePlayerDisplayName,
     normalizeScore,
 } from './highScores.js';
+import { translate, setActiveLocale, applyLocalization } from './localization.js';
+
+const SUPPORTED_LANGUAGES = ['en', 'ru'];
+const DEFAULT_LANGUAGE = SUPPORTED_LANGUAGES[0];
 
 const HEART_FILLED_SRC = 'assets/heart_filled.png';
 const HEART_EMPTY_SRC = 'assets/heart_empty.png';
+
+function normalizeLanguageCode(language) {
+    if (typeof language !== 'string') {
+        return '';
+    }
+    return language.trim().toLowerCase();
+}
+
+function resolveSupportedLanguage(language) {
+    const normalized = normalizeLanguageCode(language);
+    if (!normalized) {
+        return null;
+    }
+    if (SUPPORTED_LANGUAGES.includes(normalized)) {
+        return normalized;
+    }
+    const [base] = normalized.split(/[-_]/);
+    if (base && SUPPORTED_LANGUAGES.includes(base)) {
+        return base;
+    }
+    return null;
+}
+
+function getNavigatorLanguagePreferences() {
+    if (typeof navigator === 'undefined') {
+        return [];
+    }
+    const preferences = [];
+    if (typeof navigator.language === 'string') {
+        preferences.push(navigator.language);
+    }
+    if (Array.isArray(navigator.languages)) {
+        preferences.push(...navigator.languages);
+    }
+    return preferences;
+}
+
+function resolveInitialLanguage(game) {
+    const stored = resolveSupportedLanguage(loadLanguagePreference());
+    if (stored) {
+        return stored;
+    }
+    const navigatorPreferences = getNavigatorLanguagePreferences();
+    for (const preference of navigatorPreferences) {
+        const resolved = resolveSupportedLanguage(preference);
+        if (resolved) {
+            return resolved;
+        }
+    }
+    const current = resolveSupportedLanguage(game?.language);
+    if (current) {
+        return current;
+    }
+    return DEFAULT_LANGUAGE;
+}
 
 function getMousePos(canvas, e) {
     const rect = canvas.getBoundingClientRect();
@@ -56,6 +115,7 @@ export function bindUI(game) {
     bindLeaderboard(game);
     bindCanvasInteractions(game);
     bindDiagnosticsOverlay(game);
+    bindLocalization(game);
     updateHUD(game);
     setupStartMenu(game);
     updateAudioControls(game);
@@ -134,6 +194,65 @@ function bindHUD(game) {
             }
         }
     };
+}
+
+function bindLocalization(game) {
+    if (!game) {
+        return;
+    }
+
+    const refreshUi = () => {
+        applyLocalization(typeof document !== 'undefined' ? document : undefined);
+        updateAudioControls(game);
+        updateHUD(game);
+        updateWavePhaseIndicator(game);
+        refreshDiagnosticsOverlay(game, { force: true });
+        if (typeof game.refreshPauseUi === 'function') {
+            game.refreshPauseUi();
+        }
+        if (typeof game.refreshLeaderboardCopy === 'function') {
+            game.refreshLeaderboardCopy();
+        }
+        if (typeof game.refreshTutorialLocalization === 'function') {
+            game.refreshTutorialLocalization();
+        }
+        if (typeof game.updateEndScreenLocalization === 'function') {
+            game.updateEndScreenLocalization();
+        }
+        if (typeof game.updateStatusLocalization === 'function') {
+            game.updateStatusLocalization();
+        }
+        updateLanguageControls(game);
+    };
+
+    const applyLanguage = async (language) => {
+        const resolved = resolveSupportedLanguage(language) ?? DEFAULT_LANGUAGE;
+        await setActiveLocale(resolved);
+        refreshUi();
+    };
+
+    const handleLanguageChanged = (language) => {
+        const resolved = resolveSupportedLanguage(language) ?? DEFAULT_LANGUAGE;
+        saveLanguagePreference(resolved);
+        void applyLanguage(resolved);
+    };
+
+    if (typeof game.addLanguageListener === 'function') {
+        game.addLanguageListener(handleLanguageChanged);
+    }
+
+    const initialLanguage = resolveInitialLanguage(game);
+
+    if (typeof game.setLanguage === 'function') {
+        const changed = game.setLanguage(initialLanguage);
+        if (!changed) {
+            void applyLanguage(initialLanguage);
+        }
+    }
+    else {
+        game.language = initialLanguage;
+        void applyLanguage(initialLanguage);
+    }
 }
 
 function bindDiagnosticsOverlay(game) {
@@ -230,25 +349,29 @@ export function refreshDiagnosticsOverlay(game, options = {}) {
     const fpsDisplay = fpsValue > 0 ? fpsValue.toFixed(1) : '—';
     const waveNumber = Number.isFinite(game?.wave) ? game.wave : 0;
     const maxWaves = Number.isFinite(game?.maxWaves) ? game.maxWaves : '∞';
-    const waveStatus = game?.waveInProgress ? 'In Progress' : 'Prep';
+    const waveStatus = game?.waveInProgress
+        ? translate('diagnostics.waveStatus.active', {}, 'In Progress')
+        : translate('diagnostics.waveStatus.prep', {}, 'Prep');
     const enemies = Array.isArray(game?.enemies) ? game.enemies.length : 0;
     const towers = Array.isArray(game?.towers) ? game.towers.length : 0;
     const projectiles = Array.isArray(game?.projectiles) ? game.projectiles.length : 0;
     const entities = enemies + towers + projectiles;
-    const paused = game?.isPaused ? 'Yes' : 'No';
-    const muted = game?.audioMuted ? 'Yes' : 'No';
-    const music = game?.musicEnabled ? 'Yes' : 'No';
+    const yesText = translate('diagnostics.boolean.yes', {}, 'Yes');
+    const noText = translate('diagnostics.boolean.no', {}, 'No');
+    const paused = game?.isPaused ? yesText : noText;
+    const muted = game?.audioMuted ? yesText : noText;
+    const music = game?.musicEnabled ? yesText : noText;
 
     const lines = [
-        `FPS: ${fpsDisplay}`,
-        `Wave: ${waveNumber}/${maxWaves} (${waveStatus})`,
-        `Enemies: ${enemies}`,
-        `Towers: ${towers}`,
-        `Projectiles: ${projectiles}`,
-        `Entities: ${entities}`,
-        `Paused: ${paused}`,
-        `Muted: ${muted}`,
-        `Music Enabled: ${music}`,
+        translate('diagnostics.fps', { value: fpsDisplay }, `FPS: ${fpsDisplay}`),
+        translate('diagnostics.wave', { current: waveNumber, max: maxWaves, status: waveStatus }, `Wave: ${waveNumber}/${maxWaves} (${waveStatus})`),
+        translate('diagnostics.enemies', { count: enemies }, `Enemies: ${enemies}`),
+        translate('diagnostics.towers', { count: towers }, `Towers: ${towers}`),
+        translate('diagnostics.projectiles', { count: projectiles }, `Projectiles: ${projectiles}`),
+        translate('diagnostics.entities', { count: entities }, `Entities: ${entities}`),
+        translate('diagnostics.paused', { value: paused }, `Paused: ${paused}`),
+        translate('diagnostics.muted', { value: muted }, `Muted: ${muted}`),
+        translate('diagnostics.music', { value: music }, `Music Enabled: ${music}`),
     ];
 
     overlay.textContent = lines.join('\n');
@@ -412,7 +535,9 @@ function updateMuteButton(game) {
     }
     buttons.forEach(button => {
         if (typeof button.textContent !== 'undefined') {
-            button.textContent = muted ? 'Unmute' : 'Mute';
+            const key = muted ? 'audio.unmute' : 'audio.mute';
+            const fallback = muted ? 'Unmute' : 'Mute';
+            button.textContent = translate(key, {}, fallback);
         }
         if (typeof button.setAttribute === 'function') {
             button.setAttribute('aria-pressed', muted ? 'true' : 'false');
@@ -428,7 +553,9 @@ function updateMusicButton(game) {
     }
     buttons.forEach(button => {
         if (typeof button.textContent !== 'undefined') {
-            button.textContent = enabled ? 'Music On' : 'Music Off';
+            const key = enabled ? 'audio.musicOn' : 'audio.musicOff';
+            const fallback = enabled ? 'Music On' : 'Music Off';
+            button.textContent = translate(key, {}, fallback);
         }
         if (typeof button.setAttribute === 'function') {
             button.setAttribute('aria-pressed', enabled ? 'true' : 'false');
@@ -441,9 +568,7 @@ function updateLanguageControls(game) {
     if (!select) {
         return;
     }
-    const current = typeof game.language === 'string' && game.language.trim()
-        ? game.language.trim().toLowerCase()
-        : 'en';
+    const current = resolveSupportedLanguage(game.language) ?? DEFAULT_LANGUAGE;
     if (select.value !== current) {
         select.value = current;
     }
@@ -478,29 +603,47 @@ function showEndScreen(game, outcome) {
     if (!game.endOverlay)
         return;
     const isWin = outcome === 'WIN';
+    const result = isWin ? 'win' : 'lose';
     game.endOverlay.classList.remove('hidden');
     if (game.endMenu) {
         game.endMenu.classList.toggle('win', isWin);
         game.endMenu.classList.toggle('lose', !isWin);
     }
-    if (game.endMessageEl) {
-        game.endMessageEl.textContent = isWin ? 'Victory!' : 'Defeat!';
-    }
-    if (game.endDetailEl) {
-        game.endDetailEl.textContent = isWin
-            ? 'All waves cleared. Great job!'
-            : 'The base was overrun. Try again!';
-    }
+    updateEndScreenMessages(game, result);
     updateEndScreenScore(game);
+    game.lastEndOutcome = result;
+    game.updateEndScreenLocalization = () => {
+        updateEndScreenMessages(game, game.lastEndOutcome);
+        updateEndScreenScore(game);
+    };
 }
 
 function updateEndScreenScore(game) {
     const { current, best } = resolveScorePair(game);
     if (game.endScoreEl && typeof game.endScoreEl.textContent !== 'undefined') {
-        game.endScoreEl.textContent = `Score: ${current}`;
+        game.endScoreEl.textContent = translate('end.score', { value: current }, `Score: ${current}`);
     }
     if (game.endBestScoreEl && typeof game.endBestScoreEl.textContent !== 'undefined') {
-        game.endBestScoreEl.textContent = `Best: ${best}`;
+        game.endBestScoreEl.textContent = translate('end.best', { value: best }, `Best: ${best}`);
+    }
+}
+
+function updateEndScreenMessages(game, outcome) {
+    if (!game) {
+        return;
+    }
+    const isWin = outcome === 'win';
+    const titleKey = isWin ? 'end.victory' : 'end.defeat';
+    const detailKey = isWin ? 'end.detailWin' : 'end.detailLose';
+    const titleFallback = isWin ? 'Victory!' : 'Defeat!';
+    const detailFallback = isWin
+        ? 'All waves cleared. Great job!'
+        : 'The base was overrun. Try again!';
+    if (game.endMessageEl && typeof game.endMessageEl.textContent !== 'undefined') {
+        game.endMessageEl.textContent = translate(titleKey, {}, titleFallback);
+    }
+    if (game.endDetailEl && typeof game.endDetailEl.textContent !== 'undefined') {
+        game.endDetailEl.textContent = translate(detailKey, {}, detailFallback);
     }
 }
 
@@ -819,18 +962,18 @@ function renderScore(game) {
     const { current, best } = resolveScorePair(game);
     if (game.scoreEl) {
         if (typeof game.scoreEl.textContent !== 'undefined') {
-            game.scoreEl.textContent = `Score: ${current}`;
+            game.scoreEl.textContent = translate('hud.scoreLabel', { value: current }, `Score: ${current}`);
         }
         if (typeof game.scoreEl.setAttribute === 'function') {
-            game.scoreEl.setAttribute('aria-label', `Score: ${current}`);
+            game.scoreEl.setAttribute('aria-label', translate('hud.scoreAria', { value: current }, `Score: ${current}`));
         }
     }
     if (game.bestScoreEl) {
         if (typeof game.bestScoreEl.textContent !== 'undefined') {
-            game.bestScoreEl.textContent = `Best: ${best}`;
+            game.bestScoreEl.textContent = translate('hud.bestLabel', { value: best }, `Best: ${best}`);
         }
         if (typeof game.bestScoreEl.setAttribute === 'function') {
-            game.bestScoreEl.setAttribute('aria-label', `Best score: ${best}`);
+            game.bestScoreEl.setAttribute('aria-label', translate('hud.bestAria', { value: best }, `Best score: ${best}`));
         }
     }
     if (game.scorePanelEl && typeof game.scorePanelEl.setAttribute === 'function') {
@@ -848,6 +991,9 @@ function toggleEndlessIndicator(game, isEndless) {
     } else if (indicator.style) {
         indicator.style.display = isEndless ? '' : 'none';
     }
+    if (typeof indicator.textContent !== 'undefined') {
+        indicator.textContent = translate('hud.endlessIndicator', {}, 'Endless Mode');
+    }
     if (typeof indicator.setAttribute === 'function') {
         indicator.setAttribute('aria-hidden', isEndless ? 'false' : 'true');
     }
@@ -861,14 +1007,24 @@ function renderWaveInfo(game) {
         ? game.isEndlessWave()
         : game.wave > game.maxWaves;
     if (typeof game.waveEl.textContent !== 'undefined') {
-        game.waveEl.textContent = endlessActive
+        const key = endlessActive ? 'hud.waveLabelEndless' : 'hud.waveLabel';
+        const params = endlessActive
+            ? { current: game.wave }
+            : { current: game.wave, max: game.maxWaves };
+        const fallback = endlessActive
             ? `Wave: ${game.wave}`
             : `Wave: ${game.wave}/${game.maxWaves}`;
+        game.waveEl.textContent = translate(key, params, fallback);
     }
     if (typeof game.waveEl.setAttribute === 'function') {
-        const label = endlessActive
+        const key = endlessActive ? 'hud.waveAriaEndless' : 'hud.waveAria';
+        const params = endlessActive
+            ? { current: game.wave }
+            : { current: game.wave, max: game.maxWaves };
+        const fallback = endlessActive
             ? `Wave ${game.wave}, endless mode`
             : `Wave ${game.wave} of ${game.maxWaves}`;
+        const label = translate(key, params, fallback);
         game.waveEl.setAttribute('aria-label', label);
     }
     toggleEndlessIndicator(game, endlessActive);
@@ -877,7 +1033,9 @@ function renderWaveInfo(game) {
 export function updateWavePhaseIndicator(game) {
     const isInProgress = Boolean(game.waveInProgress);
     if (game.wavePhaseEl) {
-        game.wavePhaseEl.textContent = isInProgress ? 'Wave in progress' : 'Preparation phase';
+        const key = isInProgress ? 'hud.wavePhase.active' : 'hud.wavePhase.prep';
+        const fallback = isInProgress ? 'Wave in progress' : 'Preparation phase';
+        game.wavePhaseEl.textContent = translate(key, {}, fallback);
         game.wavePhaseEl.classList.toggle('wave-phase--active', isInProgress);
         game.wavePhaseEl.classList.toggle('wave-phase--prep', !isInProgress);
     }
@@ -916,13 +1074,15 @@ function renderLives(game) {
             game.livesEl.replaceChildren(...hearts);
         }
         if (typeof game.livesEl.setAttribute === 'function') {
-            game.livesEl.setAttribute('aria-label', `Lives: ${game.lives}`);
+            const label = translate('hud.livesAria', { value: game.lives }, `Lives: ${game.lives}`);
+            game.livesEl.setAttribute('aria-label', label);
         }
     }
     else {
-        game.livesEl.textContent = `Lives: ${game.lives}`;
+        game.livesEl.textContent = translate('hud.livesAria', { value: game.lives }, `Lives: ${game.lives}`);
         if (typeof game.livesEl.setAttribute === 'function') {
-            game.livesEl.setAttribute('aria-label', `Lives: ${game.lives}`);
+            const label = translate('hud.livesAria', { value: game.lives }, `Lives: ${game.lives}`);
+            game.livesEl.setAttribute('aria-label', label);
         }
     }
 }
@@ -955,25 +1115,29 @@ function renderEnergy(game) {
             game.energyEl.replaceChildren(value, icon);
         }
         if (typeof game.energyEl.setAttribute === 'function') {
-            game.energyEl.setAttribute('aria-label', `Energy: ${amount}`);
+            const label = translate('hud.energyAria', { amount }, `Energy: ${amount}`);
+            game.energyEl.setAttribute('aria-label', label);
         }
     }
     else {
         game.energyEl.textContent = `${amount}`;
         if (typeof game.energyEl.setAttribute === 'function') {
-            game.energyEl.setAttribute('aria-label', `Energy: ${amount}`);
+            const label = translate('hud.energyAria', { amount }, `Energy: ${amount}`);
+            game.energyEl.setAttribute('aria-label', label);
         }
     }
 }
 
 export function endGame(game, text) {
     const isWin = text === 'WIN';
+    const outcome = isWin ? 'win' : 'lose';
     game.waveInProgress = false;
     updateWavePhaseIndicator(game);
-    if (game.statusEl) {
-        game.statusEl.textContent = isWin ? 'All waves cleared!' : 'Base destroyed!';
-        game.statusEl.style.color = isWin ? '#4ade80' : '#f87171';
-    }
+    updateStatusMessage(game, outcome);
+    game.lastStatusOutcome = outcome;
+    game.updateStatusLocalization = () => {
+        updateStatusMessage(game, game.lastStatusOutcome);
+    };
     if (game.nextWaveBtn) {
         game.nextWaveBtn.disabled = true;
     }
@@ -998,6 +1162,17 @@ export function endGame(game, text) {
     }
 }
 
+function updateStatusMessage(game, outcome) {
+    if (!game?.statusEl || !outcome) {
+        return;
+    }
+    const isWin = outcome === 'win';
+    const key = isWin ? 'hud.statusWin' : 'hud.statusLose';
+    const fallback = isWin ? 'All waves cleared!' : 'Base destroyed!';
+    game.statusEl.textContent = translate(key, {}, fallback);
+    game.statusEl.style.color = isWin ? '#4ade80' : '#f87171';
+}
+
 function bindPauseSystem(game) {
     if (game.pauseBtn) {
         game.pauseBtn.disabled = true;
@@ -1010,20 +1185,26 @@ function bindPauseSystem(game) {
         }
         if (game.pauseMessageEl) {
             if (paused) {
-                game.pauseMessageEl.textContent = isAdPause
+                const key = isAdPause ? 'pause.message.ad' : 'pause.message.paused';
+                const fallback = isAdPause
                     ? 'Ad break in progress. The game will resume automatically.'
                     : 'Game paused. Take a moment before resuming the defense.';
+                game.pauseMessageEl.textContent = translate(key, {}, fallback);
             }
             else {
-                game.pauseMessageEl.textContent = 'Take a breather. The battle will wait.';
+                game.pauseMessageEl.textContent = translate('pause.message.idle', {}, 'Take a breather. The battle will wait.');
             }
         }
         if (game.resumeBtn) {
             game.resumeBtn.disabled = isAdPause;
-            game.resumeBtn.textContent = isAdPause ? 'Ad in progress…' : 'Resume';
+            const key = isAdPause ? 'pause.resumeAd' : 'pause.resume';
+            const fallback = isAdPause ? 'Ad in progress…' : 'Resume';
+            game.resumeBtn.textContent = translate(key, {}, fallback);
         }
         if (game.pauseBtn) {
-            game.pauseBtn.textContent = paused ? 'Resume' : 'Pause';
+            const key = paused ? 'pause.resume' : 'pause.pause';
+            const fallback = paused ? 'Resume' : 'Pause';
+            game.pauseBtn.textContent = translate(key, {}, fallback);
             game.pauseBtn.setAttribute('aria-pressed', paused ? 'true' : 'false');
             const shouldDisable = !game.hasStarted || game.gameOver || (paused && isAdPause);
             game.pauseBtn.disabled = shouldDisable;
@@ -1044,6 +1225,7 @@ function bindPauseSystem(game) {
         game.addPauseListener(updatePauseUi);
     }
     updatePauseUi(Boolean(game.isPaused), game.pauseReason);
+    game.refreshPauseUi = () => updatePauseUi(Boolean(game.isPaused), game.pauseReason);
 
     if (game.resumeBtn) {
         game.resumeBtn.addEventListener('click', () => {
@@ -1113,15 +1295,25 @@ function bindLeaderboard(game) {
         loading: false,
         loadPromise: null,
         loadedOnce: false,
+        loadingMessageKey: null,
+        loadingMessageFallback: '',
+        errorKey: null,
+        errorFallback: '',
+        errorParams: null,
     };
     game.leaderboardState = state;
 
     panel.hidden = true;
     panel.classList.add('hidden');
     toggleBtn.setAttribute('aria-expanded', 'false');
-    if (typeof toggleBtn.textContent === 'string') {
-        toggleBtn.textContent = 'View Global Leaderboard';
-    }
+    const setToggleLabel = () => {
+        if (typeof toggleBtn.textContent === 'string') {
+            const key = state.visible ? 'leaderboard.toggle.hide' : 'leaderboard.toggle.show';
+            const fallback = state.visible ? 'Hide Global Leaderboard' : 'View Global Leaderboard';
+            toggleBtn.textContent = translate(key, {}, fallback);
+        }
+    };
+    setToggleLabel();
 
     const getLoadingTextEl = () => {
         if (!loadingEl) {
@@ -1142,14 +1334,24 @@ function bindLeaderboard(game) {
         }
     };
 
-    const setLoading = (loading, message = 'Loading leaderboard…') => {
+    const setLoading = (loading, options = {}) => {
         state.loading = loading;
+        const key = options?.key ?? 'leaderboard.loading';
+        const fallback = options?.fallback ?? 'Loading leaderboard…';
         if (loadingEl) {
             loadingEl.classList.toggle('hidden', !loading);
             const loadingTextEl = getLoadingTextEl();
-            if (loadingTextEl && typeof loadingTextEl.textContent !== 'undefined') {
-                loadingTextEl.textContent = message;
+            if (loading && loadingTextEl && typeof loadingTextEl.textContent !== 'undefined') {
+                loadingTextEl.textContent = translate(key, {}, fallback);
             }
+        }
+        if (loading) {
+            state.loadingMessageKey = key;
+            state.loadingMessageFallback = fallback;
+        }
+        else {
+            state.loadingMessageKey = null;
+            state.loadingMessageFallback = '';
         }
         if (panel && typeof panel.setAttribute === 'function') {
             panel.setAttribute('aria-busy', loading ? 'true' : 'false');
@@ -1166,14 +1368,25 @@ function bindLeaderboard(game) {
         }
     };
 
-    const showError = (message) => {
+    const applyStoredError = () => {
         if (!errorEl) {
             return;
         }
+        const hasError = Boolean(state.errorKey || state.errorFallback);
+        const text = hasError
+            ? translate(state.errorKey, state.errorParams ?? {}, state.errorFallback ?? '')
+            : '';
         if (typeof errorEl.textContent !== 'undefined') {
-            errorEl.textContent = message ?? '';
+            errorEl.textContent = text;
         }
-        errorEl.classList.toggle('hidden', !message);
+        errorEl.classList.toggle('hidden', !text);
+    };
+
+    const showError = ({ key = null, fallback = '', params = null } = {}) => {
+        state.errorKey = key;
+        state.errorFallback = fallback;
+        state.errorParams = params;
+        applyStoredError();
     };
 
     const showEmpty = (visible) => {
@@ -1222,7 +1435,7 @@ function bindLeaderboard(game) {
         state.visible = false;
         panel.hidden = true;
         panel.classList.add('hidden');
-        toggleBtn.textContent = 'View Global Leaderboard';
+        setToggleLabel();
         toggleBtn.setAttribute('aria-expanded', 'false');
     };
 
@@ -1230,14 +1443,49 @@ function bindLeaderboard(game) {
         state.visible = true;
         panel.hidden = false;
         panel.classList.remove('hidden');
-        toggleBtn.textContent = 'Hide Global Leaderboard';
+        setToggleLabel();
         toggleBtn.setAttribute('aria-expanded', 'true');
+    };
+
+    const localizeErrorDetail = (message) => {
+        if (!message) {
+            return translate('errors.unknown', {}, 'Unknown error');
+        }
+        if (message === 'Unknown error') {
+            return translate('errors.unknown', {}, message);
+        }
+        if (message === 'Fetch API unavailable') {
+            return translate('errors.fetchUnavailable', {}, message);
+        }
+        if (message === 'Request timed out') {
+            return translate('errors.requestTimeout', {}, message);
+        }
+        if (message.startsWith('Request failed (' )) {
+            const match = message.match(/Request failed \((\d+)\s*([^)]*)\)/);
+            if (match) {
+                const [, status, text] = match;
+                return translate('errors.requestFailedStatusText', { status, statusText: text?.trim() ?? '' }, message);
+            }
+        }
+        if (message.startsWith('Request failed with status ')) {
+            const match = message.match(/Request failed with status\s+(\d+)/);
+            if (match) {
+                const [, status] = match;
+                return translate('errors.requestFailedStatus', { status }, message);
+            }
+        }
+        return message;
     };
 
     const handleResult = (result) => {
         if (!result?.success) {
-            const message = result?.error ? `Unable to load leaderboard: ${result.error}` : 'Unable to load leaderboard.';
-            showError(message);
+            const detail = localizeErrorDetail(result?.error);
+            const fallback = result?.error ? `Unable to load leaderboard: ${result.error}` : 'Unable to load leaderboard.';
+            showError({
+                key: result?.error ? 'leaderboard.error.withMessage' : 'leaderboard.error.generic',
+                fallback,
+                params: result?.error ? { error: detail } : undefined,
+            });
             clearList();
             showEmpty(false);
             return;
@@ -1246,11 +1494,11 @@ function bindLeaderboard(game) {
         const entries = Array.isArray(result.entries) ? result.entries : [];
         if (entries.length === 0) {
             clearList();
-            showError('');
+            showError();
             showEmpty(true);
             return;
         }
-        showError('');
+        showError();
         showEmpty(false);
         renderEntries(entries);
     };
@@ -1258,7 +1506,12 @@ function bindLeaderboard(game) {
     const handleFailure = (error) => {
         const message = error instanceof Error ? error.message : String(error ?? 'Unknown error');
         console.warn('Leaderboard request failed', error);
-        showError(`Unable to load leaderboard: ${message}`);
+        const detail = localizeErrorDetail(message);
+        showError({
+            key: 'leaderboard.error.withMessage',
+            fallback: `Unable to load leaderboard: ${message}`,
+            params: { error: detail },
+        });
         clearList();
         showEmpty(false);
     };
@@ -1267,9 +1520,10 @@ function bindLeaderboard(game) {
         if (state.loadPromise) {
             return state.loadPromise;
         }
-        const { message = 'Loading leaderboard…' } = options;
-        setLoading(true, message);
-        showError('');
+        const key = options?.key ?? 'leaderboard.loading';
+        const fallback = options?.fallback ?? 'Loading leaderboard…';
+        setLoading(true, { key, fallback });
+        showError();
         showEmpty(false);
         state.loadPromise = fetchLeaderboard()
             .then(handleResult)
@@ -1294,7 +1548,10 @@ function bindLeaderboard(game) {
 
     if (retryBtn) {
         retryBtn.addEventListener('click', () => {
-            void loadLeaderboard({ message: state.loadedOnce ? 'Refreshing leaderboard…' : 'Loading leaderboard…' });
+            void loadLeaderboard({
+                key: state.loadedOnce ? 'leaderboard.refresh' : 'leaderboard.loading',
+                fallback: state.loadedOnce ? 'Refreshing leaderboard…' : 'Loading leaderboard…',
+            });
         });
     }
 
@@ -1309,12 +1566,27 @@ function bindLeaderboard(game) {
     }
 
     game.refreshLeaderboard = (options = {}) => {
-        const message = options?.message ?? (state.loadedOnce ? 'Refreshing leaderboard…' : 'Loading leaderboard…');
-        return loadLeaderboard({ message });
+        const key = options?.key ?? (state.loadedOnce ? 'leaderboard.refresh' : 'leaderboard.loading');
+        const fallback = options?.fallback ?? (state.loadedOnce ? 'Refreshing leaderboard…' : 'Loading leaderboard…');
+        return loadLeaderboard({ key, fallback });
     };
 
     const initiallyDisabled = !game.isPaused || game.pauseReason === 'ad';
     toggleBtn.disabled = initiallyDisabled;
+
+    game.refreshLeaderboardCopy = () => {
+        setToggleLabel();
+        if (state.loading) {
+            setLoading(true, {
+                key: state.loadingMessageKey ?? 'leaderboard.loading',
+                fallback: state.loadingMessageFallback || 'Loading leaderboard…',
+            });
+        }
+        else {
+            setLoading(false);
+        }
+        applyStoredError();
+    };
 }
 
 function resolveLeaderboardPlayerName(game) {
@@ -1348,7 +1620,7 @@ function submitScoreToLeaderboard(game) {
                 return handleFailure(result?.error ?? 'Request failed');
             }
             if (game.leaderboardState?.visible && typeof game.refreshLeaderboard === 'function') {
-                void game.refreshLeaderboard({ message: 'Refreshing leaderboard…' });
+                void game.refreshLeaderboard({ key: 'leaderboard.refresh', fallback: 'Refreshing leaderboard…' });
             }
             return result;
         })
