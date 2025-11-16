@@ -16,6 +16,18 @@ const SOURCE_FILES = [
 
 const OPTIONAL_ASSETS = new Set([
     'assets/portal_spawn.mp3',
+    'assets/tower_fire_level1.mp3',
+    'assets/tower_fire_level2.mp3',
+    'assets/tower_fire_level3.mp3',
+    'assets/tower_fire_level4.mp3',
+    'assets/tower_fire_level5.mp3',
+    'assets/tower_fire_level6.mp3',
+    'assets/tower_hit_level1.mp3',
+    'assets/tower_hit_level2.mp3',
+    'assets/tower_hit_level3.mp3',
+    'assets/tower_hit_level4.mp3',
+    'assets/tower_hit_level5.mp3',
+    'assets/tower_hit_level6.mp3',
 ]);
 
 async function extractAssetsFromSource(relativePath) {

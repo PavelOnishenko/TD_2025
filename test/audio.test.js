@@ -146,6 +146,8 @@ test('createGameAudio returns noop audio when howler is unavailable', () => {
         assert.equal(typeof audio.playTowerRemoveCharge, 'function');
         assert.equal(typeof audio.playTowerRemoveCancel, 'function');
         assert.equal(typeof audio.playTowerRemoveExplosion, 'function');
+        assert.equal(typeof audio.playTowerFireForLevel, 'function');
+        assert.equal(typeof audio.playTowerHitForLevel, 'function');
 
         audio.playFire();
         audio.playMinigunFire();
@@ -163,6 +165,8 @@ test('createGameAudio returns noop audio when howler is unavailable', () => {
         audio.playTowerRemoveCharge();
         audio.playTowerRemoveCancel();
         audio.playTowerRemoveExplosion();
+        audio.playTowerFireForLevel(3);
+        audio.playTowerHitForLevel(2);
     });
 });
 
@@ -185,6 +189,11 @@ test('createGameAudio triggers available sounds only', () => {
         const removeChargeSound = { playCalls: 0, play() { this.playCalls += 1; } };
         const removeCancelSound = { playCalls: 0, play() { this.playCalls += 1; } };
         const removeExplosionSound = { playCalls: 0, play() { this.playCalls += 1; } };
+        const makeSound = () => ({ playCalls: 0, play() { this.playCalls += 1; } });
+        const towerFireLevel1 = makeSound();
+        const towerFireLevel3 = makeSound();
+        const towerHitLevel2 = makeSound();
+        const towerHitLevel5 = makeSound();
         const audio = createGameAudio({
             fire: fireSound,
             matchingHit: matchingHitSound,
@@ -199,7 +208,11 @@ test('createGameAudio triggers available sounds only', () => {
             merge: mergeSound,
             towerRemoveCharge: removeChargeSound,
             towerRemoveCancel: removeCancelSound,
-            towerRemoveExplosion: removeExplosionSound
+            towerRemoveExplosion: removeExplosionSound,
+            towerFireLevel1,
+            towerFireLevel3,
+            towerHitLevel2,
+            towerHitLevel5,
         });
 
         audio.playFire();
@@ -218,6 +231,16 @@ test('createGameAudio triggers available sounds only', () => {
         audio.playTowerRemoveCharge();
         audio.playTowerRemoveCancel();
         audio.playTowerRemoveExplosion();
+        assert.equal(audio.playTowerFireForLevel(1), true);
+        assert.equal(audio.playTowerFireForLevel(3), true);
+        assert.equal(audio.playTowerFireForLevel(2), false);
+        assert.equal(audio.playTowerHitForLevel(2), true);
+        assert.equal(audio.playTowerHitForLevel(5), true);
+        assert.equal(audio.playTowerHitForLevel(4), false);
+        assert.equal(towerFireLevel1.playCalls, 1);
+        assert.equal(towerFireLevel3.playCalls, 1);
+        assert.equal(towerHitLevel2.playCalls, 1);
+        assert.equal(towerHitLevel5.playCalls, 1);
 
         assert.equal(fireSound.playCalls, 1);
         assert.equal(minigunFireSound.playCalls, 1);

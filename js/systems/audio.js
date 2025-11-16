@@ -22,7 +22,11 @@ const NOOP_AUDIO = {
     playTowerRemoveCancel() {},
     playTowerRemoveExplosion() {},
     playPortalSpawn() {},
+    playTowerFireForLevel() { return false; },
+    playTowerHitForLevel() { return false; },
 };
+
+const MAX_TOWER_LEVEL = 6;
 
 function hasHowler() {
     return Boolean(globalScope && globalScope.Howl && globalScope.Howler);
@@ -34,6 +38,42 @@ function createSoundTrigger(sound) {
             return;
         }
         sound.play();
+    };
+}
+
+function normalizeTowerLevel(level, maxLevel = MAX_TOWER_LEVEL) {
+    const numericLevel = Number(level);
+    if (!Number.isFinite(numericLevel)) {
+        return 1;
+    }
+    const rounded = Math.round(numericLevel);
+    const clamped = Math.max(1, Math.min(maxLevel, rounded));
+    return clamped;
+}
+
+function createLevelSoundTriggers(sounds, prefix, maxLevel = MAX_TOWER_LEVEL) {
+    const triggers = [];
+    for (let level = 1; level <= maxLevel; level++) {
+        const key = `${prefix}${level}`;
+        const trigger = sounds[key] ? createSoundTrigger(sounds[key]) : null;
+        triggers.push(trigger);
+    }
+    return triggers;
+}
+
+function createLevelSoundPlayer(triggers) {
+    const maxLevel = triggers.length;
+    return function playForLevel(level) {
+        if (!maxLevel) {
+            return false;
+        }
+        const normalized = normalizeTowerLevel(level, maxLevel);
+        const trigger = triggers[normalized - 1];
+        if (trigger) {
+            trigger();
+            return true;
+        }
+        return false;
     };
 }
 
@@ -135,7 +175,19 @@ export function createGameAudio(sounds = {}) {
     const towerRemoveCancelSound = createSoundTrigger(towerRemoveCancelSource);
     const towerRemoveExplosionSound = createSoundTrigger(towerRemoveExplosionSource);
     const portalSpawnSound = createSoundTrigger(portalSpawnSource);
+    const towerFireTriggers = createLevelSoundTriggers(sounds, 'towerFireLevel');
+    const towerHitTriggers = createLevelSoundTriggers(sounds, 'towerHitLevel');
+    const triggerTowerFire = createLevelSoundPlayer(towerFireTriggers);
+    const triggerTowerHit = createLevelSoundPlayer(towerHitTriggers);
     const { playMusic, stopMusic } = createMusicActions(sounds.backgroundMusic ?? null);
+
+    function playTowerFireForLevel(level) {
+        return triggerTowerFire(level);
+    }
+
+    function playTowerHitForLevel(level) {
+        return triggerTowerHit(level);
+    }
 
     return {
         playFire: fireSound,
@@ -159,5 +211,7 @@ export function createGameAudio(sounds = {}) {
         playTowerRemoveCancel: towerRemoveCancelSound,
         playTowerRemoveExplosion: towerRemoveExplosionSound,
         playPortalSpawn: portalSpawnSound,
+        playTowerFireForLevel,
+        playTowerHitForLevel,
     };
 }

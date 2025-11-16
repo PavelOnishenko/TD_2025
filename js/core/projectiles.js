@@ -6,11 +6,26 @@ function clamp(value, min, max) {
     return Math.max(min, Math.min(max, value));
 }
 
+function getProjectileTowerLevel(projectile) {
+    const level = projectile?.towerLevel ?? projectile?.level;
+    if (!Number.isFinite(level)) {
+        return 1;
+    }
+    return Math.max(1, Math.round(level));
+}
+
 function playHitSound(audio, projectile, isColorMatch) {
     if (!audio) {
         return;
     }
     const weaponType = projectile.weaponType ?? projectile.type;
+    const towerLevel = getProjectileTowerLevel(projectile);
+    if (typeof audio.playTowerHitForLevel === 'function') {
+        const played = audio.playTowerHitForLevel(towerLevel, { isColorMatch, weaponType });
+        if (played) {
+            return;
+        }
+    }
     switch (weaponType) {
         case 'minigun':
             if (typeof audio.playMinigunHit === 'function') {

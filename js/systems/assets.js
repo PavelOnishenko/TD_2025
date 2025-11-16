@@ -120,6 +120,66 @@ const SOUND_OPTIONS = {
         volume: 0.45,
         preload: true
     },
+    towerFireLevel1: {
+        src: ['assets/tower_fire_level1.mp3'],
+        volume: 0.55,
+        preload: true,
+    },
+    towerFireLevel2: {
+        src: ['assets/tower_fire_level2.mp3'],
+        volume: 0.58,
+        preload: true,
+    },
+    towerFireLevel3: {
+        src: ['assets/tower_fire_level3.mp3'],
+        volume: 0.6,
+        preload: true,
+    },
+    towerFireLevel4: {
+        src: ['assets/tower_fire_level4.mp3'],
+        volume: 0.62,
+        preload: true,
+    },
+    towerFireLevel5: {
+        src: ['assets/tower_fire_level5.mp3'],
+        volume: 0.65,
+        preload: true,
+    },
+    towerFireLevel6: {
+        src: ['assets/tower_fire_level6.mp3'],
+        volume: 0.68,
+        preload: true,
+    },
+    towerHitLevel1: {
+        src: ['assets/tower_hit_level1.mp3'],
+        volume: 0.35,
+        preload: true,
+    },
+    towerHitLevel2: {
+        src: ['assets/tower_hit_level2.mp3'],
+        volume: 0.36,
+        preload: true,
+    },
+    towerHitLevel3: {
+        src: ['assets/tower_hit_level3.mp3'],
+        volume: 0.38,
+        preload: true,
+    },
+    towerHitLevel4: {
+        src: ['assets/tower_hit_level4.mp3'],
+        volume: 0.42,
+        preload: true,
+    },
+    towerHitLevel5: {
+        src: ['assets/tower_hit_level5.mp3'],
+        volume: 0.45,
+        preload: true,
+    },
+    towerHitLevel6: {
+        src: ['assets/tower_hit_level6.mp3'],
+        volume: 0.48,
+        preload: true,
+    },
     portalSpawn: {
         src: ['assets/portal_spawn.mp3'],
         volume: 0.1,

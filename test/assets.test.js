@@ -111,6 +111,18 @@ test('loadAssets returns sounds only when audio is supported', async () => {
         'assets/tower_remove_charge.mp3',
         'assets/tower_remove_cancel.mp3',
         'assets/tower_remove_explosion.mp3',
+        'assets/tower_fire_level1.mp3',
+        'assets/tower_fire_level2.mp3',
+        'assets/tower_fire_level3.mp3',
+        'assets/tower_fire_level4.mp3',
+        'assets/tower_fire_level5.mp3',
+        'assets/tower_fire_level6.mp3',
+        'assets/tower_hit_level1.mp3',
+        'assets/tower_hit_level2.mp3',
+        'assets/tower_hit_level3.mp3',
+        'assets/tower_hit_level4.mp3',
+        'assets/tower_hit_level5.mp3',
+        'assets/tower_hit_level6.mp3',
         'assets/portal_spawn.mp3',
         'assets/background_music.mp3'
     ]);
@@ -134,6 +146,18 @@ test('loadAssets returns sounds only when audio is supported', async () => {
         'towerRemoveCharge',
         'towerRemoveCancel',
         'towerRemoveExplosion',
+        'towerFireLevel1',
+        'towerFireLevel2',
+        'towerFireLevel3',
+        'towerFireLevel4',
+        'towerFireLevel5',
+        'towerFireLevel6',
+        'towerHitLevel1',
+        'towerHitLevel2',
+        'towerHitLevel3',
+        'towerHitLevel4',
+        'towerHitLevel5',
+        'towerHitLevel6',
         'portalSpawn',
         'backgroundMusic'
     ]);
@@ -150,6 +174,10 @@ test('loadAssets returns sounds only when audio is supported', async () => {
     assert.deepEqual(assets.sounds.towerRemoveCancel, { sound: 'assets/tower_remove_cancel.mp3' });
     assert.deepEqual(assets.sounds.towerRemoveExplosion, { sound: 'assets/tower_remove_explosion.mp3' });
     assert.deepEqual(assets.sounds.portalSpawn, { sound: 'assets/portal_spawn.mp3' });
+    assert.deepEqual(assets.sounds.towerFireLevel1, { sound: 'assets/tower_fire_level1.mp3' });
+    assert.deepEqual(assets.sounds.towerFireLevel6, { sound: 'assets/tower_fire_level6.mp3' });
+    assert.deepEqual(assets.sounds.towerHitLevel1, { sound: 'assets/tower_hit_level1.mp3' });
+    assert.deepEqual(assets.sounds.towerHitLevel6, { sound: 'assets/tower_hit_level6.mp3' });
 });
 
 test('loadAssets skips sounds when audio is not supported', async () => {
