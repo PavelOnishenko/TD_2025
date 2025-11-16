@@ -166,9 +166,6 @@ function bindHUD(game) {
     game.saveBtn = document.getElementById('saveGame');
     game.loadBtn = document.getElementById('loadGame');
     game.deleteSaveBtn = document.getElementById('deleteSave');
-    if (game.canvas) {
-        tutorialTargetCleanups.push(registerTutorialTarget('battlefield', () => game.canvas));
-    }
     if (game.nextWaveBtn) {
         tutorialTargetCleanups.push(registerTutorialTarget('nextWaveButton', () => game.nextWaveBtn));
     }
