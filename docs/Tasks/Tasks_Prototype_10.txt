@@ -1,4 +1,4 @@
-01 | TODO | Change merge button behavior - it should let choose the 2 towers for merging, one after another, 
+01 | DONE | Change merge button behavior - it should let choose the 2 towers for merging, one after another,
     NOT just merge all towers that can. 
     Also show merging hint only when the button is pressed (i.e. while merging mode is on). 
 

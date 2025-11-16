@@ -30,6 +30,8 @@ function resetCollections(game) {
     game.explosions = [];
     game.mergeAnimations = [];
     game.energyPopups = [];
+    game.mergeModeActive = false;
+    game.selectedMergeCell = null;
     game.maxProjectileRadius = game.projectileRadius;
     game.spawned = 0;
     game.spawnTimer = 0;
