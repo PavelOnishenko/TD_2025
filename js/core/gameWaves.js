@@ -1,4 +1,4 @@
-import { updateHUD, updateWavePhaseIndicator } from '../systems/ui.js';
+import { updateHUD, updateWavePhaseIndicator, showWaveClearedBanner } from '../systems/ui.js';
 import gameConfig from '../config/gameConfig.js';
 import { showCrazyGamesAdWithPause } from '../systems/ads.js';
 
@@ -94,6 +94,7 @@ export const waveActions = {
                 this.addScore(this.waveClearScore);
             }
             const completedWave = this.wave;
+            showWaveClearedBanner(this, completedWave);
             if (this.tutorial && typeof this.tutorial.handleWaveCompleted === 'function') {
                 try {
                     this.tutorial.handleWaveCompleted(completedWave);

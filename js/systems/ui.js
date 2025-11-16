@@ -164,6 +164,7 @@ function bindHUD(game) {
     game.leaderboardEmptyEl = document.getElementById('leaderboardEmpty');
     game.leaderboardRetryBtn = document.getElementById('leaderboardRetry');
     game.diagnosticsOverlay = document.getElementById('diagnosticsOverlay');
+    game.waveClearBannerEl = document.getElementById('waveClearBanner');
     game.saveControlsEl = document.getElementById('saveControls');
     game.saveBtn = document.getElementById('saveGame');
     game.loadBtn = document.getElementById('loadGame');
@@ -1083,6 +1084,71 @@ export function updateWavePhaseIndicator(game) {
     }
     if (game.wavePanelEl && game.wavePanelEl.dataset) {
         game.wavePanelEl.dataset.phase = isInProgress ? 'active' : 'prep';
+    }
+}
+
+export function showWaveClearedBanner(game, waveNumber) {
+    const container = game?.waveClearBannerEl;
+    if (!container)
+        return;
+
+    const host = typeof window !== 'undefined' ? window : globalThis;
+    if (typeof host?.clearTimeout === 'function' && game.waveClearHideHandle) {
+        host.clearTimeout(game.waveClearHideHandle);
+    }
+
+    const resolvedWave = Number.isFinite(waveNumber) ? Math.max(1, waveNumber) : 1;
+    const text = translate('hud.waveClearedBanner', { wave: resolvedWave }, `WAVE #${resolvedWave} CLEARED`);
+    const canCreateElements = typeof document !== 'undefined'
+        && typeof document.createElement === 'function';
+    const textEl = canCreateElements ? document.createElement('div') : null;
+    if (!textEl) {
+        return;
+    }
+    textEl.className = 'wave-clear__text';
+    const fragment = canCreateElements && typeof document.createDocumentFragment === 'function'
+        ? document.createDocumentFragment()
+        : null;
+    const target = fragment ?? textEl;
+    Array.from(text).forEach((char, index) => {
+        const letter = document.createElement('span');
+        letter.className = 'wave-clear__letter';
+        letter.style.setProperty('--index', String(index));
+        if (char === ' ') {
+            letter.classList.add('wave-clear__letter--space');
+            letter.textContent = '\u00A0';
+        }
+        else {
+            letter.textContent = char;
+        }
+        target.appendChild(letter);
+    });
+    if (fragment) {
+        textEl.appendChild(fragment);
+    }
+    if (typeof container.replaceChildren === 'function') {
+        container.replaceChildren(textEl);
+    }
+    else {
+        container.innerHTML = '';
+        container.appendChild(textEl);
+    }
+    container.classList.remove('wave-clear--visible');
+    void container.offsetWidth;
+    container.classList.add('wave-clear--visible');
+    container.setAttribute('aria-hidden', 'false');
+
+    const hide = () => {
+        container.classList.remove('wave-clear--visible');
+        container.setAttribute('aria-hidden', 'true');
+        game.waveClearHideHandle = null;
+    };
+
+    if (typeof host?.setTimeout === 'function') {
+        game.waveClearHideHandle = host.setTimeout(hide, 2400);
+    }
+    else {
+        hide();
     }
 }
 
