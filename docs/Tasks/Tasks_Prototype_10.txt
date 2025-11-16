@@ -25,7 +25,7 @@
 
 10 | TODO | Give 2x money for tank kills
 
-11 | TODO | Give 2x money for wave completion.
+11 | DONE | Give 2x money for wave completion.
 
 12 | TODO | Money amounts from kills should become larger as waves progress. Recalc gradually every wave. 
     Only integer values for energy! Use rounding.
