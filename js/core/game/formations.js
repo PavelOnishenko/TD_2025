@@ -63,6 +63,7 @@ function parseHeader(line) {
         difficulty: NaN,
         probability: '',
         gap: undefined,
+        minWave: undefined,
     };
     for (const segment of rest) {
         const [rawKey, ...rawValueParts] = segment.split('=');
@@ -77,6 +78,8 @@ function parseHeader(line) {
             header.probability = value;
         } else if (key === 'gap') {
             header.gap = toNumber(value, undefined);
+        } else if (key === 'minwave') {
+            header.minWave = toNumber(value, undefined);
         }
     }
     return header;
@@ -175,6 +178,9 @@ function finalizeFormation(current, defaults) {
     const difficulty = Number.isFinite(current.difficulty) && current.difficulty > 0
         ? current.difficulty
         : ships.length;
+    const minWave = Number.isFinite(current.minWave)
+        ? Math.max(1, Math.floor(current.minWave))
+        : 1;
     return {
         id: current.id,
         label: current.label,
@@ -183,6 +189,7 @@ function finalizeFormation(current, defaults) {
         ships,
         duration,
         gap: current.gap,
+        minWave,
     };
 }
 
@@ -296,7 +303,8 @@ export function createFormationManager(config = {}) {
             let iterations = 0;
             while (remaining > 0 && iterations < safetyLimit) {
                 iterations += 1;
-                const candidates = formations.filter(formation => formation.difficulty <= remaining);
+                const candidates = formations.filter(formation => formation.difficulty <= remaining
+                    && wave >= (formation.minWave ?? 1));
                 if (!candidates.length) {
                     break;
                 }
