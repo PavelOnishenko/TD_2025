@@ -25,3 +25,7 @@
 12 | TODO | Money amounts from kills should become larger as waves progress
 
 13 | TODO | Hovering on towers and empty places should highlight tower/place. 
+
+14 | TODO | If we are ready for release: extract engine functionality that certainly would be used for next games.
+
+15 | TODO | If we are ready for release: refactor everything with style guide.
