@@ -1,0 +1,34 @@
+WIP
+
+01 | TODO | Make an array holding buttons in top right corner, the buttons should display 
+    from top to bottom as they follow in that array. This is for easier adding buttons to that panel in the future.
+    The positions should flexibly adjust so that each next one is below the previous.
+
+02 | TODO | Create separate button for top right menu to change tower color.
+
+
+
+01 | TODO | 
+
+Kins
+----------------------------------------
+Separate button to change tower color
+Choose which towers to merge
+More ships and slower
+Prohibit changing color during wave
+Make color switch free
+More energy in the beginning
+One more color
+----------------------------------------
+
+Mine
+----------------------------------------
+Make tanks weaker
+Make 20+ waves easier
+Make it easier to get 5-6 level towers
+Prohibit merging and upgrading of 6th level towers
+Give more money for tanks 
+More money for wave completion
+Money amounts from kills should become larger as waves progress
+Hovering on towers and empty places should highlight tower/place. 
+----------------------------------------
