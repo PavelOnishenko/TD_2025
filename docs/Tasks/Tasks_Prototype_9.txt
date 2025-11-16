@@ -62,17 +62,17 @@ It should cover the following:
 
 007 | DONE | Change text on splash screen. It should show "Neon Void" instead of minimal td as it is now.
 
-008 | TODO | Add settings - sound, music, language - to the Pause menu.
+008 | DONE | Add settings - sound, music, language - to the Pause menu.
 
-009 | TODO | Add localization system. Localizations should be read from text files in assets. 2 languages need to work right away - English and Russian.
+009 | DONE | Add localization system. Localizations should be read from text files in assets. 2 languages need to work right away - English and Russian.
 Switching should be placed somewhere in the HUD. Mb in the pause menu? All texts showing in the game should be subject to localization.
 
-011 | TODO | Quality sounds
+010 | DONE | Quality sounds
 
-012 | TODO | Quality music
+011 | DONE | Quality music
 
-013 | TODO | Mb speech for the tutorial?
+012 | CANCELLED | Mb speech for the tutorial?
     
-014 | TODO | (mb) Refactor for code re-use (extract engine logic for fuure games).
+013 | CANCELLED | (mb) Refactor for code re-use (extract engine logic for fuure games).
 (when I will know what I am going to need for the next project, I am gonna separate those things as modules
 and use them as engine library to quickly get the next one on rails)

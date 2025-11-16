@@ -227,6 +227,9 @@ test('bindUI wires HUD elements and tutorial overlay', () => {
     game.tutorial.start();
     game.tutorial.handleWavePreparation(1);
     assert.equal(overlay.classList.contains('hidden'), false);
+    const overlayBackdrop = overlay.querySelector('.tutorial-overlay__backdrop');
+    assert.ok(overlayBackdrop);
+    assert.equal(overlayBackdrop.classList.contains('hidden'), true);
     assert.equal(overlay.dataset.stepId, 'story-intro');
     const title = overlay.querySelector('.tutorial-overlay__title');
     assert.ok(title);

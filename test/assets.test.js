@@ -93,17 +93,20 @@ test('loadAssets returns sounds only when audio is supported', async () => {
         'assets/swarm_B.png'
     ]);
     assert.deepEqual(soundCreatorCalls, [
-        'assets/fire.wav',
-        'assets/fire.wav',
+        'assets/tower_fire_1.mp3',
+        'assets/tower_fire_2.mp3',
+        'assets/tower_fire_3.mp3',
+        'assets/tower_fire_4.mp3',
+        'assets/tower_fire_5.mp3',
+        'assets/tower_fire_6.mp3',
+        'assets/tower_hit_1.mp3',
+        'assets/tower_hit_2.mp3',
+        'assets/tower_hit_3.mp3',
+        'assets/tower_hit_4.mp3',
+        'assets/tower_hit_5.mp3',
+        'assets/tower_hit_6.mp3',
         'assets/explosion.wav',
-        'assets/fire.wav',
-        'assets/explosion.wav',
-        'assets/explosion.wav',
-        'assets/explosion.wav',
-        'assets/explosion.wav',
-        'assets/explosion.wav',
-        'assets/explosion.wav',
-        'assets/placement.wav',
+        'assets/placement.mp3',
         'assets/merge.mp3',
         'assets/color_switch.mp3',
         'assets/explosion.wav',
@@ -116,15 +119,18 @@ test('loadAssets returns sounds only when audio is supported', async () => {
     ]);
     assert.equal(typeof assets.sounds, 'object');
     assert.deepEqual(Object.keys(assets.sounds), [
-        'fire',
-        'minigunFire',
-        'railgunFire',
-        'rocketFire',
-        'matchingHit',
-        'mismatchingHit',
-        'minigunHit',
-        'railgunHit',
-        'rocketHit',
+        'tower_fire_1',
+        'tower_fire_2',
+        'tower_fire_3',
+        'tower_fire_4',
+        'tower_fire_5',
+        'tower_fire_6',
+        'tower_hit_1',
+        'tower_hit_2',
+        'tower_hit_3',
+        'tower_hit_4',
+        'tower_hit_5',
+        'tower_hit_6',
         'explosion',
         'placement',
         'merge',
@@ -137,14 +143,11 @@ test('loadAssets returns sounds only when audio is supported', async () => {
         'portalSpawn',
         'backgroundMusic'
     ]);
-    assert.deepEqual(assets.sounds.fire, { sound: 'assets/fire.wav' });
-    assert.deepEqual(assets.sounds.minigunFire, { sound: 'assets/fire.wav' });
-    assert.deepEqual(assets.sounds.railgunFire, { sound: 'assets/explosion.wav' });
-    assert.deepEqual(assets.sounds.rocketFire, { sound: 'assets/fire.wav' });
+    for (let level = 1; level <= 6; level++) {
+        assert.deepEqual(assets.sounds[`tower_fire_${level}`], { sound: `assets/tower_fire_${level}.mp3` });
+        assert.deepEqual(assets.sounds[`tower_hit_${level}`], { sound: `assets/tower_hit_${level}.mp3` });
+    }
     assert.deepEqual(assets.sounds.baseHit, { sound: 'assets/explosion.wav' });
-    assert.deepEqual(assets.sounds.minigunHit, { sound: 'assets/explosion.wav' });
-    assert.deepEqual(assets.sounds.railgunHit, { sound: 'assets/explosion.wav' });
-    assert.deepEqual(assets.sounds.rocketHit, { sound: 'assets/explosion.wav' });
     assert.deepEqual(assets.sounds.merge, { sound: 'assets/merge.mp3' });
     assert.deepEqual(assets.sounds.towerRemoveCharge, { sound: 'assets/tower_remove_charge.mp3' });
     assert.deepEqual(assets.sounds.towerRemoveCancel, { sound: 'assets/tower_remove_cancel.mp3' });

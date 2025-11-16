@@ -217,9 +217,11 @@ swarm @3 y=520 color=blue
             {
                 id: 'story-intro',
                 name: 'Neon Empire Briefing',
+                nameKey: 'tutorial.storyIntro.title',
                 wave: 1,
                 highlightTargets: [],
                 text: 'A portal ripped open beside the Neon Empire capital world. Deploy living crystal defences and stop the alien scouts before they pour through.',
+                textKey: 'tutorial.storyIntro.text',
                 picture: 'assets/swarm_B.png',
                 sound: 'assets/portal_spawn.mp3',
                 checkComplete(game, context) {
@@ -229,11 +231,13 @@ swarm @3 y=520 color=blue
             {
                 id: 'build-tower',
                 name: 'Deploy Your First Tower',
+                nameKey: 'tutorial.buildTower.title',
                 wave: 1,
                 highlightTargets: [],
                 text: 'Click on a glowing platform to build your first tower. Each tower costs 12 energy harvested from our living crystals.',
+                textKey: 'tutorial.buildTower.text',
                 picture: 'assets/tower_1B.png',
-                sound: 'assets/placement.wav',
+                sound: 'assets/placement.mp3',
                 checkComplete(game) {
                     return Array.isArray(game?.towers) && game.towers.length > 0;
                 },
@@ -241,9 +245,11 @@ swarm @3 y=520 color=blue
             {
                 id: 'switch-color',
                 name: 'Match Enemy Colors',
+                nameKey: 'tutorial.switchColor.title',
                 wave: 1,
                 highlightTargets: [],
                 text: 'Select a tower to toggle its color. Matching enemies take full damage while mismatched shots only hit with 30% power.',
+                textKey: 'tutorial.switchColor.text',
                 picture: 'assets/tower_1R.png',
                 sound: 'assets/color_switch.mp3',
                 checkComplete(game, context) {
@@ -265,9 +271,11 @@ swarm @3 y=520 color=blue
             {
                 id: 'start-wave',
                 name: 'Begin the Assault',
+                nameKey: 'tutorial.startWave.title',
                 wave: 1,
                 highlightTargets: ['nextWaveButton'],
                 text: 'Press "Next Wave" when you are ready. Survive every wave to protect the base!',
+                textKey: 'tutorial.startWave.text',
                 picture: 'assets/swarm_R.png',
                 sound: 'assets/merge.mp3',
                 checkComplete(game, context) {
@@ -280,11 +288,13 @@ swarm @3 y=520 color=blue
             {
                 id: 'energy-economy',
                 name: 'Harvest More Energy',
+                nameKey: 'tutorial.energyEconomy.title',
                 wave: 2,
                 highlightTargets: ['energyPanel'],
                 text: 'Every destroyed ship and completed wave feeds more energy into your reserves. Watch the meter to afford new towers and color switches.',
+                textKey: 'tutorial.energyEconomy.text',
                 picture: 'assets/energy_sign.png',
-                sound: 'assets/placement.wav',
+                sound: 'assets/placement.mp3',
                 checkComplete(game, context) {
                     return hasAcknowledged(context, 'energy-economy')
                         || hasEnergyGain(context)
@@ -294,9 +304,11 @@ swarm @3 y=520 color=blue
             {
                 id: 'merge-towers',
                 name: 'Combine Towers',
+                nameKey: 'tutorial.mergeTowers.title',
                 wave: 2,
                 highlightTargets: ['mergeButton'],
                 text: 'Build two adjacent towers of the same color and level, then press Merge Towers to fuse them into a stronger crystal.',
+                textKey: 'tutorial.mergeTowers.text',
                 picture: 'assets/tower_2B.png',
                 sound: 'assets/merge.mp3',
                 checkComplete(game, context) {
@@ -306,9 +318,11 @@ swarm @3 y=520 color=blue
             {
                 id: 'remove-tower',
                 name: 'Dismantle with a Long Press',
+                nameKey: 'tutorial.removeTower.title',
                 wave: 2,
                 highlightTargets: [],
                 text: 'Press and hold on a tower to scrap it. Long presses free the platform whenever you need room or the wrong color.',
+                textKey: 'tutorial.removeTower.text',
                 picture: 'assets/tower_1R.png',
                 sound: 'assets/tower_remove_charge.mp3',
                 checkComplete(game, context) {
@@ -318,9 +332,11 @@ swarm @3 y=520 color=blue
             {
                 id: 'score-system',
                 name: 'Chase High Scores',
+                nameKey: 'tutorial.scoreSystem.title',
                 wave: 2,
                 highlightTargets: ['scorePanel', 'pauseButton'],
                 text: 'You earn score for every kill and for clearing waves. The HUD tracks your local best, and the Pause menu links to the global top 20 leaderboard.',
+                textKey: 'tutorial.scoreSystem.text',
                 picture: 'assets/swarm_R.png',
                 sound: 'assets/color_switch.mp3',
                 checkComplete(game, context) {
@@ -330,9 +346,11 @@ swarm @3 y=520 color=blue
             {
                 id: 'story-wave10',
                 name: 'Ancient Arsenal Unlocked',
+                nameKey: 'tutorial.storyWave10.title',
                 wave: 10,
                 highlightTargets: [],
                 text: 'By wave 10 scientists re-arm old war relics—machineguns, railguns, and rockets—to bolster the line. Hold the portal at all costs!',
+                textKey: 'tutorial.storyWave10.text',
                 picture: 'assets/tank_R.png',
                 sound: 'assets/portal_spawn.mp3',
                 checkComplete(game, context) {

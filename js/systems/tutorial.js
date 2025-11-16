@@ -6,6 +6,7 @@ import {
     markTutorialComplete,
 } from './tutorialProgress.js';
 import { resolveTutorialTargets } from './tutorialTargets.js';
+import { translate } from './localization.js';
 
 const DEFAULT_CHECK_INTERVAL = 320;
 const SOUND_CACHE = new Map();
@@ -32,7 +33,7 @@ function createIntervalScheduler(interval = DEFAULT_CHECK_INTERVAL) {
 
 function ensureOverlayStructure(doc, root) {
     if (!root || !doc) {
-        return { root, panel: null, mediaWrapper: null, imageEl: null, titleEl: null, textEl: null };
+        return { root, backdrop: null, panel: null, mediaWrapper: null, imageEl: null, titleEl: null, textEl: null };
     }
     const classList = root.classList;
     classList?.add('tutorial-overlay');
@@ -98,7 +99,7 @@ function ensureOverlayStructure(doc, root) {
         content.appendChild(textEl);
     }
 
-    return { root, panel, mediaWrapper, imageEl, titleEl, textEl };
+    return { root, backdrop, panel, mediaWrapper, imageEl, titleEl, textEl };
 }
 
 function createDomOverlay(doc) {
@@ -107,6 +108,7 @@ function createDomOverlay(doc) {
             show() {},
             hide() {},
             setHighlightState() {},
+            setBackdropActive() {},
         };
     }
 
@@ -118,7 +120,7 @@ function createDomOverlay(doc) {
         created = true;
     }
 
-    const { mediaWrapper, imageEl, titleEl, textEl } = ensureOverlayStructure(doc, root);
+    const { backdrop, mediaWrapper, imageEl, titleEl, textEl } = ensureOverlayStructure(doc, root);
 
     if (created && doc.body && typeof doc.body.appendChild === 'function') {
         doc.body.appendChild(root);
@@ -173,6 +175,12 @@ function createDomOverlay(doc) {
             }
             root.classList?.toggle?.('tutorial-overlay--with-highlight', Boolean(active));
         },
+        setBackdropActive(active) {
+            if (!backdrop) {
+                return;
+            }
+            backdrop.classList?.toggle?.('hidden', !active);
+        },
         element: root,
     };
 }
@@ -210,6 +218,8 @@ function normalizeSteps(steps) {
         id: step?.id ?? `step-${index}`,
         name: step?.name ?? step?.title ?? '',
         text: step?.text ?? '',
+        nameKey: typeof step?.nameKey === 'string' ? step.nameKey : null,
+        textKey: typeof step?.textKey === 'string' ? step.textKey : null,
         wave: Number.isFinite(step?.wave) ? step.wave : 1,
         highlightTargets: Array.isArray(step?.highlightTargets) ? [...step.highlightTargets] : [],
         picture: step?.picture ?? step?.image ?? null,
@@ -221,6 +231,43 @@ function normalizeSteps(steps) {
 
 function getDefaultSteps() {
     return normalizeSteps(gameConfig?.tutorial?.steps ?? []);
+}
+
+function resolveStepName(step) {
+    if (!step) {
+        return '';
+    }
+    const fallback = typeof step.name === 'string' ? step.name : '';
+    if (typeof step.nameKey === 'string' && step.nameKey) {
+        return translate(step.nameKey, {}, fallback);
+    }
+    return fallback;
+}
+
+function resolveStepText(step) {
+    if (!step) {
+        return '';
+    }
+    const fallback = typeof step.text === 'string' ? step.text : '';
+    if (typeof step.textKey === 'string' && step.textKey) {
+        return translate(step.textKey, {}, fallback);
+    }
+    return fallback;
+}
+
+function hasHighlightTargets(step) {
+    return Array.isArray(step?.highlightTargets) && step.highlightTargets.length > 0;
+}
+
+function createDisplayStep(step) {
+    if (!step) {
+        return null;
+    }
+    return {
+        ...step,
+        name: resolveStepName(step),
+        text: resolveStepText(step),
+    };
 }
 
 export function createTutorial(game, options = {}) {
@@ -256,6 +303,7 @@ export function createTutorial(game, options = {}) {
         steps,
         started: false,
         currentStep: null,
+        currentDisplayStep: null,
         currentWave: Number.isFinite(game?.wave) ? game.wave : 1,
         waveInProgress: Boolean(game?.waveInProgress),
         persistentComplete: Boolean(options.initiallyComplete),
@@ -343,11 +391,13 @@ export function createTutorial(game, options = {}) {
 
     function hideOverlay() {
         overlay?.hide?.();
+        overlay?.setBackdropActive?.(false);
         clearHighlights();
         stopCheckLoop();
         if (state.context) {
             state.context.currentStepId = null;
         }
+        state.currentDisplayStep = null;
     }
 
     function ensureCheckLoop() {
@@ -384,7 +434,10 @@ export function createTutorial(game, options = {}) {
             return;
         }
         state.currentStep = step;
-        overlay?.show?.(step);
+        const displayStep = createDisplayStep(step);
+        state.currentDisplayStep = displayStep;
+        overlay?.setBackdropActive?.(hasHighlightTargets(step));
+        overlay?.show?.(displayStep);
         applyHighlights(step);
         playSound(step.sound);
         ensureCheckLoop();
@@ -411,6 +464,17 @@ export function createTutorial(game, options = {}) {
             return;
         }
         showStep(next);
+    }
+
+    function refreshCurrentStepLocalization() {
+        if (!state.currentStep || !state.currentDisplayStep) {
+            return;
+        }
+        const displayStep = createDisplayStep(state.currentStep);
+        state.currentDisplayStep = displayStep;
+        overlay?.setBackdropActive?.(hasHighlightTargets(state.currentStep));
+        overlay?.show?.(displayStep);
+        applyHighlights(state.currentStep);
     }
 
     function evaluateCurrentStep() {
@@ -642,6 +706,10 @@ export function createTutorial(game, options = {}) {
             hideOverlay();
         },
 
+        refreshLocalization() {
+            refreshCurrentStepLocalization();
+        },
+
         _state: state,
     };
 }
@@ -670,6 +738,9 @@ export function attachTutorial(game, options = {}) {
         tutorial.clearProgress();
         tutorial.reset({ force: true });
         tutorial.handleWavePreparation?.(Number.isFinite(game?.wave) ? game.wave : 1);
+    };
+    game.refreshTutorialLocalization = () => {
+        tutorial.refreshLocalization?.();
     };
     return tutorial;
 }

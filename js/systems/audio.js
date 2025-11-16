@@ -1,17 +1,10 @@
 const globalScope = typeof globalThis !== 'undefined' ? globalThis : window;
 
 const NOOP_AUDIO = {
-    playFire() {},
-    playMinigunFire() {},
-    playRailgunFire() {},
-    playRocketFire() {},
+    playTowerFire() {},
+    playTowerHit() {},
     playExplosion() {},
     playMerge() {},
-    playMatchingHit() {},
-    playMismatchingHit() {},
-    playMinigunHit() {},
-    playRailgunHit() {},
-    playRocketHit() {},
     playPlacement() {},
     playColorSwitch() {},
     playMusic() {},
@@ -23,6 +16,36 @@ const NOOP_AUDIO = {
     playTowerRemoveExplosion() {},
     playPortalSpawn() {},
 };
+
+const MAX_TOWER_LEVEL = 6;
+
+function clampTowerLevel(level) {
+    const numeric = Number(level);
+    if (!Number.isFinite(numeric)) {
+        return 1;
+    }
+    return Math.max(1, Math.min(MAX_TOWER_LEVEL, Math.floor(numeric)));
+}
+
+function createTowerSoundTriggers(sounds, prefix, fallback = null) {
+    const triggers = new Array(MAX_TOWER_LEVEL + 1);
+    for (let level = 1; level <= MAX_TOWER_LEVEL; level++) {
+        const key = `${prefix}_${level}`;
+        const sound = sounds[key] ?? fallback;
+        triggers[level] = createSoundTrigger(sound ?? null);
+    }
+    return triggers;
+}
+
+function createTowerSoundPlayer(triggers) {
+    return function playTowerSound(level) {
+        const normalized = clampTowerLevel(level);
+        const trigger = triggers[normalized];
+        if (typeof trigger === 'function') {
+            trigger();
+        }
+    };
+}
 
 function hasHowler() {
     return Boolean(globalScope && globalScope.Howl && globalScope.Howler);
@@ -109,46 +132,36 @@ export function createGameAudio(sounds = {}) {
         return NOOP_AUDIO;
     }
 
-    const fireSound = createSoundTrigger(sounds.fire ?? null);
-    const minigunFireSound = createSoundTrigger(sounds.minigunFire ?? null);
-    const railgunFireSound = createSoundTrigger(sounds.railgunFire ?? null);
-    const rocketFireSound = createSoundTrigger(sounds.rocketFire ?? null);
-    const explosionSource = sounds.explosion ?? sounds.matchingHit ?? null;
-    const matchingHitSource = sounds.matchingHit ?? sounds.explosion ?? null;
+    const explosionSource = sounds.explosion ?? sounds.tower_hit_1 ?? null;
     const mergeSource = sounds.merge ?? explosionSource;
-    const towerRemoveChargeSource = sounds.towerRemoveCharge ?? null;
-    const towerRemoveCancelSource = sounds.towerRemoveCancel ?? null;
-    const towerRemoveExplosionSource = sounds.towerRemoveExplosion ?? explosionSource;
     const portalSpawnSource = sounds.portalSpawn ?? null;
+    const defaultFireSource = sounds.tower_fire_1 ?? explosionSource;
+    const defaultHitSource = sounds.tower_hit_1 ?? explosionSource;
+    const towerFireTriggers = createTowerSoundTriggers(sounds, 'tower_fire', defaultFireSource);
+    const towerHitTriggers = createTowerSoundTriggers(sounds, 'tower_hit', defaultHitSource);
     const explosionSound = createSoundTrigger(explosionSource);
-    const matchingHitSound = createSoundTrigger(matchingHitSource);
     const mergeSound = createSoundTrigger(mergeSource);
-    const mismatchingHitSound = createSoundTrigger(sounds.mismatchingHit ?? null);
-    const minigunHitSound = createSoundTrigger(sounds.minigunHit ?? null);
-    const railgunHitSound = createSoundTrigger(sounds.railgunHit ?? null);
-    const rocketHitSound = createSoundTrigger(sounds.rocketHit ?? null);
     const placementSound = createSoundTrigger(sounds.placement ?? null);
     const colorSwitchSound = createSoundTrigger(sounds.colorSwitch ?? null);
     const errorSound = createSoundTrigger(sounds.error ?? null);
-    const baseHitSound = createSoundTrigger(sounds.baseHit ?? null);
+    const baseHitSource = sounds.baseHit ?? explosionSource;
+    const baseHitSound = createSoundTrigger(baseHitSource);
+    const towerRemoveChargeSource = sounds.towerRemoveCharge ?? null;
+    const towerRemoveCancelSource = sounds.towerRemoveCancel ?? null;
+    const towerRemoveExplosionSource = sounds.towerRemoveExplosion ?? explosionSource;
     const towerRemoveChargeSound = createSoundTrigger(towerRemoveChargeSource);
     const towerRemoveCancelSound = createSoundTrigger(towerRemoveCancelSource);
     const towerRemoveExplosionSound = createSoundTrigger(towerRemoveExplosionSource);
     const portalSpawnSound = createSoundTrigger(portalSpawnSource);
+    const towerFireSound = createTowerSoundPlayer(towerFireTriggers);
+    const towerHitSound = createTowerSoundPlayer(towerHitTriggers);
     const { playMusic, stopMusic } = createMusicActions(sounds.backgroundMusic ?? null);
 
     return {
-        playFire: fireSound,
-        playMinigunFire: minigunFireSound,
-        playRailgunFire: railgunFireSound,
-        playRocketFire: rocketFireSound,
+        playTowerFire: towerFireSound,
         playExplosion: explosionSound,
         playMerge: mergeSound,
-        playMatchingHit: matchingHitSound,
-        playMismatchingHit: mismatchingHitSound,
-        playMinigunHit: minigunHitSound,
-        playRailgunHit: railgunHitSound,
-        playRocketHit: rocketHitSound,
+        playTowerHit: towerHitSound,
         playPlacement: placementSound,
         playColorSwitch: colorSwitchSound,
         playMusic,

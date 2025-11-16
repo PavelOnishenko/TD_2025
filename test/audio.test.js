@@ -128,41 +128,35 @@ test('createGameAudio returns noop audio when howler is unavailable', () => {
     return runWithoutHowler(() => {
         const fireSound = { play() { throw new Error('Should not play'); } };
 
-        const audio = createGameAudio({ fire: fireSound });
+        const audio = createGameAudio({ tower_fire_1: fireSound });
 
-        assert.equal(typeof audio.playFire, 'function');
-        assert.equal(typeof audio.playMinigunFire, 'function');
-        assert.equal(typeof audio.playRailgunFire, 'function');
-        assert.equal(typeof audio.playRocketFire, 'function');
+        assert.equal(typeof audio.playTowerFire, 'function');
+        assert.equal(typeof audio.playTowerHit, 'function');
         assert.equal(typeof audio.playMusic, 'function');
         assert.equal(typeof audio.stopMusic, 'function');
         assert.equal(typeof audio.playError, 'function');
-        assert.equal(typeof audio.playMatchingHit, 'function');
         assert.equal(typeof audio.playMerge, 'function');
-        assert.equal(typeof audio.playMismatchingHit, 'function');
-        assert.equal(typeof audio.playMinigunHit, 'function');
-        assert.equal(typeof audio.playRailgunHit, 'function');
-        assert.equal(typeof audio.playRocketHit, 'function');
+        assert.equal(typeof audio.playPlacement, 'function');
+        assert.equal(typeof audio.playColorSwitch, 'function');
+        assert.equal(typeof audio.playBaseHit, 'function');
         assert.equal(typeof audio.playTowerRemoveCharge, 'function');
         assert.equal(typeof audio.playTowerRemoveCancel, 'function');
         assert.equal(typeof audio.playTowerRemoveExplosion, 'function');
+        assert.equal(typeof audio.playPortalSpawn, 'function');
 
-        audio.playFire();
-        audio.playMinigunFire();
-        audio.playRailgunFire();
-        audio.playRocketFire();
+        audio.playTowerFire(1);
+        audio.playTowerHit(1);
         audio.playMusic();
         audio.stopMusic();
         audio.playError();
-        audio.playMatchingHit();
         audio.playMerge();
-        audio.playMismatchingHit();
-        audio.playMinigunHit();
-        audio.playRailgunHit();
-        audio.playRocketHit();
+        audio.playPlacement();
+        audio.playColorSwitch();
+        audio.playBaseHit();
         audio.playTowerRemoveCharge();
         audio.playTowerRemoveCancel();
         audio.playTowerRemoveExplosion();
+        audio.playPortalSpawn();
     });
 });
 
@@ -171,68 +165,75 @@ test('createGameAudio triggers available sounds only', () => {
     const fakeHowler = {};
 
     return runWithHowler(FakeHowl, fakeHowler, () => {
-        const fireSound = { playCalls: 0, play() { this.playCalls += 1; } };
-        const matchingHitSound = { playCalls: 0, play() { this.playCalls += 1; } };
-        const mismatchingHitSound = { playCalls: 0, play() { this.playCalls += 1; } };
-        const minigunFireSound = { playCalls: 0, play() { this.playCalls += 1; } };
-        const railgunFireSound = { playCalls: 0, play() { this.playCalls += 1; } };
-        const rocketFireSound = { playCalls: 0, play() { this.playCalls += 1; } };
-        const minigunHitSound = { playCalls: 0, play() { this.playCalls += 1; } };
-        const railgunHitSound = { playCalls: 0, play() { this.playCalls += 1; } };
-        const rocketHitSound = { playCalls: 0, play() { this.playCalls += 1; } };
+        const createSoundStub = () => ({ playCalls: 0, play() { this.playCalls += 1; } });
+        const towerFireSounds = Array.from({ length: 6 }, () => createSoundStub());
+        const towerHitSounds = Array.from({ length: 6 }, () => createSoundStub());
         const errorSound = { playCalls: 0, play() { this.playCalls += 1; } };
         const mergeSound = { playCalls: 0, play() { this.playCalls += 1; } };
+        const placementSound = { playCalls: 0, play() { this.playCalls += 1; } };
+        const colorSwitchSound = { playCalls: 0, play() { this.playCalls += 1; } };
         const removeChargeSound = { playCalls: 0, play() { this.playCalls += 1; } };
         const removeCancelSound = { playCalls: 0, play() { this.playCalls += 1; } };
         const removeExplosionSound = { playCalls: 0, play() { this.playCalls += 1; } };
-        const audio = createGameAudio({
-            fire: fireSound,
-            matchingHit: matchingHitSound,
-            mismatchingHit: mismatchingHitSound,
-            minigunFire: minigunFireSound,
-            railgunFire: railgunFireSound,
-            rocketFire: rocketFireSound,
-            minigunHit: minigunHitSound,
-            railgunHit: railgunHitSound,
-            rocketHit: rocketHitSound,
-            error: errorSound,
+        const explosionSound = { playCalls: 0, play() { this.playCalls += 1; } };
+        const baseHitSound = { playCalls: 0, play() { this.playCalls += 1; } };
+        const portalSpawnSound = { playCalls: 0, play() { this.playCalls += 1; } };
+        const sounds = {
+            explosion: explosionSound,
             merge: mergeSound,
+            placement: placementSound,
+            colorSwitch: colorSwitchSound,
+            error: errorSound,
             towerRemoveCharge: removeChargeSound,
             towerRemoveCancel: removeCancelSound,
-            towerRemoveExplosion: removeExplosionSound
+            towerRemoveExplosion: removeExplosionSound,
+            baseHit: baseHitSound,
+            portalSpawn: portalSpawnSound,
+        };
+        towerFireSounds.forEach((sound, index) => {
+            sounds[`tower_fire_${index + 1}`] = sound;
         });
+        towerHitSounds.forEach((sound, index) => {
+            sounds[`tower_hit_${index + 1}`] = sound;
+        });
+        const audio = createGameAudio(sounds);
 
-        audio.playFire();
-        audio.playMinigunFire();
-        audio.playRailgunFire();
-        audio.playRocketFire();
+        for (let i = 1; i <= 6; i++) {
+            audio.playTowerFire(i);
+            audio.playTowerHit(i);
+        }
+        audio.playTowerFire(12);
+        audio.playTowerHit(0);
         audio.playExplosion();
-        audio.playMatchingHit();
-        audio.playMismatchingHit();
-        audio.playMinigunHit();
-        audio.playRailgunHit();
-        audio.playRocketHit();
+        audio.playPlacement();
+        audio.playColorSwitch();
         audio.playPlacement();
         audio.playError();
         audio.playMerge();
         audio.playTowerRemoveCharge();
         audio.playTowerRemoveCancel();
         audio.playTowerRemoveExplosion();
+        audio.playBaseHit();
+        audio.playPortalSpawn();
 
-        assert.equal(fireSound.playCalls, 1);
-        assert.equal(minigunFireSound.playCalls, 1);
-        assert.equal(railgunFireSound.playCalls, 1);
-        assert.equal(rocketFireSound.playCalls, 1);
-        assert.equal(matchingHitSound.playCalls, 2);
-        assert.equal(mismatchingHitSound.playCalls, 1);
-        assert.equal(minigunHitSound.playCalls, 1);
-        assert.equal(railgunHitSound.playCalls, 1);
-        assert.equal(rocketHitSound.playCalls, 1);
+        towerFireSounds.forEach((sound, index) => {
+            const expected = index === towerFireSounds.length - 1 ? 2 : 1;
+            assert.equal(sound.playCalls, expected);
+        });
+        towerHitSounds.forEach((sound, index) => {
+            const expected = index === 0 ? 2 : 1;
+            assert.equal(sound.playCalls, expected);
+        });
+        assert.equal(explosionSound.playCalls, 1);
+        assert.equal(placementSound.playCalls, 2);
+        assert.equal(colorSwitchSound.playCalls, 1);
         assert.equal(errorSound.playCalls, 1);
         assert.equal(mergeSound.playCalls, 1);
         assert.equal(removeChargeSound.playCalls, 1);
         assert.equal(removeCancelSound.playCalls, 1);
         assert.equal(removeExplosionSound.playCalls, 1);
+        assert.equal(baseHitSound.playCalls, 1);
+        assert.equal(portalSpawnSound.playCalls, 1);
     });
 });
 
