@@ -3,7 +3,7 @@
     Also show merging hint only when the button is pressed (i.e. while merging mode is on). 
 
 02 | TODO | In all ship formations, in all waves - make overall ~30% more ships. 
-    Don't do automated system for this, just edit formations array adding ships there. 
+    Don't do automated calculation system for this, just edit formations array in config adding ships there. 
     You can also add 3-10 new formations there which include more packed formations, and REALLY CROWDY formations,
     and even CRAZILY CROWDED formations. But don't forget to configure the probability so that they don't pop up too early.
     Also formations including tanks shouldn't happen before wave 3. 
