@@ -106,7 +106,7 @@ export const gameConfig = {
     enemies: {
         defaultSpawn: { x: -600, y: 600 },
         dimensions: { width: 80, height: 80 },
-        tank: { hpMultiplier: 42, speed: { x: 100, y: 0 }, },
+        tank: { hpMultiplier: 35.7, speed: { x: 100, y: 0 }, },
         swarm: { groupSize: 3, spacing: 40, hpMultiplier: 10, speed: { x: 200, y: 0 }, },
     },
     waves: {
