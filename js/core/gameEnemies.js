@@ -163,6 +163,28 @@ export const enemyActions = {
         return normalized;
     },
 
+    getFormationSpawnCount(multiplier = 1) {
+        if (!Number.isFinite(multiplier) || multiplier <= 1) {
+            return 1;
+        }
+        const baseRemainder = Number.isFinite(this.formationSpawnRemainder)
+            ? this.formationSpawnRemainder
+            : 0;
+        const updated = baseRemainder + (multiplier - 1);
+        const additional = Math.floor(updated);
+        this.formationSpawnRemainder = updated - additional;
+        return 1 + additional;
+    },
+
+    getScaledFormationGroupSize(multiplier = 1, groupSize) {
+        const effectiveMultiplier = Number.isFinite(multiplier) && multiplier > 0 ? multiplier : 1;
+        const baseGroupSize = Number.isFinite(groupSize)
+            ? groupSize
+            : gameConfig.enemies.swarm.groupSize;
+        const scaled = Math.round(baseGroupSize * effectiveMultiplier);
+        return Math.max(1, scaled);
+    },
+
     spawnEnemyFromPlan(event) {
         if (!event) {
             return;
@@ -178,12 +200,16 @@ export const enemyActions = {
             offsets: Array.isArray(event.offsets) ? event.offsets : undefined,
             colors: Array.isArray(event.colors) ? event.colors : undefined,
         };
+        const formationMultiplier = Number.isFinite(this.formationShipMultiplier) && this.formationShipMultiplier > 0
+            ? this.formationShipMultiplier
+            : 1;
         if (event.type === 'tank') {
-            this.spawnTankEnemy(baseHp, options);
-        } else {
-            if (!options.groupSize) {
-                options.groupSize = 1;
+            const spawnCount = this.getFormationSpawnCount(formationMultiplier);
+            for (let i = 0; i < spawnCount; i += 1) {
+                this.spawnTankEnemy(baseHp, options);
             }
+        } else {
+            options.groupSize = this.getScaledFormationGroupSize(formationMultiplier, options.groupSize);
             this.spawnSwarmGroup(baseHp, options);
         }
         this.spawned += 1;

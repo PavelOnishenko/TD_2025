@@ -38,6 +38,7 @@ export const waveActions = {
 
         this.waveInProgress = true;
         this.nextWaveBtn.disabled = true;
+        this.formationSpawnRemainder = 0;
         updateWavePhaseIndicator(this);
         const cfg = typeof this.getOrCreateWaveConfig === 'function'
             ? this.getOrCreateWaveConfig(this.wave)

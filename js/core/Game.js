@@ -102,6 +102,10 @@ class Game {
         this.diagnosticsOverlay = null;
         this.diagnosticsState = { visible: false, fps: 0, lastCommit: 0 };
         this.formationManager = createFormationManager(gameConfig.waves?.formations ?? {});
+        this.formationShipMultiplier = Number.isFinite(gameConfig.waves?.formations?.shipCountMultiplier)
+            ? Math.max(0, gameConfig.waves.formations.shipCountMultiplier)
+            : 1;
+        this.formationSpawnRemainder = 0;
         this.activeFormationPlan = null;
         this.waveSpawnSchedule = null;
         this.waveSpawnCursor = 0;

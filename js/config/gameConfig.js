@@ -148,6 +148,7 @@ export const gameConfig = {
                 formationGap: 0.85,
                 minimumWeight: 0.02,
             },
+            shipCountMultiplier: 1.3,
             waveDifficulty: [
                 13, 13, 14, 14, 15,
                 15, 16, 16, 17, 17,
