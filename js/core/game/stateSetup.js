@@ -46,6 +46,15 @@ function resetButtons(game) {
     if (game.mergeBtn) {
         game.mergeBtn.disabled = false;
     }
+    if (game.upgradeBtn) {
+        const upgradeEnabled = game.instantUpgradeState
+            ? Boolean(game.instantUpgradeState.enabled)
+            : true;
+        game.upgradeBtn.disabled = !upgradeEnabled;
+    }
+    if (game.instantUpgradeState) {
+        game.instantUpgradeState.active = false;
+    }
 }
 
 function resetStatus(game) {

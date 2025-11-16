@@ -44,6 +44,16 @@ export function attachDomStubs(game) {
     game.statusEl = { textContent: '', style: {} };
     game.nextWaveBtn = { disabled: false };
     game.mergeBtn = { disabled: false };
+    game.upgradeBtn = {
+        disabled: false,
+        classList: createClassList(),
+        setAttribute: () => {},
+        removeAttribute: () => {},
+        addEventListener: () => {},
+        querySelector: () => null,
+        hidden: false,
+        title: '',
+    };
     game.pauseBtn = { disabled: false, textContent: '', setAttribute: () => {} };
     game.cooldownEl = { textContent: '' };
     game.endOverlay = { classList: createClassList() };

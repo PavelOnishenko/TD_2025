@@ -1,5 +1,6 @@
 import Tower from '../entities/Tower.js';
 import gameConfig from '../config/gameConfig.js';
+import featureFlags from '../config/featureFlags.js';
 import { callCrazyGamesEvent } from './crazyGamesIntegration.js';
 import { showCrazyGamesAdWithPause } from './ads.js';
 import { saveAudioSettings, loadLanguagePreference, saveLanguagePreference } from './dataStore.js';
@@ -15,6 +16,7 @@ import { translate, setActiveLocale, applyLocalization } from './localization.js
 
 const SUPPORTED_LANGUAGES = ['en', 'ru'];
 const DEFAULT_LANGUAGE = SUPPORTED_LANGUAGES[0];
+const DEFAULT_INSTANT_UPGRADE_COST = 100;
 
 const HEART_FILLED_SRC = 'assets/heart_filled.png';
 const HEART_EMPTY_SRC = 'assets/heart_empty.png';
@@ -53,6 +55,110 @@ function getNavigatorLanguagePreferences() {
         preferences.push(...navigator.languages);
     }
     return preferences;
+}
+
+function resolveInstantUpgradeSettings() {
+    const config = featureFlags?.instantTowerUpgrade ?? {};
+    const enabled = typeof config.enabled === 'boolean' ? config.enabled : true;
+    const cost = Number.isFinite(config.cost) ? config.cost : DEFAULT_INSTANT_UPGRADE_COST;
+    return { enabled, cost };
+}
+
+function ensureInstantUpgradeState(game) {
+    if (!game) {
+        return { enabled: false, cost: DEFAULT_INSTANT_UPGRADE_COST, active: false };
+    }
+    if (!game.instantUpgradeState) {
+        const resolved = resolveInstantUpgradeSettings();
+        game.instantUpgradeState = {
+            enabled: resolved.enabled,
+            cost: resolved.cost,
+            active: false,
+        };
+    } else {
+        if (typeof game.instantUpgradeState.enabled !== 'boolean') {
+            const resolved = resolveInstantUpgradeSettings();
+            game.instantUpgradeState.enabled = resolved.enabled;
+            game.instantUpgradeState.cost = resolved.cost;
+        }
+        if (!Number.isFinite(game.instantUpgradeState.cost)) {
+            game.instantUpgradeState.cost = DEFAULT_INSTANT_UPGRADE_COST;
+        }
+        game.instantUpgradeState.active = Boolean(game.instantUpgradeState.active && game.instantUpgradeState.enabled);
+    }
+    return game.instantUpgradeState;
+}
+
+function getInstantUpgradeCost(game) {
+    const state = ensureInstantUpgradeState(game);
+    return Number.isFinite(state.cost) ? state.cost : DEFAULT_INSTANT_UPGRADE_COST;
+}
+
+function isInstantUpgradeFeatureEnabled(game) {
+    return Boolean(ensureInstantUpgradeState(game).enabled);
+}
+
+function isInstantUpgradeSelectionActive(game) {
+    const state = ensureInstantUpgradeState(game);
+    return Boolean(state.enabled && state.active);
+}
+
+function setInstantUpgradeActive(game, active) {
+    const state = ensureInstantUpgradeState(game);
+    state.active = Boolean(active && state.enabled);
+    updateUpgradeButtonState(game);
+}
+
+function updateUpgradeButtonState(game) {
+    const button = game?.upgradeBtn;
+    if (!button) {
+        return;
+    }
+    const state = ensureInstantUpgradeState(game);
+    if (!state.enabled) {
+        button.hidden = true;
+        if (typeof button.setAttribute === 'function') {
+            button.setAttribute('aria-hidden', 'true');
+            button.setAttribute('aria-pressed', 'false');
+        }
+        button.classList?.remove?.('hud-button--active');
+        button.disabled = true;
+        return;
+    }
+    button.hidden = false;
+    if (typeof button.removeAttribute === 'function') {
+        button.removeAttribute('aria-hidden');
+    }
+    const active = Boolean(state.active);
+    button.classList?.toggle?.('hud-button--active', active);
+    if (typeof button.setAttribute === 'function') {
+        button.setAttribute('aria-pressed', active ? 'true' : 'false');
+        const ariaLabel = translate('hud.upgrade.aria', { cost: state.cost }, `Upgrade tower (cost: ${state.cost} energy)`);
+        button.setAttribute('aria-label', ariaLabel);
+        const tooltip = translate('hud.upgrade.tooltip', { cost: state.cost }, `Costs ${state.cost} energy`);
+        button.title = tooltip;
+    }
+    const costEl = typeof button.querySelector === 'function'
+        ? button.querySelector('.hud-button__cost')
+        : null;
+    if (costEl) {
+        costEl.textContent = translate('hud.upgrade.costShort', { cost: state.cost }, `${state.cost}⚡`);
+    }
+}
+
+function setupUpgradeButton(game) {
+    ensureInstantUpgradeState(game);
+    updateUpgradeButtonState(game);
+    if (!game?.upgradeBtn) {
+        return;
+    }
+    game.upgradeBtn.addEventListener('click', () => {
+        if (!isInstantUpgradeFeatureEnabled(game)) {
+            return;
+        }
+        const next = !isInstantUpgradeSelectionActive(game);
+        setInstantUpgradeActive(game, next);
+    });
 }
 
 function resolveInitialLanguage(game) {
@@ -138,6 +244,7 @@ function bindHUD(game) {
     game.muteBtn = document.getElementById('muteToggle');
     game.musicBtn = document.getElementById('musicToggle');
     game.mergeBtn = document.getElementById('mergeTowers');
+    game.upgradeBtn = document.getElementById('upgradeTower');
     game.pauseBtn = document.getElementById('pause');
     game.startOverlay = document.getElementById('startOverlay');
     game.startBtn = document.getElementById('startGame');
@@ -166,6 +273,8 @@ function bindHUD(game) {
     game.saveBtn = document.getElementById('saveGame');
     game.loadBtn = document.getElementById('loadGame');
     game.deleteSaveBtn = document.getElementById('deleteSave');
+    ensureInstantUpgradeState(game);
+    updateUpgradeButtonState(game);
     if (game.canvas) {
         tutorialTargetCleanups.push(registerTutorialTarget('battlefield', () => game.canvas));
     }
@@ -390,6 +499,7 @@ function bindButtons(game) {
         game.mergeBtn.addEventListener('click', handleMerge);
         game.mergeBtn.disabled = game.waveInProgress;
     }
+    setupUpgradeButton(game);
     const handleRestart = async () => {
         if (game.restartBtn && game.restartBtn.disabled) {
             return;
@@ -414,6 +524,9 @@ function bindButtons(game) {
             if (game.mergeBtn) {
                 game.mergeBtn.disabled = false;
             }
+            if (game.upgradeBtn && isInstantUpgradeFeatureEnabled(game)) {
+                game.upgradeBtn.disabled = false;
+            }
             if (game.pauseBtn) {
                 game.pauseBtn.disabled = false;
             }
@@ -421,6 +534,7 @@ function bindButtons(game) {
                 game.tutorial.reset();
                 game.tutorial.start();
             }
+            setInstantUpgradeActive(game, false);
         } finally {
             if (game.restartBtn) {
                 game.restartBtn.disabled = false;
@@ -441,9 +555,13 @@ function bindButtons(game) {
             if (game.mergeBtn) {
                 game.mergeBtn.disabled = false;
             }
+            if (game.upgradeBtn && isInstantUpgradeFeatureEnabled(game)) {
+                game.upgradeBtn.disabled = false;
+            }
             if (game.pauseBtn) {
                 game.pauseBtn.disabled = false;
             }
+            setInstantUpgradeActive(game, false);
             if (!game.hasStarted) {
                 game.hasStarted = true;
                 game.tutorial?.start();
@@ -584,8 +702,11 @@ function setupStartMenu(game) {
         game.restartBtn.disabled = true;
     if (game.mergeBtn)
         game.mergeBtn.disabled = true;
+    if (game.upgradeBtn)
+        game.upgradeBtn.disabled = true;
     if (game.pauseBtn)
         game.pauseBtn.disabled = true;
+    setInstantUpgradeActive(game, false);
     hideEndScreen(game);
 }
 
@@ -767,7 +888,11 @@ function bindCanvasInteractions(game) {
         cancelChargeSoundTimer();
 
         const tower = findTowerAtPosition(pos);
-        if (tower) {
+        if (tower && isInstantUpgradeSelectionActive(game)) {
+            pointerState.tower = null;
+            pointerState.startedRemoval = false;
+            pointerState.removalTriggered = false;
+        } else if (tower) {
             pointerState.tower = tower;
             const started = typeof tower.beginRemovalCharge === 'function'
                 ? tower.beginRemovalCharge()
@@ -909,8 +1034,44 @@ function handleCellTap(game, pos) {
         ? game.getAllCells().find(c => isInside(pos, c))
         : null;
     if (cell) {
+        if (tryHandleInstantUpgrade(game, cell)) {
+            return;
+        }
         tryShoot(game, cell);
     }
+}
+
+function tryHandleInstantUpgrade(game, cell) {
+    if (!cell || !isInstantUpgradeSelectionActive(game)) {
+        return false;
+    }
+    setInstantUpgradeActive(game, false);
+    if (!cell.occupied || !cell.tower) {
+        cell.highlight = Math.max(cell.highlight ?? 0, 0.35);
+        if (typeof game.audio?.playError === 'function') {
+            game.audio.playError();
+        }
+        return false;
+    }
+    if (typeof game.upgradeTowerInstantly !== 'function') {
+        return false;
+    }
+    const tower = cell.tower;
+    const upgraded = game.upgradeTowerInstantly(tower, { cost: getInstantUpgradeCost(game) });
+    if (upgraded) {
+        updateHUD(game);
+        if (typeof game.audio?.playPlacement === 'function') {
+            game.audio.playPlacement();
+        }
+    } else {
+        if (typeof tower.triggerErrorPulse === 'function') {
+            tower.triggerErrorPulse();
+        }
+        if (typeof game.audio?.playError === 'function') {
+            game.audio.playError();
+        }
+    }
+    return upgraded;
 }
 
 function tryShoot(game, cell) {
@@ -946,6 +1107,7 @@ export function updateHUD(game) {
     renderScore(game);
     renderWaveInfo(game);
     updateWavePhaseIndicator(game);
+    updateUpgradeButtonState(game);
     if (typeof game.persistState === 'function') {
         game.persistState();
     }
@@ -1147,9 +1309,13 @@ export function endGame(game, text) {
     if (game.mergeBtn) {
         game.mergeBtn.disabled = true;
     }
+    if (game.upgradeBtn) {
+        game.upgradeBtn.disabled = true;
+    }
     if (game.pauseBtn) {
         game.pauseBtn.disabled = true;
     }
+    setInstantUpgradeActive(game, false);
     showEndScreen(game, text);
     game.gameOver = true;
     if (typeof game.resume === 'function') {

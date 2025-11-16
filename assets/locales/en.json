@@ -67,10 +67,16 @@
     "buttons": {
       "nextWave": "Next Wave",
       "merge": "Merge Towers",
+      "upgrade": "Upgrade Tower",
       "restart": "Restart",
       "save": "Save Game",
       "load": "Load Game",
       "delete": "Delete Save"
+    },
+    "upgrade": {
+      "aria": "Upgrade tower (cost: {cost} energy)",
+      "tooltip": "Costs {cost} energy",
+      "costShort": "{cost}⚡"
     }
   },
   "audio": {

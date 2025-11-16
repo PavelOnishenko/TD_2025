@@ -61,6 +61,7 @@ test('applySimpleSaveState restores wave, energy, and towers in preparation mode
     assert.equal(game.towers.length, 2);
     assert.equal(game.nextWaveBtn.disabled, false);
     assert.equal(game.mergeBtn.disabled, false);
+    assert.equal(game.upgradeBtn.disabled, false);
     assert.equal(game.grid.bottomCells[2].tower.level, 2);
     assert.equal(game.grid.topCells[0].tower.color, 'yellow');
 });
