@@ -1,0 +1,159 @@
+{
+  "app": {
+    "title": "Neon Void"
+  },
+  "start": {
+    "title": "Neon Void",
+    "tagline": "Strategize. Merge. Hold the line.",
+    "button": "Enter the battlefield"
+  },
+  "pause": {
+    "title": "Paused",
+    "message": {
+      "idle": "Take a breather. The battle will wait.",
+      "paused": "Game paused. Take a moment before resuming the defense.",
+      "ad": "Ad break in progress. The game will resume automatically."
+    },
+    "resume": "Resume",
+    "resumeAd": "Ad in progress…",
+    "pause": "Pause",
+    "settings": {
+      "sound": "Sound",
+      "music": "Music",
+      "language": "Language"
+    },
+    "language": {
+      "option": {
+        "en": "English",
+        "ru": "Russian"
+      }
+    }
+  },
+  "leaderboard": {
+    "toggle": {
+      "show": "View Global Leaderboard",
+      "hide": "Hide Global Leaderboard"
+    },
+    "loading": "Loading leaderboard…",
+    "refresh": "Refreshing leaderboard…",
+    "empty": "No scores yet. Be the first to submit a score.",
+    "error": {
+      "generic": "Unable to load leaderboard.",
+      "withMessage": "Unable to load leaderboard: {error}"
+    },
+    "retry": "Try again"
+  },
+  "hud": {
+    "sectionLabel": "Game controls and stats",
+    "waveActions": "Wave actions",
+    "saveControls": "Save controls",
+    "endlessIndicator": "Endless Mode",
+    "wavePhase": {
+      "prep": "Preparation phase",
+      "active": "Wave in progress"
+    },
+    "statusWin": "All waves cleared!",
+    "statusLose": "Base destroyed!",
+    "waveLabel": "Wave: {current}/{max}",
+    "waveLabelEndless": "Wave: {current}",
+    "waveAria": "Wave {current} of {max}",
+    "waveAriaEndless": "Wave {current}, endless mode",
+    "livesAria": "Lives: {value}",
+    "energyAria": "Energy: {amount}",
+    "scoreLabel": "Score: {value}",
+    "scoreAria": "Score: {value}",
+    "bestLabel": "Best: {value}",
+    "bestAria": "Best score: {value}",
+    "buttons": {
+      "nextWave": "Next Wave",
+      "merge": "Merge Towers",
+      "restart": "Restart",
+      "save": "Save Game",
+      "load": "Load Game",
+      "delete": "Delete Save"
+    }
+  },
+  "audio": {
+    "controlsLabel": "Audio controls",
+    "mute": "Mute",
+    "unmute": "Unmute",
+    "musicOn": "Music On",
+    "musicOff": "Music Off"
+  },
+  "end": {
+    "victory": "Victory!",
+    "defeat": "Defeat!",
+    "detailWin": "All waves cleared. Great job!",
+    "detailLose": "The base was overrun. Try again!",
+    "score": "Score: {value}",
+    "best": "Best: {value}"
+  },
+  "crazyGames": {
+    "avatarAlt": "CrazyGames profile picture",
+    "defaultUser": "CrazyGames Player"
+  },
+  "tutorial": {
+    "storyIntro": {
+      "title": "Neon Empire Briefing",
+      "text": "A portal ripped open beside the Neon Empire capital world. Deploy living crystal defences and stop the alien scouts before they pour through."
+    },
+    "buildTower": {
+      "title": "Deploy Your First Tower",
+      "text": "Click on a glowing platform to build your first tower. Each tower costs 12 energy harvested from our living crystals."
+    },
+    "switchColor": {
+      "title": "Match Enemy Colors",
+      "text": "Select a tower to toggle its color. Matching enemies take full damage while mismatched shots only hit with 30% power."
+    },
+    "startWave": {
+      "title": "Begin the Assault",
+      "text": "Press \"Next Wave\" when you are ready. Survive every wave to protect the base!"
+    },
+    "energyEconomy": {
+      "title": "Harvest More Energy",
+      "text": "Every destroyed ship and completed wave feeds more energy into your reserves. Watch the meter to afford new towers and color switches."
+    },
+    "mergeTowers": {
+      "title": "Combine Towers",
+      "text": "Build two adjacent towers of the same color and level, then press Merge Towers to fuse them into a stronger crystal."
+    },
+    "removeTower": {
+      "title": "Dismantle with a Long Press",
+      "text": "Press and hold on a tower to scrap it. Long presses free the platform whenever you need room or the wrong color."
+    },
+    "scoreSystem": {
+      "title": "Chase High Scores",
+      "text": "You earn score for every kill and for clearing waves. The HUD tracks your local best, and the Pause menu links to the global top 20 leaderboard."
+    },
+    "storyWave10": {
+      "title": "Ancient Arsenal Unlocked",
+      "text": "By wave 10 scientists re-arm old war relics—machineguns, railguns, and rockets—to bolster the line. Hold the portal at all costs!"
+    }
+  },
+  "diagnostics": {
+    "fps": "FPS: {value}",
+    "wave": "Wave: {current}/{max} ({status})",
+    "enemies": "Enemies: {count}",
+    "towers": "Towers: {count}",
+    "projectiles": "Projectiles: {count}",
+    "entities": "Entities: {count}",
+    "paused": "Paused: {value}",
+    "muted": "Muted: {value}",
+    "music": "Music Enabled: {value}",
+    "boolean": {
+      "yes": "Yes",
+      "no": "No"
+    },
+    "waveStatus": {
+      "active": "In Progress",
+      "prep": "Prep"
+    }
+  },
+  "errors": {
+    "unknown": "Unknown error",
+    "fetchUnavailable": "Fetch API unavailable",
+    "requestTimeout": "Request timed out",
+    "requestFailedStatus": "Request failed with status {status}",
+    "requestFailedStatusText": "Request failed ({status} {statusText})"
+  }
+}

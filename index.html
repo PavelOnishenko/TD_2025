@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Minimal Tower Defense</title>
+    <title data-l10n="app.title">Neon Void</title>
     <link rel="stylesheet" href="style.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js"></script>
 </head>
@@ -16,35 +16,39 @@
             <div class="start-overlay__grid"></div>
         </div>
         <div class="start-menu start-menu--splash">
-            <h1 id="startTitle" class="start-menu__title">Neon Void</h1>
-            <p class="start-menu__tagline">Strategize. Merge. Hold the line.</p>
-            <button id="startGame" class="start-menu__button" type="button">Enter the battlefield</button>
+            <h1 id="startTitle" class="start-menu__title" data-l10n="start.title">Neon Void</h1>
+            <p class="start-menu__tagline" data-l10n="start.tagline">Strategize. Merge. Hold the line.</p>
+            <button id="startGame" class="start-menu__button" type="button" data-l10n="start.button">
+                Enter the battlefield
+            </button>
         </div>
     </div>
 
     <div id="pauseOverlay" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="pauseTitle">
         <div class="pause-menu">
-            <h2 id="pauseTitle">Paused</h2>
+            <h2 id="pauseTitle" data-l10n="pause.title">Paused</h2>
             <p id="pauseMessage">Take a breather. The battle will wait.</p>
             <button id="resumeGame" type="button">Resume</button>
             <div class="pause-menu__settings" role="group" aria-label="Pause settings">
                 <div class="pause-menu__setting">
-                    <span class="pause-menu__setting-label">Sound</span>
+                    <span class="pause-menu__setting-label" data-l10n="pause.settings.sound">Sound</span>
                     <button id="pauseSoundToggle" class="pause-menu__setting-button" type="button" aria-pressed="false">
                         Mute
                     </button>
                 </div>
                 <div class="pause-menu__setting">
-                    <span class="pause-menu__setting-label">Music</span>
+                    <span class="pause-menu__setting-label" data-l10n="pause.settings.music">Music</span>
                     <button id="pauseMusicToggle" class="pause-menu__setting-button" type="button" aria-pressed="true">
                         Music On
                     </button>
                 </div>
                 <div class="pause-menu__setting">
-                    <label class="pause-menu__setting-label" for="pauseLanguageSelect">Language</label>
+                    <label class="pause-menu__setting-label" for="pauseLanguageSelect" data-l10n="pause.settings.language">
+                        Language
+                    </label>
                     <select id="pauseLanguageSelect" class="pause-menu__select">
-                        <option value="en">English</option>
-                        <option value="ru">Русский</option>
+                        <option value="en" data-l10n="pause.language.option.en">English</option>
+                        <option value="ru" data-l10n="pause.language.option.ru">Русский</option>
                     </select>
                 </div>
             </div>
@@ -66,14 +70,16 @@
             >
                 <div id="leaderboardLoading" class="leaderboard__loading hidden">
                     <span class="leaderboard__spinner" aria-hidden="true"></span>
-                    <span data-loading-text>Loading leaderboard…</span>
+                    <span data-loading-text data-l10n="leaderboard.loading">Loading leaderboard…</span>
                 </div>
                 <ol id="leaderboardList" class="leaderboard__list" aria-busy="false"></ol>
-                <p id="leaderboardEmpty" class="leaderboard__empty hidden">
+                <p id="leaderboardEmpty" class="leaderboard__empty hidden" data-l10n="leaderboard.empty">
                     No scores yet. Be the first to submit a score.
                 </p>
                 <p id="leaderboardError" class="leaderboard__error hidden" role="alert"></p>
-                <button id="leaderboardRetry" type="button" class="leaderboard__retry hidden">Try again</button>
+                <button id="leaderboardRetry" type="button" class="leaderboard__retry hidden" data-l10n="leaderboard.retry">
+                    Try again
+                </button>
             </div>
         </div>
     </div>
@@ -90,11 +96,11 @@
 
     <main id="gameContainer">
         <canvas id="game" width="907" height="510"></canvas>
-        <section id="hud" aria-label="Game controls and stats">
+        <section id="hud" aria-label="Game controls and stats" data-l10n-attrs="aria-label:hud.sectionLabel">
             <div class="hud-top-left">
                 <div id="lives" class="lives" aria-label="Lives"></div>
                 <div id="crazyGamesUser" class="user-info hidden" aria-live="polite">
-                    <img id="crazyGamesUserAvatar" alt="CrazyGames profile picture" />
+                    <img id="crazyGamesUserAvatar" alt="CrazyGames profile picture" data-l10n-attrs="alt:crazyGames.avatarAlt" />
                     <span id="crazyGamesUsername"></span>
                 </div>
             </div>
@@ -113,10 +119,12 @@
                     <div id="wavePanel">
                         <span id="wave" class="wave-label">Wave: 1/10</span>
                         <span id="wavePhase" class="wave-phase wave-phase--prep">Preparation phase</span>
-                        <span id="endlessIndicator" class="wave-endless hidden" aria-hidden="true">Endless Mode</span>
+                        <span id="endlessIndicator" class="wave-endless hidden" aria-hidden="true" data-l10n="hud.endlessIndicator">
+                            Endless Mode
+                        </span>
                     </div>
                 </div>
-                <div class="wave-controls__buttons" role="group" aria-label="Wave actions">
+                <div class="wave-controls__buttons" role="group" aria-label="Wave actions" data-l10n-attrs="aria-label:hud.waveActions">
                     <button id="nextWave" class="hud-button" type="button">
                         <span class="hud-button__icon" aria-hidden="true">
                             <svg viewBox="0 0 24 24" role="img" aria-hidden="true" focusable="false">
@@ -125,7 +133,7 @@
                                 <path d="M11.5 3.5l4 3-4 3" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"></path>
                             </svg>
                         </span>
-                        <span class="hud-button__label">Next Wave</span>
+                        <span class="hud-button__label" data-l10n="hud.buttons.nextWave">Next Wave</span>
                     </button>
                     <button id="mergeTowers" class="hud-button" type="button" disabled>
                         <span class="hud-button__icon" aria-hidden="true">
@@ -136,7 +144,7 @@
                                 <path d="M9.5 12l2.5 3 2.5-3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path>
                             </svg>
                         </span>
-                        <span class="hud-button__label">Merge Towers</span>
+                        <span class="hud-button__label" data-l10n="hud.buttons.merge">Merge Towers</span>
                     </button>
                 </div>
             </div>
@@ -168,13 +176,14 @@
                             <path d="M18 4.5v4.5h-4.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"></path>
                         </svg>
                     </span>
-                    <span class="hud-button__label">Restart</span>
+                    <span class="hud-button__label" data-l10n="hud.buttons.restart">Restart</span>
                 </button>
                 <div
                     id="saveControls"
                     class="save-controls save-controls--hidden"
                     role="group"
                     aria-label="Save controls"
+                    data-l10n-attrs="aria-label:hud.saveControls"
                     aria-hidden="true"
                     hidden
                     inert
@@ -187,7 +196,7 @@
                                 <rect x="9" y="14" width="6" height="5" rx="1" ry="1" fill="none" stroke="currentColor" stroke-width="1.6"></rect>
                             </svg>
                         </span>
-                        <span class="hud-button__label">Save Game</span>
+                        <span class="hud-button__label" data-l10n="hud.buttons.save">Save Game</span>
                     </button>
                     <button id="loadGame" class="hud-button" type="button" disabled>
                         <span class="hud-button__icon" aria-hidden="true">
@@ -198,7 +207,7 @@
                                 <path d="M4 19h16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path>
                             </svg>
                         </span>
-                        <span class="hud-button__label">Load Game</span>
+                        <span class="hud-button__label" data-l10n="hud.buttons.load">Load Game</span>
                     </button>
                     <button id="deleteSave" class="hud-button save-controls__delete" type="button">
                         <span class="hud-button__icon" aria-hidden="true">
@@ -210,11 +219,11 @@
                                 <path d="M14 7l-.5 12" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"></path>
                             </svg>
                         </span>
-                        <span class="hud-button__label">Delete Save</span>
+                        <span class="hud-button__label" data-l10n="hud.buttons.delete">Delete Save</span>
                     </button>
                 </div>
                 <div class="audio-pause-controls">
-                    <div class="audio-controls" role="group" aria-label="Audio controls">
+                    <div class="audio-controls" role="group" aria-label="Audio controls" data-l10n-attrs="aria-label:audio.controlsLabel">
                         <button id="muteToggle" class="hud-button" type="button" aria-pressed="false">
                             <span class="hud-button__icon" aria-hidden="true">
                                 <svg viewBox="0 0 24 24" role="img" aria-hidden="true" focusable="false">

@@ -1,6 +1,7 @@
 const STORAGE_KEY = 'towerDefenseGameState';
 const AUDIO_SETTINGS_KEY = 'towerDefenseAudioSettings';
 const BEST_SCORE_KEY = 'towerDefenseBestScore';
+const LANGUAGE_PREFERENCE_KEY = 'towerDefenseLanguagePreference';
 
 function getDataClient() {
     const root = typeof globalThis !== 'undefined' ? globalThis : undefined;
@@ -55,6 +56,46 @@ export function saveAudioSettings(settings) {
 export function clearAudioSettings() {
     const client = getDataClient();
     return clearStoredValue(client, AUDIO_SETTINGS_KEY, 'Failed to clear CrazyGames audio settings:');
+}
+
+export function loadLanguagePreference() {
+    const storage = getLocalStorage();
+    if (!storage) {
+        return null;
+    }
+    try {
+        const value = storage.getItem(LANGUAGE_PREFERENCE_KEY);
+        if (typeof value !== 'string') {
+            return null;
+        }
+        const normalized = value.trim().toLowerCase();
+        return normalized || null;
+    } catch (error) {
+        console.error('Failed to load language preference:', error);
+        return null;
+    }
+}
+
+export function saveLanguagePreference(language) {
+    const storage = getLocalStorage();
+    if (!storage) {
+        return false;
+    }
+    try {
+        const normalized = typeof language === 'string'
+            ? language.trim().toLowerCase()
+            : '';
+        if (normalized) {
+            storage.setItem(LANGUAGE_PREFERENCE_KEY, normalized);
+        }
+        else {
+            storage.removeItem(LANGUAGE_PREFERENCE_KEY);
+        }
+        return true;
+    } catch (error) {
+        console.error('Failed to save language preference:', error);
+        return false;
+    }
 }
 
 function readJsonValue(client, key, errorLabel) {
