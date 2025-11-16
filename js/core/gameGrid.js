@@ -43,7 +43,7 @@ class GameGrid {
     }
 
     createCell(x, y) {
-        return {x,y,w: this.cellWidth,h: this.cellHeight,occupied: false,highlight: 0,mergeHint: 0,tower: null};
+        return {x,y,w: this.cellWidth,h: this.cellHeight,occupied: false,highlight: 0,mergeHint: 0,mergeSelection: 0,tower: null};
     }
 
     getAllCells() {
@@ -59,6 +59,7 @@ class GameGrid {
             cell.occupied = false;
             cell.highlight = 0;
             cell.mergeHint = 0;
+            cell.mergeSelection = 0;
             cell.tower = null;
         });
     }

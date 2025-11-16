@@ -44,14 +44,19 @@ test('startWave restarts current wave state when already in progress', () => {
     assert.ok(game.enemies.length >= 1);
 });
 
-test('manualMergeTowers merges adjacent towers of same color and level', () => {
+test('manualMergeTowers enables merge mode and merges selected adjacent towers', () => {
     const game = createGame({ attachDom: true });
     const cellA = game.bottomCells[0];
     const cellB = game.bottomCells[1];
     const towerA = placeTowerOnCell(game, cellA);
     const towerB = placeTowerOnCell(game, cellB);
 
-    game.manualMergeTowers();
+    const active = game.manualMergeTowers();
+    assert.equal(active, true);
+    assert.equal(game.mergeModeActive, true);
+
+    game.selectTowerForMerge(towerA);
+    game.selectTowerForMerge(towerB);
 
     assert.equal(game.towers.length, 1);
     assert.equal(cellA.tower, towerA);
@@ -67,8 +72,10 @@ test('manualMergeTowers skips merging during wave', () => {
     placeTowerOnCell(game, cellB);
     game.waveInProgress = true;
 
-    game.manualMergeTowers();
+    const active = game.manualMergeTowers();
 
+    assert.equal(active, false);
+    assert.equal(game.mergeModeActive, false);
     assert.equal(game.towers.length, 2);
 });
 
@@ -80,6 +87,7 @@ test('updateMergeHints does not apply hints during active wave', () => {
     const towerB = placeTowerOnCell(game, cellB);
 
     game.waveInProgress = true;
+    game.mergeModeActive = true;
     game.updateMergeHints();
 
     assert.equal(game.mergeHintPairs.length, 0);
@@ -87,6 +95,28 @@ test('updateMergeHints does not apply hints during active wave', () => {
     assert.equal(cellB.mergeHint, 0);
     assert.equal(towerA.mergeHint, 0);
     assert.equal(towerB.mergeHint, 0);
+});
+
+test('updateMergeHints shows hints only while merge mode is active', () => {
+    const game = createGame();
+    const cellA = game.bottomCells[0];
+    const cellB = game.bottomCells[1];
+    const towerA = placeTowerOnCell(game, cellA);
+    const towerB = placeTowerOnCell(game, cellB);
+
+    game.updateMergeHints();
+    assert.equal(game.mergeHintPairs.length, 0);
+    assert.equal(cellA.mergeHint, 0);
+    assert.equal(cellB.mergeHint, 0);
+
+    game.mergeModeActive = true;
+    game.updateMergeHints();
+
+    assert.ok(game.mergeHintPairs.length > 0);
+    assert.ok(cellA.mergeHint > 0);
+    assert.ok(cellB.mergeHint > 0);
+    assert.ok(towerA.mergeHint > 0);
+    assert.ok(towerB.mergeHint > 0);
 });
 
 test('checkWaveCompletion unlocks merge and next wave buttons', () => {
@@ -101,7 +131,7 @@ test('checkWaveCompletion unlocks merge and next wave buttons', () => {
 
     assert.equal(game.waveInProgress, false);
     assert.equal(game.wave, 2);
-    assert.equal(game.energy, game.initialEnergy + 3);
+    assert.equal(game.energy, game.initialEnergy + 6);
     assert.equal(game.nextWaveBtn.disabled, false);
     assert.equal(game.mergeBtn.disabled, false);
 });

@@ -1,8 +1,8 @@
-01 | TODO | Change merge button behavior - it should let choose the 2 towers for merging, one after another, 
+01 | DONE | Change merge button behavior - it should let choose the 2 towers for merging, one after another,
     NOT just merge all towers that can. 
     Also show merging hint only when the button is pressed (i.e. while merging mode is on). 
 
-02 | TODO | In all ship formations, in all waves - make overall ~30% more ships. 
+02 | DONE | In all ship formations, in all waves - make overall ~30% more ships.
     Don't do automated calculation system for this, just edit formations array in config adding ships there. 
     You can also add 3-10 new formations there which include more packed formations, and REALLY CROWDY formations,
     and even CRAZILY CROWDED formations. But don't forget to configure the probability so that they don't pop up too early.
@@ -13,7 +13,7 @@
 
 04 | DONE | Prohibit changing color during wave.
 
-05 | TODO | Make color switch cost = 0
+05 | DONE | Make color switch cost = 0
 
 06 | DONE | Give 100 energy in the beginning
 
@@ -25,7 +25,7 @@
 
 10 | DONE | Give 2x money for tank kills
 
-11 | TODO | Give 2x money for wave completion.
+11 | DONE | Give 2x money for wave completion.
 
 12 | TODO | Money amounts from kills should become larger as waves progress. Recalc gradually every wave. 
     Only integer values for energy! Use rounding.

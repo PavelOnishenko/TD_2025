@@ -18,6 +18,7 @@ test('constructor builds grid with expected cell positions', () => {
         occupied: false,
         highlight: 0,
         mergeHint: 0,
+        mergeSelection: 0,
         tower: null,
     });
 
@@ -30,6 +31,7 @@ test('constructor builds grid with expected cell positions', () => {
         occupied: false,
         highlight: 0,
         mergeHint: 0,
+        mergeSelection: 0,
         tower: null,
     });
 });
@@ -49,6 +51,7 @@ test('createCell builds cell with provided coordinates and defaults', () => {
         occupied: false,
         highlight: 0,
         mergeHint: 0,
+        mergeSelection: 0,
         tower: null,
     });
 });
@@ -69,8 +72,8 @@ test('createRow positions cells relative to origin', () => {
     const row = grid.createRow(origin, offsets);
 
     assert.deepEqual(row, [
-        { x: 110, y: 205, w: 30, h: 20, occupied: false, highlight: 0, mergeHint: 0, tower: null },
-        { x: 95, y: 215, w: 30, h: 20, occupied: false, highlight: 0, mergeHint: 0, tower: null },
+        { x: 110, y: 205, w: 30, h: 20, occupied: false, highlight: 0, mergeHint: 0, mergeSelection: 0, tower: null },
+        { x: 95, y: 215, w: 30, h: 20, occupied: false, highlight: 0, mergeHint: 0, mergeSelection: 0, tower: null },
     ]);
 });
 
@@ -122,20 +125,24 @@ test('resetCells clears occupancy, highlight and tower references', () => {
     topCell.highlight = 0.5;
     topCell.tower = {};
     topCell.mergeHint = 1;
+    topCell.mergeSelection = 1;
     bottomCell.occupied = true;
     bottomCell.highlight = 0.7;
     bottomCell.tower = {};
     bottomCell.mergeHint = 0.4;
+    bottomCell.mergeSelection = 0.6;
 
     grid.resetCells();
 
     assert.strictEqual(topCell.occupied, false);
     assert.strictEqual(topCell.highlight, 0);
     assert.strictEqual(topCell.mergeHint, 0);
+    assert.strictEqual(topCell.mergeSelection, 0);
     assert.strictEqual(topCell.tower, null);
     assert.strictEqual(bottomCell.occupied, false);
     assert.strictEqual(bottomCell.highlight, 0);
     assert.strictEqual(bottomCell.mergeHint, 0);
+    assert.strictEqual(bottomCell.mergeSelection, 0);
     assert.strictEqual(bottomCell.tower, null);
 });
 
