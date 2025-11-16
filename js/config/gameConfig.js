@@ -61,7 +61,7 @@ export const gameConfig = {
     },
     player: {
         initialLives: 5,
-        initialEnergy: 50,
+        initialEnergy: 100,
         towerCost: 12,
         switchCost: 4,
         maxWaves: 20,
@@ -107,7 +107,7 @@ export const gameConfig = {
         defaultSpawn: { x: -600, y: 600 },
         dimensions: { width: 80, height: 80 },
         speedMultiplier: 0.8,
-        tank: { hpMultiplier: 42, speed: { x: 100, y: 0 }, },
+        tank: { hpMultiplier: 35.7, speed: { x: 100, y: 0 }, },
         swarm: { groupSize: 3, spacing: 40, hpMultiplier: 10, speed: { x: 200, y: 0 }, },
     },
     waves: {
