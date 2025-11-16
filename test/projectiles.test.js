@@ -107,6 +107,20 @@ test('hitEnemy removes enemy and updates energy when enemy dies', () => {
     assert.ok(killExplosion.particles.length > impactExplosion.particles.length);
 });
 
+test('hitEnemy grants bonus energy for tank kills', () => {
+    const game = makeGame();
+    const enemy = makeEnemy({ spriteKey: 'tank' });
+    const projectile = makeProjectile({ x: 15, y: 15 });
+    game.enemies.push(enemy);
+    game.projectiles.push(projectile);
+
+    hitEnemy(game, projectile, 0);
+
+    const expectedEnergy = gameConfig.player.energyPerKill * gameConfig.player.tankKillEnergyMultiplier;
+    assert.equal(game.energy, expectedEnergy);
+    assert.equal(game.energyEl.textContent, String(expectedEnergy));
+});
+
 test('handleProjectileHits removes offscreen and hit projectiles', () => {
     const game = makeGame();
     const enemy = makeEnemy();

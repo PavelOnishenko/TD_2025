@@ -6,6 +6,16 @@ function clamp(value, min, max) {
     return Math.max(min, Math.min(max, value));
 }
 
+function getEnergyGainForKill(enemy) {
+    const baseEnergy = gameConfig.player.energyPerKill;
+    const multiplier = enemy?.spriteKey === 'tank'
+        ? (Number.isFinite(gameConfig.player.tankKillEnergyMultiplier)
+            ? gameConfig.player.tankKillEnergyMultiplier
+            : 2)
+        : 1;
+    return baseEnergy * multiplier;
+}
+
 function playHitSound(audio, projectile) {
     if (!audio) {
         return;
@@ -112,11 +122,12 @@ export function applyProjectileDamage(game, projectile, enemyIndex, options = {}
     if (enemy.hp <= 0) {
         enemyRemoved = true;
         game.enemies.splice(enemyIndex, 1);
-        game.energy += gameConfig.player.energyPerKill;
+        const energyGain = getEnergyGainForKill(enemy);
+        game.energy += energyGain;
         if (game.tutorial) {
             try {
                 if (typeof game.tutorial.handleEnergyGained === 'function') {
-                    game.tutorial.handleEnergyGained(gameConfig.player.energyPerKill);
+                    game.tutorial.handleEnergyGained(energyGain);
                 }
                 if (typeof game.tutorial.handleEnemyKilled === 'function') {
                     game.tutorial.handleEnemyKilled({ match: isColorMatch });

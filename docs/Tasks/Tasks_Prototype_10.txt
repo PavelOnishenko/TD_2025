@@ -23,7 +23,7 @@
 
 09 | TODO | Make it easier to get 5-6 lvl towers
 
-10 | TODO | Give 2x money for tank kills
+10 | DONE | Give 2x money for tank kills
 
 11 | TODO | Give 2x money for wave completion.
 
