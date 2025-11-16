@@ -23,63 +23,63 @@ const IMAGE_SOURCES = {
 
 const SOUND_OPTIONS = {
     tower_fire_1: {
-        src: ['assets/tower_fire_1.wav'],
-        volume: 0.6,
+        src: ['assets/tower_fire_1.mp3'],
+        volume: 0.3,
         preload: true,
     },
     tower_fire_2: {
-        src: ['assets/tower_fire_2.wav'],
-        volume: 0.62,
+        src: ['assets/tower_fire_2.mp3'],
+        volume: 0.28,
         preload: true,
     },
     tower_fire_3: {
-        src: ['assets/tower_fire_3.wav'],
-        volume: 0.64,
+        src: ['assets/tower_fire_3.mp3'],
+        volume: 0.14,
         preload: true,
     },
     tower_fire_4: {
-        src: ['assets/tower_fire_4.wav'],
+        src: ['assets/tower_fire_4.mp3'],
         volume: 0.66,
         preload: true,
     },
     tower_fire_5: {
-        src: ['assets/tower_fire_5.wav'],
+        src: ['assets/tower_fire_5.mp3'],
         volume: 0.68,
         preload: true,
     },
     tower_fire_6: {
-        src: ['assets/tower_fire_6.wav'],
-        volume: 0.7,
+        src: ['assets/tower_fire_6.mp3'],
+        volume: 0.2,
         preload: true,
     },
     tower_hit_1: {
-        src: ['assets/tower_hit_1.wav'],
-        volume: 0.4,
+        src: ['assets/tower_hit_1.mp3'],
+        volume: 0.2,
         preload: true,
     },
     tower_hit_2: {
-        src: ['assets/tower_hit_2.wav'],
-        volume: 0.42,
+        src: ['assets/tower_hit_2.mp3'],
+        volume: 0.2,
         preload: true,
     },
     tower_hit_3: {
-        src: ['assets/tower_hit_3.wav'],
-        volume: 0.44,
+        src: ['assets/tower_hit_3.mp3'],
+        volume: 0.24,
         preload: true,
     },
     tower_hit_4: {
-        src: ['assets/tower_hit_4.wav'],
-        volume: 0.46,
+        src: ['assets/tower_hit_4.mp3'],
+        volume: 0.03,
         preload: true,
     },
     tower_hit_5: {
-        src: ['assets/tower_hit_5.wav'],
+        src: ['assets/tower_hit_5.mp3'],
         volume: 0.48,
         preload: true,
     },
     tower_hit_6: {
-        src: ['assets/tower_hit_6.wav'],
-        volume: 0.5,
+        src: ['assets/tower_hit_6.mp3'],
+        volume: 0.1,
         preload: true,
     },
     explosion: {
@@ -134,7 +134,7 @@ const SOUND_OPTIONS = {
     },
     backgroundMusic: {
         src: ['assets/background_music.mp3'],
-        volume: 0.25,
+        volume: 0.35,
         preload: true,
         loop: true
     }

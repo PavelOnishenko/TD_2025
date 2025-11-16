@@ -67,7 +67,7 @@ It should cover the following:
 009 | DONE | Add localization system. Localizations should be read from text files in assets. 2 languages need to work right away - English and Russian.
 Switching should be placed somewhere in the HUD. Mb in the pause menu? All texts showing in the game should be subject to localization.
 
-010 | TODO | Quality sounds
+010 | DONE | Quality sounds
 
 011 | DONE | Quality music
 
