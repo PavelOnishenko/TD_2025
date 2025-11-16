@@ -29,18 +29,19 @@ test('switchTowerColor toggles color when enough energy', () => {
 
     assert.equal(switched, true);
     assert.equal(tower.color, 'blue');
-    assert.equal(game.energy, game.initialEnergy - game.switchCost);
+    assert.equal(game.energy, game.initialEnergy);
 });
 
-test('switchTowerColor rejects change when energy insufficient', () => {
+test('switchTowerColor toggles color even without energy', () => {
     const game = createGame({ attachDom: true });
     const tower = placeTowerOnCell(game, game.bottomCells[0]);
     game.energy = 0;
 
     const switched = game.switchTowerColor(tower);
 
-    assert.equal(switched, false);
-    assert.equal(tower.color, 'red');
+    assert.equal(switched, true);
+    assert.equal(tower.color, 'blue');
+    assert.equal(game.energy, 0);
 });
 
 test('switchTowerColor rejects change during active wave', () => {

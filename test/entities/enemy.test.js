@@ -1,19 +1,25 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import Enemy, { TankEnemy, SwarmEnemy } from '../../js/entities/Enemy.js';
+import gameConfig from '../../js/config/gameConfig.js';
 
 test('update moves enemy based on dt and both speed components', () => {
     const enemy = new Enemy(3, 'red', 0, 100, 120, 80);
+    const multiplier = gameConfig.enemies.speedMultiplier ?? 1;
+    const deltaXHalf = 120 * multiplier * 0.5;
+    const deltaYHalf = 80 * multiplier * 0.5;
 
     enemy.update(0.5);
 
-    assert.strictEqual(enemy.x, 39);
-    assert.strictEqual(enemy.y, 126);
+    assert.strictEqual(enemy.x, deltaXHalf);
+    assert.strictEqual(enemy.y, 100 + deltaYHalf);
 
     enemy.update(0.25);
 
-    assert.strictEqual(enemy.x, 58.5);
-    assert.strictEqual(enemy.y, 139);
+    const deltaXQuarter = 120 * multiplier * 0.25;
+    const deltaYQuarter = 80 * multiplier * 0.25;
+    assert.strictEqual(enemy.x, deltaXHalf + deltaXQuarter);
+    assert.strictEqual(enemy.y, 100 + deltaYHalf + deltaYQuarter);
 });
 
 test('isOutOfBounds only flags positions beyond the bottom edge', () => {
@@ -105,9 +111,10 @@ test('swarm enemy has less hp and moves faster than tank', () => {
 
 test('global speed multiplier applies to all enemies', () => {
     const enemy = new Enemy(3, 'red', 0, 0, 100, 50);
+    const multiplier = gameConfig.enemies.speedMultiplier ?? 1;
 
-    assert.strictEqual(enemy.speedX, 65);
-    assert.strictEqual(enemy.speedY, 32.5);
+    assert.strictEqual(enemy.speedX, 100 * multiplier);
+    assert.strictEqual(enemy.speedY, 50 * multiplier);
 });
 
 test('horizontal flight keeps vertical speed at zero', () => {
