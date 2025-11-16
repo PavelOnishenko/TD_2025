@@ -13,7 +13,7 @@
 
 04 | DONE | Prohibit changing color during wave.
 
-05 | TODO | Make color switch cost = 0
+05 | DONE | Make color switch cost = 0
 
 06 | DONE | Give 100 energy in the beginning
 
