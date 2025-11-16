@@ -120,7 +120,6 @@ const towerManagement = {
             if (!this.canMergeTowers(towerA, towerB)) continue;
 
             callback(cellA, cellB, towerA, towerB);
-            i++;
         }
     },
 
