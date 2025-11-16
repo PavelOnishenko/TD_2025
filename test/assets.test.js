@@ -93,18 +93,18 @@ test('loadAssets returns sounds only when audio is supported', async () => {
         'assets/swarm_B.png'
     ]);
     assert.deepEqual(soundCreatorCalls, [
-        'assets/tower_fire_1.wav',
-        'assets/tower_fire_2.wav',
-        'assets/tower_fire_3.wav',
-        'assets/tower_fire_4.wav',
-        'assets/tower_fire_5.wav',
-        'assets/tower_fire_6.wav',
-        'assets/tower_hit_1.wav',
-        'assets/tower_hit_2.wav',
-        'assets/tower_hit_3.wav',
-        'assets/tower_hit_4.wav',
-        'assets/tower_hit_5.wav',
-        'assets/tower_hit_6.wav',
+        'assets/tower_fire_1.mp3',
+        'assets/tower_fire_2.mp3',
+        'assets/tower_fire_3.mp3',
+        'assets/tower_fire_4.mp3',
+        'assets/tower_fire_5.mp3',
+        'assets/tower_fire_6.mp3',
+        'assets/tower_hit_1.mp3',
+        'assets/tower_hit_2.mp3',
+        'assets/tower_hit_3.mp3',
+        'assets/tower_hit_4.mp3',
+        'assets/tower_hit_5.mp3',
+        'assets/tower_hit_6.mp3',
         'assets/explosion.wav',
         'assets/placement.mp3',
         'assets/merge.mp3',
@@ -144,8 +144,8 @@ test('loadAssets returns sounds only when audio is supported', async () => {
         'backgroundMusic'
     ]);
     for (let level = 1; level <= 6; level++) {
-        assert.deepEqual(assets.sounds[`tower_fire_${level}`], { sound: `assets/tower_fire_${level}.wav` });
-        assert.deepEqual(assets.sounds[`tower_hit_${level}`], { sound: `assets/tower_hit_${level}.wav` });
+        assert.deepEqual(assets.sounds[`tower_fire_${level}`], { sound: `assets/tower_fire_${level}.mp3` });
+        assert.deepEqual(assets.sounds[`tower_hit_${level}`], { sound: `assets/tower_hit_${level}.mp3` });
     }
     assert.deepEqual(assets.sounds.baseHit, { sound: 'assets/explosion.wav' });
     assert.deepEqual(assets.sounds.merge, { sound: 'assets/merge.mp3' });
