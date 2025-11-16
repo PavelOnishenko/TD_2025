@@ -86,6 +86,8 @@ class Game {
         this.isRestoringState = false;
         this.persistenceEnabled = true;
         this.mergeHintPairs = [];
+        this.mergeModeActive = false;
+        this.selectedMergeCell = null;
         this.screenShake = createScreenShakeState();
         this.baseHitFlash = createBaseHitFlashState();
         this.audioMuted = false;

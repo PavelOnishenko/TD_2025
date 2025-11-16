@@ -7,10 +7,98 @@ const towerManagement = {
 
     manualMergeTowers() {
         if (this.waveInProgress) {
-            return;
+            this.disableMergeMode?.();
+            return this.mergeModeActive;
         }
-        this.mergeTowers(this.bottomCells);
-        this.mergeTowers(this.topCells);
+        this.mergeModeActive = !this.mergeModeActive;
+        if (this.mergeModeActive) {
+            this.clearMergeSelection();
+            this.updateMergeHints();
+        } else {
+            this.disableMergeMode();
+        }
+        this.updateMergeButtonState?.(this.mergeModeActive);
+        return this.mergeModeActive;
+    },
+
+    enableMergeMode() {
+        if (this.waveInProgress) {
+            return false;
+        }
+        this.mergeModeActive = true;
+        this.clearMergeSelection();
+        this.updateMergeHints();
+        this.updateMergeButtonState?.(true);
+        return true;
+    },
+
+    disableMergeMode() {
+        this.mergeModeActive = false;
+        this.clearMergeSelection();
+        this.clearMergeHints();
+        this.updateMergeButtonState?.(false);
+    },
+
+    clearMergeSelection() {
+        if (this.selectedMergeCell) {
+            this.selectedMergeCell.mergeSelection = 0;
+            const tower = this.getTowerAt?.(this.selectedMergeCell) ?? this.selectedMergeCell.tower;
+            if (tower) {
+                tower.mergeSelected = false;
+            }
+        }
+        this.selectedMergeCell = null;
+    },
+
+    selectTowerForMerge(tower) {
+        if (!this.mergeModeActive || this.waveInProgress) {
+            return false;
+        }
+        const cell = tower?.cell;
+        if (!cell || !cell.occupied) {
+            return false;
+        }
+
+        if (!this.selectedMergeCell) {
+            this.selectedMergeCell = cell;
+            this.selectedMergeCell.mergeSelection = 1;
+            if (tower) {
+                tower.mergeSelected = true;
+            }
+            this.playMergeSelectionSound?.();
+            this.updateMergeHints();
+            return true;
+        }
+
+        if (this.selectedMergeCell === cell) {
+            this.clearMergeSelection();
+            this.updateMergeHints();
+            return false;
+        }
+
+        const targetCell = this.selectedMergeCell;
+
+        if (!this.areCellsAdjacent(targetCell, cell)) {
+            tower?.triggerErrorPulse?.();
+            this.clearMergeSelection();
+            this.updateMergeHints();
+            return false;
+        }
+
+        const towerA = this.getTowerAt(targetCell);
+        const towerB = this.getTowerAt(cell);
+        if (!this.canMergeCells(targetCell, cell) || !this.canMergeTowers(towerA, towerB)) {
+            towerA?.triggerErrorPulse?.();
+            towerB?.triggerErrorPulse?.();
+            this.clearMergeSelection();
+            this.updateMergeHints();
+            return false;
+        }
+
+        this.mergeTowerPair(targetCell, cell, towerA, towerB);
+        this.clearMergeSelection();
+        this.updateMergeHints();
+        return true;
     },
 
     canMergeCells(cellA, cellB) {
@@ -32,8 +120,21 @@ const towerManagement = {
             if (!this.canMergeTowers(towerA, towerB)) continue;
 
             callback(cellA, cellB, towerA, towerB);
-            i++;
         }
+    },
+
+    areCellsAdjacent(cellA, cellB) {
+        const topIndexA = this.topCells.indexOf(cellA);
+        const topIndexB = this.topCells.indexOf(cellB);
+        if (topIndexA !== -1 && topIndexB !== -1) {
+            return Math.abs(topIndexA - topIndexB) === 1;
+        }
+        const bottomIndexA = this.bottomCells.indexOf(cellA);
+        const bottomIndexB = this.bottomCells.indexOf(cellB);
+        if (bottomIndexA !== -1 && bottomIndexB !== -1) {
+            return Math.abs(bottomIndexA - bottomIndexB) === 1;
+        }
+        return false;
     },
 
     mergeTowerPair(cellA, cellB, towerA, towerB) {
@@ -69,17 +170,17 @@ const towerManagement = {
     },
 
     updateMergeHints() {
-        if (!this.mergeHintPairs) {
-            this.mergeHintPairs = [];
-        } else {
-            this.mergeHintPairs.length = 0;
-        }
+        this.clearMergeHints();
 
-        if (this.waveInProgress) {
+        if (this.waveInProgress || !this.mergeModeActive) {
             return;
         }
 
         const applyHint = (cellA, cellB, towerA, towerB) => {
+            const selectedCell = this.selectedMergeCell;
+            if (selectedCell && selectedCell !== cellA && selectedCell !== cellB) {
+                return;
+            }
             cellA.mergeHint = Math.min(1, (cellA.mergeHint ?? 0) + 0.9);
             cellB.mergeHint = Math.min(1, (cellB.mergeHint ?? 0) + 0.9);
             if (towerA) {
@@ -93,6 +194,45 @@ const towerManagement = {
 
         this.forEachMergeablePair(this.bottomCells, applyHint);
         this.forEachMergeablePair(this.topCells, applyHint);
+    },
+
+    clearMergeHints() {
+        if (!this.mergeHintPairs) {
+            this.mergeHintPairs = [];
+        } else {
+            this.mergeHintPairs.length = 0;
+        }
+
+        const cells = typeof this.getAllCells === 'function' ? this.getAllCells() : [];
+        cells.forEach(cell => {
+            cell.mergeHint = 0;
+            if (!this.selectedMergeCell || cell !== this.selectedMergeCell) {
+                cell.mergeSelection = 0;
+            }
+        });
+
+        if (Array.isArray(this.towers)) {
+            this.towers.forEach(t => {
+                t.mergeHint = 0;
+                if (!this.selectedMergeCell || t.cell !== this.selectedMergeCell) {
+                    t.mergeSelected = false;
+                }
+            });
+        }
+    },
+
+    playMergeSelectionSound() {
+        const audio = this.audio;
+        if (!audio) {
+            return;
+        }
+        if (typeof audio.playPlacement === 'function') {
+            audio.playPlacement();
+            return;
+        }
+        if (typeof audio.playMerge === 'function') {
+            audio.playMerge();
+        }
     },
 };
 

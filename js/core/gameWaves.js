@@ -8,6 +8,9 @@ export const waveActions = {
         if (this.tutorial) {
             this.tutorial.handleWaveStarted();
         }
+        if (typeof this.disableMergeMode === 'function') {
+            this.disableMergeMode();
+        }
         if (this.mergeBtn) {
             this.mergeBtn.disabled = true;
         }

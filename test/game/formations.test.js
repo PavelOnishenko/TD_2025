@@ -44,3 +44,29 @@ test('createFormationManager plans wave respecting difficulty budget', () => {
     assert.equal(plan.events[0].type, 'tank');
     assert.equal(plan.events[1].type, 'swarm');
 });
+
+test('formations honor minimum wave thresholds', () => {
+    const manager = createFormationManager({
+        definitions: `
+# Early Push | difficulty=2 | probability=5 | minWave=1
+swarm @0 y=600 color=red
+---
+# Late Push | difficulty=2 | probability=5 | minWave=3
+swarm @0 y=620 color=blue
+---
+`,
+        waveDifficulty: [2, 2, 2],
+    });
+    assert.ok(manager);
+    const earlyPlan = manager.planWave(1, { random: () => 0.1 });
+    assert.ok(earlyPlan);
+    assert.equal(earlyPlan.selections.length, 1);
+    assert.ok(earlyPlan.selections.every(selection => selection.label.startsWith('Early')));
+    assert.ok(earlyPlan.events.every(event => event.color === 'red'));
+
+    const latePlan = manager.planWave(3, { random: () => 0.9 });
+    assert.ok(latePlan);
+    assert.equal(latePlan.selections.length, 1);
+    assert.ok(latePlan.selections[0].label.startsWith('Late'));
+    assert.ok(latePlan.events.every(event => event.color === 'blue'));
+});
