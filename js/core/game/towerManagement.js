@@ -7,10 +7,81 @@ const towerManagement = {
 
     manualMergeTowers() {
         if (this.waveInProgress) {
-            return;
+            this.disableMergeMode?.();
+            return this.mergeModeActive;
         }
-        this.mergeTowers(this.bottomCells);
-        this.mergeTowers(this.topCells);
+        this.mergeModeActive = !this.mergeModeActive;
+        if (this.mergeModeActive) {
+            this.clearMergeSelection();
+            this.updateMergeHints();
+        } else {
+            this.disableMergeMode();
+        }
+        this.updateMergeButtonState?.(this.mergeModeActive);
+        return this.mergeModeActive;
+    },
+
+    enableMergeMode() {
+        if (this.waveInProgress) {
+            return false;
+        }
+        this.mergeModeActive = true;
+        this.clearMergeSelection();
+        this.updateMergeHints();
+        this.updateMergeButtonState?.(true);
+        return true;
+    },
+
+    disableMergeMode() {
+        this.mergeModeActive = false;
+        this.clearMergeSelection();
+        if (this.mergeHintPairs) {
+            this.mergeHintPairs.length = 0;
+        }
+        this.updateMergeButtonState?.(false);
+    },
+
+    clearMergeSelection() {
+        this.selectedMergeCell = null;
+    },
+
+    selectTowerForMerge(tower) {
+        if (!this.mergeModeActive || this.waveInProgress) {
+            return false;
+        }
+        const cell = tower?.cell;
+        if (!cell || !cell.occupied) {
+            return false;
+        }
+
+        if (!this.selectedMergeCell) {
+            this.selectedMergeCell = cell;
+            return true;
+        }
+
+        if (this.selectedMergeCell === cell) {
+            this.clearMergeSelection();
+            return false;
+        }
+
+        const targetCell = this.selectedMergeCell;
+        this.clearMergeSelection();
+
+        if (!this.areCellsAdjacent(targetCell, cell)) {
+            tower?.triggerErrorPulse?.();
+            return false;
+        }
+
+        const towerA = this.getTowerAt(targetCell);
+        const towerB = this.getTowerAt(cell);
+        if (!this.canMergeCells(targetCell, cell) || !this.canMergeTowers(towerA, towerB)) {
+            towerA?.triggerErrorPulse?.();
+            towerB?.triggerErrorPulse?.();
+            return false;
+        }
+
+        this.mergeTowerPair(targetCell, cell, towerA, towerB);
+        return true;
     },
 
     canMergeCells(cellA, cellB) {
@@ -34,6 +105,20 @@ const towerManagement = {
             callback(cellA, cellB, towerA, towerB);
             i++;
         }
+    },
+
+    areCellsAdjacent(cellA, cellB) {
+        const topIndexA = this.topCells.indexOf(cellA);
+        const topIndexB = this.topCells.indexOf(cellB);
+        if (topIndexA !== -1 && topIndexB !== -1) {
+            return Math.abs(topIndexA - topIndexB) === 1;
+        }
+        const bottomIndexA = this.bottomCells.indexOf(cellA);
+        const bottomIndexB = this.bottomCells.indexOf(cellB);
+        if (bottomIndexA !== -1 && bottomIndexB !== -1) {
+            return Math.abs(bottomIndexA - bottomIndexB) === 1;
+        }
+        return false;
     },
 
     mergeTowerPair(cellA, cellB, towerA, towerB) {
@@ -75,7 +160,7 @@ const towerManagement = {
             this.mergeHintPairs.length = 0;
         }
 
-        if (this.waveInProgress) {
+        if (this.waveInProgress || !this.mergeModeActive) {
             return;
         }
 

@@ -107,6 +107,8 @@ function isInside(pos, rect) {
 
 export function bindUI(game) {
     bindHUD(game);
+    game.updateMergeButtonState = (active) => updateMergeButtonState(game, active);
+    game.updateMergeButtonState(false);
     attachTutorial(game);
     bindButtons(game);
     bindAudioButtons(game);
@@ -381,7 +383,8 @@ function bindButtons(game) {
             if (game.waveInProgress)
                 return;
             if (typeof game.manualMergeTowers === 'function') {
-                game.manualMergeTowers();
+                const active = game.manualMergeTowers();
+                game.updateMergeButtonState?.(active);
             }
         };
         game.mergeBtn.addEventListener('click', handleMerge);
@@ -450,6 +453,19 @@ function bindButtons(game) {
     }
     if (game.endRestartBtn) {
         game.endRestartBtn.addEventListener('click', handleRestart);
+    }
+}
+
+function updateMergeButtonState(game, active) {
+    const button = game?.mergeBtn;
+    if (!button) {
+        return;
+    }
+    if (typeof button.setAttribute === 'function') {
+        button.setAttribute('aria-pressed', active ? 'true' : 'false');
+    }
+    if (button.classList && typeof button.classList.toggle === 'function') {
+        button.classList.toggle('is-active', Boolean(active));
     }
 }
 
@@ -658,6 +674,7 @@ function bindCanvasInteractions(game) {
         removalTriggered: false,
         startedRemoval: false,
         chargeSoundHandle: null,
+        mergeSelection: false,
     };
 
     const removalDuration = Math.max(0.1, Number(gameConfig.towers?.removalHoldDuration) || 2);
@@ -760,11 +777,25 @@ function bindCanvasInteractions(game) {
         pointerState.cancelled = false;
         pointerState.removalTriggered = false;
         pointerState.startedRemoval = false;
+        pointerState.mergeSelection = false;
         pointerState.tower = null;
         cancelChargeSoundTimer();
 
         const tower = findTowerAtPosition(pos);
         if (tower) {
+            if (game.mergeModeActive) {
+                pointerState.tower = tower;
+                pointerState.mergeSelection = true;
+                if (typeof game.canvas?.setPointerCapture === 'function') {
+                    try {
+                        game.canvas.setPointerCapture(pointerId);
+                    } catch {
+                        // ignore capture failures
+                    }
+                }
+                event.preventDefault();
+                return;
+            }
             pointerState.tower = tower;
             const started = typeof tower.beginRemovalCharge === 'function'
                 ? tower.beginRemovalCharge()
@@ -802,6 +833,13 @@ function bindCanvasInteractions(game) {
         const pos = getMousePos(game.canvas, event);
 
         if (pointerState.tower) {
+            if (pointerState.mergeSelection) {
+                const distance = Math.hypot(pos.x - pointerState.downPos.x, pos.y - pointerState.downPos.y);
+                if (distance > dragThreshold) {
+                    pointerState.movedTooFar = true;
+                }
+                return;
+            }
             if (!pointerState.removalTriggered && !isTowerInGame(pointerState.tower)) {
                 pointerState.removalTriggered = true;
                 cancelChargeSoundTimer();
@@ -838,6 +876,13 @@ function bindCanvasInteractions(game) {
         cancelChargeSoundTimer();
 
         if (pointerState.tower) {
+            if (pointerState.mergeSelection) {
+                if (!pointerState.movedTooFar && typeof game.selectTowerForMerge === 'function') {
+                    game.selectTowerForMerge(pointerState.tower);
+                }
+                resetPointerState();
+                return;
+            }
             const tower = pointerState.tower;
             const towerInGame = isTowerInGame(tower);
             const progress = typeof tower.getRemovalChargeProgress === 'function'
