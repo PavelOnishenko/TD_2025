@@ -58,6 +58,7 @@
     "waveLabelEndless": "Wave: {current}",
     "waveAria": "Wave {current} of {max}",
     "waveAriaEndless": "Wave {current}, endless mode",
+    "waveClearedBanner": "WAVE #{wave} CLEARED",
     "livesAria": "Lives: {value}",
     "energyAria": "Energy: {amount}",
     "scoreLabel": "Score: {value}",

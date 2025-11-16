@@ -58,6 +58,7 @@
     "waveLabelEndless": "Волна: {current}",
     "waveAria": "Волна {current} из {max}",
     "waveAriaEndless": "Волна {current}, бесконечный режим",
+    "waveClearedBanner": "ВОЛНА №{wave} ОТРАЖЕНА",
     "livesAria": "Жизни: {value}",
     "energyAria": "Энергия: {amount}",
     "scoreLabel": "Счёт: {value}",
