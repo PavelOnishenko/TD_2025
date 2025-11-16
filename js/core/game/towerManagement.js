@@ -13,6 +13,36 @@ const towerManagement = {
         this.mergeTowers(this.topCells);
     },
 
+    upgradeTowerInstantly(tower, options = {}) {
+        if (!tower) {
+            return false;
+        }
+        const cost = Number.isFinite(options.cost) ? options.cost : 0;
+        if (!Number.isFinite(cost) || cost <= 0) {
+            return false;
+        }
+        const availableEnergy = Number.isFinite(this.energy) ? this.energy : 0;
+        if (availableEnergy < cost) {
+            return false;
+        }
+        const currentLevel = Number.isFinite(tower.level) ? tower.level : 1;
+        tower.level = currentLevel + 1;
+        if (typeof tower.updateStats === 'function') {
+            tower.updateStats();
+        }
+        if (typeof tower.triggerPlacementFlash === 'function') {
+            tower.triggerPlacementFlash();
+        }
+        if (typeof tower.triggerMergePulse === 'function') {
+            tower.triggerMergePulse();
+        }
+        this.energy = availableEnergy - cost;
+        if (typeof this.persistState === 'function') {
+            this.persistState();
+        }
+        return true;
+    },
+
     canMergeCells(cellA, cellB) {
         return cellA.occupied && cellB.occupied;
     },

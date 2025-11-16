@@ -176,13 +176,13 @@ test('bindUI wires HUD elements and tutorial overlay', () => {
   const ids = [
     'lives', 'energy', 'scorePanel', 'score', 'bestScore', 'wavePanel', 'wave', 'wavePhase',
     'endlessIndicator', 'status', 'nextWave', 'restart', 'muteToggle', 'musicToggle',
-    'mergeTowers', 'pause', 'startOverlay', 'startGame', 'endOverlay', 'endMenu', 'endMessage',
+    'mergeTowers', 'upgradeTower', 'pause', 'startOverlay', 'startGame', 'endOverlay', 'endMenu', 'endMessage',
     'endDetail', 'endScore', 'endBestScore', 'endRestart', 'pauseOverlay', 'pauseMessage',
     'resumeGame', 'diagnosticsOverlay', 'saveControls', 'saveGame', 'loadGame', 'deleteSave',
   ];
 
   ids.forEach(id => {
-    const el = id === 'nextWave' || id === 'restart' || id === 'startGame' || id === 'endRestart'
+    const el = id === 'nextWave' || id === 'restart' || id === 'startGame' || id === 'endRestart' || id === 'upgradeTower'
       ? createButtonStub()
       : createStubElement('div');
     if (id === 'nextWave') {
