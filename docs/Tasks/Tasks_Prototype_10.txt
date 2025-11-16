@@ -12,7 +12,7 @@
 
 06 | TODO | Give 100 energy in the beginning
 
-07 | TODO | Decrease tanks' HP by 15%
+07 | DONE | Decrease tanks' HP by 15%
 
 08 | TODO | Make it easier to play at 20+ waves
 
