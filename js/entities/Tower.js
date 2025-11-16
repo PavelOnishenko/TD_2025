@@ -37,6 +37,7 @@ export default class Tower {
         this.removalChargeActive = false;
         this.removalChargePending = false;
         this.removalChargeDecayRate = config.removalIndicatorDecay ?? 3.2;
+        this.mergeSelected = false;
         this.updateStats();
     }
 
@@ -222,6 +223,7 @@ export default class Tower {
         const c = this.center();
         ctx.fillStyle = this.color;
         this.drawBody(ctx, assets);
+        this.drawMergeSelection(ctx, c);
         this.drawErrorPulse(ctx, c);
         this.drawMergePulseWave(ctx, c);
         this.drawMergeHint(ctx, c);
@@ -267,6 +269,29 @@ export default class Tower {
         ctx.arc(center.x, center.y + this.h * 0.05, radius, 0, Math.PI * 2);
         ctx.fillStyle = color;
         ctx.fill();
+        ctx.restore();
+    }
+
+    drawMergeSelection(ctx, center) {
+        if (!this.mergeSelected) {
+            return;
+        }
+
+        const pulse = (Math.sin(this.glowTime * 2.4) + 1) / 2;
+        const radius = Math.max(this.w, this.h) * (0.7 + 0.14 * pulse);
+        const alpha = 0.55 + 0.35 * pulse;
+        const lineWidth = 4.5 + 2 * pulse;
+        const color = this.color === 'blue'
+            ? `rgba(160, 220, 255, ${alpha})`
+            : `rgba(255, 200, 150, ${alpha})`;
+
+        ctx.save();
+        ctx.globalCompositeOperation = 'lighter';
+        ctx.lineWidth = lineWidth;
+        ctx.strokeStyle = color;
+        ctx.beginPath();
+        ctx.arc(center.x, center.y + this.h * 0.04, radius, 0, Math.PI * 2);
+        ctx.stroke();
         ctx.restore();
     }
 
