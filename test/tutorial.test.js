@@ -71,7 +71,8 @@ test('tutorial runs through configured steps and applies highlights', () => {
   assert.equal(highlightElement.classList.has('tutorial-highlighted'), true);
 
   tutorial.handleColorSwitch();
-  assert.deepEqual(shown.at(-1), ['show', 'start']);
+  assert.deepEqual(shown.at(-1), ['hide']);
+  assert.equal(shown.some(entry => entry[0] === 'show' && entry[1] === 'start'), false);
   assert.equal(highlightElement.classList.has('tutorial-highlighted'), false);
 
   game.waveInProgress = true;
@@ -178,12 +179,15 @@ test('reset clears completion and hides overlay', () => {
 test('tutorial skips when progress is already complete', () => {
   const game = { wave: 5, waveInProgress: false };
   let shown = false;
+  const highlightElement = { classList: { add() {}, remove() {} } };
+  registerTutorialTarget('highlight', () => highlightElement);
   const tutorial = createTutorial(game, {
     steps: [
       {
         id: 'anything',
         wave: 5,
         checkComplete: () => true,
+        highlightTargets: ['highlight'],
       },
     ],
     ui: {
@@ -201,6 +205,7 @@ test('tutorial skips when progress is already complete', () => {
   tutorial.start();
   tutorial.handleWavePreparation(5);
   assert.equal(shown, true);
+  clearTutorialTargets();
 });
 
 test('syncWithGame advances steps based on game state', () => {

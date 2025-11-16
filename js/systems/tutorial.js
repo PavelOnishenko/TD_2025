@@ -259,6 +259,10 @@ function createDisplayStep(step) {
     };
 }
 
+function shouldDisplayOverlay(step) {
+    return Array.isArray(step?.highlightTargets) && step.highlightTargets.length > 0;
+}
+
 export function createTutorial(game, options = {}) {
     const doc = options.document ?? (typeof document !== 'undefined' ? document : null);
     const overlay = options.ui ?? createDomOverlay(doc);
@@ -424,7 +428,11 @@ export function createTutorial(game, options = {}) {
         state.currentStep = step;
         const displayStep = createDisplayStep(step);
         state.currentDisplayStep = displayStep;
-        overlay?.show?.(displayStep);
+        if (shouldDisplayOverlay(step)) {
+            overlay?.show?.(displayStep);
+        } else {
+            overlay?.hide?.();
+        }
         applyHighlights(step);
         playSound(step.sound);
         ensureCheckLoop();
@@ -459,7 +467,11 @@ export function createTutorial(game, options = {}) {
         }
         const displayStep = createDisplayStep(state.currentStep);
         state.currentDisplayStep = displayStep;
-        overlay?.show?.(displayStep);
+        if (shouldDisplayOverlay(state.currentStep)) {
+            overlay?.show?.(displayStep);
+        } else {
+            overlay?.hide?.();
+        }
         applyHighlights(state.currentStep);
     }
 
