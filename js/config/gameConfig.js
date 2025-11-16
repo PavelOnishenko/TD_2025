@@ -237,7 +237,7 @@ swarm @3 y=520 color=blue
                 text: 'Click on a glowing platform to build your first tower. Each tower costs 12 energy harvested from our living crystals.',
                 textKey: 'tutorial.buildTower.text',
                 picture: 'assets/tower_1B.png',
-                sound: 'assets/placement.wav',
+                sound: 'assets/placement.mp3',
                 checkComplete(game) {
                     return Array.isArray(game?.towers) && game.towers.length > 0;
                 },
@@ -294,7 +294,7 @@ swarm @3 y=520 color=blue
                 text: 'Every destroyed ship and completed wave feeds more energy into your reserves. Watch the meter to afford new towers and color switches.',
                 textKey: 'tutorial.energyEconomy.text',
                 picture: 'assets/energy_sign.png',
-                sound: 'assets/placement.wav',
+                sound: 'assets/placement.mp3',
                 checkComplete(game, context) {
                     return hasAcknowledged(context, 'energy-economy')
                         || hasEnergyGain(context)
