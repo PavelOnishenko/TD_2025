@@ -25,34 +25,17 @@ function resolveWeaponType(level) {
     return 'standard';
 }
 
-function playWeaponFireSound(audio, weaponType) {
+function playTowerFireSound(audio, towerLevel) {
     if (!audio) {
         return;
     }
-    switch (weaponType) {
-        case 'minigun':
-            if (typeof audio.playMinigunFire === 'function') {
-                audio.playMinigunFire();
-                return;
-            }
-            break;
-        case 'railgun':
-            if (typeof audio.playRailgunFire === 'function') {
-                audio.playRailgunFire();
-                return;
-            }
-            break;
-        case 'rocket':
-            if (typeof audio.playRocketFire === 'function') {
-                audio.playRocketFire();
-                return;
-            }
-            break;
-        default:
-            break;
+    if (typeof audio.playTowerFire === 'function') {
+        const level = Number.isFinite(towerLevel) ? towerLevel : 1;
+        audio.playTowerFire(level);
+        return;
     }
-    if (typeof audio.playFire === 'function') {
-        audio.playFire();
+    if (typeof audio.playExplosion === 'function') {
+        audio.playExplosion();
     }
 }
 
@@ -79,6 +62,7 @@ function createProjectile(game, angle, tower, radius, overrides = {}) {
         type,
         weaponType,
         hitRadius,
+        towerLevel: Number.isFinite(tower?.level) ? tower.level : 1,
         ...extras,
     };
     game.projectiles.push(projectile);
@@ -119,7 +103,7 @@ function spawnMinigunBurst(game, angle, tower) {
         });
         updateMaxProjectileRadius(game, radius);
     }
-    playWeaponFireSound(game.audio, 'minigun');
+    playTowerFireSound(game.audio, tower?.level);
     tower.triggerFlash();
 }
 
@@ -210,11 +194,12 @@ function spawnRailgunBeam(game, angle, tower) {
         elapsed: 0,
         width: Math.max(12, game.projectileRadius * 0.75),
         anim: { time: 0 },
+        towerLevel: Number.isFinite(tower?.level) ? tower.level : 1,
     };
 
     game.projectiles.push(beam);
     applyRailgunDamage(game, beam);
-    playWeaponFireSound(game.audio, 'railgun');
+    playTowerFireSound(game.audio, tower?.level);
     tower.triggerFlash();
 }
 
@@ -239,7 +224,7 @@ function spawnRocket(game, angle, tower) {
         },
     });
     updateMaxProjectileRadius(game, radius);
-    playWeaponFireSound(game.audio, 'rocket');
+    playTowerFireSound(game.audio, tower?.level);
     tower.triggerFlash();
     return rocket;
 }
@@ -270,7 +255,7 @@ const projectileManagement = {
                 const radius = this.getProjectileRadiusForLevel(tower?.level);
                 createProjectile(this, angle, tower, radius, { weaponType });
                 updateMaxProjectileRadius(this, radius);
-                playWeaponFireSound(this.audio, weaponType);
+                playTowerFireSound(this.audio, tower?.level);
                 tower.triggerFlash();
                 break;
             }

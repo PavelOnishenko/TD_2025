@@ -6,43 +6,16 @@ function clamp(value, min, max) {
     return Math.max(min, Math.min(max, value));
 }
 
-function playHitSound(audio, projectile, isColorMatch) {
+function playHitSound(audio, projectile) {
     if (!audio) {
         return;
     }
-    const weaponType = projectile.weaponType ?? projectile.type;
-    switch (weaponType) {
-        case 'minigun':
-            if (typeof audio.playMinigunHit === 'function') {
-                audio.playMinigunHit();
-                return;
-            }
-            break;
-        case 'railgun':
-            if (typeof audio.playRailgunHit === 'function') {
-                audio.playRailgunHit();
-                return;
-            }
-            break;
-        case 'rocket':
-            if (typeof audio.playRocketHit === 'function') {
-                audio.playRocketHit();
-                return;
-            }
-            break;
-        default:
-            break;
+    if (typeof audio.playTowerHit === 'function') {
+        const level = Number.isFinite(projectile?.towerLevel) ? projectile.towerLevel : 1;
+        audio.playTowerHit(level);
+        return;
     }
-
-    if (isColorMatch) {
-        if (typeof audio.playMatchingHit === 'function') {
-            audio.playMatchingHit();
-        } else if (typeof audio.playExplosion === 'function') {
-            audio.playExplosion();
-        }
-    } else if (typeof audio.playMismatchingHit === 'function') {
-        audio.playMismatchingHit();
-    } else if (typeof audio.playExplosion === 'function') {
+    if (typeof audio.playExplosion === 'function') {
         audio.playExplosion();
     }
 }
@@ -124,7 +97,7 @@ export function applyProjectileDamage(game, projectile, enemyIndex, options = {}
     const damage = calculateDamage(projectile, enemy);
     enemy.hp -= damage;
     const isColorMatch = projectile.color === enemy.color;
-    playHitSound(game.audio, projectile, isColorMatch);
+    playHitSound(game.audio, projectile);
 
     if (spawnImpactEffect && game.explosions) {
         const impactPos = getImpactPosition(projectile, enemy, { impactX, impactY });
