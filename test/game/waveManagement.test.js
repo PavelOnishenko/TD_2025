@@ -131,7 +131,7 @@ test('checkWaveCompletion unlocks merge and next wave buttons', () => {
 
     assert.equal(game.waveInProgress, false);
     assert.equal(game.wave, 2);
-    assert.equal(game.energy, game.initialEnergy + 3);
+    assert.equal(game.energy, game.initialEnergy + 6);
     assert.equal(game.nextWaveBtn.disabled, false);
     assert.equal(game.mergeBtn.disabled, false);
 });
