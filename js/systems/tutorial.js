@@ -33,7 +33,7 @@ function createIntervalScheduler(interval = DEFAULT_CHECK_INTERVAL) {
 
 function ensureOverlayStructure(doc, root) {
     if (!root || !doc) {
-        return { root, panel: null, mediaWrapper: null, imageEl: null, titleEl: null, textEl: null };
+        return { root, backdrop: null, panel: null, mediaWrapper: null, imageEl: null, titleEl: null, textEl: null };
     }
     const classList = root.classList;
     classList?.add('tutorial-overlay');
@@ -99,7 +99,7 @@ function ensureOverlayStructure(doc, root) {
         content.appendChild(textEl);
     }
 
-    return { root, panel, mediaWrapper, imageEl, titleEl, textEl };
+    return { root, backdrop, panel, mediaWrapper, imageEl, titleEl, textEl };
 }
 
 function createDomOverlay(doc) {
@@ -108,6 +108,7 @@ function createDomOverlay(doc) {
             show() {},
             hide() {},
             setHighlightState() {},
+            setBackdropActive() {},
         };
     }
 
@@ -119,7 +120,7 @@ function createDomOverlay(doc) {
         created = true;
     }
 
-    const { mediaWrapper, imageEl, titleEl, textEl } = ensureOverlayStructure(doc, root);
+    const { backdrop, mediaWrapper, imageEl, titleEl, textEl } = ensureOverlayStructure(doc, root);
 
     if (created && doc.body && typeof doc.body.appendChild === 'function') {
         doc.body.appendChild(root);
@@ -173,6 +174,12 @@ function createDomOverlay(doc) {
                 return;
             }
             root.classList?.toggle?.('tutorial-overlay--with-highlight', Boolean(active));
+        },
+        setBackdropActive(active) {
+            if (!backdrop) {
+                return;
+            }
+            backdrop.classList?.toggle?.('hidden', !active);
         },
         element: root,
     };
@@ -246,6 +253,10 @@ function resolveStepText(step) {
         return translate(step.textKey, {}, fallback);
     }
     return fallback;
+}
+
+function hasHighlightTargets(step) {
+    return Array.isArray(step?.highlightTargets) && step.highlightTargets.length > 0;
 }
 
 function createDisplayStep(step) {
@@ -380,6 +391,7 @@ export function createTutorial(game, options = {}) {
 
     function hideOverlay() {
         overlay?.hide?.();
+        overlay?.setBackdropActive?.(false);
         clearHighlights();
         stopCheckLoop();
         if (state.context) {
@@ -424,6 +436,7 @@ export function createTutorial(game, options = {}) {
         state.currentStep = step;
         const displayStep = createDisplayStep(step);
         state.currentDisplayStep = displayStep;
+        overlay?.setBackdropActive?.(hasHighlightTargets(step));
         overlay?.show?.(displayStep);
         applyHighlights(step);
         playSound(step.sound);
@@ -459,6 +472,7 @@ export function createTutorial(game, options = {}) {
         }
         const displayStep = createDisplayStep(state.currentStep);
         state.currentDisplayStep = displayStep;
+        overlay?.setBackdropActive?.(hasHighlightTargets(state.currentStep));
         overlay?.show?.(displayStep);
         applyHighlights(state.currentStep);
     }

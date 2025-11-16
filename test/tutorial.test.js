@@ -24,10 +24,12 @@ function createClassList() {
 
 test('tutorial runs through configured steps and applies highlights', () => {
   const shown = [];
+  const shownWithBackdrop = [];
   const highlightElement = { classList: createClassList(), dataset: {} };
   registerTutorialTarget('highlight', () => highlightElement);
 
   const game = { wave: 1, waveInProgress: false, hasTower: false };
+  const backdropStates = [];
   const tutorial = createTutorial(game, {
     steps: [
       {
@@ -53,9 +55,13 @@ test('tutorial runs through configured steps and applies highlights', () => {
       },
     ],
     ui: {
-      show: step => shown.push(['show', step.id]),
+      show: step => {
+        shown.push(['show', step.id]);
+        shownWithBackdrop.push(['show', step.id, backdropStates.at(-1) ?? null]);
+      },
       hide: () => shown.push(['hide']),
       setHighlightState: () => {},
+      setBackdropActive: value => backdropStates.push(value),
     },
     scheduleCheck: () => () => {},
   });
@@ -73,11 +79,17 @@ test('tutorial runs through configured steps and applies highlights', () => {
   tutorial.handleColorSwitch();
   assert.deepEqual(shown.at(-1), ['show', 'start']);
   assert.equal(highlightElement.classList.has('tutorial-highlighted'), false);
+  assert.deepEqual(shownWithBackdrop, [
+    ['show', 'build', true],
+    ['show', 'switch', true],
+    ['show', 'start', false],
+  ]);
 
   game.waveInProgress = true;
   tutorial.handleWaveStarted();
   assert.deepEqual(shown.at(-1), ['hide']);
   assert.equal(tutorial.isComplete(), true);
+  assert.equal(backdropStates.at(-1), false);
 
   clearTutorialTargets();
 });
