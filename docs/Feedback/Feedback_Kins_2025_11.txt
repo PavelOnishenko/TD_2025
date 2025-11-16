@@ -18,4 +18,5 @@ Prohibit merging and upgrading of 6th level towers
 Give more money for tanks 
 More money for wave completion
 Money amounts from kills should become larger as waves progress
+Hovering on towers and empty places should highlight tower/place. 
 ----------------------------------------
