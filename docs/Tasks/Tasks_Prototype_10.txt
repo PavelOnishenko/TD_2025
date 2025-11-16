@@ -6,7 +6,7 @@
 
 03 | DONE | let all ships move 20% slower. Make global config option for this.
 
-04 | TODO | Prohibit changing color during wave.
+04 | DONE | Prohibit changing color during wave.
 
 05 | TODO | Make color switch cost = 0
 

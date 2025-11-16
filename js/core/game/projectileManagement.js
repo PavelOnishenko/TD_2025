@@ -263,6 +263,15 @@ const projectileManagement = {
     },
 
     switchTowerColor(tower) {
+        if (this.waveInProgress) {
+            if (tower && typeof tower.triggerErrorPulse === 'function') {
+                tower.triggerErrorPulse();
+            }
+            if (this.audio && typeof this.audio.playError === 'function') {
+                this.audio.playError();
+            }
+            return false;
+        }
         if (this.energy < this.switchCost) {
             if (tower && typeof tower.triggerErrorPulse === 'function') {
                 tower.triggerErrorPulse();
