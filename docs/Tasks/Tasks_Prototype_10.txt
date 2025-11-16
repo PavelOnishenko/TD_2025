@@ -4,7 +4,7 @@
 
 02 | TODO | In all ship formations, in all waves - make overall 30% more ships. 
 
-03 | TODO | let all ships move 20% slower. Make global config option for this.
+03 | DONE | let all ships move 20% slower. Make global config option for this.
 
 04 | TODO | Prohibit changing color during wave.
 
