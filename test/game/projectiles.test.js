@@ -81,20 +81,20 @@ test('towerAttacks respects firing cooldown', () => {
 
 test('spawnProjectile triggers audio fire sound', () => {
     const game = createGame();
-    let called = false;
-    withReplacedMethod(game.audio, 'playFire', () => { called = true; }, () => {
+    const levels = [];
+    withReplacedMethod(game.audio, 'playTowerFire', level => { levels.push(level); }, () => {
         game.spawnProjectile(0, new Tower(0, 0));
     });
 
-    assert.equal(called, true);
+    assert.deepEqual(levels, [1]);
 });
 
 test('level 4 tower fires a minigun burst', () => {
     const game = createGame();
     const tower = new Tower(0, 0, 'blue', 4);
-    let fireCalls = 0;
+    const levels = [];
 
-    withReplacedMethod(game.audio, 'playMinigunFire', () => { fireCalls += 1; }, () => {
+    withReplacedMethod(game.audio, 'playTowerFire', level => { levels.push(level); }, () => {
         game.spawnProjectile(0, tower);
     });
 
@@ -104,7 +104,7 @@ test('level 4 tower fires a minigun burst', () => {
         return sum + projectile.damage;
     }, 0);
     assert.ok(Math.abs(totalDamage - tower.damage) < 1e-6);
-    assert.equal(fireCalls, 1);
+    assert.deepEqual(levels, [4]);
 });
 
 test('level 5 tower railgun beam pierces enemies', () => {
@@ -114,13 +114,13 @@ test('level 5 tower railgun beam pierces enemies', () => {
     const enemyA = { x: center.x + 120, y: center.y - 20, w: 40, h: 40, hp: 1, color: 'red' };
     const enemyB = { x: center.x + 220, y: center.y - 22, w: 40, h: 40, hp: 1, color: 'blue' };
     game.enemies.push(enemyA, enemyB);
-    let fireCalls = 0;
+    const levels = [];
 
-    withReplacedMethod(game.audio, 'playRailgunFire', () => { fireCalls += 1; }, () => {
+    withReplacedMethod(game.audio, 'playTowerFire', level => { levels.push(level); }, () => {
         game.spawnProjectile(0, tower);
     });
 
-    assert.equal(fireCalls, 1);
+    assert.deepEqual(levels, [5]);
     assert.equal(game.projectiles[0].type, 'railgun-beam');
     assert.ok(game.enemies.length <= 1);
 });
@@ -131,10 +131,10 @@ test('level 6 rocket impact triggers explosive damage', () => {
     const enemyA = { x: 200, y: 200, w: 40, h: 40, hp: 1, color: 'red' };
     const enemyB = { x: 230, y: 215, w: 40, h: 40, hp: 1, color: 'red' };
     game.enemies.push(enemyA, enemyB);
-    let fireCalls = 0;
-    let hitCalls = 0;
+    const fireLevels = [];
+    const hitLevels = [];
 
-    withReplacedMethod(game.audio, 'playRocketFire', () => { fireCalls += 1; }, () => {
+    withReplacedMethod(game.audio, 'playTowerFire', level => { fireLevels.push(level); }, () => {
         game.spawnProjectile(Math.PI / 4, tower);
     });
 
@@ -144,12 +144,13 @@ test('level 6 rocket impact triggers explosive damage', () => {
     projectile.x = enemyA.x + enemyA.w / 2;
     projectile.y = enemyA.y + enemyA.h / 2;
 
-    withReplacedMethod(game.audio, 'playRocketHit', () => { hitCalls += 1; }, () => {
+    withReplacedMethod(game.audio, 'playTowerHit', level => { hitLevels.push(level); }, () => {
         hitEnemy(game, projectile, projectileIndex);
     });
 
-    assert.equal(fireCalls, 1);
-    assert.ok(hitCalls >= 1);
+    assert.deepEqual(fireLevels, [6]);
+    assert.ok(hitLevels.length >= 1);
+    assert.ok(hitLevels.every(level => level === 6));
     assert.equal(game.enemies.length, 0);
 });
 

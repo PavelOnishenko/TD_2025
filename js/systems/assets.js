@@ -22,57 +22,64 @@ const IMAGE_SOURCES = {
 };
 
 const SOUND_OPTIONS = {
-    fire: {
-        src: ['assets/fire.wav'],
+    tower_fire_1: {
+        src: ['assets/tower_fire_1.wav'],
         volume: 0.6,
-        preload: true
+        preload: true,
     },
-    minigunFire: {
-        src: ['assets/fire.wav'],
+    tower_fire_2: {
+        src: ['assets/tower_fire_2.wav'],
+        volume: 0.62,
+        preload: true,
+    },
+    tower_fire_3: {
+        src: ['assets/tower_fire_3.wav'],
+        volume: 0.64,
+        preload: true,
+    },
+    tower_fire_4: {
+        src: ['assets/tower_fire_4.wav'],
+        volume: 0.66,
+        preload: true,
+    },
+    tower_fire_5: {
+        src: ['assets/tower_fire_5.wav'],
+        volume: 0.68,
+        preload: true,
+    },
+    tower_fire_6: {
+        src: ['assets/tower_fire_6.wav'],
+        volume: 0.7,
+        preload: true,
+    },
+    tower_hit_1: {
+        src: ['assets/tower_hit_1.wav'],
+        volume: 0.4,
+        preload: true,
+    },
+    tower_hit_2: {
+        src: ['assets/tower_hit_2.wav'],
+        volume: 0.42,
+        preload: true,
+    },
+    tower_hit_3: {
+        src: ['assets/tower_hit_3.wav'],
+        volume: 0.44,
+        preload: true,
+    },
+    tower_hit_4: {
+        src: ['assets/tower_hit_4.wav'],
+        volume: 0.46,
+        preload: true,
+    },
+    tower_hit_5: {
+        src: ['assets/tower_hit_5.wav'],
+        volume: 0.48,
+        preload: true,
+    },
+    tower_hit_6: {
+        src: ['assets/tower_hit_6.wav'],
         volume: 0.5,
-        rate: 1.65,
-        preload: true,
-    },
-    railgunFire: {
-        src: ['assets/explosion.wav'],
-        volume: 0.35,
-        rate: 0.42,
-        preload: true,
-    },
-    rocketFire: {
-        src: ['assets/fire.wav'],
-        volume: 0.75,
-        rate: 0.85,
-        preload: true,
-    },
-    matchingHit: {
-        src: ['assets/explosion.wav'],
-        volume: 0.25,
-        rate: 3.5,
-        preload: true
-    },
-    mismatchingHit: {
-        src: ['assets/explosion.wav'],
-        volume: 0.2,
-        rate: 0.5,
-        preload: true
-    },
-    minigunHit: {
-        src: ['assets/explosion.wav'],
-        volume: 0.22,
-        rate: 2.1,
-        preload: true,
-    },
-    railgunHit: {
-        src: ['assets/explosion.wav'],
-        volume: 0.32,
-        rate: 0.35,
-        preload: true,
-    },
-    rocketHit: {
-        src: ['assets/explosion.wav'],
-        volume: 0.5,
-        rate: 0.9,
         preload: true,
     },
     explosion: {
