@@ -103,7 +103,7 @@ test('loadAssets returns sounds only when audio is supported', async () => {
         'assets/explosion.wav',
         'assets/explosion.wav',
         'assets/explosion.wav',
-        'assets/placement.wav',
+        'assets/placement.mp3',
         'assets/merge.mp3',
         'assets/color_switch.mp3',
         'assets/explosion.wav',

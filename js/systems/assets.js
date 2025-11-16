@@ -81,7 +81,7 @@ const SOUND_OPTIONS = {
         preload: true
     },
     placement: {
-        src: ['assets/placement.wav'],
+        src: ['assets/placement.mp3'],
         volume: 0.4,
         preload: true
     },
