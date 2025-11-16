@@ -66,6 +66,7 @@ export const gameConfig = {
         switchCost: 0,
         maxWaves: 20,
         energyPerKill: 1,
+        tankKillEnergyMultiplier: 2,
         energyPerWave: 6,
         colorProbability: {
             minDifference: 0.35,
