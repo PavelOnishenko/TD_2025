@@ -752,6 +752,41 @@ function bindCanvasInteractions(game) {
         return cells.find(cell => isInside(pos, cell)) ?? null;
     };
 
+    let hoveredTower = null;
+
+    const clearHoveredTower = () => {
+        if (hoveredTower && typeof hoveredTower.setHovered === 'function') {
+            hoveredTower.setHovered(false);
+        }
+        hoveredTower = null;
+    };
+
+    const applyHoverHighlight = (pos) => {
+        if (!pos) {
+            clearHoveredTower();
+            return;
+        }
+
+        const tower = findTowerAtPosition(pos);
+        if (tower) {
+            if (tower !== hoveredTower) {
+                clearHoveredTower();
+                hoveredTower = tower;
+            }
+            if (typeof hoveredTower?.setHovered === 'function') {
+                hoveredTower.setHovered(true);
+            }
+            return;
+        }
+
+        clearHoveredTower();
+
+        const cell = findCellAtPosition(pos);
+        if (cell && !cell.occupied) {
+            cell.hover = 1;
+        }
+    };
+
     const isWithinTowerWithMargin = (tower, pos, marginFactor) => {
         const width = tower.w ?? 0;
         const height = tower.h ?? 0;
@@ -771,6 +806,8 @@ function bindCanvasInteractions(game) {
         }
         const pointerId = typeof event.pointerId === 'number' ? event.pointerId : 0;
         const pos = getMousePos(game.canvas, event);
+
+        applyHoverHighlight(pos);
 
         pointerState.pointerId = pointerId;
         pointerState.downPos = pos;
@@ -827,11 +864,13 @@ function bindCanvasInteractions(game) {
     };
 
     const handlePointerMove = (event) => {
+        const pos = getMousePos(game.canvas, event);
+        applyHoverHighlight(pos);
+
         const pointerId = typeof event.pointerId === 'number' ? event.pointerId : 0;
         if (pointerState.pointerId !== pointerId) {
             return;
         }
-        const pos = getMousePos(game.canvas, event);
 
         if (pointerState.tower) {
             if (pointerState.mergeSelection) {
@@ -914,6 +953,7 @@ function bindCanvasInteractions(game) {
     };
 
     const handlePointerCancel = (event) => {
+        clearHoveredTower();
         const pointerId = typeof event.pointerId === 'number' ? event.pointerId : 0;
         if (pointerState.pointerId !== pointerId) {
             return;
