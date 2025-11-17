@@ -1,13 +1,13 @@
 01 | DONE | Change merge button behavior - it should let choose the 2 towers for merging, one after another,
-    NOT just merge all towers that can. 
-    Also show merging hint only when the button is pressed (i.e. while merging mode is on). 
+    NOT just merge all towers that can.
+    Also show merging hint only when the button is pressed (i.e. while merging mode is on).
 
 02 | DONE | In all ship formations, in all waves - make overall ~30% more ships.
-    Don't do automated calculation system for this, just edit formations array in config adding ships there. 
+    Don't do automated calculation system for this, just edit formations array in config adding ships there.
     You can also add 3-10 new formations there which include more packed formations, and REALLY CROWDY formations,
     and even CRAZILY CROWDED formations. But don't forget to configure the probability so that they don't pop up too early.
-    Also formations including tanks shouldn't happen before wave 3. 
-    And for each formation minimum wave should be set. This is a new field to formations array elems. 
+    Also formations including tanks shouldn't happen before wave 3.
+    And for each formation minimum wave should be set. This is a new field to formations array elems.
 
 03 | DONE | let all ships move 20% slower. Make global config option for this.
 
@@ -27,11 +27,11 @@
 
 11 | DONE | Give 2x money for wave completion.
 
-12 | TODO | Money amounts from kills should become larger as waves progress. Recalc gradually every wave. 
+12 | DONE | Money amounts from kills should become larger as waves progress. Recalc gradually every wave.
     Only integer values for energy! Use rounding.
     At wave 10, they should become 30% larger. At wave 20, 60% larger. At wave 30, 100% larger.
 
-13 | TODO | Hovering on towers and empty places should highlight tower/place. 
+13 | TODO | Hovering on towers and empty places should highlight tower/place.
 
 14 | TODO | Balance the game.
 

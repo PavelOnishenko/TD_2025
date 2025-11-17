@@ -67,6 +67,16 @@ export const gameConfig = {
         maxWaves: 20,
         energyPerKill: 1,
         tankKillEnergyMultiplier: 2,
+        killEnergyScaling: {
+            baseWave: 1,
+            baseBonus: 0,
+            maxBonus: 1,
+            breakpoints: [
+                { wave: 10, bonus: 0.3 },
+                { wave: 20, bonus: 0.6 },
+                { wave: 30, bonus: 1 },
+            ],
+        },
         energyPerWave: 6,
         colorProbability: {
             minDifference: 0.35,
