@@ -95,7 +95,7 @@ const towerManagement = {
             return false;
         }
 
-        this.mergeTowerPair(targetCell, cell, towerA, towerB);
+        this.mergeTowerPair(cell, targetCell, towerB, towerA);
         this.clearMergeSelection();
         this.updateMergeHints();
         return true;

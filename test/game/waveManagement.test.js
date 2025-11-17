@@ -61,9 +61,9 @@ test('manualMergeTowers enables merge mode and merges selected adjacent towers',
     game.selectTowerForMerge(towerB);
 
     assert.equal(game.towers.length, 1);
-    assert.equal(cellA.tower, towerA);
-    assert.equal(cellB.tower, null);
-    assert.equal(towerA.level, 2);
+    assert.equal(cellA.tower, null);
+    assert.equal(cellB.tower, towerB);
+    assert.equal(towerB.level, 2);
 });
 
 test('manualMergeTowers skips merging during wave', () => {
