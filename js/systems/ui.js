@@ -752,6 +752,23 @@ function bindCanvasInteractions(game) {
         return cells.find(cell => isInside(pos, cell)) ?? null;
     };
 
+    const applyHoverHighlight = (pos) => {
+        if (!pos) {
+            return;
+        }
+
+        const tower = findTowerAtPosition(pos);
+        if (tower && typeof tower.setHover === 'function') {
+            tower.setHover();
+            return;
+        }
+
+        const cell = findCellAtPosition(pos);
+        if (cell && !cell.occupied) {
+            cell.hover = 1;
+        }
+    };
+
     const isWithinTowerWithMargin = (tower, pos, marginFactor) => {
         const width = tower.w ?? 0;
         const height = tower.h ?? 0;
@@ -771,6 +788,8 @@ function bindCanvasInteractions(game) {
         }
         const pointerId = typeof event.pointerId === 'number' ? event.pointerId : 0;
         const pos = getMousePos(game.canvas, event);
+
+        applyHoverHighlight(pos);
 
         pointerState.pointerId = pointerId;
         pointerState.downPos = pos;
@@ -827,11 +846,13 @@ function bindCanvasInteractions(game) {
     };
 
     const handlePointerMove = (event) => {
+        const pos = getMousePos(game.canvas, event);
+        applyHoverHighlight(pos);
+
         const pointerId = typeof event.pointerId === 'number' ? event.pointerId : 0;
         if (pointerState.pointerId !== pointerId) {
             return;
         }
-        const pos = getMousePos(game.canvas, event);
 
         if (pointerState.tower) {
             if (pointerState.mergeSelection) {

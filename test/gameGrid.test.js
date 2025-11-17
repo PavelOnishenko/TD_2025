@@ -17,6 +17,7 @@ test('constructor builds grid with expected cell positions', () => {
         h: 160,
         occupied: false,
         highlight: 0,
+        hover: 0,
         mergeHint: 0,
         mergeSelection: 0,
         tower: null,
@@ -30,6 +31,7 @@ test('constructor builds grid with expected cell positions', () => {
         h: 160,
         occupied: false,
         highlight: 0,
+        hover: 0,
         mergeHint: 0,
         mergeSelection: 0,
         tower: null,
@@ -50,6 +52,7 @@ test('createCell builds cell with provided coordinates and defaults', () => {
         h: 24,
         occupied: false,
         highlight: 0,
+        hover: 0,
         mergeHint: 0,
         mergeSelection: 0,
         tower: null,
@@ -72,8 +75,8 @@ test('createRow positions cells relative to origin', () => {
     const row = grid.createRow(origin, offsets);
 
     assert.deepEqual(row, [
-        { x: 110, y: 205, w: 30, h: 20, occupied: false, highlight: 0, mergeHint: 0, mergeSelection: 0, tower: null },
-        { x: 95, y: 215, w: 30, h: 20, occupied: false, highlight: 0, mergeHint: 0, mergeSelection: 0, tower: null },
+        { x: 110, y: 205, w: 30, h: 20, occupied: false, highlight: 0, hover: 0, mergeHint: 0, mergeSelection: 0, tower: null },
+        { x: 95, y: 215, w: 30, h: 20, occupied: false, highlight: 0, hover: 0, mergeHint: 0, mergeSelection: 0, tower: null },
     ]);
 });
 
@@ -123,11 +126,13 @@ test('resetCells clears occupancy, highlight and tower references', () => {
     const bottomCell = grid.bottomCells[0];
     topCell.occupied = true;
     topCell.highlight = 0.5;
+    topCell.hover = 0.9;
     topCell.tower = {};
     topCell.mergeHint = 1;
     topCell.mergeSelection = 1;
     bottomCell.occupied = true;
     bottomCell.highlight = 0.7;
+    bottomCell.hover = 0.3;
     bottomCell.tower = {};
     bottomCell.mergeHint = 0.4;
     bottomCell.mergeSelection = 0.6;
@@ -136,11 +141,13 @@ test('resetCells clears occupancy, highlight and tower references', () => {
 
     assert.strictEqual(topCell.occupied, false);
     assert.strictEqual(topCell.highlight, 0);
+    assert.strictEqual(topCell.hover, 0);
     assert.strictEqual(topCell.mergeHint, 0);
     assert.strictEqual(topCell.mergeSelection, 0);
     assert.strictEqual(topCell.tower, null);
     assert.strictEqual(bottomCell.occupied, false);
     assert.strictEqual(bottomCell.highlight, 0);
+    assert.strictEqual(bottomCell.hover, 0);
     assert.strictEqual(bottomCell.mergeHint, 0);
     assert.strictEqual(bottomCell.mergeSelection, 0);
     assert.strictEqual(bottomCell.tower, null);
@@ -157,6 +164,17 @@ test('fadeHighlights decreases highlight values but never below zero', () => {
     assert.ok(Math.abs(grid.topCells[0].highlight - 0.2) < 1e-6);
     assert.strictEqual(grid.topCells[1].highlight, 0);
     assert.strictEqual(grid.topCells[2].highlight, 0);
+});
+
+test('fadeHover decreases hover values smoothly', () => {
+    const grid = new GameGrid();
+    grid.bottomCells[0].hover = 1;
+    grid.bottomCells[1].hover = 0.3;
+
+    grid.fadeHover(0.2);
+
+    assert.ok(Math.abs(grid.bottomCells[0].hover - 0.4) < 1e-6);
+    assert.strictEqual(grid.bottomCells[1].hover, 0);
 });
 
 test('fadeMergeHints decreases merge hints smoothly', () => {
