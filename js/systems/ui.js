@@ -753,6 +753,7 @@ function bindCanvasInteractions(game) {
     };
 
     let hoveredTower = null;
+    let hoveredCell = null;
 
     const clearHoveredTower = () => {
         if (hoveredTower && typeof hoveredTower.setHovered === 'function') {
@@ -761,9 +762,18 @@ function bindCanvasInteractions(game) {
         hoveredTower = null;
     };
 
+    const clearHoveredCell = () => {
+        if (hoveredCell) {
+            hoveredCell.hoverActive = false;
+            hoveredCell.hover = 0;
+        }
+        hoveredCell = null;
+    };
+
     const applyHoverHighlight = (pos) => {
         if (!pos) {
             clearHoveredTower();
+            clearHoveredCell();
             return;
         }
 
@@ -776,6 +786,7 @@ function bindCanvasInteractions(game) {
             if (typeof hoveredTower?.setHovered === 'function') {
                 hoveredTower.setHovered(true);
             }
+            clearHoveredCell();
             return;
         }
 
@@ -783,8 +794,16 @@ function bindCanvasInteractions(game) {
 
         const cell = findCellAtPosition(pos);
         if (cell && !cell.occupied) {
-            cell.hover = 1;
+            if (cell !== hoveredCell) {
+                clearHoveredCell();
+                hoveredCell = cell;
+            }
+            hoveredCell.hoverActive = true;
+            hoveredCell.hover = 1;
+            return;
         }
+
+        clearHoveredCell();
     };
 
     const isWithinTowerWithMargin = (tower, pos, marginFactor) => {
@@ -954,6 +973,7 @@ function bindCanvasInteractions(game) {
 
     const handlePointerCancel = (event) => {
         clearHoveredTower();
+        clearHoveredCell();
         const pointerId = typeof event.pointerId === 'number' ? event.pointerId : 0;
         if (pointerState.pointerId !== pointerId) {
             return;
