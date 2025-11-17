@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createGame, placeTowerOnCell, withMockedRandom } from './helpers.js';
+import gameConfig from '../../js/config/gameConfig.js';
+import { getWaveEnergyMultiplier } from '../../js/utils/energyScaling.js';
 
 test('startWave initializes counters and spawns first enemies', () => {
     const game = createGame({ attachDom: true });
@@ -131,9 +133,25 @@ test('checkWaveCompletion unlocks merge and next wave buttons', () => {
 
     assert.equal(game.waveInProgress, false);
     assert.equal(game.wave, 2);
-    assert.equal(game.energy, game.initialEnergy + 6);
+    assert.equal(game.energy, game.initialEnergy + gameConfig.player.energyPerWave);
     assert.equal(game.nextWaveBtn.disabled, false);
     assert.equal(game.mergeBtn.disabled, false);
+});
+
+test('checkWaveCompletion scales energy reward with wave multiplier', () => {
+    const game = createGame({ attachDom: true });
+    game.wave = 20;
+    game.waveInProgress = true;
+    game.spawned = game.enemiesPerWave;
+    game.enemies = [];
+    const startingEnergy = game.energy;
+
+    game.checkWaveCompletion();
+
+    const multiplier = getWaveEnergyMultiplier({ wave: 20 });
+    const expectedGain = Math.round(gameConfig.player.energyPerWave * multiplier);
+    assert.equal(game.energy, startingEnergy + expectedGain);
+    assert.equal(game.energyEl.textContent, String(game.energy));
 });
 
 test('checkWaveCompletion transitions into endless mode after configured waves', () => {

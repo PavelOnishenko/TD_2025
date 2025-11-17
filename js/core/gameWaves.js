@@ -1,6 +1,7 @@
 import { updateHUD, updateWavePhaseIndicator, showWaveClearedBanner } from '../systems/ui.js';
 import gameConfig from '../config/gameConfig.js';
 import { showCrazyGamesAdWithPause } from '../systems/ads.js';
+import { getWaveEnergyMultiplier } from '../utils/energyScaling.js';
 
 export const waveActions = {
     startWave() {
@@ -94,6 +95,10 @@ export const waveActions = {
                 this.addScore(this.waveClearScore);
             }
             const completedWave = this.wave;
+            const waveEnergyGain = Math.max(0, Math.round(
+                gameConfig.player.energyPerWave
+                * getWaveEnergyMultiplier({ wave: completedWave }),
+            ));
             showWaveClearedBanner(this, completedWave);
             if (this.tutorial && typeof this.tutorial.handleWaveCompleted === 'function') {
                 try {
@@ -109,10 +114,10 @@ export const waveActions = {
             if (this.tutorial && typeof this.tutorial.handleWavePreparation === 'function') {
                 this.tutorial.handleWavePreparation(this.wave);
             }
-            this.energy += gameConfig.player.energyPerWave;
+            this.energy += waveEnergyGain;
             if (this.tutorial && typeof this.tutorial.handleEnergyGained === 'function') {
                 try {
-                    this.tutorial.handleEnergyGained(gameConfig.player.energyPerWave);
+                    this.tutorial.handleEnergyGained(waveEnergyGain);
                 } catch (error) {
                     console.warn('Tutorial energy handler failed', error);
                 }

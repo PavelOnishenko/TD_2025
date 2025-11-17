@@ -1,19 +1,22 @@
 import { updateHUD } from '../systems/ui.js';
 import { createExplosion } from '../systems/effects.js';
 import gameConfig from '../config/gameConfig.js';
+import { getWaveEnergyMultiplier } from '../utils/energyScaling.js';
 
 function clamp(value, min, max) {
     return Math.max(min, Math.min(max, value));
 }
 
-function getEnergyGainForKill(enemy) {
+function getEnergyGainForKill(game, enemy) {
     const baseEnergy = gameConfig.player.energyPerKill;
-    const multiplier = enemy?.spriteKey === 'tank'
+    const waveMultiplier = getWaveEnergyMultiplier(game);
+    const typeMultiplier = enemy?.spriteKey === 'tank'
         ? (Number.isFinite(gameConfig.player.tankKillEnergyMultiplier)
             ? gameConfig.player.tankKillEnergyMultiplier
             : 2)
         : 1;
-    return baseEnergy * multiplier;
+    const gain = baseEnergy * waveMultiplier * typeMultiplier;
+    return Math.max(0, Math.round(gain));
 }
 
 function playHitSound(audio, projectile) {
@@ -122,7 +125,7 @@ export function applyProjectileDamage(game, projectile, enemyIndex, options = {}
     if (enemy.hp <= 0) {
         enemyRemoved = true;
         game.enemies.splice(enemyIndex, 1);
-        const energyGain = getEnergyGainForKill(enemy);
+        const energyGain = getEnergyGainForKill(game, enemy);
         game.energy += energyGain;
         if (game.tutorial) {
             try {
