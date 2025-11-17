@@ -45,6 +45,36 @@ function makeProjectile(overrides = {}) {
     };
 }
 
+function getExpectedWaveMultiplier(wave) {
+    const scaling = gameConfig.player.killEnergyScaling;
+    const maxBonus = Number.isFinite(scaling?.maxBonus) ? scaling.maxBonus : null;
+    const checkpoints = Array.isArray(scaling?.breakpoints) ? scaling.breakpoints.slice() : [];
+    const baseWave = Math.max(1, Math.floor(Number.isFinite(scaling?.baseWave) ? scaling.baseWave : 1));
+    const baseBonus = Number.isFinite(scaling?.baseBonus) ? scaling.baseBonus : 0;
+    checkpoints.push({ wave: baseWave, bonus: baseBonus });
+    const sorted = checkpoints
+        .filter(point => Number.isFinite(point?.wave) && Number.isFinite(point?.bonus))
+        .map(point => ({ wave: Math.max(1, Math.floor(point.wave)), bonus: point.bonus }))
+        .sort((a, b) => a.wave - b.wave);
+
+    const safeWave = Math.max(1, Math.floor(wave));
+    let previous = sorted[0] ?? { wave: 1, bonus: 0 };
+
+    for (let i = 1; i < sorted.length; i++) {
+        const current = sorted[i];
+        if (safeWave <= current.wave) {
+            const span = Math.max(1, current.wave - previous.wave);
+            const progress = (safeWave - previous.wave) / span;
+            const bonus = previous.bonus + (current.bonus - previous.bonus) * progress;
+            const cappedBonus = maxBonus === null ? bonus : Math.min(bonus, maxBonus);
+            return 1 + cappedBonus;
+        }
+        previous = current;
+    }
+    const finalBonus = maxBonus === null ? previous.bonus : Math.min(previous.bonus, maxBonus);
+    return 1 + finalBonus;
+}
+
 test('moveProjectiles updates positions', () => {
     const game = makeGame();
     const first = makeProjectile({ vx: 10 });
@@ -117,6 +147,42 @@ test('hitEnemy grants bonus energy for tank kills', () => {
     hitEnemy(game, projectile, 0);
 
     const expectedEnergy = gameConfig.player.energyPerKill * gameConfig.player.tankKillEnergyMultiplier;
+    assert.equal(game.energy, expectedEnergy);
+    assert.equal(game.energyEl.textContent, String(expectedEnergy));
+});
+
+test('kill energy scales with wave milestones', () => {
+    const game = makeGame();
+    game.wave = 20;
+    const enemy = makeEnemy();
+    const projectile = makeProjectile({ x: 15, y: 15 });
+    game.enemies.push(enemy);
+    game.projectiles.push(projectile);
+
+    hitEnemy(game, projectile, 0);
+
+    const expectedEnergy = Math.round(
+        gameConfig.player.energyPerKill * getExpectedWaveMultiplier(game.wave),
+    );
+    assert.equal(game.energy, expectedEnergy);
+    assert.equal(game.energyEl.textContent, String(expectedEnergy));
+});
+
+test('tank kill scaling applies rounding and progression', () => {
+    const game = makeGame();
+    game.wave = 10;
+    const enemy = makeEnemy({ spriteKey: 'tank' });
+    const projectile = makeProjectile({ x: 15, y: 15 });
+    game.enemies.push(enemy);
+    game.projectiles.push(projectile);
+
+    hitEnemy(game, projectile, 0);
+
+    const expectedEnergy = Math.round(
+        gameConfig.player.energyPerKill
+        * gameConfig.player.tankKillEnergyMultiplier
+        * getExpectedWaveMultiplier(game.wave),
+    );
     assert.equal(game.energy, expectedEnergy);
     assert.equal(game.energyEl.textContent, String(expectedEnergy));
 });
