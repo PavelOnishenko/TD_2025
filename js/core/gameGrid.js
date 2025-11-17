@@ -51,6 +51,7 @@ class GameGrid {
             occupied: false,
             highlight: 0,
             hover: 0,
+            hoverActive: false,
             mergeHint: 0,
             mergeSelection: 0,
             tower: null,
@@ -70,6 +71,7 @@ class GameGrid {
             cell.occupied = false;
             cell.highlight = 0;
             cell.hover = 0;
+            cell.hoverActive = false;
             cell.mergeHint = 0;
             cell.mergeSelection = 0;
             cell.tower = null;
@@ -86,6 +88,10 @@ class GameGrid {
 
     fadeHover(dt) {
         this.forEachCell(cell => {
+            if (cell.hoverActive) {
+                cell.hover = 1;
+                return;
+            }
             if (cell.hover > 0) {
                 cell.hover = Math.max(0, cell.hover - dt * 3);
             }
