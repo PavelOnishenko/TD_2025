@@ -31,7 +31,7 @@
     Only integer values for energy! Use rounding.
     At wave 10, they should become 30% larger. At wave 20, 60% larger. At wave 30, 100% larger.
 
-13 | TODO | Hovering on towers and empty places should highlight tower/place.
+13 | DONE | Hovering on towers and empty places should highlight tower/place.
 
 14 | TODO | Balance the game.
 

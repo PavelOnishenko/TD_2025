@@ -440,6 +440,7 @@ class Game {
         updateColorSwitchBursts(this.colorSwitchBursts, dt);
         this.updateEnergyPopups(dt);
         this.grid.fadeHighlights(dt);
+        this.grid.fadeHover(dt);
         this.grid.fadeMergeHints(dt);
         this.updateMergeHints();
         this.checkWaveCompletion();

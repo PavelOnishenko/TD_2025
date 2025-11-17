@@ -43,7 +43,18 @@ class GameGrid {
     }
 
     createCell(x, y) {
-        return {x,y,w: this.cellWidth,h: this.cellHeight,occupied: false,highlight: 0,mergeHint: 0,mergeSelection: 0,tower: null};
+        return {
+            x,
+            y,
+            w: this.cellWidth,
+            h: this.cellHeight,
+            occupied: false,
+            highlight: 0,
+            hover: 0,
+            mergeHint: 0,
+            mergeSelection: 0,
+            tower: null,
+        };
     }
 
     getAllCells() {
@@ -58,6 +69,7 @@ class GameGrid {
         this.forEachCell(cell => {
             cell.occupied = false;
             cell.highlight = 0;
+            cell.hover = 0;
             cell.mergeHint = 0;
             cell.mergeSelection = 0;
             cell.tower = null;
@@ -68,6 +80,14 @@ class GameGrid {
         this.forEachCell(cell => {
             if (cell.highlight > 0) {
                 cell.highlight = Math.max(0, cell.highlight - dt);
+            }
+        });
+    }
+
+    fadeHover(dt) {
+        this.forEachCell(cell => {
+            if (cell.hover > 0) {
+                cell.hover = Math.max(0, cell.hover - dt * 3);
             }
         });
     }
