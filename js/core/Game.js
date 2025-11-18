@@ -103,7 +103,10 @@ class Game {
         this.endlessWaveStart = 0;
         this.diagnosticsOverlay = null;
         this.diagnosticsState = { visible: false, fps: 0, lastCommit: 0 };
-        this.formationManager = createFormationManager(gameConfig.waves?.formations ?? {});
+        this.formationManager = createFormationManager(
+            gameConfig.waves?.formations ?? {},
+            gameConfig.waves?.schedule ?? [],
+        );
         this.activeFormationPlan = null;
         this.waveSpawnSchedule = null;
         this.waveSpawnCursor = 0;
@@ -212,15 +215,17 @@ class Game {
         const endless = gameConfig.waves?.endless ?? {};
         const intervalFactor = Number.isFinite(endless.intervalFactor) ? endless.intervalFactor : 0.95;
         const minInterval = Number.isFinite(endless.minInterval) ? endless.minInterval : 0.4;
-        const cyclesIncrement = Number.isFinite(endless.cyclesIncrement) ? endless.cyclesIncrement : 3;
+        const difficultyIncrement = Number.isFinite(endless.difficultyIncrement)
+            ? endless.difficultyIncrement
+            : 3;
         const tanksIncrement = Number.isFinite(endless.tanksIncrement) ? endless.tanksIncrement : 2;
 
-        let previous = this.waveConfigs.at(-1) ?? { interval: 1, cycles: 30, tanksCount: 0 };
+        let previous = this.waveConfigs.at(-1) ?? { interval: 1, difficulty: 30, tanksCount: 0 };
         for (let wave = this.waveConfigs.length + 1; wave <= targetWave; wave += 1) {
             const nextInterval = Math.max(minInterval, Number((previous.interval * intervalFactor).toFixed(3)));
-            const nextCycles = Math.max(1, Math.round(previous.cycles + cyclesIncrement));
+            const nextDifficulty = Math.max(1, Math.round(previous.difficulty + difficultyIncrement));
             const nextTanks = Math.max(0, Math.round(previous.tanksCount + tanksIncrement));
-            const nextConfig = { interval: nextInterval, cycles: nextCycles, tanksCount: nextTanks };
+            const nextConfig = { interval: nextInterval, difficulty: nextDifficulty, tanksCount: nextTanks };
             this.waveConfigs.push(nextConfig);
             previous = nextConfig;
         }

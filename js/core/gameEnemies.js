@@ -42,7 +42,7 @@ export const enemyActions = {
             const cfg = typeof this.getOrCreateWaveConfig === 'function'
                 ? this.getOrCreateWaveConfig(this.wave)
                 : this.waveConfigs[this.wave - 1] ?? this.waveConfigs.at(-1);
-            this.prepareTankScheduleForWave(cfg, this.wave);
+            this.prepareTankScheduleForWave(cfg, this.wave, this.enemiesPerWave);
         }
 
         const spawnIndex = this.spawned + 1;

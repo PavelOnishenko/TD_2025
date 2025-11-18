@@ -24,9 +24,8 @@ test('parseFormationText builds formation descriptors', () => {
 test('createFormationManager plans wave respecting difficulty budget', () => {
     const manager = createFormationManager({
         definitions: sampleDefinitions,
-        waveDifficulty: [3],
         defaults: { formationGap: 0.4 },
-    });
+    }, [{ difficulty: 3 }]);
     assert.ok(manager);
     let calls = 0;
     const plan = manager.planWave(1, {
@@ -55,8 +54,11 @@ swarm @0 y=600 color=red
 swarm @0 y=620 color=blue
 ---
 `,
-        waveDifficulty: [2, 2, 2],
-    });
+    }, [
+        { difficulty: 2 },
+        { difficulty: 2 },
+        { difficulty: 2 },
+    ]);
     assert.ok(manager);
     const earlyPlan = manager.planWave(1, { random: () => 0.1 });
     assert.ok(earlyPlan);

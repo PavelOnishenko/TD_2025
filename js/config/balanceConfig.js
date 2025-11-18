@@ -53,26 +53,26 @@ export const balanceConfig = {
     },
     waves: {
         schedule: [
-            { interval: 0.67, cycles: 13, tanksCount: 0 },
-            { interval: 0.673, cycles: 13, tanksCount: 0 },
-            { interval: 0.676, cycles: 14, tanksCount: 0 },
-            { interval: 0.679, cycles: 14, tanksCount: 0 },
-            { interval: 0.682, cycles: 15, tanksCount: 1 }, // 5
-            { interval: 0.685, cycles: 15, tanksCount: 1 },
-            { interval: 0.688, cycles: 16, tanksCount: 1 },
-            { interval: 0.691, cycles: 16, tanksCount: 1 },
-            { interval: 0.694, cycles: 17, tanksCount: 2 },
-            { interval: 0.697, cycles: 17, tanksCount: 2 }, // 10
-            { interval: 0.700, cycles: 18, tanksCount: 2 },
-            { interval: 0.703, cycles: 18, tanksCount: 2 },
-            { interval: 0.706, cycles: 19, tanksCount: 3 },
-            { interval: 0.709, cycles: 19, tanksCount: 3 },
-            { interval: 0.712, cycles: 20, tanksCount: 3 }, // 15
-            { interval: 0.715, cycles: 20, tanksCount: 3 },
-            { interval: 0.718, cycles: 21, tanksCount: 3 },
-            { interval: 0.721, cycles: 21, tanksCount: 3 },
-            { interval: 0.724, cycles: 22, tanksCount: 4 },
-            { interval: 0.727, cycles: 22, tanksCount: 4 }, // 20
+            { interval: 0.67, difficulty: 13, tanksCount: 0 },
+            { interval: 0.673, difficulty: 13, tanksCount: 0 },
+            { interval: 0.676, difficulty: 14, tanksCount: 0 },
+            { interval: 0.679, difficulty: 14, tanksCount: 0 },
+            { interval: 0.682, difficulty: 15, tanksCount: 1 }, // 5
+            { interval: 0.685, difficulty: 15, tanksCount: 1 },
+            { interval: 0.688, difficulty: 16, tanksCount: 1 },
+            { interval: 0.691, difficulty: 16, tanksCount: 1 },
+            { interval: 0.694, difficulty: 17, tanksCount: 2 },
+            { interval: 0.697, difficulty: 17, tanksCount: 2 }, // 10
+            { interval: 0.700, difficulty: 18, tanksCount: 2 },
+            { interval: 0.703, difficulty: 18, tanksCount: 2 },
+            { interval: 0.706, difficulty: 19, tanksCount: 3 },
+            { interval: 0.709, difficulty: 19, tanksCount: 3 },
+            { interval: 0.712, difficulty: 20, tanksCount: 3 }, // 15
+            { interval: 0.715, difficulty: 20, tanksCount: 3 },
+            { interval: 0.718, difficulty: 21, tanksCount: 3 },
+            { interval: 0.721, difficulty: 21, tanksCount: 3 },
+            { interval: 0.724, difficulty: 22, tanksCount: 4 },
+            { interval: 0.727, difficulty: 22, tanksCount: 4 }, // 20
         ],
         enemyHpByWave: [
             1.34, 1.64, 1.94, 2.24, 2.53, 2.83, 3.13, 3.43, 3.73, 4.03,
@@ -82,7 +82,7 @@ export const balanceConfig = {
             hpGrowth: 1.2,
             intervalFactor: 0.94,
             minInterval: 0.45,
-            cyclesIncrement: 4,
+            difficultyIncrement: 4,
             tanksIncrement: 2,
         },
         formations: {
@@ -90,12 +90,6 @@ export const balanceConfig = {
                 formationGap: 0.85,
                 minimumWeight: 0.02,
             },
-            waveDifficulty: [
-                13, 13, 14, 14, 15,
-                15, 16, 16, 17, 17,
-                18, 18, 19, 19, 20,
-                20, 21, 21, 22, 22,
-            ],
             endlessDifficulty: {
                 startWave: 21,
                 base: 24,

@@ -266,9 +266,9 @@ export function applySimpleSaveState(game, rawState) {
         const cfg = game.getOrCreateWaveConfig(targetWave);
         if (cfg) {
             game.spawnInterval = cfg.interval;
-            game.enemiesPerWave = cfg.cycles;
+            game.enemiesPerWave = 0;
             if (typeof game.prepareTankScheduleForWave === 'function') {
-                game.prepareTankScheduleForWave(cfg, targetWave);
+                game.prepareTankScheduleForWave(cfg, targetWave, 0);
             }
         }
     }
