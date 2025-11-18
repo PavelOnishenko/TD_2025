@@ -223,7 +223,7 @@ const nonBalanceConfig = {
         ],
     },
     ads: {
-        waveCadence: 5,
+        waveCadence: 500,
     },
 };
 
