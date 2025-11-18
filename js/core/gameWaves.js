@@ -59,7 +59,7 @@ export const waveActions = {
                 ? Math.max(1, Math.floor(cfg.difficulty))
                 : 0;
         }
-        this.prepareTankScheduleForWave(cfg, this.wave, this.enemiesPerWave);
+        this.prepareTankScheduleForWave(cfg, this.wave, this.enemiesPerWave, plan);
     },
 
     prepareWaveFormationPlan(cfg, waveNumber) {

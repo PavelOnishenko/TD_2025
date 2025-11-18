@@ -218,14 +218,12 @@ class Game {
         const difficultyIncrement = Number.isFinite(endless.difficultyIncrement)
             ? endless.difficultyIncrement
             : 3;
-        const tanksIncrement = Number.isFinite(endless.tanksIncrement) ? endless.tanksIncrement : 2;
 
-        let previous = this.waveConfigs.at(-1) ?? { interval: 1, difficulty: 30, tanksCount: 0 };
+        let previous = this.waveConfigs.at(-1) ?? { interval: 1, difficulty: 30 };
         for (let wave = this.waveConfigs.length + 1; wave <= targetWave; wave += 1) {
             const nextInterval = Math.max(minInterval, Number((previous.interval * intervalFactor).toFixed(3)));
             const nextDifficulty = Math.max(1, Math.round(previous.difficulty + difficultyIncrement));
-            const nextTanks = Math.max(0, Math.round(previous.tanksCount + tanksIncrement));
-            const nextConfig = { interval: nextInterval, difficulty: nextDifficulty, tanksCount: nextTanks };
+            const nextConfig = { interval: nextInterval, difficulty: nextDifficulty };
             this.waveConfigs.push(nextConfig);
             previous = nextConfig;
         }
