@@ -1,11 +1,11 @@
 export const balanceConfig = {
     player: {
         initialLives: 5,
-        initialEnergy: 100,
-        towerCost: 12,
+        initialEnergy: 480,
+        towerCost: 120,
         switchCost: 0,
         maxWaves: 20,
-        energyPerKill: 1,
+        energyPerKill: 3,
         tankKillEnergyMultiplier: 2,
         killEnergyScaling: {
             baseWave: 1,
@@ -17,7 +17,7 @@ export const balanceConfig = {
                 { wave: 30, bonus: 1 },
             ],
         },
-        energyPerWave: 6,
+        energyPerWave: 20,
         colorProbability: {
             minDifference: 0.35,
         },
@@ -47,7 +47,7 @@ export const balanceConfig = {
     },
     enemies: {
         defaultSpawn: { x: -600, y: 600 },
-        speedMultiplier: 0.65,
+        speedMultiplier: 0.9,
         tank: { hpMultiplier: 35.7, speed: { x: 100, y: 0 }, },
         swarm: { groupSize: 3, spacing: 40, hpMultiplier: 10, speed: { x: 200, y: 0 }, },
     },
