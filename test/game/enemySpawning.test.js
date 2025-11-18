@@ -88,7 +88,7 @@ test('generateTankBurstSchedule returns sorted unique indices', () => {
     assert.equal(new Set(schedule).size, 3);
 });
 
-test('generateTankBurstSchedule handles zero cycles or tanks', () => {
+test('generateTankBurstSchedule handles zero enemies or tanks', () => {
     const game = createGame();
 
     assert.deepEqual(game.generateTankBurstSchedule(0, 3), []);
@@ -108,12 +108,13 @@ test('prepareTankScheduleForWave resets schedule when config missing', () => {
 test('determineEnemyType follows prepared tank schedule', () => {
     const game = createGame();
     const cfg = game.waveConfigs[2];
-    game.generateTankBurstSchedule = () => [1, cfg.cycles];
+    game.generateTankBurstSchedule = () => [1, cfg.difficulty];
 
-    game.prepareTankScheduleForWave(cfg, 3);
+    game.prepareTankScheduleForWave(cfg, 3, cfg.difficulty);
+    game.enemiesPerWave = cfg.difficulty;
 
     const types = [];
-    for (let i = 0; i < cfg.cycles; i++) {
+    for (let i = 0; i < cfg.difficulty; i++) {
         types.push(game.determineEnemyType());
         game.spawned += 1;
     }
@@ -125,6 +126,7 @@ test('spawnEnemiesIfNeeded respects interval and progress', () => {
     const game = createGame();
     game.waveInProgress = true;
     game.spawnTimer = game.spawnInterval;
+    game.enemiesPerWave = 1;
 
     game.spawnEnemiesIfNeeded(0);
 
@@ -135,6 +137,7 @@ test('spawnEnemiesIfNeeded respects interval and progress', () => {
 test('spawnEnemiesIfNeeded accumulates timer below interval', () => {
     const game = createGame();
     game.waveInProgress = true;
+    game.enemiesPerWave = 1;
 
     game.spawnEnemiesIfNeeded(0.2);
 

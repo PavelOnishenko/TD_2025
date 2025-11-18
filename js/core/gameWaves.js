@@ -55,9 +55,11 @@ export const waveActions = {
             this.activeFormationPlan = null;
             this.waveElapsed = 0;
             this.waveSpawnCursor = 0;
-            this.enemiesPerWave = cfg.cycles;
+            this.enemiesPerWave = Number.isFinite(cfg?.difficulty)
+                ? Math.max(1, Math.floor(cfg.difficulty))
+                : 0;
         }
-        this.prepareTankScheduleForWave(cfg, this.wave);
+        this.prepareTankScheduleForWave(cfg, this.wave, this.enemiesPerWave);
     },
 
     prepareWaveFormationPlan(cfg, waveNumber) {
@@ -66,8 +68,7 @@ export const waveActions = {
             this.waveSpawnSchedule = null;
             return null;
         }
-        const totalDifficulty = Number.isFinite(cfg?.cycles) ? cfg.cycles : undefined;
-        const plan = this.formationManager.planWave(waveNumber, { totalDifficulty });
+        const plan = this.formationManager.planWave(waveNumber);
         if (!plan || !Array.isArray(plan.events) || plan.events.length === 0) {
             this.activeFormationPlan = null;
             this.waveSpawnSchedule = null;

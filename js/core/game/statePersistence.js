@@ -69,8 +69,8 @@ function configureWaveAfterRestore(game, waveNumber) {
         ? game.getOrCreateWaveConfig(waveNumber)
         : game.waveConfigs[index] ?? fallback;
     game.spawnInterval = cfg.interval;
-    game.enemiesPerWave = cfg.cycles;
-    game.prepareTankScheduleForWave(cfg, waveNumber);
+    game.enemiesPerWave = 0;
+    game.prepareTankScheduleForWave(cfg, waveNumber, 0);
 }
 
 function createTowerInCell(game, cell, towerState) {

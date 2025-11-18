@@ -5,8 +5,8 @@ import gameConfig from '../../config/gameConfig.js';
 function configureFirstWave(game) {
     const cfg = game.waveConfigs[0];
     game.spawnInterval = cfg.interval;
-    game.enemiesPerWave = cfg.cycles;
-    game.prepareTankScheduleForWave(cfg, 1);
+    game.enemiesPerWave = 0;
+    game.prepareTankScheduleForWave(cfg, 1, 0);
 }
 
 function resetResources(game) {
@@ -127,9 +127,9 @@ const stateSetup = {
         this.tankBurstSet = new Set();
         this.tankScheduleWave = 0;
         const cfg = this.waveConfigs[0];
-        this.prepareTankScheduleForWave(cfg, 1);
+        this.prepareTankScheduleForWave(cfg, 1, 0);
         this.spawnInterval = cfg.interval;
-        this.enemiesPerWave = cfg.cycles;
+        this.enemiesPerWave = 0;
         this.spawned = 0;
         this.spawnTimer = 0;
         this.enemyHpPerWave = [...waves.enemyHpByWave];

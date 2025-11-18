@@ -27,14 +27,19 @@ function selectBurstPositions(totalCycles, tanksCount) {
     return trimmed;
 }
 
-function prepareSchedule(game, cfg, waveNumber) {
+function prepareSchedule(game, cfg, waveNumber, totalEnemies) {
     if (!cfg) {
         game.tankBurstSchedule = [];
         game.tankBurstSet = new Set();
         game.tankScheduleWave = waveNumber;
         return;
     }
-    const schedule = game.generateTankBurstSchedule(cfg.cycles, cfg.tanksCount);
+    const total = Number.isFinite(totalEnemies)
+        ? Math.max(0, Math.floor(totalEnemies))
+        : Number.isFinite(cfg?.difficulty)
+            ? Math.max(0, Math.floor(cfg.difficulty))
+            : 0;
+    const schedule = game.generateTankBurstSchedule(total, cfg.tanksCount);
     game.tankBurstSchedule = schedule;
     game.tankBurstSet = new Set(schedule);
     game.tankScheduleWave = waveNumber;
@@ -45,12 +50,12 @@ const tankSchedule = {
         return cloneWaveConfigs();
     },
 
-    prepareTankScheduleForWave(cfg, waveNumber) {
-        prepareSchedule(this, cfg, waveNumber);
+    prepareTankScheduleForWave(cfg, waveNumber, totalEnemies) {
+        prepareSchedule(this, cfg, waveNumber, totalEnemies);
     },
 
-    generateTankBurstSchedule(totalCycles, tanksCount) {
-        return selectBurstPositions(totalCycles, tanksCount);
+    generateTankBurstSchedule(totalEnemies, tanksCount) {
+        return selectBurstPositions(totalEnemies, tanksCount);
     },
 };
 
