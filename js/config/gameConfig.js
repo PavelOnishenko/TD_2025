@@ -61,11 +61,11 @@ export const gameConfig = {
     },
     player: {
         initialLives: 5,
-        initialEnergy: 100,
-        towerCost: 12,
+        initialEnergy: 480,
+        towerCost: 120,
         switchCost: 0,
         maxWaves: 20,
-        energyPerKill: 1,
+        energyPerKill: 3,
         tankKillEnergyMultiplier: 2,
         killEnergyScaling: {
             baseWave: 1,
@@ -77,7 +77,7 @@ export const gameConfig = {
                 { wave: 30, bonus: 1 },
             ],
         },
-        energyPerWave: 6,
+        energyPerWave: 20,
         colorProbability: {
             minDifference: 0.35,
         },
@@ -117,7 +117,7 @@ export const gameConfig = {
     enemies: {
         defaultSpawn: { x: -600, y: 600 },
         dimensions: { width: 80, height: 80 },
-        speedMultiplier: 0.65,
+        speedMultiplier: 0.9,
         tank: { hpMultiplier: 35.7, speed: { x: 100, y: 0 }, },
         swarm: { groupSize: 3, spacing: 40, hpMultiplier: 10, speed: { x: 200, y: 0 }, },
     },
@@ -161,10 +161,10 @@ export const gameConfig = {
                 minimumWeight: 0.02,
             },
             waveDifficulty: [
-                13, 13, 14, 14, 15,
-                15, 16, 16, 17, 17,
-                18, 18, 19, 19, 20,
-                20, 21, 21, 22, 22,
+                260, 26, 28, 28, 30,
+                30, 32, 32, 34, 34,
+                36, 36, 38, 38, 40,
+                40, 42, 42, 44, 44,
             ],
             endlessDifficulty: {
                 startWave: 21,
@@ -422,7 +422,7 @@ tank @1.35 y=760 color=red
         ],
     },
     ads: {
-        waveCadence: 5,
+        waveCadence: 500,
     },
 };
 
