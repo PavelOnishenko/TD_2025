@@ -52,6 +52,7 @@ export const balanceConfig = {
         swarm: { groupSize: 3, spacing: 40, hpMultiplier: 10, speed: { x: 200, y: 0 }, },
     },
     waves: {
+        difficultyMultiplier: 1,
         schedule: [
             { interval: 0.67, difficulty: 13, tanksCount: 0 },
             { interval: 0.673, difficulty: 13, tanksCount: 0 },

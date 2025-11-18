@@ -1,7 +1,18 @@
 import gameConfig from '../../config/gameConfig.js';
 
+function getWaveDifficultyMultiplier() {
+    const multiplier = Number(gameConfig?.waves?.difficultyMultiplier);
+    return Number.isFinite(multiplier) ? multiplier : 1;
+}
+
 function cloneWaveConfigs() {
-    return gameConfig.waves.schedule.map(cfg => ({ ...cfg }));
+    const multiplier = getWaveDifficultyMultiplier();
+    return gameConfig.waves.schedule.map(cfg => {
+        const difficulty = Number.isFinite(cfg?.difficulty)
+            ? cfg.difficulty * multiplier
+            : cfg.difficulty;
+        return { ...cfg, difficulty };
+    });
 }
 
 function shufflePositions(count) {

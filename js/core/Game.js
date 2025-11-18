@@ -20,6 +20,11 @@ import towerManagement from './game/towerManagement.js';
 import createFormationManager from './game/formations.js';
 import gameConfig from '../config/gameConfig.js';
 
+function getWaveDifficultyMultiplier() {
+    const multiplier = Number(gameConfig?.waves?.difficultyMultiplier);
+    return Number.isFinite(multiplier) ? multiplier : 1;
+}
+
 function createScreenShakeState() {
     const { frequency } = gameConfig.world.screenShake;
     return {
@@ -213,14 +218,16 @@ class Game {
         }
 
         const endless = gameConfig.waves?.endless ?? {};
+        const difficultyMultiplier = getWaveDifficultyMultiplier();
         const intervalFactor = Number.isFinite(endless.intervalFactor) ? endless.intervalFactor : 0.95;
         const minInterval = Number.isFinite(endless.minInterval) ? endless.minInterval : 0.4;
         const difficultyIncrement = Number.isFinite(endless.difficultyIncrement)
-            ? endless.difficultyIncrement
-            : 3;
+            ? endless.difficultyIncrement * difficultyMultiplier
+            : 3 * difficultyMultiplier;
         const tanksIncrement = Number.isFinite(endless.tanksIncrement) ? endless.tanksIncrement : 2;
 
-        let previous = this.waveConfigs.at(-1) ?? { interval: 1, difficulty: 30, tanksCount: 0 };
+        const defaultPrevious = { interval: 1, difficulty: 30 * difficultyMultiplier, tanksCount: 0 };
+        let previous = this.waveConfigs.at(-1) ?? defaultPrevious;
         for (let wave = this.waveConfigs.length + 1; wave <= targetWave; wave += 1) {
             const nextInterval = Math.max(minInterval, Number((previous.interval * intervalFactor).toFixed(3)));
             const nextDifficulty = Math.max(1, Math.round(previous.difficulty + difficultyIncrement));
