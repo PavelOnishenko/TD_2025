@@ -242,8 +242,12 @@ class Game {
     getEnemyHpForWave(waveNumber) {
         const targetWave = Math.max(1, Math.floor(waveNumber));
         const index = targetWave - 1;
-        if (index < this.enemyHpPerWave.length) {
-            return this.enemyHpPerWave[index];
+        if (index < this.enemyHpPerWave.length && Number.isFinite(this.enemyHpPerWave[index])) {
+            const hp = this.enemyHpPerWave[index];
+            if (this.waveConfigs[index]) {
+                this.waveConfigs[index].enemyHp = hp;
+            }
+            return hp;
         }
 
         const endless = gameConfig.waves?.endless ?? {};
@@ -254,7 +258,11 @@ class Game {
             this.enemyHpPerWave.push(previousHp);
         }
 
-        return this.enemyHpPerWave[index];
+        const hp = this.enemyHpPerWave[index];
+        if (this.waveConfigs[index]) {
+            this.waveConfigs[index].enemyHp = hp;
+        }
+        return hp;
     }
 
     getCurrentScore() {
