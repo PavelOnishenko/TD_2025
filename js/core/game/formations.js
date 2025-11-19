@@ -1,3 +1,5 @@
+import { scaleDifficulty } from '../../utils/difficultyScaling.js';
+
 const DEFAULTS = {
     formationGap: 0.75,
     minimumWeight: 0,
@@ -248,10 +250,11 @@ function getScheduledDifficulty(waveSchedule, index) {
 }
 
 function resolveWaveDifficulty(config, waveSchedule, wave) {
+    const applyMultiplier = value => scaleDifficulty(value, config);
     const index = Math.max(0, Math.floor(wave) - 1);
     const scheduled = getScheduledDifficulty(waveSchedule, index);
     if (Number.isFinite(scheduled)) {
-        return scheduled;
+        return applyMultiplier(scheduled);
     }
     const endless = config.endlessDifficulty ?? {};
     const scheduledLength = Array.isArray(waveSchedule) ? waveSchedule.length : 0;
@@ -260,7 +263,7 @@ function resolveWaveDifficulty(config, waveSchedule, wave) {
         : (scheduledLength > 0 ? scheduledLength + 1 : 1);
     if (wave < startWave) {
         const last = getScheduledDifficulty(waveSchedule, scheduledLength - 1);
-        return Number.isFinite(last) ? last : 0;
+        return applyMultiplier(Number.isFinite(last) ? last : 0);
     }
     const lastScheduled = getScheduledDifficulty(waveSchedule, scheduledLength - 1);
     const base = Number.isFinite(endless.base)
@@ -270,7 +273,8 @@ function resolveWaveDifficulty(config, waveSchedule, wave) {
     const max = Number.isFinite(endless.max) ? endless.max : Infinity;
     const waveOffset = Math.max(0, wave - startWave);
     const computed = base + growth * waveOffset;
-    return Math.min(max, Math.max(0, Math.round(computed)));
+    const capped = Math.min(max, Math.max(0, Math.round(computed)));
+    return applyMultiplier(capped);
 }
 
 function weightedRandomChoice(items, weights, randomFn) {

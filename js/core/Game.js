@@ -19,6 +19,7 @@ import stateSetup from './game/stateSetup.js';
 import towerManagement from './game/towerManagement.js';
 import createFormationManager from './game/formations.js';
 import gameConfig from '../config/gameConfig.js';
+import { scaleDifficulty } from '../utils/difficultyScaling.js';
 
 function createScreenShakeState() {
     const { frequency } = gameConfig.world.screenShake;
@@ -103,8 +104,12 @@ class Game {
         this.endlessWaveStart = 0;
         this.diagnosticsOverlay = null;
         this.diagnosticsState = { visible: false, fps: 0, lastCommit: 0 };
+        const formationsConfig = {
+            ...(gameConfig.waves?.formations ?? {}),
+            difficultyMultiplier: gameConfig.waves?.difficultyMultiplier,
+        };
         this.formationManager = createFormationManager(
-            gameConfig.waves?.formations ?? {},
+            formationsConfig,
             gameConfig.waves?.schedule ?? [],
         );
         this.activeFormationPlan = null;
@@ -217,10 +222,16 @@ class Game {
             ? endless.difficultyIncrement
             : 3;
 
-        let previous = this.waveConfigs.at(-1) ?? { difficulty: 30 };
+        let previous = this.waveConfigs.at(-1) ?? { difficulty: 30, baseDifficulty: 30 };
         for (let wave = this.waveConfigs.length + 1; wave <= targetWave; wave += 1) {
-            const nextDifficulty = Math.max(1, Math.round(previous.difficulty + difficultyIncrement));
-            const nextConfig = { difficulty: nextDifficulty };
+            const previousBase = Number.isFinite(previous.baseDifficulty)
+                ? previous.baseDifficulty
+                : previous.difficulty;
+            const nextBaseDifficulty = Math.max(1, Math.round(previousBase + difficultyIncrement));
+            const nextConfig = {
+                difficulty: scaleDifficulty(nextBaseDifficulty),
+                baseDifficulty: nextBaseDifficulty,
+            };
             this.waveConfigs.push(nextConfig);
             previous = nextConfig;
         }
