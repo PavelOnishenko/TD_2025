@@ -135,26 +135,53 @@ test('determineEnemyType follows tank positions from formations', () => {
     assert.deepEqual(types.filter(type => type === 'tank'), Array(2).fill('tank'));
 });
 
-test('spawnEnemiesIfNeeded respects interval and progress', () => {
-    const game = createGame();
+test('spawnEnemiesIfNeeded spawns events when their time is reached', () => {
+    const game = createGame({ disableFormations: true });
+    const plan = {
+        events: [
+            { time: 0.2, type: 'swarm', color: 'red', y: 520 },
+            { time: 0.6, type: 'tank', color: 'blue', y: 600 },
+        ],
+    };
+    game.waveSpawnSchedule = plan.events.slice();
     game.waveInProgress = true;
-    game.spawnTimer = game.spawnInterval;
-    game.enemiesPerWave = 1;
-
-    game.spawnEnemiesIfNeeded(0);
-
-    assert.ok(game.enemies.length > 0);
-    assert.equal(game.spawnTimer, 0);
-});
-
-test('spawnEnemiesIfNeeded accumulates timer below interval', () => {
-    const game = createGame();
-    game.waveInProgress = true;
-    game.enemiesPerWave = 1;
+    game.enemiesPerWave = plan.events.length;
+    game.waveSpawnCursor = 0;
+    game.waveElapsed = 0;
+    game.spawned = 0;
 
     game.spawnEnemiesIfNeeded(0.2);
 
-    assert.equal(game.spawnTimer, 0.2);
+    assert.equal(game.waveSpawnCursor, 1);
+    assert.equal(game.spawned, 1);
+    assert.equal(game.enemies.length, 1);
+    assert.ok(game.enemies[0] instanceof SwarmEnemy);
+
+    game.spawnEnemiesIfNeeded(0.4);
+
+    assert.equal(game.waveSpawnCursor, 2);
+    assert.equal(game.spawned, 2);
+    assert.ok(game.enemies.some(enemy => enemy instanceof TankEnemy));
+});
+
+test('spawnEnemiesIfNeeded waits until schedule time is met', () => {
+    const game = createGame({ disableFormations: true });
+    const plan = {
+        events: [
+            { time: 0.5, type: 'swarm', color: 'red', y: 540 },
+        ],
+    };
+    game.waveSpawnSchedule = plan.events.slice();
+    game.waveInProgress = true;
+    game.enemiesPerWave = plan.events.length;
+    game.waveSpawnCursor = 0;
+    game.waveElapsed = 0;
+    game.spawned = 0;
+
+    game.spawnEnemiesIfNeeded(0.2);
+
+    assert.equal(game.waveSpawnCursor, 0);
+    assert.equal(game.spawned, 0);
     assert.equal(game.enemies.length, 0);
 });
 
