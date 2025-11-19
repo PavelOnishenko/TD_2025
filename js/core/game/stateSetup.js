@@ -4,7 +4,6 @@ import gameConfig from '../../config/gameConfig.js';
 
 function configureFirstWave(game) {
     const cfg = game.waveConfigs[0];
-    game.spawnInterval = cfg.interval;
     game.enemiesPerWave = 0;
     game.prepareTankScheduleForWave(cfg, 1, 0);
 }
@@ -34,7 +33,6 @@ function resetCollections(game) {
     game.selectedMergeCell = null;
     game.maxProjectileRadius = game.projectileRadius;
     game.spawned = 0;
-    game.spawnTimer = 0;
     game.grid.resetCells();
     if (typeof game.resetScreenShake === 'function') {
         game.resetScreenShake();
@@ -128,10 +126,8 @@ const stateSetup = {
         this.tankScheduleWave = 0;
         const cfg = this.waveConfigs[0];
         this.prepareTankScheduleForWave(cfg, 1, 0);
-        this.spawnInterval = cfg.interval;
         this.enemiesPerWave = 0;
         this.spawned = 0;
-        this.spawnTimer = 0;
         this.enemyHpPerWave = [...waves.enemyHpByWave];
         this.gameOver = false;
         this.colorProbStart = 0.5

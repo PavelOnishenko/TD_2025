@@ -28,21 +28,18 @@ test('startWave initializes counters and spawns first enemies', () => {
 });
 
 test('startWave restarts current wave state when already in progress', () => {
-    const game = createGame();
+    const game = createGame({ attachDom: true });
     game.waveInProgress = true;
     game.enemies.push({}, {});
-    game.spawnInterval = 123;
     game.enemiesPerWave = 456;
     game.spawned = 7;
-    game.spawnTimer = 5;
 
     game.startWave();
 
     assert.equal(game.waveInProgress, true);
-    assert.equal(game.spawnInterval, 123);
-    assert.equal(game.enemiesPerWave, 456);
-    assert.equal(game.spawned, 1);
-    assert.equal(game.spawnTimer, 0);
+    assert.ok(Array.isArray(game.waveSpawnSchedule));
+    assert.ok(game.waveSpawnSchedule.length > 0);
+    assert.equal(game.waveSpawnCursor, game.spawned);
     assert.ok(game.enemies.length >= 1);
 });
 

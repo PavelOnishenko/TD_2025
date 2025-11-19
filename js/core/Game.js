@@ -213,17 +213,14 @@ class Game {
         }
 
         const endless = gameConfig.waves?.endless ?? {};
-        const intervalFactor = Number.isFinite(endless.intervalFactor) ? endless.intervalFactor : 0.95;
-        const minInterval = Number.isFinite(endless.minInterval) ? endless.minInterval : 0.4;
         const difficultyIncrement = Number.isFinite(endless.difficultyIncrement)
             ? endless.difficultyIncrement
             : 3;
 
-        let previous = this.waveConfigs.at(-1) ?? { interval: 1, difficulty: 30 };
+        let previous = this.waveConfigs.at(-1) ?? { difficulty: 30 };
         for (let wave = this.waveConfigs.length + 1; wave <= targetWave; wave += 1) {
-            const nextInterval = Math.max(minInterval, Number((previous.interval * intervalFactor).toFixed(3)));
             const nextDifficulty = Math.max(1, Math.round(previous.difficulty + difficultyIncrement));
-            const nextConfig = { interval: nextInterval, difficulty: nextDifficulty };
+            const nextConfig = { difficulty: nextDifficulty };
             this.waveConfigs.push(nextConfig);
             previous = nextConfig;
         }

@@ -29,36 +29,24 @@ export const waveActions = {
             this.colorProbStart = Math.random();
             this.colorProbEnd = Math.random();
         } while (Math.abs(this.colorProbStart - this.colorProbEnd) <= minDifference);
-        if (Array.isArray(this.waveSpawnSchedule) && this.waveSpawnSchedule.length > 0) {
-            this.spawnEnemiesIfNeeded(0);
-        } else {
-            this.spawnEnemy();
+        if (!Array.isArray(this.waveSpawnSchedule) || this.waveSpawnSchedule.length === 0) {
+            throw new Error(`Wave ${this.wave} has no spawn schedule.`);
         }
+        this.spawnEnemiesIfNeeded(0);
     },
 
     setupWaveStuff() {
-        if (this.waveInProgress)
-            return;
-
         this.waveInProgress = true;
         this.nextWaveBtn.disabled = true;
         updateWavePhaseIndicator(this);
         const cfg = typeof this.getOrCreateWaveConfig === 'function'
             ? this.getOrCreateWaveConfig(this.wave)
             : this.waveConfigs[this.wave - 1] ?? this.waveConfigs.at(-1);
-        this.spawnInterval = cfg.interval;
         const plan = this.prepareWaveFormationPlan?.(cfg, this.wave);
-        if (plan && plan.totalEnemies > 0) {
-            this.enemiesPerWave = plan.totalEnemies;
-        } else {
-            this.waveSpawnSchedule = null;
-            this.activeFormationPlan = null;
-            this.waveElapsed = 0;
-            this.waveSpawnCursor = 0;
-            this.enemiesPerWave = Number.isFinite(cfg?.difficulty)
-                ? Math.max(1, Math.floor(cfg.difficulty))
-                : 0;
+        if (!plan || !plan.totalEnemies) {
+            throw new Error(`Failed to generate wave formation plan for wave ${this.wave}`);
         }
+        this.enemiesPerWave = plan.totalEnemies;
         this.prepareTankScheduleForWave(cfg, this.wave, this.enemiesPerWave, plan);
     },
 

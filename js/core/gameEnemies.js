@@ -131,24 +131,17 @@ export const enemyActions = {
         if (!this.waveInProgress) {
             return;
         }
-        if (Array.isArray(this.waveSpawnSchedule) && this.waveSpawnSchedule.length > 0) {
-            this.waveElapsed = (this.waveElapsed ?? 0) + dt;
-            while (this.waveSpawnCursor < this.waveSpawnSchedule.length) {
-                const event = this.waveSpawnSchedule[this.waveSpawnCursor];
-                if (!event || this.waveElapsed + 1e-6 < event.time) {
-                    break;
-                }
-                this.spawnEnemyFromPlan(event);
-                this.waveSpawnCursor += 1;
-            }
-            return;
+        if (!Array.isArray(this.waveSpawnSchedule) || this.waveSpawnSchedule.length === 0) {
+            throw new Error(`Missing spawn schedule for wave ${this.wave}.`);
         }
-        if (this.spawned < this.enemiesPerWave) {
-            this.spawnTimer += dt;
-            if (this.spawnTimer >= this.spawnInterval) {
-                this.spawnEnemy();
-                this.spawnTimer = 0;
+        this.waveElapsed = (this.waveElapsed ?? 0) + dt;
+        while (this.waveSpawnCursor < this.waveSpawnSchedule.length) {
+            const event = this.waveSpawnSchedule[this.waveSpawnCursor];
+            if (!event || this.waveElapsed + 1e-6 < event.time) {
+                break;
             }
+            this.spawnEnemyFromPlan(event);
+            this.waveSpawnCursor += 1;
         }
     },
 

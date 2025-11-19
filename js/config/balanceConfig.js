@@ -53,26 +53,26 @@ export const balanceConfig = {
     },
     waves: {
         schedule: [
-            { interval: 0.67, difficulty: 13 },
-            { interval: 0.673, difficulty: 13 },
-            { interval: 0.676, difficulty: 14 },
-            { interval: 0.679, difficulty: 14 },
-            { interval: 0.682, difficulty: 15 }, // 5
-            { interval: 0.685, difficulty: 15 },
-            { interval: 0.688, difficulty: 16 },
-            { interval: 0.691, difficulty: 16 },
-            { interval: 0.694, difficulty: 17 },
-            { interval: 0.697, difficulty: 17 }, // 10
-            { interval: 0.700, difficulty: 18 },
-            { interval: 0.703, difficulty: 18 },
-            { interval: 0.706, difficulty: 19 },
-            { interval: 0.709, difficulty: 19 },
-            { interval: 0.712, difficulty: 20 }, // 15
-            { interval: 0.715, difficulty: 20 },
-            { interval: 0.718, difficulty: 21 },
-            { interval: 0.721, difficulty: 21 },
-            { interval: 0.724, difficulty: 22 },
-            { interval: 0.727, difficulty: 22 }, // 20
+            { difficulty: 13 },
+            { difficulty: 13 },
+            { difficulty: 14 },
+            { difficulty: 14 },
+            { difficulty: 15 }, // 5
+            { difficulty: 15 },
+            { difficulty: 16 },
+            { difficulty: 16 },
+            { difficulty: 17 },
+            { difficulty: 17 }, // 10
+            { difficulty: 18 },
+            { difficulty: 18 },
+            { difficulty: 19 },
+            { difficulty: 19 },
+            { difficulty: 20 }, // 15
+            { difficulty: 20 },
+            { difficulty: 21 },
+            { difficulty: 21 },
+            { difficulty: 22 },
+            { difficulty: 22 }, // 20
         ],
         enemyHpByWave: [
             1.34, 1.64, 1.94, 2.24, 2.53, 2.83, 3.13, 3.43, 3.73, 4.03,
@@ -80,8 +80,6 @@ export const balanceConfig = {
         ],
         endless: {
             hpGrowth: 1.2,
-            intervalFactor: 0.94,
-            minInterval: 0.45,
             difficultyIncrement: 4,
         },
         formations: {
