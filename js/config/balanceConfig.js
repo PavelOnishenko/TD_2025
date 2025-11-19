@@ -54,30 +54,26 @@ export const balanceConfig = {
     waves: {
         difficultyMultiplier: 1,
         schedule: [
-            { difficulty: 13 },
-            { difficulty: 13 },
-            { difficulty: 14 },
-            { difficulty: 14 },
-            { difficulty: 15 }, // 5
-            { difficulty: 15 },
-            { difficulty: 16 },
-            { difficulty: 16 },
-            { difficulty: 17 },
-            { difficulty: 17 }, // 10
-            { difficulty: 18 },
-            { difficulty: 18 },
-            { difficulty: 19 },
-            { difficulty: 19 },
-            { difficulty: 20 }, // 15
-            { difficulty: 20 },
-            { difficulty: 21 },
-            { difficulty: 21 },
-            { difficulty: 22 },
-            { difficulty: 22 }, // 20
-        ],
-        enemyHpByWave: [
-            1.34, 1.64, 1.94, 2.24, 2.53, 2.83, 3.13, 3.43, 3.73, 4.03,
-            4.32, 4.62, 4.92, 5.02, 5.12, 5.22, 5.35, 5.55, 5.75, 6,
+            { difficulty: 13, enemyHp: 1.34 },
+            { difficulty: 13, enemyHp: 1.64 },
+            { difficulty: 14, enemyHp: 1.94 },
+            { difficulty: 14, enemyHp: 2.24 },
+            { difficulty: 15, enemyHp: 2.53 }, // 5
+            { difficulty: 15, enemyHp: 2.83 },
+            { difficulty: 16, enemyHp: 3.13 },
+            { difficulty: 16, enemyHp: 3.43 },
+            { difficulty: 17, enemyHp: 3.73 },
+            { difficulty: 17, enemyHp: 4.03 }, // 10
+            { difficulty: 18, enemyHp: 4.32 },
+            { difficulty: 18, enemyHp: 4.62 },
+            { difficulty: 19, enemyHp: 4.92 },
+            { difficulty: 19, enemyHp: 5.02 },
+            { difficulty: 20, enemyHp: 5.12 }, // 15
+            { difficulty: 20, enemyHp: 5.22 },
+            { difficulty: 21, enemyHp: 5.35 },
+            { difficulty: 21, enemyHp: 5.55 },
+            { difficulty: 22, enemyHp: 5.75 },
+            { difficulty: 22, enemyHp: 6 }, // 20
         ],
         endless: {
             hpGrowth: 1.2,

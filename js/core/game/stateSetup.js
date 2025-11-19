@@ -110,7 +110,7 @@ function resetGame(game) {
 
 const stateSetup = {
     initStats() {
-        const { player, waves, scoring } = gameConfig;
+        const { player, scoring } = gameConfig;
         this.initialLives = player.initialLives;
         this.initialEnergy = player.initialEnergy;
         this.lives = this.initialLives;
@@ -128,7 +128,9 @@ const stateSetup = {
         this.prepareTankScheduleForWave(cfg, 1, 0);
         this.enemiesPerWave = 0;
         this.spawned = 0;
-        this.enemyHpPerWave = [...waves.enemyHpByWave];
+        this.enemyHpPerWave = this.waveConfigs.map(cfg => Number.isFinite(cfg?.enemyHp)
+            ? cfg.enemyHp
+            : 1);
         this.gameOver = false;
         this.colorProbStart = 0.5
         this.colorProbEnd = 0.6;
