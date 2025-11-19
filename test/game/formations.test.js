@@ -72,3 +72,32 @@ swarm @0 y=620 color=blue
     assert.ok(latePlan.selections[0].label.startsWith('Late'));
     assert.ok(latePlan.events.every(event => event.color === 'blue'));
 });
+
+test('difficulty multiplier scales scheduled and endless waves', () => {
+    const manager = createFormationManager({
+        formations: [
+            {
+                id: 'simple',
+                label: 'Simple Squad',
+                difficulty: 1,
+                probability: '1',
+                ships: [{ type: 'swarm' }],
+            },
+        ],
+        difficultyMultiplier: 3,
+        endlessDifficulty: { startWave: 2, base: 2, growth: 1 },
+    }, [
+        { difficulty: 2 },
+    ]);
+
+    assert.ok(manager);
+    const scheduledPlan = manager.planWave(1);
+    assert.ok(scheduledPlan);
+    assert.equal(scheduledPlan.totalDifficulty, 6);
+    assert.equal(scheduledPlan.totalEnemies, 6);
+
+    const endlessPlan = manager.planWave(3);
+    assert.ok(endlessPlan);
+    assert.equal(endlessPlan.totalDifficulty, 9);
+    assert.equal(endlessPlan.totalEnemies, 9);
+});

@@ -1,7 +1,18 @@
 import gameConfig from '../../config/gameConfig.js';
+import { scaleDifficulty } from '../../utils/difficultyScaling.js';
 
 function cloneWaveConfigs() {
-    return gameConfig.waves.schedule.map(cfg => ({ ...cfg }));
+    return gameConfig.waves.schedule.map(cfg => {
+        const baseDifficulty = Number.isFinite(cfg?.difficulty) ? cfg.difficulty : undefined;
+        if (baseDifficulty === undefined) {
+            return { ...cfg };
+        }
+        return {
+            ...cfg,
+            difficulty: scaleDifficulty(baseDifficulty),
+            baseDifficulty,
+        };
+    });
 }
 
 function extractTankScheduleFromPlan(plan) {
