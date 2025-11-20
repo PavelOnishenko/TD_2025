@@ -57,6 +57,7 @@ function createProjectile(game, angle, tower, radius, overrides = {}) {
         vy: Math.sin(angle) * speed,
         color: tower.color,
         damage,
+        sourceTowerId: tower?.id ?? null,
         anim: createProjectileVisualState(animOptions ?? undefined),
         radius,
         type,
@@ -195,6 +196,7 @@ function spawnRailgunBeam(game, angle, tower) {
         width: Math.max(12, game.projectileRadius * 0.75),
         anim: { time: 0 },
         towerLevel: Number.isFinite(tower?.level) ? tower.level : 1,
+        sourceTowerId: tower?.id ?? null,
     };
 
     game.projectiles.push(beam);
