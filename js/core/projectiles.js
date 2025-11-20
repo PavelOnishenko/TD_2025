@@ -119,7 +119,7 @@ export function applyProjectileDamage(game, projectile, enemyIndex, options = {}
             const now = typeof performance !== 'undefined' && typeof performance.now === 'function'
                 ? performance.now()
                 : Date.now();
-            const windowMs = 1000;
+            const windowMs = 10000;
             const cutoff = now - windowMs;
             const events = Array.isArray(eventsByTower.get(projectile.sourceTowerId))
                 ? eventsByTower.get(projectile.sourceTowerId)

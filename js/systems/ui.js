@@ -389,7 +389,7 @@ export function refreshDiagnosticsOverlay(game, options = {}) {
     ];
 
     if (state.collectTowerDps && Array.isArray(game?.towers)) {
-        const windowMs = 1000;
+        const windowMs = 10000;
         const cutoff = now - windowMs;
         const eventsByTower = state.towerDamageEvents instanceof Map ? state.towerDamageEvents : new Map();
         const dpsLines = [];
@@ -402,8 +402,24 @@ export function refreshDiagnosticsOverlay(game, options = {}) {
             const recentEvents = events.filter((event) => event.time >= cutoff);
             const damage = recentEvents.reduce((sum, event) => sum + event.damage, 0);
             eventsByTower.set(towerId, recentEvents);
-            const dps = damage / (windowMs / 1000);
-            dpsLines.push(`Tower ${towerId} (Lv ${level}, ${color}): ${dps.toFixed(1)} DPS`);
+            const lastSecondCutoff = now - 1000;
+            const lastSecondDamage = recentEvents
+                .filter((event) => event.time >= lastSecondCutoff)
+                .reduce((sum, event) => sum + event.damage, 0);
+            const dps = lastSecondDamage;
+
+            const bucketedDamage = new Map();
+            for (const event of recentEvents) {
+                const bucket = Math.floor(event.time / 1000);
+                bucketedDamage.set(bucket, (bucketedDamage.get(bucket) ?? 0) + event.damage);
+            }
+            const activeBuckets = Array.from(bucketedDamage.values()).filter((value) => value > 0).length;
+            const activeDurationMs = activeBuckets * 1000;
+            const activeDps = activeDurationMs > 0 ? damage / (activeDurationMs / 1000) : 0;
+
+            const dpsText = `${dps.toFixed(1)} DPS`;
+            const activeDpsText = `10s avg (active): ${activeDps.toFixed(1)}`;
+            dpsLines.push(`Tower ${towerId} (Lv ${level}, ${color}): ${dpsText} | ${activeDpsText}`);
         }
 
         if (dpsLines.length) {
