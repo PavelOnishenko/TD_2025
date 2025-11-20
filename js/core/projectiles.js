@@ -112,6 +112,15 @@ export function applyProjectileDamage(game, projectile, enemyIndex, options = {}
     const isColorMatch = projectile.color === enemy.color;
     playHitSound(game.audio, projectile);
 
+    const diagnosticsState = game?.diagnosticsState;
+    if (diagnosticsState?.collectTowerDps && projectile?.sourceTowerId) {
+        const totals = diagnosticsState.towerDamageTotals;
+        if (totals) {
+            const current = totals.get(projectile.sourceTowerId) ?? 0;
+            totals.set(projectile.sourceTowerId, current + damage);
+        }
+    }
+
     if (spawnImpactEffect && game.explosions) {
         const impactPos = getImpactPosition(projectile, enemy, { impactX, impactY });
         const variant = hitVariant ?? (isColorMatch ? 'match' : 'mismatch');

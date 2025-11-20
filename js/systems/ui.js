@@ -265,6 +265,9 @@ function bindDiagnosticsOverlay(game) {
         visible: false,
         fps: 0,
         lastCommit: 0,
+        towerDamageTotals: null,
+        towerDamageStart: 0,
+        collectTowerDps: false,
     };
     game.diagnosticsState = state;
 
@@ -276,6 +279,20 @@ function bindDiagnosticsOverlay(game) {
         return;
     }
 
+    const resetTowerDpsTracking = () => {
+        state.towerDamageTotals = null;
+        state.towerDamageStart = 0;
+        state.collectTowerDps = false;
+    };
+
+    const startTowerDpsTracking = () => {
+        state.towerDamageTotals = new Map();
+        state.collectTowerDps = true;
+        state.towerDamageStart = typeof performance !== 'undefined' && typeof performance.now === 'function'
+            ? performance.now()
+            : Date.now();
+    };
+
     const updateVisibility = () => {
         overlay.classList.toggle('diagnostics--hidden', !state.visible);
     };
@@ -283,11 +300,13 @@ function bindDiagnosticsOverlay(game) {
     const toggleOverlay = () => {
         state.visible = !state.visible;
         if (!state.visible) {
+            resetTowerDpsTracking();
             updateVisibility();
             return;
         }
         state.fps = 0;
         state.lastCommit = 0;
+        startTowerDpsTracking();
         updateVisibility();
         refreshDiagnosticsOverlay(game, { dt: 0, force: true });
     };
@@ -373,6 +392,29 @@ export function refreshDiagnosticsOverlay(game, options = {}) {
         translate('diagnostics.muted', { value: muted }, `Muted: ${muted}`),
         translate('diagnostics.music', { value: music }, `Music Enabled: ${music}`),
     ];
+
+    if (state.collectTowerDps && Array.isArray(game?.towers)) {
+        const elapsedMs = Number.isFinite(state.towerDamageStart)
+            ? now - state.towerDamageStart
+            : 0;
+        const elapsedSeconds = Math.max(0, elapsedMs) / 1000;
+        const totals = state.towerDamageTotals instanceof Map ? state.towerDamageTotals : new Map();
+        const dpsLines = [];
+
+        for (const tower of game.towers) {
+            const towerId = tower?.id ?? '—';
+            const level = Number.isFinite(tower?.level) ? tower.level : '?';
+            const color = tower?.color ?? 'unknown';
+            const damage = totals.get(towerId) ?? 0;
+            const dps = elapsedSeconds > 0 ? damage / elapsedSeconds : 0;
+            dpsLines.push(`Tower ${towerId} (Lv ${level}, ${color}): ${dps.toFixed(1)} DPS`);
+        }
+
+        if (dpsLines.length) {
+            lines.push('Tower DPS:');
+            lines.push(...dpsLines);
+        }
+    }
 
     overlay.textContent = lines.join('\n');
 }

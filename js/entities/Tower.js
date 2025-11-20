@@ -2,6 +2,8 @@ import { drawTowerMuzzleFlashIfNeeded, drawTowerPlacementFlash, drawTowerTopGlow
 import { getHowler } from '../systems/audio.js';
 import gameConfig from '../config/gameConfig.js';
 
+let towerIdCounter = 1;
+
 const DEFAULT_PLACEMENT_ANCHOR = Object.freeze({
     // The anchor describes the fraction of the sprite width/height between the
     // top-left corner and the point that should sit on the cell origin.
@@ -13,6 +15,7 @@ export default class Tower {
     constructor(x, y, color = 'red', level = 1) {
         this.x = x;
         this.y = y;
+        this.id = towerIdCounter++;
         const config = gameConfig.towers;
         this.w = config.width;
         this.h = config.height;
