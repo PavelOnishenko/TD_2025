@@ -265,8 +265,7 @@ function bindDiagnosticsOverlay(game) {
         visible: false,
         fps: 0,
         lastCommit: 0,
-        towerDamageTotals: null,
-        towerDamageStart: 0,
+        towerDamageEvents: null,
         collectTowerDps: false,
     };
     game.diagnosticsState = state;
@@ -280,17 +279,13 @@ function bindDiagnosticsOverlay(game) {
     }
 
     const resetTowerDpsTracking = () => {
-        state.towerDamageTotals = null;
-        state.towerDamageStart = 0;
+        state.towerDamageEvents = null;
         state.collectTowerDps = false;
     };
 
     const startTowerDpsTracking = () => {
-        state.towerDamageTotals = new Map();
+        state.towerDamageEvents = new Map();
         state.collectTowerDps = true;
-        state.towerDamageStart = typeof performance !== 'undefined' && typeof performance.now === 'function'
-            ? performance.now()
-            : Date.now();
     };
 
     const updateVisibility = () => {
@@ -394,19 +389,20 @@ export function refreshDiagnosticsOverlay(game, options = {}) {
     ];
 
     if (state.collectTowerDps && Array.isArray(game?.towers)) {
-        const elapsedMs = Number.isFinite(state.towerDamageStart)
-            ? now - state.towerDamageStart
-            : 0;
-        const elapsedSeconds = Math.max(0, elapsedMs) / 1000;
-        const totals = state.towerDamageTotals instanceof Map ? state.towerDamageTotals : new Map();
+        const windowMs = 1000;
+        const cutoff = now - windowMs;
+        const eventsByTower = state.towerDamageEvents instanceof Map ? state.towerDamageEvents : new Map();
         const dpsLines = [];
 
         for (const tower of game.towers) {
             const towerId = tower?.id ?? '—';
             const level = Number.isFinite(tower?.level) ? tower.level : '?';
             const color = tower?.color ?? 'unknown';
-            const damage = totals.get(towerId) ?? 0;
-            const dps = elapsedSeconds > 0 ? damage / elapsedSeconds : 0;
+            const events = Array.isArray(eventsByTower.get(towerId)) ? eventsByTower.get(towerId) : [];
+            const recentEvents = events.filter((event) => event.time >= cutoff);
+            const damage = recentEvents.reduce((sum, event) => sum + event.damage, 0);
+            eventsByTower.set(towerId, recentEvents);
+            const dps = damage / (windowMs / 1000);
             dpsLines.push(`Tower ${towerId} (Lv ${level}, ${color}): ${dps.toFixed(1)} DPS`);
         }
 
