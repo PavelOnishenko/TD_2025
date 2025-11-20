@@ -12,12 +12,39 @@ import {
     normalizeScore,
 } from './highScores.js';
 import { translate, setActiveLocale, applyLocalization } from './localization.js';
+import { DEFAULT_TIME_SCALE, MAX_TIME_SCALE, MIN_TIME_SCALE } from '../core/game/world.js';
 
 const SUPPORTED_LANGUAGES = ['en', 'ru'];
 const DEFAULT_LANGUAGE = SUPPORTED_LANGUAGES[0];
 
 const HEART_FILLED_SRC = 'assets/heart_filled.png';
 const HEART_EMPTY_SRC = 'assets/heart_empty.png';
+const TIME_SLIDER_STEPS = 100;
+const TIME_SCALE_SPAN = MAX_TIME_SCALE / MIN_TIME_SCALE;
+
+function clamp(value, min, max) {
+    if (!Number.isFinite(value)) {
+        return min;
+    }
+    return Math.min(max, Math.max(min, value));
+}
+
+function getTimeScaleFromSlider(value) {
+    const normalized = clamp(value / TIME_SLIDER_STEPS, 0, 1);
+    return MIN_TIME_SCALE * (TIME_SCALE_SPAN ** normalized);
+}
+
+function getSliderValueFromTimeScale(scale) {
+    const safeScale = clamp(scale, MIN_TIME_SCALE, MAX_TIME_SCALE);
+    const normalized = Math.log(safeScale / MIN_TIME_SCALE) / Math.log(TIME_SCALE_SPAN);
+    return Math.round(normalized * TIME_SLIDER_STEPS);
+}
+
+function formatTimeScale(scale) {
+    const safeScale = clamp(scale, MIN_TIME_SCALE, MAX_TIME_SCALE);
+    const digits = safeScale >= 10 ? 0 : safeScale >= 1 ? 2 : 3;
+    return `${safeScale.toFixed(digits)}x`;
+}
 
 function normalizeLanguageCode(language) {
     if (typeof language !== 'string') {
@@ -267,6 +294,8 @@ function bindDiagnosticsOverlay(game) {
         lastCommit: 0,
         towerDamageEvents: null,
         collectTowerDps: false,
+        logEl: null,
+        syncTimeScaleUi: null,
     };
     game.diagnosticsState = state;
 
@@ -282,6 +311,45 @@ function bindDiagnosticsOverlay(game) {
         state.towerDamageEvents = null;
         state.collectTowerDps = false;
     };
+
+    const diagnosticsLog = overlay.querySelector('#diagnosticsLog');
+    const timeScaleValueEl = overlay.querySelector('#timeScaleValue');
+    const timeScaleSlider = overlay.querySelector('#timeScaleSlider');
+
+    const updateTimeScaleDisplay = (scale) => {
+        if (timeScaleSlider) {
+            const sliderValue = getSliderValueFromTimeScale(scale);
+            if (String(sliderValue) !== timeScaleSlider.value) {
+                timeScaleSlider.value = String(sliderValue);
+            }
+        }
+        if (timeScaleValueEl) {
+            timeScaleValueEl.textContent = formatTimeScale(scale);
+        }
+    };
+
+    const applyTimeScaleFromSlider = (value) => {
+        const nextScale = typeof game.setTimeScale === 'function'
+            ? game.setTimeScale(value)
+            : value;
+        updateTimeScaleDisplay(nextScale);
+        refreshDiagnosticsOverlay(game, { force: true });
+    };
+
+    if (timeScaleSlider) {
+        const initialScale = typeof game.getTimeScale === 'function'
+            ? game.getTimeScale()
+            : DEFAULT_TIME_SCALE;
+        timeScaleSlider.value = String(getSliderValueFromTimeScale(initialScale));
+        updateTimeScaleDisplay(initialScale);
+        timeScaleSlider.addEventListener('input', (event) => {
+            const sliderValue = Number(event.target.value);
+            applyTimeScaleFromSlider(getTimeScaleFromSlider(sliderValue));
+        });
+    }
+
+    state.logEl = diagnosticsLog ?? overlay;
+    state.syncTimeScaleUi = updateTimeScaleDisplay;
 
     const startTowerDpsTracking = () => {
         state.towerDamageEvents = new Map();
@@ -327,6 +395,8 @@ export function refreshDiagnosticsOverlay(game, options = {}) {
     if (!overlay || !state) {
         return;
     }
+
+    const logEl = state.logEl ?? overlay;
 
     const {
         dt = 0,
@@ -375,8 +445,14 @@ export function refreshDiagnosticsOverlay(game, options = {}) {
     const paused = game?.isPaused ? yesText : noText;
     const muted = game?.audioMuted ? yesText : noText;
     const music = game?.musicEnabled ? yesText : noText;
+    const timeScale = typeof game?.getTimeScale === 'function'
+        ? game.getTimeScale()
+        : game?.timeScale ?? DEFAULT_TIME_SCALE;
+
+    state.syncTimeScaleUi?.(timeScale);
 
     const lines = [
+        translate('diagnostics.speed', { value: formatTimeScale(timeScale) }, `Speed: ${formatTimeScale(timeScale)}`),
         translate('diagnostics.fps', { value: fpsDisplay }, `FPS: ${fpsDisplay}`),
         translate('diagnostics.wave', { current: waveNumber, max: maxWaves, status: waveStatus }, `Wave: ${waveNumber}/${maxWaves} (${waveStatus})`),
         translate('diagnostics.enemies', { count: enemies }, `Enemies: ${enemies}`),
@@ -412,7 +488,7 @@ export function refreshDiagnosticsOverlay(game, options = {}) {
         }
     }
 
-    overlay.textContent = lines.join('\n');
+    logEl.textContent = lines.join('\n');
 }
 
 function bindButtons(game) {
