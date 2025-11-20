@@ -5,7 +5,7 @@ export const balanceConfig = {
         towerCost: 120,
         switchCost: 0,
         maxWaves: 20,
-        energyPerKill: 6,
+        energyPerKill: 3,
         tankKillEnergyMultiplier: 2,
         killEnergyScaling: {
             baseWave: 1,
@@ -17,7 +17,7 @@ export const balanceConfig = {
                 { wave: 30, bonus: 0.3 },
             ],
         },
-        energyPerWave: 70,
+        energyPerWave: 40,
         colorProbability: {
             minDifference: 0.35,
         },
