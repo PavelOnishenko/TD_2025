@@ -114,10 +114,19 @@ export function applyProjectileDamage(game, projectile, enemyIndex, options = {}
 
     const diagnosticsState = game?.diagnosticsState;
     if (diagnosticsState?.collectTowerDps && projectile?.sourceTowerId) {
-        const totals = diagnosticsState.towerDamageTotals;
-        if (totals) {
-            const current = totals.get(projectile.sourceTowerId) ?? 0;
-            totals.set(projectile.sourceTowerId, current + damage);
+        const eventsByTower = diagnosticsState.towerDamageEvents;
+        if (eventsByTower) {
+            const now = typeof performance !== 'undefined' && typeof performance.now === 'function'
+                ? performance.now()
+                : Date.now();
+            const windowMs = 1000;
+            const cutoff = now - windowMs;
+            const events = Array.isArray(eventsByTower.get(projectile.sourceTowerId))
+                ? eventsByTower.get(projectile.sourceTowerId)
+                : [];
+            const prunedEvents = events.filter((event) => event.time >= cutoff);
+            prunedEvents.push({ time: now, damage });
+            eventsByTower.set(projectile.sourceTowerId, prunedEvents);
         }
     }
 
