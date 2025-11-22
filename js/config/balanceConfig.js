@@ -22,13 +22,19 @@ export const balanceConfig = {
             minDifference: 0.35,
         },
     },
-    projectiles: {
-        speed: 700,
-        baseRadius: 18,
-        spawnInterval: 60,
-        radiusPerLevel: 5,
-        colorMismatchMultiplier: 0.3,
-    },
+        projectiles: {
+            speed: 700,
+            baseRadius: 18,
+            spawnInterval: 60,
+            radiusPerLevel: 5,
+            colorMismatchMultiplier: 0.3,
+            rocket: {
+                explosionRadius: 150,
+                minExplosionRadius: 130,
+                radiusFromRangeFactor: 0.65,
+                useRangeScaling: true,
+            },
+        },
     towers: {
         baseRange: 140,
         rangePerLevel: 0.2,

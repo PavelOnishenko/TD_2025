@@ -1,6 +1,7 @@
 import { drawExplosions, drawColorSwitchBursts } from '../systems/effects.js';
 import { drawStarfield } from './starfield.js';
 import { drawPortal } from './portal.js';
+import gameConfig from '../config/gameConfig.js';
 
 const ENERGY_PALETTES = {
     red: {
@@ -231,6 +232,53 @@ function toColorFromArray(rgb, alpha) {
     const safeAlpha = clamp01(alpha);
     const [r, g, b] = rgb ?? [255, 255, 255];
     return `rgba(${r}, ${g}, ${b}, ${safeAlpha})`;
+}
+
+function drawRocketBlastIndicators(ctx, indicators) {
+    const visualization = gameConfig.projectiles?.rocket?.blastVisualization;
+    if (!visualization || visualization.enabled === false) {
+        return;
+    }
+
+    if (!Array.isArray(indicators) || indicators.length === 0) {
+        return;
+    }
+
+    const lineWidth = Number.isFinite(visualization.lineWidth) ? visualization.lineWidth : 6;
+    const fillAlpha = Number.isFinite(visualization.fillAlpha) ? visualization.fillAlpha : 0.12;
+    const strokeAlpha = Number.isFinite(visualization.strokeAlpha) ? visualization.strokeAlpha : 0.7;
+    const fadePower = Number.isFinite(visualization.fadePower) ? visualization.fadePower : 2;
+    const ringScale = Number.isFinite(visualization.ringScale) ? visualization.ringScale : 1.05;
+
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+
+    for (const indicator of indicators) {
+        const progress = clamp01((indicator.elapsed ?? 0) / (indicator.duration ?? 1));
+        const fade = Math.pow(1 - progress, fadePower);
+        const palette = getEnergyPalette(indicator.color);
+        const radius = Math.max(0, indicator.radius ?? 0);
+        if (radius <= 0) {
+            continue;
+        }
+
+        if (fillAlpha > 0) {
+            ctx.fillStyle = toColorFromArray(palette.outer, fillAlpha * fade);
+            ctx.beginPath();
+            ctx.arc(indicator.x, indicator.y, radius, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        if (strokeAlpha > 0) {
+            ctx.lineWidth = lineWidth;
+            ctx.strokeStyle = toColorFromArray(palette.mid, strokeAlpha * fade);
+            ctx.beginPath();
+            ctx.arc(indicator.x, indicator.y, radius * ringScale, 0, Math.PI * 2);
+            ctx.stroke();
+        }
+    }
+
+    ctx.restore();
 }
 
 function drawMinigunProjectile(ctx, projectile, anim) {
@@ -913,6 +961,7 @@ export function drawEntities(game) {
         ctx.restore();
     });
 
+    drawRocketBlastIndicators(ctx, game.rocketBlastIndicators ?? []);
     drawExplosions(ctx, game.explosions ?? []);
     drawEnergyPopups(ctx, game.energyPopups ?? []);
 }

@@ -184,7 +184,10 @@ export function applyProjectileDamage(game, projectile, enemyIndex, options = {}
 }
 
 function handleRocketImpact(game, projectile, index) {
-    const radius = projectile.explosionRadius ?? 200;
+    const rocketConfig = gameConfig.projectiles?.rocket ?? {};
+    const radius = projectile.explosionRadius
+        ?? rocketConfig.explosionRadius
+        ?? 200;
     const centerX = projectile.x;
     const centerY = projectile.y;
     const impacted = [];
@@ -218,6 +221,10 @@ function handleRocketImpact(game, projectile, index) {
             color: projectile.color,
             variant: 'rocket',
         }));
+    }
+
+    if (typeof game.addRocketBlastIndicator === 'function') {
+        game.addRocketBlastIndicator(centerX, centerY, radius, projectile.color);
     }
 
     triggerScreenShake(game, 2.4, 0.42, 46);

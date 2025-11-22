@@ -61,6 +61,19 @@ const nonBalanceConfig = {
             maxParticles: 150,
         },
     },
+    projectiles: {
+        rocket: {
+            blastVisualization: {
+                enabled: true,
+                duration: 0.5,
+                lineWidth: 6,
+                fillAlpha: 0.12,
+                strokeAlpha: 0.7,
+                fadePower: 2.2,
+                ringScale: 1.05,
+            },
+        },
+    },
     towers: {
         width: 70,
         height: 105,
@@ -230,6 +243,10 @@ const nonBalanceConfig = {
 export const gameConfig = {
     ...nonBalanceConfig,
     ...balanceConfig,
+    projectiles: {
+        ...nonBalanceConfig.projectiles,
+        ...balanceConfig.projectiles,
+    },
     towers: {
         ...nonBalanceConfig.towers,
         ...balanceConfig.towers,
