@@ -12,8 +12,15 @@ export const waveActions = {
         if (typeof this.disableMergeMode === 'function') {
             this.disableMergeMode();
         }
+        if (typeof this.disableUpgradeMode === 'function') {
+            this.disableUpgradeMode();
+        }
         if (this.mergeBtn) {
             this.mergeBtn.disabled = true;
+        }
+        if (this.upgradeBtn) {
+            const upgradeUnlockWave = this.upgradeUnlockWave ?? gameConfig.towers?.upgradeUnlockWave ?? 15;
+            this.upgradeBtn.disabled = this.wave < upgradeUnlockWave;
         }
         if (this.statusEl) {
             this.statusEl.textContent = '';
