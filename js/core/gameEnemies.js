@@ -1,6 +1,7 @@
 import Enemy, { TankEnemy, SwarmEnemy } from '../entities/Enemy.js';
 import { updateHUD, endGame } from '../systems/ui.js';
 import gameConfig from '../config/gameConfig.js';
+import { DEFAULT_TIME_SCALE } from './game/world.js';
 
 export const enemyActions = {
     getEnemyColor() {
@@ -218,11 +219,16 @@ export const enemyActions = {
     },
 
     towerAttacks(timestamp) {
+        const timeScale = typeof this.getTimeScale === 'function'
+            ? this.getTimeScale()
+            : DEFAULT_TIME_SCALE;
+
         for (const tower of this.towers) {
             const fireInterval = typeof tower.getFireInterval === 'function'
                 ? tower.getFireInterval()
                 : this.projectileSpawnInterval;
-            if (timestamp - tower.lastShot < fireInterval) {
+            const scaledElapsed = (timestamp - tower.lastShot) * timeScale;
+            if (scaledElapsed < fireInterval) {
                 continue;
             }
 

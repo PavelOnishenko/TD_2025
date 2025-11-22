@@ -737,12 +737,37 @@ button:focus-visible {
     border: 1px solid rgba(148, 163, 184, 0.45);
     color: #e2e8f0;
     font-family: "Fira Code", "Source Code Pro", Menlo, Consolas, monospace;
-    font-size: 0.85rem;
-    line-height: 1.35;
+    font-size: 1rem;
+    line-height: 1.45;
     white-space: pre;
-    pointer-events: none;
+    pointer-events: auto;
     box-shadow: 0 10px 24px rgba(15, 23, 42, 0.45);
     z-index: 3;
+}
+
+.diagnostics__controls {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.diagnostics__label {
+    font-weight: 600;
+    color: #f8fafc;
+}
+
+.diagnostics__slider {
+    width: 220px;
+    accent-color: #38bdf8;
+}
+
+.diagnostics__log {
+    margin: 0;
+    font-family: inherit;
+    font-size: inherit;
+    line-height: inherit;
+    white-space: pre;
 }
 
 .diagnostics--hidden {
