@@ -256,16 +256,77 @@
             </div>
         </section>
         <div id="waveClearBanner" class="wave-clear" aria-hidden="true"></div>
-        <div id="diagnosticsOverlay" class="diagnostics diagnostics--hidden" aria-live="polite" aria-atomic="true">
-            <div class="diagnostics__controls" role="group" aria-label="Developer console">
-                <label class="diagnostics__label" for="timeScaleSlider">
-                    Game speed: <span id="timeScaleValue">1.00x</span>
-                </label>
-                <input id="timeScaleSlider" class="diagnostics__slider" type="range" min="0" max="100" step="1" value="50" />
+            <div id="diagnosticsOverlay" class="diagnostics diagnostics--hidden" aria-live="polite" aria-atomic="true">
+                <div class="diagnostics__controls" role="group" aria-label="Developer console">
+                    <label class="diagnostics__label" for="timeScaleSlider">
+                        Game speed: <span id="timeScaleValue">1.00x</span>
+                    </label>
+                    <input id="timeScaleSlider" class="diagnostics__slider" type="range" min="0" max="100" step="1" value="50" />
+                    <button id="openPositionEditor" class="diagnostics__button" type="button">Position Editor</button>
+                </div>
+                <pre id="diagnosticsLog" class="diagnostics__log"></pre>
             </div>
-            <pre id="diagnosticsLog" class="diagnostics__log"></pre>
-        </div>
     </main>
+
+    <div id="positionEditor" class="dev-modal dev-modal--hidden" role="dialog" aria-modal="true" aria-labelledby="positionEditorTitle">
+        <div class="dev-modal__backdrop" aria-hidden="true"></div>
+        <div class="dev-modal__panel" role="document">
+            <header class="dev-modal__header">
+                <div>
+                    <p class="dev-modal__eyebrow">Developer Tool</p>
+                    <h2 id="positionEditorTitle" class="dev-modal__title">Position Editor</h2>
+                    <p class="dev-modal__subtitle">
+                        Edit tower placements, colors, levels, and energy. Save and reload presets from local storage.
+                    </p>
+                </div>
+                <button id="closePositionEditor" class="dev-modal__close" type="button" aria-label="Close position editor">×</button>
+            </header>
+            <div class="dev-modal__content">
+                <section class="dev-modal__section" aria-label="Live state">
+                    <div class="dev-modal__actions">
+                        <button id="useLivePosition" type="button" class="dev-modal__button">Use Current Position</button>
+                        <button id="applyPosition" type="button" class="dev-modal__button dev-modal__button--primary">Apply to Game</button>
+                    </div>
+                    <div class="dev-modal__grid">
+                        <label class="dev-modal__field">
+                            <span class="dev-modal__field-label">Wave</span>
+                            <input id="positionWave" class="dev-modal__input" type="number" min="1" value="1" />
+                        </label>
+                        <label class="dev-modal__field">
+                            <span class="dev-modal__field-label">Energy</span>
+                            <input id="positionEnergy" class="dev-modal__input" type="number" min="0" value="0" />
+                        </label>
+                    </div>
+                </section>
+
+                <section class="dev-modal__section" aria-label="Tower entries">
+                    <div class="dev-modal__section-header">
+                        <div>
+                            <p class="dev-modal__eyebrow">Towers</p>
+                            <h3 class="dev-modal__section-title">Placement list</h3>
+                        </div>
+                        <button id="addTowerEntry" type="button" class="dev-modal__button">Add Tower</button>
+                    </div>
+                    <div id="towerEntryList" class="dev-modal__tower-list" role="list"></div>
+                    <p class="dev-modal__hint">Use cell IDs such as <code>top:0</code> or <code>bottom:3</code>.</p>
+                </section>
+
+                <section class="dev-modal__section" aria-label="Saved positions">
+                    <div class="dev-modal__section-header">
+                        <div>
+                            <p class="dev-modal__eyebrow">Local storage</p>
+                            <h3 class="dev-modal__section-title">Saved positions</h3>
+                        </div>
+                        <div class="dev-modal__actions">
+                            <input id="positionSlotName" class="dev-modal__input" type="text" placeholder="Slot name" aria-label="Slot name" />
+                            <button id="savePositionSlot" type="button" class="dev-modal__button dev-modal__button--primary">Save Slot</button>
+                        </div>
+                    </div>
+                    <div id="positionSlotList" class="dev-modal__slot-list" role="list"></div>
+                </section>
+            </div>
+        </div>
+    </div>
 
     <script type="module" src="js/main.js"></script>
 </body>
