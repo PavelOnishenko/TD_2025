@@ -12,8 +12,14 @@ export const waveActions = {
         if (typeof this.disableMergeMode === 'function') {
             this.disableMergeMode();
         }
+        if (typeof this.disableUpgradeMode === 'function') {
+            this.disableUpgradeMode();
+        }
         if (this.mergeBtn) {
             this.mergeBtn.disabled = true;
+        }
+        if (this.upgradeBtn) {
+            this.upgradeBtn.disabled = this.wave < 15;
         }
         if (this.statusEl) {
             this.statusEl.textContent = '';

@@ -30,6 +30,7 @@ function resetCollections(game) {
     game.mergeAnimations = [];
     game.energyPopups = [];
     game.mergeModeActive = false;
+    game.upgradeModeActive = false;
     game.selectedMergeCell = null;
     game.maxProjectileRadius = game.projectileRadius;
     game.spawned = 0;
@@ -45,6 +46,9 @@ function resetButtons(game) {
     }
     if (game.mergeBtn) {
         game.mergeBtn.disabled = false;
+    }
+    if (game.upgradeBtn) {
+        game.upgradeBtn.disabled = game.wave < 15;
     }
 }
 

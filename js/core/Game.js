@@ -89,6 +89,7 @@ class Game {
         this.mergeHintPairs = [];
         this.mergeModeActive = false;
         this.selectedMergeCell = null;
+        this.upgradeModeActive = false;
         this.screenShake = createScreenShakeState();
         this.baseHitFlash = createBaseHitFlashState();
         this.audioMuted = false;

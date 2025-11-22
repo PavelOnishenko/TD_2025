@@ -44,6 +44,13 @@ export const balanceConfig = {
             40,
             75,
         ],
+        upgradeCosts: {
+            1: 300,
+            2: 600,
+            3: 1200,
+            4: 2500,
+            5: 5000,
+        },
     },
     enemies: {
         defaultSpawn: { x: -600, y: 600 },

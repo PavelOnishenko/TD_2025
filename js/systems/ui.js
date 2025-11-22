@@ -109,6 +109,8 @@ export function bindUI(game) {
     bindHUD(game);
     game.updateMergeButtonState = (active) => updateMergeButtonState(game, active);
     game.updateMergeButtonState(false);
+    game.updateUpgradeButtonState = (active) => updateUpgradeButtonState(game, active);
+    game.updateUpgradeButtonState(false);
     attachTutorial(game);
     bindButtons(game);
     bindAudioButtons(game);
@@ -140,6 +142,7 @@ function bindHUD(game) {
     game.muteBtn = document.getElementById('muteToggle');
     game.musicBtn = document.getElementById('musicToggle');
     game.mergeBtn = document.getElementById('mergeTowers');
+    game.upgradeBtn = document.getElementById('upgradeTowers');
     game.pauseBtn = document.getElementById('pause');
     game.startOverlay = document.getElementById('startOverlay');
     game.startBtn = document.getElementById('startGame');
@@ -445,6 +448,19 @@ function bindButtons(game) {
         game.mergeBtn.addEventListener('click', handleMerge);
         game.mergeBtn.disabled = game.waveInProgress;
     }
+    if (game.upgradeBtn) {
+        const handleUpgradeToggle = () => {
+            if (game.waveInProgress && !isUpgradeUnlocked(game)) {
+                return;
+            }
+            if (typeof game.toggleUpgradeMode === 'function') {
+                const active = game.toggleUpgradeMode();
+                game.updateUpgradeButtonState?.(active);
+            }
+        };
+        game.upgradeBtn.addEventListener('click', handleUpgradeToggle);
+        updateUpgradeAvailability(game);
+    }
     const handleRestart = async () => {
         if (game.restartBtn && game.restartBtn.disabled) {
             return;
@@ -463,15 +479,16 @@ function bindButtons(game) {
             console.warn('Restart ad failed', error);
         }
 
-        try {
-            game.restart();
-            hideEndScreen(game);
-            if (game.mergeBtn) {
-                game.mergeBtn.disabled = false;
-            }
-            if (game.pauseBtn) {
-                game.pauseBtn.disabled = false;
-            }
+            try {
+                game.restart();
+                hideEndScreen(game);
+                if (game.mergeBtn) {
+                    game.mergeBtn.disabled = false;
+                }
+                updateUpgradeAvailability(game);
+                if (game.pauseBtn) {
+                    game.pauseBtn.disabled = false;
+                }
             if (game.tutorial) {
                 game.tutorial.reset();
                 game.tutorial.start();
@@ -496,6 +513,7 @@ function bindButtons(game) {
             if (game.mergeBtn) {
                 game.mergeBtn.disabled = false;
             }
+            updateUpgradeAvailability(game);
             if (game.pauseBtn) {
                 game.pauseBtn.disabled = false;
             }
@@ -521,6 +539,35 @@ function updateMergeButtonState(game, active) {
     }
     if (button.classList && typeof button.classList.toggle === 'function') {
         button.classList.toggle('is-active', Boolean(active));
+    }
+}
+
+function updateUpgradeButtonState(game, active) {
+    const button = game?.upgradeBtn;
+    if (!button) {
+        return;
+    }
+    if (typeof button.setAttribute === 'function') {
+        button.setAttribute('aria-pressed', active ? 'true' : 'false');
+    }
+    if (button.classList && typeof button.classList.toggle === 'function') {
+        button.classList.toggle('is-active', Boolean(active));
+    }
+}
+
+function isUpgradeUnlocked(game) {
+    return Number.isFinite(game?.wave) && game.wave >= 15;
+}
+
+function updateUpgradeAvailability(game) {
+    if (!game?.upgradeBtn) {
+        return;
+    }
+    const unlocked = isUpgradeUnlocked(game);
+    const disabled = !unlocked || game.gameOver;
+    game.upgradeBtn.disabled = disabled;
+    if (disabled && typeof game.disableUpgradeMode === 'function') {
+        game.disableUpgradeMode();
     }
 }
 
@@ -730,6 +777,7 @@ function bindCanvasInteractions(game) {
         startedRemoval: false,
         chargeSoundHandle: null,
         mergeSelection: false,
+        upgradeSelection: false,
     };
 
     const removalDuration = Math.max(0.1, Number(gameConfig.towers?.removalHoldDuration) || 2);
@@ -765,6 +813,8 @@ function bindCanvasInteractions(game) {
         pointerState.cancelled = false;
         pointerState.removalTriggered = false;
         pointerState.startedRemoval = false;
+        pointerState.mergeSelection = false;
+        pointerState.upgradeSelection = false;
     };
 
     const scheduleChargeSound = (pointerId) => {
@@ -907,6 +957,19 @@ function bindCanvasInteractions(game) {
                 event.preventDefault();
                 return;
             }
+            if (game.upgradeModeActive) {
+                pointerState.tower = tower;
+                pointerState.upgradeSelection = true;
+                if (typeof game.canvas?.setPointerCapture === 'function') {
+                    try {
+                        game.canvas.setPointerCapture(pointerId);
+                    } catch {
+                        // ignore capture failures
+                    }
+                }
+                event.preventDefault();
+                return;
+            }
             pointerState.tower = tower;
             const started = typeof tower.beginRemovalCharge === 'function'
                 ? tower.beginRemovalCharge()
@@ -946,6 +1009,13 @@ function bindCanvasInteractions(game) {
         }
 
         if (pointerState.tower) {
+            if (pointerState.upgradeSelection) {
+                const distance = Math.hypot(pos.x - pointerState.downPos.x, pos.y - pointerState.downPos.y);
+                if (distance > dragThreshold) {
+                    pointerState.movedTooFar = true;
+                }
+                return;
+            }
             if (pointerState.mergeSelection) {
                 const distance = Math.hypot(pos.x - pointerState.downPos.x, pos.y - pointerState.downPos.y);
                 if (distance > dragThreshold) {
@@ -989,6 +1059,13 @@ function bindCanvasInteractions(game) {
         cancelChargeSoundTimer();
 
         if (pointerState.tower) {
+            if (pointerState.upgradeSelection) {
+                if (!pointerState.movedTooFar && typeof game.attemptTowerUpgrade === 'function') {
+                    game.attemptTowerUpgrade(pointerState.tower);
+                }
+                resetPointerState();
+                return;
+            }
             if (pointerState.mergeSelection) {
                 if (!pointerState.movedTooFar && typeof game.selectTowerForMerge === 'function') {
                     game.selectTowerForMerge(pointerState.tower);
@@ -1103,6 +1180,7 @@ export function updateHUD(game) {
     renderScore(game);
     renderWaveInfo(game);
     updateWavePhaseIndicator(game);
+    updateUpgradeAvailability(game);
     if (typeof game.persistState === 'function') {
         game.persistState();
     }
@@ -1368,6 +1446,9 @@ export function endGame(game, text) {
     }
     if (game.mergeBtn) {
         game.mergeBtn.disabled = true;
+    }
+    if (game.upgradeBtn) {
+        game.upgradeBtn.disabled = true;
     }
     if (game.pauseBtn) {
         game.pauseBtn.disabled = true;
