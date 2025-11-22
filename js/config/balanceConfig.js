@@ -2,10 +2,10 @@ export const balanceConfig = {
     player: {
         initialLives: 5,
         initialEnergy: 480,
-        towerCost: 100,
+        towerCost: 120,
         switchCost: 0,
         maxWaves: 20,
-        energyPerKill: 4,
+        energyPerKill: 7,
         tankKillEnergyMultiplier: 2,
         killEnergyScaling: {
             baseWave: 1,
