@@ -13,7 +13,7 @@ import { createStarfield, resizeStarfield, updateStarfield as stepStarfield } fr
 import { createPortalState, updatePortalState, registerPortalBurst } from './portal.js';
 import projectileManagement from './game/projectileManagement.js';
 import tankSchedule from './game/tankSchedule.js';
-import world from './game/world.js';
+import world, { DEFAULT_TIME_SCALE } from './game/world.js';
 import statePersistence from './game/statePersistence.js';
 import stateSetup from './game/stateSetup.js';
 import towerManagement from './game/towerManagement.js';
@@ -92,6 +92,7 @@ class Game {
         this.selectedMergeCell = null;
         this.screenShake = createScreenShakeState();
         this.baseHitFlash = createBaseHitFlashState();
+        this.timeScale = DEFAULT_TIME_SCALE;
         this.audioMuted = false;
         this.musicEnabled = true;
         this.musicPausedByFocus = false;
