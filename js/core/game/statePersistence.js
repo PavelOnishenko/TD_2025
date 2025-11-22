@@ -29,7 +29,7 @@ function applySavedResources(game, savedState) {
     const targetWave = clamp(rawWave, 1, 9999);
     game.lives = clamp(toInt(savedState.lives, game.initialLives), 0, 99);
     const savedEnergy = savedState.energy ?? savedState.gold;
-    game.energy = clamp(toInt(savedEnergy, game.initialEnergy), 0, 9999);
+    game.energy = clamp(toInt(savedEnergy, game.initialEnergy), 0, 999999);
     game.score = clamp(toInt(savedState.score, 0), 0, 9999999);
     const savedBestScore = clamp(toInt(savedState.bestScore, game.bestScore ?? 0), 0, 9999999);
     if (!Number.isFinite(game.bestScore) || savedBestScore > game.bestScore) {
