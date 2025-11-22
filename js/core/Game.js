@@ -89,6 +89,8 @@ class Game {
         this.mergeHintPairs = [];
         this.mergeModeActive = false;
         this.selectedMergeCell = null;
+        this.upgradeModeActive = false;
+        this.upgradeUnlockWave = gameConfig.towers?.upgradeUnlockWave ?? 15;
         this.screenShake = createScreenShakeState();
         this.baseHitFlash = createBaseHitFlashState();
         this.timeScale = DEFAULT_TIME_SCALE;

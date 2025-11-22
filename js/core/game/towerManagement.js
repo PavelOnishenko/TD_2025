@@ -1,4 +1,99 @@
+import { balanceConfig } from '../../config/balanceConfig.js';
+import { updateHUD } from '../../systems/ui.js';
+
+const MAX_UPGRADE_LEVEL = 6;
+
 const towerManagement = {
+    getUpgradeCost(level) {
+        if (!Number.isFinite(level)) {
+            return null;
+        }
+        const cost = balanceConfig?.towers?.upgradeCosts?.[level];
+        return Number.isFinite(cost) ? cost : null;
+    },
+
+    canUpgradeTower(tower) {
+        if (!tower || !Number.isFinite(tower.level)) {
+            return false;
+        }
+        if (this.wave < 15) {
+            return false;
+        }
+        if (tower.level >= MAX_UPGRADE_LEVEL) {
+            return false;
+        }
+        const cost = this.getUpgradeCost(tower.level);
+        return Number.isFinite(cost) && cost > 0 && this.energy >= cost;
+    },
+
+    attemptTowerUpgrade(tower) {
+        if (!tower || !Number.isFinite(tower.level)) {
+            return false;
+        }
+        if (this.wave < 15) {
+            this.disableUpgradeMode?.();
+            return false;
+        }
+
+        const currentLevel = Math.max(1, tower.level);
+        if (currentLevel >= MAX_UPGRADE_LEVEL) {
+            tower.triggerErrorPulse?.();
+            if (this.audio && typeof this.audio.playError === 'function') {
+                this.audio.playError();
+            }
+            return false;
+        }
+
+        const cost = this.getUpgradeCost(currentLevel);
+        if (!Number.isFinite(cost) || cost <= 0) {
+            return false;
+        }
+        if (this.energy < cost) {
+            tower.triggerErrorPulse?.();
+            if (this.audio && typeof this.audio.playError === 'function') {
+                this.audio.playError();
+            }
+            return false;
+        }
+
+        this.energy -= cost;
+        tower.level = Math.min(MAX_UPGRADE_LEVEL, tower.level + 1);
+        tower.updateStats?.();
+        tower.triggerPlacementFlash?.();
+        this.disableUpgradeMode?.();
+        if (this.audio) {
+            if (typeof this.audio.playMerge === 'function') {
+                this.audio.playMerge();
+            } else if (typeof this.audio.playPlacement === 'function') {
+                this.audio.playPlacement();
+            }
+        }
+        updateHUD(this);
+        return true;
+    },
+
+    toggleUpgradeMode() {
+        const unlockWave = Number.isFinite(this.upgradeUnlockWave)
+            ? this.upgradeUnlockWave
+            : 15;
+        if (this.wave < unlockWave) {
+            this.disableUpgradeMode?.();
+            return this.upgradeModeActive;
+        }
+        const nextState = !this.upgradeModeActive;
+        this.upgradeModeActive = nextState;
+        if (nextState && typeof this.disableMergeMode === 'function') {
+            this.disableMergeMode();
+        }
+        this.updateUpgradeButtonState?.(nextState);
+        return this.upgradeModeActive;
+    },
+
+    disableUpgradeMode() {
+        this.upgradeModeActive = false;
+        this.updateUpgradeButtonState?.(false);
+    },
+
     mergeTowers(row) {
         this.forEachMergeablePair(row, (cellA, cellB, towerA, towerB) => {
             this.mergeTowerPair(cellA, cellB, towerA, towerB);
@@ -12,6 +107,9 @@ const towerManagement = {
         }
         this.mergeModeActive = !this.mergeModeActive;
         if (this.mergeModeActive) {
+            if (typeof this.disableUpgradeMode === 'function') {
+                this.disableUpgradeMode();
+            }
             this.clearMergeSelection();
             this.updateMergeHints();
         } else {
@@ -24,6 +122,9 @@ const towerManagement = {
     enableMergeMode() {
         if (this.waveInProgress) {
             return false;
+        }
+        if (typeof this.disableUpgradeMode === 'function') {
+            this.disableUpgradeMode();
         }
         this.mergeModeActive = true;
         this.clearMergeSelection();
