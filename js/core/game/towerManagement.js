@@ -16,7 +16,7 @@ const towerManagement = {
         if (!tower || !Number.isFinite(tower.level)) {
             return false;
         }
-        if (this.wave < 15) {
+        if (this.wave < balanceConfig?.towers?.upgradeUnlockWave) {
             return false;
         }
         if (tower.level >= MAX_UPGRADE_LEVEL) {
@@ -30,7 +30,7 @@ const towerManagement = {
         if (!tower || !Number.isFinite(tower.level)) {
             return false;
         }
-        if (this.wave < 15) {
+        if (this.wave < balanceConfig?.towers?.upgradeUnlockWave) {
             this.disableUpgradeMode?.();
             return false;
         }
