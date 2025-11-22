@@ -74,6 +74,7 @@ class Game {
         this.towers = [];
         this.projectiles = [];
         this.explosions = [];
+        this.rocketBlastIndicators = [];
         this.colorSwitchBursts = [];
         this.mergeAnimations = [];
         this.energyPopups = [];
@@ -456,6 +457,7 @@ class Game {
         handleProjectileHits(this);
         this.updateMergeAnimations(dt);
         updateExplosions(this.explosions, dt);
+        this.updateRocketBlastIndicators(dt);
         updateColorSwitchBursts(this.colorSwitchBursts, dt);
         this.updateEnergyPopups(dt);
         this.grid.fadeHighlights(dt);
@@ -647,6 +649,30 @@ class Game {
         this.energyPopups.push(popup);
     }
 
+    addRocketBlastIndicator(x, y, radius, color) {
+        const visualization = gameConfig.projectiles?.rocket?.blastVisualization;
+        if (!visualization || visualization.enabled === false) {
+            return;
+        }
+
+        if (!Array.isArray(this.rocketBlastIndicators)) {
+            this.rocketBlastIndicators = [];
+        }
+
+        const duration = Math.max(0.05, Number.isFinite(visualization.duration)
+            ? visualization.duration
+            : 0.4);
+
+        this.rocketBlastIndicators.push({
+            x: Number.isFinite(x) ? x : 0,
+            y: Number.isFinite(y) ? y : 0,
+            radius: Number.isFinite(radius) ? radius : 0,
+            color: color ?? 'default',
+            elapsed: 0,
+            duration,
+        });
+    }
+
     updateEnergyPopups(dt) {
         if (!Array.isArray(this.energyPopups) || this.energyPopups.length === 0) {
             return;
@@ -657,6 +683,20 @@ class Game {
             popup.elapsed = (popup.elapsed ?? 0) + dt;
             if (popup.elapsed >= (popup.duration ?? 0.8)) {
                 this.energyPopups.splice(i, 1);
+            }
+        }
+    }
+
+    updateRocketBlastIndicators(dt) {
+        if (!Array.isArray(this.rocketBlastIndicators) || this.rocketBlastIndicators.length === 0) {
+            return;
+        }
+
+        for (let i = this.rocketBlastIndicators.length - 1; i >= 0; i--) {
+            const indicator = this.rocketBlastIndicators[i];
+            indicator.elapsed = (indicator.elapsed ?? 0) + dt;
+            if (indicator.elapsed >= (indicator.duration ?? 0.4)) {
+                this.rocketBlastIndicators.splice(i, 1);
             }
         }
     }

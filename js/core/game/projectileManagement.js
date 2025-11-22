@@ -208,6 +208,24 @@ function spawnRailgunBeam(game, angle, tower) {
 function spawnRocket(game, angle, tower) {
     const baseRadius = game.getProjectileRadiusForLevel(tower?.level);
     const radius = baseRadius + 6;
+    const rocketConfig = gameConfig.projectiles?.rocket ?? {};
+    const shouldScaleByRange = rocketConfig.useRangeScaling !== false;
+    const rangeFactor = Number.isFinite(rocketConfig.radiusFromRangeFactor)
+        ? rocketConfig.radiusFromRangeFactor
+        : 0.65;
+    const scaledFromRange = shouldScaleByRange && Number.isFinite(tower?.range)
+        ? tower.range * rangeFactor
+        : null;
+    const baseExplosionRadius = Number.isFinite(rocketConfig.explosionRadius)
+        ? rocketConfig.explosionRadius
+        : 180;
+    const minExplosionRadius = Number.isFinite(rocketConfig.minExplosionRadius)
+        ? rocketConfig.minExplosionRadius
+        : 0;
+    const explosionRadius = Math.max(
+        minExplosionRadius,
+        Number.isFinite(scaledFromRange) ? scaledFromRange : baseExplosionRadius,
+    );
     const rocket = createProjectile(game, angle, tower, radius, {
         speed: game.projectileSpeed * 0.75,
         type: 'rocket',
@@ -219,7 +237,7 @@ function spawnRocket(game, angle, tower) {
             vibrationStrength: 0.06,
         },
         extras: {
-            explosionRadius: Math.max(180, tower.range * 0.75),
+            explosionRadius,
             trail: [],
             rotation: angle,
             life: 0,
