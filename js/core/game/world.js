@@ -1,5 +1,15 @@
 import gameConfig from '../../config/gameConfig.js';
 
+export const MIN_TIME_SCALE = 0.1;
+export const MAX_TIME_SCALE = 10;
+export const DEFAULT_TIME_SCALE = 1;
+
+export function clampTimeScale(value) {
+    const numeric = Number(value);
+    const safeValue = Number.isFinite(numeric) ? numeric : DEFAULT_TIME_SCALE;
+    return Math.min(MAX_TIME_SCALE, Math.max(MIN_TIME_SCALE, safeValue));
+}
+
 function createEmptyBounds() {
     return {
         minX: Number.POSITIVE_INFINITY,
@@ -146,7 +156,19 @@ const world = {
         this.lastTime = timestamp;
         const safeDelta = Number.isFinite(rawDelta) ? rawDelta : 0;
         const clamped = Math.max(0, safeDelta);
-        this.elapsedTime = (this.elapsedTime ?? 0) + clamped;
+        const timeScale = this.getTimeScale?.() ?? DEFAULT_TIME_SCALE;
+        const scaledDelta = clamped * timeScale;
+        this.elapsedTime = (this.elapsedTime ?? 0) + scaledDelta;
+        return scaledDelta;
+    },
+
+    getTimeScale() {
+        return clampTimeScale(this.timeScale ?? DEFAULT_TIME_SCALE);
+    },
+
+    setTimeScale(scale) {
+        const clamped = clampTimeScale(scale);
+        this.timeScale = clamped;
         return clamped;
     },
 };
