@@ -134,21 +134,22 @@ function createTowerEntryElement(entry, index, handlers) {
     return container;
 }
 
-function renderTowerEntries(listEl, draft, updateDraft) {
+function renderTowerEntries(listEl, state, updateDraft) {
     if (!listEl) {
         return;
     }
     listEl.innerHTML = '';
-    const towers = Array.isArray(draft?.towers) ? draft.towers : [];
+    const towers = Array.isArray(state?.draft?.towers) ? state.draft.towers : [];
     const handlers = {
         onChange(index, next) {
-            const updated = [...towers];
-            updated[index] = next;
-            updateDraft({ ...draft, towers: updated });
+            const currentTowers = Array.isArray(state?.draft?.towers) ? [...state.draft.towers] : [];
+            currentTowers[index] = next;
+            updateDraft({ ...state.draft, towers: currentTowers }, { skipTowerRender: true });
         },
         onRemove(index) {
-            const updated = towers.filter((_, idx) => idx !== index);
-            updateDraft({ ...draft, towers: updated });
+            const currentTowers = Array.isArray(state?.draft?.towers) ? state.draft.towers : [];
+            const updated = currentTowers.filter((_, idx) => idx !== index);
+            updateDraft({ ...state.draft, towers: updated });
         },
     };
 
@@ -255,7 +256,7 @@ export function initDeveloperPositionEditor(game) {
         draft: clonePayload(DEFAULT_DRAFT),
     };
 
-    const updateDraft = (next) => {
+    const updateDraft = (next, options = {}) => {
         state.draft = sanitizeDraft(next);
         if (waveInput) {
             waveInput.value = String(state.draft.wave ?? 1);
@@ -263,7 +264,9 @@ export function initDeveloperPositionEditor(game) {
         if (energyInput) {
             energyInput.value = String(state.draft.energy ?? 0);
         }
-        renderTowerEntries(towerListEl, state.draft, updateDraft);
+        if (!options.skipTowerRender) {
+            renderTowerEntries(towerListEl, state, updateDraft);
+        }
     };
 
     const refreshSlots = () => {
