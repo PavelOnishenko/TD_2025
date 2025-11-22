@@ -33,6 +33,23 @@ function createExplosionParticles(x, y, config, color) {
     }
     return particles;
 }
+
+function createShockwave(x, y, radius) {
+    if (!Number.isFinite(radius) || radius <= 0) {
+        return null;
+    }
+
+    const maxLife = 0.5;
+    const thickness = Math.max(6, Math.min(radius * 0.18, 26));
+    return {
+        x,
+        y,
+        radius,
+        lineWidth: thickness,
+        life: maxLife,
+        maxLife,
+    };
+}
 function createDebris(x, y, config) {
     if (!config) {
         return [];
@@ -92,11 +109,13 @@ function advanceFragment(fragment, dt, damping) {
 }
 export function createExplosion(x, y, options) {
     const { color, variant } = normalizeExplosionOptions(options);
+    const { ringRadius } = options ?? {};
     const config = getVariantConfig(variant);
     const resolvedColor = config.resolveColor(color);
     const particles = createExplosionParticles(x, y, config, resolvedColor);
     const debris = createDebris(x, y, config.debris);
-    return { particles, debris };
+    const shockwave = createShockwave(x, y, ringRadius);
+    return { particles, debris, shockwave };
 }
 export function updateExplosions(explosions, dt) {
     if (!explosions?.length) {
@@ -117,9 +136,17 @@ export function updateExplosions(explosions, dt) {
                 fragments.push(fragment);
             }
         }
+        const shockwave = explosion.shockwave;
+        if (shockwave) {
+            shockwave.life -= dt;
+        }
+
         explosion.particles = particles;
         explosion.debris = fragments;
-        if (!particles.length && !fragments.length) {
+        explosion.shockwave = shockwave?.life > 0 ? shockwave : null;
+
+        const hasShockwave = Boolean(explosion.shockwave);
+        if (!particles.length && !fragments.length && !hasShockwave) {
             explosions.splice(i, 1);
         }
     }
@@ -127,6 +154,7 @@ export function updateExplosions(explosions, dt) {
 export function drawExplosions(ctx, explosions = []) {
     const particles = [];
     const debris = [];
+    const shockwaves = [];
     for (const explosion of explosions) {
         for (const particle of explosion?.particles ?? []) {
             if (particle.life > 0) {
@@ -138,9 +166,18 @@ export function drawExplosions(ctx, explosions = []) {
                 debris.push(fragment);
             }
         }
+        if (explosion?.shockwave?.life > 0) {
+            shockwaves.push(explosion.shockwave);
+        }
     }
-    if (!particles.length && !debris.length) {
+    if (!particles.length && !debris.length && !shockwaves.length) {
         return;
+    }
+    if (shockwaves.length) {
+        ctx.save();
+        ctx.globalCompositeOperation = 'screen';
+        drawShockwavesArray(shockwaves, ctx);
+        ctx.restore();
     }
     if (particles.length) {
         ctx.save();
@@ -162,6 +199,25 @@ function drawParticlesArray(particles, ctx) {
         ctx.fillStyle = toColor(preset, alpha);
         ctx.arc(particle.x, particle.y, radius, 0, Math.PI * 2);
         ctx.fill();
+    }
+}
+
+function drawShockwavesArray(shockwaves, ctx) {
+    for (const shockwave of shockwaves) {
+        const progress = Math.max(0, Math.min(1, shockwave.life / shockwave.maxLife));
+        const alpha = 0.6 * progress;
+        const width = shockwave.lineWidth * (0.6 + 0.4 * progress);
+        const glow = Math.max(12, shockwave.radius * 0.18 * progress);
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.strokeStyle = `rgba(255, 240, 200, ${alpha})`;
+        ctx.lineWidth = width;
+        ctx.shadowColor = `rgba(255, 200, 150, ${alpha})`;
+        ctx.shadowBlur = glow;
+        ctx.arc(shockwave.x, shockwave.y, shockwave.radius, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
     }
 }
 function drawDebrisArray(debris, ctx) {
