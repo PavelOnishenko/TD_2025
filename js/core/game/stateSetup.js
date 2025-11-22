@@ -30,6 +30,7 @@ function resetCollections(game) {
     game.mergeAnimations = [];
     game.energyPopups = [];
     game.mergeModeActive = false;
+    game.upgradeModeActive = false;
     game.selectedMergeCell = null;
     game.maxProjectileRadius = game.projectileRadius;
     game.spawned = 0;
@@ -45,6 +46,10 @@ function resetButtons(game) {
     }
     if (game.mergeBtn) {
         game.mergeBtn.disabled = false;
+    }
+    if (game.upgradeBtn) {
+        const upgradeUnlockWave = game.upgradeUnlockWave ?? gameConfig.towers?.upgradeUnlockWave ?? 15;
+        game.upgradeBtn.disabled = game.wave < upgradeUnlockWave;
     }
 }
 
