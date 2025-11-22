@@ -256,7 +256,15 @@
             </div>
         </section>
         <div id="waveClearBanner" class="wave-clear" aria-hidden="true"></div>
-        <div id="diagnosticsOverlay" class="diagnostics diagnostics--hidden" aria-live="polite" aria-atomic="true"></div>
+        <div id="diagnosticsOverlay" class="diagnostics diagnostics--hidden" aria-live="polite" aria-atomic="true">
+            <div class="diagnostics__controls" role="group" aria-label="Developer console">
+                <label class="diagnostics__label" for="timeScaleSlider">
+                    Game speed: <span id="timeScaleValue">1.00x</span>
+                </label>
+                <input id="timeScaleSlider" class="diagnostics__slider" type="range" min="0" max="100" step="1" value="50" />
+            </div>
+            <pre id="diagnosticsLog" class="diagnostics__log"></pre>
+        </div>
     </main>
 
     <script type="module" src="js/main.js"></script>
