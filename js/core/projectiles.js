@@ -217,6 +217,7 @@ function handleRocketImpact(game, projectile, index) {
         game.explosions.push(createExplosion(centerX, centerY, {
             color: projectile.color,
             variant: 'rocket',
+            ringRadius: radius,
         }));
     }
 
