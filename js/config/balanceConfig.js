@@ -28,6 +28,12 @@ export const balanceConfig = {
         spawnInterval: 60,
         radiusPerLevel: 5,
         colorMismatchMultiplier: 0.3,
+        rockets: {
+            explosionRadius: {
+                min: 18,
+                rangeMultiplier: 0.5,
+            },
+        },
     },
     towers: {
         baseRange: 140,

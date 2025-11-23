@@ -54,6 +54,17 @@ function triggerScreenShake(game, intensity = 14, duration = 0.28, frequency = 4
     shake.seedY = Math.random() * Math.PI * 2;
 }
 
+function getRocketImpactRadius(projectile) {
+    const config = gameConfig.projectiles?.rockets?.explosionRadius ?? {};
+    if (!Number.isFinite(config.min)) {
+        throw new Error('Missing rocket explosion radius config (min)');
+    }
+    if (!Number.isFinite(projectile?.explosionRadius)) {
+        throw new Error('Projectile missing explosion radius');
+    }
+    return Math.max(config.min, projectile.explosionRadius);
+}
+
 function getImpactPosition(projectile, enemy, options = {}) {
     if (Number.isFinite(options.impactX) && Number.isFinite(options.impactY)) {
         return { x: options.impactX, y: options.impactY };
@@ -184,7 +195,7 @@ export function applyProjectileDamage(game, projectile, enemyIndex, options = {}
 }
 
 function handleRocketImpact(game, projectile, index) {
-    const radius = projectile.explosionRadius ?? 200;
+    const radius = getRocketImpactRadius(projectile);
     const centerX = projectile.x;
     const centerY = projectile.y;
     const impacted = [];
