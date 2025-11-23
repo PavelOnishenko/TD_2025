@@ -74,20 +74,20 @@ export const balanceConfig = {
             { difficulty: 14, enemyHp: 2.24 },
             { difficulty: 15, enemyHp: 2.53 }, // 5
             { difficulty: 15, enemyHp: 2.97 },
-            { difficulty: 16, enemyHp: 3.40 },
-            { difficulty: 16, enemyHp: 3.82 },
-            { difficulty: 17, enemyHp: 4.23 },
-            { difficulty: 17, enemyHp: 4.55 }, // 10
-            { difficulty: 18, enemyHp: 4.78 },
-            { difficulty: 18, enemyHp: 4.93 },
-            { difficulty: 19, enemyHp: 5.03 },
-            { difficulty: 19, enemyHp: 5.09 },
-            { difficulty: 20, enemyHp: 5.12 }, // 15
+            { difficulty: 16, enemyHp: 3.20 },
+            { difficulty: 16, enemyHp: 3.42 },
+            { difficulty: 17, enemyHp: 3.65 },
+            { difficulty: 17, enemyHp: 3.87 }, // 10
+            { difficulty: 18, enemyHp: 4.10 },
+            { difficulty: 18, enemyHp: 4.32 },
+            { difficulty: 19, enemyHp: 4.55 },
+            { difficulty: 19, enemyHp: 4.77 },
+            { difficulty: 20, enemyHp: 5.00 }, // 15
             { difficulty: 20, enemyHp: 5.22 },
-            { difficulty: 21, enemyHp: 5.35 },
-            { difficulty: 21, enemyHp: 5.55 },
-            { difficulty: 22, enemyHp: 5.75 },
-            { difficulty: 22, enemyHp: 6 }, // 20
+            { difficulty: 21, enemyHp: 5 },
+            { difficulty: 21, enemyHp: 5.25 },
+            { difficulty: 22, enemyHp: 5.45 },
+            { difficulty: 22, enemyHp: 5.65 }, // 20
         ],
         endless: {
             hpGrowth: 1.2,
