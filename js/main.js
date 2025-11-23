@@ -180,6 +180,7 @@ function shouldBootstrap() {
     return Boolean(document.getElementById('game'));
 }
 
+// todo can we remove this bootstrapping thing?
 if (shouldBootstrap()) {
     void bootstrapGame();
 }
