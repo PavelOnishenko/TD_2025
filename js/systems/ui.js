@@ -647,6 +647,10 @@ function updateUpgradeAvailability(game) {
     const unlocked = isUpgradeUnlocked(game);
     const disabled = !unlocked || game.gameOver;
     game.upgradeBtn.disabled = disabled;
+    game.upgradeBtn.hidden = disabled;
+    if (typeof game.upgradeBtn.setAttribute === 'function') {
+        game.upgradeBtn.setAttribute('aria-hidden', disabled ? 'true' : 'false');
+    }
     if (disabled && typeof game.disableUpgradeMode === 'function') {
         game.disableUpgradeMode();
     }
