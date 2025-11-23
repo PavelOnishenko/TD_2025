@@ -30,8 +30,8 @@ export const balanceConfig = {
         colorMismatchMultiplier: 0.3,
         rockets: {
             explosionRadius: {
-                min: 180,
-                rangeMultiplier: 0.75,
+                min: 18,
+                rangeMultiplier: 0.5,
             },
         },
     },
