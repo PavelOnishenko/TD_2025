@@ -1,4 +1,4 @@
-import { updateHUD } from '../../systems/ui.js';
+import { updateHUD, updateUpgradeAvailability } from '../../systems/ui.js';
 import { loadBestScore } from '../../systems/dataStore.js';
 import gameConfig from '../../config/gameConfig.js';
 
@@ -47,10 +47,7 @@ function resetButtons(game) {
     if (game.mergeBtn) {
         game.mergeBtn.disabled = false;
     }
-    if (game.upgradeBtn) {
-        const upgradeUnlockWave = game.upgradeUnlockWave ?? gameConfig.towers?.upgradeUnlockWave ?? 15;
-        game.upgradeBtn.disabled = game.wave < upgradeUnlockWave;
-    }
+    updateUpgradeAvailability(game);
 }
 
 function resetStatus(game) {
