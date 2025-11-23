@@ -47,7 +47,7 @@ export const balanceConfig = {
             8,
             4,
             9.1,
-            40,
+            50,
             75,
         ],
         upgradeCosts: {
