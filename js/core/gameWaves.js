@@ -28,11 +28,6 @@ export const waveActions = {
         this.spawnTimer = 0;
         this.waveElapsed = 0;
         this.waveSpawnCursor = 0;
-        const { minDifference } = gameConfig.player.colorProbability;
-        do {
-            this.colorProbStart = Math.random();
-            this.colorProbEnd = Math.random();
-        } while (Math.abs(this.colorProbStart - this.colorProbEnd) <= minDifference);
         if (!Array.isArray(this.waveSpawnSchedule) || this.waveSpawnSchedule.length === 0) {
             throw new Error(`Wave ${this.wave} has no spawn schedule.`);
         }

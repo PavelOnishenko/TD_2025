@@ -4,29 +4,6 @@ import gameConfig from '../config/gameConfig.js';
 import { DEFAULT_TIME_SCALE } from './game/world.js';
 
 export const enemyActions = {
-    getEnemyColor() {
-        const denom = this.enemiesPerWave - 1;
-        const progress = denom > 0 ? this.spawned / denom : 1;
-        const p = this.colorProbStart + (this.colorProbEnd - this.colorProbStart) * progress;
-        return Math.random() < p ? 'red' : 'blue';
-    },
-
-    spawnEnemy(type) {
-        const hp = this.determineEnemyHp();
-        const enemyType = this.determineEnemyType(type);
-
-        if (enemyType === 'tank') {
-            this.spawnTankEnemy(hp);
-        } else if (enemyType === 'swarm') {
-            this.spawnSwarmGroup(hp);
-        }
-        else {
-            throw new Error(`Unknown enemy type: ${enemyType}`);
-        }
-
-        this.spawned += 1;
-    },
-
     determineEnemyHp() {
         if (typeof this.getEnemyHpForWave === 'function') {
             return this.getEnemyHpForWave(this.wave);
@@ -63,7 +40,7 @@ export const enemyActions = {
             coords.y = overrides.y;
         }
         const hpMultiplier = gameConfig.enemies.tank.hpMultiplier;
-        const color = overrides.color ?? this.getEnemyColor();
+        const color = overrides.color;
         const tankEnemy = new TankEnemy(baseHp * hpMultiplier, color, coords.x, coords.y);
         tankEnemy.setEngineFlamePlacement({
             anchorX: tankEnemy.engineFlame.anchor.x,
@@ -99,8 +76,7 @@ export const enemyActions = {
 
         for (let i = 0; i < groupSize; i++) {
             const color = overrides.colors?.[i]
-                ?? overrides.color
-                ?? this.getEnemyColor();
+                ?? overrides.color;
             const swarmEnemy = new SwarmEnemy(swarmHp, color, coords.x, coords.y);
             if (offsets && Number.isFinite(offsets[i])) {
                 swarmEnemy.y = offsets[i];
@@ -147,14 +123,7 @@ export const enemyActions = {
     },
 
     resolvePlannedColor(color) {
-        if (!color || typeof color !== 'string') {
-            return this.getEnemyColor();
-        }
-        const normalized = color.toLowerCase();
-        if (normalized === 'auto' || normalized === 'random') {
-            return this.getEnemyColor();
-        }
-        return normalized;
+        return color.toLowerCase();
     },
 
     spawnEnemyFromPlan(event) {
