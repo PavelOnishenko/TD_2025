@@ -156,10 +156,8 @@ const world = {
         this.lastTime = timestamp;
         const safeDelta = Number.isFinite(rawDelta) ? rawDelta : 0;
         const clamped = Math.max(0, safeDelta);
-        const timeScale = this.getTimeScale?.() ?? DEFAULT_TIME_SCALE;
-        const scaledDelta = clamped * timeScale;
-        this.elapsedTime = (this.elapsedTime ?? 0) + scaledDelta;
-        return scaledDelta;
+        this.elapsedTime = (this.elapsedTime ?? 0) + clamped;
+        return clamped;
     },
 
     getTimeScale() {

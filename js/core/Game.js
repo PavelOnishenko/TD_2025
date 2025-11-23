@@ -81,7 +81,6 @@ class Game {
         this.projectileRadius = gameConfig.projectiles.baseRadius;
         this.maxProjectileRadius = this.projectileRadius;
         this.projectileSpawnInterval = gameConfig.projectiles.spawnInterval;
-        this.lastTime = 0;
         this.elapsedTime = 0;
         this.hasStarted = false;
         this.isRestoringState = false;
@@ -364,25 +363,33 @@ class Game {
         }
     }
 
-    pause(reason = 'manual') {
+    pause(reason = 'manual', options = {}) {
         if (this.gameOver) {
             return false;
         }
+        const normalizedReason = typeof reason === 'string'
+            ? reason
+            : typeof options?.reason === 'string'
+                ? options.reason
+                : 'manual';
         const wasPaused = this.isPaused;
         const previousReason = this.pauseReason;
         this.isPaused = true;
-        this.pauseReason = reason;
+        this.pauseReason = normalizedReason;
         if (typeof this.audio?.stopMusic === 'function') {
             this.audio.stopMusic();
         }
-        if (!wasPaused || previousReason !== reason) {
-            this.emitPauseState(true, reason);
+        if (!wasPaused || previousReason !== normalizedReason) {
+            this.emitPauseState(true, normalizedReason);
         }
-        return !wasPaused || previousReason !== reason;
+        if (!options?.skipRuntime) {
+            this.runtime?.pause?.(normalizedReason);
+        }
+        return !wasPaused || previousReason !== normalizedReason;
     }
 
     resume(options = {}) {
-        const { expectedReason = null, force = false, reason = null } = options;
+        const { expectedReason = null, force = false, reason = null, skipRuntime = false } = options;
         const wasPaused = this.isPaused;
         const previousReason = this.pauseReason;
         if (!wasPaused) {
@@ -395,11 +402,15 @@ class Game {
         if (!force && expectedReason && previousReason !== expectedReason) {
             return false;
         }
+        const resumeReason = reason ?? expectedReason ?? previousReason ?? 'manual';
         this.isPaused = false;
         this.pauseReason = null;
-        this.emitPauseState(false, reason ?? expectedReason ?? previousReason ?? 'manual');
+        this.emitPauseState(false, resumeReason);
         if (this.hasStarted && !this.gameOver) {
             this.playMusicIfAllowed();
+        }
+        if (!skipRuntime) {
+            this.runtime?.resume?.(resumeReason);
         }
         return true;
     }
@@ -426,23 +437,22 @@ class Game {
         return cell?.tower ?? null;
     }
 
-    update(timestamp) {
+    update(dt = 0, frameTimestamp = 0) {
         if (this.gameOver) {
-            refreshDiagnosticsOverlay(this, { dt: 0, timestamp });
+            refreshDiagnosticsOverlay(this, { dt: 0, timestamp: frameTimestamp });
             return;
         }
         if (this.isPaused) {
-            refreshDiagnosticsOverlay(this, { dt: 0, timestamp });
-            this.lastTime = timestamp;
-            requestAnimationFrame(this.update);
+            refreshDiagnosticsOverlay(this, { dt: 0, timestamp: frameTimestamp });
             return;
         }
-        const dt = this.calcDelta(timestamp);
-        this.tickStarfield(dt);
-        this.tickPortal(dt);
+        const safeDelta = Math.max(0, Number(dt) || 0);
+        this.elapsedTime = (this.elapsedTime ?? 0) + safeDelta;
+        this.tickStarfield(safeDelta);
+        this.tickPortal(safeDelta);
         const towersPendingRemoval = [];
         for (const tower of this.towers) {
-            tower.update(dt);
+            tower.update(safeDelta);
             if (typeof tower.shouldTriggerRemoval === 'function' && tower.shouldTriggerRemoval()) {
                 towersPendingRemoval.push(tower);
             }
@@ -452,27 +462,24 @@ class Game {
                 this.removeTower(tower, { cause: 'long-press' });
             });
         }
-        this.spawnEnemiesIfNeeded(dt);
-        this.updateEnemies(dt);
-        this.towerAttacks(timestamp);
-        moveProjectiles(this, dt);
+        this.spawnEnemiesIfNeeded(safeDelta);
+        this.updateEnemies(safeDelta);
+        this.towerAttacks(frameTimestamp);
+        moveProjectiles(this, safeDelta);
         handleProjectileHits(this);
-        this.updateMergeAnimations(dt);
-        updateExplosions(this.explosions, dt);
-        updateColorSwitchBursts(this.colorSwitchBursts, dt);
-        this.updateEnergyPopups(dt);
-        this.grid.fadeHighlights(dt);
-        this.grid.fadeHover(dt);
-        this.grid.fadeMergeHints(dt);
+        this.updateMergeAnimations(safeDelta);
+        updateExplosions(this.explosions, safeDelta);
+        updateColorSwitchBursts(this.colorSwitchBursts, safeDelta);
+        this.updateEnergyPopups(safeDelta);
+        this.grid.fadeHighlights(safeDelta);
+        this.grid.fadeHover(safeDelta);
+        this.grid.fadeMergeHints(safeDelta);
         this.updateMergeHints();
         this.checkWaveCompletion();
-        this.updateScreenShake(dt);
-        this.updateBaseHitFlash(dt);
+        this.updateScreenShake(safeDelta);
+        this.updateBaseHitFlash(safeDelta);
         draw(this);
-        refreshDiagnosticsOverlay(this, { dt, timestamp });
-        if (!this.gameOver) {
-            requestAnimationFrame(this.update);
-        }
+        refreshDiagnosticsOverlay(this, { dt: safeDelta, timestamp: frameTimestamp });
     }
 
     getStarfieldDimensions() {
@@ -879,25 +886,20 @@ class Game {
     }
 
     restart() {
-        this.resume({ force: true, reason: 'system' });
-        const wasGameOver = this.gameOver;
+        this.resume({ force: true, reason: 'system', skipRuntime: true });
         this.resetState();
         this.playMusicIfAllowed();
-        if (wasGameOver) {
-            this.lastTime = performance.now();
-            requestAnimationFrame(this.update);
-        }
         callCrazyGamesEvent('gameplayStart');
+        this.runtime?.start?.();
     }
 
     run() {
         this.hasStarted = true;
-        this.resume({ force: true, reason: 'system' });
+        this.resume({ force: true, reason: 'system', skipRuntime: true });
         callCrazyGamesEvent('gameplayStart');
         this.playMusicIfAllowed();
         this.elapsedTime = 0;
-        this.lastTime = performance.now();
-        requestAnimationFrame(this.update);
+        this.runtime?.start?.();
     }
 
     setAudioMuted(muted) {
