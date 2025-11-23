@@ -221,12 +221,15 @@ function handleRocketImpact(game, projectile, index) {
         });
     }
 
+    const enableShockwave = gameConfig?.projectiles?.rocket?.shockwaveEnabled !== false;
     if (game.explosions) {
-        game.explosions.push(createExplosion(centerX, centerY, {
+        const explosionOptions = {
             color: projectile.color,
             variant: 'rocket',
-            ringRadius: radius,
-        }));
+            ringRadius: enableShockwave ? radius : undefined,
+        };
+
+        game.explosions.push(createExplosion(centerX, centerY, explosionOptions));
     }
 
     triggerScreenShake(game, 2.4, 0.42, 46);
