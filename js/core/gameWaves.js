@@ -1,4 +1,4 @@
-import { updateHUD, updateWavePhaseIndicator, showWaveClearedBanner } from '../systems/ui.js';
+import { updateHUD, updateUpgradeAvailability, updateWavePhaseIndicator, showWaveClearedBanner } from '../systems/ui.js';
 import gameConfig from '../config/gameConfig.js';
 import { showCrazyGamesAdWithPause } from '../systems/ads.js';
 import { getWaveEnergyMultiplier } from '../utils/energyScaling.js';
@@ -18,10 +18,7 @@ export const waveActions = {
         if (this.mergeBtn) {
             this.mergeBtn.disabled = true;
         }
-        if (this.upgradeBtn) {
-            const upgradeUnlockWave = this.upgradeUnlockWave ?? gameConfig.towers?.upgradeUnlockWave ?? 15;
-            this.upgradeBtn.disabled = this.wave < upgradeUnlockWave;
-        }
+        updateUpgradeAvailability(this);
         if (this.statusEl) {
             this.statusEl.textContent = '';
             this.statusEl.style.color = '';

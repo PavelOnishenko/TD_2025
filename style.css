@@ -516,6 +516,10 @@ body {
     line-height: 1;
 }
 
+.hud-button--hidden {
+    display: none !important;
+}
+
 .hud-button__icon {
     width: calc(20px * var(--button-scale));
     height: calc(20px * var(--button-scale));

@@ -640,15 +640,30 @@ function isUpgradeUnlocked(game) {
     return Number.isFinite(game?.wave) && game.wave >= unlockWave;
 }
 
-function updateUpgradeAvailability(game) {
+export function updateUpgradeAvailability(game) {
     if (!game?.upgradeBtn) {
         return;
     }
     const unlocked = isUpgradeUnlocked(game);
     const disabled = !unlocked || game.gameOver;
-    game.upgradeBtn.disabled = disabled;
+    applyUpgradeButtonVisibility(game, disabled);
     if (disabled && typeof game.disableUpgradeMode === 'function') {
         game.disableUpgradeMode();
+    }
+}
+
+function applyUpgradeButtonVisibility(game, disabled) {
+    const button = game?.upgradeBtn;
+    if (!button) {
+        return;
+    }
+    button.disabled = disabled;
+    button.hidden = disabled;
+    if (button.classList && typeof button.classList.toggle === 'function') {
+        button.classList.toggle('hud-button--hidden', Boolean(disabled));
+    }
+    if (typeof button.setAttribute === 'function') {
+        button.setAttribute('aria-hidden', disabled ? 'true' : 'false');
     }
 }
 
@@ -1528,14 +1543,12 @@ export function endGame(game, text) {
     if (game.mergeBtn) {
         game.mergeBtn.disabled = true;
     }
-    if (game.upgradeBtn) {
-        game.upgradeBtn.disabled = true;
-    }
     if (game.pauseBtn) {
         game.pauseBtn.disabled = true;
     }
-    showEndScreen(game, text);
     game.gameOver = true;
+    updateUpgradeAvailability(game);
+    showEndScreen(game, text);
     if (typeof game.resume === 'function') {
         game.resume({ force: true, reason: 'system' });
     }
