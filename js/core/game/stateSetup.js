@@ -1,12 +1,11 @@
-import { updateHUD } from '../../systems/ui.js';
+import { updateHUD, updateUpgradeAvailability } from '../../systems/ui.js';
 import { loadBestScore } from '../../systems/dataStore.js';
 import gameConfig from '../../config/gameConfig.js';
 
 function configureFirstWave(game) {
     const cfg = game.waveConfigs[0];
-    game.spawnInterval = cfg.interval;
-    game.enemiesPerWave = cfg.cycles;
-    game.prepareTankScheduleForWave(cfg, 1);
+    game.enemiesPerWave = 0;
+    game.prepareTankScheduleForWave(cfg, 1, 0);
 }
 
 function resetResources(game) {
@@ -30,9 +29,11 @@ function resetCollections(game) {
     game.explosions = [];
     game.mergeAnimations = [];
     game.energyPopups = [];
+    game.mergeModeActive = false;
+    game.upgradeModeActive = false;
+    game.selectedMergeCell = null;
     game.maxProjectileRadius = game.projectileRadius;
     game.spawned = 0;
-    game.spawnTimer = 0;
     game.grid.resetCells();
     if (typeof game.resetScreenShake === 'function') {
         game.resetScreenShake();
@@ -46,6 +47,7 @@ function resetButtons(game) {
     if (game.mergeBtn) {
         game.mergeBtn.disabled = false;
     }
+    updateUpgradeAvailability(game);
 }
 
 function resetStatus(game) {
@@ -110,7 +112,7 @@ function resetGame(game) {
 
 const stateSetup = {
     initStats() {
-        const { player, waves, scoring } = gameConfig;
+        const { player, scoring } = gameConfig;
         this.initialLives = player.initialLives;
         this.initialEnergy = player.initialEnergy;
         this.lives = this.initialLives;
@@ -125,12 +127,12 @@ const stateSetup = {
         this.tankBurstSet = new Set();
         this.tankScheduleWave = 0;
         const cfg = this.waveConfigs[0];
-        this.prepareTankScheduleForWave(cfg, 1);
-        this.spawnInterval = cfg.interval;
-        this.enemiesPerWave = cfg.cycles;
+        this.prepareTankScheduleForWave(cfg, 1, 0);
+        this.enemiesPerWave = 0;
         this.spawned = 0;
-        this.spawnTimer = 0;
-        this.enemyHpPerWave = [...waves.enemyHpByWave];
+        this.enemyHpPerWave = this.waveConfigs.map(cfg => Number.isFinite(cfg?.enemyHp)
+            ? cfg.enemyHp
+            : 1);
         this.gameOver = false;
         this.colorProbStart = 0.5
         this.colorProbEnd = 0.6;

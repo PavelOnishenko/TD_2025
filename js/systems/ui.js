@@ -12,12 +12,39 @@ import {
     normalizeScore,
 } from './highScores.js';
 import { translate, setActiveLocale, applyLocalization } from './localization.js';
+import { DEFAULT_TIME_SCALE, MAX_TIME_SCALE, MIN_TIME_SCALE } from '../core/game/world.js';
 
 const SUPPORTED_LANGUAGES = ['en', 'ru'];
 const DEFAULT_LANGUAGE = SUPPORTED_LANGUAGES[0];
 
 const HEART_FILLED_SRC = 'assets/heart_filled.png';
 const HEART_EMPTY_SRC = 'assets/heart_empty.png';
+const TIME_SLIDER_STEPS = 100;
+const TIME_SCALE_SPAN = MAX_TIME_SCALE / MIN_TIME_SCALE;
+
+function clamp(value, min, max) {
+    if (!Number.isFinite(value)) {
+        return min;
+    }
+    return Math.min(max, Math.max(min, value));
+}
+
+function getTimeScaleFromSlider(value) {
+    const normalized = clamp(value / TIME_SLIDER_STEPS, 0, 1);
+    return MIN_TIME_SCALE * (TIME_SCALE_SPAN ** normalized);
+}
+
+function getSliderValueFromTimeScale(scale) {
+    const safeScale = clamp(scale, MIN_TIME_SCALE, MAX_TIME_SCALE);
+    const normalized = Math.log(safeScale / MIN_TIME_SCALE) / Math.log(TIME_SCALE_SPAN);
+    return Math.round(normalized * TIME_SLIDER_STEPS);
+}
+
+function formatTimeScale(scale) {
+    const safeScale = clamp(scale, MIN_TIME_SCALE, MAX_TIME_SCALE);
+    const digits = safeScale >= 10 ? 0 : safeScale >= 1 ? 2 : 3;
+    return `${safeScale.toFixed(digits)}x`;
+}
 
 function normalizeLanguageCode(language) {
     if (typeof language !== 'string') {
@@ -107,6 +134,10 @@ function isInside(pos, rect) {
 
 export function bindUI(game) {
     bindHUD(game);
+    game.updateMergeButtonState = (active) => updateMergeButtonState(game, active);
+    game.updateMergeButtonState(false);
+    game.updateUpgradeButtonState = (active) => updateUpgradeButtonState(game, active);
+    game.updateUpgradeButtonState(false);
     attachTutorial(game);
     bindButtons(game);
     bindAudioButtons(game);
@@ -138,6 +169,7 @@ function bindHUD(game) {
     game.muteBtn = document.getElementById('muteToggle');
     game.musicBtn = document.getElementById('musicToggle');
     game.mergeBtn = document.getElementById('mergeTowers');
+    game.upgradeBtn = document.getElementById('upgradeTowers');
     game.pauseBtn = document.getElementById('pause');
     game.startOverlay = document.getElementById('startOverlay');
     game.startBtn = document.getElementById('startGame');
@@ -162,6 +194,7 @@ function bindHUD(game) {
     game.leaderboardEmptyEl = document.getElementById('leaderboardEmpty');
     game.leaderboardRetryBtn = document.getElementById('leaderboardRetry');
     game.diagnosticsOverlay = document.getElementById('diagnosticsOverlay');
+    game.waveClearBannerEl = document.getElementById('waveClearBanner');
     game.saveControlsEl = document.getElementById('saveControls');
     game.saveBtn = document.getElementById('saveGame');
     game.loadBtn = document.getElementById('loadGame');
@@ -262,6 +295,10 @@ function bindDiagnosticsOverlay(game) {
         visible: false,
         fps: 0,
         lastCommit: 0,
+        towerDamageEvents: null,
+        collectTowerDps: false,
+        logEl: null,
+        syncTimeScaleUi: null,
     };
     game.diagnosticsState = state;
 
@@ -273,6 +310,55 @@ function bindDiagnosticsOverlay(game) {
         return;
     }
 
+    const resetTowerDpsTracking = () => {
+        state.towerDamageEvents = null;
+        state.collectTowerDps = false;
+    };
+
+    const diagnosticsLog = overlay.querySelector('#diagnosticsLog');
+    const timeScaleValueEl = overlay.querySelector('#timeScaleValue');
+    const timeScaleSlider = overlay.querySelector('#timeScaleSlider');
+
+    const updateTimeScaleDisplay = (scale) => {
+        if (timeScaleSlider) {
+            const sliderValue = getSliderValueFromTimeScale(scale);
+            if (String(sliderValue) !== timeScaleSlider.value) {
+                timeScaleSlider.value = String(sliderValue);
+            }
+        }
+        if (timeScaleValueEl) {
+            timeScaleValueEl.textContent = formatTimeScale(scale);
+        }
+    };
+
+    const applyTimeScaleFromSlider = (value) => {
+        const nextScale = typeof game.setTimeScale === 'function'
+            ? game.setTimeScale(value)
+            : value;
+        updateTimeScaleDisplay(nextScale);
+        refreshDiagnosticsOverlay(game, { force: true });
+    };
+
+    if (timeScaleSlider) {
+        const initialScale = typeof game.getTimeScale === 'function'
+            ? game.getTimeScale()
+            : DEFAULT_TIME_SCALE;
+        timeScaleSlider.value = String(getSliderValueFromTimeScale(initialScale));
+        updateTimeScaleDisplay(initialScale);
+        timeScaleSlider.addEventListener('input', (event) => {
+            const sliderValue = Number(event.target.value);
+            applyTimeScaleFromSlider(getTimeScaleFromSlider(sliderValue));
+        });
+    }
+
+    state.logEl = diagnosticsLog ?? overlay;
+    state.syncTimeScaleUi = updateTimeScaleDisplay;
+
+    const startTowerDpsTracking = () => {
+        state.towerDamageEvents = new Map();
+        state.collectTowerDps = true;
+    };
+
     const updateVisibility = () => {
         overlay.classList.toggle('diagnostics--hidden', !state.visible);
     };
@@ -280,11 +366,13 @@ function bindDiagnosticsOverlay(game) {
     const toggleOverlay = () => {
         state.visible = !state.visible;
         if (!state.visible) {
+            resetTowerDpsTracking();
             updateVisibility();
             return;
         }
         state.fps = 0;
         state.lastCommit = 0;
+        startTowerDpsTracking();
         updateVisibility();
         refreshDiagnosticsOverlay(game, { dt: 0, force: true });
     };
@@ -310,6 +398,8 @@ export function refreshDiagnosticsOverlay(game, options = {}) {
     if (!overlay || !state) {
         return;
     }
+
+    const logEl = state.logEl ?? overlay;
 
     const {
         dt = 0,
@@ -358,8 +448,14 @@ export function refreshDiagnosticsOverlay(game, options = {}) {
     const paused = game?.isPaused ? yesText : noText;
     const muted = game?.audioMuted ? yesText : noText;
     const music = game?.musicEnabled ? yesText : noText;
+    const timeScale = typeof game?.getTimeScale === 'function'
+        ? game.getTimeScale()
+        : game?.timeScale ?? DEFAULT_TIME_SCALE;
+
+    state.syncTimeScaleUi?.(timeScale);
 
     const lines = [
+        translate('diagnostics.speed', { value: formatTimeScale(timeScale) }, `Speed: ${formatTimeScale(timeScale)}`),
         translate('diagnostics.fps', { value: fpsDisplay }, `FPS: ${fpsDisplay}`),
         translate('diagnostics.wave', { current: waveNumber, max: maxWaves, status: waveStatus }, `Wave: ${waveNumber}/${maxWaves} (${waveStatus})`),
         translate('diagnostics.enemies', { count: enemies }, `Enemies: ${enemies}`),
@@ -371,7 +467,47 @@ export function refreshDiagnosticsOverlay(game, options = {}) {
         translate('diagnostics.music', { value: music }, `Music Enabled: ${music}`),
     ];
 
-    overlay.textContent = lines.join('\n');
+    if (state.collectTowerDps && Array.isArray(game?.towers)) {
+        const windowMs = 10000;
+        const cutoff = now - windowMs;
+        const eventsByTower = state.towerDamageEvents instanceof Map ? state.towerDamageEvents : new Map();
+        const dpsLines = [];
+
+        for (const tower of game.towers) {
+            const towerId = tower?.id ?? '—';
+            const level = Number.isFinite(tower?.level) ? tower.level : '?';
+            const color = tower?.color ?? 'unknown';
+            const events = Array.isArray(eventsByTower.get(towerId)) ? eventsByTower.get(towerId) : [];
+            const recentEvents = events.filter((event) => event.time >= cutoff);
+            const damage = recentEvents.reduce((sum, event) => sum + event.damage, 0);
+            eventsByTower.set(towerId, recentEvents);
+            const lastSecondCutoff = now - 1000;
+            const lastSecondDamage = recentEvents
+                .filter((event) => event.time >= lastSecondCutoff)
+                .reduce((sum, event) => sum + event.damage, 0);
+            const dps = lastSecondDamage;
+
+            const bucketedDamage = new Map();
+            for (const event of recentEvents) {
+                const bucket = Math.floor(event.time / 1000);
+                bucketedDamage.set(bucket, (bucketedDamage.get(bucket) ?? 0) + event.damage);
+            }
+            const activeBuckets = Array.from(bucketedDamage.values()).filter((value) => value > 0).length;
+            const activeDurationMs = activeBuckets * 1000;
+            const activeDps = activeDurationMs > 0 ? damage / (activeDurationMs / 1000) : 0;
+
+            const dpsText = `${dps.toFixed(1)} DPS`;
+            const activeDpsText = `10s avg (active): ${activeDps.toFixed(1)}`;
+            dpsLines.push(`Tower ${towerId} (Lv ${level}, ${color}): ${dpsText} | ${activeDpsText}`);
+        }
+
+        if (dpsLines.length) {
+            lines.push('Tower DPS:');
+            lines.push(...dpsLines);
+        }
+    }
+
+    logEl.textContent = lines.join('\n');
 }
 
 function bindButtons(game) {
@@ -381,11 +517,25 @@ function bindButtons(game) {
             if (game.waveInProgress)
                 return;
             if (typeof game.manualMergeTowers === 'function') {
-                game.manualMergeTowers();
+                const active = game.manualMergeTowers();
+                game.updateMergeButtonState?.(active);
             }
         };
         game.mergeBtn.addEventListener('click', handleMerge);
         game.mergeBtn.disabled = game.waveInProgress;
+    }
+    if (game.upgradeBtn) {
+        const handleUpgradeToggle = () => {
+            if (game.waveInProgress && !isUpgradeUnlocked(game)) {
+                return;
+            }
+            if (typeof game.toggleUpgradeMode === 'function') {
+                const active = game.toggleUpgradeMode();
+                game.updateUpgradeButtonState?.(active);
+            }
+        };
+        game.upgradeBtn.addEventListener('click', handleUpgradeToggle);
+        updateUpgradeAvailability(game);
     }
     const handleRestart = async () => {
         if (game.restartBtn && game.restartBtn.disabled) {
@@ -405,15 +555,16 @@ function bindButtons(game) {
             console.warn('Restart ad failed', error);
         }
 
-        try {
-            game.restart();
-            hideEndScreen(game);
-            if (game.mergeBtn) {
-                game.mergeBtn.disabled = false;
-            }
-            if (game.pauseBtn) {
-                game.pauseBtn.disabled = false;
-            }
+            try {
+                game.restart();
+                hideEndScreen(game);
+                if (game.mergeBtn) {
+                    game.mergeBtn.disabled = false;
+                }
+                updateUpgradeAvailability(game);
+                if (game.pauseBtn) {
+                    game.pauseBtn.disabled = false;
+                }
             if (game.tutorial) {
                 game.tutorial.reset();
                 game.tutorial.start();
@@ -438,6 +589,7 @@ function bindButtons(game) {
             if (game.mergeBtn) {
                 game.mergeBtn.disabled = false;
             }
+            updateUpgradeAvailability(game);
             if (game.pauseBtn) {
                 game.pauseBtn.disabled = false;
             }
@@ -450,6 +602,68 @@ function bindButtons(game) {
     }
     if (game.endRestartBtn) {
         game.endRestartBtn.addEventListener('click', handleRestart);
+    }
+}
+
+function updateMergeButtonState(game, active) {
+    const button = game?.mergeBtn;
+    if (!button) {
+        return;
+    }
+    if (typeof button.setAttribute === 'function') {
+        button.setAttribute('aria-pressed', active ? 'true' : 'false');
+    }
+    if (button.classList && typeof button.classList.toggle === 'function') {
+        button.classList.toggle('is-active', Boolean(active));
+    }
+}
+
+function updateUpgradeButtonState(game, active) {
+    const button = game?.upgradeBtn;
+    if (!button) {
+        return;
+    }
+    if (typeof button.setAttribute === 'function') {
+        button.setAttribute('aria-pressed', active ? 'true' : 'false');
+    }
+    if (button.classList && typeof button.classList.toggle === 'function') {
+        button.classList.toggle('is-active', Boolean(active));
+    }
+}
+
+function isUpgradeUnlocked(game) {
+    const unlockWave = Number.isFinite(game?.upgradeUnlockWave)
+        ? game.upgradeUnlockWave
+        : Number.isFinite(gameConfig.towers?.upgradeUnlockWave)
+            ? gameConfig.towers.upgradeUnlockWave
+            : 15;
+    return Number.isFinite(game?.wave) && game.wave >= unlockWave;
+}
+
+export function updateUpgradeAvailability(game) {
+    if (!game?.upgradeBtn) {
+        return;
+    }
+    const unlocked = isUpgradeUnlocked(game);
+    const disabled = !unlocked || game.gameOver;
+    applyUpgradeButtonVisibility(game, disabled);
+    if (disabled && typeof game.disableUpgradeMode === 'function') {
+        game.disableUpgradeMode();
+    }
+}
+
+function applyUpgradeButtonVisibility(game, disabled) {
+    const button = game?.upgradeBtn;
+    if (!button) {
+        return;
+    }
+    button.disabled = disabled;
+    button.hidden = disabled;
+    if (button.classList && typeof button.classList.toggle === 'function') {
+        button.classList.toggle('hud-button--hidden', Boolean(disabled));
+    }
+    if (typeof button.setAttribute === 'function') {
+        button.setAttribute('aria-hidden', disabled ? 'true' : 'false');
     }
 }
 
@@ -658,6 +872,8 @@ function bindCanvasInteractions(game) {
         removalTriggered: false,
         startedRemoval: false,
         chargeSoundHandle: null,
+        mergeSelection: false,
+        upgradeSelection: false,
     };
 
     const removalDuration = Math.max(0.1, Number(gameConfig.towers?.removalHoldDuration) || 2);
@@ -693,6 +909,8 @@ function bindCanvasInteractions(game) {
         pointerState.cancelled = false;
         pointerState.removalTriggered = false;
         pointerState.startedRemoval = false;
+        pointerState.mergeSelection = false;
+        pointerState.upgradeSelection = false;
     };
 
     const scheduleChargeSound = (pointerId) => {
@@ -734,6 +952,60 @@ function bindCanvasInteractions(game) {
         return cells.find(cell => isInside(pos, cell)) ?? null;
     };
 
+    let hoveredTower = null;
+    let hoveredCell = null;
+
+    const clearHoveredTower = () => {
+        if (hoveredTower && typeof hoveredTower.setHovered === 'function') {
+            hoveredTower.setHovered(false);
+        }
+        hoveredTower = null;
+    };
+
+    const clearHoveredCell = () => {
+        if (hoveredCell) {
+            hoveredCell.hoverActive = false;
+            hoveredCell.hover = 0;
+        }
+        hoveredCell = null;
+    };
+
+    const applyHoverHighlight = (pos) => {
+        if (!pos) {
+            clearHoveredTower();
+            clearHoveredCell();
+            return;
+        }
+
+        const tower = findTowerAtPosition(pos);
+        if (tower) {
+            if (tower !== hoveredTower) {
+                clearHoveredTower();
+                hoveredTower = tower;
+            }
+            if (typeof hoveredTower?.setHovered === 'function') {
+                hoveredTower.setHovered(true);
+            }
+            clearHoveredCell();
+            return;
+        }
+
+        clearHoveredTower();
+
+        const cell = findCellAtPosition(pos);
+        if (cell && !cell.occupied) {
+            if (cell !== hoveredCell) {
+                clearHoveredCell();
+                hoveredCell = cell;
+            }
+            hoveredCell.hoverActive = true;
+            hoveredCell.hover = 1;
+            return;
+        }
+
+        clearHoveredCell();
+    };
+
     const isWithinTowerWithMargin = (tower, pos, marginFactor) => {
         const width = tower.w ?? 0;
         const height = tower.h ?? 0;
@@ -754,17 +1026,46 @@ function bindCanvasInteractions(game) {
         const pointerId = typeof event.pointerId === 'number' ? event.pointerId : 0;
         const pos = getMousePos(game.canvas, event);
 
+        applyHoverHighlight(pos);
+
         pointerState.pointerId = pointerId;
         pointerState.downPos = pos;
         pointerState.movedTooFar = false;
         pointerState.cancelled = false;
         pointerState.removalTriggered = false;
         pointerState.startedRemoval = false;
+        pointerState.mergeSelection = false;
         pointerState.tower = null;
         cancelChargeSoundTimer();
 
         const tower = findTowerAtPosition(pos);
         if (tower) {
+            if (game.mergeModeActive) {
+                pointerState.tower = tower;
+                pointerState.mergeSelection = true;
+                if (typeof game.canvas?.setPointerCapture === 'function') {
+                    try {
+                        game.canvas.setPointerCapture(pointerId);
+                    } catch {
+                        // ignore capture failures
+                    }
+                }
+                event.preventDefault();
+                return;
+            }
+            if (game.upgradeModeActive) {
+                pointerState.tower = tower;
+                pointerState.upgradeSelection = true;
+                if (typeof game.canvas?.setPointerCapture === 'function') {
+                    try {
+                        game.canvas.setPointerCapture(pointerId);
+                    } catch {
+                        // ignore capture failures
+                    }
+                }
+                event.preventDefault();
+                return;
+            }
             pointerState.tower = tower;
             const started = typeof tower.beginRemovalCharge === 'function'
                 ? tower.beginRemovalCharge()
@@ -795,13 +1096,29 @@ function bindCanvasInteractions(game) {
     };
 
     const handlePointerMove = (event) => {
+        const pos = getMousePos(game.canvas, event);
+        applyHoverHighlight(pos);
+
         const pointerId = typeof event.pointerId === 'number' ? event.pointerId : 0;
         if (pointerState.pointerId !== pointerId) {
             return;
         }
-        const pos = getMousePos(game.canvas, event);
 
         if (pointerState.tower) {
+            if (pointerState.upgradeSelection) {
+                const distance = Math.hypot(pos.x - pointerState.downPos.x, pos.y - pointerState.downPos.y);
+                if (distance > dragThreshold) {
+                    pointerState.movedTooFar = true;
+                }
+                return;
+            }
+            if (pointerState.mergeSelection) {
+                const distance = Math.hypot(pos.x - pointerState.downPos.x, pos.y - pointerState.downPos.y);
+                if (distance > dragThreshold) {
+                    pointerState.movedTooFar = true;
+                }
+                return;
+            }
             if (!pointerState.removalTriggered && !isTowerInGame(pointerState.tower)) {
                 pointerState.removalTriggered = true;
                 cancelChargeSoundTimer();
@@ -838,6 +1155,20 @@ function bindCanvasInteractions(game) {
         cancelChargeSoundTimer();
 
         if (pointerState.tower) {
+            if (pointerState.upgradeSelection) {
+                if (!pointerState.movedTooFar && typeof game.attemptTowerUpgrade === 'function') {
+                    game.attemptTowerUpgrade(pointerState.tower);
+                }
+                resetPointerState();
+                return;
+            }
+            if (pointerState.mergeSelection) {
+                if (!pointerState.movedTooFar && typeof game.selectTowerForMerge === 'function') {
+                    game.selectTowerForMerge(pointerState.tower);
+                }
+                resetPointerState();
+                return;
+            }
             const tower = pointerState.tower;
             const towerInGame = isTowerInGame(tower);
             const progress = typeof tower.getRemovalChargeProgress === 'function'
@@ -868,6 +1199,8 @@ function bindCanvasInteractions(game) {
     };
 
     const handlePointerCancel = (event) => {
+        clearHoveredTower();
+        clearHoveredCell();
         const pointerId = typeof event.pointerId === 'number' ? event.pointerId : 0;
         if (pointerState.pointerId !== pointerId) {
             return;
@@ -943,6 +1276,7 @@ export function updateHUD(game) {
     renderScore(game);
     renderWaveInfo(game);
     updateWavePhaseIndicator(game);
+    updateUpgradeAvailability(game);
     if (typeof game.persistState === 'function') {
         game.persistState();
     }
@@ -1038,6 +1372,71 @@ export function updateWavePhaseIndicator(game) {
     }
     if (game.wavePanelEl && game.wavePanelEl.dataset) {
         game.wavePanelEl.dataset.phase = isInProgress ? 'active' : 'prep';
+    }
+}
+
+export function showWaveClearedBanner(game, waveNumber) {
+    const container = game?.waveClearBannerEl;
+    if (!container)
+        return;
+
+    const host = typeof window !== 'undefined' ? window : globalThis;
+    if (typeof host?.clearTimeout === 'function' && game.waveClearHideHandle) {
+        host.clearTimeout(game.waveClearHideHandle);
+    }
+
+    const resolvedWave = Number.isFinite(waveNumber) ? Math.max(1, waveNumber) : 1;
+    const text = translate('hud.waveClearedBanner', { wave: resolvedWave }, `WAVE #${resolvedWave} CLEARED`);
+    const canCreateElements = typeof document !== 'undefined'
+        && typeof document.createElement === 'function';
+    const textEl = canCreateElements ? document.createElement('div') : null;
+    if (!textEl) {
+        return;
+    }
+    textEl.className = 'wave-clear__text';
+    const fragment = canCreateElements && typeof document.createDocumentFragment === 'function'
+        ? document.createDocumentFragment()
+        : null;
+    const target = fragment ?? textEl;
+    Array.from(text).forEach((char, index) => {
+        const letter = document.createElement('span');
+        letter.className = 'wave-clear__letter';
+        letter.style.setProperty('--index', String(index));
+        if (char === ' ') {
+            letter.classList.add('wave-clear__letter--space');
+            letter.textContent = '\u00A0';
+        }
+        else {
+            letter.textContent = char;
+        }
+        target.appendChild(letter);
+    });
+    if (fragment) {
+        textEl.appendChild(fragment);
+    }
+    if (typeof container.replaceChildren === 'function') {
+        container.replaceChildren(textEl);
+    }
+    else {
+        container.innerHTML = '';
+        container.appendChild(textEl);
+    }
+    container.classList.remove('wave-clear--visible');
+    void container.offsetWidth;
+    container.classList.add('wave-clear--visible');
+    container.setAttribute('aria-hidden', 'false');
+
+    const hide = () => {
+        container.classList.remove('wave-clear--visible');
+        container.setAttribute('aria-hidden', 'true');
+        game.waveClearHideHandle = null;
+    };
+
+    if (typeof host?.setTimeout === 'function') {
+        game.waveClearHideHandle = host.setTimeout(hide, 2400);
+    }
+    else {
+        hide();
     }
 }
 
@@ -1147,8 +1546,9 @@ export function endGame(game, text) {
     if (game.pauseBtn) {
         game.pauseBtn.disabled = true;
     }
-    showEndScreen(game, text);
     game.gameOver = true;
+    updateUpgradeAvailability(game);
+    showEndScreen(game, text);
     if (typeof game.resume === 'function') {
         game.resume({ force: true, reason: 'system' });
     }

@@ -14,6 +14,7 @@ import featureFlags from './config/featureFlags.js';
 import initSimpleSaveSystem from './systems/simpleSaveSystem.js';
 import { initializeHudController } from './systems/hudLayout.js';
 import { translate } from './systems/localization.js';
+import initDeveloperPositionEditor from './systems/developerPositionEditor.js';
 
 const { width: LOGICAL_W, height: LOGICAL_H } = gameConfig.world.logicalSize;
 export function getViewportMetrics(windowRef = window) {
@@ -250,6 +251,7 @@ async function startGame(context) {
         }
     }
     bindUI(game);
+    initDeveloperPositionEditor(game);
     const simpleSaveConfig = featureFlags?.simpleSaveSystem ?? {};
     const simpleSaveEnabled = typeof simpleSaveConfig === 'object'
         ? Boolean(simpleSaveConfig.enabled ?? true)

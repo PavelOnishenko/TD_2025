@@ -2,6 +2,8 @@ import { drawTowerMuzzleFlashIfNeeded, drawTowerPlacementFlash, drawTowerTopGlow
 import { getHowler } from '../systems/audio.js';
 import gameConfig from '../config/gameConfig.js';
 
+let towerIdCounter = 1;
+
 const DEFAULT_PLACEMENT_ANCHOR = Object.freeze({
     // The anchor describes the fraction of the sprite width/height between the
     // top-left corner and the point that should sit on the cell origin.
@@ -13,6 +15,7 @@ export default class Tower {
     constructor(x, y, color = 'red', level = 1) {
         this.x = x;
         this.y = y;
+        this.id = towerIdCounter++;
         const config = gameConfig.towers;
         this.w = config.width;
         this.h = config.height;
@@ -37,6 +40,9 @@ export default class Tower {
         this.removalChargeActive = false;
         this.removalChargePending = false;
         this.removalChargeDecayRate = config.removalIndicatorDecay ?? 3.2;
+        this.mergeSelected = false;
+        this.hovered = false;
+        this.hoverAmount = 0;
         this.updateStats();
     }
 
@@ -104,6 +110,11 @@ export default class Tower {
         }
         if (this.errorPulseTimer > 0) {
             this.errorPulseTimer = Math.max(0, this.errorPulseTimer - dt);
+        }
+        if (this.hovered) {
+            this.hoverAmount = 1;
+        } else if (this.hoverAmount > 0) {
+            this.hoverAmount = Math.max(0, this.hoverAmount - dt * 3.5);
         }
         this.updateRemovalCharge(dt);
     }
@@ -220,8 +231,10 @@ export default class Tower {
 
     draw(ctx, assets) {
         const c = this.center();
+        this.drawHover(ctx, c);
         ctx.fillStyle = this.color;
         this.drawBody(ctx, assets);
+        this.drawMergeSelection(ctx, c);
         this.drawErrorPulse(ctx, c);
         this.drawMergePulseWave(ctx, c);
         this.drawMergeHint(ctx, c);
@@ -234,6 +247,45 @@ export default class Tower {
 
         this.drawRemovalChargeIndicator(ctx, c);
         this.drawLevelIndicator(ctx);
+    }
+
+    setHover(strength = 1) {
+        if (!Number.isFinite(strength)) {
+            return;
+        }
+        this.setHovered(true);
+        this.hoverAmount = Math.max(this.hoverAmount, Math.max(0, Math.min(1, strength)));
+    }
+
+    setHovered(isHovered) {
+        this.hovered = Boolean(isHovered);
+        if (this.hovered) {
+            this.hoverAmount = 1;
+        } else {
+            this.hoverAmount = 0;
+        }
+    }
+
+    drawHover(ctx, center) {
+        if (this.hoverAmount <= 0) {
+            return;
+        }
+
+        const intensity = Math.min(1, this.hoverAmount * 1.1);
+        const pulse = (Math.sin(this.glowTime * 2.2) + 1) / 2;
+        const radius = Math.max(this.w, this.h) * (0.55 + 0.07 * pulse);
+        const alpha = 0.18 + 0.3 * intensity;
+        const color = this.color === 'blue'
+            ? `rgba(150, 210, 255, ${alpha})`
+            : `rgba(255, 200, 150, ${alpha})`;
+
+        ctx.save();
+        ctx.globalCompositeOperation = 'lighter';
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.arc(center.x, center.y + this.h * 0.05, radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
     }
 
     drawBody(ctx, assets) {
@@ -267,6 +319,29 @@ export default class Tower {
         ctx.arc(center.x, center.y + this.h * 0.05, radius, 0, Math.PI * 2);
         ctx.fillStyle = color;
         ctx.fill();
+        ctx.restore();
+    }
+
+    drawMergeSelection(ctx, center) {
+        if (!this.mergeSelected) {
+            return;
+        }
+
+        const pulse = (Math.sin(this.glowTime * 2.4) + 1) / 2;
+        const radius = Math.max(this.w, this.h) * (0.7 + 0.14 * pulse);
+        const alpha = 0.55 + 0.35 * pulse;
+        const lineWidth = 4.5 + 2 * pulse;
+        const color = this.color === 'blue'
+            ? `rgba(160, 220, 255, ${alpha})`
+            : `rgba(255, 200, 150, ${alpha})`;
+
+        ctx.save();
+        ctx.globalCompositeOperation = 'lighter';
+        ctx.lineWidth = lineWidth;
+        ctx.strokeStyle = color;
+        ctx.beginPath();
+        ctx.arc(center.x, center.y + this.h * 0.04, radius, 0, Math.PI * 2);
+        ctx.stroke();
         ctx.restore();
     }
 

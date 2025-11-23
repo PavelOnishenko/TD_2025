@@ -13,12 +13,13 @@ import { createStarfield, resizeStarfield, updateStarfield as stepStarfield } fr
 import { createPortalState, updatePortalState, registerPortalBurst } from './portal.js';
 import projectileManagement from './game/projectileManagement.js';
 import tankSchedule from './game/tankSchedule.js';
-import world from './game/world.js';
+import world, { DEFAULT_TIME_SCALE } from './game/world.js';
 import statePersistence from './game/statePersistence.js';
 import stateSetup from './game/stateSetup.js';
 import towerManagement from './game/towerManagement.js';
 import createFormationManager from './game/formations.js';
 import gameConfig from '../config/gameConfig.js';
+import { scaleDifficulty } from '../utils/difficultyScaling.js';
 
 function createScreenShakeState() {
     const { frequency } = gameConfig.world.screenShake;
@@ -86,8 +87,13 @@ class Game {
         this.isRestoringState = false;
         this.persistenceEnabled = true;
         this.mergeHintPairs = [];
+        this.mergeModeActive = false;
+        this.selectedMergeCell = null;
+        this.upgradeModeActive = false;
+        this.upgradeUnlockWave = gameConfig.towers?.upgradeUnlockWave ?? 15;
         this.screenShake = createScreenShakeState();
         this.baseHitFlash = createBaseHitFlashState();
+        this.timeScale = DEFAULT_TIME_SCALE;
         this.audioMuted = false;
         this.musicEnabled = true;
         this.musicPausedByFocus = false;
@@ -101,7 +107,14 @@ class Game {
         this.endlessWaveStart = 0;
         this.diagnosticsOverlay = null;
         this.diagnosticsState = { visible: false, fps: 0, lastCommit: 0 };
-        this.formationManager = createFormationManager(gameConfig.waves?.formations ?? {});
+        const formationsConfig = {
+            ...(gameConfig.waves?.formations ?? {}),
+            difficultyMultiplier: gameConfig.waves?.difficultyMultiplier,
+        };
+        this.formationManager = createFormationManager(
+            formationsConfig,
+            gameConfig.waves?.schedule ?? [],
+        );
         this.activeFormationPlan = null;
         this.waveSpawnSchedule = null;
         this.waveSpawnCursor = 0;
@@ -208,17 +221,20 @@ class Game {
         }
 
         const endless = gameConfig.waves?.endless ?? {};
-        const intervalFactor = Number.isFinite(endless.intervalFactor) ? endless.intervalFactor : 0.95;
-        const minInterval = Number.isFinite(endless.minInterval) ? endless.minInterval : 0.4;
-        const cyclesIncrement = Number.isFinite(endless.cyclesIncrement) ? endless.cyclesIncrement : 3;
-        const tanksIncrement = Number.isFinite(endless.tanksIncrement) ? endless.tanksIncrement : 2;
+        const difficultyIncrement = Number.isFinite(endless.difficultyIncrement)
+            ? endless.difficultyIncrement
+            : 3;
 
-        let previous = this.waveConfigs.at(-1) ?? { interval: 1, cycles: 30, tanksCount: 0 };
+        let previous = this.waveConfigs.at(-1) ?? { difficulty: 30, baseDifficulty: 30 };
         for (let wave = this.waveConfigs.length + 1; wave <= targetWave; wave += 1) {
-            const nextInterval = Math.max(minInterval, Number((previous.interval * intervalFactor).toFixed(3)));
-            const nextCycles = Math.max(1, Math.round(previous.cycles + cyclesIncrement));
-            const nextTanks = Math.max(0, Math.round(previous.tanksCount + tanksIncrement));
-            const nextConfig = { interval: nextInterval, cycles: nextCycles, tanksCount: nextTanks };
+            const previousBase = Number.isFinite(previous.baseDifficulty)
+                ? previous.baseDifficulty
+                : previous.difficulty;
+            const nextBaseDifficulty = Math.max(1, Math.round(previousBase + difficultyIncrement));
+            const nextConfig = {
+                difficulty: scaleDifficulty(nextBaseDifficulty),
+                baseDifficulty: nextBaseDifficulty,
+            };
             this.waveConfigs.push(nextConfig);
             previous = nextConfig;
         }
@@ -229,8 +245,12 @@ class Game {
     getEnemyHpForWave(waveNumber) {
         const targetWave = Math.max(1, Math.floor(waveNumber));
         const index = targetWave - 1;
-        if (index < this.enemyHpPerWave.length) {
-            return this.enemyHpPerWave[index];
+        if (index < this.enemyHpPerWave.length && Number.isFinite(this.enemyHpPerWave[index])) {
+            const hp = this.enemyHpPerWave[index];
+            if (this.waveConfigs[index]) {
+                this.waveConfigs[index].enemyHp = hp;
+            }
+            return hp;
         }
 
         const endless = gameConfig.waves?.endless ?? {};
@@ -241,7 +261,11 @@ class Game {
             this.enemyHpPerWave.push(previousHp);
         }
 
-        return this.enemyHpPerWave[index];
+        const hp = this.enemyHpPerWave[index];
+        if (this.waveConfigs[index]) {
+            this.waveConfigs[index].enemyHp = hp;
+        }
+        return hp;
     }
 
     getCurrentScore() {
@@ -438,6 +462,7 @@ class Game {
         updateColorSwitchBursts(this.colorSwitchBursts, dt);
         this.updateEnergyPopups(dt);
         this.grid.fadeHighlights(dt);
+        this.grid.fadeHover(dt);
         this.grid.fadeMergeHints(dt);
         this.updateMergeHints();
         this.checkWaveCompletion();

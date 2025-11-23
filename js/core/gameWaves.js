@@ -1,6 +1,7 @@
-import { updateHUD, updateWavePhaseIndicator } from '../systems/ui.js';
+import { updateHUD, updateUpgradeAvailability, updateWavePhaseIndicator, showWaveClearedBanner } from '../systems/ui.js';
 import gameConfig from '../config/gameConfig.js';
 import { showCrazyGamesAdWithPause } from '../systems/ads.js';
+import { getWaveEnergyMultiplier } from '../utils/energyScaling.js';
 
 export const waveActions = {
     startWave() {
@@ -8,9 +9,16 @@ export const waveActions = {
         if (this.tutorial) {
             this.tutorial.handleWaveStarted();
         }
+        if (typeof this.disableMergeMode === 'function') {
+            this.disableMergeMode();
+        }
+        if (typeof this.disableUpgradeMode === 'function') {
+            this.disableUpgradeMode();
+        }
         if (this.mergeBtn) {
             this.mergeBtn.disabled = true;
         }
+        updateUpgradeAvailability(this);
         if (this.statusEl) {
             this.statusEl.textContent = '';
             this.statusEl.style.color = '';
@@ -25,35 +33,25 @@ export const waveActions = {
             this.colorProbStart = Math.random();
             this.colorProbEnd = Math.random();
         } while (Math.abs(this.colorProbStart - this.colorProbEnd) <= minDifference);
-        if (Array.isArray(this.waveSpawnSchedule) && this.waveSpawnSchedule.length > 0) {
-            this.spawnEnemiesIfNeeded(0);
-        } else {
-            this.spawnEnemy();
+        if (!Array.isArray(this.waveSpawnSchedule) || this.waveSpawnSchedule.length === 0) {
+            throw new Error(`Wave ${this.wave} has no spawn schedule.`);
         }
+        this.spawnEnemiesIfNeeded(0);
     },
 
     setupWaveStuff() {
-        if (this.waveInProgress)
-            return;
-
         this.waveInProgress = true;
         this.nextWaveBtn.disabled = true;
         updateWavePhaseIndicator(this);
         const cfg = typeof this.getOrCreateWaveConfig === 'function'
             ? this.getOrCreateWaveConfig(this.wave)
             : this.waveConfigs[this.wave - 1] ?? this.waveConfigs.at(-1);
-        this.spawnInterval = cfg.interval;
         const plan = this.prepareWaveFormationPlan?.(cfg, this.wave);
-        if (plan && plan.totalEnemies > 0) {
-            this.enemiesPerWave = plan.totalEnemies;
-        } else {
-            this.waveSpawnSchedule = null;
-            this.activeFormationPlan = null;
-            this.waveElapsed = 0;
-            this.waveSpawnCursor = 0;
-            this.enemiesPerWave = cfg.cycles;
+        if (!plan || !plan.totalEnemies) {
+            throw new Error(`Failed to generate wave formation plan for wave ${this.wave}`);
         }
-        this.prepareTankScheduleForWave(cfg, this.wave);
+        this.enemiesPerWave = plan.totalEnemies;
+        this.prepareTankScheduleForWave(cfg, this.wave, this.enemiesPerWave, plan);
     },
 
     prepareWaveFormationPlan(cfg, waveNumber) {
@@ -62,8 +60,7 @@ export const waveActions = {
             this.waveSpawnSchedule = null;
             return null;
         }
-        const totalDifficulty = Number.isFinite(cfg?.cycles) ? cfg.cycles : undefined;
-        const plan = this.formationManager.planWave(waveNumber, { totalDifficulty });
+        const plan = this.formationManager.planWave(waveNumber);
         if (!plan || !Array.isArray(plan.events) || plan.events.length === 0) {
             this.activeFormationPlan = null;
             this.waveSpawnSchedule = null;
@@ -91,6 +88,11 @@ export const waveActions = {
                 this.addScore(this.waveClearScore);
             }
             const completedWave = this.wave;
+            const waveEnergyGain = Math.max(0, Math.round(
+                gameConfig.player.energyPerWave
+                * getWaveEnergyMultiplier({ wave: completedWave }),
+            ));
+            showWaveClearedBanner(this, completedWave);
             if (this.tutorial && typeof this.tutorial.handleWaveCompleted === 'function') {
                 try {
                     this.tutorial.handleWaveCompleted(completedWave);
@@ -105,10 +107,10 @@ export const waveActions = {
             if (this.tutorial && typeof this.tutorial.handleWavePreparation === 'function') {
                 this.tutorial.handleWavePreparation(this.wave);
             }
-            this.energy += gameConfig.player.energyPerWave;
+            this.energy += waveEnergyGain;
             if (this.tutorial && typeof this.tutorial.handleEnergyGained === 'function') {
                 try {
-                    this.tutorial.handleEnergyGained(gameConfig.player.energyPerWave);
+                    this.tutorial.handleEnergyGained(waveEnergyGain);
                 } catch (error) {
                     console.warn('Tutorial energy handler failed', error);
                 }

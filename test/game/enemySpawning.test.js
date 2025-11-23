@@ -76,23 +76,27 @@ test('spawnEnemy chooses random colors per enemy', () => {
     assert.deepEqual(colors, expectedColors);
 });
 
-test('generateTankBurstSchedule returns sorted unique indices', () => {
+test('generateTankBurstSchedule uses formation plan ordering', () => {
     const game = createGame();
+    const plan = {
+        events: [
+            { type: 'tank', time: 0.1 },
+            { type: 'swarm', time: 0.2 },
+            { type: 'tank', time: 0.3 },
+            { type: 'swarm', time: 0.8 },
+        ],
+    };
 
-    const schedule = withMockedRandom([0.91, 0.35, 0.72, 0.18, 0.54, 0.27], () => {
-        return game.generateTankBurstSchedule(6, 3);
-    });
+    const schedule = game.generateTankBurstSchedule(6, plan);
 
-    assert.equal(schedule.length, 3);
-    assert.deepEqual(schedule.slice().sort((a, b) => a - b), schedule);
-    assert.equal(new Set(schedule).size, 3);
+    assert.deepEqual(schedule, [1, 3]);
 });
 
-test('generateTankBurstSchedule handles zero cycles or tanks', () => {
+test('generateTankBurstSchedule returns empty when no plan', () => {
     const game = createGame();
 
-    assert.deepEqual(game.generateTankBurstSchedule(0, 3), []);
-    assert.deepEqual(game.generateTankBurstSchedule(5, 0), []);
+    assert.deepEqual(game.generateTankBurstSchedule(0, null), []);
+    assert.deepEqual(game.generateTankBurstSchedule(5, undefined), []);
 });
 
 test('prepareTankScheduleForWave resets schedule when config missing', () => {
@@ -105,15 +109,25 @@ test('prepareTankScheduleForWave resets schedule when config missing', () => {
     assert.equal(game.tankScheduleWave, 5);
 });
 
-test('determineEnemyType follows prepared tank schedule', () => {
+test('determineEnemyType follows tank positions from formations', () => {
     const game = createGame();
     const cfg = game.waveConfigs[2];
-    game.generateTankBurstSchedule = () => [1, cfg.cycles];
+    const plan = {
+        events: [
+            { type: 'tank', time: 0.1 },
+            { type: 'swarm', time: 0.2 },
+            { type: 'tank', time: 0.3 },
+            { type: 'swarm', time: 0.4 },
+        ],
+    };
 
-    game.prepareTankScheduleForWave(cfg, 3);
+    game.wave = 3;
+    game.activeFormationPlan = plan;
+    game.prepareTankScheduleForWave(cfg, game.wave, plan.events.length, plan);
+    game.enemiesPerWave = plan.events.length;
 
     const types = [];
-    for (let i = 0; i < cfg.cycles; i++) {
+    for (let i = 0; i < plan.events.length; i++) {
         types.push(game.determineEnemyType());
         game.spawned += 1;
     }
@@ -121,24 +135,53 @@ test('determineEnemyType follows prepared tank schedule', () => {
     assert.deepEqual(types.filter(type => type === 'tank'), Array(2).fill('tank'));
 });
 
-test('spawnEnemiesIfNeeded respects interval and progress', () => {
-    const game = createGame();
+test('spawnEnemiesIfNeeded spawns events when their time is reached', () => {
+    const game = createGame({ disableFormations: true });
+    const plan = {
+        events: [
+            { time: 0.2, type: 'swarm', color: 'red', y: 520 },
+            { time: 0.6, type: 'tank', color: 'blue', y: 600 },
+        ],
+    };
+    game.waveSpawnSchedule = plan.events.slice();
     game.waveInProgress = true;
-    game.spawnTimer = game.spawnInterval;
-
-    game.spawnEnemiesIfNeeded(0);
-
-    assert.ok(game.enemies.length > 0);
-    assert.equal(game.spawnTimer, 0);
-});
-
-test('spawnEnemiesIfNeeded accumulates timer below interval', () => {
-    const game = createGame();
-    game.waveInProgress = true;
+    game.enemiesPerWave = plan.events.length;
+    game.waveSpawnCursor = 0;
+    game.waveElapsed = 0;
+    game.spawned = 0;
 
     game.spawnEnemiesIfNeeded(0.2);
 
-    assert.equal(game.spawnTimer, 0.2);
+    assert.equal(game.waveSpawnCursor, 1);
+    assert.equal(game.spawned, 1);
+    assert.equal(game.enemies.length, 1);
+    assert.ok(game.enemies[0] instanceof SwarmEnemy);
+
+    game.spawnEnemiesIfNeeded(0.4);
+
+    assert.equal(game.waveSpawnCursor, 2);
+    assert.equal(game.spawned, 2);
+    assert.ok(game.enemies.some(enemy => enemy instanceof TankEnemy));
+});
+
+test('spawnEnemiesIfNeeded waits until schedule time is met', () => {
+    const game = createGame({ disableFormations: true });
+    const plan = {
+        events: [
+            { time: 0.5, type: 'swarm', color: 'red', y: 540 },
+        ],
+    };
+    game.waveSpawnSchedule = plan.events.slice();
+    game.waveInProgress = true;
+    game.enemiesPerWave = plan.events.length;
+    game.waveSpawnCursor = 0;
+    game.waveElapsed = 0;
+    game.spawned = 0;
+
+    game.spawnEnemiesIfNeeded(0.2);
+
+    assert.equal(game.waveSpawnCursor, 0);
+    assert.equal(game.spawned, 0);
     assert.equal(game.enemies.length, 0);
 });
 

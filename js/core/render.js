@@ -697,6 +697,15 @@ function drawGrid(game) {
             ctx.drawImage(cellImage, cell.x, cell.y, cell.w, cell.h);
         }
 
+        if (!cell.occupied && cell.hover > 0) {
+            const alpha = Math.min(0.35, 0.18 + cell.hover * 0.35);
+            ctx.save();
+            ctx.globalAlpha = alpha;
+            ctx.fillStyle = 'rgba(160, 220, 255, 1)';
+            ctx.fillRect(cell.x, cell.y, cell.w, cell.h);
+            ctx.restore();
+        }
+
         if (isPreparationPhase && !cell.occupied) {
             const offset = (cell.x + cell.y) * 0.008;
             const pulse = Math.sin(elapsed * 2.8 + offset);
@@ -744,6 +753,23 @@ function drawGrid(game) {
             ctx.globalAlpha = alpha;
             ctx.fillStyle = 'red';
             ctx.fillRect(cell.x, cell.y, cell.w, cell.h);
+            ctx.restore();
+        }
+
+        if (cell.mergeSelection > 0 && cell.occupied) {
+            const pulse = Math.sin(elapsed * 5 + (cell.x + cell.y) * 0.01);
+            const normalized = (pulse + 1) / 2;
+            const alpha = 0.45 + normalized * 0.35;
+            const thickness = 4.5 + normalized * 2.5;
+            const color = cell.tower?.color === 'blue'
+                ? `rgba(150, 210, 255, ${alpha})`
+                : `rgba(255, 200, 160, ${alpha})`;
+
+            ctx.save();
+            ctx.globalCompositeOperation = 'lighter';
+            ctx.lineWidth = thickness;
+            ctx.strokeStyle = color;
+            ctx.strokeRect(cell.x + thickness * 0.75, cell.y + thickness * 0.75, cell.w - thickness * 1.5, cell.h - thickness * 1.5);
             ctx.restore();
         }
 

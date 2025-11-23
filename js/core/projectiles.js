@@ -1,9 +1,22 @@
 import { updateHUD } from '../systems/ui.js';
 import { createExplosion } from '../systems/effects.js';
 import gameConfig from '../config/gameConfig.js';
+import { getWaveEnergyMultiplier } from '../utils/energyScaling.js';
 
 function clamp(value, min, max) {
     return Math.max(min, Math.min(max, value));
+}
+
+function getEnergyGainForKill(game, enemy) {
+    const baseEnergy = gameConfig.player.energyPerKill;
+    const waveMultiplier = getWaveEnergyMultiplier(game);
+    const typeMultiplier = enemy?.spriteKey === 'tank'
+        ? (Number.isFinite(gameConfig.player.tankKillEnergyMultiplier)
+            ? gameConfig.player.tankKillEnergyMultiplier
+            : 2)
+        : 1;
+    const gain = baseEnergy * waveMultiplier * typeMultiplier;
+    return Math.max(0, Math.round(gain));
 }
 
 function playHitSound(audio, projectile) {
@@ -39,6 +52,17 @@ function triggerScreenShake(game, intensity = 14, duration = 0.28, frequency = 4
     shake.frequency = frequency;
     shake.seedX = Math.random() * Math.PI * 2;
     shake.seedY = Math.random() * Math.PI * 2;
+}
+
+function getRocketImpactRadius(projectile) {
+    const config = gameConfig.projectiles?.rockets?.explosionRadius ?? {};
+    if (!Number.isFinite(config.min)) {
+        throw new Error('Missing rocket explosion radius config (min)');
+    }
+    if (!Number.isFinite(projectile?.explosionRadius)) {
+        throw new Error('Projectile missing explosion radius');
+    }
+    return Math.max(config.min, projectile.explosionRadius);
 }
 
 function getImpactPosition(projectile, enemy, options = {}) {
@@ -99,6 +123,24 @@ export function applyProjectileDamage(game, projectile, enemyIndex, options = {}
     const isColorMatch = projectile.color === enemy.color;
     playHitSound(game.audio, projectile);
 
+    const diagnosticsState = game?.diagnosticsState;
+    if (diagnosticsState?.collectTowerDps && projectile?.sourceTowerId) {
+        const eventsByTower = diagnosticsState.towerDamageEvents;
+        if (eventsByTower) {
+            const now = typeof performance !== 'undefined' && typeof performance.now === 'function'
+                ? performance.now()
+                : Date.now();
+            const windowMs = 10000;
+            const cutoff = now - windowMs;
+            const events = Array.isArray(eventsByTower.get(projectile.sourceTowerId))
+                ? eventsByTower.get(projectile.sourceTowerId)
+                : [];
+            const prunedEvents = events.filter((event) => event.time >= cutoff);
+            prunedEvents.push({ time: now, damage });
+            eventsByTower.set(projectile.sourceTowerId, prunedEvents);
+        }
+    }
+
     if (spawnImpactEffect && game.explosions) {
         const impactPos = getImpactPosition(projectile, enemy, { impactX, impactY });
         const variant = hitVariant ?? (isColorMatch ? 'match' : 'mismatch');
@@ -112,11 +154,12 @@ export function applyProjectileDamage(game, projectile, enemyIndex, options = {}
     if (enemy.hp <= 0) {
         enemyRemoved = true;
         game.enemies.splice(enemyIndex, 1);
-        game.energy += gameConfig.player.energyPerKill;
+        const energyGain = getEnergyGainForKill(game, enemy);
+        game.energy += energyGain;
         if (game.tutorial) {
             try {
                 if (typeof game.tutorial.handleEnergyGained === 'function') {
-                    game.tutorial.handleEnergyGained(gameConfig.player.energyPerKill);
+                    game.tutorial.handleEnergyGained(energyGain);
                 }
                 if (typeof game.tutorial.handleEnemyKilled === 'function') {
                     game.tutorial.handleEnemyKilled({ match: isColorMatch });
@@ -152,7 +195,7 @@ export function applyProjectileDamage(game, projectile, enemyIndex, options = {}
 }
 
 function handleRocketImpact(game, projectile, index) {
-    const radius = projectile.explosionRadius ?? 200;
+    const radius = getRocketImpactRadius(projectile);
     const centerX = projectile.x;
     const centerY = projectile.y;
     const impacted = [];
@@ -181,11 +224,15 @@ function handleRocketImpact(game, projectile, index) {
         });
     }
 
+    const enableShockwave = gameConfig?.projectiles?.rocket?.shockwaveEnabled !== false;
     if (game.explosions) {
-        game.explosions.push(createExplosion(centerX, centerY, {
+        const explosionOptions = {
             color: projectile.color,
             variant: 'rocket',
-        }));
+            ringRadius: enableShockwave ? radius : undefined,
+        };
+
+        game.explosions.push(createExplosion(centerX, centerY, explosionOptions));
     }
 
     triggerScreenShake(game, 2.4, 0.42, 46);

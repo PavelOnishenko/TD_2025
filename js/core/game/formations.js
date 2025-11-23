@@ -1,3 +1,5 @@
+import { scaleDifficulty } from '../../utils/difficultyScaling.js';
+
 const DEFAULTS = {
     formationGap: 0.75,
     minimumWeight: 0,
@@ -63,6 +65,7 @@ function parseHeader(line) {
         difficulty: NaN,
         probability: '',
         gap: undefined,
+        minWave: undefined,
     };
     for (const segment of rest) {
         const [rawKey, ...rawValueParts] = segment.split('=');
@@ -77,6 +80,8 @@ function parseHeader(line) {
             header.probability = value;
         } else if (key === 'gap') {
             header.gap = toNumber(value, undefined);
+        } else if (key === 'minwave') {
+            header.minWave = toNumber(value, undefined);
         }
     }
     return header;
@@ -175,6 +180,9 @@ function finalizeFormation(current, defaults) {
     const difficulty = Number.isFinite(current.difficulty) && current.difficulty > 0
         ? current.difficulty
         : ships.length;
+    const minWave = Number.isFinite(current.minWave)
+        ? Math.max(1, Math.floor(current.minWave))
+        : 1;
     return {
         id: current.id,
         label: current.label,
@@ -183,6 +191,7 @@ function finalizeFormation(current, defaults) {
         ships,
         duration,
         gap: current.gap,
+        minWave,
     };
 }
 
@@ -226,27 +235,46 @@ export function parseFormationText(definitions, defaults = {}) {
     return formations;
 }
 
-function resolveWaveDifficulty(config, wave) {
+function getScheduledDifficulty(waveSchedule, index) {
+    if (!Array.isArray(waveSchedule) || index < 0 || index >= waveSchedule.length) {
+        return undefined;
+    }
+    const entry = waveSchedule[index];
+    if (Number.isFinite(entry?.difficulty)) {
+        return entry.difficulty;
+    }
+    if (Array.isArray(entry)) {
+        return getScheduledDifficulty(entry, entry.length - 1);
+    }
+    return undefined;
+}
+
+function resolveWaveDifficulty(config, waveSchedule, wave) {
+    const applyMultiplier = value => scaleDifficulty(value, config);
     const index = Math.max(0, Math.floor(wave) - 1);
-    if (Array.isArray(config.waveDifficulty) && index < config.waveDifficulty.length) {
-        return config.waveDifficulty[index];
+    const scheduled = getScheduledDifficulty(waveSchedule, index);
+    if (Number.isFinite(scheduled)) {
+        return applyMultiplier(scheduled);
     }
     const endless = config.endlessDifficulty ?? {};
+    const scheduledLength = Array.isArray(waveSchedule) ? waveSchedule.length : 0;
     const startWave = Number.isFinite(endless.startWave)
         ? endless.startWave
-        : (Array.isArray(config.waveDifficulty) ? config.waveDifficulty.length + 1 : 1);
+        : (scheduledLength > 0 ? scheduledLength + 1 : 1);
     if (wave < startWave) {
-        const last = Array.isArray(config.waveDifficulty) ? config.waveDifficulty.at(-1) : undefined;
-        return Number.isFinite(last) ? last : 0;
+        const last = getScheduledDifficulty(waveSchedule, scheduledLength - 1);
+        return applyMultiplier(Number.isFinite(last) ? last : 0);
     }
+    const lastScheduled = getScheduledDifficulty(waveSchedule, scheduledLength - 1);
     const base = Number.isFinite(endless.base)
         ? endless.base
-        : (Array.isArray(config.waveDifficulty) ? config.waveDifficulty.at(-1) ?? 0 : 0);
+        : (Number.isFinite(lastScheduled) ? lastScheduled : 0);
     const growth = Number.isFinite(endless.growth) ? endless.growth : 0;
     const max = Number.isFinite(endless.max) ? endless.max : Infinity;
     const waveOffset = Math.max(0, wave - startWave);
     const computed = base + growth * waveOffset;
-    return Math.min(max, Math.max(0, Math.round(computed)));
+    const capped = Math.min(max, Math.max(0, Math.round(computed)));
+    return applyMultiplier(capped);
 }
 
 function weightedRandomChoice(items, weights, randomFn) {
@@ -269,7 +297,7 @@ function weightedRandomChoice(items, weights, randomFn) {
     return items.at(-1) ?? null;
 }
 
-export function createFormationManager(config = {}) {
+export function createFormationManager(config = {}, waveSchedule = []) {
     const defaults = { ...DEFAULTS, ...(config.defaults ?? {}) };
     const parsed = parseFormationText(config.definitions ?? '', defaults);
     const formations = Array.isArray(config.formations) && config.formations.length
@@ -285,7 +313,7 @@ export function createFormationManager(config = {}) {
         planWave(wave, options = {}) {
             const totalDifficulty = Number.isFinite(options.totalDifficulty)
                 ? options.totalDifficulty
-                : resolveWaveDifficulty(config, wave);
+                : resolveWaveDifficulty(config, waveSchedule, wave);
             if (!Number.isFinite(totalDifficulty) || totalDifficulty <= 0) {
                 return null;
             }
@@ -296,7 +324,8 @@ export function createFormationManager(config = {}) {
             let iterations = 0;
             while (remaining > 0 && iterations < safetyLimit) {
                 iterations += 1;
-                const candidates = formations.filter(formation => formation.difficulty <= remaining);
+                const candidates = formations.filter(formation => formation.difficulty <= remaining
+                    && wave >= (formation.minWave ?? 1));
                 if (!candidates.length) {
                     break;
                 }

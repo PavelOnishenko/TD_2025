@@ -265,11 +265,14 @@ export function applySimpleSaveState(game, rawState) {
     if (typeof game.getOrCreateWaveConfig === 'function') {
         const cfg = game.getOrCreateWaveConfig(targetWave);
         if (cfg) {
-            game.spawnInterval = cfg.interval;
-            game.enemiesPerWave = cfg.cycles;
+            game.enemiesPerWave = 0;
             if (typeof game.prepareTankScheduleForWave === 'function') {
-                game.prepareTankScheduleForWave(cfg, targetWave);
+                game.prepareTankScheduleForWave(cfg, targetWave, 0);
             }
+            game.activeFormationPlan = null;
+            game.waveSpawnSchedule = null;
+            game.waveSpawnCursor = 0;
+            game.waveElapsed = 0;
         }
     }
     if (typeof game.getEnemyHpForWave === 'function') {

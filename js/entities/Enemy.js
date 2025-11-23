@@ -16,8 +16,11 @@ export default class Enemy {
         const { width, height } = gameConfig.enemies.dimensions;
         this.w = width;
         this.h = height;
-        this.speedX = speedX;
-        this.speedY = speedY;
+        const speedMultiplier = Number.isFinite(gameConfig.enemies.speedMultiplier)
+            ? gameConfig.enemies.speedMultiplier
+            : 1;
+        this.speedX = speedX * speedMultiplier;
+        this.speedY = speedY * speedMultiplier;
         this.maxHp = maxHp;
         this.hp = this.maxHp;
         this.color = color;

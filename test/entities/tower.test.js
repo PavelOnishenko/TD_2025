@@ -114,6 +114,20 @@ test('update decays timers and wraps glow phase', () => {
     assert.equal(tower.placementFlashTimer, 0);
 });
 
+test('hover highlight persists while hovered and clears when exiting', () => {
+    const tower = new Tower(0, 0);
+
+    tower.setHovered(true);
+    tower.update(1);
+
+    assert.equal(tower.hoverAmount, 1);
+
+    tower.setHovered(false);
+    tower.update(0.1);
+
+    assert.equal(tower.hoverAmount, 0);
+});
+
 test('placement flash draws glow when intensity present', () => {
     const tower = new Tower(10, 20);
     tower.glowTime = 0;

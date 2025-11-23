@@ -57,6 +57,7 @@ function createProjectile(game, angle, tower, radius, overrides = {}) {
         vy: Math.sin(angle) * speed,
         color: tower.color,
         damage,
+        sourceTowerId: tower?.id ?? null,
         anim: createProjectileVisualState(animOptions ?? undefined),
         radius,
         type,
@@ -119,6 +120,22 @@ function ensureScreenShake(game) {
         };
     }
     return game.screenShake;
+}
+
+function resolveRocketExplosionRadius(tower) {
+    const config = gameConfig.projectiles?.rockets?.explosionRadius ?? {};
+    if (!Number.isFinite(config.min) || !Number.isFinite(config.rangeMultiplier)) {
+        throw new Error('Missing rocket explosion radius config (min, rangeMultiplier)');
+    }
+    if (!Number.isFinite(tower?.range)) {
+        throw new Error('Cannot resolve rocket explosion radius without tower range');
+    }
+    const rangeBasedRadius = tower.range * config.rangeMultiplier;
+    const radius = Math.max(config.min, rangeBasedRadius);
+    if (!Number.isFinite(radius)) {
+        throw new Error('Resolved rocket explosion radius is not finite');
+    }
+    return radius;
 }
 
 function applyRailgunDamage(game, beam) {
@@ -195,6 +212,7 @@ function spawnRailgunBeam(game, angle, tower) {
         width: Math.max(12, game.projectileRadius * 0.75),
         anim: { time: 0 },
         towerLevel: Number.isFinite(tower?.level) ? tower.level : 1,
+        sourceTowerId: tower?.id ?? null,
     };
 
     game.projectiles.push(beam);
@@ -206,6 +224,7 @@ function spawnRailgunBeam(game, angle, tower) {
 function spawnRocket(game, angle, tower) {
     const baseRadius = game.getProjectileRadiusForLevel(tower?.level);
     const radius = baseRadius + 6;
+    const explosionRadius = resolveRocketExplosionRadius(tower);
     const rocket = createProjectile(game, angle, tower, radius, {
         speed: game.projectileSpeed * 0.75,
         type: 'rocket',
@@ -217,7 +236,7 @@ function spawnRocket(game, angle, tower) {
             vibrationStrength: 0.06,
         },
         extras: {
-            explosionRadius: Math.max(180, tower.range * 0.75),
+            explosionRadius,
             trail: [],
             rotation: angle,
             life: 0,
@@ -263,7 +282,18 @@ const projectileManagement = {
     },
 
     switchTowerColor(tower) {
-        if (this.energy < this.switchCost) {
+        const rawCost = Number.isFinite(this.switchCost) ? this.switchCost : 0;
+        const cost = Math.max(0, rawCost);
+        if (this.waveInProgress) {
+            if (tower && typeof tower.triggerErrorPulse === 'function') {
+                tower.triggerErrorPulse();
+            }
+            if (this.audio && typeof this.audio.playError === 'function') {
+                this.audio.playError();
+            }
+            return false;
+        }
+        if (cost > 0 && this.energy < cost) {
             if (tower && typeof tower.triggerErrorPulse === 'function') {
                 tower.triggerErrorPulse();
             }
@@ -274,12 +304,13 @@ const projectileManagement = {
         }
         const nextColor = tower.color === 'red' ? 'blue' : 'red';
         tower.color = nextColor;
-        this.energy -= this.switchCost;
-        if (typeof this.addEnergyPopup === 'function' && tower) {
+        if (cost > 0) {
+            this.energy -= cost;
+        }
+        if (cost > 0 && typeof this.addEnergyPopup === 'function' && tower) {
             const center = typeof tower.center === 'function'
                 ? tower.center()
                 : { x: (tower.x ?? 0) + (tower.w ?? 0) / 2, y: (tower.y ?? 0) + (tower.h ?? 0) / 2 };
-            const rawCost = Number.isFinite(this.switchCost) ? this.switchCost : 0;
             const cost = Math.max(0, Math.round(rawCost));
             const text = `-${cost}`;
             const popupY = center.y - (tower.h ?? 0) * 0.4;
