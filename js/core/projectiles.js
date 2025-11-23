@@ -54,6 +54,14 @@ function triggerScreenShake(game, intensity = 14, duration = 0.28, frequency = 4
     shake.seedY = Math.random() * Math.PI * 2;
 }
 
+function getRocketImpactRadius(projectile) {
+    const config = gameConfig.projectiles?.rockets?.explosionRadius ?? {};
+    const fallback = Number.isFinite(config.fallback) ? config.fallback : 200;
+    const min = Number.isFinite(config.min) ? config.min : 180;
+    const radius = projectile.explosionRadius ?? fallback;
+    return Math.max(min, radius);
+}
+
 function getImpactPosition(projectile, enemy, options = {}) {
     if (Number.isFinite(options.impactX) && Number.isFinite(options.impactY)) {
         return { x: options.impactX, y: options.impactY };
@@ -184,7 +192,7 @@ export function applyProjectileDamage(game, projectile, enemyIndex, options = {}
 }
 
 function handleRocketImpact(game, projectile, index) {
-    const radius = projectile.explosionRadius ?? 200;
+    const radius = getRocketImpactRadius(projectile);
     const centerX = projectile.x;
     const centerY = projectile.y;
     const impacted = [];

@@ -122,6 +122,18 @@ function ensureScreenShake(game) {
     return game.screenShake;
 }
 
+function resolveRocketExplosionRadius(tower) {
+    const config = gameConfig.projectiles?.rockets?.explosionRadius ?? {};
+    const min = Number.isFinite(config.min) ? config.min : 180;
+    const rangeMultiplier = Number.isFinite(config.rangeMultiplier) ? config.rangeMultiplier : 0.75;
+    const fallback = Number.isFinite(config.fallback) ? config.fallback : 200;
+    const rangeBasedRadius = Number.isFinite(tower?.range)
+        ? tower.range * rangeMultiplier
+        : 0;
+    const radius = Math.max(min, rangeBasedRadius);
+    return Number.isFinite(radius) ? radius : fallback;
+}
+
 function applyRailgunDamage(game, beam) {
     const direction = { x: Math.cos(beam.angle), y: Math.sin(beam.angle) };
     const maxDistance = beam.length;
@@ -208,6 +220,7 @@ function spawnRailgunBeam(game, angle, tower) {
 function spawnRocket(game, angle, tower) {
     const baseRadius = game.getProjectileRadiusForLevel(tower?.level);
     const radius = baseRadius + 6;
+    const explosionRadius = resolveRocketExplosionRadius(tower);
     const rocket = createProjectile(game, angle, tower, radius, {
         speed: game.projectileSpeed * 0.75,
         type: 'rocket',
@@ -219,7 +232,7 @@ function spawnRocket(game, angle, tower) {
             vibrationStrength: 0.06,
         },
         extras: {
-            explosionRadius: Math.max(180, tower.range * 0.75),
+            explosionRadius,
             trail: [],
             rotation: angle,
             life: 0,
