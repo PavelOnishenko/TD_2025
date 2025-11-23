@@ -72,6 +72,11 @@ const nonBalanceConfig = {
         removalHoldDuration: 2,
         removalIndicatorDecay: 3.2,
     },
+    projectiles: {
+        rocket: {
+            shockwaveEnabled: true,
+        },
+    },
     enemies: {
         dimensions: { width: 80, height: 80 },
     },
@@ -233,6 +238,10 @@ export const gameConfig = {
     towers: {
         ...nonBalanceConfig.towers,
         ...balanceConfig.towers,
+    },
+    projectiles: {
+        ...nonBalanceConfig.projectiles,
+        ...balanceConfig.projectiles,
     },
     enemies: {
         ...nonBalanceConfig.enemies,
