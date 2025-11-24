@@ -60,7 +60,7 @@ export const balanceConfig = {
         swarm: { groupSize: 3, hpMultiplier: 10, speed: { x: 200, y: 0 }, },
     },
     waves: {
-        difficultyMultiplier: 1,
+        difficultyMultiplier: 1,    // todo up this to make waves more epic
         schedule: [
            { difficulty: 13, enemyHp: 1.34 },
             { difficulty: 13, enemyHp: 1.64 },
