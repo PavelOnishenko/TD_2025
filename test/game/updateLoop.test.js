@@ -42,7 +42,8 @@ test('update schedules next frame when game active', () => {
     const game = createGame({ attachDom: true });
     game.assets = new Proxy({}, { get: () => ({}) });
     game.startWave();
-    const timestamp = game.spawnInterval * 1000;
+    // const timestamp = game.spawnInterval * 1000; // here how it was
+    const timestamp = 500; // need to fix the test if it's faiing. We dont have spawnInterval anymore
     let scheduledCallback = null;
 
     withReplacedMethod(globalThis, 'requestAnimationFrame', cb => { scheduledCallback = cb; }, () => {

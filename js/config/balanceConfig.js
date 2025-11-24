@@ -25,7 +25,6 @@ export const balanceConfig = {
     projectiles: {
         speed: 700,
         baseRadius: 18,
-        spawnInterval: 60,
         radiusPerLevel: 5,
         colorMismatchMultiplier: 0.3,
         rockets: {

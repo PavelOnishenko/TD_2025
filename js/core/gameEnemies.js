@@ -193,9 +193,9 @@ export const enemyActions = {
             : DEFAULT_TIME_SCALE;
 
         for (const tower of this.towers) {
-            const fireInterval = typeof tower.getFireInterval === 'function'
-                ? tower.getFireInterval()
-                : this.projectileSpawnInterval;
+            if(typeof tower.getFireInterval !== 'function')
+                throw new Error('Tower is missing getFireInterval method');
+            const fireInterval = tower.getFireInterval();
             const scaledElapsed = (timestamp - tower.lastShot) * timeScale;
             if (scaledElapsed < fireInterval) {
                 continue;

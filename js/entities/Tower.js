@@ -81,10 +81,13 @@ export default class Tower {
             if (Number.isFinite(interval) && interval > 0) {
                 return interval;
             }
+            else {
+                throw new Error(`Invalid fire interval for tower level ${this.level}: ${interval}`);
+            }    
         }
-        return Number.isFinite(gameConfig.projectiles?.spawnInterval)
-            ? gameConfig.projectiles.spawnInterval
-            : 60;
+        else {
+            throw new Error('Missing or invalid fireIntervalPerLevel configuration in gameConfig');
+        }
     }
 
     getFireInterval() {

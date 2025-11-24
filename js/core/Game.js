@@ -80,7 +80,6 @@ class Game {
         this.projectileSpeed = gameConfig.projectiles.speed;
         this.projectileRadius = gameConfig.projectiles.baseRadius;
         this.maxProjectileRadius = this.projectileRadius;
-        this.projectileSpawnInterval = gameConfig.projectiles.spawnInterval;
         this.lastTime = 0;
         this.elapsedTime = 0;
         this.hasStarted = false;
