@@ -49,23 +49,19 @@ export default class Tower {
     updateStats() {
         const config = gameConfig.towers;
         const rangeMultiplier = 1 + config.rangePerLevel * (this.level - 1);
-        const damageGrowth = config.damagePerLevel;
-        const damageMultiplier = typeof damageGrowth === 'number'
-            ? 1 + damageGrowth * (this.level - 1)
-            : 1;
         const rangeIncreaseFactor = config.rangeBonusMultiplier;
         this.range = this.baseRange * rangeMultiplier * rangeIncreaseFactor;
-        this.damage = this.baseDamage * damageMultiplier;
-        const damageOverrides = Array.isArray(config.damageByLevel)
-            ? config.damageByLevel
-            : null;
-        if (damageOverrides) {
-            const index = Math.max(0, Math.min(this.level - 1, damageOverrides.length - 1));
-            const override = damageOverrides[index];
-            if (Number.isFinite(override)) {
-                this.damage = override;
-            }
+        if (Array.isArray(config.damageByLevel) === false) {
+            throw new Error('Missing or invalid damageByLevel configuration in gameConfig');
         }
+        const damageOverrides = config.damageByLevel;
+        const index = Math.max(0, Math.min(this.level - 1, damageOverrides.length - 1));
+        const override = damageOverrides[index];
+        if (Number.isFinite(override) === false) {
+            throw new Error(`Invalid damage override for tower level ${this.level}: ${override}`);
+        }
+        this.damage = override;
+
         const glowSpeeds = config.glowSpeeds;
         const clampedLevel = Math.max(1, Math.min(this.level, glowSpeeds.length));
         const speedIndex = clampedLevel - 1;

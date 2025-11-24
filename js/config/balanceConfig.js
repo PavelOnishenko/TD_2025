@@ -36,7 +36,6 @@ export const balanceConfig = {
         rangePerLevel: 0.2,
         rangeBonusMultiplier: 1.3,
         baseDamage: 1,
-        damagePerLevel: 0.8,
         fireIntervalPerLevel: [500, 200, 60, 120, 1050, 1200],
         damageByLevel: [
             8.3,
