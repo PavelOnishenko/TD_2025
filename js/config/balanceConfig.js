@@ -18,9 +18,6 @@ export const balanceConfig = {
             ],
         },
         energyPerWave: 40,
-        colorProbability: {
-            minDifference: 0.35,
-        },
     },
     projectiles: {
         speed: 700,
