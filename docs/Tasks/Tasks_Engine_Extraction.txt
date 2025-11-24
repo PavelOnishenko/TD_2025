@@ -1,3 +1,5 @@
+Postponing this. Too hard to do "by the way". Need full involvement, later.
+
 ENGINE TASK LIST (Phase 1 – Core foundation)
 1. Create the engine/ folder structure
 
