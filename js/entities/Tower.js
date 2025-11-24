@@ -20,7 +20,6 @@ export default class Tower {
         this.w = config.width;
         this.h = config.height;
         this.baseRange = config.baseRange;
-        this.baseDamage = config.baseDamage;
         this.lastShot = 0;
         this.color = color;
         this.level = level;
