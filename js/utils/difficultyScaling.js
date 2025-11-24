@@ -1,10 +1,9 @@
 import gameConfig from '../config/gameConfig.js';
 
 function resolveMultiplier(source = gameConfig?.waves) {
-    const raw = source?.difficultyMultiplier ?? gameConfig?.waves?.difficultyMultiplier;
-    const multiplier = Number(raw);
+    const multiplier = Number(source?.difficultyMultiplier ?? gameConfig?.waves?.difficultyMultiplier);
     if (!Number.isFinite(multiplier) || multiplier <= 0) {
-        return 1;
+        throw new Error(`Invalid difficulty multiplier: ${multiplier}`);
     }
     return multiplier;
 }
@@ -16,10 +15,9 @@ export function getDifficultyMultiplier(source) {
 export function scaleDifficulty(baseDifficulty, source) {
     const difficulty = Number(baseDifficulty);
     if (!Number.isFinite(difficulty)) {
-        return baseDifficulty;
+        throw new Error(`Invalid base difficulty: ${baseDifficulty}`);
     }
-    const multiplier = resolveMultiplier(source);
-    const scaled = difficulty * multiplier;
+    const scaled = difficulty * resolveMultiplier(source);
     return Math.max(0, Math.round(scaled));
 }
 
