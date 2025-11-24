@@ -57,7 +57,7 @@ export const balanceConfig = {
         defaultSpawn: { x: -600, y: 600 },
         speedMultiplier: 0.9,
         tank: { hpMultiplier: 35.7, speed: { x: 100, y: 0 }, },
-        swarm: { groupSize: 3, spacing: 40, hpMultiplier: 10, speed: { x: 200, y: 0 }, },
+        swarm: { groupSize: 3, hpMultiplier: 10, speed: { x: 200, y: 0 }, },
     },
     waves: {
         difficultyMultiplier: 1,
@@ -84,7 +84,7 @@ export const balanceConfig = {
             { difficulty: 22, enemyHp: 5.65 }, // 20
         ],
         endless: {
-            hpGrowth: 1.2,
+            hpGrowth: 1.2,  // todo make it easier?
             difficultyIncrement: 4,
         },
         formations: {
