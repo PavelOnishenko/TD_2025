@@ -45,21 +45,29 @@ export default class Tower {
         this.updateStats();
     }
 
+    getLevelConfig(level = this.level) {
+        const levelConfigs = gameConfig.towers?.levels;
+        if (!Array.isArray(levelConfigs)) {
+            throw new Error('Missing or invalid tower level configuration in gameConfig');
+        }
+        const index = Math.max(0, Math.min(level - 1, levelConfigs.length - 1));
+        const config = levelConfigs[index];
+        if (!config || typeof config !== 'object') {
+            throw new Error(`Invalid tower level configuration for tower level ${level}: ${config}`);
+        }
+        return config;
+    }
+
     updateStats() {
         const config = gameConfig.towers;
         const rangeMultiplier = 1 + config.rangePerLevel * (this.level - 1);
         const rangeIncreaseFactor = config.rangeBonusMultiplier;
         this.range = this.baseRange * rangeMultiplier * rangeIncreaseFactor;
-        if (Array.isArray(config.damageByLevel) === false) {
-            throw new Error('Missing or invalid damageByLevel configuration in gameConfig');
+        const { damage } = this.getLevelConfig();
+        if (Number.isFinite(damage) === false) {
+            throw new Error(`Invalid damage override for tower level ${this.level}: ${damage}`);
         }
-        const damageOverrides = config.damageByLevel;
-        const index = Math.max(0, Math.min(this.level - 1, damageOverrides.length - 1));
-        const override = damageOverrides[index];
-        if (Number.isFinite(override) === false) {
-            throw new Error(`Invalid damage override for tower level ${this.level}: ${override}`);
-        }
-        this.damage = override;
+        this.damage = damage;
 
         const glowSpeeds = config.glowSpeeds;
         const clampedLevel = Math.max(1, Math.min(this.level, glowSpeeds.length));
@@ -69,20 +77,11 @@ export default class Tower {
     }
 
     getConfiguredFireInterval() {
-        const fireIntervals = gameConfig.towers?.fireIntervalPerLevel;
-        if (Array.isArray(fireIntervals)) {
-            const index = Math.max(0, Math.min(this.level - 1, fireIntervals.length - 1));
-            const interval = fireIntervals[index];
-            if (Number.isFinite(interval) && interval > 0) {
-                return interval;
-            }
-            else {
-                throw new Error(`Invalid fire interval for tower level ${this.level}: ${interval}`);
-            }    
+        const { fireInterval } = this.getLevelConfig();
+        if (Number.isFinite(fireInterval) && fireInterval > 0) {
+            return fireInterval;
         }
-        else {
-            throw new Error('Missing or invalid fireIntervalPerLevel configuration in gameConfig');
-        }
+        throw new Error(`Invalid fire interval for tower level ${this.level}: ${fireInterval}`);
     }
 
     getFireInterval() {

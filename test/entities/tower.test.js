@@ -9,9 +9,9 @@ test('constructor applies defaults and derives stats', () => {
     assert.equal(tower.color, 'red');
     assert.equal(tower.level, 1);
     assert.equal(tower.range, 140 * 1.3);
-    const expectedDamage = gameConfig.towers.damageByLevel?.[0] ?? 1;
+    const expectedDamage = gameConfig.towers.levels?.[0]?.damage ?? 1;
     assert.ok(Math.abs(tower.damage - expectedDamage) < 1e-6);
-    assert.equal(tower.getFireInterval(), gameConfig.towers.fireIntervalPerLevel?.[0]);
+    assert.equal(tower.getFireInterval(), gameConfig.towers.levels?.[0]?.fireInterval);
     assert.deepEqual(tower.center(), { x: 47, y: 70.5 });
 });
 
@@ -19,9 +19,9 @@ test('updateStats scales range, damage and glow speed with level', () => {
     const tower = new Tower(0, 0, 'blue', 3);
 
     assert.ok(Math.abs(tower.range - 254.8) < 1e-6);
-    const damageLevel3 = gameConfig.towers.damageByLevel?.[2] ?? tower.damage;
+    const damageLevel3 = gameConfig.towers.levels?.[2]?.damage ?? tower.damage;
     assert.ok(Math.abs(tower.damage - damageLevel3) < 1e-6);
-    assert.equal(tower.getFireInterval(), gameConfig.towers.fireIntervalPerLevel?.[2]);
+    assert.equal(tower.getFireInterval(), gameConfig.towers.levels?.[2]?.fireInterval);
     assert.equal(tower.glowSpeed, 2.4);
 });
 
@@ -59,7 +59,7 @@ test('draw uses blue styling without emitting range stroke', () => {
     tower.draw(ctx, assets);
 
     assert.ok(Math.abs(tower.range - 218.4) < 1e-6);
-    const damageLevel2 = gameConfig.towers.damageByLevel?.[1] ?? tower.damage;
+    const damageLevel2 = gameConfig.towers.levels?.[1]?.damage ?? tower.damage;
     assert.ok(Math.abs(tower.damage - damageLevel2) < 1e-6);
     assert.deepEqual(findOp(ctx.ops, 'fillStyle'), ['fillStyle', 'blue']);
     assert.equal(findOp(ctx.ops, 'strokeStyle'), undefined);
