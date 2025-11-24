@@ -74,7 +74,7 @@ const nonBalanceConfig = {
     },
     projectiles: {
         rocket: {
-            shockwaveEnabled: true,
+            shockwaveEnabled: false,
         },
     },
     enemies: {
