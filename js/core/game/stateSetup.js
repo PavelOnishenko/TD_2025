@@ -134,8 +134,6 @@ const stateSetup = {
             ? cfg.enemyHp
             : 1);
         this.gameOver = false;
-        this.colorProbStart = 0.5
-        this.colorProbEnd = 0.6;
         this.score = 0;
         this.bestScore = loadBestScore();
         this.scorePerKill = scoring.perKill;

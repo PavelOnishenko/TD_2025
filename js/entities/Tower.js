@@ -20,7 +20,6 @@ export default class Tower {
         this.w = config.width;
         this.h = config.height;
         this.baseRange = config.baseRange;
-        this.baseDamage = config.baseDamage;
         this.lastShot = 0;
         this.color = color;
         this.level = level;
@@ -46,26 +45,30 @@ export default class Tower {
         this.updateStats();
     }
 
+    getLevelConfig(level = this.level) {
+        const levelConfigs = gameConfig.towers?.levels;
+        if (!Array.isArray(levelConfigs)) {
+            throw new Error('Missing or invalid tower level configuration in gameConfig');
+        }
+        const index = Math.max(0, Math.min(level - 1, levelConfigs.length - 1));
+        const config = levelConfigs[index];
+        if (!config || typeof config !== 'object') {
+            throw new Error(`Invalid tower level configuration for tower level ${level}: ${config}`);
+        }
+        return config;
+    }
+
     updateStats() {
         const config = gameConfig.towers;
         const rangeMultiplier = 1 + config.rangePerLevel * (this.level - 1);
-        const damageGrowth = config.damagePerLevel;
-        const damageMultiplier = typeof damageGrowth === 'number'
-            ? 1 + damageGrowth * (this.level - 1)
-            : 1;
         const rangeIncreaseFactor = config.rangeBonusMultiplier;
         this.range = this.baseRange * rangeMultiplier * rangeIncreaseFactor;
-        this.damage = this.baseDamage * damageMultiplier;
-        const damageOverrides = Array.isArray(config.damageByLevel)
-            ? config.damageByLevel
-            : null;
-        if (damageOverrides) {
-            const index = Math.max(0, Math.min(this.level - 1, damageOverrides.length - 1));
-            const override = damageOverrides[index];
-            if (Number.isFinite(override)) {
-                this.damage = override;
-            }
+        const { damage } = this.getLevelConfig();
+        if (Number.isFinite(damage) === false) {
+            throw new Error(`Invalid damage override for tower level ${this.level}: ${damage}`);
         }
+        this.damage = damage;
+
         const glowSpeeds = config.glowSpeeds;
         const clampedLevel = Math.max(1, Math.min(this.level, glowSpeeds.length));
         const speedIndex = clampedLevel - 1;
@@ -74,17 +77,11 @@ export default class Tower {
     }
 
     getConfiguredFireInterval() {
-        const fireIntervals = gameConfig.towers?.fireIntervalPerLevel;
-        if (Array.isArray(fireIntervals)) {
-            const index = Math.max(0, Math.min(this.level - 1, fireIntervals.length - 1));
-            const interval = fireIntervals[index];
-            if (Number.isFinite(interval) && interval > 0) {
-                return interval;
-            }
+        const { fireInterval } = this.getLevelConfig();
+        if (Number.isFinite(fireInterval) && fireInterval > 0) {
+            return fireInterval;
         }
-        return Number.isFinite(gameConfig.projectiles?.spawnInterval)
-            ? gameConfig.projectiles.spawnInterval
-            : 60;
+        throw new Error(`Invalid fire interval for tower level ${this.level}: ${fireInterval}`);
     }
 
     getFireInterval() {

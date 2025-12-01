@@ -1,14 +1,29 @@
 import { balanceConfig } from '../../config/balanceConfig.js';
 import { updateHUD } from '../../systems/ui.js';
 
-const MAX_UPGRADE_LEVEL = 6;
+const towerLevels = Array.isArray(balanceConfig?.towers?.levels)
+    ? balanceConfig.towers.levels
+    : null;
+const MAX_UPGRADE_LEVEL = towerLevels?.length ?? 6;
+
+function getTowerLevelConfig(level) {
+    if (!towerLevels || !Number.isFinite(level)) {
+        return null;
+    }
+    const index = level - 1;
+    if (index < 0 || index >= towerLevels.length) {
+        return null;
+    }
+    const config = towerLevels[index];
+    return config && typeof config === 'object' ? config : null;
+}
 
 const towerManagement = {
     getUpgradeCost(level) {
         if (!Number.isFinite(level)) {
             return null;
         }
-        const cost = balanceConfig?.towers?.upgradeCosts?.[level];
+        const cost = getTowerLevelConfig(level)?.upgradeCost;
         return Number.isFinite(cost) ? cost : null;
     },
 

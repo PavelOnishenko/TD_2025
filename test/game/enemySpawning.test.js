@@ -45,22 +45,6 @@ test('spawnEnemy defaults to last hp when wave exceeds table', () => {
     enemies.forEach(enemy => assert.equal(enemy.maxHp, expected));
 });
 
-test('getEnemyColor uses linear interpolation across wave', () => {
-    const game = createGame();
-    game.enemiesPerWave = 4;
-    game.colorProbStart = 0.2;
-    game.colorProbEnd = 0.8;
-
-    const colors = withMockedRandom([0.1, 0.5, 0.55, 0.9], () => {
-        return Array.from({ length: 4 }, (_, index) => {
-            game.spawned = index;
-            return game.getEnemyColor();
-        });
-    });
-
-    assert.deepEqual(colors, ['red', 'blue', 'red', 'blue']);
-});
-
 test('spawnEnemy chooses random colors per enemy', () => {
     const game = createGame();
 

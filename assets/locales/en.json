@@ -71,7 +71,8 @@
       "restart": "Restart",
       "save": "Save Game",
       "load": "Load Game",
-      "delete": "Delete Save"
+      "delete": "Delete Save",
+      "upgrade": "Upgrade Towers"
     }
   },
   "audio": {
@@ -129,6 +130,10 @@
     "storyWave10": {
       "title": "Ancient Arsenal Unlocked",
       "text": "By wave 10 scientists re-arm old war relics—machineguns, railguns, and rockets—to bolster the line. Hold the portal at all costs!"
+    },
+    "upgradeTower": {
+      "title": "Upgrade your Towers",
+      "text": "Now there is a way to upgrade your towers without merging! Click Upgrade button, then choose tower. Keep in mind hat upgrading towers this way is very expensive and should be used when merging cannot help."
     }
   },
   "diagnostics": {

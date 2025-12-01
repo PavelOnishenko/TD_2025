@@ -1,0 +1,203 @@
+Postponing this. Too hard to do "by the way". Need full involvement, later.
+
+ENGINE TASK LIST (Phase 1 – Core foundation)
+1. Create the engine/ folder structure
+
+Goal: Prepare clean folder hierarchy for all shared systems.
+Structure:
+
+engine/
+  core/
+  services/
+  ui/
+  config/
+
+CORE MODULES
+2. Implement engine/core/EngineRuntime.js
+
+Goal: Provide the main entry point and game loop for all games.
+Requirements:
+
+Handle init(), update(dt), render(ctx) lifecycle.
+
+Centralize timeScale, pause/resume, deltaTime, and requestAnimationFrame.
+
+Allow custom game instance injection (e.g., setGame(gameInstance)).
+
+Detect focus loss (window blur) and auto-pause.
+
+Handle resize() and maintain logical viewport size (using canvas scaling).
+
+3. Implement engine/core/ViewportManager.js
+
+Goal: Manage canvas resizing, scaling, and aspect ratio.
+Requirements:
+
+Handle DPI and window resize events.
+
+Maintain logical width/height constants.
+
+Provide method getRenderScale() for consistent rendering.
+
+4. Implement engine/core/InputManager.js
+
+Goal: Centralize mouse and keyboard input.
+Requirements:
+
+Track pressed keys, clicks, and pointer positions.
+
+Support simple subscription pattern (e.g., onClick, onKeyDown).
+
+Optional mobile/touch support placeholder.
+
+5. Implement engine/core/EntitySystem.js
+
+Goal: Base system for updateable/drawable objects (for both TD and future games).
+Requirements:
+
+Manage entities with update(dt) and render(ctx) calls.
+
+Allow adding/removing entities dynamically.
+
+Provide base class Entity with position, active flag, and simple destroy() method.
+
+SERVICES
+6. Implement engine/services/StorageService.js
+
+Goal: Unified interface for local save/load.
+Requirements:
+
+API: save(key, value), load(key, defaultValue), remove(key).
+
+Use localStorage internally.
+
+Safe JSON serialization with error handling.
+
+7. Implement engine/services/LocaleService.js
+
+Goal: Centralize localization.
+Requirements:
+
+Load dictionary from data/localization.json.
+
+Provide t(key) for text lookup.
+
+Fallback to English if key missing.
+
+8. Implement engine/services/HighscoreService.js
+
+Goal: Shared leaderboard handling.
+Requirements:
+
+Support both local leaderboard and remote one (HTTP API).
+
+Configurable base URL (SERVICE_BASE_URL).
+
+API: submitScore(name, score), getTopScores(limit).
+
+9. Implement engine/services/AdsService.js
+
+Goal: Pluggable ads integration (e.g., CrazyGames).
+Requirements:
+
+Define interface:
+
+showInterstitial(reason)
+showRewarded(context, reward)
+initialize()
+
+
+Provide built-in implementations:
+
+CrazyGamesAdsService (real)
+
+DummyAdsService (for local testing)
+
+AdsService is selected in config:
+engineConfig.adsProvider = 'crazygames' | 'dummy'
+
+UI LAYER
+10. Implement engine/ui/UIManager.js
+
+Goal: Central manager that binds UI elements and game state.
+Requirements:
+
+Show/hide screens: Start, Gameplay, Pause, End, Leaderboard.
+
+Dispatch button clicks (startGame, pause, restart, etc.).
+
+Manage HUD counters (score, wave, lives).
+
+Works with LocaleService for text labels.
+
+All UI elements referenced by query selectors (HTML IDs).
+
+11. Implement engine/ui/HUD.js
+
+Goal: Core HUD widget for score, lives, wave, and language buttons.
+Requirements:
+
+Public methods: setScore(v), setWave(v), setLives(v).
+
+Auto-refresh DOM text.
+
+Style-neutral — CSS handled outside.
+
+CONFIGURATION
+12. Implement engine/config/EngineConfig.js
+
+Goal: Central config file describing which modules/services to use.
+Requirements:
+
+Contains:
+
+export const engineConfig = {
+  logicalWidth: 800,
+  logicalHeight: 600,
+  adsProvider: 'crazygames',
+  locale: 'en',
+  highscoreURL: 'https://highscorewebservice.onrender.com',
+};
+
+
+Can be overridden by game-specific configs.
+
+GAME INTEGRATION
+13. Add engine/core/GameAdapter.js
+
+Goal: Bridge between engine and individual game logic.
+Requirements:
+
+Accepts game-specific class (e.g., TowerDefenseGame).
+
+Handles start, update, pause, restart using engine runtime.
+
+Dispatches UI events (via UIManager).
+
+Provides shared access to services (ads, locale, storage).
+
+TEST GAME INTEGRATION (TD_2025 migration stage)
+14. Integrate existing Tower Defense game into the engine
+
+Goal: Make the current TD game run on engine/ foundation with minimal changes.
+Steps:
+
+Replace old game loop with EngineRuntime.
+
+Move CrazyGames, localization, and storage logic to services.
+
+Use UIManager for start/pause/end menus.
+
+Keep game logic files (towers, enemies, etc.) unchanged for now.
+
+FUTURE EXTENSION (for next game prototype)
+15. Prepare for a “Space Shooter” demo game
+
+Goal: Validate reusability of engine.
+Requirements:
+
+Create new folder game_space_shooter/ using same engine/.
+
+Test waves, HUD, ads, and leaderboard without any tower-specific code.
+
+Confirm full build pipeline works (launch → play → submit score → restart).

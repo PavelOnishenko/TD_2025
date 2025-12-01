@@ -74,7 +74,7 @@ const nonBalanceConfig = {
     },
     projectiles: {
         rocket: {
-            shockwaveEnabled: true,
+            shockwaveEnabled: false,
         },
     },
     enemies: {
@@ -88,7 +88,7 @@ const nonBalanceConfig = {
                 nameKey: 'tutorial.storyIntro.title',
                 wave: 1,
                 highlightTargets: [],
-                text: 'A portal ripped open beside the Neon Empire capital world. Deploy living crystal defences and stop the alien scouts before they pour through.',
+                text: 'A portal ripped open beside the gateway to the Neon Empire capital world. Deploy living crystal defences and stop the alien scouts before they pour through.',
                 textKey: 'tutorial.storyIntro.text',
                 picture: 'assets/swarm_B.png',
                 sound: 'assets/portal_spawn.mp3',
@@ -102,7 +102,7 @@ const nonBalanceConfig = {
                 nameKey: 'tutorial.buildTower.title',
                 wave: 1,
                 highlightTargets: [],
-                text: 'Click on a glowing platform to build your first tower. Each tower costs 12 energy harvested from our living crystals.',
+                text: 'Click on a glowing platform to build your first tower. Each tower costs 120 energy harvested from our living crystals.',
                 textKey: 'tutorial.buildTower.text',
                 picture: 'assets/tower_1B.png',
                 sound: 'assets/placement.mp3',
@@ -142,7 +142,7 @@ const nonBalanceConfig = {
                 nameKey: 'tutorial.startWave.title',
                 wave: 1,
                 highlightTargets: ['nextWaveButton'],
-                text: 'Press "Next Wave" when you are ready. Survive every wave to protect the base!',
+                text: 'Press "Next Wave" when you are ready. Destroy all ships to protect the base!',
                 textKey: 'tutorial.startWave.text',
                 picture: 'assets/swarm_R.png',
                 sound: 'assets/merge.mp3',
@@ -175,7 +175,7 @@ const nonBalanceConfig = {
                 nameKey: 'tutorial.mergeTowers.title',
                 wave: 2,
                 highlightTargets: ['mergeButton'],
-                text: 'Build two adjacent towers of the same color and level, then press Merge Towers to fuse them into a stronger crystal.',
+                text: 'You need two adjacent towers of the same color and level, then press Merge Towers to fuse them into a stronger tower (with different weapon!).',
                 textKey: 'tutorial.mergeTowers.text',
                 picture: 'assets/tower_2B.png',
                 sound: 'assets/merge.mp3',
@@ -223,6 +223,20 @@ const nonBalanceConfig = {
                 sound: 'assets/portal_spawn.mp3',
                 checkComplete(game, context) {
                     return hasAcknowledged(context, 'story-wave10');
+                },
+            },
+            {
+                id: 'upgrade-tower',
+                name: 'Upgrade your Towers',
+                nameKey: 'tutorial.upgradeTower.title',
+                wave: 15,
+                highlightTargets: [],
+                text: 'Now there is a way to upgrade your towers without merging! Use the Upgrade button. Keep in mind hat upgrading towers this way is very expensive and should be used when merging cannot help.',
+                textKey: 'tutorial.upgradeTower.text',
+                picture: 'assets/tower_6B.png',
+                sound: 'assets/placement.mp3',
+                checkComplete(game, context) {
+                    return hasAcknowledged(context, 'upgrade-tower');
                 },
             },
         ],

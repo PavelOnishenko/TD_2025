@@ -18,14 +18,10 @@ export const balanceConfig = {
             ],
         },
         energyPerWave: 40,
-        colorProbability: {
-            minDifference: 0.35,
-        },
     },
     projectiles: {
         speed: 700,
         baseRadius: 18,
-        spawnInterval: 60,
         radiusPerLevel: 5,
         colorMismatchMultiplier: 0.3,
         rockets: {
@@ -39,34 +35,24 @@ export const balanceConfig = {
         baseRange: 140,
         rangePerLevel: 0.2,
         rangeBonusMultiplier: 1.3,
-        baseDamage: 1,
-        damagePerLevel: 0.8,
-        fireIntervalPerLevel: [500, 200, 60, 120, 1050, 1200],
-        damageByLevel: [
-            8.3,
-            8,
-            4,
-            9.1,
-            50,
-            80,
+        levels: [
+            { damage: 8.3, fireInterval: 500, upgradeCost: 300 },
+            { damage: 8, fireInterval: 200, upgradeCost: 600 },
+            { damage: 4, fireInterval: 60, upgradeCost: 1200 },
+            { damage: 9.1, fireInterval: 120, upgradeCost: 2500 },
+            { damage: 50, fireInterval: 1050, upgradeCost: 5000 },
+            { damage: 80, fireInterval: 1200 },
         ],
-        upgradeCosts: {
-            1: 300,
-            2: 600,
-            3: 1200,
-            4: 2500,
-            5: 5000,
-        },
         upgradeUnlockWave: 15,
     },
     enemies: {
         defaultSpawn: { x: -600, y: 600 },
         speedMultiplier: 0.9,
         tank: { hpMultiplier: 35.7, speed: { x: 100, y: 0 }, },
-        swarm: { groupSize: 3, spacing: 40, hpMultiplier: 10, speed: { x: 200, y: 0 }, },
+        swarm: { groupSize: 3, hpMultiplier: 10, speed: { x: 200, y: 0 }, },
     },
     waves: {
-        difficultyMultiplier: 1,
+        difficultyMultiplier: 1,    // todo up this to make waves more epic
         schedule: [
            { difficulty: 13, enemyHp: 1.34 },
             { difficulty: 13, enemyHp: 1.64 },
@@ -90,7 +76,7 @@ export const balanceConfig = {
             { difficulty: 22, enemyHp: 5.65 }, // 20
         ],
         endless: {
-            hpGrowth: 1.2,
+            hpGrowth: 1.2,  // todo make it easier?
             difficultyIncrement: 4,
         },
         formations: {
