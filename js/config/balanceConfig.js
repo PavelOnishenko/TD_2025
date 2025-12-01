@@ -76,8 +76,8 @@ export const balanceConfig = {
             { difficulty: 22, enemyHp: 5.65 }, // 20
         ],
         endless: {
-            hpGrowth: 1.2,  // todo make it easier?
-            difficultyIncrement: 4,
+            hpGrowth: 1.1, 
+            difficultyIncrement: 3,
         },
         formations: {
             defaults: {
