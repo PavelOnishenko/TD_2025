@@ -226,7 +226,7 @@ export default class Tower {
         return Math.max(0, Math.min(1, normalized));
     }
 
-    draw(ctx, assets) {
+    draw(ctx, assets, game = null) {
         const c = this.center();
         this.drawHover(ctx, c);
         ctx.fillStyle = this.color;
@@ -244,6 +244,10 @@ export default class Tower {
 
         this.drawRemovalChargeIndicator(ctx, c);
         this.drawLevelIndicator(ctx);
+        
+        if (game && game.upgradeModeActive) {
+            this.drawUpgradeCost(ctx, game);
+        }
     }
 
     setHover(strength = 1) {
@@ -411,6 +415,58 @@ export default class Tower {
         ctx.fillStyle = 'black';
         ctx.font = '10px sans-serif';
         ctx.fillText(String(this.level), this.x + this.w + 2, this.y + 10);
+    }
+
+    drawUpgradeCost(ctx, game) {
+        const MAX_UPGRADE_LEVEL = 6;
+        if (this.level >= MAX_UPGRADE_LEVEL) {
+            return;
+        }
+
+        const cost = typeof game.getUpgradeCost === 'function'
+            ? game.getUpgradeCost(this.level)
+            : null;
+        
+        if (!Number.isFinite(cost) || cost <= 0) {
+            return;
+        }
+
+        const config = gameConfig.towers?.upgradeCostText ?? {};
+        const fontSize = Number.isFinite(config.fontSize) ? config.fontSize : 12;
+        const fontFamily = typeof config.fontFamily === 'string' ? config.fontFamily : 'sans-serif';
+        const fontWeight = typeof config.fontWeight === 'string' ? config.fontWeight : 'bold';
+        const colorAffordable = typeof config.colorAffordable === 'string' ? config.colorAffordable : '#ffffff';
+        const colorUnaffordable = typeof config.colorUnaffordable === 'string' ? config.colorUnaffordable : '#ff6666';
+        const backgroundAlpha = Number.isFinite(config.backgroundAlpha) ? config.backgroundAlpha : 0.6;
+        const padding = Number.isFinite(config.padding) ? config.padding : 4;
+        const offsetY = Number.isFinite(config.offsetY) ? config.offsetY : -8;
+
+        const c = this.center();
+        const textY = this.y + offsetY;
+        const text = String(cost);
+        
+        // Draw background for better visibility
+        ctx.save();
+        const fontString = `${fontWeight} ${fontSize}px ${fontFamily}`;
+        ctx.font = fontString;
+        const metrics = ctx.measureText(text);
+        const textWidth = metrics.width;
+        const bgX = c.x - textWidth / 2 - padding;
+        const bgY = textY - fontSize / 2 - padding;
+        const bgWidth = textWidth + padding * 2;
+        const bgHeight = fontSize + padding * 2;
+
+        // Semi-transparent background
+        ctx.fillStyle = `rgba(0, 0, 0, ${backgroundAlpha})`;
+        ctx.fillRect(bgX, bgY, bgWidth, bgHeight);
+
+        // Draw text
+        const canAfford = game.energy >= cost;
+        ctx.fillStyle = canAfford ? colorAffordable : colorUnaffordable;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(text, c.x, textY);
+        ctx.restore();
     }
 
     updateRemovalCharge(dt) {

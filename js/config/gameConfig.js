@@ -71,6 +71,16 @@ const nonBalanceConfig = {
         glowSpeeds: [1.8, 2.1, 2.4],
         removalHoldDuration: 2,
         removalIndicatorDecay: 3.2,
+        upgradeCostText: {
+            fontSize: 22,
+            fontFamily: 'sans-serif',
+            fontWeight: 'bold',
+            colorAffordable: '#00ff00',
+            colorUnaffordable: '#ff6666',
+            backgroundAlpha: 0.6,
+            padding: 4,
+            offsetY: -20,
+        },
     },
     projectiles: {
         rocket: {
