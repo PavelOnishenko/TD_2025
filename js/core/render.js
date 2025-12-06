@@ -826,7 +826,7 @@ export function drawEntities(game) {
     for (const tower of game.towers) {
         layeredEntities.push({
             sortKey: computeSortKey(tower),
-            draw: () => tower.draw(ctx, assets),
+            draw: () => tower.draw(ctx, assets, game),
         });
     }
 
