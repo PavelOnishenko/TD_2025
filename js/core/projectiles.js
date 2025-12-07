@@ -226,6 +226,17 @@ function handleRocketImpact(game, projectile, index) {
         });
     }
 
+    if (impacted.length >= 2 && typeof game.addEnergyPopup === 'function') {
+        const text = `×${impacted.length}`;
+        game.addEnergyPopup(text, centerX, centerY, {
+            color: projectile.color === 'blue' ? '#60a5fa' : '#f87171',
+            stroke: 'rgba(0,0,0,0.7)',
+            font: '700 32px "Baloo 2", sans-serif',
+            duration: 1.2,
+            driftY: -80,
+        });
+    }
+
     const enableShockwave = gameConfig?.projectiles?.rocket?.shockwaveEnabled !== false;
     if (game.explosions) {
         const explosionOptions = {
