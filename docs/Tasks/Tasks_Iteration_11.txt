@@ -1,4 +1,4 @@
-1. Show tower upgrade cost near tower.
+DONE 1. Show tower upgrade cost near tower.
 2. New tutorial step - build 4 towers before 1st wave.
 3. Merge tutorial - add step to make player get 2 towers ready for merge first, before clicking the button.
 4. Draw lvl3 projectiles even when firing from 0 distance (possible?) 
