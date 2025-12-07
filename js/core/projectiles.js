@@ -101,6 +101,8 @@ export function moveProjectiles(game, dt) {
             }
             p.rotation = Math.atan2(p.vy, p.vx);
             p.life = (p.life ?? 0) + dt;
+        } else if (p.towerLevel === 3) {
+            p.life = (p.life ?? 0) + dt;
         }
 
         p.x += p.vx * dt;
@@ -246,6 +248,14 @@ function handleRocketImpact(game, projectile, index) {
 
 export function hitEnemy(game, projectile, index) {
     if (projectile.type === 'railgun-beam') {
+        return false;
+    }
+
+    const minLifetimeForLevel3 = gameConfig.projectiles?.minLifetimeLevel3 ?? 0.03;
+    const isLevel3 = projectile.towerLevel === 3;
+    const projectileLife = projectile.life ?? 0;
+
+    if (isLevel3 && projectileLife < minLifetimeForLevel3) {
         return false;
     }
 

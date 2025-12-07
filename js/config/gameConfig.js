@@ -83,6 +83,7 @@ const nonBalanceConfig = {
         },
     },
     projectiles: {
+        minLifetimeLevel3: 0.03,
         rocket: {
             shockwaveEnabled: false,
         },
