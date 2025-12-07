@@ -103,6 +103,10 @@
       "title": "Deploy Your First Tower",
       "text": "Click on a glowing platform to build your first tower. Each tower costs 12 energy harvested from our living crystals."
     },
+    "buildFourTowers": {
+      "title": "Build Four Defenders",
+      "text": "Build 4 towers to create a solid defensive line before the first wave arrives. Position them strategically to cover both lanes."
+    },
     "switchColor": {
       "title": "Match Enemy Colors",
       "text": "Select a tower to toggle its color. Matching enemies take full damage while mismatched shots only hit with 30% power."

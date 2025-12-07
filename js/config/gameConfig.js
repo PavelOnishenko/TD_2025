@@ -121,6 +121,20 @@ const nonBalanceConfig = {
                 },
             },
             {
+                id: 'build-four-towers',
+                name: 'Build Four Defenders',
+                nameKey: 'tutorial.buildFourTowers.title',
+                wave: 1,
+                highlightTargets: [],
+                text: 'Build 4 towers to create a solid defensive line before the first wave arrives. Position them strategically to cover both lanes.',
+                textKey: 'tutorial.buildFourTowers.text',
+                picture: 'assets/tower_1B.png',
+                sound: 'assets/placement.mp3',
+                checkComplete(game) {
+                    return Array.isArray(game?.towers) && game.towers.length >= 4;
+                },
+            },
+            {
                 id: 'switch-color',
                 name: 'Match Enemy Colors',
                 nameKey: 'tutorial.switchColor.title',
