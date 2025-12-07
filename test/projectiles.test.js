@@ -273,3 +273,42 @@ test('handleProjectileHits respects configured world bounds', () => {
     assert.equal(game.explosions.length, 0);
     assert.equal(game.energy, 0);
 });
+
+test('hitEnemy enforces minimal lifetime for level 3 projectiles', () => {
+    const game = makeGame();
+    const enemy = makeEnemy({ x: 10, y: 10 });
+    const level3Projectile = makeProjectile({ x: 15, y: 15, towerLevel: 3, life: 0 });
+    game.enemies.push(enemy);
+    game.projectiles.push(level3Projectile);
+
+    const resultBeforeMinLife = hitEnemy(game, level3Projectile, 0);
+
+    assert.equal(resultBeforeMinLife, false);
+    assert.equal(game.projectiles.length, 1);
+    assert.equal(game.enemies.length, 1);
+    assert.equal(enemy.hp, 1);
+
+    level3Projectile.life = 0.04;
+
+    const resultAfterMinLife = hitEnemy(game, level3Projectile, 0);
+
+    assert.equal(resultAfterMinLife, true);
+    assert.equal(game.projectiles.length, 0);
+    assert.equal(game.enemies.length, 0);
+});
+
+test('moveProjectiles tracks lifetime for level 3 projectiles', () => {
+    const game = makeGame();
+    const level3Projectile = makeProjectile({ towerLevel: 3 });
+    game.projectiles.push(level3Projectile);
+
+    assert.equal(level3Projectile.life, undefined);
+
+    moveProjectiles(game, 0.02);
+
+    assert.equal(level3Projectile.life, 0.02);
+
+    moveProjectiles(game, 0.015);
+
+    assert.equal(level3Projectile.life, 0.035);
+});

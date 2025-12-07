@@ -3,7 +3,8 @@
     "allow": [
       "Bash(git log:*)",
       "Bash(node -c:*)",
-      "Bash(python -m json.tool:*)"
+      "Bash(python -m json.tool:*)",
+      "Bash(npm test)"
     ],
     "deny": [],
     "ask": []
