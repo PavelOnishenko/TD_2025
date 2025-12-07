@@ -14,6 +14,33 @@ const hasScoreProgress = (game, context) => {
     const best = Number.isFinite(game?.bestScore) ? Math.max(0, Math.floor(game.bestScore)) : 0;
     return scoreFromContext > 0 || gained > 0 || score > 0 || best > 0;
 };
+const hasMergeableTowers = (game) => {
+    if (!game?.grid) {
+        return false;
+    }
+
+    const rows = [game.grid.topCells, game.grid.bottomCells];
+
+    for (const row of rows) {
+        if (!Array.isArray(row)) continue;
+
+        for (let i = 0; i < row.length - 1; i++) {
+            const cellA = row[i];
+            const cellB = row[i + 1];
+
+            if (!cellA?.occupied || !cellB?.occupied) continue;
+
+            const towerA = game.getTowerAt?.(cellA);
+            const towerB = game.getTowerAt?.(cellB);
+
+            if (game.canMergeTowers?.(towerA, towerB)) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+};
 
 const nonBalanceConfig = {
     world: {
@@ -195,12 +222,26 @@ const nonBalanceConfig = {
                 },
             },
             {
+                id: 'prepare-merge',
+                name: 'Prepare for Merge',
+                nameKey: 'tutorial.prepareMerge.title',
+                wave: 2,
+                highlightTargets: [],
+                text: 'Build two adjacent towers of the same color and level. When they\'re ready, you\'ll be able to merge them!',
+                textKey: 'tutorial.prepareMerge.text',
+                picture: 'assets/tower_1B.png',
+                sound: 'assets/tower_place.mp3',
+                checkComplete(game, context) {
+                    return hasAcknowledged(context, 'prepare-merge') || hasMergeableTowers(game);
+                },
+            },
+            {
                 id: 'merge-towers',
                 name: 'Combine Towers',
                 nameKey: 'tutorial.mergeTowers.title',
                 wave: 2,
                 highlightTargets: ['mergeButton'],
-                text: 'You need two adjacent towers of the same color and level, then press Merge Towers to fuse them into a stronger tower (with different weapon!).',
+                text: 'Great! Now press the Merge Towers button to fuse them into a stronger tower with a different weapon!',
                 textKey: 'tutorial.mergeTowers.text',
                 picture: 'assets/tower_2B.png',
                 sound: 'assets/merge.mp3',

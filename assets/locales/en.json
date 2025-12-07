@@ -119,9 +119,13 @@
       "title": "Harvest More Energy",
       "text": "Every destroyed ship and completed wave feeds more energy into your reserves. Watch the meter to afford new towers and color switches."
     },
+    "prepareMerge": {
+      "title": "Prepare for Merge",
+      "text": "Build two adjacent towers of the same color and level. When they're ready, you'll be able to merge them!"
+    },
     "mergeTowers": {
       "title": "Combine Towers",
-      "text": "Build two adjacent towers of the same color and level, then press Merge Towers to fuse them into a stronger crystal."
+      "text": "Great! Now press the Merge Towers button to fuse them into a stronger tower with a different weapon!"
     },
     "removeTower": {
       "title": "Dismantle with a Long Press",
