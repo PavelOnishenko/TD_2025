@@ -4,7 +4,14 @@
       "Bash(git log:*)",
       "Bash(node -c:*)",
       "Bash(python -m json.tool:*)",
-      "Bash(npm test:*)"
+      "Bash(git branch:*)",
+      "Bash(gh --version:*)",
+      "Bash(node --version:*)",
+      "Bash(git -C \"K:\\GameProjects\\TD_2025\\GitRepo\\TD_2025\" branch -a)",
+      "Bash(git -C \"K:\\GameProjects\\TD_2025\\GitRepo\\TD_2025\" log --oneline --max-count=10)",
+      "Bash(git -C \"K:\\GameProjects\\TD_2025\\GitRepo\\TD_2025\" log --oneline --max-count=20 --format=\"%s\")",
+      "Bash(npm test:*)",
+      "Bash(node --test:*)"
     ],
     "deny": [],
     "ask": []
