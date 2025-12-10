@@ -1,8 +1,8 @@
 DONE 1. Show tower upgrade cost near tower.
 DONE 2. New tutorial step - build 4 towers before 1st wave.
 DONE 3. Merge tutorial - add step to make player get 2 towers ready for merge first, before clicking the button.
-DONE 4. Draw lvl3 projectiles even when firing from 0 distance (possible?) 
-5. Add energy from kills flying up to energy counter (animation)
+DONE 4. Draw lvl3 projectiles even when firing from 0 distance (possible?)
+DONE 5. Add energy from kills flying up to energy counter (animation)
 6. Rail and rockets - show cool indicators when hit multiple enemies
 7. Nerf level 3 towers
 8. More screen shake for rockets, less for rail

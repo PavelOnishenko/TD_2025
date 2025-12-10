@@ -310,6 +310,12 @@ const nonBalanceConfig = {
     ads: {
         waveCadence: 500,
     },
+    effects: {
+        flyingEnergy: {
+            fontSize: 32,
+            duration: 1.5,
+        },
+    },
 };
 
 export const gameConfig = {
