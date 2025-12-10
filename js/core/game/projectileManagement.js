@@ -199,11 +199,12 @@ function applyRailgunDamage(game, beam) {
     }
 
     const shake = ensureScreenShake(game);
-    const impactIntensity = 16;
-    shake.duration = Math.max(shake.duration, 0.32);
+    const shakeConfig = gameConfig.world?.screenShake?.railgun ?? { intensity: 10, duration: 0.28, frequency: 52 };
+    const impactIntensity = shakeConfig.intensity;
+    shake.duration = Math.max(shake.duration, shakeConfig.duration);
     shake.elapsed = 0;
     shake.intensity = Math.min(impactIntensity * 1.4, (shake.intensity ?? 0) * 0.4 + impactIntensity);
-    shake.frequency = 52;
+    shake.frequency = shakeConfig.frequency;
     shake.seedX = Math.random() * Math.PI * 2;
     shake.seedY = Math.random() * Math.PI * 2;
 }

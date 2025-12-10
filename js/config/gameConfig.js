@@ -46,7 +46,11 @@ const nonBalanceConfig = {
     world: {
         logicalSize: { width: 540, height: 960 },
         base: { x: 1100, width: 160, height: 160, bottomOffset: 470 },
-        screenShake: { frequency: 42 },
+        screenShake: {
+            frequency: 42,
+            rocket: { intensity: 6, duration: 0.5, frequency: 46 },
+            railgun: { intensity: 5, duration: 0.28, frequency: 52 },
+        },
         bounds: { minMargin: 40, projectileRadiusFactor: 2 },
         grid: {
             cellSize: { w: 120, h: 160 },

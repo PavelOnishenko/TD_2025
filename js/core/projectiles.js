@@ -259,7 +259,8 @@ function handleRocketImpact(game, projectile, index) {
         game.explosions.push(createExplosion(centerX, centerY, explosionOptions));
     }
 
-    triggerScreenShake(game, 2.4, 0.42, 46);
+    const shakeConfig = gameConfig.world?.screenShake?.rocket ?? { intensity: 3.5, duration: 0.5, frequency: 46 };
+    triggerScreenShake(game, shakeConfig.intensity, shakeConfig.duration, shakeConfig.frequency);
 
     if (projectile.trail) {
         projectile.trail.length = 0;
