@@ -2,6 +2,11 @@
 
 ## CRITICAL: Always follow these steps when coding
 
+### 0. Read Project Guidelines FIRST
+- **ALWAYS read and follow** `docs/Style_Guide.txt` for code style rules
+- **ALWAYS read and follow** `docs/TD_2025_Instructions.txt` for task workflow
+- **ALWAYS read and follow** `docs/TestWritingGuide.txt` when writing/modifying tests
+
 ### 1. Localization
 - **ALWAYS add localization** when adding new user-facing text
 - Localization files are in `assets/locales/`
@@ -80,7 +85,39 @@ const hasFeature = (game) => {
 }
 ```
 
+## Project Guidelines Summary
+
+### Style Guide Rules (docs/Style_Guide.txt)
+- Max 170 characters per line
+- Named functions: max 20 lines
+- Files: max 200 lines
+- Indentation: 4 spaces
+- Extract method when code repeats 3+ times
+- Create variable if value evaluated 2+ times
+- Meaningful names, self-explanatory code
+- No one-liner ifs
+- Prefer shorter statements when possible
+- Max 10 files/folders per directory
+
+### TD_2025 Instructions (docs/TD_2025_Instructions.txt)
+1. Make only required changes
+2. Modify tests to reflect changes
+3. Simple and efficient implementation
+4. Readable, modular code without excess complexity
+5. Self-documented code, minimal comments
+6. Mark task DONE in task file
+
+### Test Writing Guide (docs/TestWritingGuide.txt)
+- Cover all game logic functions
+- Test main scenario + all branches + corner cases
+- Be reasonable - skip senseless tests
+- Use AAA pattern (Arrange, Act, Assert)
+- Create mocks/stubs for isolation
+- No need to test simple getters/setters without logic
+
 ## Remember
+- **Read Style_Guide, TD_2025_Instructions, TestWritingGuide** - ALWAYS
 - **Localization is NOT optional** - always add it
 - **Mark tasks as DONE** - keep task lists updated
 - **Run tests** - ensure nothing breaks
+- **Follow style rules** - 170 char max, 20 lines max for functions, etc.

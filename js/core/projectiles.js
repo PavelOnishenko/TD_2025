@@ -2,6 +2,7 @@ import { updateHUD } from '../systems/ui.js';
 import { createExplosion } from '../systems/effects.js';
 import gameConfig from '../config/gameConfig.js';
 import { getWaveEnergyMultiplier } from '../utils/energyScaling.js';
+import { createFlyingEnergyParticle } from '../systems/effects/flyingEnergy.js';
 
 function clamp(value, min, max) {
     return Math.max(min, Math.min(max, value));
@@ -158,6 +159,16 @@ export function applyProjectileDamage(game, projectile, enemyIndex, options = {}
         game.enemies.splice(enemyIndex, 1);
         const energyGain = getEnergyGainForKill(game, enemy);
         game.energy += energyGain;
+
+        const width = Number.isFinite(enemy.w) ? enemy.w : 0;
+        const height = Number.isFinite(enemy.h) ? enemy.h : 0;
+        const centerX = Number.isFinite(enemy.x) ? enemy.x + width / 2 : projectile.x;
+        const centerY = Number.isFinite(enemy.y) ? enemy.y + height / 2 : projectile.y;
+
+        if (Array.isArray(game.flyingEnergy)) {
+            const particle = createFlyingEnergyParticle(centerX, centerY, energyGain, game);
+            game.flyingEnergy.push(particle);
+        }
         if (game.tutorial) {
             try {
                 if (typeof game.tutorial.handleEnergyGained === 'function') {
