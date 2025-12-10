@@ -6,7 +6,7 @@ DONE 5. Add energy from kills flying up to energy counter (animation)
 DONE 6. Rail and rockets - show cool indicators when hit multiple enemies
 CANCELLED 7. Nerf level 3 towers
 8. More screen shake for rockets, less for rail
-9. Rail sound quieter, lvl4 sound louder
+DONE 9. Rail sound quieter, lvl4 sound louder
 10. Bug with tutorial about removing towers - if player just skips it, all next tutorials are not working.
 11. Map out some main strategies and define where they are expected to fail. Enforce that.
 12. More difficulty for waves 1-20, and balance that.

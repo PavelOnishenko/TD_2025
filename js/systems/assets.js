@@ -44,7 +44,7 @@ const SOUND_OPTIONS = {
     },
     tower_fire_5: {
         src: ['assets/tower_fire_5.mp3'],
-        volume: 0.68,
+        volume: 0.58,
         preload: true,
     },
     tower_fire_6: {
