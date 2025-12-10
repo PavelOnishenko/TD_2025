@@ -4,7 +4,7 @@ DONE 3. Merge tutorial - add step to make player get 2 towers ready for merge fi
 DONE 4. Draw lvl3 projectiles even when firing from 0 distance (possible?)
 DONE 5. Add energy from kills flying up to energy counter (animation)
 DONE 6. Rail and rockets - show cool indicators when hit multiple enemies
-7. Nerf level 3 towers
+CANCELLED 7. Nerf level 3 towers
 8. More screen shake for rockets, less for rail
 9. Rail sound quieter, lvl4 sound louder
 10. Bug with tutorial about removing towers - if player just skips it, all next tutorials are not working.
