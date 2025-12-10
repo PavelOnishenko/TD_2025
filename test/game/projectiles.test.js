@@ -154,3 +154,60 @@ test('level 6 rocket impact triggers explosive damage', () => {
     assert.equal(game.enemies.length, 0);
 });
 
+test('rocket shows multi-hit indicator when hitting 2+ enemies', () => {
+    const game = createGame();
+    const tower = createTower(game, 0, { level: 6 });
+
+    const enemyA = { x: 100, y: 100, w: 80, h: 80, hp: 1, color: 'red' };
+    const enemyB = { x: 120, y: 120, w: 80, h: 80, hp: 1, color: 'blue' };
+    game.enemies.push(enemyA, enemyB);
+
+    game.spawnProjectile(0, tower);
+    const projectile = game.projectiles.find(p => p.type === 'rocket');
+    projectile.x = 110;
+    projectile.y = 110;
+
+    const projectileIndex = game.projectiles.indexOf(projectile);
+    hitEnemy(game, projectile, projectileIndex);
+
+    assert.ok(Array.isArray(game.energyPopups));
+    const multiHitPopup = game.energyPopups.find(p => p.text.startsWith('×'));
+    assert.ok(multiHitPopup, 'Should create multi-hit popup');
+    assert.equal(multiHitPopup.text, '×2');
+});
+
+test('railgun shows multi-hit indicator when hitting 2+ enemies', () => {
+    const game = createGame();
+    const tower = createTower(game, 0, { level: 5, color: 'red' });
+    const center = tower.center();
+    const enemyA = { x: center.x + 120, y: center.y - 20, w: 40, h: 40, hp: 1, color: 'red' };
+    const enemyB = { x: center.x + 220, y: center.y - 22, w: 40, h: 40, hp: 1, color: 'blue' };
+    game.enemies.push(enemyA, enemyB);
+
+    game.spawnProjectile(0, tower);
+
+    assert.ok(Array.isArray(game.energyPopups));
+    const multiHitPopup = game.energyPopups.find(p => p.text.startsWith('×'));
+    assert.ok(multiHitPopup, 'Should create multi-hit popup');
+    assert.equal(multiHitPopup.text, '×2');
+});
+
+test('multi-hit indicator not shown for single enemy', () => {
+    const game = createGame();
+    const tower = createTower(game, 0, { level: 6 });
+
+    const enemy = { x: 100, y: 100, w: 80, h: 80, hp: 1, color: 'red' };
+    game.enemies.push(enemy);
+
+    game.spawnProjectile(0, tower);
+    const projectile = game.projectiles.find(p => p.type === 'rocket');
+    projectile.x = 110;
+    projectile.y = 110;
+
+    const projectileIndex = game.projectiles.indexOf(projectile);
+    hitEnemy(game, projectile, projectileIndex);
+
+    const multiHitPopup = (game.energyPopups ?? []).find(p => p.text.startsWith('×'));
+    assert.equal(multiHitPopup, undefined, 'Should not create multi-hit popup for single enemy');
+});
+

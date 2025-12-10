@@ -184,6 +184,18 @@ function applyRailgunDamage(game, beam) {
         beam.hitPositions = recordedHits;
         const furthest = recordedHits[recordedHits.length - 1];
         beam.length = Math.max(beam.length * 0.55, furthest.distance + 40);
+
+        if (recordedHits.length >= 2 && typeof game.addEnergyPopup === 'function') {
+            const midPoint = recordedHits[Math.floor(recordedHits.length / 2)];
+            const text = `×${recordedHits.length}`;
+            game.addEnergyPopup(text, midPoint.x, midPoint.y, {
+                color: beam.color === 'blue' ? '#60a5fa' : '#f87171',
+                stroke: 'rgba(0,0,0,0.7)',
+                font: '700 32px "Baloo 2", sans-serif',
+                duration: 1.2,
+                driftY: -80,
+            });
+        }
     }
 
     const shake = ensureScreenShake(game);
