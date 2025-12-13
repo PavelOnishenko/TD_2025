@@ -220,9 +220,7 @@ const nonBalanceConfig = {
                 picture: 'assets/energy_sign.png',
                 sound: 'assets/placement.mp3',
                 checkComplete(game, context) {
-                    return hasAcknowledged(context, 'energy-economy')
-                        || hasEnergyGain(context)
-                        || hasEnergyGainFromGame(game);
+                    return hasAcknowledged(context, 'energy-economy');
                 },
             },
             {
@@ -278,7 +276,7 @@ const nonBalanceConfig = {
                 picture: 'assets/swarm_R.png',
                 sound: 'assets/color_switch.mp3',
                 checkComplete(game, context) {
-                    return hasAcknowledged(context, 'score-system') || hasScoreProgress(game, context);
+                    return hasAcknowledged(context, 'score-system');
                 },
             },
             {
