@@ -332,8 +332,8 @@ const nonBalanceConfig = {
                 textKey: 'tutorial.exitMergeMode.text',
                 picture: 'assets/tower_2B.png',
                 sound: 'assets/merge.mp3',
-                checkComplete(game, context) {
-                    return hasAcknowledged(context, 'exit-merge-mode') || !game.mergeModeActive;
+                checkComplete(game) {
+                    return !game.mergeModeActive;
                 },
             },
             {
