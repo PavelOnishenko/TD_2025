@@ -412,9 +412,91 @@ export default class Tower {
     }
 
     drawLevelIndicator(ctx) {
-        ctx.fillStyle = 'black';
-        ctx.font = '10px sans-serif';
-        ctx.fillText(String(this.level), this.x + this.w + 2, this.y + 10);
+        const config = gameConfig.towers?.levelIndicator ?? {};
+        const fontSize = config.fontSize ?? 16;
+        const offsetX = config.offsetX ?? 0;
+        const offsetY = config.offsetY ?? 4;
+        const padding = config.padding ?? 4;
+        const backgroundAlpha = config.backgroundAlpha ?? 0.85;
+
+        const text = String(this.level);
+
+        ctx.save();
+        ctx.font = `bold ${fontSize}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'bottom';
+
+        // Position at bottom-center of the tower with configurable offset
+        const textX = this.x + this.w / 2 + offsetX;
+        const textY = this.y + this.h + fontSize + offsetY;
+
+        // Get color and intensity based on level
+        const levelStyle = this.getLevelIndicatorStyle(this.level);
+
+        // Draw semi-transparent background for better visibility
+        const metrics = ctx.measureText(text);
+        const bgWidth = metrics.width + padding * 2;
+        const bgHeight = fontSize + padding * 2;
+        const bgX = textX - bgWidth / 2;
+        const bgY = textY - bgHeight + padding;
+
+        // Background with subtle glow
+        ctx.fillStyle = `rgba(0, 0, 0, ${backgroundAlpha})`;
+        ctx.fillRect(bgX, bgY, bgWidth, bgHeight);
+
+        // Add outer glow effect based on level
+        if (levelStyle.glowIntensity > 0) {
+            const pulse = (Math.sin(this.glowTime * 1.5) + 1) / 2;
+            const glowAlpha = levelStyle.glowIntensity * (0.3 + 0.15 * pulse);
+
+            ctx.shadowColor = levelStyle.glowColor;
+            ctx.shadowBlur = 8 + 4 * pulse;
+            ctx.globalAlpha = glowAlpha;
+            ctx.fillStyle = levelStyle.glowColor;
+            ctx.fillRect(bgX - 1, bgY - 1, bgWidth + 2, bgHeight + 2);
+            ctx.globalAlpha = 1;
+            ctx.shadowBlur = 0;
+        }
+
+        // Draw border
+        ctx.strokeStyle = levelStyle.borderColor;
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(bgX, bgY, bgWidth, bgHeight);
+
+        // Draw text with glow
+        ctx.shadowColor = levelStyle.textGlow;
+        ctx.shadowBlur = levelStyle.textGlowSize;
+
+        ctx.fillStyle = levelStyle.textColor;
+        ctx.fillText(text, textX, textY);
+
+        // Extra bright overlay for higher levels
+        if (this.level >= 4) {
+            ctx.shadowBlur = levelStyle.textGlowSize * 1.5;
+            ctx.globalAlpha = 0.4;
+            ctx.fillText(text, textX, textY);
+            ctx.globalAlpha = 1;
+        }
+
+        ctx.restore();
+    }
+
+    getLevelIndicatorStyle(level) {
+        const config = gameConfig.towers?.levelIndicator ?? {};
+        const styles = config.styles ?? {};
+
+        // Fallback default style if config is missing
+        const defaultStyle = {
+            textColor: 'rgba(255, 255, 255, 1)',
+            textGlow: 'rgba(255, 255, 255, 0.5)',
+            textGlowSize: 4,
+            borderColor: 'rgba(255, 255, 255, 0.7)',
+            glowColor: 'rgba(255, 255, 255, 0.3)',
+            glowIntensity: 0.5
+        };
+
+        // Return style for the level, defaulting to level 6 style, then default style
+        return styles[level] || styles[6] || defaultStyle;
     }
 
     drawUpgradeCost(ctx, game) {

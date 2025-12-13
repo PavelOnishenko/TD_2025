@@ -11,4 +11,4 @@ DONE 10. Bug with tutorial about removing towers - if player just skips it, all 
 11. Map out some main strategies and define where they are expected to fail. Enforce that.
 12. More difficulty for waves 1-20, and balance that.
 13. Balance upgrades. Upgrades should start make sense since 15 level and should be a common way of playing since 20.
-14. Increase visibility of tower level indicators
+DONE 14. Increase visibility of tower level indicators
