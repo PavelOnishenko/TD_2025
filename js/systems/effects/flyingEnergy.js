@@ -41,8 +41,6 @@ export function drawFlyingEnergy(ctx, particles, game) {
         return;
     }
 
-    console.log('[FlyingEnergy] Drawing', particles.length, 'particles');
-
     const fontSize = game?.gameConfig?.effects?.flyingEnergy?.fontSize ?? 32;
 
     particles.forEach(particle => {
