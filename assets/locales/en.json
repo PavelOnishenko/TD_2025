@@ -127,6 +127,10 @@
       "title": "Combine Towers",
       "text": "Great! Now press the Merge Towers button to fuse them into a stronger tower with a different weapon!"
     },
+    "selectMergeTowers": {
+      "title": "Select Towers to Merge",
+      "text": "Now select two adjacent towers of the same color and level to merge them into a powerful upgraded tower!"
+    },
     "removeTower": {
       "title": "Dismantle with a Long Press",
       "text": "Press and hold on a tower to scrap it. Long presses free the platform whenever you need room or the wrong color."

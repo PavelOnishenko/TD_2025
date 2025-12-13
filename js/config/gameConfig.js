@@ -248,7 +248,21 @@ const nonBalanceConfig = {
                 picture: 'assets/tower_2B.png',
                 sound: 'assets/merge.mp3',
                 checkComplete(game, context) {
-                    return hasAcknowledged(context, 'merge-towers') || hasMerges(context);
+                    return hasAcknowledged(context, 'merge-towers') || game.mergeModeActive;
+                },
+            },
+            {
+                id: 'select-merge-towers',
+                name: 'Select Towers to Merge',
+                nameKey: 'tutorial.selectMergeTowers.title',
+                wave: 2,
+                highlightTargets: [],
+                text: 'Now select two adjacent towers of the same color and level to merge them into a powerful upgraded tower!',
+                textKey: 'tutorial.selectMergeTowers.text',
+                picture: 'assets/tower_2B.png',
+                sound: 'assets/merge.mp3',
+                checkComplete(game, context) {
+                    return hasAcknowledged(context, 'select-merge-towers') || hasMerges(context);
                 },
             },
             {
