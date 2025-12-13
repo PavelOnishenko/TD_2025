@@ -323,6 +323,21 @@ const nonBalanceConfig = {
                 },
             },
             {
+                id: 'exit-merge-mode',
+                name: 'Exit Merge Mode',
+                nameKey: 'tutorial.exitMergeMode.title',
+                wave: 2,
+                highlightTargets: ['mergeButton'],
+                text: 'Great merge! Now press the Merge button again to exit merge mode and return to normal tower controls.',
+                textKey: 'tutorial.exitMergeMode.text',
+                picture: 'assets/tower_2B.png',
+                sound: 'assets/merge.mp3',
+                checkComplete(game, context) {
+                    // Only complete if this step is currently being shown and merge mode is off
+                    return context?.currentStepId === 'exit-merge-mode' && !game.mergeModeActive;
+                },
+            },
+            {
                 id: 'remove-tower',
                 name: 'Dismantle with a Long Press',
                 nameKey: 'tutorial.removeTower.title',
