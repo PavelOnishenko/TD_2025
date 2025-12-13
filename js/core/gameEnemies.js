@@ -2,6 +2,7 @@ import Enemy, { TankEnemy, SwarmEnemy } from '../entities/Enemy.js';
 import { updateHUD, endGame } from '../systems/ui.js';
 import gameConfig from '../config/gameConfig.js';
 import { DEFAULT_TIME_SCALE } from './game/world.js';
+import { trackLifeLost } from '../systems/balanceTracking.js';
 
 export const enemyActions = {
     determineEnemyHp() {
@@ -168,6 +169,7 @@ export const enemyActions = {
             if (e.x + e.w >= this.base.x) {
                 this.enemies.splice(i, 1);
                 this.lives--;
+                trackLifeLost(this);
                 if (typeof this.addScore === 'function') {
                     const penalty = Number.isFinite(this.baseHitPenalty)
                         ? this.baseHitPenalty

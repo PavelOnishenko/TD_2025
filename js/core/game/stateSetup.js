@@ -1,6 +1,7 @@
 import { updateHUD, updateUpgradeAvailability } from '../../systems/ui.js';
 import { loadBestScore } from '../../systems/dataStore.js';
 import gameConfig from '../../config/gameConfig.js';
+import { initializeBalanceTracking } from '../../systems/balanceTracking.js';
 
 function configureFirstWave(game) {
     const cfg = game.waveConfigs[0];
@@ -20,6 +21,11 @@ function resetResources(game) {
         game.ensureEndlessWaveTracking();
     }
     game.endlessModeActive = false;
+    // Reset balance tracking stats
+    game.swarmKills = 0;
+    game.tankKills = 0;
+    game.energyGained = 0;
+    game.energySpent = 0;
 }
 
 function resetCollections(game) {
@@ -141,6 +147,13 @@ const stateSetup = {
         this.baseHitPenalty = scoring.baseHitPenalty;
         this.endlessModeActive = false;
         this.ensureEndlessWaveTracking?.();
+        // Balance tracking stats
+        this.swarmKills = 0;
+        this.tankKills = 0;
+        this.energyGained = 0;
+        this.energySpent = 0;
+        // Initialize detailed balance tracking
+        initializeBalanceTracking(this);
         const hasShownWavesSet = this.waveAdState
             && this.waveAdState.shownWaves
             && typeof this.waveAdState.shownWaves.clear === 'function';

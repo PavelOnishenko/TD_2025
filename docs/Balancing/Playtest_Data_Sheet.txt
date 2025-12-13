@@ -1,0 +1,121 @@
+PLAYTEST DATA COLLECTION SHEET
+==============================
+Date: _12.13.2025__________
+
+Fill in actual values from playtesting. Leave blank if not applicable.
+
+================================================================================
+TEST RUN #1: MASS LEVEL 1 SPAM
+================================================================================
+Strategy: Build only Level 1 towers, never merge or upgrade
+
+Wave _5__:
+  Enemy Count: _____ swarms, _____ tanks
+  Total Energy Gained: _____ (kills + wave clear)
+  Difficulty Feel: [ ] Easy  [ ] Fair  [ ] Hard  [ ] Very Hard
+
+Wave ___:
+  Enemy Count: _____ swarms, _____ tanks
+  Total Energy Gained: _____ (kills + wave clear)
+  Difficulty Feel: [ ] Easy  [ ] Fair  [ ] Hard  [ ] Very Hard
+
+Wave ___:
+  Enemy Count: _____ swarms, _____ tanks
+  Total Energy Gained: _____ (kills + wave clear)
+  Difficulty Feel: [ ] Easy  [ ] Fair  [ ] Hard  [ ] Very Hard
+
+Wave ___:
+  Enemy Count: _____ swarms, _____ tanks
+  Total Energy Gained: _____ (kills + wave clear)
+  Difficulty Feel: [ ] Easy  [ ] Fair  [ ] Hard  [ ] Very Hard
+
+Wave Failed: _____
+Total Energy at Failure: _____
+Number of Level 1 Towers: _____
+Grid Slots Used: _____/12
+
+Failure Reason (check one):
+[ ] Not enough DPS (enemies getting through)
+[ ] Not enough coverage (enemies in gaps)
+[ ] Ran out of grid space
+[ ] Other: _________________________
+
+Notes: _______________________________________________________________
+
+================================================================================
+TEST RUN #2: BALANCED PLAY
+================================================================================
+Strategy: Play normally, merge when it makes sense
+
+Energy Checkpoints:
+  Wave 5:  _____ energy | Towers: ___ L1, ___ L2, ___ L3, ___ L4+
+  Wave 10: _____ energy | Towers: ___ L1, ___ L2, ___ L3, ___ L4+
+  Wave 15: _____ energy | Towers: ___ L1, ___ L2, ___ L3, ___ L4+
+  Wave 20: _____ energy | Towers: ___ L1, ___ L2, ___ L3, ___ L4+
+
+Did you beat wave 20? [ ] Yes  [ ] No (failed at wave _____)
+
+Notes: _______________________________________________________________
+
+================================================================================
+TEST RUN #3: RUSH HIGH LEVEL (Optional)
+================================================================================
+Strategy: Merge aggressively to get highest level towers ASAP
+
+First Level 3 at Wave: _____
+First Level 4 at Wave: _____
+First Level 5 at Wave: _____ (if reached)
+
+Wave Failed (or 20+ if won): _____
+Energy at Failure/Wave 20: _____
+
+Notes: _______________________________________________________________
+
+================================================================================
+WAVE DATA VALIDATION TEMPLATE
+================================================================================
+
+Pick 3-4 waves to record detailed data:
+
+Wave ___:
+  Enemy Count: _____ swarms, _____ tanks
+  Total Energy Gained: _____ (kills + wave clear)
+  Difficulty Feel: [ ] Easy  [ ] Fair  [ ] Hard  [ ] Very Hard
+
+Wave ___:
+  Enemy Count: _____ swarms, _____ tanks
+  Total Energy Gained: _____ (kills + wave clear)
+  Difficulty Feel: [ ] Easy  [ ] Fair  [ ] Hard  [ ] Very Hard
+
+Wave ___:
+  Enemy Count: _____ swarms, _____ tanks
+  Total Energy Gained: _____ (kills + wave clear)
+  Difficulty Feel: [ ] Easy  [ ] Fair  [ ] Hard  [ ] Very Hard
+
+Wave ___:
+  Enemy Count: _____ swarms, _____ tanks
+  Total Energy Gained: _____ (kills + wave clear)
+  Difficulty Feel: [ ] Easy  [ ] Fair  [ ] Hard  [ ] Very Hard
+
+================================================================================
+GENERAL OBSERVATIONS
+================================================================================
+
+When did Level 1 towers start feeling weak?
+Wave: _____
+
+When did you first feel you NEEDED to merge?
+Wave: _____
+
+Did you use upgrades (wave 15+)? [ ] Yes  [ ] No
+If yes, which upgrades felt worth it? ___________________________________
+
+Most difficult waves: _______________________________________________
+
+Any waves that felt too easy? _______________________________________
+
+Other notes: ________________________________________________________
+____________________________________________________________________
+____________________________________________________________________
+
+================================================================================

@@ -3,6 +3,7 @@ import { createExplosion } from '../systems/effects.js';
 import gameConfig from '../config/gameConfig.js';
 import { getWaveEnergyMultiplier } from '../utils/energyScaling.js';
 import { createFlyingEnergyParticle } from '../systems/effects/flyingEnergy.js';
+import { trackEnemyKill } from '../systems/balanceTracking.js';
 
 function clamp(value, min, max) {
     return Math.max(min, Math.min(max, value));
@@ -159,6 +160,15 @@ export function applyProjectileDamage(game, projectile, enemyIndex, options = {}
         game.enemies.splice(enemyIndex, 1);
         const energyGain = getEnergyGainForKill(game, enemy);
         game.energy += energyGain;
+
+        // Track kills by type and energy gained
+        if (enemy?.spriteKey === 'tank') {
+            game.tankKills = (game.tankKills || 0) + 1;
+        } else {
+            game.swarmKills = (game.swarmKills || 0) + 1;
+        }
+        game.energyGained = (game.energyGained || 0) + energyGain;
+        trackEnemyKill(game, enemy, energyGain);
 
         const width = Number.isFinite(enemy.w) ? enemy.w : 0;
         const height = Number.isFinite(enemy.h) ? enemy.h : 0;

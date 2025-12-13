@@ -1,0 +1,67 @@
+printBalanceData()
+balanceTracking.js:150 
+========================================
+balanceTracking.js:151 BALANCE TRACKING DATA
+balanceTracking.js:152 ========================================
+
+balanceTracking.js:155 WAVE 1:
+balanceTracking.js:156   Duration: 17.7s
+balanceTracking.js:157   Enemies: 24 swarms, 0 tanks (24 total)
+balanceTracking.js:158   Energy: Start=0, End=208, Gained=208, Spent=0
+balanceTracking.js:159     From kills: 168, From wave clear: 40
+balanceTracking.js:160   Towers: Start=4, End=4
+balanceTracking.js:161     Placed: 0, Merged: 0, Upgraded: 0, Removed: 0
+balanceTracking.js:162   Tower Levels (end): L1=4, L2=0, L3=0, L4=0, L5=0, L6=0
+balanceTracking.js:163   Lives Lost: 0
+balanceTracking.js:164 
+balanceTracking.js:155 WAVE 2:
+balanceTracking.js:156   Duration: 12.0s
+balanceTracking.js:157   Enemies: 17 swarms, 0 tanks (17 total)
+balanceTracking.js:158   Energy: Start=88, End=247, Gained=159, Spent=0
+balanceTracking.js:159     From kills: 119, From wave clear: 40
+balanceTracking.js:160   Towers: Start=5, End=5
+balanceTracking.js:161     Placed: 0, Merged: 0, Upgraded: 0, Removed: 0
+balanceTracking.js:162   Tower Levels (end): L1=5, L2=0, L3=0, L4=0, L5=0, L6=0
+balanceTracking.js:163   Lives Lost: 0
+balanceTracking.js:164 
+balanceTracking.js:155 WAVE 3:
+balanceTracking.js:156   Duration: 14.9s
+balanceTracking.js:157   Enemies: 21 swarms, 0 tanks (21 total)
+balanceTracking.js:158   Energy: Start=7, End=194, Gained=187, Spent=0
+balanceTracking.js:159     From kills: 147, From wave clear: 40
+balanceTracking.js:160   Towers: Start=7, End=7
+balanceTracking.js:161     Placed: 0, Merged: 0, Upgraded: 0, Removed: 0
+balanceTracking.js:162   Tower Levels (end): L1=7, L2=0, L3=0, L4=0, L5=0, L6=0
+balanceTracking.js:163   Lives Lost: 0
+balanceTracking.js:164 
+balanceTracking.js:155 WAVE 4:
+balanceTracking.js:156   Duration: 11.8s
+balanceTracking.js:157   Enemies: 18 swarms, 0 tanks (18 total)
+balanceTracking.js:158   Energy: Start=74, End=240, Gained=166, Spent=0
+balanceTracking.js:159     From kills: 126, From wave clear: 40
+balanceTracking.js:160   Towers: Start=8, End=8
+balanceTracking.js:161     Placed: 0, Merged: 0, Upgraded: 0, Removed: 0
+balanceTracking.js:162   Tower Levels (end): L1=8, L2=0, L3=0, L4=0, L5=0, L6=0
+balanceTracking.js:163   Lives Lost: 0
+balanceTracking.js:164 
+balanceTracking.js:155 WAVE 5:
+balanceTracking.js:156   Duration: 15.1s
+balanceTracking.js:157   Enemies: 18 swarms, 1 tanks (19 total)
+balanceTracking.js:158   Energy: Start=0, End=181, Gained=181, Spent=0
+balanceTracking.js:159     From kills: 140, From wave clear: 41
+balanceTracking.js:160   Towers: Start=10, End=10
+balanceTracking.js:161     Placed: 0, Merged: 0, Upgraded: 0, Removed: 0
+balanceTracking.js:162   Tower Levels (end): L1=10, L2=0, L3=0, L4=0, L5=0, L6=0
+balanceTracking.js:163   Lives Lost: 0
+balanceTracking.js:164 
+balanceTracking.js:155 WAVE 6:
+balanceTracking.js:156   Duration: 12.6s
+balanceTracking.js:157   Enemies: 19 swarms, 0 tanks (19 total)
+balanceTracking.js:158   Energy: Start=61, End=235, Gained=174, Spent=0
+balanceTracking.js:159     From kills: 133, From wave clear: 41
+balanceTracking.js:160   Towers: Start=11, End=11
+balanceTracking.js:161     Placed: 0, Merged: 0, Upgraded: 0, Removed: 0
+balanceTracking.js:162   Tower Levels (end): L1=11, L2=0, L3=0, L4=0, L5=0, L6=0
+balanceTracking.js:163   Lives Lost: 0
+balanceTracking.js:164 
+balanceTracking.js:167 ========================================

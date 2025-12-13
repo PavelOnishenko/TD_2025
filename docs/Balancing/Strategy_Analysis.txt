@@ -1,0 +1,409 @@
+STRATEGY ANALYSIS & BREAKPOINT CALCULATION
+===========================================
+Date: 2025-12-13
+Based on: Balance_Numbers_Extracted.txt
+
+This document analyzes different strategies and identifies where they should fail.
+
+================================================================================
+PART 1: WAVE-BY-WAVE SIMULATION
+================================================================================
+
+Assumptions for calculations:
+- Average enemy count per wave ≈ difficulty / 3 (rough estimate)
+- Swarms are more common than tanks (ratio ~3:1)
+- Enemy speed: 200 (swarm), 100 (tank) with 0.9 multiplier
+- Path length: estimated ~1400 units (need to verify from code)
+- Time in range varies by tower level (longer range = more time)
+
+Wave Data Table:
+----------------------------------------------------------------
+Wave | Diff | HP   | Est Enemies | Swarm HP | Tank HP  | Est Total HP
+-----|------|------|-------------|----------|----------|-------------
+  1  | 13   | 1.34 |    ~10      |  13.4    |  47.8    |   ~200
+  2  | 13   | 1.64 |    ~10      |  16.4    |  58.5    |   ~245
+  3  | 14   | 1.94 |    ~11      |  19.4    |  69.3    |   ~310
+  4  | 14   | 2.24 |    ~11      |  22.4    |  80.0    |   ~370
+  5  | 15   | 2.53 |    ~12      |  25.3    |  90.3    |   ~445
+  6  | 15   | 2.97 |    ~12      |  29.7    | 106.0    |   ~525
+  7  | 16   | 3.20 |    ~13      |  32.0    | 114.2    |   ~610
+  8  | 16   | 3.42 |    ~13      |  34.2    | 122.1    |   ~650
+  9  | 17   | 3.65 |    ~14      |  36.5    | 130.3    |   ~745
+ 10  | 17   | 3.87 |    ~14      |  38.7    | 138.2    |   ~790
+ 11  | 18   | 4.10 |    ~15      |  41.0    | 146.4    |   ~895
+ 12  | 18   | 4.32 |    ~15      |  43.2    | 154.2    |   ~945
+ 13  | 19   | 4.55 |    ~16      |  45.5    | 162.4    |  ~1060
+ 14  | 19   | 4.77 |    ~16      |  47.7    | 170.3    |  ~1110
+ 15  | 20   | 5.00 |    ~17      |  50.0    | 178.5    |  ~1235
+ 16  | 20   | 5.22 |    ~17      |  52.2    | 186.4    |  ~1295
+ 17  | 21   | 5.00 |    ~18      |  50.0    | 178.5    |  ~1310
+ 18  | 21   | 5.25 |    ~18      |  52.5    | 187.4    |  ~1375
+ 19  | 22   | 5.45 |    ~19      |  54.5    | 194.6    |  ~1510
+ 20  | 22   | 5.65 |    ~19      |  56.5    | 201.6    |  ~1565
+
+Notes:
+- Total HP is rough estimate assuming 3:1 swarm:tank ratio
+- Actual counts vary due to random formation selection
+- These are MINIMUM values; actual waves may be harder
+
+Energy Projection:
+------------------
+Starting: 480 energy
+
+Assuming average 10 kills/wave × 7 energy + 40 wave bonus:
+Wave 1 end: 480 + 110 = 590
+Wave 2 end: 590 + 110 = 700
+Wave 3 end: 700 + 115 = 815
+Wave 4 end: 815 + 115 = 930
+Wave 5 end: 930 + 120 = 1050
+Wave 6 end: 1050 + 120 = 1170
+Wave 7 end: 1170 + 125 = 1295
+Wave 8 end: 1295 + 125 = 1420
+Wave 9 end: 1420 + 130 = 1550
+Wave 10 end: 1550 + 135 = 1685 (bonuses start)
+Wave 15 end: ~2500 energy (upgrades unlock)
+Wave 20 end: ~3500 energy
+
+(These are conservative estimates - actual may be higher)
+
+================================================================================
+PART 2: STRATEGY ANALYSIS
+================================================================================
+
+────────────────────────────────────────────────────────────────────────────
+STRATEGY A: MASS LEVEL 1 SPAM
+────────────────────────────────────────────────────────────────────────────
+
+Concept: Build as many Level 1 towers as possible, never merge or upgrade
+
+Stats:
+- Cost per tower: 120 energy
+- Max towers: 12
+- Total cost: 1440 energy
+- Total DPS: 12 × 16.6 = 199.2 DPS
+- Range: 182 (limited coverage)
+
+Wave-by-Wave Viability:
+
+Wave 1-4: ✓ VIABLE
+- Can afford 4-7 towers
+- 66-116 DPS available
+- Total enemy HP: ~200-370
+- Low HP enemies die quickly
+
+Wave 5-7: ⚠️ TIGHT
+- Can afford 8-10 towers
+- 133-166 DPS available
+- Total enemy HP: ~445-610
+- Starting to struggle with tankier enemies
+- Level 1 takes 3-4 shots on swarms, 7-10 shots on tanks
+
+Wave 8-10: ❌ FAILING
+- Can afford 11-12 towers (grid limit reached!)
+- 183-199 DPS available
+- Total enemy HP: ~650-790
+- Time-to-kill exceeds safe margins
+- Level 1 takes 5 shots per swarm (2.5s), 17 shots per tank (8.5s)
+- Tanks will leak through with limited range
+
+Wave 11+: ❌ IMPOSSIBLE
+- Already at max towers (12)
+- No way to increase DPS
+- Enemy HP keeps scaling
+- Complete failure
+
+**Verdict: Mass Level 1 should FAIL by Wave 8-10**
+
+Failure Symptoms:
+- Grid slots full but still losing
+- Towers can't kill fast enough
+- Tanks walking through due to limited range
+- Player has energy but nowhere to spend it effectively
+
+────────────────────────────────────────────────────────────────────────────
+STRATEGY B: RUSH MERGING (Get Level 3-4 ASAP)
+────────────────────────────────────────────────────────────────────────────
+
+Concept: Merge aggressively to get high-level towers early
+
+Example path:
+- Wave 1: Build 4 Level 1s (480 energy)
+- Wave 2: Merge to 2 Level 2s, build more
+- Wave 3-5: Rush to Level 3s (very fast balls - 66.67 DPS!)
+- Wave 6-10: Mix of Level 3-4 towers
+- Wave 11+: Start pushing to Level 5 (railgun with piercing!)
+
+Stats for early Level 3:
+- Cost: 4 Level 1s merged = 480 energy → 1 Level 3
+- DPS: 66.67 (4× more than Level 1!)
+- Range: 254.8 (much better coverage)
+- Weapon: Very fast balls (single target)
+
+Stats for Level 4:
+- Cost: 8 Level 1s merged = 960 energy → 1 Level 4
+- DPS: 75.83 (4.5× more than Level 1!)
+- Range: 291.2
+- Weapon: Machinegun bursts (single target)
+
+Wave-by-Wave Viability:
+
+Wave 1-2: ⚠️ RISKY
+- Only 2-4 towers active
+- Limited coverage
+- If towers poorly positioned, may leak
+- High skill requirement
+
+Wave 3-5: ✓ STRONG
+- Have 1-2 Level 3s (very fast fire rate)
+- Good single-target DPS
+- Good range coverage
+- 133-166 DPS from fewer towers
+
+Wave 6-12: ✓ VERY STRONG
+- Multiple Level 3-4 towers
+- Excellent single-target DPS
+- Good range
+- Energy spent on quality over quantity
+- Can start working toward Level 5
+
+Wave 13-15: ⚠️ PLATEAUING
+- Level 3-4s still good but enemy HP scaling
+- Grid filling up
+- Need to start getting Level 5 (railgun!)
+- Upgrades unlock at wave 15
+
+Wave 16+: ❌ NEEDS EVOLUTION
+- Level 3-4 alone not enough
+- Must get Level 5 (railgun piercing!) or Level 6 (rockets AoE!)
+- Upgrades unlock at wave 15, should be using them
+
+**Verdict: Rush merging is STRONGEST in waves 6-15, but requires skill early and evolution late**
+
+Failure Symptoms:
+- Waves 1-2: Leaks due to poor coverage
+- Waves 16+: Need to evolve strategy, stuck on Level 3-4 without multi-target weapons
+
+────────────────────────────────────────────────────────────────────────────
+STRATEGY C: BALANCED BUILD & MERGE
+────────────────────────────────────────────────────────────────────────────
+
+Concept: Build for coverage, merge when efficient, adapt to each wave
+
+Example path:
+- Wave 1-3: Build 6-8 Level 1s for solid coverage
+- Wave 4-6: Start merging to Level 2s
+- Wave 7-10: Mix of Level 2-3 (6-8 towers total)
+- Wave 11-15: Push some towers to Level 3-4
+- Wave 15+: Use upgrades when merging isn't possible
+
+Stats:
+- Flexible energy allocation
+- Maintains good coverage
+- Gradually increases tower quality
+
+Wave-by-Wave Viability:
+
+Wave 1-20: ✓ VIABLE (with good play)
+- Always adapts to current challenge
+- Balances coverage vs tower quality
+- Uses energy efficiently
+- Most forgiving of mistakes
+
+**Verdict: Balanced approach is VIABLE LONGEST but requires most skill**
+
+Failure Symptoms:
+- Player makes poor merge decisions
+- Over-commits to either building or merging
+- Runs out of energy at critical moments
+- Poor positioning leaves gaps
+
+────────────────────────────────────────────────────────────────────────────
+STRATEGY D: UPGRADE-HEAVY (Post-Wave 15)
+────────────────────────────────────────────────────────────────────────────
+
+Concept: Rely on upgrade system instead of merging
+
+Stats:
+- Upgrades cost 300-5000 energy
+- Available from wave 15
+- Can upgrade without losing coverage
+
+Analysis:
+Upgrade L1→L2: 300 energy, +23.4 DPS, keeps coverage ✓ GOOD
+Upgrade L2→L3: 600 energy, +26.67 DPS, keeps coverage ✓ EXCELLENT
+Upgrade L3→L4: 1200 energy, +9.16 DPS ⚠️ EXPENSIVE
+Upgrade L4→L5: 2500 energy, -28.21 DPS ❌ TRAP! (only for range?)
+Upgrade L5→L6: 5000 energy, +19 DPS + AoE ⚠️ VERY EXPENSIVE
+
+Comparing to merging:
+- Merge 2×L1→L2: Cost 240, net +6.8 DPS, -1 tower
+- Upgrade L1→L2: Cost 300, +23.4 DPS, keeps coverage
+- **Upgrade is BETTER for DPS, worse for coverage**
+
+Wave-by-Wave Viability:
+
+Wave 1-14: ❌ NOT AVAILABLE
+
+Wave 15-17: ✓ USEFUL SUPPLEMENT
+- Can upgrade to fill gaps when grid is full
+- Expensive but effective
+- Should NOT be primary strategy
+
+Wave 18-20: ✓ NECESSARY
+- Grid likely full or nearly full
+- Only way to increase power
+- Must use upgrades to survive
+
+**Verdict: Upgrades are ESSENTIAL late game but too expensive to rely on exclusively**
+
+Failure Symptoms:
+- Running out of energy
+- Trying to upgrade too early
+- Falling for L4→L5 trap
+- Not merging when it's more efficient
+
+────────────────────────────────────────────────────────────────────────────
+STRATEGY E: MINIMAL TOWER / EFFICIENCY RUN
+────────────────────────────────────────────────────────────────────────────
+
+Concept: Beat waves with as few towers as possible (challenge mode)
+
+Requirements:
+- Perfect positioning
+- Perfect timing on merges
+- Optimal tower upgrades
+- Color management
+
+Likely limit: ~Wave 10-15 before it becomes impossible
+
+**Verdict: Fun challenge but not sustainable**
+
+================================================================================
+PART 3: CRITICAL BREAKPOINTS & RECOMMENDATIONS
+================================================================================
+
+DESIGNED FAILURE POINTS:
+------------------------
+
+Wave 1-5: Tutorial Phase
+→ Any strategy works
+→ Teach building, merging, color switching
+
+Wave 6-8: First Skill Check - "Can you merge?"
+→ Pure Level 1 spam starts struggling
+→ Players should have some Level 2s
+→ Merging should feel rewarding
+
+Wave 9-12: Second Skill Check - "Can you manage economy?"
+→ Level 1 spam completely fails
+→ Need mix of Level 2-3-4
+→ High DPS towers become valuable
+→ Energy management matters
+
+Wave 13-15: Third Skill Check - "Can you optimize composition?"
+→ Need multiple Level 3-4s or start pushing to Level 5 (railgun!)
+→ Must plan ahead for upgrades (unlock at wave 15)
+→ Tower positioning critical
+
+Wave 15: MAJOR MILESTONE - Upgrades Unlock
+→ Game changes significantly
+→ New strategic options
+→ Should feel like power spike
+
+Wave 16-20: Endgame - "Master everything"
+→ Must use upgrades
+→ Grid optimization critical
+→ Perfect play required
+→ All strategies converge to "max level towers"
+
+Wave 21+: Endless Mode
+→ Continuous scaling
+→ See how far you can go
+→ Pure optimization challenge
+
+================================================================================
+PART 4: BALANCE TUNING RECOMMENDATIONS
+================================================================================
+
+Current Issues to Consider:
+
+1. **Level 4→5 Upgrade is a TRAP**
+   - Costs 2500 energy
+   - DECREASES DPS by 28
+   - Only benefit is +36 range
+   - Recommendation: Either buff L5 damage or reduce cost
+
+2. **Level 1 Spam Might Fail Too Late**
+   - Currently fails around wave 8-10
+   - Might want it to fail by wave 6-7
+   - Solution: Increase enemy HP slightly for waves 6-8
+
+3. **Rush Merging to Level 5 Might Be Too Strong**
+   - Level 5 Railgun piercing is VERY powerful if achieved early
+   - Early Level 5 could dominate waves 12-18 if reached
+   - However, getting Level 5 requires huge investment (16 Level 1s!)
+   - Likely balanced by difficulty of achieving it
+
+4. **Energy Economy Might Be Too Generous**
+   - By wave 10, player has ~1685 energy (14 towers worth!)
+   - Grid only holds 12
+   - Maybe reduce energy gains to make choices harder?
+
+5. **Upgrade Costs Are Steep**
+   - L5→L6 costs 5000 energy (41 towers worth!)
+   - By wave 20, might only have ~3500 total energy
+   - Consider: Reduce L5→L6 cost to 3000-3500?
+
+6. **Missing Strategy: Pure Upgrade Path**
+   - Is there a viable "never merge, only upgrade" strategy?
+   - Currently seems impossible (upgrades too expensive)
+   - Might be intentional design
+
+================================================================================
+PART 5: SPECIFIC QUESTIONS FOR TESTING
+================================================================================
+
+Need to verify by playing:
+
+1. How long does a typical wave last?
+   → Affects time-to-kill calculations
+
+2. What's the actual enemy count variance per wave?
+   → My estimates might be off
+
+3. How much does Level 5 railgun piercing help in practice?
+   → Single-target DPS (47.62) might underestimate L5 true value
+   → Against groups could be 150-240+ effective DPS
+
+4. How much does Level 6 rocket AoE help?
+   → Single-target DPS (66.67) might underestimate L6 true value
+   → Against groups could be 200-330+ effective DPS
+
+5. What's the actual energy gain by wave 10/15/20?
+   → Need real data to validate projections
+
+6. Can Level 1 spam actually reach wave 10?
+   → Or does it fail earlier than calculated?
+
+7. Is rushing Level 3-4 actually viable?
+   → Or do early waves punish low tower count too hard?
+
+8. Can players realistically get Level 5 by wave 15?
+   → Requires 16 Level 1s worth of energy (1920) + merges
+   → Is this achievable and worth it?
+
+8. What's the player's actual income per wave?
+   → Kill counts, wave bonuses, etc.
+
+================================================================================
+NEXT STEPS
+================================================================================
+
+1. Playtest each strategy to verify theoretical breakpoints
+2. Record actual energy income per wave
+3. Measure enemy counts and total HP per wave
+4. Note where strategies actually fail vs theoretical
+5. Adjust balance knobs accordingly
+6. Document intended strategy progression for players
+
+================================================================================

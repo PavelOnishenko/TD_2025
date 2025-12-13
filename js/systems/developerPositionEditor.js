@@ -1,7 +1,7 @@
 import { applySimpleSaveState, createSimpleSavePayload } from './simpleSaveSystem.js';
 
 const STORAGE_KEY = 'td_dev_positions_v1';
-const DEFAULT_DRAFT = { version: 1, wave: 1, energy: 0, towers: [] };
+const DEFAULT_DRAFT = { version: 1, wave: 1, energy: 0, towers: [], swarmKills: 0, tankKills: 0, energyGained: 0, energySpent: 0 };
 
 function getStorage() {
     if (typeof window === 'undefined' || !window.localStorage) {
@@ -76,7 +76,11 @@ function sanitizeDraft(rawDraft) {
     const towers = Array.isArray(rawDraft?.towers)
         ? rawDraft.towers.map(sanitizeTowerDraft).filter(entry => entry.cellId)
         : [];
-    return { version: 1, wave, energy, towers };
+    const swarmKills = Math.max(0, Math.floor(Number(rawDraft?.swarmKills) || 0));
+    const tankKills = Math.max(0, Math.floor(Number(rawDraft?.tankKills) || 0));
+    const energyGained = Math.max(0, Math.floor(Number(rawDraft?.energyGained) || 0));
+    const energySpent = Math.max(0, Math.floor(Number(rawDraft?.energySpent) || 0));
+    return { version: 1, wave, energy, towers, swarmKills, tankKills, energyGained, energySpent };
 }
 
 function formatSlotSummary(slot) {

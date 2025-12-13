@@ -21,6 +21,7 @@ import towerManagement from './game/towerManagement.js';
 import createFormationManager from './game/formations.js';
 import gameConfig from '../config/gameConfig.js';
 import { scaleDifficulty } from '../utils/difficultyScaling.js';
+import { trackTowerRemoved } from '../systems/balanceTracking.js';
 
 function createScreenShakeState() {
     const { frequency } = gameConfig.world.screenShake;
@@ -574,6 +575,7 @@ class Game {
         }
 
         this.towers.splice(index, 1);
+        trackTowerRemoved(this);
 
         if (tower.cell) {
             tower.cell.occupied = false;

@@ -1,0 +1,386 @@
+BALANCE CONFIG EXTRACTION
+=========================
+Extracted from: js/config/balanceConfig.js
+Date: 2025-12-13
+
+================================================================================
+PLAYER ECONOMY
+================================================================================
+
+Starting Resources:
+  - Initial Energy: 480
+  - Initial Lives: 5
+  - Max Waves: 20 (then endless mode)
+
+Costs:
+  - Tower Placement: 120 energy
+  - Color Switch: 0 energy (free)
+  - Tower Upgrade Costs (by level):
+      Level 1→2: 300 energy
+      Level 2→3: 600 energy
+      Level 3→4: 1200 energy
+      Level 4→5: 2500 energy
+      Level 5→6: 5000 energy
+
+Energy Income:
+  - Per Enemy Kill (base): 7 energy
+  - Per Tank Kill: 7 × 2 = 14 energy
+  - Per Wave Clear: 40 energy
+
+  Kill Energy Scaling (bonus multiplier on base 7):
+    - Waves 1-9:   0% bonus (7 energy)
+    - Wave 10-19:  3% bonus (7.21 energy)
+    - Wave 20-29:  10% bonus (7.7 energy)
+    - Wave 30+:    30% bonus (9.1 energy)
+
+Upgrade System:
+  - Unlocks at Wave: 15
+
+Max Tower Count:
+  - Grid cells available: 12 (6 top + 6 bottom)
+
+================================================================================
+TOWER STATS (by level)
+================================================================================
+
+Level 1 (Balls - Basic):
+  - Damage: 8.3
+  - Fire Interval: 500ms (0.5 seconds)
+  - DPS: 8.3 / 0.5 = 16.6
+  - Upgrade Cost: 300
+  - Weapon: Single ball shot
+
+Level 2 (Balls - Faster):
+  - Damage: 8
+  - Fire Interval: 200ms (0.2 seconds)
+  - DPS: 8 / 0.2 = 40
+  - Upgrade Cost: 600
+  - Weapon: Single ball shot (weaker but more frequent)
+
+Level 3 (Balls - VERY Fast):
+  - Damage: 4
+  - Fire Interval: 60ms (0.06 seconds)
+  - DPS: 4 / 0.06 = 66.67
+  - Upgrade Cost: 1200
+  - Weapon: Single ball shot (weaker but VERY frequent)
+
+Level 4 (Machinegun):
+  - Damage: 9.1
+  - Fire Interval: 120ms (0.12 seconds)
+  - DPS: 9.1 / 0.12 = 75.83
+  - Upgrade Cost: 2500
+  - Weapon: Bursts of 3 bullets
+
+Level 5 (Railgun):
+  - Damage: 50
+  - Fire Interval: 1050ms (1.05 seconds)
+  - DPS: 50 / 1.05 = 47.62 (SINGLE TARGET)
+  - Upgrade Cost: 5000
+  - Weapon: PIERCING beam (hits all enemies in line!)
+  - Effective DPS: 150-240+ when hitting multiple enemies
+
+Level 6 (Rockets):
+  - Damage: 80
+  - Fire Interval: 1200ms (1.2 seconds)
+  - DPS: 80 / 1.2 = 66.67 (SINGLE TARGET)
+  - Upgrade Cost: N/A (max level)
+  - Weapon: EXPLOSION (hits all enemies in radius!)
+  - Explosion Radius: min 18, range multiplier 0.5
+  - Effective DPS: 200-330+ when hitting multiple enemies
+
+Tower Range:
+  - Base Range: 140
+  - Range Per Level: 0.2 (UNCLEAR: 0.2 absolute units or 20% increase?)
+  - Range Bonus Multiplier: 1.3 (UNCLEAR: when is this applied?)
+
+Projectile Stats:
+  - Speed: 700
+  - Base Radius: 18
+  - Radius Per Level: 5
+  - Color Mismatch Damage: 30% of normal damage
+
+================================================================================
+ENEMY STATS
+================================================================================
+
+Swarm (light, fast):
+  - HP Multiplier: 10
+  - Speed: 200 (x direction)
+  - Group Size: 3 (spawns in groups of 3)
+
+Tank (heavy, slow):
+  - HP Multiplier: 35.7
+  - Speed: 100 (x direction)
+
+Speed Multiplier (global): 0.9 (applied to all enemies?)
+
+Enemy Spawn Location: x=-600, y=600 (default)
+
+UNCLEAR:
+  - How does HP multiplier work? What's the base HP?
+  - What does enemyHp in wave schedule mean?
+  - Are swarms counted as 1 or 3 enemies?
+
+================================================================================
+WAVE SCHEDULE (Waves 1-20)
+================================================================================
+
+Wave | Difficulty | Enemy HP
+-----|------------|----------
+  1  |    13      |  1.34
+  2  |    13      |  1.64
+  3  |    14      |  1.94
+  4  |    14      |  2.24
+  5  |    15      |  2.53
+  6  |    15      |  2.97
+  7  |    16      |  3.20
+  8  |    16      |  3.42
+  9  |    17      |  3.65
+ 10  |    17      |  3.87
+ 11  |    18      |  4.10
+ 12  |    18      |  4.32
+ 13  |    19      |  4.55
+ 14  |    19      |  4.77
+ 15  |    20      |  5.00
+ 16  |    20      |  5.22
+ 17  |    21      |  5.00
+ 18  |    21      |  5.25
+ 19  |    22      |  5.45
+ 20  |    22      |  5.65
+
+Difficulty Multiplier (global): 1
+
+Endless Mode (Wave 21+):
+  - HP Growth: 1.1 (10% per wave?)
+  - Difficulty Increment: 3
+
+UNCLEAR:
+  - What does "difficulty" actually mean? Enemy count?
+  - Is enemyHp a multiplier on base HP?
+  - How are formations selected from difficulty budget?
+
+================================================================================
+FORMATIONS
+================================================================================
+
+Formation Gap: 0.85 (time between enemies in formation?)
+Minimum Weight: 0.02
+
+13 Formation Types with varying difficulty (1-9):
+  - Difficulty 1: Solo Scout
+  - Difficulty 2: Twin Harass
+  - Difficulty 3: Triple Column, Tank Spearhead
+  - Difficulty 4: Escort Column, Heavy Vanguard, Offset Sweep
+  - Difficulty 5: Swarm Wave, Staggered Flood
+  - Difficulty 6: Mixed Barrage, Tank Phalanx
+  - Difficulty 7: Spiral Crush
+  - Difficulty 9: Warfront Saturation
+
+Each formation has probability formula based on wave number.
+
+QUESTIONS:
+
+  - How does wave "difficulty" budget translate to formations? 
+  - Each formation has its own difficulty. Wave has total difficulty. 
+  When wave is constructed, it generates formations 1 by 1 until total wave difficulty is depleted.
+
+  - Does difficulty=13 mean ~13 points to spend on formations?
+  - If u have wave difficulty = 13, u can have for example formations of 1,2,3,3,4
+
+
+  - How many times are formations spawned per wave?
+  - until wave budget is finished.
+
+================================================================================
+SCORING
+================================================================================
+
+Score Earned:
+  - Per Kill: 10 points
+  - Per Wave Clear: 150 points
+  - Base Hit Penalty: -25 points
+
+================================================================================
+CLARIFICATIONS (RESEARCHED FROM CODE)
+================================================================================
+
+1. **Enemy HP Calculation:** ✓ CONFIRMED
+   Source: js/core/gameEnemies.js:34-61
+
+   Formula: actualHP = wave.enemyHp × enemy.hpMultiplier
+
+   Examples for Wave 1 (enemyHp = 1.34):
+   - Swarm: 1.34 × 10 = 13.4 HP
+   - Tank:  1.34 × 35.7 = 47.84 HP
+
+   Examples for Wave 10 (enemyHp = 3.87):
+   - Swarm: 3.87 × 10 = 38.7 HP
+   - Tank:  3.87 × 35.7 = 138.16 HP
+
+2. **Difficulty System:** ✓ CONFIRMED
+   Source: js/core/game/formations.js:321-338
+
+   - Wave difficulty IS a point budget
+   - Formations are selected randomly (weighted by probability)
+   - Each formation costs its difficulty value
+   - Process repeats until budget exhausted
+   - YES, multiple formations per wave is the norm
+
+   Example: Wave 1 has difficulty=13
+   - Might pick "Solo Scout" (diff=1) + "Triple Column" (diff=3) + "Swarm Wave" (diff=5)
+     + "Twin Harass" (diff=2) = 11 points used, 2 remaining
+   - Or different combination based on probabilities
+
+3. **Tower Range:** ✓ CONFIRMED
+   Source: js/entities/Tower.js:63-65
+
+   Formula: range = baseRange × (1 + rangePerLevel × (level-1)) × rangeBonusMultiplier
+
+   With baseRange=140, rangePerLevel=0.2, rangeBonusMultiplier=1.3:
+   - Level 1: 140 × (1 + 0.2×0) × 1.3 = 140 × 1.0 × 1.3 = 182
+   - Level 2: 140 × (1 + 0.2×1) × 1.3 = 140 × 1.2 × 1.3 = 218.4
+   - Level 3: 140 × (1 + 0.2×2) × 1.3 = 140 × 1.4 × 1.3 = 254.8
+   - Level 4: 140 × (1 + 0.2×3) × 1.3 = 140 × 1.6 × 1.3 = 291.2
+   - Level 5: 140 × (1 + 0.2×4) × 1.3 = 140 × 1.8 × 1.3 = 327.6
+   - Level 6: 140 × (1 + 0.2×5) × 1.3 = 140 × 2.0 × 1.3 = 364
+
+   Range grows linearly (20% per level), bonus multiplier ALWAYS applied.
+
+4. **Swarm Groups / groupSize:** ✓ CONFIRMED
+   Source: js/core/gameEnemies.js:60, js/core/game/formations.js:131-132
+
+   - Old swarm.groupSize config is DEPRECATED (not used by formation system)
+   - New system: formations can specify groupSize per ship
+   - Each swarm in a group counts as 1 separate enemy for:
+     * Energy rewards (each gives energy)
+     * Score (each gives points)
+     * Enemy count
+   - groupSize=3 means spawn 3 separate swarm entities
+
+5. **Formation Timing:** ✓ CONFIRMED
+   Source: js/core/game/formations.js:115-116, 343-365
+
+   - @0, @0.5, @1 are time offsets IN SECONDS within the formation
+   - Each formation starts at cursorTime
+   - Ships spawn at: formationStartTime + shipTime
+   - After formation completes, cursor advances by:
+     cursorTime = formationStart + maxShipTime + formationGap
+   - Default formationGap = 0.85 seconds
+
+   Example formation:
+     swarm @0 y=600      → spawns at T+0.0s
+     swarm @0.5 y=650    → spawns at T+0.5s
+     tank @1 y=700       → spawns at T+1.0s
+   Next formation starts at: T + 1.0 + 0.85 = T+1.85s
+
+6. **Tower Weapon Types:** ✓ CONFIRMED
+   Level 1: Balls - basic single shot (single target)
+   Level 2: Balls - weaker but faster fire rate (single target)
+   Level 3: Balls - weaker but VERY fast fire rate (single target)
+   Level 4: Machinegun - shoots in bursts of 3 bullets (single target)
+   Level 5: Railgun - piercing beam (HITS MULTIPLE ENEMIES IN LINE!)
+   Level 6: Rockets - explosion damage (HITS ALL ENEMIES IN RADIUS!)
+
+   **CRITICAL: Levels 5 and 6 hit MULTIPLE enemies!**
+   - Level 5 Railgun: Piercing beam hits all enemies in its path
+   - Level 6 Rockets: Explosion radius damage
+
+   This means single-target DPS calculations UNDERESTIMATE their true power:
+   - Level 5: 47.62 DPS per target, but can hit 3-5 enemies = 150-240 effective DPS!
+   - Level 6: 66.67 DPS per target, but can hit 3-5 enemies = 200-330 effective DPS!
+
+7. **Merge Mechanics:** ✓ CONFIRMED
+   - 2 towers of level N → 1 tower of level N+1
+   - Works for all levels except 6 (max level, no merge)
+   - Stats that change:
+     * Weapon type (as described above)
+     * Damage (per level table)
+     * Fire rate (per level table)
+     * Range (grows linearly, 20% per level)
+
+================================================================================
+KEY CALCULATIONS WITH CONFIRMED FORMULAS
+================================================================================
+
+Enemy HP Formulas:
+  Swarm HP(wave) = enemyHp[wave] × 10
+  Tank HP(wave)  = enemyHp[wave] × 35.7
+
+Tower Range Formula:
+  Range(level) = 140 × (1 + 0.2×(level-1)) × 1.3
+
+Tower DPS (Single-Target):
+  DPS = Damage / (FireInterval in seconds)
+  Level 1: 8.3 / 0.5  = 16.6 DPS   | Range: 182   | Balls (basic)
+  Level 2: 8 / 0.2    = 40 DPS     | Range: 218.4 | Balls (faster)
+  Level 3: 4 / 0.06   = 66.67 DPS  | Range: 254.8 | Balls (VERY fast)
+  Level 4: 9.1 / 0.12 = 75.83 DPS  | Range: 291.2 | Machinegun bursts
+  Level 5: 50 / 1.05  = 47.62 DPS  | Range: 327.6 | RAILGUN (PIERCING!)
+  Level 6: 80 / 1.2   = 66.67 DPS  | Range: 364   | ROCKETS (AoE!)
+
+Shots to Kill:
+  Shots = ceiling(Enemy HP / Tower Damage)
+
+  Wave 1 Swarm (13.4 HP):
+    Level 1: ceil(13.4/8.3)  = 2 shots  → 1.0 seconds
+    Level 2: ceil(13.4/8)    = 2 shots  → 0.4 seconds
+    Level 3: ceil(13.4/4)    = 4 shots  → 0.24 seconds
+
+  Wave 1 Tank (47.84 HP):
+    Level 1: ceil(47.84/8.3) = 6 shots  → 3.0 seconds
+    Level 2: ceil(47.84/8)   = 6 shots  → 1.2 seconds
+    Level 3: ceil(47.84/4)   = 12 shots → 0.72 seconds
+
+  Wave 10 Swarm (38.7 HP):
+    Level 1: ceil(38.7/8.3)  = 5 shots  → 2.5 seconds
+    Level 2: ceil(38.7/8)    = 5 shots  → 1.0 seconds
+    Level 3: ceil(38.7/4)    = 10 shots → 0.6 seconds
+
+  Wave 10 Tank (138.16 HP):
+    Level 1: ceil(138.16/8.3) = 17 shots → 8.5 seconds
+    Level 2: ceil(138.16/8)   = 18 shots → 3.6 seconds
+    Level 3: ceil(138.16/4)   = 35 shots → 2.1 seconds
+
+Energy Economy:
+  Starting Energy: 480 (= 4 towers)
+
+  Energy Income per Wave:
+    Base: 40 energy/wave
+    Per Kill: 7 energy (14 for tanks)
+    Scaling bonuses start at wave 10
+
+  Example Wave 1 (assume 13 difficulty ≈ ~8-12 enemies):
+    Kill rewards: ~10 enemies × 7 = 70 energy
+    Wave clear: 40 energy
+    Total: ~110 energy
+
+  Energy by Wave 2: 480 + 110 = 590 (almost 5 towers total)
+
+Tower Efficiency (Energy Cost vs Single-Target DPS):
+  Building new tower: 120 energy → +16.6 DPS (Level 1)
+  Upgrade L1→L2: 300 energy → +23.4 DPS increase
+  Upgrade L2→L3: 600 energy → +26.67 DPS increase
+  Upgrade L3→L4: 1200 energy → +9.16 DPS increase
+  Upgrade L4→L5: 2500 energy → -28.21 DPS decrease (but GAINS PIERCING!)
+  Upgrade L5→L6: 5000 energy → +19.05 DPS (and keeps AoE)
+
+  **IMPORTANT:** L4→L5 looks bad in single-target DPS, but:
+  - Gains piercing (hits multiple enemies)
+  - Effective DPS vs groups: 150-240 DPS!
+  - NOT a trap upgrade if enemies group up
+
+  Merging (2 Level 1 → 1 Level 2):
+    Cost: 2×120 = 240 energy invested
+    DPS: 2×16.6 = 33.2 → 40 DPS (net +6.8 DPS, but -1 tower)
+    Coverage: Lost 1 tower position
+
+Grid Constraints:
+  Max towers: 12 cells
+  Max Level 1s energy: 12 × 120 = 1440 energy
+  Max Level 1 DPS: 12 × 16.6 = 199.2 DPS total
+
+Critical Question for Strategy Analysis:
+  At what wave does max Level 1 coverage become insufficient?
+  → Need to calculate total wave HP vs max Level 1 DPS with coverage
+
+================================================================================
