@@ -225,7 +225,17 @@ const towerManagement = {
     },
 
     canMergeTowers(towerA, towerB) {
-        return towerA && towerB && towerA.color === towerB.color && towerA.level === towerB.level;
+        if (!towerA || !towerB) {
+            return false;
+        }
+        if (towerA.color !== towerB.color || towerA.level !== towerB.level) {
+            return false;
+        }
+        // Prevent merging towers that are already at max level
+        if (towerA.level >= MAX_UPGRADE_LEVEL || towerB.level >= MAX_UPGRADE_LEVEL) {
+            return false;
+        }
+        return true;
     },
 
     forEachMergeablePair(row, callback) {
