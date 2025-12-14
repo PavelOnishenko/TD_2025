@@ -40,7 +40,7 @@ export const balanceConfig = {
             { damage: 8, fireInterval: 200, upgradeCost: 600 },
             { damage: 4, fireInterval: 60, upgradeCost: 1200 },
             { damage: 9.1, fireInterval: 120, upgradeCost: 2500 },
-            { damage: 65, fireInterval: 1050, upgradeCost: 5000 },
+            { damage: 57, fireInterval: 1050, upgradeCost: 5000 },
             { damage: 80, fireInterval: 1200 },
         ],
         upgradeUnlockWave: 15,
@@ -76,7 +76,7 @@ export const balanceConfig = {
             { difficulty: 22, enemyHp: 5.65 }, // 20
         ],
         endless: {
-            hpGrowth: 1.08, 
+            hpGrowth: 1.09, 
             difficultyIncrement: 3,
         },
         formations: {
