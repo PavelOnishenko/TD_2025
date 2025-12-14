@@ -272,6 +272,7 @@
                     </label>
                     <input id="timeScaleSlider" class="diagnostics__slider" type="range" min="0" max="100" step="1" value="50" />
                     <button id="openPositionEditor" class="diagnostics__button" type="button">Position Editor</button>
+                    <button id="openBalanceViewer" class="diagnostics__button" type="button">Balance Data</button>
                 </div>
                 <pre id="diagnosticsLog" class="diagnostics__log"></pre>
             </div>
@@ -348,6 +349,33 @@
                         </div>
                     </div>
                     <div id="positionSlotList" class="dev-modal__slot-list" role="list"></div>
+                </section>
+            </div>
+        </div>
+    </div>
+
+    <div id="balanceViewer" class="dev-modal dev-modal--hidden" role="dialog" aria-modal="true" aria-labelledby="balanceViewerTitle">
+        <div class="dev-modal__backdrop" aria-hidden="true"></div>
+        <div class="dev-modal__panel" role="document">
+            <header class="dev-modal__header">
+                <div>
+                    <p class="dev-modal__eyebrow">Developer Tool</p>
+                    <h2 id="balanceViewerTitle" class="dev-modal__title">Balance Data</h2>
+                    <p class="dev-modal__subtitle">
+                        View tracked wave information and export to CSV for balancing analysis.
+                    </p>
+                </div>
+                <button id="closeBalanceViewer" class="dev-modal__close" type="button" aria-label="Close balance viewer">×</button>
+            </header>
+            <div class="dev-modal__content">
+                <section class="dev-modal__section" aria-label="Balance data">
+                    <div class="dev-modal__actions">
+                        <button id="refreshBalanceData" type="button" class="dev-modal__button">Refresh</button>
+                        <button id="exportBalanceCSV" type="button" class="dev-modal__button dev-modal__button--primary">Export CSV</button>
+                    </div>
+                    <div class="balance-viewer__data-container">
+                        <pre id="balanceDataDisplay" class="balance-viewer__data-text"></pre>
+                    </div>
                 </section>
             </div>
         </div>
