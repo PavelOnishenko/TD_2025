@@ -1,6 +1,32 @@
 # Test Data Summary
 
-## All Test Runs
+## Balance Version History
+
+### v1 (Original - All tests below)
+- Energy per kill: 7
+- L5 damage: 50
+- Waves 12-14 HP: 4.32, 4.55, 4.77
+- Endless HP growth: 1.1x per wave
+
+### v2 (Current)
+- Energy per kill: **8** (+14%)
+- L5 damage: **65** (+30%)
+- Waves 12-14 HP: **4.5, 4.65, 4.85** (smoothed)
+- Endless HP growth: **1.08x** per wave (reduced from 1.1x)
+
+**Expected impact:** L6 earlier (wave 20?), L5 stronger, wave 12 harder, wave 30+ easier
+
+### v2 Test Result: RUN 1124 - TOO EASY
+- **Wave reached:** 45+ (quit, not dead)
+- **Lives lost:** 0 (ZERO through wave 45!)
+- **First L5:** Wave 14
+- **First L6:** Wave 21 (close to goal)
+- **Wave 40 comp:** 5L1, 1L2, 1L3, 1L4, 0L5, 4L6
+- **Verdict:** Completely broken, way too easy
+
+---
+
+## All Test Runs (v1 Balance)
 
 ### Run 728 (Part 1) - L1 Spam Until Failure
 - **Waves:** 1-14
