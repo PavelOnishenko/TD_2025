@@ -24,6 +24,22 @@
 - **Wave 40 comp:** 5L1, 1L2, 1L3, 1L4, 0L5, 4L6
 - **Verdict:** Completely broken, way too easy
 
+### v3 (Current)
+- Energy per kill: **8** (kept from v2)
+- L5 damage: **57** (reduced from 65)
+- Endless HP growth: **1.09x** per wave (increased from 1.08x)
+- Difficulty increment: **3** (unchanged)
+
+### v3 Test Result: RUN 1212 - FEELS GOOD
+- **Wave reached:** 35 (died)
+- **Lives lost:** 3 (2 at wave 34, 1 at wave 35)
+- **First L5:** Wave 19
+- **First L6:** Wave 23
+- **Final comp:** 2L1, 3L2, 1L3, 2L4, 1L5, 2L6
+- **Player feedback:** "Pretty cool, very epic, seemed like losing"
+- **Note:** No upgrades used, hadn't optimized to double 654321 pattern yet
+- **Verdict:** Good difficulty, feels challenging
+
 ---
 
 ## All Test Runs (v1 Balance)
