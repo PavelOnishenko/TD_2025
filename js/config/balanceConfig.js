@@ -4,7 +4,7 @@ export const balanceConfig = {
         initialEnergy: 480,
         towerCost: 120,
         switchCost: 0,
-        maxWaves: 20,
+        maxWaves: 40,
         energyPerKill: 8,
         tankKillEnergyMultiplier: 2,
         killEnergyScaling: {
@@ -74,6 +74,26 @@ export const balanceConfig = {
             { difficulty: 21, enemyHp: 5.25 },
             { difficulty: 22, enemyHp: 5.45 },
             { difficulty: 22, enemyHp: 5.65 }, // 20
+            { difficulty: 25, enemyHp: 6.16 },
+            { difficulty: 28, enemyHp: 6.71 },
+            { difficulty: 31, enemyHp: 7.32 },
+            { difficulty: 34, enemyHp: 7.98 },
+            { difficulty: 37, enemyHp: 8.69 }, // 25
+            { difficulty: 40, enemyHp: 9.48 },
+            { difficulty: 43, enemyHp: 10.33 },
+            { difficulty: 46, enemyHp: 11.26 },
+            { difficulty: 49, enemyHp: 12.27 },
+            { difficulty: 52, enemyHp: 13.38 }, // 30
+            { difficulty: 55, enemyHp: 14.58 },
+            { difficulty: 58, enemyHp: 15.89 },
+            { difficulty: 61, enemyHp: 17.32 },
+            { difficulty: 64, enemyHp: 18.88 },
+            { difficulty: 67, enemyHp: 20.58 }, // 35
+            { difficulty: 70, enemyHp: 22.43 },
+            { difficulty: 73, enemyHp: 24.45 },
+            { difficulty: 76, enemyHp: 26.65 },
+            { difficulty: 79, enemyHp: 29.05 },
+            { difficulty: 82, enemyHp: 31.66 }, // 40
         ],
         endless: {
             hpGrowth: 1.09, 
@@ -85,8 +105,8 @@ export const balanceConfig = {
                 minimumWeight: 0.02,
             },
             endlessDifficulty: {
-                startWave: 21,
-                base: 24,
+                startWave: 41,
+                base: 72,
                 growth: 2.4,
                 max: 160,
             },
