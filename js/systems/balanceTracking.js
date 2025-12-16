@@ -8,6 +8,13 @@ export function initializeBalanceTracking(game) {
         sessionStart: Date.now(),
         waves: [],
         currentWave: null,
+        pendingActions: {
+            energySpent: 0,
+            towersPlaced: 0,
+            towersMerged: 0,
+            towersUpgraded: 0,
+            towersRemoved: 0,
+        },
     };
 
     // Add console command to print data
@@ -23,6 +30,15 @@ export function startWaveTracking(game, waveNumber) {
         initializeBalanceTracking(game);
     }
 
+    // Apply pending actions from between waves
+    const pending = game.balanceData.pendingActions || {
+        energySpent: 0,
+        towersPlaced: 0,
+        towersMerged: 0,
+        towersUpgraded: 0,
+        towersRemoved: 0,
+    };
+
     game.balanceData.currentWave = {
         wave: waveNumber,
         startTime: Date.now(),
@@ -33,15 +49,24 @@ export function startWaveTracking(game, waveNumber) {
         tankKills: 0,
         energyFromKills: 0,
         energyFromWave: 0,
+        energySpent: pending.energySpent,
+        towersPlaced: pending.towersPlaced,
+        towersMerged: pending.towersMerged,
+        towersUpgraded: pending.towersUpgraded,
+        towersRemoved: pending.towersRemoved,
+        livesLost: 0,
+        endEnergy: 0,
+        endTowers: 0,
+        duration: 0,
+    };
+
+    // Reset pending actions
+    game.balanceData.pendingActions = {
         energySpent: 0,
         towersPlaced: 0,
         towersMerged: 0,
         towersUpgraded: 0,
         towersRemoved: 0,
-        livesLost: 0,
-        endEnergy: 0,
-        endTowers: 0,
-        duration: 0,
     };
 }
 
@@ -79,41 +104,103 @@ export function trackEnemyKill(game, enemy, energyGain) {
 }
 
 export function trackTowerPlaced(game, cost) {
-    if (!game.balanceData || !game.balanceData.currentWave) {
+    if (!game.balanceData) {
         return;
     }
 
-    const wave = game.balanceData.currentWave;
-    wave.towersPlaced++;
-    wave.energySpent += cost || 0;
+    if (game.balanceData.currentWave) {
+        // Track on current wave if one is active
+        const wave = game.balanceData.currentWave;
+        wave.towersPlaced++;
+        wave.energySpent += cost || 0;
+    } else {
+        // Buffer for next wave if between waves
+        if (!game.balanceData.pendingActions) {
+            game.balanceData.pendingActions = {
+                energySpent: 0,
+                towersPlaced: 0,
+                towersMerged: 0,
+                towersUpgraded: 0,
+                towersRemoved: 0,
+            };
+        }
+        game.balanceData.pendingActions.towersPlaced++;
+        game.balanceData.pendingActions.energySpent += cost || 0;
+    }
 }
 
 export function trackTowerMerged(game) {
-    if (!game.balanceData || !game.balanceData.currentWave) {
+    if (!game.balanceData) {
         return;
     }
 
-    const wave = game.balanceData.currentWave;
-    wave.towersMerged++;
+    if (game.balanceData.currentWave) {
+        // Track on current wave if one is active
+        const wave = game.balanceData.currentWave;
+        wave.towersMerged++;
+    } else {
+        // Buffer for next wave if between waves
+        if (!game.balanceData.pendingActions) {
+            game.balanceData.pendingActions = {
+                energySpent: 0,
+                towersPlaced: 0,
+                towersMerged: 0,
+                towersUpgraded: 0,
+                towersRemoved: 0,
+            };
+        }
+        game.balanceData.pendingActions.towersMerged++;
+    }
 }
 
 export function trackTowerUpgraded(game, cost) {
-    if (!game.balanceData || !game.balanceData.currentWave) {
+    if (!game.balanceData) {
         return;
     }
 
-    const wave = game.balanceData.currentWave;
-    wave.towersUpgraded++;
-    wave.energySpent += cost || 0;
+    if (game.balanceData.currentWave) {
+        // Track on current wave if one is active
+        const wave = game.balanceData.currentWave;
+        wave.towersUpgraded++;
+        wave.energySpent += cost || 0;
+    } else {
+        // Buffer for next wave if between waves
+        if (!game.balanceData.pendingActions) {
+            game.balanceData.pendingActions = {
+                energySpent: 0,
+                towersPlaced: 0,
+                towersMerged: 0,
+                towersUpgraded: 0,
+                towersRemoved: 0,
+            };
+        }
+        game.balanceData.pendingActions.towersUpgraded++;
+        game.balanceData.pendingActions.energySpent += cost || 0;
+    }
 }
 
 export function trackTowerRemoved(game) {
-    if (!game.balanceData || !game.balanceData.currentWave) {
+    if (!game.balanceData) {
         return;
     }
 
-    const wave = game.balanceData.currentWave;
-    wave.towersRemoved++;
+    if (game.balanceData.currentWave) {
+        // Track on current wave if one is active
+        const wave = game.balanceData.currentWave;
+        wave.towersRemoved++;
+    } else {
+        // Buffer for next wave if between waves
+        if (!game.balanceData.pendingActions) {
+            game.balanceData.pendingActions = {
+                energySpent: 0,
+                towersPlaced: 0,
+                towersMerged: 0,
+                towersUpgraded: 0,
+                towersRemoved: 0,
+            };
+        }
+        game.balanceData.pendingActions.towersRemoved++;
+    }
 }
 
 export function trackLifeLost(game) {
