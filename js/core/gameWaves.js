@@ -2,10 +2,12 @@ import { updateHUD, updateUpgradeAvailability, updateWavePhaseIndicator, showWav
 import gameConfig from '../config/gameConfig.js';
 import { showCrazyGamesAdWithPause } from '../systems/ads.js';
 import { getWaveEnergyMultiplier } from '../utils/energyScaling.js';
+import { startWaveTracking, completeWaveTracking } from '../systems/balanceTracking.js';
 
 export const waveActions = {
     startWave() {
         this.setupWaveStuff();
+        startWaveTracking(this, this.wave);
         if (this.tutorial) {
             this.tutorial.handleWaveStarted();
         }
@@ -110,6 +112,7 @@ export const waveActions = {
                     console.warn('Tutorial energy handler failed', error);
                 }
             }
+            completeWaveTracking(this, waveEnergyGain);
             updateHUD(this);
             this.triggerWaveAdIfNeeded(completedWave);
         }

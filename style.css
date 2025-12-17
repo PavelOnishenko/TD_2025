@@ -1049,6 +1049,26 @@ button:focus-visible {
     display: none;
 }
 
+.balance-viewer__data-container {
+    margin-top: 16px;
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: 6px;
+    background: rgba(15, 23, 42, 0.6);
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.balance-viewer__data-text {
+    margin: 0;
+    padding: 16px;
+    font-family: "Courier New", monospace;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: #e2e8f0;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
 .overlay {
     position: fixed;
     inset: 0;

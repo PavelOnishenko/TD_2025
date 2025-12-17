@@ -1,0 +1,14 @@
+DONE 1. Show tower upgrade cost near tower.
+DONE 2. New tutorial step - build 4 towers before 1st wave.
+DONE 3. Merge tutorial - add step to make player get 2 towers ready for merge first, before clicking the button.
+DONE 4. Draw lvl3 projectiles even when firing from 0 distance (possible?)
+DONE 5. Add energy from kills flying up to energy counter (animation)
+DONE 6. Rail and rockets - show cool indicators when hit multiple enemies
+CANCELLED 7. Nerf level 3 towers
+DONE 8. More screen shake for rockets, less for rail
+DONE 9. Rail sound quieter, lvl4 sound louder
+DONE 10. Bug with tutorial about removing towers - if player just skips it, all next tutorials are not working.
+INPRO 11. Map out some main strategies and define where they are expected to fail. Enforce that.
+INPRO 12. More difficulty for waves 1-20, and balance that.
+INPRO 13. Balance upgrades. Upgrades should start make sense since 15 level and should be a common way of playing since 20.
+DONE 14. Increase visibility of tower level indicators

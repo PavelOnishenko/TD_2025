@@ -5,6 +5,7 @@ import { waveActions } from './gameWaves.js';
 import { callCrazyGamesEvent } from '../systems/crazyGamesIntegration.js';
 import { createGameAudio, getHowler } from '../systems/audio.js';
 import { createExplosion, updateExplosions, updateColorSwitchBursts } from '../systems/effects.js';
+import { updateFlyingEnergy } from '../systems/effects/flyingEnergy.js';
 import { saveBestScore } from '../systems/dataStore.js';
 import { refreshDiagnosticsOverlay, updateHUD } from '../systems/ui.js';
 import GameGrid from './gameGrid.js';
@@ -20,6 +21,7 @@ import towerManagement from './game/towerManagement.js';
 import createFormationManager from './game/formations.js';
 import gameConfig from '../config/gameConfig.js';
 import { scaleDifficulty } from '../utils/difficultyScaling.js';
+import { trackTowerRemoved } from '../systems/balanceTracking.js';
 
 function createScreenShakeState() {
     const { frequency } = gameConfig.world.screenShake;
@@ -67,6 +69,7 @@ class Game {
         this.logicalH = height;
         this.ctx = canvas.getContext('2d');
         this.viewport = { scale: 1, offsetX: 0, offsetY: 0, dpr: 1 };
+        this.gameConfig = gameConfig;
     }
 
     setupCollections() {
@@ -77,6 +80,7 @@ class Game {
         this.colorSwitchBursts = [];
         this.mergeAnimations = [];
         this.energyPopups = [];
+        this.flyingEnergy = [];
         this.projectileSpeed = gameConfig.projectiles.speed;
         this.projectileRadius = gameConfig.projectiles.baseRadius;
         this.maxProjectileRadius = this.projectileRadius;
@@ -460,6 +464,7 @@ class Game {
         updateExplosions(this.explosions, dt);
         updateColorSwitchBursts(this.colorSwitchBursts, dt);
         this.updateEnergyPopups(dt);
+        updateFlyingEnergy(this.flyingEnergy, dt);
         this.grid.fadeHighlights(dt);
         this.grid.fadeHover(dt);
         this.grid.fadeMergeHints(dt);
@@ -570,6 +575,7 @@ class Game {
         }
 
         this.towers.splice(index, 1);
+        trackTowerRemoved(this);
 
         if (tower.cell) {
             tower.cell.occupied = false;

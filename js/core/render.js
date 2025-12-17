@@ -1,6 +1,7 @@
 import { drawExplosions, drawColorSwitchBursts } from '../systems/effects.js';
 import { drawStarfield } from './starfield.js';
 import { drawPortal } from './portal.js';
+import { drawFlyingEnergy } from '../systems/effects/flyingEnergy.js';
 
 const ENERGY_PALETTES = {
     red: {
@@ -826,7 +827,7 @@ export function drawEntities(game) {
     for (const tower of game.towers) {
         layeredEntities.push({
             sortKey: computeSortKey(tower),
-            draw: () => tower.draw(ctx, assets),
+            draw: () => tower.draw(ctx, assets, game),
         });
     }
 
@@ -915,6 +916,7 @@ export function drawEntities(game) {
 
     drawExplosions(ctx, game.explosions ?? []);
     drawEnergyPopups(ctx, game.energyPopups ?? []);
+    drawFlyingEnergy(ctx, game.flyingEnergy ?? [], game);
 }
 
 function drawEnergyPopups(ctx, popups) {

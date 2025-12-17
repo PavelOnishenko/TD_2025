@@ -47,7 +47,19 @@ test('draw renders sprite and level text without range circle', () => {
     assert.equal(rangeArc, undefined);
     assert.deepEqual(findOp(ctx.ops, 'fillStyle'), ['fillStyle', 'red']);
     assert.deepEqual(findOp(ctx.ops, 'drawImage'), ['drawImage', sprite, tower.x, tower.y, tower.w, tower.h]);
-    assert.deepEqual(findOp(ctx.ops, 'fillText'), ['fillText', '1', tower.x + tower.w + 2, tower.y + 10]);
+
+    // Check that level indicator is drawn centered at bottom of tower
+    const config = gameConfig.towers?.levelIndicator ?? {};
+    const fontSize = config.fontSize ?? 16;
+    const offsetX = config.offsetX ?? 0;
+    const offsetY = config.offsetY ?? 4;
+    const expectedX = tower.x + tower.w / 2 + offsetX;
+    const expectedY = tower.y + tower.h + fontSize + offsetY;
+    const fillTextOp = ctx.ops.find(op => op[0] === 'fillText' && op[1] === '1');
+    assert.ok(fillTextOp, 'fillText operation should exist');
+    assert.equal(fillTextOp[1], '1', 'level text should be "1"');
+    assert.equal(fillTextOp[2], expectedX, 'level text x position should be centered');
+    assert.equal(fillTextOp[3], expectedY, 'level text y position should be below tower');
 });
 
 test('draw uses blue styling without emitting range stroke', () => {
@@ -62,7 +74,10 @@ test('draw uses blue styling without emitting range stroke', () => {
     const damageLevel2 = gameConfig.towers.levels?.[1]?.damage ?? tower.damage;
     assert.ok(Math.abs(tower.damage - damageLevel2) < 1e-6);
     assert.deepEqual(findOp(ctx.ops, 'fillStyle'), ['fillStyle', 'blue']);
-    assert.equal(findOp(ctx.ops, 'strokeStyle'), undefined);
+
+    // Verify no range circle is drawn (no arc with tower.range as radius)
+    const rangeArc = ctx.ops.find(op => op[0] === 'arc' && op[3] === tower.range);
+    assert.equal(rangeArc, undefined, 'should not draw range circle');
 });
 
 test('draw warns and skips sprite rendering when asset missing', () => {
@@ -158,13 +173,19 @@ function createCtxCore(ops) {
         fill: () => recordOp(ops, 'fill'),
         drawImage: (img, x, y, w, h) => recordOp(ops, 'drawImage', img, x, y, w, h),
         strokeRect: (x, y, w, h) => recordOp(ops, 'strokeRect', x, y, w, h),
+        fillRect: (x, y, w, h) => recordOp(ops, 'fillRect', x, y, w, h),
         fillText: (text, x, y) => recordOp(ops, 'fillText', text, x, y),
+        strokeText: (text, x, y) => recordOp(ops, 'strokeText', text, x, y),
+        measureText: (text) => {
+            recordOp(ops, 'measureText', text);
+            return { width: text.length * 8 };
+        },
         createRadialGradient: (x0, y0, r0, x1, y1, r1) => createGradient(ops, x0, y0, r0, x1, y1, r1),
     };
 }
 
 function attachCtxSetters(ctx, ops) {
-    ['strokeStyle', 'fillStyle', 'font', 'globalCompositeOperation', 'globalAlpha'].forEach(name => {
+    ['strokeStyle', 'fillStyle', 'font', 'globalCompositeOperation', 'globalAlpha', 'textAlign', 'textBaseline', 'lineWidth'].forEach(name => {
         Object.defineProperty(ctx, name, {
             set(value) {
                 recordOp(ops, name, value);

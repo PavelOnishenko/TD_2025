@@ -14,12 +14,43 @@ const hasScoreProgress = (game, context) => {
     const best = Number.isFinite(game?.bestScore) ? Math.max(0, Math.floor(game.bestScore)) : 0;
     return scoreFromContext > 0 || gained > 0 || score > 0 || best > 0;
 };
+const hasMergeableTowers = (game) => {
+    if (!game?.grid) {
+        return false;
+    }
+
+    const rows = [game.grid.topCells, game.grid.bottomCells];
+
+    for (const row of rows) {
+        if (!Array.isArray(row)) continue;
+
+        for (let i = 0; i < row.length - 1; i++) {
+            const cellA = row[i];
+            const cellB = row[i + 1];
+
+            if (!cellA?.occupied || !cellB?.occupied) continue;
+
+            const towerA = game.getTowerAt?.(cellA);
+            const towerB = game.getTowerAt?.(cellB);
+
+            if (game.canMergeTowers?.(towerA, towerB)) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+};
 
 const nonBalanceConfig = {
     world: {
         logicalSize: { width: 540, height: 960 },
         base: { x: 1100, width: 160, height: 160, bottomOffset: 470 },
-        screenShake: { frequency: 42 },
+        screenShake: {
+            frequency: 42,
+            rocket: { intensity: 6, duration: 0.5, frequency: 46 },
+            railgun: { intensity: 5, duration: 0.28, frequency: 52 },
+        },
         bounds: { minMargin: 40, projectileRadiusFactor: 2 },
         grid: {
             cellSize: { w: 120, h: 160 },
@@ -71,8 +102,76 @@ const nonBalanceConfig = {
         glowSpeeds: [1.8, 2.1, 2.4],
         removalHoldDuration: 2,
         removalIndicatorDecay: 3.2,
+        upgradeCostText: {
+            fontSize: 22,
+            fontFamily: 'sans-serif',
+            fontWeight: 'bold',
+            colorAffordable: '#00ff00',
+            colorUnaffordable: '#ff6666',
+            backgroundAlpha: 0.6,
+            padding: 4,
+            offsetY: -20,
+        },
+        levelIndicator: {
+            fontSize: 16,
+            offsetX: 0,
+            offsetY: 4,
+            padding: 4,
+            backgroundAlpha: 0.85,
+            styles: {
+                1: {
+                    textColor: 'rgba(200, 200, 200, 0.9)',
+                    textGlow: 'rgba(150, 150, 150, 0.3)',
+                    textGlowSize: 2,
+                    borderColor: 'rgba(120, 120, 120, 0.6)',
+                    glowColor: 'rgba(150, 150, 150, 0.2)',
+                    glowIntensity: 0.1,
+                },
+                2: {
+                    textColor: 'rgba(180, 220, 255, 0.95)',
+                    textGlow: 'rgba(120, 180, 255, 0.5)',
+                    textGlowSize: 4,
+                    borderColor: 'rgba(120, 180, 255, 0.7)',
+                    glowColor: 'rgba(120, 180, 255, 0.4)',
+                    glowIntensity: 0.3,
+                },
+                3: {
+                    textColor: 'rgba(160, 230, 255, 1)',
+                    textGlow: 'rgba(100, 200, 255, 0.7)',
+                    textGlowSize: 6,
+                    borderColor: 'rgba(100, 200, 255, 0.8)',
+                    glowColor: 'rgba(100, 200, 255, 0.5)',
+                    glowIntensity: 0.5,
+                },
+                4: {
+                    textColor: 'rgba(86, 100, 255, 1)',
+                    textGlow: 'rgba(191, 180, 255, 0.8)',
+                    textGlowSize: 8,
+                    borderColor: 'rgba(13, 0, 112, 0.9)',
+                    glowColor: 'rgba(53, 60, 255, 0.6)',
+                    glowIntensity: 0.7,
+                },
+                5: {
+                    textColor: 'rgba(91, 246, 138, 1)',
+                    textGlow: 'rgba(177, 255, 179, 0.9)',
+                    textGlowSize: 10,
+                    borderColor: 'rgba(0, 56, 12, 1)',
+                    glowColor: 'rgba(0, 225, 45, 0.7)',
+                    glowIntensity: 0.85,
+                },
+                6: {
+                    textColor: 'rgba(246, 114, 255, 1)',
+                    textGlow: 'rgba(255, 169, 248, 1)',
+                    textGlowSize: 12,
+                    borderColor: 'rgba(42, 0, 40, 1)',
+                    glowColor: 'rgba(127, 0, 104, 0.8)',
+                    glowIntensity: 1,
+                },
+            },
+        },
     },
     projectiles: {
+        minLifetimeLevel3: 0.03,
         rocket: {
             shockwaveEnabled: false,
         },
@@ -108,6 +207,20 @@ const nonBalanceConfig = {
                 sound: 'assets/placement.mp3',
                 checkComplete(game) {
                     return Array.isArray(game?.towers) && game.towers.length > 0;
+                },
+            },
+            {
+                id: 'build-four-towers',
+                name: 'Build Four Defenders',
+                nameKey: 'tutorial.buildFourTowers.title',
+                wave: 1,
+                highlightTargets: [],
+                text: 'Build 4 towers to create a solid defensive line before the first wave arrives. Position them strategically to cover both lanes.',
+                textKey: 'tutorial.buildFourTowers.text',
+                picture: 'assets/tower_1B.png',
+                sound: 'assets/placement.mp3',
+                checkComplete(game) {
+                    return Array.isArray(game?.towers) && game.towers.length >= 4;
                 },
             },
             {
@@ -164,9 +277,21 @@ const nonBalanceConfig = {
                 picture: 'assets/energy_sign.png',
                 sound: 'assets/placement.mp3',
                 checkComplete(game, context) {
-                    return hasAcknowledged(context, 'energy-economy')
-                        || hasEnergyGain(context)
-                        || hasEnergyGainFromGame(game);
+                    return hasAcknowledged(context, 'energy-economy');
+                },
+            },
+            {
+                id: 'prepare-merge',
+                name: 'Prepare for Merge',
+                nameKey: 'tutorial.prepareMerge.title',
+                wave: 2,
+                highlightTargets: [],
+                text: 'Build two adjacent towers of the same color and level. When they\'re ready, you\'ll be able to merge them!',
+                textKey: 'tutorial.prepareMerge.text',
+                picture: 'assets/tower_1B.png',
+                sound: 'assets/tower_place.mp3',
+                checkComplete(game, context) {
+                    return hasAcknowledged(context, 'prepare-merge') || hasMergeableTowers(game);
                 },
             },
             {
@@ -175,12 +300,41 @@ const nonBalanceConfig = {
                 nameKey: 'tutorial.mergeTowers.title',
                 wave: 2,
                 highlightTargets: ['mergeButton'],
-                text: 'You need two adjacent towers of the same color and level, then press Merge Towers to fuse them into a stronger tower (with different weapon!).',
+                text: 'Great! Now press the Merge Towers button to fuse them into a stronger tower with a different weapon!',
                 textKey: 'tutorial.mergeTowers.text',
                 picture: 'assets/tower_2B.png',
                 sound: 'assets/merge.mp3',
                 checkComplete(game, context) {
-                    return hasAcknowledged(context, 'merge-towers') || hasMerges(context);
+                    return hasAcknowledged(context, 'merge-towers') || game.mergeModeActive;
+                },
+            },
+            {
+                id: 'select-merge-towers',
+                name: 'Select Towers to Merge',
+                nameKey: 'tutorial.selectMergeTowers.title',
+                wave: 2,
+                highlightTargets: [],
+                text: 'Now select two adjacent towers of the same color and level to merge them into a powerful upgraded tower!',
+                textKey: 'tutorial.selectMergeTowers.text',
+                picture: 'assets/tower_2B.png',
+                sound: 'assets/merge.mp3',
+                checkComplete(game, context) {
+                    return hasAcknowledged(context, 'select-merge-towers') || hasMerges(context);
+                },
+            },
+            {
+                id: 'exit-merge-mode',
+                name: 'Exit Merge Mode',
+                nameKey: 'tutorial.exitMergeMode.title',
+                wave: 2,
+                highlightTargets: ['mergeButton'],
+                text: 'Great merge! Now press the Merge button again to exit merge mode and return to normal tower controls.',
+                textKey: 'tutorial.exitMergeMode.text',
+                picture: 'assets/tower_2B.png',
+                sound: 'assets/merge.mp3',
+                checkComplete(game, context) {
+                    // Only complete if this step is currently being shown and merge mode is off
+                    return context?.currentStepId === 'exit-merge-mode' && !game.mergeModeActive;
                 },
             },
             {
@@ -208,7 +362,7 @@ const nonBalanceConfig = {
                 picture: 'assets/swarm_R.png',
                 sound: 'assets/color_switch.mp3',
                 checkComplete(game, context) {
-                    return hasAcknowledged(context, 'score-system') || hasScoreProgress(game, context);
+                    return hasAcknowledged(context, 'score-system');
                 },
             },
             {
@@ -243,6 +397,12 @@ const nonBalanceConfig = {
     },
     ads: {
         waveCadence: 500,
+    },
+    effects: {
+        flyingEnergy: {
+            fontSize: 32,
+            duration: 1.5,
+        },
     },
 };
 

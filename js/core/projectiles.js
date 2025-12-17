@@ -2,6 +2,8 @@ import { updateHUD } from '../systems/ui.js';
 import { createExplosion } from '../systems/effects.js';
 import gameConfig from '../config/gameConfig.js';
 import { getWaveEnergyMultiplier } from '../utils/energyScaling.js';
+import { createFlyingEnergyParticle } from '../systems/effects/flyingEnergy.js';
+import { trackEnemyKill } from '../systems/balanceTracking.js';
 
 function clamp(value, min, max) {
     return Math.max(min, Math.min(max, value));
@@ -101,6 +103,8 @@ export function moveProjectiles(game, dt) {
             }
             p.rotation = Math.atan2(p.vy, p.vx);
             p.life = (p.life ?? 0) + dt;
+        } else if (p.towerLevel === 3) {
+            p.life = (p.life ?? 0) + dt;
         }
 
         p.x += p.vx * dt;
@@ -156,6 +160,25 @@ export function applyProjectileDamage(game, projectile, enemyIndex, options = {}
         game.enemies.splice(enemyIndex, 1);
         const energyGain = getEnergyGainForKill(game, enemy);
         game.energy += energyGain;
+
+        // Track kills by type and energy gained
+        if (enemy?.spriteKey === 'tank') {
+            game.tankKills = (game.tankKills || 0) + 1;
+        } else {
+            game.swarmKills = (game.swarmKills || 0) + 1;
+        }
+        game.energyGained = (game.energyGained || 0) + energyGain;
+        trackEnemyKill(game, enemy, energyGain);
+
+        const width = Number.isFinite(enemy.w) ? enemy.w : 0;
+        const height = Number.isFinite(enemy.h) ? enemy.h : 0;
+        const centerX = Number.isFinite(enemy.x) ? enemy.x + width / 2 : projectile.x;
+        const centerY = Number.isFinite(enemy.y) ? enemy.y + height / 2 : projectile.y;
+
+        if (Array.isArray(game.flyingEnergy)) {
+            const particle = createFlyingEnergyParticle(centerX, centerY, energyGain, game);
+            game.flyingEnergy.push(particle);
+        }
         if (game.tutorial) {
             try {
                 if (typeof game.tutorial.handleEnergyGained === 'function') {
@@ -224,6 +247,17 @@ function handleRocketImpact(game, projectile, index) {
         });
     }
 
+    if (impacted.length >= 2 && typeof game.addEnergyPopup === 'function') {
+        const text = `×${impacted.length}`;
+        game.addEnergyPopup(text, centerX, centerY, {
+            color: projectile.color === 'blue' ? '#60a5fa' : '#f87171',
+            stroke: 'rgba(0,0,0,0.7)',
+            font: '700 32px "Baloo 2", sans-serif',
+            duration: 1.2,
+            driftY: -80,
+        });
+    }
+
     const enableShockwave = gameConfig?.projectiles?.rocket?.shockwaveEnabled !== false;
     if (game.explosions) {
         const explosionOptions = {
@@ -235,7 +269,8 @@ function handleRocketImpact(game, projectile, index) {
         game.explosions.push(createExplosion(centerX, centerY, explosionOptions));
     }
 
-    triggerScreenShake(game, 2.4, 0.42, 46);
+    const shakeConfig = gameConfig.world?.screenShake?.rocket ?? { intensity: 3.5, duration: 0.5, frequency: 46 };
+    triggerScreenShake(game, shakeConfig.intensity, shakeConfig.duration, shakeConfig.frequency);
 
     if (projectile.trail) {
         projectile.trail.length = 0;
@@ -246,6 +281,14 @@ function handleRocketImpact(game, projectile, index) {
 
 export function hitEnemy(game, projectile, index) {
     if (projectile.type === 'railgun-beam') {
+        return false;
+    }
+
+    const minLifetimeForLevel3 = gameConfig.projectiles?.minLifetimeLevel3 ?? 0.03;
+    const isLevel3 = projectile.towerLevel === 3;
+    const projectileLife = projectile.life ?? 0;
+
+    if (isLevel3 && projectileLife < minLifetimeForLevel3) {
         return false;
     }
 

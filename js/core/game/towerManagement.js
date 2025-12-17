@@ -1,5 +1,6 @@
 import { balanceConfig } from '../../config/balanceConfig.js';
 import { updateHUD } from '../../systems/ui.js';
+import { trackTowerMerged, trackTowerUpgraded } from '../../systems/balanceTracking.js';
 
 const towerLevels = Array.isArray(balanceConfig?.towers?.levels)
     ? balanceConfig.towers.levels
@@ -72,6 +73,8 @@ const towerManagement = {
         }
 
         this.energy -= cost;
+        this.energySpent = (this.energySpent || 0) + cost;
+        trackTowerUpgraded(this, cost);
         tower.level = Math.min(MAX_UPGRADE_LEVEL, tower.level + 1);
         tower.updateStats?.();
         tower.triggerPlacementFlash?.();
@@ -222,7 +225,17 @@ const towerManagement = {
     },
 
     canMergeTowers(towerA, towerB) {
-        return towerA && towerB && towerA.color === towerB.color && towerA.level === towerB.level;
+        if (!towerA || !towerB) {
+            return false;
+        }
+        if (towerA.color !== towerB.color || towerA.level !== towerB.level) {
+            return false;
+        }
+        // Prevent merging towers that are already at max level
+        if (towerA.level >= MAX_UPGRADE_LEVEL || towerB.level >= MAX_UPGRADE_LEVEL) {
+            return false;
+        }
+        return true;
     },
 
     forEachMergeablePair(row, callback) {
@@ -273,6 +286,7 @@ const towerManagement = {
         if (typeof this.persistState === 'function') {
             this.persistState();
         }
+        trackTowerMerged(this);
         if (this.tutorial && typeof this.tutorial.handleTowerMerged === 'function') {
             try {
                 this.tutorial.handleTowerMerged({

@@ -11,6 +11,8 @@ import { translate } from './localization.js';
 const DEFAULT_CHECK_INTERVAL = 320;
 const SOUND_CACHE = new Map();
 
+let lastTutorialAcknowledgedAt = 0;
+
 function createIntervalScheduler(interval = DEFAULT_CHECK_INTERVAL) {
     return (callback) => {
         if (typeof callback !== 'function') {
@@ -341,7 +343,14 @@ export function createTutorial(game, options = {}) {
     };
 
     if (overlay?.element && typeof overlay.element.addEventListener === 'function') {
-        const handlePointer = () => acknowledgeCurrentStep();
+        const handlePointer = () => {
+            if (Date.now() - lastTutorialAcknowledgedAt < 300) {
+                return;
+            }
+
+            lastTutorialAcknowledgedAt = Date.now();
+            acknowledgeCurrentStep();
+        };
         const handleKey = (event) => {
             if (!event) {
                 return;

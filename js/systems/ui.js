@@ -13,6 +13,7 @@ import {
 } from './highScores.js';
 import { translate, setActiveLocale, applyLocalization } from './localization.js';
 import { DEFAULT_TIME_SCALE, MAX_TIME_SCALE, MIN_TIME_SCALE } from '../core/game/world.js';
+import { trackTowerPlaced, trackTowerMerged, trackTowerUpgraded, trackTowerRemoved, trackLifeLost } from './balanceTracking.js';
 
 const SUPPORTED_LANGUAGES = ['en', 'ru'];
 const DEFAULT_LANGUAGE = SUPPORTED_LANGUAGES[0];
@@ -1254,6 +1255,8 @@ function tryShoot(game, cell) {
             cell.tower = tower;
             tower.cell = cell;
             game.energy -= game.towerCost;
+            game.energySpent = (game.energySpent || 0) + game.towerCost;
+            trackTowerPlaced(game, game.towerCost);
             updateHUD(game);
             if (game.audio && typeof game.audio.playPlacement === 'function') {
                 game.audio.playPlacement();

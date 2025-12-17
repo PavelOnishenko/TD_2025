@@ -4,8 +4,8 @@ export const balanceConfig = {
         initialEnergy: 480,
         towerCost: 120,
         switchCost: 0,
-        maxWaves: 20,
-        energyPerKill: 7,
+        maxWaves: 40,
+        energyPerKill: 8,
         tankKillEnergyMultiplier: 2,
         killEnergyScaling: {
             baseWave: 1,
@@ -39,9 +39,9 @@ export const balanceConfig = {
             { damage: 8.3, fireInterval: 500, upgradeCost: 300 },
             { damage: 8, fireInterval: 200, upgradeCost: 600 },
             { damage: 4, fireInterval: 60, upgradeCost: 1200 },
-            { damage: 9.1, fireInterval: 120, upgradeCost: 2500 },
-            { damage: 50, fireInterval: 1050, upgradeCost: 5000 },
-            { damage: 80, fireInterval: 1200 },
+            { damage: 9.5, fireInterval: 120, upgradeCost: 2500 },
+            { damage: 60, fireInterval: 1050, upgradeCost: 5000 },
+            { damage: 86, fireInterval: 1200 },
         ],
         upgradeUnlockWave: 15,
     },
@@ -65,18 +65,38 @@ export const balanceConfig = {
             { difficulty: 17, enemyHp: 3.65 },
             { difficulty: 17, enemyHp: 3.87 }, // 10
             { difficulty: 18, enemyHp: 4.10 },
-            { difficulty: 18, enemyHp: 4.32 },
-            { difficulty: 19, enemyHp: 4.55 },
-            { difficulty: 19, enemyHp: 4.77 },
+            { difficulty: 18, enemyHp: 4.5 },
+            { difficulty: 19, enemyHp: 4.65 },
+            { difficulty: 19, enemyHp: 4.85 },
             { difficulty: 20, enemyHp: 5.00 }, // 15
             { difficulty: 20, enemyHp: 5.22 },
             { difficulty: 21, enemyHp: 5 },
             { difficulty: 21, enemyHp: 5.25 },
             { difficulty: 22, enemyHp: 5.45 },
             { difficulty: 22, enemyHp: 5.65 }, // 20
+            { difficulty: 25, enemyHp: 6.16 },
+            { difficulty: 28, enemyHp: 6.71 },
+            { difficulty: 31, enemyHp: 7.32 },
+            { difficulty: 34, enemyHp: 7.98 },
+            { difficulty: 37, enemyHp: 8.69 }, // 25
+            { difficulty: 40, enemyHp: 9.48 },
+            { difficulty: 43, enemyHp: 10.33 },
+            { difficulty: 46, enemyHp: 11.26 },
+            { difficulty: 49, enemyHp: 12.27 },
+            { difficulty: 52, enemyHp: 13 }, // 30
+            { difficulty: 55, enemyHp: 13.8 },
+            { difficulty: 58, enemyHp: 14.6 },
+            { difficulty: 61, enemyHp: 15.4 },
+            { difficulty: 64, enemyHp: 16.2 },
+            { difficulty: 67, enemyHp: 17 }, // 35
+            { difficulty: 70, enemyHp: 17.8 },
+            { difficulty: 73, enemyHp: 18.6 },
+            { difficulty: 76, enemyHp: 19.4 },
+            { difficulty: 79, enemyHp: 20.2 },
+            { difficulty: 82, enemyHp: 21 }, // 40
         ],
         endless: {
-            hpGrowth: 1.1, 
+            hpGrowth: 1.09, 
             difficultyIncrement: 3,
         },
         formations: {
@@ -85,8 +105,8 @@ export const balanceConfig = {
                 minimumWeight: 0.02,
             },
             endlessDifficulty: {
-                startWave: 21,
-                base: 24,
+                startWave: 41,
+                base: 72,
                 growth: 2.4,
                 max: 160,
             },

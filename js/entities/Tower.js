@@ -226,7 +226,7 @@ export default class Tower {
         return Math.max(0, Math.min(1, normalized));
     }
 
-    draw(ctx, assets) {
+    draw(ctx, assets, game = null) {
         const c = this.center();
         this.drawHover(ctx, c);
         ctx.fillStyle = this.color;
@@ -244,6 +244,10 @@ export default class Tower {
 
         this.drawRemovalChargeIndicator(ctx, c);
         this.drawLevelIndicator(ctx);
+        
+        if (game && game.upgradeModeActive) {
+            this.drawUpgradeCost(ctx, game);
+        }
     }
 
     setHover(strength = 1) {
@@ -408,9 +412,143 @@ export default class Tower {
     }
 
     drawLevelIndicator(ctx) {
-        ctx.fillStyle = 'black';
-        ctx.font = '10px sans-serif';
-        ctx.fillText(String(this.level), this.x + this.w + 2, this.y + 10);
+        const config = gameConfig.towers?.levelIndicator ?? {};
+        const fontSize = config.fontSize ?? 16;
+        const offsetX = config.offsetX ?? 0;
+        const offsetY = config.offsetY ?? 4;
+        const padding = config.padding ?? 4;
+        const backgroundAlpha = config.backgroundAlpha ?? 0.85;
+
+        const text = String(this.level);
+
+        ctx.save();
+        ctx.font = `bold ${fontSize}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'bottom';
+
+        // Position at bottom-center of the tower with configurable offset
+        const textX = this.x + this.w / 2 + offsetX;
+        const textY = this.y + this.h + fontSize + offsetY;
+
+        // Get color and intensity based on level
+        const levelStyle = this.getLevelIndicatorStyle(this.level);
+
+        // Draw semi-transparent background for better visibility
+        const metrics = ctx.measureText(text);
+        const bgWidth = metrics.width + padding * 2;
+        const bgHeight = fontSize + padding * 2;
+        const bgX = textX - bgWidth / 2;
+        const bgY = textY - bgHeight + padding;
+
+        // Background with subtle glow
+        ctx.fillStyle = `rgba(0, 0, 0, ${backgroundAlpha})`;
+        ctx.fillRect(bgX, bgY, bgWidth, bgHeight);
+
+        // Add outer glow effect based on level
+        if (levelStyle.glowIntensity > 0) {
+            const pulse = (Math.sin(this.glowTime * 1.5) + 1) / 2;
+            const glowAlpha = levelStyle.glowIntensity * (0.3 + 0.15 * pulse);
+
+            ctx.shadowColor = levelStyle.glowColor;
+            ctx.shadowBlur = 8 + 4 * pulse;
+            ctx.globalAlpha = glowAlpha;
+            ctx.fillStyle = levelStyle.glowColor;
+            ctx.fillRect(bgX - 1, bgY - 1, bgWidth + 2, bgHeight + 2);
+            ctx.globalAlpha = 1;
+            ctx.shadowBlur = 0;
+        }
+
+        // Draw border
+        ctx.strokeStyle = levelStyle.borderColor;
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(bgX, bgY, bgWidth, bgHeight);
+
+        // Draw text with glow
+        ctx.shadowColor = levelStyle.textGlow;
+        ctx.shadowBlur = levelStyle.textGlowSize;
+
+        ctx.fillStyle = levelStyle.textColor;
+        ctx.fillText(text, textX, textY);
+
+        // Extra bright overlay for higher levels
+        if (this.level >= 4) {
+            ctx.shadowBlur = levelStyle.textGlowSize * 1.5;
+            ctx.globalAlpha = 0.4;
+            ctx.fillText(text, textX, textY);
+            ctx.globalAlpha = 1;
+        }
+
+        ctx.restore();
+    }
+
+    getLevelIndicatorStyle(level) {
+        const config = gameConfig.towers?.levelIndicator ?? {};
+        const styles = config.styles ?? {};
+
+        // Fallback default style if config is missing
+        const defaultStyle = {
+            textColor: 'rgba(255, 255, 255, 1)',
+            textGlow: 'rgba(255, 255, 255, 0.5)',
+            textGlowSize: 4,
+            borderColor: 'rgba(255, 255, 255, 0.7)',
+            glowColor: 'rgba(255, 255, 255, 0.3)',
+            glowIntensity: 0.5
+        };
+
+        // Return style for the level, defaulting to level 6 style, then default style
+        return styles[level] || styles[6] || defaultStyle;
+    }
+
+    drawUpgradeCost(ctx, game) {
+        const MAX_UPGRADE_LEVEL = 6;
+        if (this.level >= MAX_UPGRADE_LEVEL) {
+            return;
+        }
+
+        const cost = typeof game.getUpgradeCost === 'function'
+            ? game.getUpgradeCost(this.level)
+            : null;
+        
+        if (!Number.isFinite(cost) || cost <= 0) {
+            return;
+        }
+
+        const config = gameConfig.towers?.upgradeCostText ?? {};
+        const fontSize = Number.isFinite(config.fontSize) ? config.fontSize : 12;
+        const fontFamily = typeof config.fontFamily === 'string' ? config.fontFamily : 'sans-serif';
+        const fontWeight = typeof config.fontWeight === 'string' ? config.fontWeight : 'bold';
+        const colorAffordable = typeof config.colorAffordable === 'string' ? config.colorAffordable : '#ffffff';
+        const colorUnaffordable = typeof config.colorUnaffordable === 'string' ? config.colorUnaffordable : '#ff6666';
+        const backgroundAlpha = Number.isFinite(config.backgroundAlpha) ? config.backgroundAlpha : 0.6;
+        const padding = Number.isFinite(config.padding) ? config.padding : 4;
+        const offsetY = Number.isFinite(config.offsetY) ? config.offsetY : -8;
+
+        const c = this.center();
+        const textY = this.y + offsetY;
+        const text = String(cost);
+        
+        // Draw background for better visibility
+        ctx.save();
+        const fontString = `${fontWeight} ${fontSize}px ${fontFamily}`;
+        ctx.font = fontString;
+        const metrics = ctx.measureText(text);
+        const textWidth = metrics.width;
+        const bgX = c.x - textWidth / 2 - padding;
+        const bgY = textY - fontSize / 2 - padding;
+        const bgWidth = textWidth + padding * 2;
+        const bgHeight = fontSize + padding * 2;
+
+        // Semi-transparent background
+        ctx.fillStyle = `rgba(0, 0, 0, ${backgroundAlpha})`;
+        ctx.fillRect(bgX, bgY, bgWidth, bgHeight);
+
+        // Draw text
+        const canAfford = game.energy >= cost;
+        ctx.fillStyle = canAfford ? colorAffordable : colorUnaffordable;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(text, c.x, textY);
+        ctx.restore();
     }
 
     updateRemovalCharge(dt) {
