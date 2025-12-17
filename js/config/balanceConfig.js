@@ -83,17 +83,17 @@ export const balanceConfig = {
             { difficulty: 43, enemyHp: 10.33 },
             { difficulty: 46, enemyHp: 11.26 },
             { difficulty: 49, enemyHp: 12.27 },
-            { difficulty: 52, enemyHp: 13.38 }, // 30
-            { difficulty: 55, enemyHp: 14.58 },
-            { difficulty: 58, enemyHp: 15.89 },
-            { difficulty: 61, enemyHp: 17.32 },
-            { difficulty: 64, enemyHp: 18.88 },
-            { difficulty: 67, enemyHp: 20.58 }, // 35
-            { difficulty: 70, enemyHp: 22.43 },
-            { difficulty: 73, enemyHp: 24.45 },
-            { difficulty: 76, enemyHp: 26.65 },
-            { difficulty: 79, enemyHp: 29.05 },
-            { difficulty: 82, enemyHp: 31.66 }, // 40
+            { difficulty: 52, enemyHp: 13 }, // 30
+            { difficulty: 55, enemyHp: 13.8 },
+            { difficulty: 58, enemyHp: 14.6 },
+            { difficulty: 61, enemyHp: 15.4 },
+            { difficulty: 64, enemyHp: 16.2 },
+            { difficulty: 67, enemyHp: 17 }, // 35
+            { difficulty: 70, enemyHp: 17.8 },
+            { difficulty: 73, enemyHp: 18.6 },
+            { difficulty: 76, enemyHp: 19.4 },
+            { difficulty: 79, enemyHp: 20.2 },
+            { difficulty: 82, enemyHp: 21 }, // 40
         ],
         endless: {
             hpGrowth: 1.09, 
