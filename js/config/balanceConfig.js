@@ -41,7 +41,7 @@ export const balanceConfig = {
             { damage: 4, fireInterval: 60, upgradeCost: 1200 },
             { damage: 9.5, fireInterval: 120, upgradeCost: 2500 },
             { damage: 60, fireInterval: 1050, upgradeCost: 5000 },
-            { damage: 84, fireInterval: 1200 },
+            { damage: 86, fireInterval: 1200 },
         ],
         upgradeUnlockWave: 15,
     },
