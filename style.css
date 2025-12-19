@@ -338,9 +338,10 @@ body {
     position: absolute;
     inset: 0;
     display: flex;
-    align-items: flex-end;
+    align-items: center;
     justify-content: center;
     padding: calc(var(--hud-gap) * 1.2);
+    padding-bottom: calc(var(--hud-gap) * 5);
     z-index: 12;
     pointer-events: none;
     transition: opacity 0.25s ease;
@@ -371,18 +372,24 @@ body {
     grid-template-columns: auto 1fr;
     gap: calc(var(--hud-gap) * 0.9);
     align-items: center;
-    padding: calc(var(--hud-gap) * 1.2);
-    max-width: min(460px, 100%);
+    padding: calc(var(--hud-gap) * 1);
+    padding-inline: calc(var(--hud-gap) * 1.2);
+    max-width: min(85%, 520px);
+    width: 100%;
     background: linear-gradient(145deg, rgba(18, 26, 52, 0.95), rgba(10, 16, 34, 0.92));
-    border-radius: 22px;
+    border-radius: calc(12px + var(--hud-gap) * 0.5);
     border: 2px solid rgba(86, 164, 255, 0.65);
     box-shadow: 0 18px 60px rgba(8, 12, 32, 0.65);
     pointer-events: auto;
 }
 
 .tutorial-overlay__media {
-    width: 120px;
-    height: 120px;
+    width: calc(70px + var(--hud-gap) * 2);
+    height: calc(70px + var(--hud-gap) * 2);
+    min-width: 70px;
+    min-height: 70px;
+    max-width: 120px;
+    max-height: 120px;
     border-radius: 18px;
     overflow: hidden;
     background: rgba(24, 40, 68, 0.65);
@@ -414,7 +421,7 @@ body {
 
 .tutorial-overlay__title {
     margin: 0;
-    font-size: calc(1.05rem * var(--hud-font-scale));
+    font-size: calc(0.95rem * var(--hud-font-scale));
     color: #f5faff;
     letter-spacing: 0.02em;
     text-transform: uppercase;
@@ -422,13 +429,21 @@ body {
 
 .tutorial-overlay__text {
     margin: 0;
-    font-size: calc(0.88rem * var(--hud-font-scale));
-    line-height: 1.5;
+    font-size: calc(0.8rem * var(--hud-font-scale));
+    line-height: 1.4;
     color: #d9e7ff;
 }
 
 .tutorial-overlay--with-highlight .tutorial-overlay__backdrop {
     background: radial-gradient(circle at 50% 30%, rgba(52, 88, 148, 0.6), rgba(6, 10, 26, 0.85));
+}
+
+.tutorial-overlay__panel--no-image {
+    grid-template-columns: 1fr;
+}
+
+.tutorial-overlay__panel--no-image .tutorial-overlay__media {
+    display: none;
 }
 
 .tutorial-highlighted {
