@@ -5,6 +5,27 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title data-l10n="app.title">Neon Void</title>
     <link rel="stylesheet" href="style.css" />
+    <script>
+        // Suppress Tracking Prevention warnings from Howler.js localStorage access
+        if (typeof Storage !== 'undefined') {
+            const originalSetItem = Storage.prototype.setItem;
+            const originalGetItem = Storage.prototype.getItem;
+            Storage.prototype.setItem = function(key, value) {
+                try {
+                    originalSetItem.call(this, key, value);
+                } catch (e) {
+                    // Silently ignore storage access errors
+                }
+            };
+            Storage.prototype.getItem = function(key) {
+                try {
+                    return originalGetItem.call(this, key);
+                } catch (e) {
+                    return null;
+                }
+            };
+        }
+    </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js"></script>
 </head>
 <body>

@@ -26,7 +26,6 @@ export async function getCrazyGamesUser(options = {}) {
 
 export async function initializeCrazyGamesIfNeeded() {
     if (!crazyGamesIntegrationAllowed) {
-        console.log('CrazyGames integration disabled for this host.');
         return null;
     }
 

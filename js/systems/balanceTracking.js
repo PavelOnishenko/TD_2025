@@ -21,7 +21,6 @@ export function initializeBalanceTracking(game) {
     if (typeof window !== 'undefined') {
         window.printBalanceData = () => printBalanceData(game);
         window.exportBalanceCSV = () => exportBalanceCSV(game);
-        console.log('Balance tracking initialized. Use printBalanceData() or exportBalanceCSV() to view data.');
     }
 }
 
