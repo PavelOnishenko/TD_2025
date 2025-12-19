@@ -104,6 +104,17 @@ function ensureOverlayStructure(doc, root) {
     return { root, backdrop, panel, mediaWrapper, imageEl, titleEl, textEl };
 }
 
+function shouldHideImageForViewport() {
+    if (typeof window === 'undefined') {
+        return false;
+    }
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+    const area = width * height;
+    const SMALL_SCREEN_THRESHOLD = 800 * 500;
+    return area < SMALL_SCREEN_THRESHOLD;
+}
+
 function createDomOverlay(doc) {
     if (!doc || typeof doc.getElementById !== 'function') {
         return {
@@ -122,7 +133,7 @@ function createDomOverlay(doc) {
         created = true;
     }
 
-    const { backdrop, mediaWrapper, imageEl, titleEl, textEl } = ensureOverlayStructure(doc, root);
+    const { backdrop, panel, mediaWrapper, imageEl, titleEl, textEl } = ensureOverlayStructure(doc, root);
 
     if (created && doc.body && typeof doc.body.appendChild === 'function') {
         doc.body.appendChild(root);
@@ -147,7 +158,13 @@ function createDomOverlay(doc) {
                 textEl.textContent = step?.text ?? '';
             }
             const picture = step?.picture;
-            if (picture && imageEl) {
+            const hideImage = shouldHideImageForViewport();
+
+            if (panel) {
+                panel.classList?.toggle?.('tutorial-overlay__panel--no-image', hideImage);
+            }
+
+            if (picture && imageEl && !hideImage) {
                 imageEl.src = picture;
                 mediaWrapper?.classList?.remove?.('hidden');
             } else {
@@ -165,6 +182,9 @@ function createDomOverlay(doc) {
             root.setAttribute?.('aria-hidden', 'true');
             if (root.dataset) {
                 delete root.dataset.stepId;
+            }
+            if (panel) {
+                panel.classList?.remove?.('tutorial-overlay__panel--no-image');
             }
             mediaWrapper?.classList?.add?.('hidden');
             if (imageEl) {
