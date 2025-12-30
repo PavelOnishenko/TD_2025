@@ -22,6 +22,7 @@
       "Bash(git -C \"K:\\\\GameProjects\\\\TD_2025\\\\GitRepo\\\\TD_2025\" status)",
       "Bash(git -C \"K:\\\\GameProjects\\\\TD_2025\\\\GitRepo\\\\TD_2025\" ls-tree:*)",
       "Bash(git -C \"K:\\\\GameProjects\\\\TD_2025\\\\GitRepo\\\\TD_2025\" ls-tree -d --name-only eva_engine)"
+      "Bash(awk:*)"
     ],
     "deny": [],
     "ask": []
