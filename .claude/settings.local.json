@@ -16,7 +16,8 @@
       "Bash(git -C \"K:\\GameProjects\\TD_2025\\GitRepo\\TD_2025\" diff HEAD -- js/systems/ui.js)",
       "Bash(git -C \"K:\\GameProjects\\TD_2025\\GitRepo\\TD_2025\" log --oneline --max-count=5)",
       "Bash(git -C \"K:\\GameProjects\\TD_2025\\GitRepo\\TD_2025\" diff 83308a4^..83308a4 -- js/config/balanceConfig.js)",
-      "Bash(git -C \"K:\\GameProjects\\TD_2025\\GitRepo\\TD_2025\" diff f2e8b59^..f2e8b59 -- js/config/balanceConfig.js)"
+      "Bash(git -C \"K:\\GameProjects\\TD_2025\\GitRepo\\TD_2025\" diff f2e8b59^..f2e8b59 -- js/config/balanceConfig.js)",
+      "Bash(wc:*)"
     ],
     "deny": [],
     "ask": []
