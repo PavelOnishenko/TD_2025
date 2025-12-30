@@ -18,6 +18,7 @@
       "Bash(git -C \"K:\\GameProjects\\TD_2025\\GitRepo\\TD_2025\" diff 83308a4^..83308a4 -- js/config/balanceConfig.js)",
       "Bash(git -C \"K:\\GameProjects\\TD_2025\\GitRepo\\TD_2025\" diff f2e8b59^..f2e8b59 -- js/config/balanceConfig.js)",
       "Bash(ls:*)",
+      "Bash(wc:*)"
       "Bash(git -C \"K:\\\\GameProjects\\\\TD_2025\\\\GitRepo\\\\TD_2025\" status)",
       "Bash(git -C \"K:\\\\GameProjects\\\\TD_2025\\\\GitRepo\\\\TD_2025\" ls-tree:*)",
       "Bash(git -C \"K:\\\\GameProjects\\\\TD_2025\\\\GitRepo\\\\TD_2025\" ls-tree -d --name-only eva_engine)"
