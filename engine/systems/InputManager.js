@@ -8,12 +8,14 @@ export default class InputManager {
     }
 
     handleKeyDown(event) {
+        console.log('Key down event:', event);
         const code = event?.code;
         if (!code || event?.repeat) {
             return;
         }
 
         if (!this.keys.get(code)) {
+            console.log('Key registered as pressed:', code);
             this.keysPressed.add(code);
         }
         this.keys.set(code, true);
@@ -34,7 +36,9 @@ export default class InputManager {
     }
 
     wasPressed(code) {
-        return this.keysPressed.has(code);
+        var result = this.keysPressed.has(code);
+        if (result) console.log('wasPressed result:', result);
+        return result;
     }
 
     wasReleased(code) {
@@ -60,7 +64,10 @@ export default class InputManager {
             return false;
         }
 
-        return keyCodes.some(code => this.wasPressed(code));
+        // console.log('Checking wasActionPressed for action:', actionName, 'with keys:', keyCodes);
+        var result = keyCodes.some(code => this.wasPressed(code));
+        if (result) console.log('wasActionPressed result:', result);
+        return result;
     }
 
     wasActionReleased(actionName) {

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Beat'em Up Prototype</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="game-container">
+        <canvas id="game-canvas"></canvas>
+
+        <div id="hud">
+            <div id="hud-left">
+                <div id="health-display">
+                    <span>Health:</span>
+                    <span id="health-value">100</span>
+                </div>
+                <div id="score-display">
+                    <span>Score:</span>
+                    <span id="score-value">0</span>
+                </div>
+            </div>
+            <div id="hud-right">
+                <div id="level-display">
+                    <span>Level:</span>
+                    <span id="level-value">1</span>
+                </div>
+            </div>
+        </div>
+
+        <div id="start-overlay" class="overlay">
+            <div class="overlay-content">
+                <h1>Beat'em Up</h1>
+                <p>Use Arrow Keys or WASD to move</p>
+                <p>Press SPACE to attack</p>
+                <button id="start-button">Start Game</button>
+            </div>
+        </div>
+
+        <div id="pause-overlay" class="overlay hidden">
+            <div class="overlay-content">
+                <h1>Paused</h1>
+                <button id="resume-button">Resume</button>
+            </div>
+        </div>
+
+        <div id="gameover-overlay" class="overlay hidden">
+            <div class="overlay-content">
+                <h1>Game Over</h1>
+                <p>Final Score: <span id="final-score">0</span></p>
+                <button id="restart-button">Restart</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>
