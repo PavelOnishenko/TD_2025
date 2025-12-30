@@ -1,0 +1,22 @@
+{
+    "game": {
+        "title": "Beat'em Up",
+        "start": "Start Game",
+        "pause": "Paused",
+        "resume": "Resume",
+        "gameOver": "Game Over",
+        "restart": "Restart"
+    },
+    "hud": {
+        "health": "Health:",
+        "score": "Score:",
+        "level": "Level:"
+    },
+    "instructions": {
+        "move": "Use Arrow Keys or WASD to move",
+        "attack": "Press SPACE to attack"
+    },
+    "score": {
+        "final": "Final Score:"
+    }
+}
