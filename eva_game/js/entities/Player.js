@@ -34,16 +34,13 @@ export default class Player extends Entity {
             this.velocityY = 0;
             return;
         }
-
         this.velocityX = horizontalInput * PLAYER_SPEED;
         this.velocityY = verticalInput * PLAYER_SPEED;
-
         if (horizontalInput > 0) {
             this.facingRight = true;
         } else if (horizontalInput < 0) {
             this.facingRight = false;
         }
-
         this.animationState = (this.velocityX !== 0 || this.velocityY !== 0) ? 'walk' : 'idle';
     }
 
@@ -51,13 +48,13 @@ export default class Player extends Entity {
         if (this.attackCooldownTimer > 0) {
             return;
         }
-
         if (input.wasActionPressed('attack') && !this.isAttacking) {
             this.startAttack();
         }
     }
 
     startAttack() {
+        console.log('Player attack initiated');
         this.isAttacking = true;
         this.attackTimer = ATTACK_DURATION;
         this.attackCooldownTimer = ATTACK_COOLDOWN;
@@ -78,7 +75,6 @@ export default class Player extends Entity {
                 this.animationState = 'idle';
             }
         }
-
         if (this.attackCooldownTimer > 0) {
             this.attackCooldownTimer -= deltaTime * 1000;
         }
@@ -97,12 +93,10 @@ export default class Player extends Entity {
         if (this.invulnerable) {
             return;
         }
-
         this.health -= amount;
         if (this.health < 0) {
             this.health = 0;
         }
-
         this.invulnerable = true;
         this.invulnerabilityTimer = INVULNERABILITY_DURATION;
     }
@@ -111,7 +105,6 @@ export default class Player extends Entity {
         if (!this.isAttacking) {
             return false;
         }
-
         return this.isEnemyInAttackRange(enemy);
     }
 
@@ -119,7 +112,6 @@ export default class Player extends Entity {
         const dx = enemy.x - this.x;
         const dy = enemy.y - this.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
-
         const isFacingEnemy = this.isFacingTowards(dx);
         return distance <= ATTACK_RANGE && isFacingEnemy;
     }
@@ -131,10 +123,8 @@ export default class Player extends Entity {
     draw(ctx, viewport) {
         const screenX = this.x;
         const screenY = this.y;
-
         this.drawPlayerBody(ctx, screenX, screenY);
         this.drawHealthBar(ctx, screenX, screenY);
-
         if (this.isAttacking) {
             this.drawAttackIndicator(ctx, screenX, screenY);
         }
@@ -144,7 +134,6 @@ export default class Player extends Entity {
         const isFlashing = this.invulnerable && Math.floor(Date.now() / 100) % 2 === 0;
         ctx.fillStyle = isFlashing ? 'rgba(100, 200, 255, 0.5)' : '#64c8ff';
         ctx.fillRect(screenX - this.width / 2, screenY - this.height / 2, this.width, this.height);
-
         this.drawPlayerFace(ctx, screenX, screenY);
     }
 
@@ -159,10 +148,8 @@ export default class Player extends Entity {
         const barWidth = this.width;
         const barHeight = 4;
         const barY = screenY - this.height / 2 - 10;
-
         ctx.fillStyle = '#333';
         ctx.fillRect(screenX - barWidth / 2, barY, barWidth, barHeight);
-
         const healthPercent = this.health / this.maxHealth;
         const healthBarWidth = barWidth * healthPercent;
         const color = healthPercent > 0.6 ? '#4ade80' : healthPercent > 0.3 ? '#fbbf24' : '#ef4444';

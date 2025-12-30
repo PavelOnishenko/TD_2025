@@ -37,13 +37,11 @@ export default class Enemy extends Entity {
         const dx = targetX - this.x;
         const dy = targetY - this.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
-
         if (distance < ENEMY_ATTACK_RANGE) {
             this.velocityX = 0;
             this.velocityY = 0;
             return;
         }
-
         this.updateFacingDirection(dx);
         this.setVelocityTowardTarget(dx, dy, distance);
     }
@@ -63,11 +61,9 @@ export default class Enemy extends Entity {
         if (this.attackCooldownTimer > 0) {
             return false;
         }
-
         const dx = player.x - this.x;
         const dy = player.y - this.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
-
         return distance <= ENEMY_ATTACK_RANGE;
     }
 
@@ -75,7 +71,6 @@ export default class Enemy extends Entity {
         if (!this.canAttackPlayer(player)) {
             return;
         }
-
         player.takeDamage(ENEMY_DAMAGE);
         this.attackCooldownTimer = ENEMY_ATTACK_COOLDOWN;
     }
@@ -91,7 +86,6 @@ export default class Enemy extends Entity {
     draw(ctx, viewport) {
         const screenX = this.x;
         const screenY = this.y;
-
         this.drawEnemyBody(ctx, screenX, screenY);
         this.drawHealthBar(ctx, screenX, screenY);
     }
@@ -99,7 +93,6 @@ export default class Enemy extends Entity {
     drawEnemyBody(ctx, screenX, screenY) {
         ctx.fillStyle = '#ff6b6b';
         ctx.fillRect(screenX - this.width / 2, screenY - this.height / 2, this.width, this.height);
-
         this.drawEnemyFace(ctx, screenX, screenY);
     }
 
@@ -114,10 +107,8 @@ export default class Enemy extends Entity {
         const barWidth = this.width;
         const barHeight = 3;
         const barY = screenY - this.height / 2 - 8;
-
         ctx.fillStyle = '#222';
         ctx.fillRect(screenX - barWidth / 2, barY, barWidth, barHeight);
-
         const healthPercent = this.health / this.maxHealth;
         const healthBarWidth = barWidth * healthPercent;
         const color = healthPercent > 0.5 ? '#ff4444' : '#ff8888';
