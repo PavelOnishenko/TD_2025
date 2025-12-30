@@ -4,10 +4,7 @@ import gameConfig from '../config/gameConfig.js';
 import { getWaveEnergyMultiplier } from '../utils/energyScaling.js';
 import { createFlyingEnergyParticle } from '../systems/effects/flyingEnergy.js';
 import { trackEnemyKill } from '../systems/balanceTracking.js';
-
-function clamp(value, min, max) {
-    return Math.max(min, Math.min(max, value));
-}
+import { clamp } from '../../engine/utils/MathUtils.js';
 
 function getEnergyGainForKill(game, enemy) {
     const baseEnergy = gameConfig.player.energyPerKill;
