@@ -18,7 +18,8 @@
       "Bash(git -C \"K:\\GameProjects\\TD_2025\\GitRepo\\TD_2025\" diff 83308a4^..83308a4 -- js/config/balanceConfig.js)",
       "Bash(git -C \"K:\\GameProjects\\TD_2025\\GitRepo\\TD_2025\" diff f2e8b59^..f2e8b59 -- js/config/balanceConfig.js)",
       "Bash(wc:*)",
-      "Bash(awk:*)"
+      "Bash(awk:*)",
+      "Bash(git stash:*)"
     ],
     "deny": [],
     "ask": []
