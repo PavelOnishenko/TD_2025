@@ -80,11 +80,11 @@ export default class Game {
         if (this.gameOver || this.isPaused) {
             return;
         }
-        this.input.update();
         this.updatePlayer(deltaTime);
         this.updateEnemies(deltaTime);
         this.checkCollisions();
         this.updateHUD();
+        this.input.update();
     }
 
     updatePlayer(deltaTime) {
