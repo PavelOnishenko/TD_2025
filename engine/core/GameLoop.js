@@ -80,22 +80,35 @@ export default class GameLoop {
         }
 
         if (this.isPaused) {
-            this.lastTime = timestamp;
-            this.animationFrameId = requestAnimationFrame(this.boundTick);
+            this.handlePausedTick(timestamp);
             return;
         }
 
-        const deltaTime = this.calcDelta(timestamp);
+        this.handleActiveTick(timestamp);
+    }
 
+    handlePausedTick(timestamp) {
+        this.lastTime = timestamp;
+        this.animationFrameId = requestAnimationFrame(this.boundTick);
+    }
+
+    handleActiveTick(timestamp) {
+        const deltaTime = this.calcDelta(timestamp);
+        this.callUpdateCallback(deltaTime, timestamp);
+        this.callRenderCallback(deltaTime, timestamp);
+        this.animationFrameId = requestAnimationFrame(this.boundTick);
+    }
+
+    callUpdateCallback(deltaTime, timestamp) {
         if (typeof this.updateCallback === 'function') {
             this.updateCallback(deltaTime, timestamp);
         }
+    }
 
+    callRenderCallback(deltaTime, timestamp) {
         if (typeof this.renderCallback === 'function') {
             this.renderCallback(deltaTime, timestamp);
         }
-
-        this.animationFrameId = requestAnimationFrame(this.boundTick);
     }
 }
 
