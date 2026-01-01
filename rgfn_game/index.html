@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RGFN - Turn-Based RPG</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="game-container">
+        <div id="hud">
+            <div class="hud-section">
+                <h1>RGFN</h1>
+                <div id="mode-indicator">World Map</div>
+            </div>
+            <div class="hud-section stats">
+                <div class="stat">HP: <span id="player-hp">100</span>/<span id="player-max-hp">100</span></div>
+                <div class="stat">DMG: <span id="player-dmg">10</span></div>
+            </div>
+        </div>
+
+        <canvas id="game-canvas" width="800" height="600"></canvas>
+
+        <div id="battle-ui" class="hidden">
+            <div class="battle-panel">
+                <h2>Combat</h2>
+                <div id="enemy-info">
+                    <div class="enemy-stat">Enemy: <span id="enemy-name">-</span></div>
+                    <div class="enemy-stat">HP: <span id="enemy-hp">-</span>/<span id="enemy-max-hp">-</span></div>
+                </div>
+                <div id="battle-actions">
+                    <button id="attack-btn" class="action-btn">Attack</button>
+                    <button id="flee-btn" class="action-btn">Flee (50%)</button>
+                </div>
+                <div id="battle-log"></div>
+            </div>
+        </div>
+
+        <div id="controls">
+            <p>Arrow Keys / WASD: Move on World Map</p>
+            <p>Combat: Use buttons to act during your turn</p>
+        </div>
+    </div>
+
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>
