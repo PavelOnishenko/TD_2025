@@ -273,6 +273,7 @@
                     <input id="timeScaleSlider" class="diagnostics__slider" type="range" min="0" max="100" step="1" value="50" />
                     <button id="openPositionEditor" class="diagnostics__button" type="button">Position Editor</button>
                     <button id="openBalanceViewer" class="diagnostics__button" type="button">Balance Data</button>
+                    <button id="openColorThemeManager" class="diagnostics__button" type="button">Color Themes</button>
                 </div>
                 <pre id="diagnosticsLog" class="diagnostics__log"></pre>
             </div>
@@ -377,6 +378,36 @@
                         <pre id="balanceDataDisplay" class="balance-viewer__data-text"></pre>
                     </div>
                 </section>
+            </div>
+        </div>
+    </div>
+
+    <div id="colorThemeManager" class="dev-modal dev-modal--hidden" role="dialog" aria-modal="true" aria-labelledby="colorThemeTitle">
+        <div class="dev-modal__backdrop" aria-hidden="true"></div>
+        <div class="dev-modal__panel dev-modal__panel--wide" role="document">
+            <header class="dev-modal__header">
+                <div>
+                    <p class="dev-modal__eyebrow">Developer Tool</p>
+                    <h2 id="colorThemeTitle" class="dev-modal__title">Color Theme Manager</h2>
+                    <p class="dev-modal__subtitle">
+                        Configure color palettes for game effects. Customize energy, projectile, and visual effect colors.
+                    </p>
+                </div>
+                <button id="closeColorThemeManager" class="dev-modal__close" type="button" aria-label="Close color theme manager">×</button>
+            </header>
+            <div class="dev-modal__content">
+                <section class="dev-modal__section" aria-label="Theme actions">
+                    <div class="dev-modal__actions">
+                        <input id="colorThemeName" class="dev-modal__input" type="text" placeholder="Theme name" aria-label="Theme name" />
+                        <button id="saveColorTheme" type="button" class="dev-modal__button dev-modal__button--primary">Save Theme</button>
+                        <button id="exportColorTheme" type="button" class="dev-modal__button">Export JSON</button>
+                        <label class="dev-modal__button" style="cursor: pointer;">
+                            Import JSON
+                            <input id="importColorTheme" type="file" accept=".json" style="display: none;" />
+                        </label>
+                    </div>
+                </section>
+                <div id="colorThemeContent" class="color-theme__content"></div>
             </div>
         </div>
     </div>

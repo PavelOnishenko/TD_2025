@@ -1623,3 +1623,98 @@ button:focus-visible {
 .end-menu.lose h2 {
     color: #f87171;
 }
+
+/* Color Theme Manager */
+.dev-modal__panel--wide {
+    width: min(1400px, 96vw);
+}
+
+.color-theme__content {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.color-theme__color-group {
+    background: rgba(15, 23, 42, 0.75);
+    border: 1px solid rgba(148, 163, 184, 0.3);
+    border-radius: 10px;
+    padding: 0;
+    margin: 8px 0;
+}
+
+.color-theme__color-summary {
+    padding: 12px 14px;
+    cursor: pointer;
+    font-weight: 700;
+    color: #7dd3fc;
+    font-size: 1.05rem;
+    list-style: none;
+    user-select: none;
+    transition: background 0.2s ease;
+}
+
+.color-theme__color-summary::-webkit-details-marker {
+    display: none;
+}
+
+.color-theme__color-summary:hover {
+    background: rgba(56, 189, 248, 0.08);
+}
+
+.color-theme__color-group[open] .color-theme__color-summary {
+    border-bottom: 1px solid rgba(148, 163, 184, 0.25);
+}
+
+.color-theme__inputs {
+    padding: 14px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 14px;
+}
+
+.color-theme__input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.color-theme__label {
+    font-weight: 600;
+    color: #cbd5e1;
+    font-size: 0.9rem;
+}
+
+.color-theme__input {
+    flex: 1;
+}
+
+.color-theme__color-wrapper {
+    display: flex;
+    gap: 8px;
+    align-items: stretch;
+}
+
+.color-theme__color-picker {
+    width: 52px;
+    height: 42px;
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    border-radius: 10px;
+    background: rgba(15, 23, 42, 0.65);
+    cursor: pointer;
+    padding: 4px;
+}
+
+.color-theme__color-picker::-webkit-color-swatch-wrapper {
+    padding: 0;
+}
+
+.color-theme__color-picker::-webkit-color-swatch {
+    border: none;
+    border-radius: 6px;
+}
+
+.color-theme__color-picker::-moz-color-swatch {
+    border: none;
+    border-radius: 6px;
+}
