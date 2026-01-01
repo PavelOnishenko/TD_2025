@@ -5,10 +5,10 @@
 export const timingConfig = {
     battle: {
         // Delay after player action before processing next turn (ms)
-        playerActionDelay: 300,
+        playerActionDelay: 100,
 
         // Delay after enemy turn before processing next turn (ms)
-        enemyTurnDelay: 300,
+        enemyTurnDelay: 100,
 
         // Delay before enemy executes their action (ms)
         enemyActionStartDelay: 400,
