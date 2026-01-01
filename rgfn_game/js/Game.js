@@ -73,12 +73,14 @@ export default class Game {
             enemyMaxHp: document.getElementById('enemy-max-hp'),
             attackBtn: document.getElementById('attack-btn'),
             fleeBtn: document.getElementById('flee-btn'),
+            waitBtn: document.getElementById('wait-btn'),
             log: document.getElementById('battle-log'),
         };
 
         // Battle button events
         this.battleUI.attackBtn.addEventListener('click', () => this.handleAttack());
         this.battleUI.fleeBtn.addEventListener('click', () => this.handleFlee());
+        this.battleUI.waitBtn.addEventListener('click', () => this.handleWait());
     }
 
     setupInput() {
@@ -343,6 +345,22 @@ export default class Game {
         }
     }
 
+    handleWait() {
+        if (!this.turnManager.isPlayerTurn() ||
+            !this.turnManager.waitingForPlayer ||
+            this.turnTransitioning) {
+            return;
+        }
+
+        this.enableBattleButtons(false);
+        this.turnTransitioning = true;
+        this.turnManager.waitingForPlayer = false;
+
+        this.addBattleLog('You waited.', 'player');
+        this.turnManager.nextTurn();
+        setTimeout(() => this.processTurn(), 600);
+    }
+
     endBattle(result) {
         if (result === 'victory') {
             this.addBattleLog('Victory!', 'system');
@@ -387,6 +405,7 @@ export default class Game {
     enableBattleButtons(enabled) {
         this.battleUI.attackBtn.disabled = !enabled;
         this.battleUI.fleeBtn.disabled = !enabled;
+        this.battleUI.waitBtn.disabled = !enabled;
     }
 
     addBattleLog(message, type = 'system') {
