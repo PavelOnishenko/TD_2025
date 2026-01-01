@@ -76,24 +76,80 @@ export default class BattleMap {
         return false;
     }
 
-    draw(ctx, renderer) {
+    moveEntity(entity, direction) {
+        let newCol = entity.gridCol;
+        let newRow = entity.gridRow;
+
+        switch (direction) {
+            case 'up':
+                newRow = entity.gridRow - 1;
+                break;
+            case 'down':
+                newRow = entity.gridRow + 1;
+                break;
+            case 'left':
+                newCol = entity.gridCol - 1;
+                break;
+            case 'right':
+                newCol = entity.gridCol + 1;
+                break;
+        }
+
+        // Check if position is valid and not occupied
+        if (this.grid.isValidPosition(newCol, newRow)) {
+            const occupied = this.entities.some(e =>
+                e !== entity && e.gridCol === newCol && e.gridRow === newRow && !e.isDead()
+            );
+
+            if (!occupied) {
+                entity.gridCol = newCol;
+                entity.gridRow = newRow;
+                const [x, y] = this.grid.gridToPixel(newCol, newRow);
+                entity.x = x;
+                entity.y = y;
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    draw(ctx, renderer, currentEntity = null) {
         const dims = this.grid.getDimensions();
 
         // Draw grid background
-        ctx.fillStyle = '#2a1a1a';
+        ctx.fillStyle = '#1a0a0a';
         ctx.fillRect(0, 0, dims.width, dims.height);
 
-        // Draw grid cells
+        // Draw grid cells with clear borders
         this.grid.forEachCell((cell, col, row) => {
-            // Alternating tile colors
+            // Alternating tile colors for better visibility
             const isLight = (col + row) % 2 === 0;
-            ctx.fillStyle = isLight ? 'rgba(100, 50, 50, 0.2)' : 'rgba(50, 25, 25, 0.2)';
+            ctx.fillStyle = isLight ? 'rgba(80, 30, 30, 0.4)' : 'rgba(40, 15, 15, 0.4)';
             ctx.fillRect(cell.x, cell.y, cell.width, cell.height);
 
-            // Cell borders
-            ctx.strokeStyle = 'rgba(255, 0, 0, 0.2)';
-            ctx.lineWidth = 1;
+            // Highlight current entity's cell
+            if (currentEntity && currentEntity.gridCol === col && currentEntity.gridRow === row) {
+                const isPlayer = currentEntity.constructor.name === 'Player';
+                ctx.fillStyle = isPlayer ? 'rgba(0, 204, 255, 0.3)' : 'rgba(255, 100, 0, 0.3)';
+                ctx.fillRect(cell.x, cell.y, cell.width, cell.height);
+            }
+
+            // Clear cell borders
+            ctx.strokeStyle = 'rgba(255, 50, 50, 0.5)';
+            ctx.lineWidth = 2;
             ctx.strokeRect(cell.x, cell.y, cell.width, cell.height);
+        });
+
+        // Draw grid coordinates for reference
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.font = '10px monospace';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+
+        this.grid.forEachCell((cell, col, row) => {
+            const [x, y] = this.grid.gridToPixel(col, row);
+            ctx.fillText(`${col},${row}`, x, y - 15);
         });
     }
 }

@@ -19,26 +19,34 @@
             </div>
         </div>
 
-        <canvas id="game-canvas" width="800" height="600"></canvas>
+        <div id="game-area">
+            <canvas id="game-canvas" width="800" height="600"></canvas>
 
-        <div id="battle-ui" class="hidden">
-            <div class="battle-panel">
+            <div id="battle-sidebar" class="hidden">
                 <h2>Combat</h2>
                 <div id="enemy-info">
                     <div class="enemy-stat">Enemy: <span id="enemy-name">-</span></div>
                     <div class="enemy-stat">HP: <span id="enemy-hp">-</span>/<span id="enemy-max-hp">-</span></div>
                 </div>
+                <div id="battle-instructions">
+                    <p><strong>Your Turn:</strong></p>
+                    <p>Move with Arrow Keys/WASD</p>
+                    <p>Attack when adjacent (1 tile)</p>
+                </div>
                 <div id="battle-actions">
                     <button id="attack-btn" class="action-btn">Attack</button>
                     <button id="flee-btn" class="action-btn">Flee (50%)</button>
                 </div>
-                <div id="battle-log"></div>
+                <div id="battle-log-container">
+                    <h3>Battle Log</h3>
+                    <div id="battle-log"></div>
+                </div>
             </div>
         </div>
 
         <div id="controls">
-            <p>Arrow Keys / WASD: Move on World Map</p>
-            <p>Combat: Use buttons to act during your turn</p>
+            <p>Arrow Keys / WASD: Move</p>
+            <p>Battle: Move each turn OR click Attack/Flee</p>
         </div>
     </div>
 

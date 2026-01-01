@@ -65,7 +65,7 @@ export default class Game {
         };
 
         this.battleUI = {
-            container: document.getElementById('battle-ui'),
+            sidebar: document.getElementById('battle-sidebar'),
             enemyName: document.getElementById('enemy-name'),
             enemyHp: document.getElementById('enemy-hp'),
             enemyMaxHp: document.getElementById('enemy-max-hp'),
@@ -115,7 +115,7 @@ export default class Game {
 
     enterWorldMode() {
         this.hudElements.modeIndicator.textContent = 'World Map';
-        this.battleUI.container.classList.add('hidden');
+        this.battleUI.sidebar.classList.add('hidden');
 
         // Reset player position on world map
         const [px, py] = this.worldMap.getPlayerPixelPosition();
@@ -170,7 +170,7 @@ export default class Game {
 
     enterBattleMode(enemies) {
         this.hudElements.modeIndicator.textContent = 'Battle!';
-        this.battleUI.container.classList.remove('hidden');
+        this.battleUI.sidebar.classList.remove('hidden');
 
         this.currentEnemies = enemies;
         this.battleMap.setup(this.player, this.currentEnemies);
@@ -183,7 +183,28 @@ export default class Game {
     }
 
     updateBattleMode(deltaTime) {
-        // Battle is turn-based, updates happen via button clicks
+        // Allow player movement during their turn
+        if (this.turnManager.isPlayerTurn() && this.turnManager.waitingForPlayer) {
+            let moved = false;
+
+            if (this.input.wasActionPressed('moveUp')) {
+                moved = this.battleMap.moveEntity(this.player, 'up');
+            } else if (this.input.wasActionPressed('moveDown')) {
+                moved = this.battleMap.moveEntity(this.player, 'down');
+            } else if (this.input.wasActionPressed('moveLeft')) {
+                moved = this.battleMap.moveEntity(this.player, 'left');
+            } else if (this.input.wasActionPressed('moveRight')) {
+                moved = this.battleMap.moveEntity(this.player, 'right');
+            }
+
+            if (moved) {
+                this.addBattleLog('You moved.', 'player');
+                // End player turn after moving
+                this.turnManager.waitingForPlayer = false;
+                this.turnManager.nextTurn();
+                setTimeout(() => this.processTurn(), 500);
+            }
+        }
     }
 
     processTurn() {
@@ -205,6 +226,7 @@ export default class Game {
         }
 
         if (this.turnManager.isPlayerTurn()) {
+            this.turnManager.waitingForPlayer = true; // Enable player input
             this.updateBattleUI();
             this.enableBattleButtons(true);
         } else {
@@ -240,7 +262,12 @@ export default class Game {
     }
 
     handleAttack() {
+        if (!this.turnManager.isPlayerTurn() || !this.turnManager.waitingForPlayer) {
+            return;
+        }
+
         this.enableBattleButtons(false);
+        this.turnManager.waitingForPlayer = false;
 
         const enemies = this.turnManager.getActiveEnemies();
         if (enemies.length === 0) {
@@ -248,11 +275,16 @@ export default class Game {
             return;
         }
 
-        // Attack first living enemy
-        const target = enemies[0];
-        const inRange = this.battleMap.isInMeleeRange(this.player, target);
+        // Find closest enemy in melee range
+        let target = null;
+        for (const enemy of enemies) {
+            if (this.battleMap.isInMeleeRange(this.player, enemy)) {
+                target = enemy;
+                break;
+            }
+        }
 
-        if (inRange) {
+        if (target) {
             this.addBattleLog('You attack!', 'player');
             target.takeDamage(this.player.damage);
             this.addBattleLog(`${target.name} takes ${this.player.damage} damage!`, 'damage');
@@ -260,17 +292,23 @@ export default class Game {
             if (target.isDead()) {
                 this.addBattleLog(`${target.name} defeated!`, 'system');
             }
-        } else {
-            this.battleMap.moveEntityToward(this.player, target);
-            this.addBattleLog('You move closer to the enemy...', 'player');
-        }
 
-        this.turnManager.nextTurn();
-        setTimeout(() => this.processTurn(), 500);
+            this.turnManager.nextTurn();
+            setTimeout(() => this.processTurn(), 500);
+        } else {
+            this.addBattleLog('No enemy in range! Move closer first.', 'system');
+            this.turnManager.waitingForPlayer = true;
+            this.enableBattleButtons(true);
+        }
     }
 
     handleFlee() {
+        if (!this.turnManager.isPlayerTurn() || !this.turnManager.waitingForPlayer) {
+            return;
+        }
+
         this.enableBattleButtons(false);
+        this.turnManager.waitingForPlayer = false;
 
         const success = Math.random() < 0.5;
         if (success) {
@@ -300,7 +338,8 @@ export default class Game {
     }
 
     renderBattleMode() {
-        this.battleMap.draw(this.renderer.ctx, this.renderer);
+        const currentEntity = this.turnManager.getCurrentEntity();
+        this.battleMap.draw(this.renderer.ctx, this.renderer, currentEntity);
 
         // Draw all entities
         const entities = [this.player, ...this.currentEnemies.filter(e => e.active)];
