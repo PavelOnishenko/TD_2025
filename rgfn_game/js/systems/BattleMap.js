@@ -51,16 +51,46 @@ export default class BattleMap {
         const colDiff = targetCol - entity.gridCol;
         const rowDiff = targetRow - entity.gridRow;
 
-        if (Math.abs(colDiff) > Math.abs(rowDiff)) {
+        // Prioritize the direction with greater distance
+        const primaryMoveIsCol = Math.abs(colDiff) > Math.abs(rowDiff);
+
+        // Try primary direction first
+        if (primaryMoveIsCol && colDiff !== 0) {
             newCol += colDiff > 0 ? 1 : -1;
-        } else if (rowDiff !== 0) {
+        } else if (!primaryMoveIsCol && rowDiff !== 0) {
             newRow += rowDiff > 0 ? 1 : -1;
         }
 
         // Check if position is valid and not occupied
         if (this.grid.isValidPosition(newCol, newRow)) {
             const occupied = this.entities.some(e =>
-                e !== entity && e.gridCol === newCol && e.gridRow === newRow
+                e !== entity && e.gridCol === newCol && e.gridRow === newRow && !e.isDead()
+            );
+
+            if (!occupied) {
+                entity.gridCol = newCol;
+                entity.gridRow = newRow;
+                const [x, y] = this.grid.gridToPixel(newCol, newRow);
+                entity.x = x;
+                entity.y = y;
+                return true;
+            }
+        }
+
+        // Primary direction blocked, try alternate direction
+        newCol = entity.gridCol;
+        newRow = entity.gridRow;
+
+        if (!primaryMoveIsCol && colDiff !== 0) {
+            newCol += colDiff > 0 ? 1 : -1;
+        } else if (primaryMoveIsCol && rowDiff !== 0) {
+            newRow += rowDiff > 0 ? 1 : -1;
+        }
+
+        // Check if alternate position is valid and not occupied
+        if (this.grid.isValidPosition(newCol, newRow)) {
+            const occupied = this.entities.some(e =>
+                e !== entity && e.gridCol === newCol && e.gridRow === newRow && !e.isDead()
             );
 
             if (!occupied) {
