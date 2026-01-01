@@ -30,6 +30,7 @@ export default class Game {
         this.turnManager = new TurnManager();
         this.encounterSystem = new EncounterSystem();
         this.currentEnemies = [];
+        this.turnTransitioning = false; // Prevent input during turn changes
 
         // State machine for game modes
         this.stateMachine = new StateMachine(MODES.WORLD_MAP);
@@ -175,6 +176,7 @@ export default class Game {
         this.currentEnemies = enemies;
         this.battleMap.setup(this.player, this.currentEnemies);
         this.turnManager.initializeTurns([this.player, ...this.currentEnemies]);
+        this.turnTransitioning = false; // Reset transition flag
 
         this.clearBattleLog();
         this.addBattleLog(`Encountered ${enemies.length} skeleton${enemies.length > 1 ? 's' : ''}!`, 'system');
@@ -183,8 +185,11 @@ export default class Game {
     }
 
     updateBattleMode(deltaTime) {
-        // Allow player movement during their turn
-        if (this.turnManager.isPlayerTurn() && this.turnManager.waitingForPlayer) {
+        // Allow player movement during their turn (only when not transitioning)
+        if (this.turnManager.isPlayerTurn() &&
+            this.turnManager.waitingForPlayer &&
+            !this.turnTransitioning) {
+
             let moved = false;
 
             if (this.input.wasActionPressed('moveUp')) {
@@ -200,9 +205,12 @@ export default class Game {
             if (moved) {
                 this.addBattleLog('You moved.', 'player');
                 // End player turn after moving
+                this.turnTransitioning = true;
                 this.turnManager.waitingForPlayer = false;
                 this.turnManager.nextTurn();
-                setTimeout(() => this.processTurn(), 500);
+                setTimeout(() => {
+                    this.processTurn();
+                }, 600);
             }
         }
     }
@@ -226,9 +234,13 @@ export default class Game {
         }
 
         if (this.turnManager.isPlayerTurn()) {
-            this.turnManager.waitingForPlayer = true; // Enable player input
-            this.updateBattleUI();
-            this.enableBattleButtons(true);
+            // Small delay before accepting player input to clear any lingering key presses
+            setTimeout(() => {
+                this.turnTransitioning = false;
+                this.turnManager.waitingForPlayer = true;
+                this.updateBattleUI();
+                this.enableBattleButtons(true);
+            }, 100);
         } else {
             this.enableBattleButtons(false);
             this.executeEnemyTurn(current);
@@ -236,6 +248,8 @@ export default class Game {
     }
 
     executeEnemyTurn(enemy) {
+        this.turnTransitioning = true;
+
         setTimeout(() => {
             // Enemy AI: move toward player, attack if in range
             const inRange = this.battleMap.isInMeleeRange(enemy, this.player);
@@ -257,16 +271,19 @@ export default class Game {
             }
 
             this.turnManager.nextTurn();
-            setTimeout(() => this.processTurn(), 500);
+            setTimeout(() => this.processTurn(), 600);
         }, 800);
     }
 
     handleAttack() {
-        if (!this.turnManager.isPlayerTurn() || !this.turnManager.waitingForPlayer) {
+        if (!this.turnManager.isPlayerTurn() ||
+            !this.turnManager.waitingForPlayer ||
+            this.turnTransitioning) {
             return;
         }
 
         this.enableBattleButtons(false);
+        this.turnTransitioning = true;
         this.turnManager.waitingForPlayer = false;
 
         const enemies = this.turnManager.getActiveEnemies();
@@ -294,20 +311,24 @@ export default class Game {
             }
 
             this.turnManager.nextTurn();
-            setTimeout(() => this.processTurn(), 500);
+            setTimeout(() => this.processTurn(), 600);
         } else {
             this.addBattleLog('No enemy in range! Move closer first.', 'system');
+            this.turnTransitioning = false;
             this.turnManager.waitingForPlayer = true;
             this.enableBattleButtons(true);
         }
     }
 
     handleFlee() {
-        if (!this.turnManager.isPlayerTurn() || !this.turnManager.waitingForPlayer) {
+        if (!this.turnManager.isPlayerTurn() ||
+            !this.turnManager.waitingForPlayer ||
+            this.turnTransitioning) {
             return;
         }
 
         this.enableBattleButtons(false);
+        this.turnTransitioning = true;
         this.turnManager.waitingForPlayer = false;
 
         const success = Math.random() < 0.5;
