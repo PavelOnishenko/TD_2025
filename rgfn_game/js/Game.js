@@ -7,6 +7,7 @@ import BattleMap from './systems/BattleMap.js';
 import TurnManager from './systems/TurnManager.js';
 import EncounterSystem from './systems/EncounterSystem.js';
 import Player from './entities/Player.js';
+import timingConfig from './config/timingConfig.js';
 
 const MODES = {
     WORLD_MAP: 'WORLD_MAP',
@@ -210,7 +211,7 @@ export default class Game {
                 this.turnManager.nextTurn();
                 setTimeout(() => {
                     this.processTurn();
-                }, 600);
+                }, timingConfig.battle.playerActionDelay);
             }
         }
     }
@@ -240,7 +241,7 @@ export default class Game {
                 this.turnManager.waitingForPlayer = true;
                 this.updateBattleUI();
                 this.enableBattleButtons(true);
-            }, 100);
+            }, timingConfig.battle.turnStartInputDelay);
         } else {
             this.enableBattleButtons(false);
             this.executeEnemyTurn(current);
@@ -262,7 +263,7 @@ export default class Game {
 
                 if (this.player.isDead()) {
                     this.addBattleLog('You have been defeated!', 'system');
-                    setTimeout(() => this.endBattle('defeat'), 1500);
+                    setTimeout(() => this.endBattle('defeat'), timingConfig.battle.defeatEndDelay);
                     return;
                 }
             } else {
@@ -271,8 +272,8 @@ export default class Game {
             }
 
             this.turnManager.nextTurn();
-            setTimeout(() => this.processTurn(), 600);
-        }, 800);
+            setTimeout(() => this.processTurn(), timingConfig.battle.enemyTurnDelay);
+        }, timingConfig.battle.enemyActionStartDelay);
     }
 
     handleAttack() {
@@ -311,7 +312,7 @@ export default class Game {
             }
 
             this.turnManager.nextTurn();
-            setTimeout(() => this.processTurn(), 600);
+            setTimeout(() => this.processTurn(), timingConfig.battle.playerActionDelay);
         } else {
             this.addBattleLog('No enemy in range! Move closer first.', 'system');
             this.turnTransitioning = false;
@@ -334,21 +335,21 @@ export default class Game {
         const success = Math.random() < 0.5;
         if (success) {
             this.addBattleLog('You fled from battle!', 'system');
-            setTimeout(() => this.endBattle('fled'), 1000);
+            setTimeout(() => this.endBattle('fled'), timingConfig.battle.fleeSuccessDelay);
         } else {
             this.addBattleLog('Failed to flee!', 'system');
             this.turnManager.nextTurn();
-            setTimeout(() => this.processTurn(), 1000);
+            setTimeout(() => this.processTurn(), timingConfig.battle.fleeFailedDelay);
         }
     }
 
     endBattle(result) {
         if (result === 'victory') {
             this.addBattleLog('Victory!', 'system');
-            setTimeout(() => this.stateMachine.transition(MODES.WORLD_MAP), 2000);
+            setTimeout(() => this.stateMachine.transition(MODES.WORLD_MAP), timingConfig.battle.victoryEndDelay);
         } else if (result === 'defeat') {
             this.addBattleLog('Game Over!', 'system');
-            setTimeout(() => this.gameOver(), 2000);
+            setTimeout(() => this.gameOver(), timingConfig.battle.gameOverDelay);
         } else if (result === 'fled') {
             this.stateMachine.transition(MODES.WORLD_MAP);
         }
