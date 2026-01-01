@@ -8,6 +8,7 @@ import TurnManager from './systems/TurnManager.js';
 import EncounterSystem from './systems/EncounterSystem.js';
 import Player from './entities/Player.js';
 import timingConfig from './config/timingConfig.js';
+import balanceConfig from '../../js/config/balanceConfig.js';
 
 const MODES = {
     WORLD_MAP: 'WORLD_MAP',
@@ -29,7 +30,7 @@ export default class Game {
         this.worldMap = new WorldMap(20, 15, 40);
         this.battleMap = new BattleMap();
         this.turnManager = new TurnManager();
-        this.encounterSystem = new EncounterSystem();
+        this.encounterSystem = new EncounterSystem(balanceConfig.encounters);
         this.currentEnemies = [];
         this.turnTransitioning = false; // Prevent input during turn changes
 

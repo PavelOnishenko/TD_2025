@@ -212,6 +212,10 @@ tank @1.35 y=760 color=red
         waveClear: 150,
         baseHitPenalty: 25,
     },
+    encounters: {
+        encounterRate: 0.3,           // Probability per step after minimum steps (30%)
+        minStepsBeforeEncounter: 10,  // Minimum steps before first encounter can occur
+    },
 };
 
 export default balanceConfig;

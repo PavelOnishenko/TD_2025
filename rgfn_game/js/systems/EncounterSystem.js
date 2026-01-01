@@ -2,10 +2,10 @@ import { randomInt } from '../../../engine/utils/MathUtils.js';
 import Skeleton from '../entities/Skeleton.js';
 
 export default class EncounterSystem {
-    constructor(encounterRate = 0.08) {
-        this.encounterRate = encounterRate;
+    constructor(config = {}) {
+        this.encounterRate = config.encounterRate ?? 0.08;
+        this.minStepsBeforeEncounter = config.minStepsBeforeEncounter ?? 10;
         this.stepsSinceEncounter = 0;
-        this.minStepsBeforeEncounter = 10;
     }
 
     onPlayerMove() {
