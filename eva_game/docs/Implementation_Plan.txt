@@ -40,7 +40,8 @@ CURRENT STATE:
 
 NEEDED:
 ✓ Implement depth-based rendering (Y-axis determines draw order)
-□ Collision detection considering depth (can't hit enemy in different depth)
+□ Collision detection considering depth 
+(can't hit enemy in different depth so it works like hitting with fists in beat em up)
 
 FILES TO CREATE/MODIFY:
 - eva_game/js/systems/DepthManager.js (new)
