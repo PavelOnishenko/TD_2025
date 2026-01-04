@@ -6,6 +6,9 @@ nul
 *.js.map
 *.d.ts.map
 
+# Generated declaration files in engine
+engine/**/*.d.ts
+
 # Node modules
 node_modules/
 
