@@ -1,0 +1,40 @@
+import { Viewport, WorldBounds } from './types/engine';
+import { GameOverCallback } from './types/game';
+export default class Game {
+    private ctx;
+    private renderer;
+    private input;
+    private loop;
+    private player;
+    private enemies;
+    private score;
+    private level;
+    private viewport?;
+    gameOver: boolean;
+    isPaused: boolean;
+    onGameOver: GameOverCallback | null;
+    constructor(canvas: HTMLCanvasElement);
+    private setupInput;
+    private initializeGame;
+    private spawnEnemies;
+    start(): void;
+    pause(): void;
+    resume(): void;
+    restart(): void;
+    private update;
+    private updatePlayer;
+    private keepPlayerInBounds;
+    private updateEnemies;
+    private checkCollisions;
+    private handlePlayerEnemyCollision;
+    private handlePlayerAttackHit;
+    private endGame;
+    private updateHUD;
+    private render;
+    private drawBackground;
+    private drawGrid;
+    private drawEntities;
+    updateViewport(viewport: Viewport): void;
+    computeWorldBounds(): WorldBounds;
+}
+//# sourceMappingURL=Game.d.ts.map
