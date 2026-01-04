@@ -1,7 +1,7 @@
 import Entity from '../../../engine/core/Entity.js';
-import { Viewport } from '../types/engine';
-import { AnimationState } from '../types/game';
-import Player from './Player';
+import { Viewport } from '../types/engine.js';
+import { AnimationState } from '../types/game.js';
+import Player from './Player.js';
 
 const ENEMY_SPEED: number = 80;
 const ENEMY_ATTACK_RANGE: number = 40;

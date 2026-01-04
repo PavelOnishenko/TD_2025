@@ -1,10 +1,10 @@
 import GameLoop from '../../engine/core/GameLoop.js';
 import Renderer from '../../engine/core/Renderer.js';
 import InputManager from '../../engine/systems/InputManager.js';
-import { Viewport, WorldBounds } from './types/engine';
-import { GameOverCallback } from './types/game';
-import Player from './entities/Player';
-import Enemy from './entities/Enemy';
+import { Viewport, WorldBounds } from './types/engine.js';
+import { GameOverCallback } from './types/game.js';
+import Player from './entities/Player.js';
+import Enemy from './entities/Enemy.js';
 
 const WORLD_WIDTH: number = 800;
 const WORLD_HEIGHT: number = 600;

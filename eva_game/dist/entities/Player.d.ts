@@ -1,7 +1,7 @@
 import Entity from '../../../engine/core/Entity.js';
 import InputManager from '../../../engine/systems/InputManager.js';
-import { Viewport } from '../types/engine';
-import { AnimationState } from '../types/game';
+import { Viewport } from '../types/engine.js';
+import { AnimationState } from '../types/game.js';
 export default class Player extends Entity {
     x: number;
     y: number;

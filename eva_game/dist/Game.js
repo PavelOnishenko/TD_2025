@@ -1,8 +1,8 @@
 import GameLoop from '../../engine/core/GameLoop.js';
 import Renderer from '../../engine/core/Renderer.js';
 import InputManager from '../../engine/systems/InputManager.js';
-import Player from './entities/Player';
-import Enemy from './entities/Enemy';
+import Player from './entities/Player.js';
+import Enemy from './entities/Enemy.js';
 const WORLD_WIDTH = 800;
 const WORLD_HEIGHT = 600;
 export default class Game {

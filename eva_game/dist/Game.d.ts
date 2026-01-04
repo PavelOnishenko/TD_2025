@@ -1,5 +1,5 @@
-import { Viewport, WorldBounds } from './types/engine';
-import { GameOverCallback } from './types/game';
+import { Viewport, WorldBounds } from './types/engine.js';
+import { GameOverCallback } from './types/game.js';
 export default class Game {
     private ctx;
     private renderer;

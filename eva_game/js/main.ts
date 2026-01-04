@@ -1,5 +1,5 @@
-import Game from './Game';
-import { resizeCanvas } from '../../engine/systems/ViewportManager';
+import Game from './Game.js';
+import { resizeCanvas } from '../../engine/systems/ViewportManager.js';
 
 const canvas = document.getElementById('game-canvas') as HTMLCanvasElement;
 const startButton = document.getElementById('start-button') as HTMLButtonElement;

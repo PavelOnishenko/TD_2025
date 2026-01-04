@@ -1,7 +1,7 @@
 import Entity from '../../../engine/core/Entity.js';
-import { Viewport } from '../types/engine';
-import { AnimationState } from '../types/game';
-import Player from './Player';
+import { Viewport } from '../types/engine.js';
+import { AnimationState } from '../types/game.js';
+import Player from './Player.js';
 export default class Enemy extends Entity {
     x: number;
     y: number;
