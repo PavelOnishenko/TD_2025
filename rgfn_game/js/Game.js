@@ -150,10 +150,13 @@ export default class Game {
             }
         }
 
-        // Update player position
-        const [px, py] = this.worldMap.getPlayerPixelPosition();
-        this.player.x = px;
-        this.player.y = py;
+        // Update player position (only if still in world map mode)
+        // Don't overwrite position if we just transitioned to battle
+        if (this.stateMachine.isInState(MODES.WORLD_MAP)) {
+            const [px, py] = this.worldMap.getPlayerPixelPosition();
+            this.player.x = px;
+            this.player.y = py;
+        }
     }
 
     onPlayerMoved() {
