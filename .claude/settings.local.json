@@ -19,7 +19,9 @@
       "Bash(git -C \"K:\\GameProjects\\TD_2025\\GitRepo\\TD_2025\" diff f2e8b59^..f2e8b59 -- js/config/balanceConfig.js)",
       "Bash(wc:*)",
       "Bash(awk:*)",
-      "Bash(git stash:*)"
+      "Bash(git stash:*)",
+      "Bash(npx tsc)",
+      "Bash(npm install:*)"
     ],
     "deny": [],
     "ask": []
