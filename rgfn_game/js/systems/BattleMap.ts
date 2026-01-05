@@ -16,11 +16,11 @@ export default class BattleMap {
         // Place player at bottom center
         const playerCol = Math.floor(this.grid.columns / 2);
         const playerRow = this.grid.rows - 2;
-        const [playerX, playerY] = this.grid.gridToPixel(playerCol, playerRow);
-        player.x = playerX;
-        player.y = playerY;
         player.gridCol = playerCol;
         player.gridRow = playerRow;
+        const playerPos = this.grid.gridToPixel(playerCol, playerRow);
+        player.x = playerPos[0];
+        player.y = playerPos[1];
 
         this.entities.push(player);
 
@@ -29,11 +29,11 @@ export default class BattleMap {
         enemies.forEach((enemy, i) => {
             const col = startCol + i * 2;
             const row = 1;
-            const [x, y] = this.grid.gridToPixel(col, row);
-            enemy.x = x;
-            enemy.y = y;
             enemy.gridCol = col;
             enemy.gridRow = row;
+            const enemyPos = this.grid.gridToPixel(col, row);
+            enemy.x = enemyPos[0];
+            enemy.y = enemyPos[1];
             this.entities.push(enemy);
         });
     }
