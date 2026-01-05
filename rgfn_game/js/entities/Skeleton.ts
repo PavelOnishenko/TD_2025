@@ -21,6 +21,7 @@ export default class Skeleton extends Entity {
     public maxHp: number = 30;
     public damage: number = 8;
     public name: string = 'Skeleton';
+    public xpValue: number = 3; // XP awarded when defeated
     public gridCol?: number;
     public gridRow?: number;
 
@@ -32,6 +33,7 @@ export default class Skeleton extends Entity {
         this.maxHp = 30;
         this.damage = 8;
         this.name = 'Skeleton';
+        this.xpValue = 3;
     }
 
     public takeDamage(amount: number): void {

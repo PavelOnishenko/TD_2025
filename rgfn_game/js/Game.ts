@@ -18,9 +18,20 @@ const MODES = {
 
 interface HUDElements {
     modeIndicator: HTMLElement;
+    playerLevel: HTMLElement;
+    playerXp: HTMLElement;
+    playerXpNext: HTMLElement;
     playerHp: HTMLElement;
     playerMaxHp: HTMLElement;
     playerDmg: HTMLElement;
+    playerArmor: HTMLElement;
+    skillPoints: HTMLElement;
+    statVitality: HTMLElement;
+    statToughness: HTMLElement;
+    statStrength: HTMLElement;
+    addVitalityBtn: HTMLButtonElement;
+    addToughnessBtn: HTMLButtonElement;
+    addStrengthBtn: HTMLButtonElement;
 }
 
 interface BattleUI {
@@ -100,9 +111,20 @@ export default class Game {
     private setupUI(): void {
         this.hudElements = {
             modeIndicator: document.getElementById('mode-indicator')!,
+            playerLevel: document.getElementById('player-level')!,
+            playerXp: document.getElementById('player-xp')!,
+            playerXpNext: document.getElementById('player-xp-next')!,
             playerHp: document.getElementById('player-hp')!,
             playerMaxHp: document.getElementById('player-max-hp')!,
             playerDmg: document.getElementById('player-dmg')!,
+            playerArmor: document.getElementById('player-armor')!,
+            skillPoints: document.getElementById('skill-points')!,
+            statVitality: document.getElementById('stat-vitality')!,
+            statToughness: document.getElementById('stat-toughness')!,
+            statStrength: document.getElementById('stat-strength')!,
+            addVitalityBtn: document.getElementById('add-vitality-btn')! as HTMLButtonElement,
+            addToughnessBtn: document.getElementById('add-toughness-btn')! as HTMLButtonElement,
+            addStrengthBtn: document.getElementById('add-strength-btn')! as HTMLButtonElement,
         };
 
         this.battleUI = {
@@ -120,6 +142,11 @@ export default class Game {
         this.battleUI.attackBtn.addEventListener('click', () => this.handleAttack());
         this.battleUI.fleeBtn.addEventListener('click', () => this.handleFlee());
         this.battleUI.waitBtn.addEventListener('click', () => this.handleWait());
+
+        // Stat allocation button events
+        this.hudElements.addVitalityBtn.addEventListener('click', () => this.handleAddStat('vitality'));
+        this.hudElements.addToughnessBtn.addEventListener('click', () => this.handleAddStat('toughness'));
+        this.hudElements.addStrengthBtn.addEventListener('click', () => this.handleAddStat('strength'));
 
         // Canvas click for enemy selection
         this.canvas.addEventListener('click', (e: MouseEvent) => this.handleCanvasClick(e));
@@ -384,8 +411,16 @@ export default class Game {
 
             if (inRange) {
                 this.addBattleLog(`${enemy.name} attacks!`, 'enemy');
+                const damageBeforeArmor = enemy.damage;
+                const damageAfterArmor = Math.max(0, damageBeforeArmor - this.player.armor);
                 this.player.takeDamage(enemy.damage);
-                this.addBattleLog(`Player takes ${enemy.damage} damage!`, 'damage');
+
+                if (this.player.armor > 0 && damageAfterArmor < damageBeforeArmor) {
+                    this.addBattleLog(`Player takes ${damageAfterArmor} damage (${damageBeforeArmor - damageAfterArmor} blocked by armor)!`, 'damage');
+                } else {
+                    this.addBattleLog(`Player takes ${damageAfterArmor} damage!`, 'damage');
+                }
+
                 this.updateHUD();
 
                 if (this.player.isDead()) {
@@ -443,6 +478,21 @@ export default class Game {
 
             if (target.isDead()) {
                 this.addBattleLog(`${target.name} defeated!`, 'system');
+
+                // Award XP
+                const xpGained = (target as any).xpValue || 0;
+                if (xpGained > 0) {
+                    const leveledUp = this.player.addXp(xpGained);
+                    this.addBattleLog(`Gained ${xpGained} XP!`, 'system');
+
+                    if (leveledUp) {
+                        this.addBattleLog(`LEVEL UP! Now level ${this.player.level}!`, 'system');
+                        this.addBattleLog(`+${4} skill points! HP fully restored!`, 'system');
+                    }
+                }
+
+                this.updateHUD();
+
                 // Clear selection if selected enemy died
                 if (this.selectedEnemy === target) {
                     this.selectedEnemy = null;
@@ -575,9 +625,34 @@ export default class Game {
     // ============ HUD ============
 
     private updateHUD(): void {
+        this.hudElements.playerLevel.textContent = String(this.player.level);
+        this.hudElements.playerXp.textContent = String(this.player.xp);
+        this.hudElements.playerXpNext.textContent = String(this.player.xpToNextLevel);
         this.hudElements.playerHp.textContent = String(this.player.hp);
         this.hudElements.playerMaxHp.textContent = String(this.player.maxHp);
         this.hudElements.playerDmg.textContent = String(this.player.damage);
+        this.hudElements.playerArmor.textContent = String(this.player.armor);
+        this.hudElements.skillPoints.textContent = String(this.player.skillPoints);
+        this.hudElements.statVitality.textContent = String(this.player.vitality);
+        this.hudElements.statToughness.textContent = String(this.player.toughness);
+        this.hudElements.statStrength.textContent = String(this.player.strength);
+
+        // Update stat button states
+        this.updateStatButtons();
+    }
+
+    private updateStatButtons(): void {
+        const hasSkillPoints = this.player.skillPoints > 0;
+        this.hudElements.addVitalityBtn.disabled = !hasSkillPoints;
+        this.hudElements.addToughnessBtn.disabled = !hasSkillPoints;
+        this.hudElements.addStrengthBtn.disabled = !hasSkillPoints;
+    }
+
+    private handleAddStat(stat: 'vitality' | 'toughness' | 'strength'): void {
+        if (this.player.addStat(stat)) {
+            this.updateHUD();
+            this.addBattleLog(`+1 ${stat.charAt(0).toUpperCase() + stat.slice(1)}!`, 'system');
+        }
     }
 
     // ============ GAME OVER ============
