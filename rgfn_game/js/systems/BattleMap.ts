@@ -150,7 +150,7 @@ export default class BattleMap {
         return false;
     }
 
-    public draw(ctx: CanvasRenderingContext2D, renderer: any, currentEntity: CombatEntity | null = null): void {
+    public draw(ctx: CanvasRenderingContext2D, renderer: any, currentEntity: CombatEntity | null = null, selectedEnemy: CombatEntity | null = null): void {
         const dims = this.grid.getDimensions();
 
         // Draw grid background
@@ -171,10 +171,23 @@ export default class BattleMap {
                 ctx.fillRect(cell.x, cell.y, cell.width, cell.height);
             }
 
+            // Highlight selected enemy's cell with green border
+            if (selectedEnemy && selectedEnemy.gridCol === col && selectedEnemy.gridRow === row) {
+                ctx.fillStyle = 'rgba(0, 255, 0, 0.2)';
+                ctx.fillRect(cell.x, cell.y, cell.width, cell.height);
+            }
+
             // Clear cell borders
             ctx.strokeStyle = 'rgba(255, 50, 50, 0.5)';
             ctx.lineWidth = 2;
             ctx.strokeRect(cell.x, cell.y, cell.width, cell.height);
+
+            // Draw thicker green border for selected enemy
+            if (selectedEnemy && selectedEnemy.gridCol === col && selectedEnemy.gridRow === row) {
+                ctx.strokeStyle = 'rgba(0, 255, 0, 0.8)';
+                ctx.lineWidth = 4;
+                ctx.strokeRect(cell.x, cell.y, cell.width, cell.height);
+            }
         });
 
         // Draw grid coordinates for reference

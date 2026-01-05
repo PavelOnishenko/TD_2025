@@ -9,6 +9,7 @@ import EncounterSystem from './systems/EncounterSystem.js';
 import Player from './entities/Player.js';
 import Skeleton from './entities/Skeleton.js';
 import timingConfig from './config/timingConfig.js';
+import { Direction } from './types/game.js';
 
 const MODES = {
     WORLD_MAP: 'WORLD_MAP',
@@ -48,6 +49,7 @@ export default class Game {
     private stateMachine: StateMachine;
     private hudElements: HUDElements;
     private battleUI: BattleUI;
+    private selectedEnemy: Skeleton | null;
 
     constructor(canvas: HTMLCanvasElement) {
         this.canvas = canvas;
@@ -66,6 +68,7 @@ export default class Game {
         this.encounterSystem = new EncounterSystem();
         this.currentEnemies = [];
         this.turnTransitioning = false;
+        this.selectedEnemy = null;
 
         // State machine for game modes
         this.stateMachine = new StateMachine(MODES.WORLD_MAP);
@@ -117,6 +120,9 @@ export default class Game {
         this.battleUI.attackBtn.addEventListener('click', () => this.handleAttack());
         this.battleUI.fleeBtn.addEventListener('click', () => this.handleFlee());
         this.battleUI.waitBtn.addEventListener('click', () => this.handleWait());
+
+        // Canvas click for enemy selection
+        this.canvas.addEventListener('click', (e: MouseEvent) => this.handleCanvasClick(e));
     }
 
     private setupInput(): void {
@@ -213,6 +219,7 @@ export default class Game {
         this.battleUI.sidebar.classList.remove('hidden');
 
         this.currentEnemies = enemies;
+        this.selectedEnemy = null; // Reset selection
         this.battleMap.setup(this.player, this.currentEnemies);
         this.turnManager.initializeTurns([this.player, ...this.currentEnemies]);
         this.turnTransitioning = false;
@@ -232,13 +239,13 @@ export default class Game {
             let moved = false;
 
             if (this.input.wasActionPressed('moveUp')) {
-                moved = this.battleMap.moveEntity(this.player, 'up');
+                moved = this.handleMovementOrSelection('up');
             } else if (this.input.wasActionPressed('moveDown')) {
-                moved = this.battleMap.moveEntity(this.player, 'down');
+                moved = this.handleMovementOrSelection('down');
             } else if (this.input.wasActionPressed('moveLeft')) {
-                moved = this.battleMap.moveEntity(this.player, 'left');
+                moved = this.handleMovementOrSelection('left');
             } else if (this.input.wasActionPressed('moveRight')) {
-                moved = this.battleMap.moveEntity(this.player, 'right');
+                moved = this.handleMovementOrSelection('right');
             }
 
             if (moved) {
@@ -250,6 +257,88 @@ export default class Game {
                 setTimeout(() => {
                     this.processTurn();
                 }, timingConfig.battle.playerActionDelay);
+            }
+        }
+    }
+
+    private handleMovementOrSelection(direction: Direction): boolean {
+        // Check if there's an enemy adjacent in the pressed direction
+        const enemyInDirection = this.getEnemyInDirection(direction);
+
+        if (enemyInDirection) {
+            // Select the enemy instead of moving
+            this.selectedEnemy = enemyInDirection;
+            this.updateBattleUI();
+            this.addBattleLog(`Selected ${enemyInDirection.name}`, 'system');
+            return false; // Didn't move, just selected
+        }
+
+        // No enemy in that direction, try to move
+        return this.battleMap.moveEntity(this.player, direction);
+    }
+
+    private getAdjacentEnemies(): Skeleton[] {
+        const enemies = this.turnManager.getActiveEnemies() as Skeleton[];
+        return enemies.filter(enemy => this.battleMap.isInMeleeRange(this.player, enemy));
+    }
+
+    private getEnemyInDirection(direction: Direction): Skeleton | null {
+        const playerCol = this.player.gridCol ?? 0;
+        const playerRow = this.player.gridRow ?? 0;
+
+        let targetCol = playerCol;
+        let targetRow = playerRow;
+
+        switch (direction) {
+            case 'up':
+                targetRow = playerRow - 1;
+                break;
+            case 'down':
+                targetRow = playerRow + 1;
+                break;
+            case 'left':
+                targetCol = playerCol - 1;
+                break;
+            case 'right':
+                targetCol = playerCol + 1;
+                break;
+        }
+
+        const enemies = this.turnManager.getActiveEnemies() as Skeleton[];
+        return enemies.find(enemy =>
+            enemy.gridCol === targetCol && enemy.gridRow === targetRow
+        ) || null;
+    }
+
+    private handleCanvasClick(event: MouseEvent): void {
+        // Only handle clicks during battle mode and player's turn
+        if (!this.stateMachine.isInState(MODES.BATTLE) ||
+            !this.turnManager.isPlayerTurn() ||
+            !this.turnManager.waitingForPlayer ||
+            this.turnTransitioning) {
+            return;
+        }
+
+        const rect = this.canvas.getBoundingClientRect();
+        const clickX = event.clientX - rect.left;
+        const clickY = event.clientY - rect.top;
+
+        // Find which enemy was clicked (if any)
+        const enemies = this.turnManager.getActiveEnemies() as Skeleton[];
+        for (const enemy of enemies) {
+            const enemyX = enemy.x;
+            const enemyY = enemy.y;
+            const radius = 20; // Approximate click radius
+
+            const distance = Math.sqrt(
+                Math.pow(clickX - enemyX, 2) + Math.pow(clickY - enemyY, 2)
+            );
+
+            if (distance <= radius) {
+                this.selectedEnemy = enemy;
+                this.updateBattleUI();
+                this.addBattleLog(`Selected ${enemy.name}`, 'system');
+                return;
             }
         }
     }
@@ -331,12 +420,19 @@ export default class Game {
             return;
         }
 
-        // Find closest enemy in melee range
+        // Use selected enemy if valid and in range, otherwise find first enemy in range
         let target: Skeleton | null = null;
-        for (const enemy of enemies) {
-            if (this.battleMap.isInMeleeRange(this.player, enemy)) {
-                target = enemy as Skeleton;
-                break;
+
+        if (this.selectedEnemy && !this.selectedEnemy.isDead() &&
+            this.battleMap.isInMeleeRange(this.player, this.selectedEnemy)) {
+            target = this.selectedEnemy;
+        } else {
+            // Find first enemy in melee range
+            for (const enemy of enemies) {
+                if (this.battleMap.isInMeleeRange(this.player, enemy)) {
+                    target = enemy as Skeleton;
+                    break;
+                }
             }
         }
 
@@ -347,6 +443,10 @@ export default class Game {
 
             if (target.isDead()) {
                 this.addBattleLog(`${target.name} defeated!`, 'system');
+                // Clear selection if selected enemy died
+                if (this.selectedEnemy === target) {
+                    this.selectedEnemy = null;
+                }
             }
 
             this.turnManager.nextTurn();
@@ -415,7 +515,7 @@ export default class Game {
 
     private renderBattleMode(): void {
         const currentEntity = this.turnManager.getCurrentEntity();
-        this.battleMap.draw(this.renderer.ctx, this.renderer, currentEntity);
+        this.battleMap.draw(this.renderer.ctx, this.renderer, currentEntity, this.selectedEnemy);
 
         // Draw all entities
         const entities = [this.player, ...this.currentEnemies.filter(e => e.active)];
@@ -426,11 +526,27 @@ export default class Game {
 
     private updateBattleUI(): void {
         const enemies = this.turnManager.getActiveEnemies();
-        if (enemies.length > 0) {
-            const target = enemies[0] as Skeleton;
-            this.battleUI.enemyName.textContent = target.name;
-            this.battleUI.enemyHp.textContent = String(target.hp);
-            this.battleUI.enemyMaxHp.textContent = String(target.maxHp);
+        let displayEnemy: Skeleton | null = null;
+
+        // If we have a selected enemy that's still alive, show it
+        if (this.selectedEnemy && !this.selectedEnemy.isDead()) {
+            displayEnemy = this.selectedEnemy;
+        } else {
+            // Auto-select first adjacent enemy, or just first enemy if none adjacent
+            const adjacentEnemies = this.getAdjacentEnemies();
+            if (adjacentEnemies.length > 0) {
+                displayEnemy = adjacentEnemies[0];
+                this.selectedEnemy = displayEnemy; // Auto-select
+            } else if (enemies.length > 0) {
+                displayEnemy = enemies[0] as Skeleton;
+            }
+        }
+
+        if (displayEnemy) {
+            const isSelected = displayEnemy === this.selectedEnemy;
+            this.battleUI.enemyName.textContent = displayEnemy.name + (isSelected ? ' [SELECTED]' : '');
+            this.battleUI.enemyHp.textContent = String(displayEnemy.hp);
+            this.battleUI.enemyMaxHp.textContent = String(displayEnemy.maxHp);
         } else {
             this.battleUI.enemyName.textContent = '-';
             this.battleUI.enemyHp.textContent = '-';
