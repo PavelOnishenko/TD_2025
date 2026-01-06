@@ -1,4 +1,5 @@
 import Entity from '../../../engine/core/Entity.js';
+import { themeManager } from '../config/ThemeConfig.js';
 
 export default class Player extends Entity {
     // Explicitly declare inherited properties from Entity
@@ -53,9 +54,10 @@ export default class Player extends Entity {
     public draw(ctx: CanvasRenderingContext2D, viewport?: any): void {
         const screenX = this.x;
         const screenY = this.y;
+        const theme = themeManager.getTheme();
 
-        // Player body (blue)
-        ctx.fillStyle = '#00ccff';
+        // Player body
+        ctx.fillStyle = theme.entities.player.body;
         ctx.fillRect(
             screenX - this.width / 2,
             screenY - this.height / 2,
@@ -64,7 +66,7 @@ export default class Player extends Entity {
         );
 
         // Player face
-        ctx.fillStyle = '#ffffff';
+        ctx.fillStyle = theme.entities.player.face;
         const faceX = screenX - 6;
         const faceY = screenY - 8;
         ctx.fillRect(faceX, faceY, 4, 4); // eye
@@ -79,15 +81,18 @@ export default class Player extends Entity {
         const barWidth = this.width;
         const barHeight = 4;
         const barY = screenY - this.height / 2 - 8;
+        const theme = themeManager.getTheme();
 
         // Background
-        ctx.fillStyle = '#333';
+        ctx.fillStyle = theme.entities.player.healthBg;
         ctx.fillRect(screenX - barWidth / 2, barY, barWidth, barHeight);
 
         // Health
         const healthPercent = this.hp / this.maxHp;
         const healthBarWidth = barWidth * healthPercent;
-        const color = healthPercent > 0.6 ? '#4ade80' : healthPercent > 0.3 ? '#fbbf24' : '#ef4444';
+        const color = healthPercent > 0.6 ? theme.entities.player.healthHigh :
+                      healthPercent > 0.3 ? theme.entities.player.healthMid :
+                      theme.entities.player.healthLow;
         ctx.fillStyle = color;
         ctx.fillRect(screenX - barWidth / 2, barY, healthBarWidth, barHeight);
     }
