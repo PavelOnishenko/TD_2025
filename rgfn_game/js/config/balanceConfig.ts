@@ -19,7 +19,7 @@ export const balanceConfig = {
     // ============ ENEMY STATS ============
     enemies: {
         skeleton: {
-            hp: 30,
+            hp: 3,
             damage: 1,
             xpValue: 3,
             name: 'Skeleton',
