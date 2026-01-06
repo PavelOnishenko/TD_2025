@@ -32,6 +32,12 @@ export const timingConfig: TimingConfig = {
 
         // Delay before game over screen (ms)
         gameOverDelay: 2000,
+
+        // Duration to display battle start splash screen (ms)
+        battleStartSplashDuration: 2000,
+
+        // Duration to display battle end splash screen (ms)
+        battleEndSplashDuration: 2500,
     },
 };
 

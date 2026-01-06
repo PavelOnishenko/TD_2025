@@ -11,6 +11,7 @@ import Skeleton from './entities/Skeleton.js';
 import timingConfig from './config/timingConfig.js';
 import { Direction } from './types/game.js';
 import { ThemeEditor } from './ui/ThemeEditor.js';
+import { BattleSplash } from './ui/BattleSplash.js';
 import { themeManager } from './config/ThemeConfig.js';
 
 const MODES = {
@@ -53,6 +54,7 @@ export default class Game {
     private battleUI: BattleUI;
     private selectedEnemy: Skeleton | null;
     private themeEditor: ThemeEditor;
+    private battleSplash: BattleSplash;
 
     constructor(canvas: HTMLCanvasElement) {
         this.canvas = canvas;
@@ -93,6 +95,7 @@ export default class Game {
 
         // Initialize theme system
         this.themeEditor = new ThemeEditor(() => this.onThemeChange());
+        this.battleSplash = new BattleSplash();
         themeManager.applyThemeToCSS();
 
         // Input mapping
@@ -233,14 +236,18 @@ export default class Game {
 
         this.currentEnemies = enemies;
         this.selectedEnemy = null; // Reset selection
-        this.battleMap.setup(this.player, this.currentEnemies);
-        this.turnManager.initializeTurns([this.player, ...this.currentEnemies]);
-        this.turnTransitioning = false;
 
-        this.clearBattleLog();
-        this.addBattleLog(`Encountered ${enemies.length} skeleton${enemies.length > 1 ? 's' : ''}!`, 'system');
+        // Show battle start splash screen, then continue with battle setup
+        this.battleSplash.showBattleStart(enemies.length, () => {
+            this.battleMap.setup(this.player, this.currentEnemies);
+            this.turnManager.initializeTurns([this.player, ...this.currentEnemies]);
+            this.turnTransitioning = false;
 
-        this.processTurn();
+            this.clearBattleLog();
+            this.addBattleLog(`Encountered ${enemies.length} skeleton${enemies.length > 1 ? 's' : ''}!`, 'system');
+
+            this.processTurn();
+        });
     }
 
     private updateBattleMode(deltaTime: number): void {
@@ -513,10 +520,16 @@ export default class Game {
     private endBattle(result: 'victory' | 'defeat' | 'fled'): void {
         if (result === 'victory') {
             this.addBattleLog('Victory!', 'system');
-            setTimeout(() => this.stateMachine.transition(MODES.WORLD_MAP), timingConfig.battle.victoryEndDelay);
+            // Show victory splash screen
+            this.battleSplash.showBattleEnd('victory', () => {
+                this.stateMachine.transition(MODES.WORLD_MAP);
+            });
         } else if (result === 'defeat') {
             this.addBattleLog('Game Over!', 'system');
-            setTimeout(() => this.gameOver(), timingConfig.battle.gameOverDelay);
+            // Show defeat splash screen
+            this.battleSplash.showBattleEnd('defeat', () => {
+                this.gameOver();
+            });
         } else if (result === 'fled') {
             this.stateMachine.transition(MODES.WORLD_MAP);
         }
