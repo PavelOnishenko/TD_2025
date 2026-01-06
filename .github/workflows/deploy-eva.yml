@@ -1,8 +1,8 @@
-name: Deploy to GitHub Pages
+name: Deploy EVA to GitHub Pages
 
 on:
   push:
-    branches: [ main ]
+    branches: [ release_eva ]
   workflow_dispatch:
 
 permissions:
@@ -30,9 +30,6 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
-
-      - name: Build RGFN game
-        run: npm run build:rgfn
 
       - name: Build EVA game
         run: npm run build:eva
