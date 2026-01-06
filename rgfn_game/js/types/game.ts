@@ -48,6 +48,8 @@ export interface TimingConfig {
         victoryEndDelay: number;
         fleeSuccessDelay: number;
         gameOverDelay: number;
+        battleStartSplashDuration: number;
+        battleEndSplashDuration: number;
     };
 }
 
