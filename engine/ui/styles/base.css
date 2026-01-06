@@ -1,0 +1,30 @@
+/* CSS Reset and Base Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html,
+body {
+    height: 100%;
+}
+
+body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    overflow: hidden;
+}
+
+/* Utility Classes */
+.hidden {
+    display: none;
+}
+
+/* Focus Styles */
+button:focus-visible {
+    outline: 3px solid #facc15;
+    outline-offset: 3px;
+}

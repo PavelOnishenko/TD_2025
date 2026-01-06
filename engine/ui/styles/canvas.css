@@ -1,0 +1,8 @@
+/* Canvas Styles */
+canvas {
+    display: block;
+}
+
+#game-canvas {
+    display: block;
+}

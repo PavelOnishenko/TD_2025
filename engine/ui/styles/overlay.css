@@ -1,0 +1,32 @@
+/* Overlay System */
+.overlay {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.75);
+    z-index: 10;
+}
+
+.overlay.hidden {
+    display: none;
+}
+
+.overlay-content {
+    text-align: center;
+    padding: 40px;
+    background: rgba(22, 33, 62, 0.95);
+    border-radius: 10px;
+    border: 2px solid rgba(148, 163, 184, 0.5);
+}
+
+.overlay-content h1 {
+    font-size: 48px;
+    margin-bottom: 20px;
+}
+
+.overlay-content p {
+    font-size: 20px;
+    margin: 10px 0;
+}

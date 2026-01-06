@@ -1,0 +1,24 @@
+/* Button Styles */
+button {
+    margin-top: 20px;
+    padding: 15px 40px;
+    font-size: 20px;
+    font-weight: bold;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+button:hover:not(:disabled) {
+    transform: scale(1.05);
+}
+
+button:active:not(:disabled) {
+    transform: scale(0.95);
+}
+
+button:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
