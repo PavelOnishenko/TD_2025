@@ -6,6 +6,7 @@ import {
     calculateArmor,
     levelConfig
 } from '../config/levelConfig.js';
+import { balanceConfig } from '../config/balanceConfig.js';
 
 export default class Player extends Entity {
     // Explicitly declare inherited properties from Entity
@@ -44,8 +45,8 @@ export default class Player extends Entity {
 
     constructor(x: number, y: number) {
         super(x, y);
-        this.width = 32;
-        this.height = 32;
+        this.width = balanceConfig.player.width;
+        this.height = balanceConfig.player.height;
 
         // Initialize stats
         this.vitality = 0;

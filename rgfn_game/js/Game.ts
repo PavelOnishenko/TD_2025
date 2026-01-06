@@ -9,6 +9,7 @@ import EncounterSystem from './systems/EncounterSystem.js';
 import Player from './entities/Player.js';
 import Skeleton from './entities/Skeleton.js';
 import timingConfig from './config/timingConfig.js';
+import { balanceConfig } from './config/balanceConfig.js';
 import { Direction } from './types/game.js';
 
 const MODES = {
@@ -520,7 +521,7 @@ export default class Game {
         this.turnTransitioning = true;
         this.turnManager.waitingForPlayer = false;
 
-        const success = Math.random() < 0.5;
+        const success = Math.random() < balanceConfig.combat.fleeChance;
         if (success) {
             this.addBattleLog('You fled from battle!', 'system');
             setTimeout(() => this.endBattle('fled'), timingConfig.battle.fleeSuccessDelay);
