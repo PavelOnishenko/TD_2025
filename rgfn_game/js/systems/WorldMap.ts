@@ -1,5 +1,6 @@
 import GridMap from '../utils/GridMap.js';
 import { FogState, TerrainData, GridPosition, Direction, GridCell } from '../types/game.js';
+import { themeManager } from '../config/ThemeConfig.js';
 
 // Fog of war states
 const FOG_STATE = {
@@ -49,14 +50,15 @@ export default class WorldMap {
         // Generate pseudo-random terrain based on cell coordinates
         const seed = col * 1000 + row;
         const random = this.seededRandom(seed);
+        const theme = themeManager.getTheme();
 
         // Choose terrain type
         const terrainTypes = [
-            { type: 'grass' as const, color: '#4a7c3e', probability: 0.4 },
-            { type: 'forest' as const, color: '#2d5a2d', probability: 0.25 },
-            { type: 'mountain' as const, color: '#6b6b6b', probability: 0.15 },
-            { type: 'water' as const, color: '#3a6ea5', probability: 0.15 },
-            { type: 'desert' as const, color: '#c9a86a', probability: 0.05 }
+            { type: 'grass' as const, color: theme.worldMap.terrain.grass, probability: 0.4 },
+            { type: 'forest' as const, color: theme.worldMap.terrain.forest, probability: 0.25 },
+            { type: 'mountain' as const, color: theme.worldMap.terrain.mountain, probability: 0.15 },
+            { type: 'water' as const, color: theme.worldMap.terrain.water, probability: 0.15 },
+            { type: 'desert' as const, color: theme.worldMap.terrain.desert, probability: 0.05 }
         ];
 
         let accumulator = 0;
@@ -158,9 +160,10 @@ export default class WorldMap {
 
     public draw(ctx: CanvasRenderingContext2D, renderer: any): void {
         const dims = this.grid.getDimensions();
+        const theme = themeManager.getTheme();
 
         // Draw grid background
-        ctx.fillStyle = '#0a0a1a';
+        ctx.fillStyle = theme.worldMap.background;
         ctx.fillRect(0, 0, dims.width, dims.height);
 
         // Draw all cells based on their fog state
@@ -172,7 +175,7 @@ export default class WorldMap {
         });
 
         // Draw grid lines
-        ctx.strokeStyle = 'rgba(0, 255, 0, 0.1)';
+        ctx.strokeStyle = theme.worldMap.gridLines;
         ctx.lineWidth = 1;
 
         // Vertical lines
@@ -200,7 +203,7 @@ export default class WorldMap {
             ctx.fillRect(playerCell.x, playerCell.y, playerCell.width, playerCell.height);
 
             // Draw player marker
-            ctx.fillStyle = '#00ccff';
+            ctx.fillStyle = theme.worldMap.playerMarker;
             const centerX = playerCell.x + playerCell.width / 2;
             const centerY = playerCell.y + playerCell.height / 2;
             ctx.beginPath();
@@ -210,10 +213,12 @@ export default class WorldMap {
     }
 
     private drawCell(ctx: CanvasRenderingContext2D, cell: GridCell, fogState: FogState, terrain: TerrainData | undefined, col: number, row: number): void {
+        const theme = themeManager.getTheme();
+
         switch (fogState) {
             case FOG_STATE.UNKNOWN:
                 // Unknown cells - all look identical (dark/mysterious)
-                ctx.fillStyle = '#1a1a2a';
+                ctx.fillStyle = theme.worldMap.unknown;
                 ctx.fillRect(cell.x, cell.y, cell.width, cell.height);
 
                 // Add subtle question mark or unknown indicator

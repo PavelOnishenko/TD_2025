@@ -11,6 +11,8 @@ import Skeleton from './entities/Skeleton.js';
 import timingConfig from './config/timingConfig.js';
 import { balanceConfig } from './config/balanceConfig.js';
 import { Direction } from './types/game.js';
+import { ThemeEditor } from './ui/ThemeEditor.js';
+import { themeManager } from './config/ThemeConfig.js';
 
 const MODES = {
     WORLD_MAP: 'WORLD_MAP',
@@ -62,6 +64,7 @@ export default class Game {
     private hudElements: HUDElements;
     private battleUI: BattleUI;
     private selectedEnemy: Skeleton | null;
+    private themeEditor: ThemeEditor;
 
     constructor(canvas: HTMLCanvasElement) {
         this.canvas = canvas;
@@ -99,6 +102,10 @@ export default class Game {
         this.hudElements = {} as HUDElements;
         this.battleUI = {} as BattleUI;
         this.setupUI();
+
+        // Initialize theme system
+        this.themeEditor = new ThemeEditor(() => this.onThemeChange());
+        themeManager.applyThemeToCSS();
 
         // Input mapping
         this.setupInput();
@@ -148,6 +155,11 @@ export default class Game {
         this.hudElements.addVitalityBtn.addEventListener('click', () => this.handleAddStat('vitality'));
         this.hudElements.addToughnessBtn.addEventListener('click', () => this.handleAddStat('toughness'));
         this.hudElements.addStrengthBtn.addEventListener('click', () => this.handleAddStat('strength'));
+        // Theme button event
+        const themeButton = document.getElementById('theme-button');
+        if (themeButton) {
+            themeButton.addEventListener('click', () => this.themeEditor.toggle());
+        }
 
         // Canvas click for enemy selection
         this.canvas.addEventListener('click', (e: MouseEvent) => this.handleCanvasClick(e));
@@ -670,6 +682,16 @@ export default class Game {
             this.updateHUD();
             this.addBattleLog(`+1 ${stat.charAt(0).toUpperCase() + stat.slice(1)}!`, 'system');
         }
+    }
+
+    // ============ THEME SYSTEM ============
+
+    private onThemeChange(): void {
+        // Regenerate terrain with new theme colors
+        this.worldMap = new WorldMap(20, 15, 40);
+        const [px, py] = this.worldMap.getPlayerPixelPosition();
+        this.player.x = px;
+        this.player.y = py;
     }
 
     // ============ GAME OVER ============

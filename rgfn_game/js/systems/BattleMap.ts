@@ -1,5 +1,6 @@
 import GridMap from '../utils/GridMap.js';
 import { CombatEntity, Direction, GridCell } from '../types/game.js';
+import { themeManager } from '../config/ThemeConfig.js';
 
 export default class BattleMap {
     private grid: GridMap;
@@ -152,33 +153,34 @@ export default class BattleMap {
 
     public draw(ctx: CanvasRenderingContext2D, renderer: any, currentEntity: CombatEntity | null = null, selectedEnemy: CombatEntity | null = null): void {
         const dims = this.grid.getDimensions();
+        const theme = themeManager.getTheme();
 
         // Draw grid background
-        ctx.fillStyle = '#1a0a0a';
+        ctx.fillStyle = theme.battleMap.background;
         ctx.fillRect(0, 0, dims.width, dims.height);
 
         // Draw grid cells with clear borders
         this.grid.forEachCell((cell: GridCell, col: number, row: number) => {
             // Alternating tile colors for better visibility
             const isLight = (col + row) % 2 === 0;
-            ctx.fillStyle = isLight ? 'rgba(80, 30, 30, 0.4)' : 'rgba(40, 15, 15, 0.4)';
+            ctx.fillStyle = isLight ? theme.battleMap.tileLight : theme.battleMap.tileDark;
             ctx.fillRect(cell.x, cell.y, cell.width, cell.height);
 
             // Highlight current entity's cell
             if (currentEntity && currentEntity.gridCol === col && currentEntity.gridRow === row) {
                 const isPlayer = currentEntity.constructor.name === 'Player';
-                ctx.fillStyle = isPlayer ? 'rgba(0, 204, 255, 0.3)' : 'rgba(255, 100, 0, 0.3)';
+                ctx.fillStyle = isPlayer ? theme.battleMap.currentEntityPlayer : theme.battleMap.currentEntityEnemy;
                 ctx.fillRect(cell.x, cell.y, cell.width, cell.height);
             }
 
             // Highlight selected enemy's cell with green border
             if (selectedEnemy && selectedEnemy.gridCol === col && selectedEnemy.gridRow === row) {
-                ctx.fillStyle = 'rgba(0, 255, 0, 0.2)';
+                ctx.fillStyle = theme.battleMap.selectedEnemy;
                 ctx.fillRect(cell.x, cell.y, cell.width, cell.height);
             }
 
             // Clear cell borders
-            ctx.strokeStyle = 'rgba(255, 50, 50, 0.5)';
+            ctx.strokeStyle = theme.battleMap.gridBorders;
             ctx.lineWidth = 2;
             ctx.strokeRect(cell.x, cell.y, cell.width, cell.height);
 

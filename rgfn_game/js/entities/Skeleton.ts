@@ -1,5 +1,6 @@
 import Entity from '../../../engine/core/Entity.js';
 import { balanceConfig } from '../config/balanceConfig.js';
+import { themeManager } from '../config/ThemeConfig.js';
 
 export default class Skeleton extends Entity {
     // Explicitly declare inherited properties from Entity
@@ -56,9 +57,10 @@ export default class Skeleton extends Entity {
     public draw(ctx: CanvasRenderingContext2D, viewport?: any): void {
         const screenX = this.x;
         const screenY = this.y;
+        const theme = themeManager.getTheme();
 
-        // Skeleton body (bone white with red tint)
-        ctx.fillStyle = '#e6d5c3';
+        // Skeleton body
+        ctx.fillStyle = theme.entities.skeleton.body;
         ctx.fillRect(
             screenX - this.width / 2,
             screenY - this.height / 2,
@@ -67,7 +69,7 @@ export default class Skeleton extends Entity {
         );
 
         // Skull features
-        ctx.fillStyle = '#000';
+        ctx.fillStyle = theme.entities.skeleton.features;
         // Eye sockets
         ctx.fillRect(screenX - 8, screenY - 8, 5, 5);
         ctx.fillRect(screenX + 3, screenY - 8, 5, 5);
@@ -75,7 +77,7 @@ export default class Skeleton extends Entity {
         ctx.fillRect(screenX - 2, screenY - 1, 4, 3);
 
         // Teeth
-        ctx.fillStyle = '#e6d5c3';
+        ctx.fillStyle = theme.entities.skeleton.body;
         for (let i = 0; i < 4; i++) {
             ctx.fillRect(screenX - 8 + i * 4, screenY + 5, 3, 4);
         }
@@ -88,15 +90,16 @@ export default class Skeleton extends Entity {
         const barWidth = this.width;
         const barHeight = 3;
         const barY = screenY - this.height / 2 - 6;
+        const theme = themeManager.getTheme();
 
         // Background
-        ctx.fillStyle = '#222';
+        ctx.fillStyle = theme.entities.skeleton.healthBg;
         ctx.fillRect(screenX - barWidth / 2, barY, barWidth, barHeight);
 
         // Health
         const healthPercent = this.hp / this.maxHp;
         const healthBarWidth = barWidth * healthPercent;
-        ctx.fillStyle = '#ff4444';
+        ctx.fillStyle = theme.entities.skeleton.healthBar;
         ctx.fillRect(screenX - barWidth / 2, barY, healthBarWidth, barHeight);
     }
 }
