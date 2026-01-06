@@ -1,15 +1,16 @@
 import { randomInt } from '../../../engine/utils/MathUtils.js';
 import Skeleton from '../entities/Skeleton.js';
+import { balanceConfig } from '../config/balanceConfig.js';
 
 export default class EncounterSystem {
     private encounterRate: number;
     private stepsSinceEncounter: number;
     private minStepsBeforeEncounter: number;
 
-    constructor(encounterRate: number = 0.08) {
-        this.encounterRate = encounterRate;
+    constructor(encounterRate?: number) {
+        this.encounterRate = encounterRate ?? balanceConfig.encounters.encounterRate;
         this.stepsSinceEncounter = 0;
-        this.minStepsBeforeEncounter = 10;
+        this.minStepsBeforeEncounter = balanceConfig.encounters.minStepsBeforeEncounter;
     }
 
     public onPlayerMove(): void {
@@ -31,7 +32,10 @@ export default class EncounterSystem {
     }
 
     public generateEncounter(): Skeleton[] {
-        const enemyCount = randomInt(1, 3);
+        const enemyCount = randomInt(
+            balanceConfig.encounters.minEnemies,
+            balanceConfig.encounters.maxEnemies
+        );
         const enemies: Skeleton[] = [];
 
         for (let i = 0; i < enemyCount; i++) {

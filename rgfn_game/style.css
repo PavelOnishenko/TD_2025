@@ -75,6 +75,42 @@ h1 {
     letter-spacing: 1px;
 }
 
+.stat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    padding: 4px 0;
+}
+
+.stat-btn {
+    padding: 4px 10px;
+    background-color: #0a0a0a;
+    color: #00ff00;
+    border: 1px solid #00ff00;
+    cursor: pointer;
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+    font-weight: bold;
+    transition: all 0.2s;
+    border-radius: 3px;
+    min-width: 30px;
+}
+
+.stat-btn:hover:not(:disabled) {
+    background-color: #00ff00;
+    color: #0a0a0a;
+    box-shadow: 0 0 10px #00ff00;
+}
+
+.stat-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    border-color: #444;
+    color: #444;
+}
+
 #game-area {
     display: flex;
     gap: 15px;

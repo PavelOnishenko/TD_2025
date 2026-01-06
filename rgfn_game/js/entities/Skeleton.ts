@@ -1,4 +1,5 @@
 import Entity from '../../../engine/core/Entity.js';
+import { balanceConfig } from '../config/balanceConfig.js';
 import { themeManager } from '../config/ThemeConfig.js';
 
 export default class Skeleton extends Entity {
@@ -18,21 +19,25 @@ export default class Skeleton extends Entity {
     declare checkCollision: (other: any) => boolean;
 
     // Skeleton-specific properties
-    public hp: number = 30;
-    public maxHp: number = 30;
-    public damage: number = 8;
-    public name: string = 'Skeleton';
+    public hp: number;
+    public maxHp: number;
+    public damage: number;
+    public name: string;
+    public xpValue: number;
     public gridCol?: number;
     public gridRow?: number;
 
     constructor(x: number, y: number) {
         super(x, y);
-        this.width = 30;
-        this.height = 30;
-        this.hp = 30;
-        this.maxHp = 30;
-        this.damage = 8;
-        this.name = 'Skeleton';
+        const config = balanceConfig.enemies.skeleton;
+
+        this.width = config.width;
+        this.height = config.height;
+        this.hp = config.hp;
+        this.maxHp = config.hp;
+        this.damage = config.damage;
+        this.name = config.name;
+        this.xpValue = config.xpValue;
     }
 
     public takeDamage(amount: number): void {
