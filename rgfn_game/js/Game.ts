@@ -195,6 +195,9 @@ export default class Game {
         const [px, py] = this.worldMap.getPlayerPixelPosition();
         this.player.x = px;
         this.player.y = py;
+
+        // Update HUD to reflect any changes from battle (XP, level, etc.)
+        this.updateHUD();
     }
 
     private updateWorldMode(deltaTime: number): void {
@@ -254,6 +257,9 @@ export default class Game {
 
         this.clearBattleLog();
         this.addBattleLog(`Encountered ${enemies.length} skeleton${enemies.length > 1 ? 's' : ''}!`, 'system');
+
+        // Update HUD to show current player stats
+        this.updateHUD();
 
         this.processTurn();
     }
@@ -480,16 +486,25 @@ export default class Game {
             if (target.isDead()) {
                 this.addBattleLog(`${target.name} defeated!`, 'system');
 
-                // Award XP
-                const xpGained = (target as any).xpValue || 0;
-                if (xpGained > 0) {
-                    const leveledUp = this.player.addXp(xpGained);
-                    this.addBattleLog(`Gained ${xpGained} XP!`, 'system');
+                // Award XP - target is Skeleton type, so xpValue should exist
+                const skeleton = target as Skeleton;
+                console.log('Skeleton defeated:', skeleton.name, 'XP Value:', skeleton.xpValue);
+
+                if (skeleton.xpValue && skeleton.xpValue > 0) {
+                    const xpBefore = this.player.xp;
+                    const levelBefore = this.player.level;
+
+                    const leveledUp = this.player.addXp(skeleton.xpValue);
+
+                    console.log(`XP: ${xpBefore} -> ${this.player.xp}, Level: ${levelBefore} -> ${this.player.level}`);
+                    this.addBattleLog(`Gained ${skeleton.xpValue} XP!`, 'system');
 
                     if (leveledUp) {
                         this.addBattleLog(`LEVEL UP! Now level ${this.player.level}!`, 'system');
-                        this.addBattleLog(`+${4} skill points! HP fully restored!`, 'system');
+                        this.addBattleLog(`Gained ${balanceConfig.leveling.skillPointsPerLevel} skill points! HP fully restored!`, 'system');
                     }
+                } else {
+                    console.warn('No XP value found on skeleton:', skeleton);
                 }
 
                 this.updateHUD();
@@ -500,6 +515,7 @@ export default class Game {
                 }
             }
 
+            this.updateHUD(); // Always update HUD after damage
             this.turnManager.nextTurn();
             setTimeout(() => this.processTurn(), timingConfig.battle.playerActionDelay);
         } else {
