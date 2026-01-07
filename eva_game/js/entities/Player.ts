@@ -2,6 +2,7 @@ import Entity from '../../../engine/core/Entity.js';
 import InputManager from '../../../engine/systems/InputManager.js';
 import { Viewport } from '../types/engine.js';
 import { AnimationState } from '../types/game.js';
+import StickFigure from '../utils/StickFigure.js';
 
 const PLAYER_SPEED: number = 200;
 const ATTACK_DURATION: number = 300;
@@ -37,6 +38,16 @@ export default class Player extends Entity {
     private attackTimer: number = 0;
     private attackCooldownTimer: number = 0;
     private invulnerabilityTimer: number = 0;
+
+    // Animation progress (0-1) for gradual animations
+    public animationProgress: number = 0;
+    private walkAnimationTime: number = 0;
+    private hurtAnimationTimer: number = 0;
+    private deathAnimationTimer: number = 0;
+
+    private static readonly WALK_ANIMATION_SPEED: number = 3; // cycles per second
+    private static readonly HURT_ANIMATION_DURATION: number = 400; // ms
+    private static readonly DEATH_ANIMATION_DURATION: number = 1000; // ms
 
     constructor(x: number, y: number) {
         super(x, y);
@@ -90,6 +101,7 @@ export default class Player extends Entity {
         this.move(deltaTime);
         this.updateAttackTimer(deltaTime);
         this.updateInvulnerability(deltaTime);
+        this.updateAnimationProgress(deltaTime);
     }
 
     private updateAttackTimer(deltaTime: number): void {
@@ -115,18 +127,85 @@ export default class Player extends Entity {
         }
     }
 
+    private updateAnimationProgress(deltaTime: number): void {
+        // Update animation progress based on current state
+        switch (this.animationState) {
+            case 'walk':
+                // Continuous cycling animation for walking
+                this.walkAnimationTime += deltaTime * Player.WALK_ANIMATION_SPEED;
+                this.animationProgress = (this.walkAnimationTime % 1);
+                break;
+
+            case 'punch':
+                // Progress through punch animation during attack
+                const attackProgress = 1 - (this.attackTimer / ATTACK_DURATION);
+                this.animationProgress = Math.max(0, Math.min(1, attackProgress));
+                break;
+
+            case 'hurt':
+                // Progress through hurt animation
+                if (this.hurtAnimationTimer > 0) {
+                    this.hurtAnimationTimer -= deltaTime * 1000;
+                    const hurtProgress = 1 - (this.hurtAnimationTimer / Player.HURT_ANIMATION_DURATION);
+                    this.animationProgress = Math.max(0, Math.min(1, hurtProgress));
+
+                    if (this.hurtAnimationTimer <= 0) {
+                        this.animationState = 'idle';
+                        this.animationProgress = 0;
+                    }
+                }
+                break;
+
+            case 'death':
+                // Progress through death animation
+                if (this.deathAnimationTimer > 0) {
+                    this.deathAnimationTimer -= deltaTime * 1000;
+                    const deathProgress = 1 - (this.deathAnimationTimer / Player.DEATH_ANIMATION_DURATION);
+                    this.animationProgress = Math.max(0, Math.min(1, deathProgress));
+                }
+                break;
+
+            case 'idle':
+            default:
+                // Reset animation progress for idle
+                this.animationProgress = 0;
+                this.walkAnimationTime = 0;
+                break;
+        }
+    }
+
     public takeDamage(amount: number): void {
         if (this.invulnerable) {
             return;
         }
 
         this.health -= amount;
-        if (this.health < 0) {
+        if (this.health <= 0) {
             this.health = 0;
+            this.triggerDeathAnimation();
+        } else {
+            this.triggerHurtAnimation();
         }
 
         this.invulnerable = true;
         this.invulnerabilityTimer = INVULNERABILITY_DURATION;
+    }
+
+    private triggerHurtAnimation(): void {
+        // Only trigger hurt if not already in hurt or death state
+        if (this.animationState !== 'hurt' && this.animationState !== 'death') {
+            this.animationState = 'hurt';
+            this.hurtAnimationTimer = Player.HURT_ANIMATION_DURATION;
+            this.animationProgress = 0;
+        }
+    }
+
+    private triggerDeathAnimation(): void {
+        this.animationState = 'death';
+        this.deathAnimationTimer = Player.DEATH_ANIMATION_DURATION;
+        this.animationProgress = 0;
+        this.velocityX = 0;
+        this.velocityY = 0;
     }
 
     public checkAttackHit(enemy: Entity): boolean {
@@ -154,7 +233,7 @@ export default class Player extends Entity {
         const screenX: number = this.x;
         const screenY: number = this.y;
 
-        this.drawPlayerBody(ctx, screenX, screenY);
+        this.drawStickFigure(ctx, screenX, screenY);
         this.drawHealthBar(ctx, screenX, screenY);
 
         if (this.isAttacking) {
@@ -162,19 +241,34 @@ export default class Player extends Entity {
         }
     }
 
-    private drawPlayerBody(ctx: CanvasRenderingContext2D, screenX: number, screenY: number): void {
+    private drawStickFigure(ctx: CanvasRenderingContext2D, screenX: number, screenY: number): void {
+        // Get pose based on current animation state
+        let pose = StickFigure.getIdlePose();
+
+        switch (this.animationState) {
+            case 'walk':
+                pose = StickFigure.getWalkPose(this.animationProgress);
+                break;
+            case 'punch':
+                pose = StickFigure.getPunchPose(this.animationProgress, this.facingRight);
+                break;
+            case 'hurt':
+                pose = StickFigure.getHurtPose(this.animationProgress);
+                break;
+            case 'death':
+                pose = StickFigure.getDeathPose(this.animationProgress);
+                break;
+            case 'idle':
+            default:
+                pose = StickFigure.getIdlePose();
+                break;
+        }
+
+        // Apply flashing effect when invulnerable
         const isFlashing: boolean = this.invulnerable && Math.floor(Date.now() / 100) % 2 === 0;
-        ctx.fillStyle = isFlashing ? 'rgba(100, 200, 255, 0.5)' : '#64c8ff';
-        ctx.fillRect(screenX - this.width / 2, screenY - this.height / 2, this.width, this.height);
+        const color: string = isFlashing ? 'rgba(100, 200, 255, 0.5)' : '#64c8ff';
 
-        this.drawPlayerFace(ctx, screenX, screenY);
-    }
-
-    private drawPlayerFace(ctx: CanvasRenderingContext2D, screenX: number, screenY: number): void {
-        ctx.fillStyle = '#ffffff';
-        const faceOffset: number = this.facingRight ? 8 : -8;
-        ctx.fillRect(screenX + faceOffset - 3, screenY - 15, 6, 6);
-        ctx.fillRect(screenX + faceOffset - 3, screenY - 5, 6, 3);
+        StickFigure.draw(ctx, screenX, screenY, pose, color, this.facingRight);
     }
 
     private drawHealthBar(ctx: CanvasRenderingContext2D, screenX: number, screenY: number): void {
