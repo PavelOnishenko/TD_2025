@@ -1,4 +1,4 @@
-import Enemy, { TankEnemy, SwarmEnemy } from '../entities/Enemy.js';
+import Enemy, { TankEnemy, SwarmEnemy, SkeletonEnemy, ZombieEnemy } from '../entities/Enemy.js';
 import { updateHUD, endGame } from '../systems/ui.js';
 import gameConfig from '../config/gameConfig.js';
 import { DEFAULT_TIME_SCALE } from './game/world.js';
@@ -105,6 +105,100 @@ export const enemyActions = {
         }
     },
 
+    spawnSkeletonGroup(baseHp, overrides = {}) {
+        const groupSize = Math.max(1, Math.floor(overrides.groupSize ?? gameConfig.enemies.skeleton?.groupSize ?? 1));
+        const skeletonHp = Math.max(1, Math.floor(baseHp * (gameConfig.enemies.skeleton?.hpMultiplier ?? 1)));
+        const spacing = Number.isFinite(overrides.spacing)
+            ? overrides.spacing
+            : (gameConfig.enemies.skeleton?.spacing ?? gameConfig.enemies.swarm.spacing);
+        const coords = this.getDefaultEnemyCoords();
+        if (Number.isFinite(overrides.x)) {
+            coords.x = overrides.x;
+        }
+        if (Number.isFinite(overrides.y)) {
+            coords.y = overrides.y;
+        }
+        const offsets = Array.isArray(overrides.offsets) ? overrides.offsets : null;
+        const centerOffsetBase = (groupSize - 1) / 2;
+        const spawnCenters = [];
+        const spawnColors = [];
+
+        for (let i = 0; i < groupSize; i++) {
+            const color = overrides.colors?.[i] ?? overrides.color;
+            const skeletonEnemy = new SkeletonEnemy(skeletonHp, color, coords.x, coords.y);
+            if (offsets && Number.isFinite(offsets[i])) {
+                skeletonEnemy.y = offsets[i];
+            } else if (groupSize > 1) {
+                const centerOffset = (i - centerOffsetBase) * spacing;
+                skeletonEnemy.y = coords.y + centerOffset;
+            } else {
+                skeletonEnemy.y = coords.y;
+            }
+            skeletonEnemy.setEngineFlamePlacement({
+                anchorX:skeletonEnemy.engineFlame.anchor.x, anchorY:skeletonEnemy.engineFlame.anchor.y,
+                offsetX:skeletonEnemy.engineFlame.offset.x-10, offsetY:skeletonEnemy.engineFlame.offset.y,
+                angleDegrees:skeletonEnemy.engineFlame.angle - 55
+            });
+            this.enemies.push(skeletonEnemy);
+            spawnCenters.push(skeletonEnemy.y + (skeletonEnemy.h ?? 0) / 2);
+            spawnColors.push(color);
+        }
+        if (typeof this.triggerPortalEntry === 'function') {
+            const entryY = spawnCenters.length > 0
+                ? spawnCenters.reduce((sum, value) => sum + value, 0) / spawnCenters.length
+                : coords.y;
+            const entryColor = spawnColors[0] ?? overrides.color ?? null;
+            this.triggerPortalEntry({ y: entryY, groupSize, color: entryColor });
+        }
+    },
+
+    spawnZombieGroup(baseHp, overrides = {}) {
+        const groupSize = Math.max(1, Math.floor(overrides.groupSize ?? gameConfig.enemies.zombie?.groupSize ?? 1));
+        const zombieHp = Math.max(1, Math.floor(baseHp * (gameConfig.enemies.zombie?.hpMultiplier ?? 1)));
+        const spacing = Number.isFinite(overrides.spacing)
+            ? overrides.spacing
+            : (gameConfig.enemies.zombie?.spacing ?? gameConfig.enemies.swarm.spacing);
+        const coords = this.getDefaultEnemyCoords();
+        if (Number.isFinite(overrides.x)) {
+            coords.x = overrides.x;
+        }
+        if (Number.isFinite(overrides.y)) {
+            coords.y = overrides.y;
+        }
+        const offsets = Array.isArray(overrides.offsets) ? overrides.offsets : null;
+        const centerOffsetBase = (groupSize - 1) / 2;
+        const spawnCenters = [];
+        const spawnColors = [];
+
+        for (let i = 0; i < groupSize; i++) {
+            const color = overrides.colors?.[i] ?? overrides.color;
+            const zombieEnemy = new ZombieEnemy(zombieHp, color, coords.x, coords.y);
+            if (offsets && Number.isFinite(offsets[i])) {
+                zombieEnemy.y = offsets[i];
+            } else if (groupSize > 1) {
+                const centerOffset = (i - centerOffsetBase) * spacing;
+                zombieEnemy.y = coords.y + centerOffset;
+            } else {
+                zombieEnemy.y = coords.y;
+            }
+            zombieEnemy.setEngineFlamePlacement({
+                anchorX:zombieEnemy.engineFlame.anchor.x, anchorY:zombieEnemy.engineFlame.anchor.y,
+                offsetX:zombieEnemy.engineFlame.offset.x-10, offsetY:zombieEnemy.engineFlame.offset.y,
+                angleDegrees:zombieEnemy.engineFlame.angle - 55
+            });
+            this.enemies.push(zombieEnemy);
+            spawnCenters.push(zombieEnemy.y + (zombieEnemy.h ?? 0) / 2);
+            spawnColors.push(color);
+        }
+        if (typeof this.triggerPortalEntry === 'function') {
+            const entryY = spawnCenters.length > 0
+                ? spawnCenters.reduce((sum, value) => sum + value, 0) / spawnCenters.length
+                : coords.y;
+            const entryColor = spawnColors[0] ?? overrides.color ?? null;
+            this.triggerPortalEntry({ y: entryY, groupSize, color: entryColor });
+        }
+    },
+
     spawnEnemiesIfNeeded(dt) {
         if (!this.waveInProgress) {
             return;
@@ -144,6 +238,16 @@ export const enemyActions = {
         };
         if (event.type === 'tank') {
             this.spawnTankEnemy(baseHp, options);
+        } else if (event.type === 'skeleton') {
+            if (!options.groupSize) {
+                options.groupSize = 1;
+            }
+            this.spawnSkeletonGroup(baseHp, options);
+        } else if (event.type === 'zombie') {
+            if (!options.groupSize) {
+                options.groupSize = 1;
+            }
+            this.spawnZombieGroup(baseHp, options);
         } else {
             if (!options.groupSize) {
                 options.groupSize = 1;
@@ -168,7 +272,8 @@ export const enemyActions = {
             e.update(dt);
             if (e.x + e.w >= this.base.x) {
                 this.enemies.splice(i, 1);
-                this.lives--;
+                const damage = Number.isFinite(e.damage) ? e.damage : 1;
+                this.lives -= damage;
                 trackLifeLost(this);
                 if (typeof this.addScore === 'function') {
                     const penalty = Number.isFinite(this.baseHitPenalty)

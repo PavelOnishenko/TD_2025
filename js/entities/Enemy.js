@@ -9,7 +9,8 @@ export default class Enemy {
         y,
         speedX = gameConfig.enemies.swarm.speed.x,
         speedY = gameConfig.enemies.swarm.speed.y,
-        spriteKey = 'swarm'
+        spriteKey = 'swarm',
+        damage = 1
     ) {
         this.x = x;
         this.y = y;
@@ -25,6 +26,7 @@ export default class Enemy {
         this.hp = this.maxHp;
         this.color = color;
         this.spriteKey = spriteKey;
+        this.damage = damage;
         if (typeof Enemy._glowPhaseCursor !== 'number') {
             Enemy._glowPhaseCursor = 0;
         }
@@ -126,7 +128,7 @@ export class TankEnemy extends Enemy {
         speedX = gameConfig.enemies.tank.speed.x,
         speedY = gameConfig.enemies.tank.speed.y
     ) {
-        super(maxHp, color, x, y, speedX, speedY, 'tank');
+        super(maxHp, color, x, y, speedX, speedY, 'tank', 1);
     }
 }
 
@@ -139,7 +141,33 @@ export class SwarmEnemy extends Enemy {
         speedX = gameConfig.enemies.swarm.speed.x,
         speedY = gameConfig.enemies.swarm.speed.y
     ) {
-        super(maxHp, color, x, y, speedX, speedY, 'swarm');
+        super(maxHp, color, x, y, speedX, speedY, 'swarm', 1);
+    }
+}
+
+export class SkeletonEnemy extends Enemy {
+    constructor(
+        maxHp = 1,
+        color = 'red',
+        x = 0,
+        y = 0,
+        speedX = gameConfig.enemies.skeleton?.speed?.x ?? gameConfig.enemies.swarm.speed.x,
+        speedY = gameConfig.enemies.skeleton?.speed?.y ?? gameConfig.enemies.swarm.speed.y
+    ) {
+        super(maxHp, color, x, y, speedX, speedY, 'skeleton', 2);
+    }
+}
+
+export class ZombieEnemy extends Enemy {
+    constructor(
+        maxHp = 7,
+        color = 'red',
+        x = 0,
+        y = 0,
+        speedX = gameConfig.enemies.zombie?.speed?.x ?? gameConfig.enemies.swarm.speed.x,
+        speedY = gameConfig.enemies.zombie?.speed?.y ?? gameConfig.enemies.swarm.speed.y
+    ) {
+        super(maxHp, color, x, y, speedX, speedY, 'zombie', 1);
     }
 }
 

@@ -50,6 +50,8 @@ export const balanceConfig = {
         speedMultiplier: 0.9,
         tank: { hpMultiplier: 35.7, speed: { x: 100, y: 0 }, },
         swarm: { groupSize: 3, hpMultiplier: 10, speed: { x: 200, y: 0 }, },
+        skeleton: { groupSize: 1, hpMultiplier: 10, speed: { x: 200, y: 0 }, },
+        zombie: { groupSize: 1, hpMultiplier: 10, speed: { x: 200, y: 0 }, },
     },
     waves: {
         difficultyMultiplier: 1,    // todo up this to make waves more epic
@@ -204,6 +206,35 @@ swarm @0.9 y=660 color=red
 swarm @1.05 y=700 color=blue
 swarm @1.2 y=740 color=red
 tank @1.35 y=760 color=red
+---
+# Undead Assault | difficulty=3 | probability=Math.max(0.4, 0.7 + 0.06 * (wave - 1)) | minWave=1
+skeleton @0 y=560 color=red
+zombie @0.6 y=600 color=blue
+skeleton @1 y=640 color=red
+---
+# Zombie Horde | difficulty=3 | probability=Math.max(0.4, 0.7 + 0.06 * (wave - 1)) | minWave=1
+zombie @0 y=540 color=blue
+zombie @0.6 y=600 color=red
+zombie @1 y=660 color=blue
+---
+# Skeleton March | difficulty=3 | probability=Math.max(0.4, 0.7 + 0.06 * (wave - 1)) | minWave=1
+skeleton @0 y=540 color=red
+skeleton @0.5 y=600 color=blue
+skeleton @1 y=660 color=red
+---
+# Mixed Undead | difficulty=4 | probability=Math.max(0.25, 0.35 + 0.03 * Math.max(0, wave - 2)) | minWave=2
+zombie @0 y=520 color=red
+skeleton @0.5 y=580 color=blue
+zombie @1 y=640 color=red
+skeleton @1.5 y=700 color=blue
+---
+# Undead Swarm | difficulty=5 | probability=0.4 + 0.05 * Math.max(0, wave - 1) | minWave=2
+skeleton @0 y=500 color=blue
+zombie @0.4 y=550 color=red
+skeleton @0.8 y=600 color=blue
+zombie @1.2 y=650 color=red
+skeleton @1.6 y=700 color=blue
+zombie @2 y=750 color=red
 `,
         },
     },
