@@ -1,6 +1,6 @@
 import GridMap from '../utils/GridMap.js';
 import { CombatEntity, Direction, GridCell } from '../types/game.js';
-import { themeManager } from '../config/ThemeConfig.js';
+import { theme } from '../config/ThemeConfig.js';
 
 export default class BattleMap {
     private grid: GridMap;
@@ -153,7 +153,6 @@ export default class BattleMap {
 
     public draw(ctx: CanvasRenderingContext2D, renderer: any, currentEntity: CombatEntity | null = null, selectedEnemy: CombatEntity | null = null): void {
         const dims = this.grid.getDimensions();
-        const theme = themeManager.getTheme();
 
         // Draw grid background
         ctx.fillStyle = theme.battleMap.background;

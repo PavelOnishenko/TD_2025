@@ -7,7 +7,7 @@ import {
     levelConfig
 } from '../config/levelConfig.js';
 import { balanceConfig } from '../config/balanceConfig.js';
-import { themeManager } from '../config/ThemeConfig.js';
+import { theme } from '../config/ThemeConfig.js';
 
 export default class Player extends Entity {
     // Explicitly declare inherited properties from Entity
@@ -184,7 +184,6 @@ export default class Player extends Entity {
     public draw(ctx: CanvasRenderingContext2D, viewport?: any): void {
         const screenX = this.x;
         const screenY = this.y;
-        const theme = themeManager.getTheme();
 
         // Player body
         ctx.fillStyle = theme.entities.player.body;
@@ -211,7 +210,6 @@ export default class Player extends Entity {
         const barWidth = this.width;
         const barHeight = 4;
         const barY = screenY - this.height / 2 - 8;
-        const theme = themeManager.getTheme();
 
         // Background
         ctx.fillStyle = theme.entities.player.healthBg;

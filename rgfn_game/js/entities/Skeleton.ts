@@ -1,6 +1,6 @@
 import Entity from '../../../engine/core/Entity.js';
 import { balanceConfig } from '../config/balanceConfig.js';
-import { themeManager } from '../config/ThemeConfig.js';
+import { theme } from '../config/ThemeConfig.js';
 
 export default class Skeleton extends Entity {
     // Explicitly declare inherited properties from Entity
@@ -57,7 +57,6 @@ export default class Skeleton extends Entity {
     public draw(ctx: CanvasRenderingContext2D, viewport?: any): void {
         const screenX = this.x;
         const screenY = this.y;
-        const theme = themeManager.getTheme();
 
         // Skeleton body
         ctx.fillStyle = theme.entities.skeleton.body;
@@ -90,7 +89,6 @@ export default class Skeleton extends Entity {
         const barWidth = this.width;
         const barHeight = 3;
         const barY = screenY - this.height / 2 - 6;
-        const theme = themeManager.getTheme();
 
         // Background
         ctx.fillStyle = theme.entities.skeleton.healthBg;

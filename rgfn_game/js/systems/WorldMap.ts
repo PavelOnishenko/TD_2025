@@ -1,6 +1,6 @@
 import GridMap from '../utils/GridMap.js';
 import { FogState, TerrainData, GridPosition, Direction, GridCell } from '../types/game.js';
-import { themeManager } from '../config/ThemeConfig.js';
+import { theme } from '../config/ThemeConfig.js';
 
 // Fog of war states
 const FOG_STATE = {
@@ -50,7 +50,6 @@ export default class WorldMap {
         // Generate pseudo-random terrain based on cell coordinates
         const seed = col * 1000 + row;
         const random = this.seededRandom(seed);
-        const theme = themeManager.getTheme();
 
         // Choose terrain type
         const terrainTypes = [
@@ -160,7 +159,6 @@ export default class WorldMap {
 
     public draw(ctx: CanvasRenderingContext2D, renderer: any): void {
         const dims = this.grid.getDimensions();
-        const theme = themeManager.getTheme();
 
         // Draw grid background
         ctx.fillStyle = theme.worldMap.background;
@@ -213,8 +211,6 @@ export default class WorldMap {
     }
 
     private drawCell(ctx: CanvasRenderingContext2D, cell: GridCell, fogState: FogState, terrain: TerrainData | undefined, col: number, row: number): void {
-        const theme = themeManager.getTheme();
-
         switch (fogState) {
             case FOG_STATE.UNKNOWN:
                 // Unknown cells - all look identical (dark/mysterious)
