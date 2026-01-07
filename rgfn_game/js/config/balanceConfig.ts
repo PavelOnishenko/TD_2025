@@ -20,9 +20,17 @@ export const balanceConfig = {
     enemies: {
         skeleton: {
             hp: 3,
-            damage: 1,
+            damage: 2,
             xpValue: 3,
             name: 'Skeleton',
+            width: 30,
+            height: 30,
+        },
+        zombie: {
+            hp: 7,
+            damage: 1,
+            xpValue: 5,
+            name: 'Zombie',
             width: 30,
             height: 30,
         },

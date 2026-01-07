@@ -1,6 +1,8 @@
 import { randomInt } from '../../../engine/utils/MathUtils.js';
 import Skeleton from '../entities/Skeleton.js';
+import Zombie from '../entities/Zombie.js';
 import { balanceConfig } from '../config/balanceConfig.js';
+import { CombatEntity } from '../types/game.js';
 
 export default class EncounterSystem {
     private encounterRate: number;
@@ -31,15 +33,21 @@ export default class EncounterSystem {
         return false;
     }
 
-    public generateEncounter(): Skeleton[] {
+    public generateEncounter(): CombatEntity[] {
         const enemyCount = randomInt(
             balanceConfig.encounters.minEnemies,
             balanceConfig.encounters.maxEnemies
         );
-        const enemies: Skeleton[] = [];
+        const enemies: CombatEntity[] = [];
 
         for (let i = 0; i < enemyCount; i++) {
-            enemies.push(new Skeleton(0, 0));
+            // 50/50 chance to spawn either a skeleton or zombie
+            const spawnZombie = Math.random() < 0.5;
+            if (spawnZombie) {
+                enemies.push(new Zombie(0, 0));
+            } else {
+                enemies.push(new Skeleton(0, 0));
+            }
         }
 
         return enemies;

@@ -35,6 +35,12 @@ export interface Theme {
       healthBg: string;
       healthBar: string;
     };
+    zombie: {
+      body: string;
+      features: string;
+      healthBg: string;
+      healthBar: string;
+    };
   };
 
   // World Map Colors
@@ -93,6 +99,12 @@ export const CLASSIC_THEME: Theme = {
       healthBg: '#222',
       healthBar: '#ff4444',
     },
+    zombie: {
+      body: '#8b9a7e',
+      features: '#3a4a3a',
+      healthBg: '#222',
+      healthBar: '#ff4444',
+    },
   },
   worldMap: {
     background: '#0a0a1a',
@@ -144,6 +156,12 @@ export const OCEAN_THEME: Theme = {
     skeleton: {
       body: '#c0e0ff',
       features: '#003050',
+      healthBg: '#0a2030',
+      healthBar: '#ff8888',
+    },
+    zombie: {
+      body: '#7ba09e',
+      features: '#1a3a3a',
       healthBg: '#0a2030',
       healthBar: '#ff8888',
     },
@@ -201,6 +219,12 @@ export const SUNSET_THEME: Theme = {
       healthBg: '#2a1a1a',
       healthBar: '#ff5555',
     },
+    zombie: {
+      body: '#9a8a7e',
+      features: '#3a2a1a',
+      healthBg: '#2a1a1a',
+      healthBar: '#ff5555',
+    },
   },
   worldMap: {
     background: '#1a0a1a',
@@ -255,6 +279,12 @@ export const FOREST_THEME: Theme = {
       healthBg: '#1a2a1a',
       healthBar: '#ff5544',
     },
+    zombie: {
+      body: '#7a9a6e',
+      features: '#2a3a1a',
+      healthBg: '#1a2a1a',
+      healthBar: '#ff5544',
+    },
   },
   worldMap: {
     background: '#0a1a0a',
@@ -306,6 +336,12 @@ export const CYBERPUNK_THEME: Theme = {
     skeleton: {
       body: '#d6b5e3',
       features: '#2a0a3a',
+      healthBg: '#1a0a2a',
+      healthBar: '#ff0080',
+    },
+    zombie: {
+      body: '#9a8aae',
+      features: '#3a2a4a',
       healthBg: '#1a0a2a',
       healthBar: '#ff0080',
     },
