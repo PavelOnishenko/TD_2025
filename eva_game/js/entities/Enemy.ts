@@ -8,6 +8,7 @@ const ENEMY_SPEED: number = 80;
 const ENEMY_ATTACK_RANGE: number = 40;
 const ENEMY_ATTACK_COOLDOWN: number = 1500;
 const ENEMY_DAMAGE: number = 10;
+const ENEMY_PUNCH_DURATION: number = 300; // ms
 
 export default class Enemy extends Entity {
     // Explicitly declare inherited properties from Entity
@@ -37,6 +38,7 @@ export default class Enemy extends Entity {
     public animationProgress: number = 0;
     private walkAnimationTime: number = 0;
     private deathAnimationTimer: number = 0;
+    private punchAnimationTimer: number = 0;
 
     private static readonly WALK_ANIMATION_SPEED: number = 2.5; // cycles per second
     private static readonly DEATH_ANIMATION_DURATION: number = 1000; // ms
@@ -50,6 +52,7 @@ export default class Enemy extends Entity {
     public update(deltaTime: number): void {
         this.move(deltaTime);
         this.updateAttackCooldown(deltaTime);
+        this.updatePunchAnimation(deltaTime);
         this.updateAnimationState();
         this.updateAnimationProgress(deltaTime);
     }
@@ -60,9 +63,24 @@ export default class Enemy extends Entity {
         }
     }
 
+    private updatePunchAnimation(deltaTime: number): void {
+        if (this.punchAnimationTimer > 0) {
+            this.punchAnimationTimer -= deltaTime * 1000;
+            if (this.punchAnimationTimer <= 0) {
+                this.punchAnimationTimer = 0;
+            }
+        }
+    }
+
     private updateAnimationState(): void {
         // Don't change animation state if dead
         if (this.animationState === 'death') {
+            return;
+        }
+
+        // Punch animation takes priority when active
+        if (this.punchAnimationTimer > 0) {
+            this.animationState = 'punch';
             return;
         }
 
@@ -76,6 +94,12 @@ export default class Enemy extends Entity {
                 // Continuous cycling animation for walking
                 this.walkAnimationTime += deltaTime * Enemy.WALK_ANIMATION_SPEED;
                 this.animationProgress = (this.walkAnimationTime % 1);
+                break;
+
+            case 'punch':
+                // Progress through punch animation
+                const punchProgress = 1 - (this.punchAnimationTimer / ENEMY_PUNCH_DURATION);
+                this.animationProgress = Math.max(0, Math.min(1, punchProgress));
                 break;
 
             case 'death':
@@ -141,6 +165,7 @@ export default class Enemy extends Entity {
 
         player.takeDamage(ENEMY_DAMAGE);
         this.attackCooldownTimer = ENEMY_ATTACK_COOLDOWN;
+        this.punchAnimationTimer = ENEMY_PUNCH_DURATION;
     }
 
     public takeDamage(amount: number): void {
@@ -178,6 +203,9 @@ export default class Enemy extends Entity {
         switch (this.animationState) {
             case 'walk':
                 pose = StickFigure.getWalkPose(this.animationProgress);
+                break;
+            case 'punch':
+                pose = StickFigure.getPunchPose(this.animationProgress, this.facingRight);
                 break;
             case 'death':
                 pose = StickFigure.getDeathPose(this.animationProgress);
