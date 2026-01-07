@@ -1,8 +1,8 @@
-name: Deploy RGFN to GitHub Pages
+name: Deploy RGFN to GitHub Pages (DEPRECATED - use deploy-all-games.yml)
 
 on:
   push:
-    branches: [ release_rgfn ]
+    branches: [ deprecated-release_rgfn ]
   workflow_dispatch:
 
 permissions:

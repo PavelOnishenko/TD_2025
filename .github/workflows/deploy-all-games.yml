@@ -1,0 +1,224 @@
+name: Deploy All Games to GitHub Pages
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build EVA game
+        run: npm run build:eva
+
+      - name: Build RGFN game
+        run: npm run build:rgfn
+
+      - name: Create deployment directory structure
+        run: |
+          mkdir -p deploy_temp/neonvoid
+          mkdir -p deploy_temp/eva
+          mkdir -p deploy_temp/rgfn
+
+      - name: Copy Neon Void to subdirectory
+        run: |
+          # Copy all Neon Void files (root game) to neonvoid subdirectory
+          rsync -av --exclude='node_modules' --exclude='.git' --exclude='deploy_temp' \
+            --exclude='eva_game' --exclude='rgfn_game' --exclude='.github' \
+            --exclude='test' --exclude='docs' --exclude='engine' \
+            ./ deploy_temp/neonvoid/
+
+      - name: Copy EVA game to subdirectory
+        run: |
+          cp -r eva_game/* deploy_temp/eva/
+
+      - name: Copy RGFN game to subdirectory
+        run: |
+          cp -r rgfn_game/* deploy_temp/rgfn/
+
+      - name: Create landing page
+        run: |
+          cat > deploy_temp/index.html << 'EOF'
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+              <meta charset="UTF-8" />
+              <meta name="viewport" content="width=device-width, initial-scale=1" />
+              <title>Tower Defense Games Collection</title>
+              <style>
+                  * {
+                      margin: 0;
+                      padding: 0;
+                      box-sizing: border-box;
+                  }
+
+                  body {
+                      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+                      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                      min-height: 100vh;
+                      display: flex;
+                      align-items: center;
+                      justify-content: center;
+                      padding: 20px;
+                  }
+
+                  .container {
+                      max-width: 1200px;
+                      width: 100%;
+                  }
+
+                  h1 {
+                      text-align: center;
+                      color: white;
+                      font-size: 3rem;
+                      margin-bottom: 1rem;
+                      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+                  }
+
+                  .subtitle {
+                      text-align: center;
+                      color: rgba(255,255,255,0.9);
+                      font-size: 1.2rem;
+                      margin-bottom: 3rem;
+                  }
+
+                  .games-grid {
+                      display: grid;
+                      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+                      gap: 2rem;
+                      margin-bottom: 2rem;
+                  }
+
+                  .game-card {
+                      background: white;
+                      border-radius: 12px;
+                      padding: 2rem;
+                      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+                      transition: transform 0.3s ease, box-shadow 0.3s ease;
+                      text-decoration: none;
+                      color: inherit;
+                      display: block;
+                  }
+
+                  .game-card:hover {
+                      transform: translateY(-5px);
+                      box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+                  }
+
+                  .game-card h2 {
+                      color: #667eea;
+                      font-size: 1.8rem;
+                      margin-bottom: 1rem;
+                  }
+
+                  .game-card p {
+                      color: #666;
+                      line-height: 1.6;
+                      margin-bottom: 1.5rem;
+                  }
+
+                  .game-card .play-button {
+                      display: inline-block;
+                      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                      color: white;
+                      padding: 0.8rem 2rem;
+                      border-radius: 25px;
+                      font-weight: bold;
+                      transition: opacity 0.3s ease;
+                  }
+
+                  .game-card:hover .play-button {
+                      opacity: 0.9;
+                  }
+
+                  .footer {
+                      text-align: center;
+                      color: rgba(255,255,255,0.8);
+                      margin-top: 3rem;
+                  }
+
+                  @media (max-width: 768px) {
+                      h1 {
+                          font-size: 2rem;
+                      }
+
+                      .subtitle {
+                          font-size: 1rem;
+                      }
+
+                      .games-grid {
+                          grid-template-columns: 1fr;
+                      }
+                  }
+              </style>
+          </head>
+          <body>
+              <div class="container">
+                  <h1>Tower Defense Collection</h1>
+                  <p class="subtitle">Choose your battle</p>
+
+                  <div class="games-grid">
+                      <a href="neonvoid/" class="game-card">
+                          <h2>Neon Void</h2>
+                          <p>Strategize. Merge. Hold the line. Defend your base against waves of enemies in this neon-styled tower defense game.</p>
+                          <span class="play-button">Play Now →</span>
+                      </a>
+
+                      <a href="eva/" class="game-card">
+                          <h2>EVA</h2>
+                          <p>Experience intense tower defense action with unique mechanics and strategic gameplay.</p>
+                          <span class="play-button">Play Now →</span>
+                      </a>
+
+                      <a href="rgfn/" class="game-card">
+                          <h2>RGFN</h2>
+                          <p>Challenge yourself with this innovative tower defense experience.</p>
+                          <span class="play-button">Play Now →</span>
+                      </a>
+                  </div>
+
+                  <div class="footer">
+                      <p>© 2025 Tower Defense Games</p>
+                  </div>
+              </div>
+          </body>
+          </html>
+          EOF
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: 'deploy_temp'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

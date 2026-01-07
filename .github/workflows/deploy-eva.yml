@@ -1,8 +1,8 @@
-name: Deploy EVA to GitHub Pages
+name: Deploy EVA to GitHub Pages (DEPRECATED - use deploy-all-games.yml)
 
 on:
   push:
-    branches: [ release_eva ]
+    branches: [ deprecated-release_eva ]
   workflow_dispatch:
 
 permissions:
