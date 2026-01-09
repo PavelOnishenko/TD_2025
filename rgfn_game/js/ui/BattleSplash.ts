@@ -1,4 +1,4 @@
-import { themeManager } from '../config/ThemeConfig.js';
+import { theme } from '../config/ThemeConfig.js';
 
 /**
  * BattleSplash - Displays themed splash screens for battle start and end events
@@ -64,8 +64,6 @@ export class BattleSplash {
     showBattleStart(enemyCount: number, callback: () => void): void {
         if (!this.overlay || !this.title || !this.subtitle) return;
 
-        const theme = themeManager.getTheme();
-
         // Set content
         this.title.textContent = 'BATTLE START!';
         this.subtitle.textContent = `Prepare to face ${enemyCount} ${enemyCount === 1 ? 'enemy' : 'enemies'}!`;
@@ -89,8 +87,6 @@ export class BattleSplash {
      */
     showBattleEnd(result: 'victory' | 'defeat', callback: () => void): void {
         if (!this.overlay || !this.title || !this.subtitle) return;
-
-        const theme = themeManager.getTheme();
 
         // Set content based on result
         if (result === 'victory') {
@@ -118,8 +114,6 @@ export class BattleSplash {
      */
     private applyThemeColors(type: 'battle-start' | 'victory' | 'defeat'): void {
         if (!this.modal || !this.title || !this.subtitle || !this.decorativeBorder) return;
-
-        const theme = themeManager.getTheme();
 
         // Base styling - always use theme colors
         this.modal.style.backgroundColor = theme.ui.primaryBg;
