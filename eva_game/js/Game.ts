@@ -171,7 +171,7 @@ export default class Game {
         }
 
         if (!this.player.invulnerable) {
-            this.player.takeDamage(10);
+            enemy.attackPlayer(this.player);
             if (this.player.health <= 0) {
                 this.endGame();
             }
