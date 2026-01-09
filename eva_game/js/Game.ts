@@ -9,6 +9,26 @@ import Enemy from './entities/Enemy.js';
 const WORLD_WIDTH: number = 800;
 const WORLD_HEIGHT: number = 600;
 
+// Color palette for enemies - each enemy gets a unique color
+const ENEMY_COLORS: string[] = [
+    '#ff6b6b', // Red
+    '#4ecdc4', // Teal
+    '#45b7d1', // Blue
+    '#f9ca24', // Yellow
+    '#6c5ce7', // Purple
+    '#fd79a8', // Pink
+    '#00b894', // Green
+    '#ff7675', // Light Red
+    '#fdcb6e', // Orange
+    '#a29bfe', // Light Purple
+    '#74b9ff', // Light Blue
+    '#55efc4', // Mint
+    '#fab1a0', // Peach
+    '#e17055', // Dark Orange
+    '#0984e3', // Dark Blue
+    '#d63031', // Dark Red
+];
+
 export default class Game {
     private ctx: CanvasRenderingContext2D;
     private renderer: Renderer;
@@ -19,6 +39,7 @@ export default class Game {
     private score: number = 0;
     private level: number = 1;
     private viewport?: Viewport;
+    private nextColorIndex: number = 0;
 
     public gameOver: boolean = false;
     public isPaused: boolean = false;
@@ -63,7 +84,12 @@ export default class Game {
         for (let i = 0; i < count; i++) {
             const x: number = Math.random() * (WORLD_WIDTH - 100) + 50;
             const y: number = Math.random() * (WORLD_HEIGHT - 100) + 50;
-            const enemy: Enemy = new Enemy(x, y);
+
+            // Assign a unique color to each enemy
+            const color: string = ENEMY_COLORS[this.nextColorIndex % ENEMY_COLORS.length];
+            this.nextColorIndex++;
+
+            const enemy: Enemy = new Enemy(x, y, color);
             this.enemies.push(enemy);
         }
     }
@@ -87,6 +113,7 @@ export default class Game {
         this.score = 0;
         this.level = 1;
         this.enemies = [];
+        this.nextColorIndex = 0;
         this.initializeGame();
         this.updateHUD();
         this.loop.start();

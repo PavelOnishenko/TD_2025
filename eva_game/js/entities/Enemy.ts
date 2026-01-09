@@ -31,6 +31,7 @@ export default class Enemy extends Entity {
     public maxHealth: number = 50;
     public facingRight: boolean = true;
     public animationState: AnimationState = 'idle';
+    public color: string;
 
     private attackCooldownTimer: number = 0;
 
@@ -43,10 +44,11 @@ export default class Enemy extends Entity {
     private static readonly WALK_ANIMATION_SPEED: number = 2.5; // cycles per second
     private static readonly DEATH_ANIMATION_DURATION: number = 1000; // ms
 
-    constructor(x: number, y: number) {
+    constructor(x: number, y: number, color: string = '#ff6b6b') {
         super(x, y);
         this.width = 35;
         this.height = 55;
+        this.color = color;
     }
 
     public update(deltaTime: number): void {
@@ -216,9 +218,7 @@ export default class Enemy extends Entity {
                 break;
         }
 
-        const color: string = '#ff6b6b'; // Red for enemies
-
-        StickFigure.draw(ctx, screenX, screenY, pose, color, this.facingRight);
+        StickFigure.draw(ctx, screenX, screenY, pose, this.color, this.facingRight);
     }
 
     private drawHealthBar(ctx: CanvasRenderingContext2D, screenX: number, screenY: number): void {
