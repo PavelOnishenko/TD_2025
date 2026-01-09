@@ -9,6 +9,8 @@ const ENEMY_ATTACK_RANGE: number = 40;
 const ENEMY_ATTACK_COOLDOWN: number = 1500;
 const ENEMY_DAMAGE: number = 10;
 const ENEMY_PUNCH_DURATION: number = 300; // ms
+const ENEMY_SEPARATION_DISTANCE: number = 70; // Minimum distance between enemies
+const SEPARATION_STRENGTH: number = 1.2; // How strongly enemies push away from each other
 
 export default class Enemy extends Entity {
     // Explicitly declare inherited properties from Entity
@@ -120,7 +122,7 @@ export default class Enemy extends Entity {
         }
     }
 
-    public moveToward(targetX: number, targetY: number, deltaTime: number): void {
+    public moveToward(targetX: number, targetY: number, deltaTime: number, otherEnemies?: Enemy[]): void {
         const dx: number = targetX - this.x;
         const dy: number = targetY - this.y;
         const distance: number = Math.sqrt(dx * dx + dy * dy);
@@ -132,18 +134,76 @@ export default class Enemy extends Entity {
         }
 
         this.updateFacingDirection(dx);
-        this.setVelocityTowardTarget(dx, dy, distance);
+
+        // Calculate separation from other enemies to prevent clustering
+        const separation = this.calculateSeparation(otherEnemies);
+
+        // Combine player-seeking with enemy separation
+        this.setVelocityWithSeparation(dx, dy, distance, separation);
     }
 
     private updateFacingDirection(dx: number): void {
         this.facingRight = dx > 0;
     }
 
-    private setVelocityTowardTarget(dx: number, dy: number, distance: number): void {
+    private calculateSeparation(otherEnemies?: Enemy[]): { x: number; y: number } {
+        const separation = { x: 0, y: 0 };
+
+        if (!otherEnemies || otherEnemies.length === 0) {
+            return separation;
+        }
+
+        let separationCount = 0;
+
+        for (const other of otherEnemies) {
+            // Skip self and dead enemies
+            if (other === this || other.animationState === 'death') {
+                continue;
+            }
+
+            const dx = this.x - other.x;
+            const dy = this.y - other.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            // If enemy is too close, push away
+            if (distance > 0 && distance < ENEMY_SEPARATION_DISTANCE) {
+                // Normalize and weight by how close they are (closer = stronger push)
+                const strength = (1 - distance / ENEMY_SEPARATION_DISTANCE) * SEPARATION_STRENGTH;
+                separation.x += (dx / distance) * strength;
+                separation.y += (dy / distance) * strength;
+                separationCount++;
+            }
+        }
+
+        // Average the separation force
+        if (separationCount > 0) {
+            separation.x /= separationCount;
+            separation.y /= separationCount;
+        }
+
+        return separation;
+    }
+
+    private setVelocityWithSeparation(dx: number, dy: number, distance: number, separation: { x: number; y: number }): void {
+        // Normalize direction to player
         const dirX: number = dx / distance;
         const dirY: number = dy / distance;
-        this.velocityX = dirX * ENEMY_SPEED;
-        this.velocityY = dirY * ENEMY_SPEED;
+
+        // Combine player-seeking direction with separation force
+        const finalDirX = dirX + separation.x;
+        const finalDirY = dirY + separation.y;
+
+        // Normalize the combined direction
+        const finalDistance = Math.sqrt(finalDirX * finalDirX + finalDirY * finalDirY);
+
+        if (finalDistance > 0) {
+            this.velocityX = (finalDirX / finalDistance) * ENEMY_SPEED;
+            this.velocityY = (finalDirY / finalDistance) * ENEMY_SPEED;
+        } else {
+            // Fallback to simple player-seeking if no combined direction
+            this.velocityX = dirX * ENEMY_SPEED;
+            this.velocityY = dirY * ENEMY_SPEED;
+        }
     }
 
     public canAttackPlayer(player: Player): boolean {
