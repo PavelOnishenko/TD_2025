@@ -155,7 +155,8 @@ export default class Game {
         }
 
         for (const enemy of this.enemies) {
-            if (this.player.checkCollision(enemy)) {
+            // Check if enemy can attack based on distance (not just collision)
+            if (enemy.canAttackPlayer(this.player)) {
                 this.handlePlayerEnemyCollision(enemy);
             }
 
