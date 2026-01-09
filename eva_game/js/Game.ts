@@ -135,7 +135,8 @@ export default class Game {
         for (let i = this.enemies.length - 1; i >= 0; i--) {
             const enemy: Enemy = this.enemies[i];
             enemy.update(deltaTime);
-            enemy.moveToward(this.player.x, this.player.y, deltaTime);
+            // Pass all enemies so they can avoid clustering
+            enemy.moveToward(this.player.x, this.player.y, deltaTime, this.enemies);
 
             if (!enemy.active) {
                 this.enemies.splice(i, 1);
