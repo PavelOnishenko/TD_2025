@@ -5,6 +5,7 @@ import { Viewport, WorldBounds } from './types/engine.js';
 import { GameOverCallback } from './types/game.js';
 import Player from './entities/Player.js';
 import Enemy from './entities/Enemy.js';
+import { CyberpunkBackground } from './utils/CyberpunkBackground.js';
 
 const WORLD_WIDTH: number = 800;
 const WORLD_HEIGHT: number = 600;
@@ -40,6 +41,7 @@ export default class Game {
     private level: number = 1;
     private viewport?: Viewport;
     private nextColorIndex: number = 0;
+    private cyberpunkBackground: CyberpunkBackground;
 
     public gameOver: boolean = false;
     public isPaused: boolean = false;
@@ -59,6 +61,7 @@ export default class Game {
             (dt: number) => this.update(dt),
             () => this.render()
         );
+        this.cyberpunkBackground = new CyberpunkBackground(WORLD_WIDTH, WORLD_HEIGHT);
 
         this.setupInput();
         this.initializeGame();
@@ -124,6 +127,7 @@ export default class Game {
             return;
         }
 
+        this.cyberpunkBackground.update(deltaTime);
         this.updatePlayer(deltaTime);
         this.updateEnemies(deltaTime);
         this.checkCollisions();
@@ -249,27 +253,7 @@ export default class Game {
     }
 
     private drawBackground(): void {
-        this.renderer.fillRect(0, 0, WORLD_WIDTH, WORLD_HEIGHT, '#2a2a4a');
-        this.drawGrid(50);
-    }
-
-    private drawGrid(gridSize: number): void {
-        this.ctx.strokeStyle = 'rgba(100, 100, 150, 0.2)';
-        this.ctx.lineWidth = 1;
-
-        for (let x = 0; x <= WORLD_WIDTH; x += gridSize) {
-            this.ctx.beginPath();
-            this.ctx.moveTo(x, 0);
-            this.ctx.lineTo(x, WORLD_HEIGHT);
-            this.ctx.stroke();
-        }
-
-        for (let y = 0; y <= WORLD_HEIGHT; y += gridSize) {
-            this.ctx.beginPath();
-            this.ctx.moveTo(0, y);
-            this.ctx.lineTo(WORLD_WIDTH, y);
-            this.ctx.stroke();
-        }
+        this.cyberpunkBackground.draw(this.ctx);
     }
 
     private drawEntities(): void {
