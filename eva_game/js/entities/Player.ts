@@ -8,7 +8,7 @@ const PLAYER_SPEED: number = 200;
 const ATTACK_DURATION: number = 300;
 const ATTACK_COOLDOWN: number = 200;
 const INVULNERABILITY_DURATION: number = 1000;
-const ATTACK_RANGE: number = 50;
+const ATTACK_RANGE: number = 20;
 
 export default class Player extends Entity {
     // Explicitly declare inherited properties from Entity
