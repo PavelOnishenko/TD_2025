@@ -5,7 +5,7 @@ import Player from './Player.js';
 import StickFigure from '../utils/StickFigure.js';
 
 const ENEMY_SPEED: number = 80;
-const ENEMY_ATTACK_RANGE: number = 40;
+const ENEMY_ATTACK_RANGE: number = 25;
 const ENEMY_ATTACK_COOLDOWN: number = 1500;
 const ENEMY_DAMAGE: number = 10;
 const ENEMY_PUNCH_DURATION: number = 300; // ms
