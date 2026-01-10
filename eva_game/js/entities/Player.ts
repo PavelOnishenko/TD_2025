@@ -3,12 +3,7 @@ import InputManager from '../../../engine/systems/InputManager.js';
 import { Viewport } from '../types/engine.js';
 import { AnimationState } from '../types/game.js';
 import StickFigure from '../utils/StickFigure.js';
-
-const PLAYER_SPEED: number = 200;
-const ATTACK_DURATION: number = 300;
-const ATTACK_COOLDOWN: number = 200;
-const INVULNERABILITY_DURATION: number = 1000;
-const ATTACK_RANGE: number = 50;
+import { balanceConfig } from '../config/balanceConfig.js';
 
 export default class Player extends Entity {
     // Explicitly declare inherited properties from Entity
@@ -27,9 +22,9 @@ export default class Player extends Entity {
     declare checkCollision: (other: any) => boolean;
 
     // Player-specific properties
-    public health: number = 100;
-    public maxHealth: number = 100;
-    public attackDamage: number = 25;
+    public health: number;
+    public maxHealth: number;
+    public attackDamage: number;
     public isAttacking: boolean = false;
     public invulnerable: boolean = false;
     public facingRight: boolean = true;
@@ -51,8 +46,13 @@ export default class Player extends Entity {
 
     constructor(x: number, y: number) {
         super(x, y);
-        this.width = 40;
-        this.height = 60;
+        const config = balanceConfig.player;
+
+        this.width = config.width;
+        this.height = config.height;
+        this.maxHealth = config.maxHealth;
+        this.health = this.maxHealth;
+        this.attackDamage = config.attackDamage;
     }
 
     public handleInput(horizontalInput: number, verticalInput: number, input: InputManager): void {
@@ -67,8 +67,8 @@ export default class Player extends Entity {
             return;
         }
 
-        this.velocityX = horizontalInput * PLAYER_SPEED;
-        this.velocityY = verticalInput * PLAYER_SPEED;
+        this.velocityX = horizontalInput * balanceConfig.player.speed;
+        this.velocityY = verticalInput * balanceConfig.player.speed;
 
         if (horizontalInput > 0) {
             this.facingRight = true;
@@ -92,8 +92,8 @@ export default class Player extends Entity {
     private startAttack(): void {
         console.log('Player attack initiated');
         this.isAttacking = true;
-        this.attackTimer = ATTACK_DURATION;
-        this.attackCooldownTimer = ATTACK_COOLDOWN;
+        this.attackTimer = balanceConfig.player.attackDuration;
+        this.attackCooldownTimer = balanceConfig.player.attackCooldown;
         this.animationState = 'punch';
     }
 
@@ -138,7 +138,7 @@ export default class Player extends Entity {
 
             case 'punch':
                 // Progress through punch animation during attack
-                const attackProgress = 1 - (this.attackTimer / ATTACK_DURATION);
+                const attackProgress = 1 - (this.attackTimer / balanceConfig.player.attackDuration);
                 this.animationProgress = Math.max(0, Math.min(1, attackProgress));
                 break;
 
@@ -188,7 +188,7 @@ export default class Player extends Entity {
         }
 
         this.invulnerable = true;
-        this.invulnerabilityTimer = INVULNERABILITY_DURATION;
+        this.invulnerabilityTimer = balanceConfig.player.invulnerabilityDuration;
     }
 
     private triggerHurtAnimation(): void {
@@ -222,7 +222,7 @@ export default class Player extends Entity {
         const distance: number = Math.sqrt(dx * dx + dy * dy);
         const isFacingEnemy: boolean = this.isFacingTowards(dx);
 
-        return distance <= ATTACK_RANGE && isFacingEnemy;
+        return distance <= balanceConfig.player.attackRange && isFacingEnemy;
     }
 
     private isFacingTowards(dx: number): boolean {
@@ -291,7 +291,7 @@ export default class Player extends Entity {
         ctx.strokeStyle = 'rgba(255, 100, 100, 0.6)';
         ctx.lineWidth = 2;
         ctx.beginPath();
-        const attackX: number = this.facingRight ? screenX + ATTACK_RANGE : screenX - ATTACK_RANGE;
+        const attackX: number = this.facingRight ? screenX + balanceConfig.player.attackRange : screenX - balanceConfig.player.attackRange;
         ctx.arc(attackX, screenY, 15, 0, Math.PI * 2);
         ctx.stroke();
     }
