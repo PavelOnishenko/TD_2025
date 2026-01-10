@@ -8,6 +8,7 @@ import {
 } from '../config/levelConfig.js';
 import { balanceConfig } from '../config/balanceConfig.js';
 import { theme } from '../config/ThemeConfig.js';
+import Item from './Item.js';
 
 export default class Player extends Entity {
     // Explicitly declare inherited properties from Entity
@@ -43,6 +44,9 @@ export default class Player extends Entity {
     public toughness: number = 0;
     public strength: number = 0;
     public skillPoints: number = 0;
+
+    // Equipment
+    public equippedWeapon: Item | null = null;
 
     constructor(x: number, y: number) {
         super(x, y);
@@ -179,6 +183,33 @@ export default class Player extends Entity {
      */
     public getArmorReduction(): number {
         return this.armor;
+    }
+
+    /**
+     * Equip an item (automatically equipped when obtained)
+     */
+    public equipItem(item: Item): void {
+        if (item.type === 'weapon') {
+            this.equippedWeapon = item;
+        }
+    }
+
+    /**
+     * Get the player's current attack range
+     * @returns number of cells the player can attack from
+     */
+    public getAttackRange(): number {
+        if (this.equippedWeapon) {
+            return this.equippedWeapon.attackRange;
+        }
+        return 1; // Default melee range
+    }
+
+    /**
+     * Check if the player has a specific item equipped
+     */
+    public hasWeapon(): boolean {
+        return this.equippedWeapon !== null;
     }
 
     public draw(ctx: CanvasRenderingContext2D, viewport?: any): void {
