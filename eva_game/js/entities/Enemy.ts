@@ -3,14 +3,7 @@ import { Viewport } from '../types/engine.js';
 import { AnimationState } from '../types/game.js';
 import Player from './Player.js';
 import StickFigure from '../utils/StickFigure.js';
-
-const ENEMY_SPEED: number = 80;
-const ENEMY_ATTACK_RANGE: number = 25;
-const ENEMY_ATTACK_COOLDOWN: number = 1500;
-const ENEMY_DAMAGE: number = 10;
-const ENEMY_PUNCH_DURATION: number = 300; // ms
-const ENEMY_SEPARATION_DISTANCE: number = 70; // Minimum distance between enemies
-const SEPARATION_STRENGTH: number = 1.2; // How strongly enemies push away from each other
+import { balanceConfig } from '../config/balanceConfig.js';
 
 export default class Enemy extends Entity {
     // Explicitly declare inherited properties from Entity
@@ -29,8 +22,8 @@ export default class Enemy extends Entity {
     declare checkCollision: (other: any) => boolean;
 
     // Enemy-specific properties
-    public health: number = 50;
-    public maxHealth: number = 50;
+    public health: number;
+    public maxHealth: number;
     public facingRight: boolean = true;
     public animationState: AnimationState = 'idle';
     public color: string;
@@ -51,6 +44,8 @@ export default class Enemy extends Entity {
         this.width = 35;
         this.height = 55;
         this.color = color;
+        this.health = balanceConfig.enemy.health;
+        this.maxHealth = balanceConfig.enemy.health;
     }
 
     public update(deltaTime: number): void {
@@ -102,7 +97,7 @@ export default class Enemy extends Entity {
 
             case 'punch':
                 // Progress through punch animation
-                const punchProgress = 1 - (this.punchAnimationTimer / ENEMY_PUNCH_DURATION);
+                const punchProgress = 1 - (this.punchAnimationTimer / balanceConfig.enemy.attack.punchDuration);
                 this.animationProgress = Math.max(0, Math.min(1, punchProgress));
                 break;
 
@@ -129,7 +124,7 @@ export default class Enemy extends Entity {
         const dy: number = targetY - this.y;
         const distance: number = Math.sqrt(dx * dx + dy * dy);
 
-        if (distance < ENEMY_ATTACK_RANGE) {
+        if (distance < balanceConfig.enemy.attack.range) {
             this.velocityX = 0;
             this.velocityY = 0;
             return;
@@ -168,9 +163,9 @@ export default class Enemy extends Entity {
             const distance = Math.sqrt(dx * dx + dy * dy);
 
             // If enemy is too close, push away
-            if (distance > 0 && distance < ENEMY_SEPARATION_DISTANCE) {
+            if (distance > 0 && distance < balanceConfig.enemy.separation.distance) {
                 // Normalize and weight by how close they are (closer = stronger push)
-                const strength = (1 - distance / ENEMY_SEPARATION_DISTANCE) * SEPARATION_STRENGTH;
+                const strength = (1 - distance / balanceConfig.enemy.separation.distance) * balanceConfig.enemy.separation.strength;
                 separation.x += (dx / distance) * strength;
                 separation.y += (dy / distance) * strength;
                 separationCount++;
@@ -199,12 +194,12 @@ export default class Enemy extends Entity {
         const finalDistance = Math.sqrt(finalDirX * finalDirX + finalDirY * finalDirY);
 
         if (finalDistance > 0) {
-            this.velocityX = (finalDirX / finalDistance) * ENEMY_SPEED;
-            this.velocityY = (finalDirY / finalDistance) * ENEMY_SPEED;
+            this.velocityX = (finalDirX / finalDistance) * balanceConfig.enemy.speed;
+            this.velocityY = (finalDirY / finalDistance) * balanceConfig.enemy.speed;
         } else {
             // Fallback to simple player-seeking if no combined direction
-            this.velocityX = dirX * ENEMY_SPEED;
-            this.velocityY = dirY * ENEMY_SPEED;
+            this.velocityX = dirX * balanceConfig.enemy.speed;
+            this.velocityY = dirY * balanceConfig.enemy.speed;
         }
     }
 
@@ -217,7 +212,7 @@ export default class Enemy extends Entity {
         const dy: number = player.y - this.y;
         const distance: number = Math.sqrt(dx * dx + dy * dy);
 
-        return distance <= ENEMY_ATTACK_RANGE;
+        return distance <= balanceConfig.enemy.attack.range;
     }
 
     public attackPlayer(player: Player): void {
@@ -225,9 +220,9 @@ export default class Enemy extends Entity {
             return;
         }
 
-        player.takeDamage(ENEMY_DAMAGE);
-        this.attackCooldownTimer = ENEMY_ATTACK_COOLDOWN;
-        this.punchAnimationTimer = ENEMY_PUNCH_DURATION;
+        player.takeDamage(balanceConfig.enemy.attack.damage);
+        this.attackCooldownTimer = balanceConfig.enemy.attack.cooldown;
+        this.punchAnimationTimer = balanceConfig.enemy.attack.punchDuration;
     }
 
     public takeDamage(amount: number): void {
