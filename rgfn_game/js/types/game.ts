@@ -62,6 +62,6 @@ export interface CombatEntity {
     active: boolean;
     gridCol?: number;
     gridRow?: number;
-    takeDamage(amount: number): void;
+    takeDamage(amount: number): boolean | void;
     isDead(): boolean;
 }
