@@ -53,7 +53,7 @@ export default class Player extends Entity {
         this.height = config.height;
         this.maxHealth = config.maxHealth;
         this.health = this.maxHealth;
-        this.attackDamage = config.attackDamage;
+        this.attackDamage = config.attack.damage;
     }
 
     public handleInput(horizontalInput: number, verticalInput: number, input: InputManager): void {

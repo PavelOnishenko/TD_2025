@@ -82,14 +82,13 @@ export const balanceConfig: BalanceConfig = {
     attack: {
       duration: 300,
       cooldown: 200,
-      range: 20,
+      range: 50,  // Restored from our branch (was 20, too short)
       hitArea: {
         radius: 10,
         offsetX: 0,
         offsetY: 0,
       },
-      // NOTE: other branch had 25, master had 20.
-      // Pick one; 25 matches the "4 hits @ 100 HP" comment logic.
+      // 25 matches the "4 hits @ 100 HP" balance (100/25 = 4)
       damage: 25,
       knockbackForce: 100,
     },
@@ -107,7 +106,7 @@ export const balanceConfig: BalanceConfig = {
 
     speed: 80,
     attack: {
-      range: 20,
+      range: 40,  // Restored from our branch (was 20, too short)
       cooldown: 1500,
       damage: 10,
       punchDuration: 300,
@@ -134,10 +133,10 @@ export const balanceConfig: BalanceConfig = {
     canvasHeight: 600,
   },
 
-  // MUST stay from master (requested)
+  // Restored from our branch for more movement space
   world: {
-    width: 800,
-    height: 600,
+    width: 1200,
+    height: 800,
   },
 };
 

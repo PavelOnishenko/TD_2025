@@ -44,11 +44,10 @@ export default class Enemy extends Entity {
 
         this.width = config.width;
         this.height = config.height;
+        // Use either health or maxHealth (they're kept in sync in config)
         this.maxHealth = config.maxHealth;
         this.health = this.maxHealth;
         this.color = color;
-        this.health = balanceConfig.enemy.health;
-        this.maxHealth = balanceConfig.enemy.health;
     }
 
     public update(deltaTime: number): void {
@@ -108,7 +107,7 @@ export default class Enemy extends Entity {
                 // Progress through death animation
                 if (this.deathAnimationTimer > 0) {
                     this.deathAnimationTimer -= deltaTime * 1000;
-                    const deathProgress = 1 - (this.deathAnimationTimer / balanceConfig.enemy.deathAnimationDuration);
+                    const deathProgress = 1 - (this.deathAnimationTimer / balanceConfig.enemy.attack.deathAnimationDuration);
                     this.animationProgress = Math.max(0, Math.min(1, deathProgress));
                 }
                 break;
@@ -241,7 +240,7 @@ export default class Enemy extends Entity {
 
     private triggerDeathAnimation(): void {
         this.animationState = 'death';
-        this.deathAnimationTimer = balanceConfig.enemy.deathAnimationDuration;
+        this.deathAnimationTimer = balanceConfig.enemy.attack.deathAnimationDuration;
         this.animationProgress = 0;
         this.velocityX = 0;
         this.velocityY = 0;
