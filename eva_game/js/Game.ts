@@ -1,6 +1,7 @@
 import GameLoop from '../../engine/core/GameLoop.js';
 import Renderer from '../../engine/core/Renderer.js';
 import InputManager from '../../engine/systems/InputManager.js';
+import ScoreManager from '../../engine/core/ScoreManager.js';
 import { Viewport, WorldBounds } from './types/engine.js';
 import { GameOverCallback } from './types/game.js';
 import Player from './entities/Player.js';
@@ -32,9 +33,9 @@ export default class Game {
     private renderer: Renderer;
     private input: InputManager;
     private loop: GameLoop;
+    private scoreManager: ScoreManager;
     private player: Player | null = null;
     private enemies: Enemy[] = [];
-    private score: number = 0;
     private level: number = 1;
     private viewport?: Viewport;
     private nextColorIndex: number = 0;
@@ -53,6 +54,7 @@ export default class Game {
 
         this.renderer = new Renderer(canvas, this.ctx);
         this.input = new InputManager();
+        this.scoreManager = new ScoreManager();
         this.loop = new GameLoop(
             (dt: number) => this.update(dt),
             () => this.render()
@@ -108,7 +110,7 @@ export default class Game {
 
     public restart(): void {
         this.gameOver = false;
-        this.score = 0;
+        this.scoreManager.reset();
         this.level = 1;
         this.enemies = [];
         this.nextColorIndex = 0;
@@ -165,7 +167,7 @@ export default class Game {
 
             if (!enemy.active) {
                 this.enemies.splice(i, 1);
-                this.score += 10;
+                this.scoreManager.addScore(10);
             }
         }
 
@@ -219,7 +221,7 @@ export default class Game {
         this.loop.stop();
 
         if (typeof this.onGameOver === 'function') {
-            this.onGameOver(this.score);
+            this.onGameOver(this.scoreManager.getCurrentScore());
         }
     }
 
@@ -233,7 +235,7 @@ export default class Game {
         const levelElement = document.getElementById('level-value');
 
         if (healthElement) healthElement.textContent = String(this.player.health);
-        if (scoreElement) scoreElement.textContent = String(this.score);
+        if (scoreElement) scoreElement.textContent = String(this.scoreManager.getCurrentScore());
         if (levelElement) levelElement.textContent = String(this.level);
     }
 

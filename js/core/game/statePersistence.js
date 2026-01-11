@@ -30,11 +30,15 @@ function applySavedResources(game, savedState) {
     game.lives = clamp(toInt(savedState.lives, game.initialLives), 0, 99);
     const savedEnergy = savedState.energy ?? savedState.gold;
     game.energy = clamp(toInt(savedEnergy, game.initialEnergy), 0, 999999);
-    game.score = clamp(toInt(savedState.score, 0), 0, 9999999);
-    const savedBestScore = clamp(toInt(savedState.bestScore, game.bestScore ?? 0), 0, 9999999);
-    if (!Number.isFinite(game.bestScore) || savedBestScore > game.bestScore) {
-        game.bestScore = savedBestScore;
-        saveBestScore(game.bestScore);
+    if (game.scoreManager) {
+        const savedScore = clamp(toInt(savedState.score, 0), 0, 9999999);
+        game.scoreManager.setScore(savedScore);
+        const savedBestScore = clamp(toInt(savedState.bestScore, game.scoreManager.getBestScore()), 0, 9999999);
+        const currentBest = game.scoreManager.getBestScore();
+        if (savedBestScore > currentBest) {
+            game.scoreManager.setBestScore(savedBestScore);
+            saveBestScore(savedBestScore);
+        }
     }
     if (typeof game.ensureEndlessWaveTracking === 'function') {
         game.ensureEndlessWaveTracking();
@@ -189,8 +193,8 @@ const statePersistence = {
             lives: this.lives,
             energy: this.energy,
             wave: this.wave,
-            score: Number.isFinite(this.score) ? this.score : 0,
-            bestScore: Number.isFinite(this.bestScore) ? this.bestScore : 0,
+            score: this.scoreManager ? this.scoreManager.getCurrentScore() : 0,
+            bestScore: this.scoreManager ? this.scoreManager.getBestScore() : 0,
             towers: snapshotTowers(this),
         };
     },
