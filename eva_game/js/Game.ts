@@ -73,15 +73,21 @@ export default class Game {
 
     private initializeGame(): void {
         const centerX: number = balanceConfig.world.width / 2;
-        const centerY: number = balanceConfig.world.height / 2;
-        this.player = new Player(centerX, centerY);
+        // Spawn player in the middle of the road area
+        const roadY: number = balanceConfig.layout.backgroundHeight;
+        const roadCenterY: number = roadY + balanceConfig.layout.roadHeight / 2;
+        this.player = new Player(centerX, roadCenterY);
         this.spawnEnemies(balanceConfig.spawn.initialEnemyCount);
     }
 
     private spawnEnemies(count: number): void {
+        const roadY: number = balanceConfig.layout.backgroundHeight;
+        const roadHeight: number = balanceConfig.layout.roadHeight;
+
         for (let i = 0; i < count; i++) {
             const x: number = Math.random() * (balanceConfig.world.width - 100) + 50;
-            const y: number = Math.random() * (balanceConfig.world.height - 100) + 50;
+            // Spawn enemies only in the road area
+            const y: number = roadY + Math.random() * (roadHeight - 100) + 50;
 
             // Assign a unique color to each enemy
             const color: string = ENEMY_COLORS[this.nextColorIndex % ENEMY_COLORS.length];
@@ -148,8 +154,31 @@ export default class Game {
 
         const halfWidth: number = this.player.width / 2;
         const halfHeight: number = this.player.height / 2;
+
+        // Horizontal bounds: entire world width
         this.player.x = Math.max(halfWidth, Math.min(balanceConfig.world.width - halfWidth, this.player.x));
-        this.player.y = Math.max(halfHeight, Math.min(balanceConfig.world.height - halfHeight, this.player.y));
+
+        // Vertical bounds: restricted to road area only
+        const roadY: number = balanceConfig.layout.backgroundHeight;
+        const roadBottom: number = roadY + balanceConfig.layout.roadHeight;
+        const minY: number = roadY + halfHeight;
+        const maxY: number = roadBottom - halfHeight;
+        this.player.y = Math.max(minY, Math.min(maxY, this.player.y));
+    }
+
+    private keepEnemyInBounds(enemy: Enemy): void {
+        const halfWidth: number = enemy.width / 2;
+        const halfHeight: number = enemy.height / 2;
+
+        // Horizontal bounds: entire world width
+        enemy.x = Math.max(halfWidth, Math.min(balanceConfig.world.width - halfWidth, enemy.x));
+
+        // Vertical bounds: restricted to road area only
+        const roadY: number = balanceConfig.layout.backgroundHeight;
+        const roadBottom: number = roadY + balanceConfig.layout.roadHeight;
+        const minY: number = roadY + halfHeight;
+        const maxY: number = roadBottom - halfHeight;
+        enemy.y = Math.max(minY, Math.min(maxY, enemy.y));
     }
 
     private updateEnemies(deltaTime: number): void {
@@ -162,6 +191,8 @@ export default class Game {
             enemy.update(deltaTime);
             // Pass all enemies so they can avoid clustering
             enemy.moveToward(this.player.x, this.player.y, deltaTime, this.enemies);
+            // Keep enemies within road bounds
+            this.keepEnemyInBounds(enemy);
 
             if (!enemy.active) {
                 this.enemies.splice(i, 1);
@@ -245,22 +276,48 @@ export default class Game {
     }
 
     private drawBackground(): void {
-        this.renderer.fillRect(0, 0, balanceConfig.world.width, balanceConfig.world.height, '#2a2a4a');
-        this.drawGrid(50);
+        const bgHeight = balanceConfig.layout.backgroundHeight;
+        const roadY = bgHeight;
+        const roadHeight = balanceConfig.layout.roadHeight;
+
+        // Top part: Background wall (non-playable)
+        this.renderer.fillRect(0, 0, balanceConfig.world.width, bgHeight, '#1a1a2e');
+
+        // Add some texture to the wall with darker stripes
+        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+        for (let y = 0; y < bgHeight; y += 40) {
+            this.ctx.fillRect(0, y, balanceConfig.world.width, 20);
+        }
+
+        // Bottom part: Road (playable area)
+        this.renderer.fillRect(0, roadY, balanceConfig.world.width, roadHeight, '#4a4a6a');
+
+        // Draw road grid only in playable area
+        this.drawRoadGrid(50, roadY, roadHeight);
+
+        // Dividing line between background and road
+        this.ctx.strokeStyle = '#f39c12';
+        this.ctx.lineWidth = 4;
+        this.ctx.beginPath();
+        this.ctx.moveTo(0, roadY);
+        this.ctx.lineTo(balanceConfig.world.width, roadY);
+        this.ctx.stroke();
     }
 
-    private drawGrid(gridSize: number): void {
-        this.ctx.strokeStyle = 'rgba(100, 100, 150, 0.2)';
+    private drawRoadGrid(gridSize: number, roadY: number, roadHeight: number): void {
+        this.ctx.strokeStyle = 'rgba(100, 100, 150, 0.3)';
         this.ctx.lineWidth = 1;
 
+        // Vertical grid lines across the entire road
         for (let x = 0; x <= balanceConfig.world.width; x += gridSize) {
             this.ctx.beginPath();
-            this.ctx.moveTo(x, 0);
-            this.ctx.lineTo(x, balanceConfig.world.height);
+            this.ctx.moveTo(x, roadY);
+            this.ctx.lineTo(x, roadY + roadHeight);
             this.ctx.stroke();
         }
 
-        for (let y = 0; y <= balanceConfig.world.height; y += gridSize) {
+        // Horizontal grid lines only in the road area
+        for (let y = roadY; y <= roadY + roadHeight; y += gridSize) {
             this.ctx.beginPath();
             this.ctx.moveTo(0, y);
             this.ctx.lineTo(balanceConfig.world.width, y);

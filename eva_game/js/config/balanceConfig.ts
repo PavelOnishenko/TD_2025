@@ -67,6 +67,12 @@ export interface BalanceConfig {
     width: number;
     height: number;
   };
+
+  // Split-screen layout for beat 'em up style
+  layout: {
+    backgroundHeight: number;  // Height of top background/wall area
+    roadHeight: number;        // Height of bottom playable road area
+  };
 }
 
 export const balanceConfig: BalanceConfig = {
@@ -137,6 +143,12 @@ export const balanceConfig: BalanceConfig = {
   world: {
     width: 1200,
     height: 800,
+  },
+
+  // Split-screen layout for beat 'em up style
+  layout: {
+    backgroundHeight: 320,  // Top 40% - non-playable background/wall
+    roadHeight: 480,        // Bottom 60% - playable road area
   },
 };
 
