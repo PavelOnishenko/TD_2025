@@ -1,78 +1,163 @@
 /**
  * Balance configuration for Eva game
- * This file contains all gameplay balance parameters that affect difficulty and feel
+ * Centralized location for all game balance parameters
  */
 
 export interface BalanceConfig {
-    player: {
-        speed: number;
-        attack: {
-            duration: number;           // ms - how long the attack animation lasts
-            cooldown: number;           // ms - time between attacks
-            range: number;              // pixels - distance from player center to attack hit area center
-            hitArea: {
-                radius: number;         // pixels - radius of circular hit detection area
-                offsetX: number;        // pixels - additional X offset from attack range (for fine-tuning)
-                offsetY: number;        // pixels - Y offset from player center
-            };
-            damage: number;             // damage dealt to enemies
-            knockbackForce: number;     // force applied to enemies when hit
-        };
-        invulnerabilityDuration: number; // ms - how long player is invulnerable after being hit
+  player: {
+    maxHealth: number;
+    width: number;
+    height: number;
+
+    speed: number;
+    attack: {
+      duration: number;           // ms
+      cooldown: number;           // ms
+      range: number;              // pixels
+      hitArea: {
+        radius: number;           // pixels
+        offsetX: number;          // pixels
+        offsetY: number;          // pixels
+      };
+      damage: number;             // damage dealt to enemies
+      knockbackForce: number;     // force applied to enemies when hit
     };
-    enemy: {
-        speed: number;
-        health: number;
-        attack: {
-            range: number;              // pixels - distance at which enemy can attack player
-            cooldown: number;           // ms - time between enemy attacks
-            damage: number;             // damage dealt to player
-            punchDuration: number;      // ms - animation duration
-        };
-        separation: {
-            distance: number;           // pixels - minimum distance enemies try to maintain from each other
-            strength: number;           // multiplier for separation force
-        };
+    invulnerabilityDuration: number; // ms
+  };
+
+  enemy: {
+    // Keep both to avoid breaking either branch usage:
+    // - master used `health`
+    // - other branch introduced `maxHealth`
+    health: number;
+    maxHealth: number;
+
+    width: number;
+    height: number;
+
+    speed: number;
+    attack: {
+      range: number;              // pixels
+      cooldown: number;           // ms
+      damage: number;             // damage dealt to player
+      punchDuration: number;      // ms
+      deathAnimationDuration: number; // ms
     };
-    world: {
-        width: number;
-        height: number;
+    separation: {
+      distance: number;           // pixels
+      strength: number;           // multiplier
     };
+  };
+
+  spawn: {
+    initialEnemyCount: number;
+    waveSize: number;
+    spawnDelay: number;            // ms
+    minDistanceFromPlayer: number;
+    maxDistanceFromPlayer: number;
+  };
+
+  game: {
+    canvasWidth: number;
+    canvasHeight: number;
+  };
+
+  // IMPORTANT: keep from master (requested)
+  world: {
+    width: number;
+    height: number;
+  };
 }
 
 export const balanceConfig: BalanceConfig = {
-    player: {
-        speed: 200,
-        attack: {
-            duration: 300,              // ms attack animation
-            cooldown: 200,              // ms between attacks
-            range: 20,                  // pixels from player center
-            hitArea: {
-                radius: 10,             // pixel radius for hit detection
-                offsetX: 0,             // additional X offset
-                offsetY: 0,             // centered on player Y position
-            },
-            damage: 20,                 // damage per hit
-            knockbackForce: 100,        // knockback force
-        },
-        invulnerabilityDuration: 1000,  // ms of invulnerability after hit
+  player: {
+    maxHealth: 100,
+
+    // Visual properties (from other branch)
+    width: 40,
+    height: 60,
+
+    // master structure
+    speed: 200,
+    attack: {
+      duration: 300,
+      cooldown: 200,
+      range: 50,  // Restored from our branch (was 20, too short)
+      hitArea: {
+        radius: 10,
+        offsetX: 0,
+        offsetY: 0,
+      },
+      // 25 matches the "4 hits @ 100 HP" balance (100/25 = 4)
+      damage: 25,
+      knockbackForce: 100,
     },
-    enemy: {
-        speed: 80,
-        health: 100,
-        attack: {
-            range: 20,                  // pixels attack range
-            cooldown: 1500,             // seconds between attacks
-            damage: 10,                 // damage per hit
-            punchDuration: 300,         // ms punch animation
-        },
-        separation: {
-            distance: 70,               // pixels minimum separation
-            strength: 1.2,              // separation force multiplier
-        },
+    invulnerabilityDuration: 1000,
+  },
+
+  enemy: {
+    // Keep both names in sync
+    health: 100,
+    maxHealth: 100,
+
+    // Visual properties (from other branch)
+    width: 35,
+    height: 55,
+
+    speed: 80,
+    attack: {
+      range: 40,  // Restored from our branch (was 20, too short)
+      cooldown: 1500,
+      damage: 10,
+      punchDuration: 300,
+      deathAnimationDuration: 1000,
     },
-    world: {
-        width: 800,
-        height: 600,
+    separation: {
+      distance: 70,
+      strength: 1.2,
     },
+  },
+
+  // Spawn settings (from other branch)
+  spawn: {
+    initialEnemyCount: 3,
+    waveSize: 2,
+    spawnDelay: 3000,
+    minDistanceFromPlayer: 200,
+    maxDistanceFromPlayer: 400,
+  },
+
+  // Canvas size (from other branch)
+  game: {
+    canvasWidth: 800,
+    canvasHeight: 600,
+  },
+
+  // Restored from our branch for more movement space
+  world: {
+    width: 1200,
+    height: 800,
+  },
+};
+
+/**
+ * Preset configurations for different difficulty levels
+ * (from other branch)
+ */
+export const difficultyPresets = {
+  easy: {
+    enemyHealth: 75,
+    enemyDamage: 5,
+    enemySpeed: 60,
+  },
+  normal: {
+    enemyHealth: 100,
+    enemyDamage: 10,
+    enemySpeed: 80,
+  },
+  hard: {
+    enemyHealth: 125,
+    enemyDamage: 15,
+    enemySpeed: 100,
+  },
 };

@@ -75,7 +75,7 @@ export default class Game {
         const centerX: number = balanceConfig.world.width / 2;
         const centerY: number = balanceConfig.world.height / 2;
         this.player = new Player(centerX, centerY);
-        this.spawnEnemies(3);
+        this.spawnEnemies(balanceConfig.spawn.initialEnemyCount);
     }
 
     private spawnEnemies(count: number): void {
@@ -211,9 +211,7 @@ export default class Game {
         }
 
         enemy.takeDamage(this.player.attackDamage);
-        if (enemy.health <= 0) {
-            enemy.active = false;
-        }
+        // takeDamage() now handles setting active = false when health reaches 0
     }
 
     private endGame(): void {

@@ -1,4 +1,5 @@
 import Entity from '../../../engine/core/Entity.js';
+import { withDamageable } from '../../../engine/core/Damageable.js';
 import {
     getXpForLevel,
     calculateMaxHp,
@@ -10,7 +11,10 @@ import { balanceConfig } from '../config/balanceConfig.js';
 import { theme } from '../config/ThemeConfig.js';
 import Item from './Item.js';
 
-export default class Player extends Entity {
+// Extend Entity with Damageable functionality
+const DamageableEntity = withDamageable(Entity);
+
+export default class Player extends DamageableEntity {
     // Explicitly declare inherited properties from Entity
     declare x: number;
     declare y: number;
@@ -26,9 +30,18 @@ export default class Player extends Entity {
     declare getBounds: () => { left: number; right: number; top: number; bottom: number };
     declare checkCollision: (other: any) => boolean;
 
+    // Explicitly declare inherited properties from Damageable
+    declare hp: number;
+    declare maxHp: number;
+
+    // Explicitly declare inherited methods from Damageable
+    declare initDamageable: (maxHp: number) => void;
+    declare heal: (amount: number) => void;
+    declare isDead: () => boolean;
+    declare getHealthPercent: () => number;
+    declare healToFull: () => void;
+
     // Player-specific properties
-    public hp: number;
-    public maxHp: number;
     public damage: number;
     public armor: number = 0;
     public gridCol?: number;
@@ -63,28 +76,18 @@ export default class Player extends Entity {
         this.updateStats();
         this.xpToNextLevel = getXpForLevel(2);
 
-        // Start with full HP
-        this.hp = this.maxHp;
+        // Initialize Damageable functionality with calculated maxHp
+        this.initDamageable(this.maxHp);
     }
 
-    public takeDamage(amount: number): void {
+    /**
+     * Override takeDamage to apply armor reduction before damage
+     */
+    public takeDamage(amount: number): boolean {
         // Apply armor reduction
         const damageAfterArmor = Math.max(0, amount - this.armor);
-        this.hp -= damageAfterArmor;
-        if (this.hp < 0) {
-            this.hp = 0;
-        }
-    }
-
-    public heal(amount: number): void {
-        this.hp += amount;
-        if (this.hp > this.maxHp) {
-            this.hp = this.maxHp;
-        }
-    }
-
-    public isDead(): boolean {
-        return this.hp <= 0;
+        // Call parent implementation with reduced damage
+        return super.takeDamage(damageAfterArmor);
     }
 
     /**
@@ -137,8 +140,8 @@ export default class Player extends Entity {
         const oldMaxHp = this.maxHp;
         this.updateStats();
 
-        // Heal to full HP
-        this.hp = this.maxHp;
+        // Heal to full HP (use Damageable method)
+        this.healToFull();
     }
 
     /**

@@ -120,7 +120,7 @@ export function applyProjectileDamage(game, projectile, enemyIndex, options = {}
 
     const { spawnImpactEffect = true, spawnKillEffect = true, hitVariant = null, killVariant = null, impactX = null, impactY = null } = options;
     const damage = calculateDamage(projectile, enemy);
-    enemy.hp -= damage;
+    enemy.takeDamage(damage);
     const isColorMatch = projectile.color === enemy.color;
     playHitSound(game.audio, projectile);
 
@@ -152,7 +152,7 @@ export function applyProjectileDamage(game, projectile, enemyIndex, options = {}
     }
 
     let enemyRemoved = false;
-    if (enemy.hp <= 0) {
+    if (enemy.isDead()) {
         enemyRemoved = true;
         game.enemies.splice(enemyIndex, 1);
         const energyGain = getEnergyGainForKill(game, enemy);

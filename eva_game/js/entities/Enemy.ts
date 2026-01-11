@@ -37,15 +37,17 @@ export default class Enemy extends Entity {
     private punchAnimationTimer: number = 0;
 
     private static readonly WALK_ANIMATION_SPEED: number = 2.5; // cycles per second
-    private static readonly DEATH_ANIMATION_DURATION: number = 1000; // ms
 
     constructor(x: number, y: number, color: string = '#ff6b6b') {
         super(x, y);
-        this.width = 35;
-        this.height = 55;
+        const config = balanceConfig.enemy;
+
+        this.width = config.width;
+        this.height = config.height;
+        // Use either health or maxHealth (they're kept in sync in config)
+        this.maxHealth = config.maxHealth;
+        this.health = this.maxHealth;
         this.color = color;
-        this.health = balanceConfig.enemy.health;
-        this.maxHealth = balanceConfig.enemy.health;
     }
 
     public update(deltaTime: number): void {
@@ -105,7 +107,7 @@ export default class Enemy extends Entity {
                 // Progress through death animation
                 if (this.deathAnimationTimer > 0) {
                     this.deathAnimationTimer -= deltaTime * 1000;
-                    const deathProgress = 1 - (this.deathAnimationTimer / Enemy.DEATH_ANIMATION_DURATION);
+                    const deathProgress = 1 - (this.deathAnimationTimer / balanceConfig.enemy.attack.deathAnimationDuration);
                     this.animationProgress = Math.max(0, Math.min(1, deathProgress));
                 }
                 break;
@@ -151,6 +153,7 @@ export default class Enemy extends Entity {
         }
 
         let separationCount = 0;
+        const config = balanceConfig.enemy;
 
         for (const other of otherEnemies) {
             // Skip self and dead enemies
@@ -230,19 +233,18 @@ export default class Enemy extends Entity {
         if (this.health <= 0) {
             this.health = 0;
             this.triggerDeathAnimation();
+            // Mark as inactive immediately so Game.ts can remove it
+            this.active = false;
         }
     }
 
     private triggerDeathAnimation(): void {
         this.animationState = 'death';
-        this.deathAnimationTimer = Enemy.DEATH_ANIMATION_DURATION;
+        this.deathAnimationTimer = balanceConfig.enemy.attack.deathAnimationDuration;
         this.animationProgress = 0;
         this.velocityX = 0;
         this.velocityY = 0;
-        // Deactivate after death animation completes
-        setTimeout(() => {
-            this.active = false;
-        }, Enemy.DEATH_ANIMATION_DURATION);
+        // Note: active flag is already set to false in takeDamage()
     }
 
     public draw(ctx: CanvasRenderingContext2D, viewport?: Viewport): void {

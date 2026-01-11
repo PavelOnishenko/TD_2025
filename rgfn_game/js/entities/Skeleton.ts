@@ -1,8 +1,12 @@
 import Entity from '../../../engine/core/Entity.js';
+import { withDamageable } from '../../../engine/core/Damageable.js';
 import { balanceConfig } from '../config/balanceConfig.js';
 import { theme } from '../config/ThemeConfig.js';
 
-export default class Skeleton extends Entity {
+// Extend Entity with Damageable functionality
+const DamageableEntity = withDamageable(Entity);
+
+export default class Skeleton extends DamageableEntity {
     // Explicitly declare inherited properties from Entity
     declare x: number;
     declare y: number;
@@ -18,9 +22,18 @@ export default class Skeleton extends Entity {
     declare getBounds: () => { left: number; right: number; top: number; bottom: number };
     declare checkCollision: (other: any) => boolean;
 
+    // Explicitly declare inherited properties from Damageable
+    declare hp: number;
+    declare maxHp: number;
+
+    // Explicitly declare inherited methods from Damageable
+    declare initDamageable: (maxHp: number) => void;
+    declare heal: (amount: number) => void;
+    declare isDead: () => boolean;
+    declare getHealthPercent: () => number;
+    declare healToFull: () => void;
+
     // Skeleton-specific properties
-    public hp: number;
-    public maxHp: number;
     public damage: number;
     public name: string;
     public xpValue: number;
@@ -33,25 +46,21 @@ export default class Skeleton extends Entity {
 
         this.width = config.width;
         this.height = config.height;
-        this.hp = config.hp;
-        this.maxHp = config.hp;
         this.damage = config.damage;
         this.name = config.name;
         this.xpValue = config.xpValue;
+
+        // Initialize Damageable functionality
+        this.initDamageable(config.hp);
     }
 
-    public takeDamage(amount: number): void {
-        this.hp -= amount;
-        if (this.hp < 0) {
-            this.hp = 0;
-        }
-        if (this.hp === 0) {
+    // Override takeDamage to deactivate when dead
+    public takeDamage(amount: number): boolean {
+        const died = super.takeDamage(amount);
+        if (died) {
             this.active = false;
         }
-    }
-
-    public isDead(): boolean {
-        return this.hp <= 0;
+        return died;
     }
 
     public draw(ctx: CanvasRenderingContext2D, viewport?: any): void {

@@ -22,9 +22,9 @@ export default class Player extends Entity {
     declare checkCollision: (other: any) => boolean;
 
     // Player-specific properties
-    public health: number = 100;
-    public maxHealth: number = 100;
-    public attackDamage: number = 25;
+    public health: number;
+    public maxHealth: number;
+    public attackDamage: number;
     public isAttacking: boolean = false;
     public invulnerable: boolean = false;
     public facingRight: boolean = true;
@@ -33,6 +33,7 @@ export default class Player extends Entity {
     private attackTimer: number = 0;
     private attackCooldownTimer: number = 0;
     private invulnerabilityTimer: number = 0;
+    private hitEnemiesThisAttack: Set<number> = new Set(); // Track enemies hit in current attack
 
     // Animation progress (0-1) for gradual animations
     public animationProgress: number = 0;
@@ -46,8 +47,13 @@ export default class Player extends Entity {
 
     constructor(x: number, y: number) {
         super(x, y);
-        this.width = 40;
-        this.height = 60;
+        const config = balanceConfig.player;
+
+        this.width = config.width;
+        this.height = config.height;
+        this.maxHealth = config.maxHealth;
+        this.health = this.maxHealth;
+        this.attackDamage = config.attack.damage;
     }
 
     public handleInput(horizontalInput: number, verticalInput: number, input: InputManager): void {
@@ -90,6 +96,7 @@ export default class Player extends Entity {
         this.attackTimer = balanceConfig.player.attack.duration;
         this.attackCooldownTimer = balanceConfig.player.attack.cooldown;
         this.animationState = 'punch';
+        this.hitEnemiesThisAttack.clear(); // Reset hit tracking for new attack
     }
 
     public update(deltaTime: number): void {
@@ -208,7 +215,19 @@ export default class Player extends Entity {
             return false;
         }
 
-        return this.isEnemyInAttackRange(enemy);
+        // Check if we've already hit this enemy during this attack
+        if (this.hitEnemiesThisAttack.has(enemy.id)) {
+            return false;
+        }
+
+        // Check if enemy is in range
+        if (this.isEnemyInAttackRange(enemy)) {
+            // Mark this enemy as hit for this attack
+            this.hitEnemiesThisAttack.add(enemy.id);
+            return true;
+        }
+
+        return false;
     }
 
     private isEnemyInAttackRange(enemy: Entity): boolean {
