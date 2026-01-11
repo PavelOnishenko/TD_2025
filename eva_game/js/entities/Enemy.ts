@@ -126,7 +126,7 @@ export default class Enemy extends Entity {
         const dy: number = targetY - this.y;
         const distance: number = Math.sqrt(dx * dx + dy * dy);
 
-        if (distance < balanceConfig.enemy.attack.range) {
+        if (distance < balanceConfig.enemy.attack.armLength) {
             this.velocityX = 0;
             this.velocityY = 0;
             return;
@@ -211,11 +211,31 @@ export default class Enemy extends Entity {
             return false;
         }
 
+        const attackConfig = balanceConfig.enemy.attack;
+
+        // Calculate horizontal distance from enemy to player
         const dx: number = player.x - this.x;
         const dy: number = player.y - this.y;
-        const distance: number = Math.sqrt(dx * dx + dy * dy);
 
-        return distance <= balanceConfig.enemy.attack.range;
+        // Check if player is in facing direction
+        const isFacingPlayer: boolean = (this.facingRight && dx > 0) || (!this.facingRight && dx < 0);
+        if (!isFacingPlayer) {
+            return false;
+        }
+
+        // Check horizontal range (arm length) in facing direction
+        const horizontalDistance: number = Math.abs(dx);
+        if (horizontalDistance > attackConfig.armLength) {
+            return false;
+        }
+
+        // Check vertical threshold
+        const verticalDistance: number = Math.abs(dy);
+        if (verticalDistance > attackConfig.verticalThreshold) {
+            return false;
+        }
+
+        return true;
     }
 
     public attackPlayer(player: Player): void {

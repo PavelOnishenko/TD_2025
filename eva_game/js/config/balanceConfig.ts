@@ -13,12 +13,8 @@ export interface BalanceConfig {
     attack: {
       duration: number;           // ms
       cooldown: number;           // ms
-      range: number;              // pixels
-      hitArea: {
-        radius: number;           // pixels
-        offsetX: number;          // pixels
-        offsetY: number;          // pixels
-      };
+      armLength: number;          // pixels - horizontal range in facing direction
+      verticalThreshold: number;  // pixels - vertical offset up/down where hits still land
       damage: number;             // damage dealt to enemies
       knockbackForce: number;     // force applied to enemies when hit
     };
@@ -37,7 +33,8 @@ export interface BalanceConfig {
 
     speed: number;
     attack: {
-      range: number;              // pixels
+      armLength: number;          // pixels - horizontal range in facing direction
+      verticalThreshold: number;  // pixels - vertical offset up/down where hits still land
       cooldown: number;           // ms
       damage: number;             // damage dealt to player
       punchDuration: number;      // ms
@@ -82,12 +79,8 @@ export const balanceConfig: BalanceConfig = {
     attack: {
       duration: 300,
       cooldown: 200,
-      range: 50,  // Restored from our branch (was 20, too short)
-      hitArea: {
-        radius: 10,
-        offsetX: 0,
-        offsetY: 0,
-      },
+      armLength: 60,          // horizontal range of punch (like arm length)
+      verticalThreshold: 30,  // vertical offset tolerance
       // 25 matches the "4 hits @ 100 HP" balance (100/25 = 4)
       damage: 25,
       knockbackForce: 100,
@@ -106,7 +99,8 @@ export const balanceConfig: BalanceConfig = {
 
     speed: 80,
     attack: {
-      range: 40,  // Restored from our branch (was 20, too short)
+      armLength: 50,          // horizontal range of punch (like arm length)
+      verticalThreshold: 30,  // vertical offset tolerance
       cooldown: 1500,
       damage: 10,
       punchDuration: 300,
