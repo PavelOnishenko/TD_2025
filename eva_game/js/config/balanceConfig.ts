@@ -44,30 +44,30 @@ export const balanceConfig: BalanceConfig = {
     player: {
         speed: 200,
         attack: {
-            duration: 300,              // 300ms attack animation
-            cooldown: 200,              // 200ms between attacks
-            range: 20,                  // 20 pixels from player center
+            duration: 300,              // ms attack animation
+            cooldown: 200,              // ms between attacks
+            range: 20,                  // pixels from player center
             hitArea: {
-                radius: 15,             // 15 pixel radius for hit detection
-                offsetX: 0,             // no additional X offset
+                radius: 10,             // pixel radius for hit detection
+                offsetX: 0,             // additional X offset
                 offsetY: 0,             // centered on player Y position
             },
             damage: 20,                 // damage per hit
             knockbackForce: 100,        // knockback force
         },
-        invulnerabilityDuration: 1000,  // 1 second of invulnerability after hit
+        invulnerabilityDuration: 1000,  // ms of invulnerability after hit
     },
     enemy: {
         speed: 80,
         health: 100,
         attack: {
-            range: 25,                  // 25 pixels attack range
-            cooldown: 1500,             // 1.5 seconds between attacks
-            damage: 10,                 // 10 damage per hit
-            punchDuration: 300,         // 300ms punch animation
+            range: 20,                  // pixels attack range
+            cooldown: 1500,             // seconds between attacks
+            damage: 10,                 // damage per hit
+            punchDuration: 300,         // ms punch animation
         },
         separation: {
-            distance: 70,               // 70 pixels minimum separation
+            distance: 70,               // pixels minimum separation
             strength: 1.2,              // separation force multiplier
         },
     },
