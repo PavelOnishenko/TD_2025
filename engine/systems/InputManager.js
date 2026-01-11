@@ -8,14 +8,12 @@ export default class InputManager {
     }
 
     handleKeyDown(event) {
-        console.log('Key down event:', event);
         const code = event?.code;
         if (!code || event?.repeat) {
             return;
         }
 
         if (!this.keys.get(code)) {
-            console.log('Key registered as pressed:', code);
             this.keysPressed.add(code);
         }
         this.keys.set(code, true);
