@@ -46,7 +46,7 @@ jobs:
           mkdir -p deploy/rgfn-game
 
           # Copy Neon Void (root game) - JavaScript game
-          cp -r js assets style.css deploy/neon-void/
+          cp -r js assets engine style.css deploy/neon-void/
           cp index.html deploy/neon-void/
 
           # Copy Eva Game - only production files
