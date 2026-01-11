@@ -47,6 +47,8 @@ export default class Enemy extends Entity {
         this.maxHealth = config.maxHealth;
         this.health = this.maxHealth;
         this.color = color;
+        this.health = balanceConfig.enemy.health;
+        this.maxHealth = balanceConfig.enemy.health;
     }
 
     public update(deltaTime: number): void {
@@ -98,7 +100,7 @@ export default class Enemy extends Entity {
 
             case 'punch':
                 // Progress through punch animation
-                const punchProgress = 1 - (this.punchAnimationTimer / balanceConfig.enemy.punchDuration);
+                const punchProgress = 1 - (this.punchAnimationTimer / balanceConfig.enemy.attack.punchDuration);
                 this.animationProgress = Math.max(0, Math.min(1, punchProgress));
                 break;
 
@@ -125,7 +127,7 @@ export default class Enemy extends Entity {
         const dy: number = targetY - this.y;
         const distance: number = Math.sqrt(dx * dx + dy * dy);
 
-        if (distance < balanceConfig.enemy.attackRange) {
+        if (distance < balanceConfig.enemy.attack.range) {
             this.velocityX = 0;
             this.velocityY = 0;
             return;
@@ -165,9 +167,9 @@ export default class Enemy extends Entity {
             const distance = Math.sqrt(dx * dx + dy * dy);
 
             // If enemy is too close, push away
-            if (distance > 0 && distance < config.separationDistance) {
+            if (distance > 0 && distance < balanceConfig.enemy.separation.distance) {
                 // Normalize and weight by how close they are (closer = stronger push)
-                const strength = (1 - distance / config.separationDistance) * config.separationStrength;
+                const strength = (1 - distance / balanceConfig.enemy.separation.distance) * balanceConfig.enemy.separation.strength;
                 separation.x += (dx / distance) * strength;
                 separation.y += (dy / distance) * strength;
                 separationCount++;
@@ -214,7 +216,7 @@ export default class Enemy extends Entity {
         const dy: number = player.y - this.y;
         const distance: number = Math.sqrt(dx * dx + dy * dy);
 
-        return distance <= balanceConfig.enemy.attackRange;
+        return distance <= balanceConfig.enemy.attack.range;
     }
 
     public attackPlayer(player: Player): void {
@@ -222,9 +224,9 @@ export default class Enemy extends Entity {
             return;
         }
 
-        player.takeDamage(balanceConfig.enemy.attackDamage);
-        this.attackCooldownTimer = balanceConfig.enemy.attackCooldown;
-        this.punchAnimationTimer = balanceConfig.enemy.punchDuration;
+        player.takeDamage(balanceConfig.enemy.attack.damage);
+        this.attackCooldownTimer = balanceConfig.enemy.attack.cooldown;
+        this.punchAnimationTimer = balanceConfig.enemy.attack.punchDuration;
     }
 
     public takeDamage(amount: number): void {

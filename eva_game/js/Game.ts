@@ -72,16 +72,16 @@ export default class Game {
     }
 
     private initializeGame(): void {
-        const centerX: number = balanceConfig.game.worldWidth / 2;
-        const centerY: number = balanceConfig.game.worldHeight / 2;
+        const centerX: number = balanceConfig.world.width / 2;
+        const centerY: number = balanceConfig.world.height / 2;
         this.player = new Player(centerX, centerY);
         this.spawnEnemies(balanceConfig.spawn.initialEnemyCount);
     }
 
     private spawnEnemies(count: number): void {
         for (let i = 0; i < count; i++) {
-            const x: number = Math.random() * (balanceConfig.game.worldWidth - 100) + 50;
-            const y: number = Math.random() * (balanceConfig.game.worldHeight - 100) + 50;
+            const x: number = Math.random() * (balanceConfig.world.width - 100) + 50;
+            const y: number = Math.random() * (balanceConfig.world.height - 100) + 50;
 
             // Assign a unique color to each enemy
             const color: string = ENEMY_COLORS[this.nextColorIndex % ENEMY_COLORS.length];
@@ -148,8 +148,8 @@ export default class Game {
 
         const halfWidth: number = this.player.width / 2;
         const halfHeight: number = this.player.height / 2;
-        this.player.x = Math.max(halfWidth, Math.min(balanceConfig.game.worldWidth - halfWidth, this.player.x));
-        this.player.y = Math.max(halfHeight, Math.min(balanceConfig.game.worldHeight - halfHeight, this.player.y));
+        this.player.x = Math.max(halfWidth, Math.min(balanceConfig.world.width - halfWidth, this.player.x));
+        this.player.y = Math.max(halfHeight, Math.min(balanceConfig.world.height - halfHeight, this.player.y));
     }
 
     private updateEnemies(deltaTime: number): void {
@@ -247,7 +247,7 @@ export default class Game {
     }
 
     private drawBackground(): void {
-        this.renderer.fillRect(0, 0, balanceConfig.game.worldWidth, balanceConfig.game.worldHeight, '#2a2a4a');
+        this.renderer.fillRect(0, 0, balanceConfig.world.width, balanceConfig.world.height, '#2a2a4a');
         this.drawGrid(50);
     }
 
@@ -255,17 +255,17 @@ export default class Game {
         this.ctx.strokeStyle = 'rgba(100, 100, 150, 0.2)';
         this.ctx.lineWidth = 1;
 
-        for (let x = 0; x <= balanceConfig.game.worldWidth; x += gridSize) {
+        for (let x = 0; x <= balanceConfig.world.width; x += gridSize) {
             this.ctx.beginPath();
             this.ctx.moveTo(x, 0);
-            this.ctx.lineTo(x, balanceConfig.game.worldHeight);
+            this.ctx.lineTo(x, balanceConfig.world.height);
             this.ctx.stroke();
         }
 
-        for (let y = 0; y <= balanceConfig.game.worldHeight; y += gridSize) {
+        for (let y = 0; y <= balanceConfig.world.height; y += gridSize) {
             this.ctx.beginPath();
             this.ctx.moveTo(0, y);
-            this.ctx.lineTo(balanceConfig.game.worldWidth, y);
+            this.ctx.lineTo(balanceConfig.world.width, y);
             this.ctx.stroke();
         }
     }
@@ -287,9 +287,9 @@ export default class Game {
     public computeWorldBounds(): WorldBounds {
         return {
             minX: 0,
-            maxX: balanceConfig.game.worldWidth,
+            maxX: balanceConfig.world.width,
             minY: 0,
-            maxY: balanceConfig.game.worldHeight,
+            maxY: balanceConfig.world.height,
         };
     }
 }

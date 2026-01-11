@@ -93,8 +93,8 @@ export default class Player extends Entity {
     private startAttack(): void {
         console.log('Player attack initiated');
         this.isAttacking = true;
-        this.attackTimer = balanceConfig.player.attackDuration;
-        this.attackCooldownTimer = balanceConfig.player.attackCooldown;
+        this.attackTimer = balanceConfig.player.attack.duration;
+        this.attackCooldownTimer = balanceConfig.player.attack.cooldown;
         this.animationState = 'punch';
         this.hitEnemiesThisAttack.clear(); // Reset hit tracking for new attack
     }
@@ -140,7 +140,7 @@ export default class Player extends Entity {
 
             case 'punch':
                 // Progress through punch animation during attack
-                const attackProgress = 1 - (this.attackTimer / balanceConfig.player.attackDuration);
+                const attackProgress = 1 - (this.attackTimer / balanceConfig.player.attack.duration);
                 this.animationProgress = Math.max(0, Math.min(1, attackProgress));
                 break;
 
@@ -231,12 +231,25 @@ export default class Player extends Entity {
     }
 
     private isEnemyInAttackRange(enemy: Entity): boolean {
-        const dx: number = enemy.x - this.x;
-        const dy: number = enemy.y - this.y;
-        const distance: number = Math.sqrt(dx * dx + dy * dy);
-        const isFacingEnemy: boolean = this.isFacingTowards(dx);
+        const attackConfig = balanceConfig.player.attack;
+        const hitArea = attackConfig.hitArea;
 
-        return distance <= balanceConfig.player.attackRange && isFacingEnemy;
+        // Calculate attack hit center position based on facing direction
+        const attackCenterX = this.facingRight
+            ? this.x + attackConfig.range + hitArea.offsetX
+            : this.x - attackConfig.range - hitArea.offsetX;
+        const attackCenterY = this.y + hitArea.offsetY;
+
+        // Check if enemy is within hit area radius
+        const dx: number = enemy.x - attackCenterX;
+        const dy: number = enemy.y - attackCenterY;
+        const distance: number = Math.sqrt(dx * dx + dy * dy);
+
+        // Also check if facing enemy
+        const enemyDx: number = enemy.x - this.x;
+        const isFacingEnemy: boolean = this.isFacingTowards(enemyDx);
+
+        return distance <= hitArea.radius && isFacingEnemy;
     }
 
     private isFacingTowards(dx: number): boolean {
@@ -249,10 +262,6 @@ export default class Player extends Entity {
 
         this.drawStickFigure(ctx, screenX, screenY);
         this.drawHealthBar(ctx, screenX, screenY);
-
-        if (this.isAttacking) {
-            this.drawAttackIndicator(ctx, screenX, screenY);
-        }
     }
 
     private drawStickFigure(ctx: CanvasRenderingContext2D, screenX: number, screenY: number): void {
@@ -299,14 +308,5 @@ export default class Player extends Entity {
 
         ctx.fillStyle = color;
         ctx.fillRect(screenX - barWidth / 2, barY, healthBarWidth, barHeight);
-    }
-
-    private drawAttackIndicator(ctx: CanvasRenderingContext2D, screenX: number, screenY: number): void {
-        ctx.strokeStyle = 'rgba(255, 100, 100, 0.6)';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        const attackX: number = this.facingRight ? screenX + balanceConfig.player.attackRange : screenX - balanceConfig.player.attackRange;
-        ctx.arc(attackX, screenY, 15, 0, Math.PI * 2);
-        ctx.stroke();
     }
 }

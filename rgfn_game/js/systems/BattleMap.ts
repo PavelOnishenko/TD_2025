@@ -47,6 +47,21 @@ export default class BattleMap {
         return this.grid.areAdjacent(col1, row1, col2, row2);
     }
 
+    /**
+     * Check if target is within attack range
+     * @param attacker - The attacking entity
+     * @param target - The target entity
+     * @param range - Attack range in cells (1 for melee, 2 for bow, etc.)
+     */
+    public isInAttackRange(attacker: CombatEntity, target: CombatEntity, range: number): boolean {
+        const col1 = attacker.gridCol ?? 0;
+        const row1 = attacker.gridRow ?? 0;
+        const col2 = target.gridCol ?? 0;
+        const row2 = target.gridRow ?? 0;
+        const distance = this.grid.getDistance(col1, row1, col2, row2);
+        return distance <= range;
+    }
+
     public moveEntityToward(entity: CombatEntity, targetEntity: CombatEntity): boolean {
         const targetCol = targetEntity.gridCol ?? 0;
         const targetRow = targetEntity.gridRow ?? 0;

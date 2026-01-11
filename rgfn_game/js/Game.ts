@@ -8,10 +8,12 @@ import TurnManager from './systems/TurnManager.js';
 import EncounterSystem from './systems/EncounterSystem.js';
 import Player from './entities/Player.js';
 import Skeleton from './entities/Skeleton.js';
+import Item from './entities/Item.js';
 import timingConfig from './config/timingConfig.js';
 import { balanceConfig } from './config/balanceConfig.js';
 import { Direction } from './types/game.js';
 import { BattleSplash } from './ui/BattleSplash.js';
+import { ItemDiscoverySplash } from './ui/ItemDiscoverySplash.js';
 import { applyThemeToCSS } from './config/ThemeConfig.js';
 
 const MODES = {
@@ -28,6 +30,7 @@ interface HUDElements {
     playerMaxHp: HTMLElement;
     playerDmg: HTMLElement;
     playerArmor: HTMLElement;
+    playerWeapon: HTMLElement;
     skillPoints: HTMLElement;
     statVitality: HTMLElement;
     statToughness: HTMLElement;
@@ -46,6 +49,7 @@ interface BattleUI {
     fleeBtn: HTMLButtonElement;
     waitBtn: HTMLButtonElement;
     log: HTMLElement;
+    attackRangeText: HTMLElement;
 }
 
 export default class Game {
@@ -65,6 +69,7 @@ export default class Game {
     private battleUI: BattleUI;
     private selectedEnemy: Skeleton | null;
     private battleSplash: BattleSplash;
+    private itemDiscoverySplash: ItemDiscoverySplash;
 
     constructor(canvas: HTMLCanvasElement) {
         this.canvas = canvas;
@@ -105,6 +110,7 @@ export default class Game {
 
         // Initialize systems
         this.battleSplash = new BattleSplash();
+        this.itemDiscoverySplash = new ItemDiscoverySplash();
         applyThemeToCSS();
 
         // Input mapping
@@ -126,6 +132,7 @@ export default class Game {
             playerMaxHp: document.getElementById('player-max-hp')!,
             playerDmg: document.getElementById('player-dmg')!,
             playerArmor: document.getElementById('player-armor')!,
+            playerWeapon: document.getElementById('player-weapon')!,
             skillPoints: document.getElementById('skill-points')!,
             statVitality: document.getElementById('stat-vitality')!,
             statToughness: document.getElementById('stat-toughness')!,
@@ -144,6 +151,7 @@ export default class Game {
             fleeBtn: document.getElementById('flee-btn')! as HTMLButtonElement,
             waitBtn: document.getElementById('wait-btn')! as HTMLButtonElement,
             log: document.getElementById('battle-log')!,
+            attackRangeText: document.getElementById('attack-range-text')!,
         };
 
         // Battle button events
@@ -240,9 +248,25 @@ export default class Game {
         this.encounterSystem.onPlayerMove();
 
         if (this.encounterSystem.checkEncounter()) {
-            const enemies = this.encounterSystem.generateEncounter();
-            this.stateMachine.transition(MODES.BATTLE, enemies);
+            const encounter = this.encounterSystem.generateEncounter();
+
+            if (encounter.type === 'battle') {
+                this.stateMachine.transition(MODES.BATTLE, encounter.enemies);
+            } else if (encounter.type === 'item') {
+                this.handleItemDiscovery(encounter.item);
+            }
         }
+    }
+
+    private handleItemDiscovery(item: Item): void {
+        // Show item discovery splash screen
+        this.itemDiscoverySplash.showItemDiscovery(item, () => {
+            // After splash, equip the item
+            this.player.equipItem(item);
+
+            // Update HUD to show the equipped item
+            this.updateHUD();
+        });
     }
 
     private renderWorldMode(): void {
@@ -475,14 +499,15 @@ export default class Game {
 
         // Use selected enemy if valid and in range, otherwise find first enemy in range
         let target: Skeleton | null = null;
+        const attackRange = this.player.getAttackRange();
 
         if (this.selectedEnemy && !this.selectedEnemy.isDead() &&
-            this.battleMap.isInMeleeRange(this.player, this.selectedEnemy)) {
+            this.battleMap.isInAttackRange(this.player, this.selectedEnemy, attackRange)) {
             target = this.selectedEnemy;
         } else {
-            // Find first enemy in melee range
+            // Find first enemy in attack range
             for (const enemy of enemies) {
-                if (this.battleMap.isInMeleeRange(this.player, enemy)) {
+                if (this.battleMap.isInAttackRange(this.player, enemy, attackRange)) {
                     target = enemy as Skeleton;
                     break;
                 }
@@ -670,6 +695,21 @@ export default class Game {
         this.hudElements.statVitality.textContent = String(this.player.vitality);
         this.hudElements.statToughness.textContent = String(this.player.toughness);
         this.hudElements.statStrength.textContent = String(this.player.strength);
+
+        // Update weapon display
+        if (this.player.equippedWeapon) {
+            this.hudElements.playerWeapon.textContent = this.player.equippedWeapon.name;
+        } else {
+            this.hudElements.playerWeapon.textContent = 'None';
+        }
+
+        // Update attack range text in battle UI
+        const attackRange = this.player.getAttackRange();
+        if (attackRange === 1) {
+            this.battleUI.attackRangeText.textContent = 'Attack when adjacent (1 tile)';
+        } else {
+            this.battleUI.attackRangeText.textContent = `Attack from ${attackRange} tiles away`;
+        }
 
         // Update stat button states
         this.updateStatButtons();

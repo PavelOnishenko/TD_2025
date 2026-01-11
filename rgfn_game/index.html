@@ -6,6 +6,7 @@
     <title>RGFN - Turn-Based RPG</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="css/battle-splash.css">
+    <link rel="stylesheet" href="css/item-discovery-splash.css">
 </head>
 <body>
     <div id="game-container">
@@ -20,6 +21,7 @@
                 <div class="stat">HP: <span id="player-hp">5</span>/<span id="player-max-hp">5</span></div>
                 <div class="stat">DMG: <span id="player-dmg">2</span></div>
                 <div class="stat">Armor: <span id="player-armor">0</span></div>
+                <div class="stat">Weapon: <span id="player-weapon">None</span></div>
             </div>
             <div class="hud-section stats">
                 <div class="stat">Skill Points: <span id="skill-points">0</span></div>
@@ -50,7 +52,7 @@
                 <div id="battle-instructions">
                     <p><strong>Your Turn:</strong></p>
                     <p>Move with Arrow Keys/WASD</p>
-                    <p>Attack when adjacent (1 tile)</p>
+                    <p id="attack-range-text">Attack when adjacent (1 tile)</p>
                 </div>
                 <div id="battle-actions">
                     <button id="attack-btn" class="action-btn">Attack</button>
