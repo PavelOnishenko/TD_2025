@@ -33,6 +33,7 @@ export default class Player extends Entity {
     private attackTimer: number = 0;
     private attackCooldownTimer: number = 0;
     private invulnerabilityTimer: number = 0;
+    private hitEnemiesThisAttack: Set<number> = new Set(); // Track enemies hit in current attack
 
     // Animation progress (0-1) for gradual animations
     public animationProgress: number = 0;
@@ -95,6 +96,7 @@ export default class Player extends Entity {
         this.attackTimer = balanceConfig.player.attackDuration;
         this.attackCooldownTimer = balanceConfig.player.attackCooldown;
         this.animationState = 'punch';
+        this.hitEnemiesThisAttack.clear(); // Reset hit tracking for new attack
     }
 
     public update(deltaTime: number): void {
@@ -213,7 +215,19 @@ export default class Player extends Entity {
             return false;
         }
 
-        return this.isEnemyInAttackRange(enemy);
+        // Check if we've already hit this enemy during this attack
+        if (this.hitEnemiesThisAttack.has(enemy.id)) {
+            return false;
+        }
+
+        // Check if enemy is in range
+        if (this.isEnemyInAttackRange(enemy)) {
+            // Mark this enemy as hit for this attack
+            this.hitEnemiesThisAttack.add(enemy.id);
+            return true;
+        }
+
+        return false;
     }
 
     private isEnemyInAttackRange(enemy: Entity): boolean {
