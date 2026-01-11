@@ -22,6 +22,7 @@ import createFormationManager from './game/formations.js';
 import gameConfig from '../config/gameConfig.js';
 import { scaleDifficulty } from '../utils/difficultyScaling.js';
 import { trackTowerRemoved } from '../systems/balanceTracking.js';
+import ScoreManager from '../../engine/core/ScoreManager.js';
 
 function createScreenShakeState() {
     const { frequency } = gameConfig.world.screenShake;
@@ -123,6 +124,22 @@ class Game {
         this.waveSpawnCursor = 0;
         this.waveElapsed = 0;
         this.portal = null;
+        // Initialize ScoreManager from engine
+        this.scoreManager = new ScoreManager({
+            onBestScoreChanged: (newBest) => {
+                saveBestScore(newBest);
+            },
+            onScoreChanged: (newScore, { delta }) => {
+                // Handle tutorial score change notification
+                if (this.tutorial && typeof this.tutorial.handleScoreChanged === 'function') {
+                    try {
+                        this.tutorial.handleScoreChanged(newScore, { delta });
+                    } catch (error) {
+                        console.warn('Tutorial score handler failed', error);
+                    }
+                }
+            },
+        });
     }
 
     setupEnvironment() {
@@ -272,39 +289,15 @@ class Game {
     }
 
     getCurrentScore() {
-        const current = Number.isFinite(this.score) ? this.score : 0;
-        if (current < 0) {
-            this.score = 0;
-            return 0;
-        }
-        return current;
+        return this.scoreManager.getCurrentScore();
     }
 
     addScore(amount) {
-        return this.changeScore(amount);
+        return this.scoreManager.addScore(amount);
     }
 
     changeScore(amount) {
-        const delta = Number.isFinite(amount) ? amount : 0;
-        if (!Number.isFinite(delta) || delta === 0) {
-            return this.getCurrentScore();
-        }
-        const current = this.getCurrentScore();
-        const next = Math.max(0, Math.floor(current + delta));
-        this.score = next;
-        const best = Number.isFinite(this.bestScore) ? this.bestScore : 0;
-        if (next > best) {
-            this.bestScore = next;
-            saveBestScore(next);
-        }
-        if (this.tutorial && typeof this.tutorial.handleScoreChanged === 'function') {
-            try {
-                this.tutorial.handleScoreChanged(next, { delta });
-            } catch (error) {
-                console.warn('Tutorial score handler failed', error);
-            }
-        }
-        return next;
+        return this.scoreManager.changeScore(amount);
     }
 
     get assets() {

@@ -10,8 +10,8 @@ const hasEnergyGainFromGame = (game) => Number.isFinite(game?.energy)
 const hasScoreProgress = (game, context) => {
     const scoreFromContext = Number(context?.scoreTotal ?? 0);
     const gained = Number(context?.scoreGained ?? 0);
-    const score = Number.isFinite(game?.score) ? Math.max(0, Math.floor(game.score)) : 0;
-    const best = Number.isFinite(game?.bestScore) ? Math.max(0, Math.floor(game.bestScore)) : 0;
+    const score = game?.scoreManager ? game.scoreManager.getCurrentScore() : 0;
+    const best = game?.scoreManager ? game.scoreManager.getBestScore() : 0;
     return scoreFromContext > 0 || gained > 0 || score > 0 || best > 0;
 };
 const hasMergeableTowers = (game) => {

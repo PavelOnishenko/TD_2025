@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { fetchLeaderboard, submitHighScore } from '../../js/systems/highScores.js';
+import { fetchLeaderboard, submitHighScore } from '../../engine/services/HighScoreService.js';
 
 function createResponse({ ok = true, status = 200, statusText = 'OK', body = '' } = {}) {
     return {
