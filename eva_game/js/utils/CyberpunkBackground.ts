@@ -36,19 +36,6 @@ interface StarfieldConfig {
     maxAlpha: number;
 }
 
-interface NeonSign {
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-    text: string;
-    color: string;
-    glowColor: string;
-    flickerSpeed: number;
-    flickerPhase: number;
-    baseAlpha: number;
-}
-
 interface Building {
     x: number;
     y: number;
@@ -87,15 +74,6 @@ const NEON_COLORS = {
     green: '#00ff88',
     orange: '#ff8800',
 };
-
-const NEON_SIGN_TEXTS = [
-    '霓虹',  // Neon in Chinese
-    'BAR',
-    'CYBER',
-    '24/7',
-    'RAMEN',
-    '酒',    // Sake in Japanese
-];
 
 function clamp01(value: number): number {
     return Math.max(0, Math.min(1, value));
@@ -193,130 +171,88 @@ function renderStar(ctx: CanvasRenderingContext2D, star: Star, width: number, he
     ctx.globalAlpha = 1;
 }
 
-// Building generation
+// Building generation - creates alley walls at the top
 function createBuildings(width: number, height: number): Building[] {
     const buildings: Building[] = [];
 
-    // Left side buildings
-    const leftBuildingCount = 2 + Math.floor(Math.random() * 2);
-    let leftY = 0;
-    for (let i = 0; i < leftBuildingCount; i++) {
-        const buildingWidth = 60 + Math.random() * 40;
-        const buildingHeight = 80 + Math.random() * 120;
-        const building: Building = {
-            x: -10,
-            y: leftY,
-            width: buildingWidth,
-            height: buildingHeight,
-            windows: [],
-            antennaCount: Math.floor(Math.random() * 3),
-        };
+    // Wall height should cover top 40% of screen
+    const wallHeight = height * 0.4;
 
-        // Add windows
-        const windowRows = Math.floor(buildingHeight / 20);
-        const windowCols = Math.floor(buildingWidth / 15);
-        for (let row = 0; row < windowRows; row++) {
-            for (let col = 0; col < windowCols; col++) {
-                if (Math.random() > 0.3) { // 70% chance of window
-                    const neonColorKeys = Object.keys(NEON_COLORS) as (keyof typeof NEON_COLORS)[];
-                    const randomColorKey = neonColorKeys[Math.floor(Math.random() * neonColorKeys.length)];
-                    building.windows.push({
-                        x: 10 + col * 15,
-                        y: 10 + row * 20,
-                        width: 8,
-                        height: 12,
-                        color: Math.random() > 0.6 ? NEON_COLORS[randomColorKey] : '#ffaa44',
-                        flickerSpeed: randomBetween(0.5, 2),
-                        flickerPhase: Math.random() * Math.PI * 2,
-                        on: Math.random() > 0.2, // 80% of windows are on
-                    });
-                }
+    // Left wall - single building covering top portion
+    const leftWallWidth = 120;
+    const leftWall: Building = {
+        x: 0,
+        y: 0,
+        width: leftWallWidth,
+        height: wallHeight,
+        windows: [],
+        antennaCount: 2,
+    };
+
+    // Add windows to left wall
+    const leftWindowRows = Math.floor(wallHeight / 20);
+    const leftWindowCols = Math.floor(leftWallWidth / 15);
+    for (let row = 0; row < leftWindowRows; row++) {
+        for (let col = 0; col < leftWindowCols; col++) {
+            if (Math.random() > 0.3) {
+                const neonColorKeys = Object.keys(NEON_COLORS) as (keyof typeof NEON_COLORS)[];
+                const randomColorKey = neonColorKeys[Math.floor(Math.random() * neonColorKeys.length)];
+                leftWall.windows.push({
+                    x: 10 + col * 15,
+                    y: 10 + row * 20,
+                    width: 8,
+                    height: 12,
+                    color: Math.random() > 0.6 ? NEON_COLORS[randomColorKey] : '#ffaa44',
+                    flickerSpeed: randomBetween(0.5, 2),
+                    flickerPhase: Math.random() * Math.PI * 2,
+                    on: Math.random() > 0.2,
+                });
             }
         }
-
-        buildings.push(building);
-        leftY += buildingHeight;
-        if (leftY >= height) break;
     }
+    buildings.push(leftWall);
 
-    // Right side buildings
-    const rightBuildingCount = 2 + Math.floor(Math.random() * 2);
-    let rightY = 0;
-    for (let i = 0; i < rightBuildingCount; i++) {
-        const buildingWidth = 60 + Math.random() * 40;
-        const buildingHeight = 80 + Math.random() * 120;
-        const building: Building = {
-            x: width - buildingWidth + 10,
-            y: rightY,
-            width: buildingWidth,
-            height: buildingHeight,
-            windows: [],
-            antennaCount: Math.floor(Math.random() * 3),
-        };
+    // Right wall - single building covering top portion
+    const rightWallWidth = 120;
+    const rightWall: Building = {
+        x: width - rightWallWidth,
+        y: 0,
+        width: rightWallWidth,
+        height: wallHeight,
+        windows: [],
+        antennaCount: 2,
+    };
 
-        // Add windows
-        const windowRows = Math.floor(buildingHeight / 20);
-        const windowCols = Math.floor(buildingWidth / 15);
-        for (let row = 0; row < windowRows; row++) {
-            for (let col = 0; col < windowCols; col++) {
-                if (Math.random() > 0.3) {
-                    const neonColorKeys = Object.keys(NEON_COLORS) as (keyof typeof NEON_COLORS)[];
-                    const randomColorKey = neonColorKeys[Math.floor(Math.random() * neonColorKeys.length)];
-                    building.windows.push({
-                        x: 10 + col * 15,
-                        y: 10 + row * 20,
-                        width: 8,
-                        height: 12,
-                        color: Math.random() > 0.6 ? NEON_COLORS[randomColorKey] : '#ffaa44',
-                        flickerSpeed: randomBetween(0.5, 2),
-                        flickerPhase: Math.random() * Math.PI * 2,
-                        on: Math.random() > 0.2,
-                    });
-                }
+    // Add windows to right wall
+    const rightWindowRows = Math.floor(wallHeight / 20);
+    const rightWindowCols = Math.floor(rightWallWidth / 15);
+    for (let row = 0; row < rightWindowRows; row++) {
+        for (let col = 0; col < rightWindowCols; col++) {
+            if (Math.random() > 0.3) {
+                const neonColorKeys = Object.keys(NEON_COLORS) as (keyof typeof NEON_COLORS)[];
+                const randomColorKey = neonColorKeys[Math.floor(Math.random() * neonColorKeys.length)];
+                rightWall.windows.push({
+                    x: 10 + col * 15,
+                    y: 10 + row * 20,
+                    width: 8,
+                    height: 12,
+                    color: Math.random() > 0.6 ? NEON_COLORS[randomColorKey] : '#ffaa44',
+                    flickerSpeed: randomBetween(0.5, 2),
+                    flickerPhase: Math.random() * Math.PI * 2,
+                    on: Math.random() > 0.2,
+                });
             }
         }
-
-        buildings.push(building);
-        rightY += buildingHeight;
-        if (rightY >= height) break;
     }
+    buildings.push(rightWall);
 
     return buildings;
 }
 
-// Neon sign generation
-function createNeonSigns(width: number, height: number): NeonSign[] {
-    const signs: NeonSign[] = [];
-    const signCount = 3 + Math.floor(Math.random() * 3);
-
-    for (let i = 0; i < signCount; i++) {
-        const isLeft = Math.random() > 0.5;
-        const text = NEON_SIGN_TEXTS[Math.floor(Math.random() * NEON_SIGN_TEXTS.length)];
-        const neonColorKeys = Object.keys(NEON_COLORS) as (keyof typeof NEON_COLORS)[];
-        const randomColorKey = neonColorKeys[Math.floor(Math.random() * neonColorKeys.length)];
-        const color = NEON_COLORS[randomColorKey];
-
-        signs.push({
-            x: isLeft ? 20 + Math.random() * 60 : width - 120 - Math.random() * 60,
-            y: 40 + i * (height / signCount),
-            width: 80,
-            height: 30,
-            text,
-            color,
-            glowColor: color,
-            flickerSpeed: randomBetween(0.3, 1.5),
-            flickerPhase: Math.random() * Math.PI * 2,
-            baseAlpha: randomBetween(0.7, 1.0),
-        });
-    }
-
-    return signs;
-}
 
 export class CyberpunkBackground {
     private starfield: Starfield;
     private buildings: Building[];
-    private neonSigns: NeonSign[];
     private width: number;
     private height: number;
     private time: number = 0;
@@ -326,7 +262,6 @@ export class CyberpunkBackground {
         this.height = height;
         this.starfield = createStarfield(width, height);
         this.buildings = createBuildings(width, height);
-        this.neonSigns = createNeonSigns(width, height);
     }
 
     update(dt: number): void {
@@ -409,36 +344,7 @@ export class CyberpunkBackground {
             }
         }
 
-        // 4. Draw neon signs
-        for (const sign of this.neonSigns) {
-            const flicker = Math.sin(this.time * sign.flickerSpeed + sign.flickerPhase);
-            const alpha = sign.baseAlpha + flicker * 0.2;
-
-            // Sign background (dark)
-            ctx.fillStyle = '#1a1a2e';
-            ctx.fillRect(sign.x - 5, sign.y - 5, sign.width + 10, sign.height + 10);
-
-            // Neon glow
-            ctx.shadowBlur = 20;
-            ctx.shadowColor = sign.glowColor;
-            ctx.globalAlpha = alpha;
-
-            // Neon text
-            ctx.fillStyle = sign.color;
-            ctx.font = 'bold 20px monospace';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(sign.text, sign.x + sign.width / 2, sign.y + sign.height / 2);
-
-            // Extra glow
-            ctx.globalAlpha = alpha * 0.5;
-            ctx.fillText(sign.text, sign.x + sign.width / 2, sign.y + sign.height / 2);
-
-            ctx.shadowBlur = 0;
-            ctx.globalAlpha = 1;
-        }
-
-        // 5. Draw ground/road
+        // 4. Draw ground/road
         const groundY = this.height * 0.75;
 
         // Ground gradient
