@@ -211,9 +211,7 @@ export default class Game {
         }
 
         enemy.takeDamage(this.player.attackDamage);
-        if (enemy.health <= 0) {
-            enemy.active = false;
-        }
+        // takeDamage() now handles setting active = false when health reaches 0
     }
 
     private endGame(): void {

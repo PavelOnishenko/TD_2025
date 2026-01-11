@@ -234,6 +234,8 @@ export default class Enemy extends Entity {
         if (this.health <= 0) {
             this.health = 0;
             this.triggerDeathAnimation();
+            // Mark as inactive immediately so Game.ts can remove it
+            this.active = false;
         }
     }
 
@@ -243,10 +245,7 @@ export default class Enemy extends Entity {
         this.animationProgress = 0;
         this.velocityX = 0;
         this.velocityY = 0;
-        // Deactivate after death animation completes
-        setTimeout(() => {
-            this.active = false;
-        }, balanceConfig.enemy.deathAnimationDuration);
+        // Note: active flag is already set to false in takeDamage()
     }
 
     public draw(ctx: CanvasRenderingContext2D, viewport?: Viewport): void {
