@@ -207,15 +207,26 @@ function createDomOverlay(doc) {
     };
 }
 
-function defaultPlaySound(src) {
+function defaultPlaySound(soundConfig) {
+    if (!soundConfig) {
+        return;
+    }
+
+    // Support both string (legacy) and object format
+    const isObject = typeof soundConfig === 'object' && soundConfig !== null;
+    const src = isObject ? soundConfig.src : soundConfig;
+    const volume = isObject && Number.isFinite(soundConfig.volume) ? soundConfig.volume : 1.0;
+
     if (!src) {
         return;
     }
+
     try {
-        let sound = SOUND_CACHE.get(src);
+        const cacheKey = `${src}:${volume}`;
+        let sound = SOUND_CACHE.get(cacheKey);
         if (!sound) {
-            sound = createSound({ src: [src], preload: true });
-            SOUND_CACHE.set(src, sound);
+            sound = createSound({ src: [src], volume, preload: true });
+            SOUND_CACHE.set(cacheKey, sound);
         }
         if (!sound) {
             return;
