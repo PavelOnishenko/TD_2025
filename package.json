@@ -4,6 +4,9 @@
   "type": "module",
   "scripts": {
     "test": "node --test",
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "clean": "rm -rf dist",
     "build:rgfn": "tsc -p rgfn_game/tsconfig.json",
     "watch:rgfn": "tsc -p rgfn_game/tsconfig.json --watch",
     "build:eva": "tsc -p eva_game/tsconfig.json",
