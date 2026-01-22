@@ -147,25 +147,3 @@ export const balanceConfig: BalanceConfig = {
     feetColliderHeight: 15,  // Only bottom 15px acts as ground collider
   },
 };
-
-/**
- * Preset configurations for different difficulty levels
- * (from other branch)
- */
-export const difficultyPresets = {
-  easy: {
-    enemyHealth: 75,
-    enemyDamage: 5,
-    enemySpeed: 60,
-  },
-  normal: {
-    enemyHealth: 100,
-    enemyDamage: 10,
-    enemySpeed: 80,
-  },
-  hard: {
-    enemyHealth: 125,
-    enemyDamage: 15,
-    enemySpeed: 100,
-  },
-};
