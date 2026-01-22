@@ -22,10 +22,6 @@ export interface BalanceConfig {
   };
 
   enemy: {
-    // Keep both to avoid breaking either branch usage:
-    // - master used `health`
-    // - other branch introduced `maxHealth`
-    health: number;
     maxHealth: number;
 
     width: number;
@@ -59,7 +55,6 @@ export interface BalanceConfig {
     canvasHeight: number;
   };
 
-  // IMPORTANT: keep from master (requested)
   world: {
     width: number;
     height: number;
@@ -92,7 +87,6 @@ export const balanceConfig: BalanceConfig = {
       cooldown: 200,
       armLength: 60,          // horizontal range of punch (like arm length)
       verticalThreshold: 30,  // vertical offset tolerance
-      // 25 matches the "4 hits @ 100 HP" balance (100/25 = 4)
       damage: 25,
       knockbackForce: 100,
     },
@@ -100,8 +94,6 @@ export const balanceConfig: BalanceConfig = {
   },
 
   enemy: {
-    // Keep both names in sync
-    health: 100,
     maxHealth: 100,
 
     // Visual properties (from other branch)
@@ -146,8 +138,8 @@ export const balanceConfig: BalanceConfig = {
 
   // Split-screen layout for beat 'em up style
   layout: {
-    backgroundHeight: 320,  // Top 40% - non-playable background/wall
-    roadHeight: 480,        // Bottom 60% - playable road area
+    backgroundHeight: 320,  
+    roadHeight: 480,  
   },
 
   // Collision settings for beat 'em up depth
