@@ -73,21 +73,29 @@ export default class Game {
 
     private initializeGame(): void {
         const centerX: number = balanceConfig.world.width / 2;
-        // Spawn player in the middle of the road area
+        // Spawn player with feet in the middle of the road area
         const roadY: number = balanceConfig.layout.backgroundHeight;
-        const roadCenterY: number = roadY + balanceConfig.layout.roadHeight / 2;
-        this.player = new Player(centerX, roadCenterY);
+        const roadHeight: number = balanceConfig.layout.roadHeight;
+        const playerHalfHeight: number = balanceConfig.player.height / 2;
+        // Center the feet in the road area
+        const feetCenterY: number = roadY + roadHeight / 2;
+        const playerY: number = feetCenterY - playerHalfHeight;
+        this.player = new Player(centerX, playerY);
         this.spawnEnemies(balanceConfig.spawn.initialEnemyCount);
     }
 
     private spawnEnemies(count: number): void {
         const roadY: number = balanceConfig.layout.backgroundHeight;
         const roadHeight: number = balanceConfig.layout.roadHeight;
+        const enemyHalfHeight: number = balanceConfig.enemy.height / 2;
 
         for (let i = 0; i < count; i++) {
             const x: number = Math.random() * (balanceConfig.world.width - 100) + 50;
-            // Spawn enemies only in the road area
-            const y: number = roadY + Math.random() * (roadHeight - 100) + 50;
+            // Spawn enemies with feet in road area (y position accounts for center point)
+            // minY allows feet at roadY, maxY allows feet at roadBottom
+            const minY: number = roadY - enemyHalfHeight;
+            const maxY: number = roadY + roadHeight - enemyHalfHeight;
+            const y: number = minY + Math.random() * (maxY - minY);
 
             // Assign a unique color to each enemy
             const color: string = ENEMY_COLORS[this.nextColorIndex % ENEMY_COLORS.length];
@@ -158,11 +166,12 @@ export default class Game {
         // Horizontal bounds: entire world width
         this.player.x = Math.max(halfWidth, Math.min(balanceConfig.world.width - halfWidth, this.player.x));
 
-        // Vertical bounds: restricted to road area only
+        // Vertical bounds: only feet restricted to road area (head can overlap wall)
         const roadY: number = balanceConfig.layout.backgroundHeight;
         const roadBottom: number = roadY + balanceConfig.layout.roadHeight;
-        const minY: number = roadY + halfHeight;
-        const maxY: number = roadBottom - halfHeight;
+        // Feet position = y + halfHeight, constrain feet to [roadY, roadBottom]
+        const minY: number = roadY - halfHeight;  // Feet at roadY, head extends into wall
+        const maxY: number = roadBottom - halfHeight;  // Feet at roadBottom
         this.player.y = Math.max(minY, Math.min(maxY, this.player.y));
     }
 
@@ -173,11 +182,12 @@ export default class Game {
         // Horizontal bounds: entire world width
         enemy.x = Math.max(halfWidth, Math.min(balanceConfig.world.width - halfWidth, enemy.x));
 
-        // Vertical bounds: restricted to road area only
+        // Vertical bounds: only feet restricted to road area (head can overlap wall)
         const roadY: number = balanceConfig.layout.backgroundHeight;
         const roadBottom: number = roadY + balanceConfig.layout.roadHeight;
-        const minY: number = roadY + halfHeight;
-        const maxY: number = roadBottom - halfHeight;
+        // Feet position = y + halfHeight, constrain feet to [roadY, roadBottom]
+        const minY: number = roadY - halfHeight;  // Feet at roadY, head extends into wall
+        const maxY: number = roadBottom - halfHeight;  // Feet at roadBottom
         enemy.y = Math.max(minY, Math.min(maxY, enemy.y));
     }
 
