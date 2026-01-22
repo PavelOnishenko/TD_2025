@@ -73,13 +73,15 @@ export default class Game {
 
     private initializeGame(): void {
         const centerX: number = balanceConfig.world.width / 2;
-        // Spawn player with feet in the middle of the road area
+        // Spawn player in the middle of the allowed Y range
         const roadY: number = balanceConfig.layout.backgroundHeight;
         const roadHeight: number = balanceConfig.layout.roadHeight;
         const playerHalfHeight: number = balanceConfig.player.height / 2;
-        // Center the feet in the road area
-        const feetCenterY: number = roadY + roadHeight / 2;
-        const playerY: number = feetCenterY - playerHalfHeight;
+        const feetColliderHeight: number = balanceConfig.collision.feetColliderHeight;
+        const roadBottom: number = roadY + roadHeight;
+        const minY: number = roadY - playerHalfHeight + feetColliderHeight;
+        const maxY: number = roadBottom - playerHalfHeight;
+        const playerY: number = (minY + maxY) / 2;
         this.player = new Player(centerX, playerY);
         this.spawnEnemies(balanceConfig.spawn.initialEnemyCount);
     }
@@ -87,14 +89,15 @@ export default class Game {
     private spawnEnemies(count: number): void {
         const roadY: number = balanceConfig.layout.backgroundHeight;
         const roadHeight: number = balanceConfig.layout.roadHeight;
+        const roadBottom: number = roadY + roadHeight;
         const enemyHalfHeight: number = balanceConfig.enemy.height / 2;
+        const feetColliderHeight: number = balanceConfig.collision.feetColliderHeight;
 
         for (let i = 0; i < count; i++) {
             const x: number = Math.random() * (balanceConfig.world.width - 100) + 50;
-            // Spawn enemies with feet in road area (y position accounts for center point)
-            // minY allows feet at roadY, maxY allows feet at roadBottom
-            const minY: number = roadY - enemyHalfHeight;
-            const maxY: number = roadY + roadHeight - enemyHalfHeight;
+            // Spawn enemies within allowed Y range (using feet collider bounds)
+            const minY: number = roadY - enemyHalfHeight + feetColliderHeight;
+            const maxY: number = roadBottom - enemyHalfHeight;
             const y: number = minY + Math.random() * (maxY - minY);
 
             // Assign a unique color to each enemy
@@ -166,12 +169,14 @@ export default class Game {
         // Horizontal bounds: entire world width
         this.player.x = Math.max(halfWidth, Math.min(balanceConfig.world.width - halfWidth, this.player.x));
 
-        // Vertical bounds: only feet restricted to road area (head can overlap wall)
+        // Vertical bounds: only feet collider restricted to road area
         const roadY: number = balanceConfig.layout.backgroundHeight;
         const roadBottom: number = roadY + balanceConfig.layout.roadHeight;
-        // Feet position = y + halfHeight, constrain feet to [roadY, roadBottom]
-        const minY: number = roadY - halfHeight;  // Feet at roadY, head extends into wall
-        const maxY: number = roadBottom - halfHeight;  // Feet at roadBottom
+        const feetColliderHeight: number = balanceConfig.collision.feetColliderHeight;
+        // Top of feet collider = y + halfHeight - feetColliderHeight, must be >= roadY
+        const minY: number = roadY - halfHeight + feetColliderHeight;
+        // Bottom of feet collider = y + halfHeight, must be <= roadBottom
+        const maxY: number = roadBottom - halfHeight;
         this.player.y = Math.max(minY, Math.min(maxY, this.player.y));
     }
 
@@ -182,12 +187,14 @@ export default class Game {
         // Horizontal bounds: entire world width
         enemy.x = Math.max(halfWidth, Math.min(balanceConfig.world.width - halfWidth, enemy.x));
 
-        // Vertical bounds: only feet restricted to road area (head can overlap wall)
+        // Vertical bounds: only feet collider restricted to road area
         const roadY: number = balanceConfig.layout.backgroundHeight;
         const roadBottom: number = roadY + balanceConfig.layout.roadHeight;
-        // Feet position = y + halfHeight, constrain feet to [roadY, roadBottom]
-        const minY: number = roadY - halfHeight;  // Feet at roadY, head extends into wall
-        const maxY: number = roadBottom - halfHeight;  // Feet at roadBottom
+        const feetColliderHeight: number = balanceConfig.collision.feetColliderHeight;
+        // Top of feet collider = y + halfHeight - feetColliderHeight, must be >= roadY
+        const minY: number = roadY - halfHeight + feetColliderHeight;
+        // Bottom of feet collider = y + halfHeight, must be <= roadBottom
+        const maxY: number = roadBottom - halfHeight;
         enemy.y = Math.max(minY, Math.min(maxY, enemy.y));
     }
 

@@ -73,6 +73,11 @@ export interface BalanceConfig {
     backgroundHeight: number;  // Height of top background/wall area
     roadHeight: number;        // Height of bottom playable road area
   };
+
+  // Collision settings for beat 'em up depth
+  collision: {
+    feetColliderHeight: number;  // Height of feet collider (pixels from bottom)
+  };
 }
 
 export const balanceConfig: BalanceConfig = {
@@ -149,6 +154,11 @@ export const balanceConfig: BalanceConfig = {
   layout: {
     backgroundHeight: 320,  // Top 40% - non-playable background/wall
     roadHeight: 480,        // Bottom 60% - playable road area
+  },
+
+  // Collision settings for beat 'em up depth
+  collision: {
+    feetColliderHeight: 15,  // Only bottom 15px acts as ground collider
   },
 };
 
