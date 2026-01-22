@@ -83,7 +83,7 @@ export const balanceConfig: BalanceConfig = {
     // master structure
     speed: 200,
     attack: {
-      duration: 300,
+      duration: 100,
       cooldown: 200,
       armLength: 60,          // horizontal range of punch (like arm length)
       verticalThreshold: 30,  // vertical offset tolerance
