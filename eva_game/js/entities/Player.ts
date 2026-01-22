@@ -232,24 +232,30 @@ export default class Player extends Entity {
 
     private isEnemyInAttackRange(enemy: Entity): boolean {
         const attackConfig = balanceConfig.player.attack;
-        const hitArea = attackConfig.hitArea;
 
-        // Calculate attack hit center position based on facing direction
-        const attackCenterX = this.facingRight
-            ? this.x + attackConfig.range + hitArea.offsetX
-            : this.x - attackConfig.range - hitArea.offsetX;
-        const attackCenterY = this.y + hitArea.offsetY;
+        // Calculate horizontal distance from player to enemy
+        const dx: number = enemy.x - this.x;
+        const dy: number = enemy.y - this.y;
 
-        // Check if enemy is within hit area radius
-        const dx: number = enemy.x - attackCenterX;
-        const dy: number = enemy.y - attackCenterY;
-        const distance: number = Math.sqrt(dx * dx + dy * dy);
+        // Check if enemy is in facing direction
+        const isFacingEnemy: boolean = this.isFacingTowards(dx);
+        if (!isFacingEnemy) {
+            return false;
+        }
 
-        // Also check if facing enemy
-        const enemyDx: number = enemy.x - this.x;
-        const isFacingEnemy: boolean = this.isFacingTowards(enemyDx);
+        // Check horizontal range (arm length) in facing direction
+        const horizontalDistance: number = Math.abs(dx);
+        if (horizontalDistance > attackConfig.armLength) {
+            return false;
+        }
 
-        return distance <= hitArea.radius && isFacingEnemy;
+        // Check vertical threshold
+        const verticalDistance: number = Math.abs(dy);
+        if (verticalDistance > attackConfig.verticalThreshold) {
+            return false;
+        }
+
+        return true;
     }
 
     private isFacingTowards(dx: number): boolean {
