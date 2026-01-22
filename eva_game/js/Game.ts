@@ -231,24 +231,30 @@ export default class Game {
         }
 
         for (const enemy of this.enemies) {
-            // Check if enemy can attack based on distance (not just collision)
+            // Check if enemy can initiate attack based on distance
             if (enemy.canAttackPlayer(this.player)) {
-                this.handlePlayerEnemyCollision(enemy);
+                enemy.startAttack();
             }
 
+            // Check if enemy's punch hits player during animation
+            if (enemy.checkAttackHit(this.player)) {
+                this.handleEnemyAttackHit(enemy);
+            }
+
+            // Check if player attack hits enemy
             if (this.player.isAttacking && this.player.checkAttackHit(enemy)) {
                 this.handlePlayerAttackHit(enemy);
             }
         }
     }
 
-    private handlePlayerEnemyCollision(enemy: Enemy): void {
+    private handleEnemyAttackHit(enemy: Enemy): void {
         if (!this.player) {
             return;
         }
 
         if (!this.player.invulnerable) {
-            enemy.attackPlayer(this.player);
+            this.player.takeDamage(balanceConfig.enemy.attack.damage);
             if (this.player.health <= 0) {
                 this.endGame();
             }

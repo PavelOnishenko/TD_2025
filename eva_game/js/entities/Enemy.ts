@@ -29,6 +29,7 @@ export default class Enemy extends Entity {
     public color: string;
 
     private attackCooldownTimer: number = 0;
+    private hasDealtDamageThisAttack: boolean = false; // Track if damage was dealt in current attack
 
     // Animation progress (0-1) for gradual animations
     public animationProgress: number = 0;
@@ -69,6 +70,7 @@ export default class Enemy extends Entity {
             this.punchAnimationTimer -= deltaTime * 1000;
             if (this.punchAnimationTimer <= 0) {
                 this.punchAnimationTimer = 0;
+                this.hasDealtDamageThisAttack = false; // Reset for next attack
             }
         }
     }
@@ -238,14 +240,67 @@ export default class Enemy extends Entity {
         return true;
     }
 
-    public attackPlayer(player: Player): void {
-        if (!this.canAttackPlayer(player)) {
-            return;
-        }
-
-        player.takeDamage(balanceConfig.enemy.attack.damage);
+    public startAttack(): void {
         this.attackCooldownTimer = balanceConfig.enemy.attack.cooldown;
         this.punchAnimationTimer = balanceConfig.enemy.attack.punchDuration;
+        this.hasDealtDamageThisAttack = false; // Reset damage tracking for new attack
+    }
+
+    public checkAttackHit(player: Player): boolean {
+        // Check if punch animation is active
+        if (this.punchAnimationTimer <= 0) {
+            return false;
+        }
+
+        // Only detect hits when arm is actually extended (mid-animation)
+        // Hit window is during the extension phase of the punch
+        const hitWindowStart = 0.3;
+        const hitWindowEnd = 0.7;
+        if (this.animationProgress < hitWindowStart || this.animationProgress > hitWindowEnd) {
+            return false;
+        }
+
+        // Check if we've already dealt damage during this attack
+        if (this.hasDealtDamageThisAttack) {
+            return false;
+        }
+
+        // Check if player is in range
+        if (this.isPlayerInAttackRange(player)) {
+            // Mark that we've dealt damage for this attack
+            this.hasDealtDamageThisAttack = true;
+            return true;
+        }
+
+        return false;
+    }
+
+    private isPlayerInAttackRange(player: Player): boolean {
+        const attackConfig = balanceConfig.enemy.attack;
+
+        // Calculate horizontal distance from enemy to player
+        const dx: number = player.x - this.x;
+        const dy: number = player.y - this.y;
+
+        // Check if player is in facing direction
+        const isFacingPlayer: boolean = (this.facingRight && dx > 0) || (!this.facingRight && dx < 0);
+        if (!isFacingPlayer) {
+            return false;
+        }
+
+        // Check horizontal range (arm length) in facing direction
+        const horizontalDistance: number = Math.abs(dx);
+        if (horizontalDistance > attackConfig.armLength) {
+            return false;
+        }
+
+        // Check vertical threshold
+        const verticalDistance: number = Math.abs(dy);
+        if (verticalDistance > attackConfig.verticalThreshold) {
+            return false;
+        }
+
+        return true;
     }
 
     public takeDamage(amount: number): void {
