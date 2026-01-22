@@ -33,10 +33,12 @@ export default class Enemy extends Entity {
     // Animation progress (0-1) for gradual animations
     public animationProgress: number = 0;
     private walkAnimationTime: number = 0;
+    private hurtAnimationTimer: number = 0;
     private deathAnimationTimer: number = 0;
     private punchAnimationTimer: number = 0;
 
     private static readonly WALK_ANIMATION_SPEED: number = 2.5; // cycles per second
+    private static readonly HURT_ANIMATION_DURATION: number = 400; // ms
 
     constructor(x: number, y: number, color: string = '#ff6b6b') {
         super(x, y);
@@ -74,8 +76,8 @@ export default class Enemy extends Entity {
     }
 
     private updateAnimationState(): void {
-        // Don't change animation state if dead
-        if (this.animationState === 'death') {
+        // Don't change animation state if dead or hurt
+        if (this.animationState === 'death' || this.animationState === 'hurt') {
             return;
         }
 
@@ -101,6 +103,20 @@ export default class Enemy extends Entity {
                 // Progress through punch animation
                 const punchProgress = 1 - (this.punchAnimationTimer / balanceConfig.enemy.attack.punchDuration);
                 this.animationProgress = Math.max(0, Math.min(1, punchProgress));
+                break;
+
+            case 'hurt':
+                // Progress through hurt animation
+                if (this.hurtAnimationTimer > 0) {
+                    this.hurtAnimationTimer -= deltaTime * 1000;
+                    const hurtProgress = 1 - (this.hurtAnimationTimer / Enemy.HURT_ANIMATION_DURATION);
+                    this.animationProgress = Math.max(0, Math.min(1, hurtProgress));
+
+                    if (this.hurtAnimationTimer <= 0) {
+                        this.animationState = 'idle';
+                        this.animationProgress = 0;
+                    }
+                }
                 break;
 
             case 'death':
@@ -255,6 +271,17 @@ export default class Enemy extends Entity {
             this.triggerDeathAnimation();
             // Mark as inactive immediately so Game.ts can remove it
             this.active = false;
+        } else {
+            this.triggerHurtAnimation();
+        }
+    }
+
+    private triggerHurtAnimation(): void {
+        // Only trigger hurt if not already in hurt or death state
+        if (this.animationState !== 'hurt' && this.animationState !== 'death') {
+            this.animationState = 'hurt';
+            this.hurtAnimationTimer = Enemy.HURT_ANIMATION_DURATION;
+            this.animationProgress = 0;
         }
     }
 
@@ -285,6 +312,9 @@ export default class Enemy extends Entity {
                 break;
             case 'punch':
                 pose = StickFigure.getPunchPose(this.animationProgress, this.facingRight);
+                break;
+            case 'hurt':
+                pose = StickFigure.getHurtPose(this.animationProgress);
                 break;
             case 'death':
                 pose = StickFigure.getDeathPose(this.animationProgress);
