@@ -190,7 +190,7 @@ const nonBalanceConfig = {
                 text: 'A portal ripped open beside the gateway to the Neon Empire capital world. Deploy living crystal defences and stop the alien scouts before they pour through.',
                 textKey: 'tutorial.storyIntro.text',
                 picture: 'assets/swarm_B.png',
-                sound: { src: 'assets/portal_spawn.mp3', volume: 0.3 },
+                sound: { src: 'assets/portal_spawn.mp3', volume: 0.15 },
                 checkComplete(game, context) {
                     return hasAcknowledged(context, 'story-intro');
                 },
