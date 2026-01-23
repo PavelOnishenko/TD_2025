@@ -144,8 +144,7 @@ export default class Enemy extends Entity {
         const dy: number = targetY - this.y;
         const distance: number = Math.sqrt(dx * dx + dy * dy);
 
-        // Stop moving only if we're within actual attack range (not just center-to-center distance)
-        // This prevents diagonal freeze bug where enemy stops but can't attack
+        // Check if we're within attack range
         const attackConfig = balanceConfig.enemy.attack;
         const horizontalDistance: number = Math.abs(dx);
         const verticalDistance: number = Math.abs(dy);
@@ -153,22 +152,42 @@ export default class Enemy extends Entity {
         // Check if we're facing the target (or will be after updating facing direction)
         const wouldBeFacingTarget: boolean = (dx > 0 && this.facingRight) || (dx < 0 && !this.facingRight) || dx === 0;
 
-        // Stop only if within attack box (horizontal AND vertical thresholds met)
-        if (wouldBeFacingTarget &&
+        // Check if we're in attack range
+        const inAttackRange: boolean = wouldBeFacingTarget &&
             horizontalDistance < attackConfig.armLength &&
-            verticalDistance < attackConfig.verticalThreshold) {
+            verticalDistance < attackConfig.verticalThreshold;
+
+        this.updateFacingDirection(dx);
+
+        // Always calculate separation from other enemies to prevent clustering
+        const separation = this.calculateSeparation(otherEnemies);
+
+        // Calculate separation magnitude to determine if we need to move
+        const separationMagnitude = Math.sqrt(separation.x * separation.x + separation.y * separation.y);
+
+        // Stop only if in attack range AND no significant separation force is pushing us
+        // This allows enemies to spread out around the player even when in attack range
+        if (inAttackRange && separationMagnitude < 0.1) {
             this.velocityX = 0;
             this.velocityY = 0;
             return;
         }
 
-        this.updateFacingDirection(dx);
-
-        // Calculate separation from other enemies to prevent clustering
-        const separation = this.calculateSeparation(otherEnemies);
-
-        // Combine player-seeking with enemy separation
-        this.setVelocityWithSeparation(dx, dy, distance, separation);
+        // If in attack range but separation is pushing us, prioritize separation over player-seeking
+        if (inAttackRange) {
+            // Apply only separation force to spread out around player
+            const separationDistance = Math.sqrt(separation.x * separation.x + separation.y * separation.y);
+            if (separationDistance > 0) {
+                this.velocityX = (separation.x / separationDistance) * balanceConfig.enemy.speed;
+                this.velocityY = (separation.y / separationDistance) * balanceConfig.enemy.speed;
+            } else {
+                this.velocityX = 0;
+                this.velocityY = 0;
+            }
+        } else {
+            // Not in attack range, combine player-seeking with enemy separation
+            this.setVelocityWithSeparation(dx, dy, distance, separation);
+        }
     }
 
     private updateFacingDirection(dx: number): void {
