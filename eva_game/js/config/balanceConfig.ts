@@ -73,6 +73,10 @@ export interface BalanceConfig {
   // Collision settings for beat 'em up depth
   collision: {
     feetColliderHeight: number;  // Height of feet collider (pixels from bottom)
+    characterSeparation: {
+      distance: number;           // pixels - minimum distance between any two characters
+      strength: number;           // multiplier - force applied to push characters apart
+    };
   };
 }
 
@@ -153,5 +157,9 @@ export const balanceConfig: BalanceConfig = {
   // Collision settings for beat 'em up depth
   collision: {
     feetColliderHeight: 15,  // Only bottom 15px acts as ground collider
+    characterSeparation: {
+      distance: 50,           // Minimum distance between any two characters (prevents merging)
+      strength: 2.0,          // Strong repulsion force to prevent overlap
+    },
   },
 };

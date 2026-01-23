@@ -138,7 +138,7 @@ export default class Enemy extends Entity {
         }
     }
 
-    public moveToward(targetX: number, targetY: number, deltaTime: number, otherEnemies?: Enemy[]): void {
+    public moveToward(targetX: number, targetY: number, deltaTime: number, otherEnemies?: Enemy[], player?: Player): void {
         // Don't move if attacking or getting hit
         if (this.animationState === 'punch' || this.animationState === 'hurt') {
             this.velocityX = 0;
@@ -166,11 +166,20 @@ export default class Enemy extends Entity {
 
         this.updateFacingDirection(dx);
 
-        // Always calculate separation from other enemies to prevent clustering
-        const separation = this.calculateSeparation(otherEnemies);
+        // Calculate separation from other enemies to prevent clustering
+        const enemySeparation = this.calculateSeparation(otherEnemies);
+
+        // Calculate separation from player to prevent merging
+        const playerSeparation = player ? this.calculatePlayerSeparation(player) : { x: 0, y: 0 };
+
+        // Combine both separation forces
+        const totalSeparation = {
+            x: enemySeparation.x + playerSeparation.x,
+            y: enemySeparation.y + playerSeparation.y
+        };
 
         // Calculate separation magnitude to determine if we need to move
-        const separationMagnitude = Math.sqrt(separation.x * separation.x + separation.y * separation.y);
+        const separationMagnitude = Math.sqrt(totalSeparation.x * totalSeparation.x + totalSeparation.y * totalSeparation.y);
 
         // Stop only if in attack range AND no significant separation force is pushing us
         // This allows enemies to spread out around the player even when in attack range
@@ -183,17 +192,17 @@ export default class Enemy extends Entity {
         // If in attack range but separation is pushing us, prioritize separation over player-seeking
         if (inAttackRange) {
             // Apply only separation force to spread out around player
-            const separationDistance = Math.sqrt(separation.x * separation.x + separation.y * separation.y);
+            const separationDistance = Math.sqrt(totalSeparation.x * totalSeparation.x + totalSeparation.y * totalSeparation.y);
             if (separationDistance > 0) {
-                this.velocityX = (separation.x / separationDistance) * balanceConfig.enemy.speed;
-                this.velocityY = (separation.y / separationDistance) * balanceConfig.enemy.speed;
+                this.velocityX = (totalSeparation.x / separationDistance) * balanceConfig.enemy.speed;
+                this.velocityY = (totalSeparation.y / separationDistance) * balanceConfig.enemy.speed;
             } else {
                 this.velocityX = 0;
                 this.velocityY = 0;
             }
         } else {
             // Not in attack range, combine player-seeking with enemy separation
-            this.setVelocityWithSeparation(dx, dy, distance, separation);
+            this.setVelocityWithSeparation(dx, dy, distance, totalSeparation);
         }
     }
 
@@ -235,6 +244,25 @@ export default class Enemy extends Entity {
         if (separationCount > 0) {
             separation.x /= separationCount;
             separation.y /= separationCount;
+        }
+
+        return separation;
+    }
+
+    private calculatePlayerSeparation(player: Player): { x: number; y: number } {
+        const separation = { x: 0, y: 0 };
+        const config = balanceConfig.collision.characterSeparation;
+
+        const dx = this.x - player.x;
+        const dy = this.y - player.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+
+        // If too close to player, push away with strong force
+        if (distance > 0 && distance < config.distance) {
+            // Normalize and weight by how close they are (closer = stronger push)
+            const strength = (1 - distance / config.distance) * config.strength;
+            separation.x = (dx / distance) * strength;
+            separation.y = (dy / distance) * strength;
         }
 
         return separation;
