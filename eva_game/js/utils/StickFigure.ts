@@ -288,48 +288,51 @@ export default class StickFigure {
 
     /**
      * Get death pose with animation progress (0-1)
-     * Falls to the ground gradually
+     * Falls to the ground gradually, lying on back with feet pointing forward
      */
     public static getDeathPose(progress: number): StickFigurePose {
         // Smooth fall using easing
         const fallProgress = 1 - Math.pow(1 - progress, 3); // Ease out cubic
-        const rotation = fallProgress * 90; // Rotate 90 degrees to horizontal
-        const dropHeight = fallProgress * 15;
 
-        // Simplified: just drop to ground
+        // Figure falls backward and lays flat
+        // Body center moves down as figure collapses
+        const dropHeight = fallProgress * 20;
+
+        // Lying on back pose - body is horizontal
         return {
-            headY: -20 + dropHeight + rotation * 0.3,
-            torsoEndY: 5 + dropHeight + rotation * 0.4,
+            // Head at ground level
+            headY: -20 + dropHeight,
+            torsoEndY: 5 + dropHeight,
 
-            // Arms fall limply
+            // Arms spread out to sides at shoulder level
             leftShoulderX: -5,
-            leftShoulderY: -12 + dropHeight + rotation * 0.3,
-            leftElbowX: -8 - fallProgress * 8,
-            leftElbowY: 0 + dropHeight + rotation * 0.4,
-            leftHandX: -12 - fallProgress * 10,
-            leftHandY: 5 + dropHeight + rotation * 0.5,
+            leftShoulderY: -12 + dropHeight,
+            leftElbowX: -15 * fallProgress - 5,
+            leftElbowY: -12 + dropHeight,
+            leftHandX: -20 * fallProgress - 5,
+            leftHandY: -12 + dropHeight,
 
             rightShoulderX: 5,
-            rightShoulderY: -12 + dropHeight + rotation * 0.3,
-            rightElbowX: 8 + fallProgress * 8,
-            rightElbowY: 0 + dropHeight + rotation * 0.4,
-            rightHandX: 12 + fallProgress * 10,
-            rightHandY: 5 + dropHeight + rotation * 0.5,
+            rightShoulderY: -12 + dropHeight,
+            rightElbowX: 15 * fallProgress + 5,
+            rightElbowY: -12 + dropHeight,
+            rightHandX: 20 * fallProgress + 5,
+            rightHandY: -12 + dropHeight,
 
-            // Legs collapse
+            // Legs straight out pointing forward (in the direction of movement)
             leftHipX: -3,
-            leftHipY: 5 + dropHeight + rotation * 0.4,
-            leftKneeX: -3 - fallProgress * 5,
-            leftKneeY: 15 + dropHeight + rotation * 0.5,
-            leftFootX: -3 - fallProgress * 8,
-            leftFootY: 25 + dropHeight + rotation * 0.6,
+            leftHipY: 5 + dropHeight,
+            leftKneeX: -3,
+            leftKneeY: 15 + dropHeight,
+            leftFootX: -3,
+            leftFootY: 25 + dropHeight,
 
             rightHipX: 3,
-            rightHipY: 5 + dropHeight + rotation * 0.4,
-            rightKneeX: 3 + fallProgress * 5,
-            rightKneeY: 15 + dropHeight + rotation * 0.5,
-            rightFootX: 3 + fallProgress * 8,
-            rightFootY: 25 + dropHeight + rotation * 0.6
+            rightHipY: 5 + dropHeight,
+            rightKneeX: 3,
+            rightKneeY: 15 + dropHeight,
+            rightFootX: 3,
+            rightFootY: 25 + dropHeight
         };
     }
 

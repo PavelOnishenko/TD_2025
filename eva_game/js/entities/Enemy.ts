@@ -378,7 +378,10 @@ export default class Enemy extends Entity {
         const screenY: number = this.y;
 
         this.drawStickFigure(ctx, screenX, screenY);
-        this.drawHealthBar(ctx, screenX, screenY);
+        // Don't show health bar for dead enemies
+        if (!this.isDead) {
+            this.drawHealthBar(ctx, screenX, screenY);
+        }
     }
 
     private drawStickFigure(ctx: CanvasRenderingContext2D, screenX: number, screenY: number): void {

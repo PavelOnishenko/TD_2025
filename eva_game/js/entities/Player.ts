@@ -281,7 +281,10 @@ export default class Player extends Entity {
         const screenY: number = this.y;
 
         this.drawStickFigure(ctx, screenX, screenY);
-        this.drawHealthBar(ctx, screenX, screenY);
+        // Don't show health bar when dead
+        if (!this.isDead) {
+            this.drawHealthBar(ctx, screenX, screenY);
+        }
     }
 
     private drawStickFigure(ctx: CanvasRenderingContext2D, screenX: number, screenY: number): void {
