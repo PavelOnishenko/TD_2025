@@ -253,11 +253,9 @@ export default class Game {
             return;
         }
 
-        if (!this.player.invulnerable) {
-            this.player.takeDamage(balanceConfig.enemy.attack.damage);
-            if (this.player.health <= 0) {
-                this.endGame();
-            }
+        this.player.takeDamage(balanceConfig.enemy.attack.damage);
+        if (this.player.health <= 0) {
+            this.endGame();
         }
     }
 

@@ -26,13 +26,11 @@ export default class Player extends Entity {
     public maxHealth: number;
     public attackDamage: number;
     public isAttacking: boolean = false;
-    public invulnerable: boolean = false;
     public facingRight: boolean = true;
     public animationState: AnimationState = 'idle';
 
     private attackTimer: number = 0;
     private attackCooldownTimer: number = 0;
-    private invulnerabilityTimer: number = 0;
     private hitEnemiesThisAttack: Set<number> = new Set(); // Track enemies hit in current attack
 
     // Animation progress (0-1) for gradual animations
@@ -103,7 +101,6 @@ export default class Player extends Entity {
     public update(deltaTime: number): void {
         this.move(deltaTime);
         this.updateAttackTimer(deltaTime);
-        this.updateInvulnerability(deltaTime);
         this.updateAnimationProgress(deltaTime);
     }
 
@@ -121,15 +118,6 @@ export default class Player extends Entity {
 
         if (this.attackCooldownTimer > 0) {
             this.attackCooldownTimer -= deltaTime * 1000;
-        }
-    }
-
-    private updateInvulnerability(deltaTime: number): void {
-        if (this.invulnerabilityTimer > 0) {
-            this.invulnerabilityTimer -= deltaTime * 1000;
-            if (this.invulnerabilityTimer <= 0) {
-                this.invulnerable = false;
-            }
         }
     }
 
@@ -181,10 +169,6 @@ export default class Player extends Entity {
     }
 
     public takeDamage(amount: number): void {
-        if (this.invulnerable) {
-            return;
-        }
-
         this.health -= amount;
         if (this.health <= 0) {
             this.health = 0;
@@ -192,9 +176,6 @@ export default class Player extends Entity {
         } else {
             this.triggerHurtAnimation();
         }
-
-        this.invulnerable = true;
-        this.invulnerabilityTimer = balanceConfig.player.invulnerabilityDuration;
     }
 
     private triggerHurtAnimation(): void {
@@ -305,9 +286,7 @@ export default class Player extends Entity {
                 break;
         }
 
-        // Apply flashing effect when invulnerable
-        const isFlashing: boolean = this.invulnerable && Math.floor(Date.now() / 100) % 2 === 0;
-        const color: string = isFlashing ? 'rgba(100, 200, 255, 0.5)' : '#64c8ff';
+        const color: string = '#64c8ff';
 
         StickFigure.draw(ctx, screenX, screenY, pose, color, this.facingRight);
     }
