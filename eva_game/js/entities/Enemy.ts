@@ -39,7 +39,6 @@ export default class Enemy extends Entity {
     private punchAnimationTimer: number = 0;
 
     private static readonly WALK_ANIMATION_SPEED: number = 2.5; // cycles per second
-    private static readonly HURT_ANIMATION_DURATION: number = 400; // ms
 
     constructor(x: number, y: number, color: string = '#ff6b6b') {
         super(x, y);
@@ -111,7 +110,7 @@ export default class Enemy extends Entity {
                 // Progress through hurt animation
                 if (this.hurtAnimationTimer > 0) {
                     this.hurtAnimationTimer -= deltaTime * 1000;
-                    const hurtProgress = 1 - (this.hurtAnimationTimer / Enemy.HURT_ANIMATION_DURATION);
+                    const hurtProgress = 1 - (this.hurtAnimationTimer / balanceConfig.enemy.attack.hurtAnimationDuration);
                     this.animationProgress = Math.max(0, Math.min(1, hurtProgress));
 
                     if (this.hurtAnimationTimer <= 0) {
@@ -347,7 +346,7 @@ export default class Enemy extends Entity {
         // Only trigger hurt if not already in hurt or death state
         if (this.animationState !== 'hurt' && this.animationState !== 'death') {
             this.animationState = 'hurt';
-            this.hurtAnimationTimer = Enemy.HURT_ANIMATION_DURATION;
+            this.hurtAnimationTimer = balanceConfig.enemy.attack.hurtAnimationDuration;
             this.animationProgress = 0;
         }
     }

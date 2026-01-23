@@ -42,8 +42,6 @@ export default class Player extends Entity {
     private deathAnimationTimer: number = 0;
 
     private static readonly WALK_ANIMATION_SPEED: number = 3; // cycles per second
-    private static readonly HURT_ANIMATION_DURATION: number = 400; // ms
-    private static readonly DEATH_ANIMATION_DURATION: number = 1000; // ms
 
     constructor(x: number, y: number) {
         super(x, y);
@@ -148,7 +146,7 @@ export default class Player extends Entity {
                 // Progress through hurt animation
                 if (this.hurtAnimationTimer > 0) {
                     this.hurtAnimationTimer -= deltaTime * 1000;
-                    const hurtProgress = 1 - (this.hurtAnimationTimer / Player.HURT_ANIMATION_DURATION);
+                    const hurtProgress = 1 - (this.hurtAnimationTimer / balanceConfig.player.attack.hurtAnimationDuration);
                     this.animationProgress = Math.max(0, Math.min(1, hurtProgress));
 
                     if (this.hurtAnimationTimer <= 0) {
@@ -162,7 +160,7 @@ export default class Player extends Entity {
                 // Progress through death animation
                 if (this.deathAnimationTimer > 0) {
                     this.deathAnimationTimer -= deltaTime * 1000;
-                    const deathProgress = 1 - (this.deathAnimationTimer / Player.DEATH_ANIMATION_DURATION);
+                    const deathProgress = 1 - (this.deathAnimationTimer / balanceConfig.player.attack.deathAnimationDuration);
                     this.animationProgress = Math.max(0, Math.min(1, deathProgress));
                 }
                 break;
@@ -197,14 +195,14 @@ export default class Player extends Entity {
         // Only trigger hurt if not already in hurt or death state
         if (this.animationState !== 'hurt' && this.animationState !== 'death') {
             this.animationState = 'hurt';
-            this.hurtAnimationTimer = Player.HURT_ANIMATION_DURATION;
+            this.hurtAnimationTimer = balanceConfig.player.attack.hurtAnimationDuration;
             this.animationProgress = 0;
         }
     }
 
     private triggerDeathAnimation(): void {
         this.animationState = 'death';
-        this.deathAnimationTimer = Player.DEATH_ANIMATION_DURATION;
+        this.deathAnimationTimer = balanceConfig.player.attack.deathAnimationDuration;
         this.animationProgress = 0;
         this.velocityX = 0;
         this.velocityY = 0;
