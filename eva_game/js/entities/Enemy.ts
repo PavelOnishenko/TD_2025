@@ -140,6 +140,13 @@ export default class Enemy extends Entity {
     }
 
     public moveToward(targetX: number, targetY: number, deltaTime: number, otherEnemies?: Enemy[]): void {
+        // Don't move if attacking or getting hit
+        if (this.animationState === 'punch' || this.animationState === 'hurt') {
+            this.velocityX = 0;
+            this.velocityY = 0;
+            return;
+        }
+
         const dx: number = targetX - this.x;
         const dy: number = targetY - this.y;
         const distance: number = Math.sqrt(dx * dx + dy * dy);
@@ -225,6 +232,11 @@ export default class Enemy extends Entity {
     }
 
     public canAttackPlayer(player: Player): boolean {
+        // Can't attack while getting hit
+        if (this.animationState === 'hurt') {
+            return false;
+        }
+
         if (this.attackCooldownTimer > 0) {
             return false;
         }
