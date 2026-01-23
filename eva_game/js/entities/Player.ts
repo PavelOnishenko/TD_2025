@@ -215,6 +215,14 @@ export default class Player extends Entity {
             return false;
         }
 
+        // Only detect hits when arm is actually extended (mid-animation)
+        // Hit window is during the extension phase of the punch
+        const hitWindowStart = 0.3;
+        const hitWindowEnd = 0.7;
+        if (this.animationProgress < hitWindowStart || this.animationProgress > hitWindowEnd) {
+            return false;
+        }
+
         // Check if we've already hit this enemy during this attack
         if (this.hitEnemiesThisAttack.has(enemy.id)) {
             return false;
