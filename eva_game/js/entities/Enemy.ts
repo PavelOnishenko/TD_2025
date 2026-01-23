@@ -144,7 +144,19 @@ export default class Enemy extends Entity {
         const dy: number = targetY - this.y;
         const distance: number = Math.sqrt(dx * dx + dy * dy);
 
-        if (distance < balanceConfig.enemy.attack.armLength) {
+        // Stop moving only if we're within actual attack range (not just center-to-center distance)
+        // This prevents diagonal freeze bug where enemy stops but can't attack
+        const attackConfig = balanceConfig.enemy.attack;
+        const horizontalDistance: number = Math.abs(dx);
+        const verticalDistance: number = Math.abs(dy);
+
+        // Check if we're facing the target (or will be after updating facing direction)
+        const wouldBeFacingTarget: boolean = (dx > 0 && this.facingRight) || (dx < 0 && !this.facingRight) || dx === 0;
+
+        // Stop only if within attack box (horizontal AND vertical thresholds met)
+        if (wouldBeFacingTarget &&
+            horizontalDistance < attackConfig.armLength &&
+            verticalDistance < attackConfig.verticalThreshold) {
             this.velocityX = 0;
             this.velocityY = 0;
             return;
