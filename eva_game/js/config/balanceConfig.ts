@@ -20,7 +20,6 @@ export interface BalanceConfig {
       hurtAnimationDuration: number;  // ms
       deathAnimationDuration: number; // ms
     };
-    invulnerabilityDuration: number; // ms
   };
 
   enemy: {
@@ -95,7 +94,6 @@ export const balanceConfig: BalanceConfig = {
       hurtAnimationDuration: 400,
       deathAnimationDuration: 1000,
     },
-    invulnerabilityDuration: 1000,
   },
 
   enemy: {
