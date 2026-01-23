@@ -17,6 +17,8 @@ export interface BalanceConfig {
       verticalThreshold: number;  // pixels - vertical offset up/down where hits still land
       damage: number;             // damage dealt to enemies
       knockbackForce: number;     // force applied to enemies when hit
+      hurtAnimationDuration: number;  // ms
+      deathAnimationDuration: number; // ms
     };
     invulnerabilityDuration: number; // ms
   };
@@ -34,6 +36,7 @@ export interface BalanceConfig {
       cooldown: number;           // ms
       damage: number;             // damage dealt to player
       punchDuration: number;      // ms
+      hurtAnimationDuration: number;  // ms
       deathAnimationDuration: number; // ms
     };
     separation: {
@@ -89,6 +92,8 @@ export const balanceConfig: BalanceConfig = {
       verticalThreshold: 30,  // vertical offset tolerance
       damage: 25,
       knockbackForce: 100,
+      hurtAnimationDuration: 400,
+      deathAnimationDuration: 1000,
     },
     invulnerabilityDuration: 1000,
   },
@@ -107,6 +112,7 @@ export const balanceConfig: BalanceConfig = {
       cooldown: 1500,
       damage: 10,
       punchDuration: 300,
+      hurtAnimationDuration: 400,
       deathAnimationDuration: 1000,
     },
     separation: {

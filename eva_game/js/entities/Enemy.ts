@@ -39,7 +39,6 @@ export default class Enemy extends Entity {
     private punchAnimationTimer: number = 0;
 
     private static readonly WALK_ANIMATION_SPEED: number = 2.5; // cycles per second
-    private static readonly HURT_ANIMATION_DURATION: number = 400; // ms
 
     constructor(x: number, y: number, color: string = '#ff6b6b') {
         super(x, y);
@@ -111,7 +110,7 @@ export default class Enemy extends Entity {
                 // Progress through hurt animation
                 if (this.hurtAnimationTimer > 0) {
                     this.hurtAnimationTimer -= deltaTime * 1000;
-                    const hurtProgress = 1 - (this.hurtAnimationTimer / Enemy.HURT_ANIMATION_DURATION);
+                    const hurtProgress = 1 - (this.hurtAnimationTimer / balanceConfig.enemy.attack.hurtAnimationDuration);
                     this.animationProgress = Math.max(0, Math.min(1, hurtProgress));
 
                     if (this.hurtAnimationTimer <= 0) {
@@ -140,6 +139,13 @@ export default class Enemy extends Entity {
     }
 
     public moveToward(targetX: number, targetY: number, deltaTime: number, otherEnemies?: Enemy[]): void {
+        // Don't move if attacking or getting hit
+        if (this.animationState === 'punch' || this.animationState === 'hurt') {
+            this.velocityX = 0;
+            this.velocityY = 0;
+            return;
+        }
+
         const dx: number = targetX - this.x;
         const dy: number = targetY - this.y;
         const distance: number = Math.sqrt(dx * dx + dy * dy);
@@ -237,6 +243,11 @@ export default class Enemy extends Entity {
     }
 
     public canAttackPlayer(player: Player): boolean {
+        // Can't attack while getting hit
+        if (this.animationState === 'hurt') {
+            return false;
+        }
+
         if (this.attackCooldownTimer > 0) {
             return false;
         }
@@ -347,7 +358,7 @@ export default class Enemy extends Entity {
         // Only trigger hurt if not already in hurt or death state
         if (this.animationState !== 'hurt' && this.animationState !== 'death') {
             this.animationState = 'hurt';
-            this.hurtAnimationTimer = Enemy.HURT_ANIMATION_DURATION;
+            this.hurtAnimationTimer = balanceConfig.enemy.attack.hurtAnimationDuration;
             this.animationProgress = 0;
         }
     }
