@@ -77,7 +77,10 @@ export default class Player extends Entity {
             this.facingRight = false;
         }
 
-        this.animationState = (this.velocityX !== 0 || this.velocityY !== 0) ? 'walk' : 'idle';
+        // Don't override hurt or death animations
+        if (this.animationState !== 'hurt' && this.animationState !== 'death') {
+            this.animationState = (this.velocityX !== 0 || this.velocityY !== 0) ? 'walk' : 'idle';
+        }
     }
 
     private updateAttack(input: InputManager): void {
@@ -111,7 +114,10 @@ export default class Player extends Entity {
             this.attackTimer -= deltaTime * 1000;
             if (this.attackTimer <= 0) {
                 this.isAttacking = false;
-                this.animationState = 'idle';
+                // Only reset to idle if still in punch animation (don't override hurt/death)
+                if (this.animationState === 'punch') {
+                    this.animationState = 'idle';
+                }
             }
         }
 
