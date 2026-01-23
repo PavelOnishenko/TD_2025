@@ -27,6 +27,8 @@ export default class Enemy extends Entity {
     public facingRight: boolean = true;
     public animationState: AnimationState = 'idle';
     public color: string;
+    public isDead: boolean = false;
+    public scoreAwarded: boolean = false;
 
     private attackCooldownTimer: number = 0;
     private hasDealtDamageThisAttack: boolean = false; // Track if damage was dealt in current attack
@@ -139,8 +141,8 @@ export default class Enemy extends Entity {
     }
 
     public moveToward(targetX: number, targetY: number, deltaTime: number, otherEnemies?: Enemy[]): void {
-        // Don't move if attacking or getting hit
-        if (this.animationState === 'punch' || this.animationState === 'hurt') {
+        // Don't move if dead, attacking, or getting hit
+        if (this.isDead || this.animationState === 'punch' || this.animationState === 'hurt') {
             this.velocityX = 0;
             this.velocityY = 0;
             return;
@@ -193,7 +195,7 @@ export default class Enemy extends Entity {
 
         for (const other of otherEnemies) {
             // Skip self and dead enemies
-            if (other === this || other.animationState === 'death') {
+            if (other === this || other.isDead) {
                 continue;
             }
 
@@ -243,8 +245,8 @@ export default class Enemy extends Entity {
     }
 
     public canAttackPlayer(player: Player): boolean {
-        // Can't attack while getting hit
-        if (this.animationState === 'hurt') {
+        // Can't attack if dead or getting hit
+        if (this.isDead || this.animationState === 'hurt') {
             return false;
         }
 
@@ -346,9 +348,8 @@ export default class Enemy extends Entity {
         this.health -= amount;
         if (this.health <= 0) {
             this.health = 0;
+            this.isDead = true;
             this.triggerDeathAnimation();
-            // Mark as inactive immediately so Game.ts can remove it
-            this.active = false;
         } else {
             this.triggerHurtAnimation();
         }
@@ -369,7 +370,7 @@ export default class Enemy extends Entity {
         this.animationProgress = 0;
         this.velocityX = 0;
         this.velocityY = 0;
-        // Note: active flag is already set to false in takeDamage()
+        // Note: isDead flag is already set to true in takeDamage()
     }
 
     public draw(ctx: CanvasRenderingContext2D, viewport?: Viewport): void {

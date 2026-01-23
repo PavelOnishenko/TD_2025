@@ -29,6 +29,7 @@ export default class Player extends Entity {
     public invulnerable: boolean = false;
     public facingRight: boolean = true;
     public animationState: AnimationState = 'idle';
+    public isDead: boolean = false;
 
     private attackTimer: number = 0;
     private attackCooldownTimer: number = 0;
@@ -60,7 +61,7 @@ export default class Player extends Entity {
     }
 
     private updateMovement(horizontalInput: number, verticalInput: number): void {
-        if (this.isAttacking) {
+        if (this.isDead || this.isAttacking) {
             this.velocityX = 0;
             this.velocityY = 0;
             return;
@@ -82,7 +83,7 @@ export default class Player extends Entity {
     }
 
     private updateAttack(input: InputManager): void {
-        if (this.attackCooldownTimer > 0) {
+        if (this.isDead || this.attackCooldownTimer > 0) {
             return;
         }
 
@@ -188,6 +189,7 @@ export default class Player extends Entity {
         this.health -= amount;
         if (this.health <= 0) {
             this.health = 0;
+            this.isDead = true;
             this.triggerDeathAnimation();
         } else {
             this.triggerHurtAnimation();

@@ -213,13 +213,16 @@ export default class Game {
             // Keep enemies within road bounds
             this.keepEnemyInBounds(enemy);
 
-            if (!enemy.active) {
-                this.enemies.splice(i, 1);
+            // Award score when enemy dies (but keep the body around)
+            if (enemy.isDead && !enemy.scoreAwarded) {
+                enemy.scoreAwarded = true;
                 this.scoreManager.addScore(10);
             }
         }
 
-        if (this.enemies.length === 0) {
+        // Count alive enemies for level progression
+        const aliveEnemies = this.enemies.filter(e => !e.isDead).length;
+        if (aliveEnemies === 0) {
             this.level += 1;
             this.spawnEnemies(this.level + 2);
         }
@@ -231,6 +234,11 @@ export default class Game {
         }
 
         for (const enemy of this.enemies) {
+            // Skip dead enemies for collision detection
+            if (enemy.isDead) {
+                continue;
+            }
+
             // Check if enemy can initiate attack based on distance
             if (enemy.canAttackPlayer(this.player)) {
                 enemy.startAttack();
@@ -267,7 +275,7 @@ export default class Game {
         }
 
         enemy.takeDamage(this.player.attackDamage);
-        // takeDamage() now handles setting active = false when health reaches 0
+        // takeDamage() now handles setting isDead = true when health reaches 0
     }
 
     private endGame(): void {
