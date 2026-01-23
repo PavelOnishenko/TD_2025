@@ -158,8 +158,9 @@ export default class Enemy extends Entity {
         // Check if we're facing the target (or will be after updating facing direction)
         const wouldBeFacingTarget: boolean = (dx > 0 && this.facingRight) || (dx < 0 && !this.facingRight) || dx === 0;
 
-        // Check if we're in attack range
+        // Check if we're in attack range (must be from the side, not above/below)
         const inAttackRange: boolean = wouldBeFacingTarget &&
+            horizontalDistance >= attackConfig.minHorizontalDistance &&
             horizontalDistance < attackConfig.armLength &&
             verticalDistance < attackConfig.verticalThreshold;
 
@@ -289,7 +290,12 @@ export default class Enemy extends Entity {
             return false;
         }
 
-        // Check vertical threshold
+        // Ensure enemy is attacking from the side (not from above/below)
+        if (horizontalDistance < attackConfig.minHorizontalDistance) {
+            return false;
+        }
+
+        // Check vertical threshold (small tolerance for minor alignment)
         const verticalDistance: number = Math.abs(dy);
         if (verticalDistance > attackConfig.verticalThreshold) {
             return false;
@@ -352,7 +358,12 @@ export default class Enemy extends Entity {
             return false;
         }
 
-        // Check vertical threshold
+        // Ensure enemy is attacking from the side (not from above/below)
+        if (horizontalDistance < attackConfig.minHorizontalDistance) {
+            return false;
+        }
+
+        // Check vertical threshold (small tolerance for minor alignment)
         const verticalDistance: number = Math.abs(dy);
         if (verticalDistance > attackConfig.verticalThreshold) {
             return false;

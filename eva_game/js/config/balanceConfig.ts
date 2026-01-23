@@ -32,6 +32,7 @@ export interface BalanceConfig {
     speed: number;
     attack: {
       armLength: number;          // pixels - horizontal range in facing direction
+      minHorizontalDistance: number; // pixels - minimum horizontal distance required to attack (ensures side attacks only)
       verticalThreshold: number;  // pixels - vertical offset up/down where hits still land
       cooldown: number;           // ms
       damage: number;             // damage dealt to player
@@ -108,7 +109,8 @@ export const balanceConfig: BalanceConfig = {
     speed: 80,
     attack: {
       armLength: 50,          // horizontal range of punch (like arm length)
-      verticalThreshold: 30,  // vertical offset tolerance
+      minHorizontalDistance: 10, // minimum horizontal distance to attack (ensures attacks from sides only)
+      verticalThreshold: 15,  // vertical offset tolerance (small value for minor alignment)
       cooldown: 1500,
       damage: 10,
       punchDuration: 300,
