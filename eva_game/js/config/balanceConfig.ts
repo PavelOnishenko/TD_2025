@@ -50,7 +50,7 @@ export const balanceConfig = {
 
   // Spawn settings (from other branch)
   spawn: {
-    initialEnemyCount: 3,
+    initialEnemyCount: 1,
     waveSize: 2,
     spawnDelay: 3000,
     minDistanceFromPlayer: 200,
