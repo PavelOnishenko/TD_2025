@@ -155,44 +155,79 @@ export default class Enemy extends Entity {
         const horizontalDistance: number = Math.abs(dx);
         const verticalDistance: number = Math.abs(dy);
 
-        // Check if we're facing the target (or will be after updating facing direction)
-        const wouldBeFacingTarget: boolean = (dx > 0 && this.facingRight) || (dx < 0 && !this.facingRight) || dx === 0;
+        // Check if we're approaching from above/below (vertically)
+        const approachingVertically = this.isApproachingVertically(dx, dy);
 
-        // Check if we're in attack range
-        const inAttackRange: boolean = wouldBeFacingTarget &&
-            horizontalDistance < attackConfig.armLength &&
-            verticalDistance < attackConfig.verticalThreshold;
+        if (approachingVertically) {
+            // Enemy is coming from above or below - need to reposition to the side
+            const sidePosition = this.calculateSidePosition(targetX, targetY);
 
-        this.updateFacingDirection(dx);
+            // Check if the path to the side position is blocked by another enemy
+            if (this.isPathBlockedByEnemy(sidePosition.x, sidePosition.y, otherEnemies)) {
+                // Path is blocked - stop and wait for it to clear
+                this.velocityX = 0;
+                this.velocityY = 0;
+                // Still update facing to look at player
+                this.updateFacingDirection(dx);
+                return;
+            }
 
-        // Always calculate separation from other enemies to prevent clustering
-        const separation = this.calculateSeparation(otherEnemies);
+            // Path is clear - move toward the side position
+            const dxToSide = sidePosition.x - this.x;
+            const dyToSide = sidePosition.y - this.y;
+            const distanceToSide = Math.sqrt(dxToSide * dxToSide + dyToSide * dyToSide);
 
-        // Calculate separation magnitude to determine if we need to move
-        const separationMagnitude = Math.sqrt(separation.x * separation.x + separation.y * separation.y);
+            this.updateFacingDirection(dx); // Face the player, not the side position
 
-        // Stop only if in attack range AND no significant separation force is pushing us
-        // This allows enemies to spread out around the player even when in attack range
-        if (inAttackRange && separationMagnitude < 0.1) {
-            this.velocityX = 0;
-            this.velocityY = 0;
-            return;
-        }
-
-        // If in attack range but separation is pushing us, prioritize separation over player-seeking
-        if (inAttackRange) {
-            // Apply only separation force to spread out around player
-            const separationDistance = Math.sqrt(separation.x * separation.x + separation.y * separation.y);
-            if (separationDistance > 0) {
-                this.velocityX = (separation.x / separationDistance) * balanceConfig.enemy.speed;
-                this.velocityY = (separation.y / separationDistance) * balanceConfig.enemy.speed;
+            if (distanceToSide > 0) {
+                // Normalize and apply speed
+                this.velocityX = (dxToSide / distanceToSide) * balanceConfig.enemy.speed;
+                this.velocityY = (dyToSide / distanceToSide) * balanceConfig.enemy.speed;
             } else {
                 this.velocityX = 0;
                 this.velocityY = 0;
             }
         } else {
-            // Not in attack range, combine player-seeking with enemy separation
-            this.setVelocityWithSeparation(dx, dy, distance, separation);
+            // Approaching from the side - use normal attack logic
+            // Check if we're facing the target (or will be after updating facing direction)
+            const wouldBeFacingTarget: boolean = (dx > 0 && this.facingRight) || (dx < 0 && !this.facingRight) || dx === 0;
+
+            // Check if we're in attack range
+            const inAttackRange: boolean = wouldBeFacingTarget &&
+                horizontalDistance < attackConfig.armLength &&
+                verticalDistance < attackConfig.verticalThreshold;
+
+            this.updateFacingDirection(dx);
+
+            // Always calculate separation from other enemies to prevent clustering
+            const separation = this.calculateSeparation(otherEnemies);
+
+            // Calculate separation magnitude to determine if we need to move
+            const separationMagnitude = Math.sqrt(separation.x * separation.x + separation.y * separation.y);
+
+            // Stop only if in attack range AND no significant separation force is pushing us
+            // This allows enemies to spread out around the player even when in attack range
+            if (inAttackRange && separationMagnitude < 0.1) {
+                this.velocityX = 0;
+                this.velocityY = 0;
+                return;
+            }
+
+            // If in attack range but separation is pushing us, prioritize separation over player-seeking
+            if (inAttackRange) {
+                // Apply only separation force to spread out around player
+                const separationDistance = Math.sqrt(separation.x * separation.x + separation.y * separation.y);
+                if (separationDistance > 0) {
+                    this.velocityX = (separation.x / separationDistance) * balanceConfig.enemy.speed;
+                    this.velocityY = (separation.y / separationDistance) * balanceConfig.enemy.speed;
+                } else {
+                    this.velocityX = 0;
+                    this.velocityY = 0;
+                }
+            } else {
+                // Not in attack range, combine player-seeking with enemy separation
+                this.setVelocityWithSeparation(dx, dy, distance, separation);
+            }
         }
     }
 
@@ -259,6 +294,63 @@ export default class Enemy extends Entity {
             this.velocityX = dirX * balanceConfig.enemy.speed;
             this.velocityY = dirY * balanceConfig.enemy.speed;
         }
+    }
+
+    /**
+     * Determines if enemy is approaching from above/below rather than from the side
+     */
+    private isApproachingVertically(dx: number, dy: number): boolean {
+        const threshold = balanceConfig.enemy.positioning.verticalApproachThreshold;
+        // If vertical distance is significantly larger than horizontal, it's a vertical approach
+        return Math.abs(dy) > Math.abs(dx) * threshold;
+    }
+
+    /**
+     * Calculates the target side position for enemies approaching vertically
+     * Returns the nearest side position (left or right of player)
+     */
+    private calculateSidePosition(playerX: number, playerY: number): { x: number; y: number } {
+        const sideDistance = balanceConfig.enemy.positioning.preferredSideDistance;
+
+        // Determine which side is closer
+        const toLeft = playerX - sideDistance;
+        const toRight = playerX + sideDistance;
+
+        // Choose the side that requires less horizontal movement
+        const targetX = Math.abs(this.x - toLeft) < Math.abs(this.x - toRight) ? toLeft : toRight;
+
+        // Target the player's vertical position
+        return { x: targetX, y: playerY };
+    }
+
+    /**
+     * Checks if moving toward a target position would violate minimum spacing with other enemies
+     */
+    private isPathBlockedByEnemy(targetX: number, targetY: number, otherEnemies?: Enemy[]): boolean {
+        if (!otherEnemies || otherEnemies.length === 0) {
+            return false;
+        }
+
+        const minSpacing = balanceConfig.enemy.separation.minSpacing;
+
+        for (const other of otherEnemies) {
+            // Skip self and dead enemies
+            if (other === this || other.animationState === 'death') {
+                continue;
+            }
+
+            // Calculate distance from the other enemy to our target position
+            const dxToOther = targetX - other.x;
+            const dyToOther = targetY - other.y;
+            const distanceToOther = Math.sqrt(dxToOther * dxToOther + dyToOther * dyToOther);
+
+            // If moving to target would put us too close to another enemy, path is blocked
+            if (distanceToOther < minSpacing) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public canAttackPlayer(player: Player): boolean {

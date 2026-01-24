@@ -114,8 +114,13 @@ export const balanceConfig: BalanceConfig = {
       deathAnimationDuration: 1000,
     },
     separation: {
-      distance: 70,
-      strength: 1.2,
+      distance: 70,              // soft push distance for force-based separation
+      strength: 1.2,             // strength of the push force
+      minSpacing: 60,            // minimum allowed distance between enemies (hard limit)
+    },
+    positioning: {
+      preferredSideDistance: 55, // how far to the side of player enemies try to position
+      verticalApproachThreshold: 35, // if abs(dy) > abs(dx) * threshold, enemy is approaching vertically
     },
   },
 
