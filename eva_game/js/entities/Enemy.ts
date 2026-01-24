@@ -415,7 +415,9 @@ export default class Enemy extends Entity {
         // Don't draw enemies outside the visible game arena (in the "darkness" beyond the edges)
         // They still exist as physical objects but are invisible until they enter the playable area
         const halfWidth = this.width / 2;
-        if (this.x + halfWidth < 0 || this.x - halfWidth > balanceConfig.world.width) {
+        // Use viewport worldBounds for dynamic width, fallback to config for safety
+        const worldWidth = viewport?.worldBounds?.maxX ?? balanceConfig.world.width;
+        if (this.x + halfWidth < 0 || this.x - halfWidth > worldWidth) {
             return; // Enemy is outside the visible arena, don't render
         }
 
