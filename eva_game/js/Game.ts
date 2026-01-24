@@ -231,7 +231,9 @@ export default class Game {
         // Spawn new enemies when all are dead
         if (aliveEnemyCount === 0) {
             this.level += 1;
-            this.spawnEnemies(this.level + 2);
+            // Start with 1 enemy, then 2, up to max 6
+            const enemyCount = Math.min(this.level, 6);
+            this.spawnEnemies(enemyCount);
         }
     }
 
