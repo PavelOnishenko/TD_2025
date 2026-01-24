@@ -257,8 +257,8 @@ export default class Game {
                 this.handleEnemyAttackHit(enemy);
             }
 
-            // Check if player attack hits enemy - find the closest one
-            if (this.player.isAttacking && this.player.checkAttackHit(enemy)) {
+            // Find the closest enemy that can be hit (without marking them as hit yet)
+            if (this.player.canHitEnemy(enemy)) {
                 const distance = Math.abs(enemy.x - this.player.x);
                 if (distance < closestDistance) {
                     closestDistance = distance;
@@ -267,8 +267,8 @@ export default class Game {
             }
         }
 
-        // Only hit the closest enemy
-        if (closestHitEnemy) {
+        // Only hit the closest enemy (this marks them as hit and applies damage)
+        if (closestHitEnemy && this.player.checkAttackHit(closestHitEnemy)) {
             this.handlePlayerAttackHit(closestHitEnemy);
         }
     }

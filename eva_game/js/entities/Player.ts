@@ -195,7 +195,8 @@ export default class Player extends Entity {
         this.velocityY = 0;
     }
 
-    public checkAttackHit(enemy: Entity): boolean {
+    // Check if enemy can be hit without marking it (for finding closest enemy)
+    public canHitEnemy(enemy: Entity): boolean {
         if (!this.isAttacking) {
             return false;
         }
@@ -214,12 +215,15 @@ export default class Player extends Entity {
         }
 
         // Check if enemy is in range
-        if (this.isEnemyInAttackRange(enemy)) {
+        return this.isEnemyInAttackRange(enemy);
+    }
+
+    public checkAttackHit(enemy: Entity): boolean {
+        if (this.canHitEnemy(enemy)) {
             // Mark this enemy as hit for this attack
             this.hitEnemiesThisAttack.add(enemy.id);
             return true;
         }
-
         return false;
     }
 
