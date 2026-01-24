@@ -93,10 +93,12 @@ export default class Game {
         const roadHeight: number = balanceConfig.layout.roadHeight;
         const roadBottom: number = roadY + roadHeight;
         const enemyHalfHeight: number = balanceConfig.enemy.height / 2;
+        const enemyHalfWidth: number = balanceConfig.enemy.width / 2;
         const feetColliderHeight: number = balanceConfig.collision.feetColliderHeight;
 
         for (let i = 0; i < count; i++) {
-            const x: number = Math.random() * (balanceConfig.world.width - 100) + 50;
+            // Spawn enemies off-screen to the right, with some spacing between them
+            const x: number = balanceConfig.world.width + enemyHalfWidth + (i * 60);
             // Spawn enemies within allowed Y range (using feet collider bounds)
             const minY: number = roadY - enemyHalfHeight + feetColliderHeight;
             const maxY: number = roadBottom - enemyHalfHeight;
@@ -186,8 +188,8 @@ export default class Game {
         const halfWidth: number = enemy.width / 2;
         const halfHeight: number = enemy.height / 2;
 
-        // Horizontal bounds: entire world width
-        enemy.x = Math.max(halfWidth, Math.min(balanceConfig.world.width - halfWidth, enemy.x));
+        // Horizontal bounds: only restrict left side, allow enemies to come from the right
+        enemy.x = Math.max(halfWidth, enemy.x);
 
         // Vertical bounds: only feet collider restricted to road area
         const roadY: number = balanceConfig.layout.backgroundHeight;
