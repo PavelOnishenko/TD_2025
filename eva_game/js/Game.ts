@@ -205,21 +205,29 @@ export default class Game {
             return;
         }
 
+        let aliveEnemyCount = 0;
+
         for (let i = this.enemies.length - 1; i >= 0; i--) {
             const enemy: Enemy = this.enemies[i];
             enemy.update(deltaTime);
-            // Pass all enemies so they can avoid clustering
-            enemy.moveToward(this.player.x, this.player.y, deltaTime, this.enemies);
-            // Keep enemies within road bounds
-            this.keepEnemyInBounds(enemy);
 
-            if (!enemy.active) {
-                this.enemies.splice(i, 1);
+            // Only update alive enemies
+            if (enemy.animationState !== 'death' && !enemy.isDead) {
+                // Pass all enemies so they can avoid clustering
+                enemy.moveToward(this.player.x, this.player.y, deltaTime, this.enemies);
+                // Keep enemies within road bounds
+                this.keepEnemyInBounds(enemy);
+                aliveEnemyCount++;
+            }
+
+            // Award score when enemy just died
+            if (enemy.justDied) {
                 this.scoreManager.addScore(10);
             }
         }
 
-        if (this.enemies.length === 0) {
+        // Spawn new enemies when all are dead
+        if (aliveEnemyCount === 0) {
             this.level += 1;
             this.spawnEnemies(this.level + 2);
         }
@@ -231,6 +239,11 @@ export default class Game {
         }
 
         for (const enemy of this.enemies) {
+            // Skip dead enemies for collision detection
+            if (enemy.animationState === 'death' || enemy.isDead) {
+                continue;
+            }
+
             // Check if enemy can initiate attack based on distance
             if (enemy.canAttackPlayer(this.player)) {
                 enemy.startAttack();
