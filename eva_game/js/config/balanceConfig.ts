@@ -10,6 +10,7 @@ export const balanceConfig = {
     // Visual properties (from other branch)
     width: 40,
     height: 60,
+    scale: 1.8,  // Visual scale of the stick figure (1.0 = default size)
 
     // master structure
     speed: 200,
@@ -31,6 +32,7 @@ export const balanceConfig = {
     // Visual properties (from other branch)
     width: 35,
     height: 55,
+    scale: 1.8,  // Visual scale of the stick figure (1.0 = default size)
 
     speed: 80,
     attack: {

@@ -54,54 +54,58 @@ export default class StickFigure {
         y: number,
         pose: StickFigurePose,
         color: string,
-        facingRight: boolean
+        facingRight: boolean,
+        scale: number = 1
     ): void {
         ctx.strokeStyle = color;
         ctx.fillStyle = color;
-        ctx.lineWidth = this.LINE_WIDTH;
+        ctx.lineWidth = this.LINE_WIDTH * scale;
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
 
         // Flip horizontally if facing left
         const flip = facingRight ? 1 : -1;
 
+        // Scale the head radius
+        const headRadius = this.HEAD_RADIUS * scale;
+
         // Draw head
         ctx.beginPath();
-        ctx.arc(x, y + pose.headY, this.HEAD_RADIUS, 0, Math.PI * 2);
+        ctx.arc(x, y + pose.headY * scale, headRadius, 0, Math.PI * 2);
         ctx.fill();
 
         // Draw torso
         ctx.beginPath();
-        ctx.moveTo(x, y + pose.headY + this.HEAD_RADIUS);
-        ctx.lineTo(x, y + pose.torsoEndY);
+        ctx.moveTo(x, y + pose.headY * scale + headRadius);
+        ctx.lineTo(x, y + pose.torsoEndY * scale);
         ctx.stroke();
 
         // Draw left arm
         ctx.beginPath();
-        ctx.moveTo(x + pose.leftShoulderX * flip, y + pose.leftShoulderY);
-        ctx.lineTo(x + pose.leftElbowX * flip, y + pose.leftElbowY);
-        ctx.lineTo(x + pose.leftHandX * flip, y + pose.leftHandY);
+        ctx.moveTo(x + pose.leftShoulderX * flip * scale, y + pose.leftShoulderY * scale);
+        ctx.lineTo(x + pose.leftElbowX * flip * scale, y + pose.leftElbowY * scale);
+        ctx.lineTo(x + pose.leftHandX * flip * scale, y + pose.leftHandY * scale);
         ctx.stroke();
 
         // Draw right arm
         ctx.beginPath();
-        ctx.moveTo(x + pose.rightShoulderX * flip, y + pose.rightShoulderY);
-        ctx.lineTo(x + pose.rightElbowX * flip, y + pose.rightElbowY);
-        ctx.lineTo(x + pose.rightHandX * flip, y + pose.rightHandY);
+        ctx.moveTo(x + pose.rightShoulderX * flip * scale, y + pose.rightShoulderY * scale);
+        ctx.lineTo(x + pose.rightElbowX * flip * scale, y + pose.rightElbowY * scale);
+        ctx.lineTo(x + pose.rightHandX * flip * scale, y + pose.rightHandY * scale);
         ctx.stroke();
 
         // Draw left leg
         ctx.beginPath();
-        ctx.moveTo(x + pose.leftHipX * flip, y + pose.leftHipY);
-        ctx.lineTo(x + pose.leftKneeX * flip, y + pose.leftKneeY);
-        ctx.lineTo(x + pose.leftFootX * flip, y + pose.leftFootY);
+        ctx.moveTo(x + pose.leftHipX * flip * scale, y + pose.leftHipY * scale);
+        ctx.lineTo(x + pose.leftKneeX * flip * scale, y + pose.leftKneeY * scale);
+        ctx.lineTo(x + pose.leftFootX * flip * scale, y + pose.leftFootY * scale);
         ctx.stroke();
 
         // Draw right leg
         ctx.beginPath();
-        ctx.moveTo(x + pose.rightHipX * flip, y + pose.rightHipY);
-        ctx.lineTo(x + pose.rightKneeX * flip, y + pose.rightKneeY);
-        ctx.lineTo(x + pose.rightFootX * flip, y + pose.rightFootY);
+        ctx.moveTo(x + pose.rightHipX * flip * scale, y + pose.rightHipY * scale);
+        ctx.lineTo(x + pose.rightKneeX * flip * scale, y + pose.rightKneeY * scale);
+        ctx.lineTo(x + pose.rightFootX * flip * scale, y + pose.rightFootY * scale);
         ctx.stroke();
     }
 
