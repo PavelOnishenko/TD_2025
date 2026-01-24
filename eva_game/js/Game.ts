@@ -352,9 +352,6 @@ export default class Game {
         const roadBottom = roadY + roadHeight;
         const centerX = balanceConfig.world.width / 2;
 
-        // Vanishing point for perspective (above the road, creates depth effect)
-        const vanishingPointY = roadY - gridConfig.perspective.vanishingPointOffset;
-
         // Perspective factor from config
         const perspectiveFactor = gridConfig.perspective.factor;
 

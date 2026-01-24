@@ -16,10 +16,7 @@ export const decorationConfig = {
     perspective: {
       // How much the grid narrows at the top (0.0 to 1.0)
       // 0.3 means the top will be 30% of the full width
-      factor: 0.3,
-
-      // Vanishing point Y offset above the road (for future use)
-      vanishingPointOffset: 100,
+      factor: 0.45
     },
   },
 };
