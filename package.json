@@ -10,7 +10,8 @@
     "build:rgfn": "tsc -p rgfn_game/tsconfig.json",
     "watch:rgfn": "tsc -p rgfn_game/tsconfig.json --watch",
     "build:eva": "tsc -p eva_game/tsconfig.json",
-    "watch:eva": "tsc -p eva_game/tsconfig.json --watch"
+    "watch:eva": "tsc -p eva_game/tsconfig.json --watch",
+    "test:eva": "node --test eva_game/test/*.test.js "
   },
   "devDependencies": {
     "typescript": "^5.9.3"

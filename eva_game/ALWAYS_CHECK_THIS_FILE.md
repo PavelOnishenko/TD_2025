@@ -1,0 +1,1 @@
+When doing any task, make sure tests are updated if needed. After finishing with task, make sure all tests pass. 
