@@ -5,7 +5,7 @@
 
 export const balanceConfig = {
   player: {
-    maxHealth: 100,
+    maxHealth: 1000,
 
     // Visual properties (from other branch)
     width: 40,
