@@ -351,16 +351,28 @@ export default class Game {
 
         const roadBottom = roadY + roadHeight;
         const centerX = balanceConfig.world.width / 2;
+        const worldWidth = balanceConfig.world.width;
 
         // Perspective factor from config
         const perspectiveFactor = gridConfig.perspective.factor;
 
-        // Draw vertical lines with perspective (converging towards center)
-        const numVerticalLines = Math.floor(balanceConfig.world.width / gridConfig.cellSize);
-        for (let i = 0; i <= numVerticalLines; i++) {
-            const x = i * gridConfig.cellSize;
+        // Clip to road area only - no drawing outside road bounds
+        this.ctx.save();
+        this.ctx.beginPath();
+        this.ctx.rect(0, roadY, worldWidth, roadHeight);
+        this.ctx.clip();
 
-            // Calculate how far this line is from center (normalized -1 to 1)
+        // Calculate extended range to cover full width at the top
+        // To reach topX=0, we need bottomX = centerX * (1 - 1/perspectiveFactor)
+        // To reach topX=width, we need bottomX = centerX * (1 + 1/perspectiveFactor)
+        const expansionFactor = 1 / perspectiveFactor;
+        const extendedLeft = centerX * (1 - expansionFactor);
+        const extendedRight = centerX * (1 + expansionFactor);
+
+        // Draw vertical lines with perspective (converging towards center)
+        // Use extended range to ensure full coverage at the top
+        for (let x = extendedLeft; x <= extendedRight; x += gridConfig.cellSize) {
+            // Calculate how far this line is from center (normalized)
             const offsetFromCenter = (x - centerX) / centerX;
 
             // Top point: closer to center (perspective effect)
@@ -385,7 +397,7 @@ export default class Game {
 
             // Interpolate width based on depth
             const widthAtThisDepth = perspectiveFactor + (1 - perspectiveFactor) * depth;
-            const halfWidth = (balanceConfig.world.width / 2) * widthAtThisDepth;
+            const halfWidth = (worldWidth / 2) * widthAtThisDepth;
 
             const leftX = centerX - halfWidth;
             const rightX = centerX + halfWidth;
@@ -395,6 +407,9 @@ export default class Game {
             this.ctx.lineTo(rightX, y);
             this.ctx.stroke();
         }
+
+        // Restore context to remove clipping
+        this.ctx.restore();
     }
 
     private drawEntities(): void {
