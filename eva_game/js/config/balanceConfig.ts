@@ -46,7 +46,7 @@ export const balanceConfig = {
       distance: 70,
       strength: 1.2,
     },
-  },
+  }, 
 
   // Spawn settings (from other branch)
   spawn: {
