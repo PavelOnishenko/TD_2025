@@ -1,6 +1,6 @@
 import Entity from '../../../engine/core/Entity.js';
 import { Viewport } from '../types/engine.js';
-import { AnimationState } from '../types/game.js';
+import { AnimationState, EnemyState } from '../types/game.js';
 import Player from './Player.js';
 import StickFigure from '../utils/StickFigure.js';
 import { balanceConfig } from '../config/balanceConfig.js';
@@ -29,6 +29,10 @@ export default class Enemy extends Entity {
     public color: string;
     public isDead: boolean = false; // Track if enemy is dead (after death animation completes)
     public justDied: boolean = false; // True for one frame when enemy dies (for score tracking)
+
+    // Attack position system state
+    public enemyState: EnemyState = 'waiting'; // Current behavior state
+    public assignedAttackPosition: { x: number; y: number } | null = null; // Currently assigned attack position
 
     private attackCooldownTimer: number = 0;
     private hasDealtDamageThisAttack: boolean = false; // Track if damage was dealt in current attack
