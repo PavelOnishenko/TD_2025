@@ -1,0 +1,1009 @@
+================================================================================
+EVA GAME - COMPREHENSIVE IMPLEMENTATION PLAN
+Based on MessagesFromVdm_2025_12_31.txt
+================================================================================
+
+OVERVIEW
+--------
+Eva Game is a classic 2D beat'em up in a dark cyberpunk setting featuring two
+playable characters (Eva and Taras) who become cops in a world of endless chaos.
+The game emphasizes cooperative gameplay, environmental interaction, and
+progression through unlockable gear and challenges.
+
+GAME VISION
+-----------
+Setting: Dark cyberpunk (Judge Dredd Stallone film aesthetic)
+- Grim alleyways, gang warfare, fires and destruction in early levels
+- Progressively cleaner, more sci-fi advanced districts in later levels
+
+Characters:
+- Taras: Paratrooper stuck in time loop for 1000+ years, loves fighting
+- Eva: Terrorist/inventor/saboteur/genius fighter, loves combat
+
+Story: Two ultra-powerful fighters sent to hardcore world by "The Viewer"
+(multiversal entity). They won battle royale, chose to be sent to endless
+combat world. Become cops "for fun" to bring order to chaos.
+
+Core Gameplay: Classic 2D beat'em up with Battletoads-style depth movement
+
+
+================================================================================
+PHASE 1: CORE BEAT'EM UP MECHANICS
+================================================================================
+
+1.1 MOVEMENT SYSTEM
+-------------------
+CURRENT STATE:
+✓ Basic 8-directional movement
+✓ Player can move within bounds
+✓ Facing direction tracking
+
+NEEDED:
+✓ Implement depth-based rendering (Y-axis determines draw order)
+□ Collision detection considering depth 
+(can't hit enemy in different depth so it works like hitting with fists in beat em up)
+
+FILES TO CREATE/MODIFY:
+- eva_game/js/systems/DepthManager.js (new)
+- eva_game/js/entities/Player.js (modify)
+- eva_game/js/Game.js (modify rendering order)
+
+
+1.2 ENHANCED COMBAT SYSTEM
+---------------------------
+CURRENT STATE:
+✓ Basic punch attack
+✓ Attack range and facing direction
+✓ Simple damage system
+✓ Attack cooldown
+
+NEEDED:
+□ Multiple attack types:
+  - Light punch (quick, low damage)
+  - Heavy punch (slow, high damage)
+  - Kick (medium range, medium damage)
+  - Jump attack (aerial attack)
+  - Running attack (attack while moving)
+
+□ Combo system:
+  - Chain attacks together (light -> light -> heavy)
+  - Combo counter and display
+  - Combo damage multiplier
+  - Combo timer (resets if too slow)
+  - Different combo finishers
+
+□ Advanced attack mechanics:
+  - Attack hitboxes per move
+  - Attack startup/active/recovery frames
+  - Hitstun for enemies
+  - Knockback on hit
+  - Critical hits (random or combo-based)
+
+FILES TO CREATE/MODIFY:
+- eva_game/js/systems/ComboSystem.js (new)
+- eva_game/js/systems/AttackSystem.js (new)
+- eva_game/js/entities/Player.js (major modification)
+- eva_game/js/data/AttackData.js (new - attack definitions)
+
+
+1.3 GRAB AND THROW SYSTEM
+--------------------------
+CURRENT STATE:
+✗ No grab mechanics exist
+
+NEEDED:
+□ Grab mechanic:
+  - Grab button/input
+  - Grab range (slightly larger than attack)
+  - Grab enemy and enter "holding" state
+  - Enemy is held in front of player
+  - Player can move slowly while holding
+  - Held enemy can't move or attack
+
+□ Throw mechanic:
+  - Throw in facing direction
+  - Throw upward
+  - Throw downward (slam)
+  - Throw trajectory and arc
+  - Damage on throw impact
+  - Thrown enemy damages other enemies
+
+□ Cooperative hold system (IMPORTANT FOR 2-PLAYER):
+  - Player 1 can grab and hold enemy
+  - While held, Player 2 can attack held enemy
+  - Held enemy takes extra damage
+  - Visual indicator for held enemy
+  - Cannot grab same enemy simultaneously
+
+□ Enemy collision when thrown:
+  - Thrown enemy as projectile
+  - Collision with other enemies
+  - Collision with environmental objects
+  - Damage dealt to both thrown and hit enemies
+
+FILES TO CREATE/MODIFY:
+- eva_game/js/systems/GrabSystem.js (new)
+- eva_game/js/entities/Player.js (add grab state)
+- eva_game/js/entities/Enemy.js (add grabbed state)
+- eva_game/js/Game.js (manage grab interactions)
+
+
+================================================================================
+PHASE 2: TWO-PLAYER COOPERATIVE GAMEPLAY
+================================================================================
+
+2.1 PLAYER 2 INTEGRATION
+-------------------------
+CURRENT STATE:
+✗ Single player only
+
+NEEDED:
+□ Second player character:
+  - Player 2 input mapping (different keys/controller)
+  - Player 2 spawn position
+  - Independent movement and combat
+  - Player 2 HUD (health, score separate)
+  - Camera follows both players
+
+□ Character selection:
+  - Choose Eva or Taras for Player 1
+  - Choose Eva or Taras for Player 2
+  - Both can select same character (different color palette)
+  - Character stats and abilities
+
+□ Cooperative mechanics:
+  - Shared score or separate scores
+  - Revive fallen partner
+  - Friendly fire toggle (optional)
+  - Team combo attacks (advanced)
+
+FILES TO CREATE/MODIFY:
+- eva_game/js/entities/Player.js (parameterize for P1/P2)
+- eva_game/js/systems/CharacterSelector.js (new)
+- eva_game/js/Game.js (manage two players)
+- eva_game/js/systems/CameraSystem.js (new - follow both players)
+
+
+2.2 CHARACTER DIFFERENTIATION
+------------------------------
+CURRENT STATE:
+✗ No character variation
+
+NEEDED:
+□ Eva character:
+  - Slightly faster movement
+  - Lower health
+  - Higher combo potential
+  - Special moves: gadgets, traps, quick strikes
+  - Visual design (female fighter, tech gear)
+
+□ Taras character:
+  - Slightly slower movement
+  - Higher health
+  - Higher base damage
+  - Special moves: grapples, power moves, area attacks
+  - Visual design (military paratrooper aesthetic)
+
+□ Shared mechanics but different feel
+□ Balanced for cooperative play
+
+FILES TO CREATE/MODIFY:
+- eva_game/js/entities/characters/Eva.js (new - extends Player)
+- eva_game/js/entities/characters/Taras.js (new - extends Player)
+- eva_game/js/entities/Player.js (make more generic base class)
+- eva_game/js/data/CharacterStats.js (new - character data)
+
+
+================================================================================
+PHASE 3: ENVIRONMENTAL INTERACTION
+================================================================================
+
+3.1 INTERACTIVE OBJECTS SYSTEM
+-------------------------------
+CURRENT STATE:
+✗ No environmental interaction
+
+NEEDED:
+□ Object types:
+  - Chairs (breakable, throwable)
+  - Fire barrels (breakable, causes fire damage)
+  - Crates/boxes (breakable, may contain items)
+  - Street signs (breakable)
+  - Trash cans (breakable, throwable)
+  - Car parts (hoods, doors - background only)
+  - Lamp posts (sturdy, can slam enemies into)
+
+□ Object properties:
+  - Health/durability
+  - Weight (affects throw distance)
+  - Damage dealt when used as weapon
+  - Special effects (fire, explosion, etc.)
+  - Respawn or permanent destruction
+
+□ Interaction mechanics:
+  - Pick up light objects
+  - Throw objects at enemies
+  - Break objects with attacks
+  - Objects break when enemies thrown into them
+  - Chain reactions (barrel explosion damages nearby)
+
+FILES TO CREATE/MODIFY:
+- eva_game/js/entities/EnvironmentObject.js (new base class)
+- eva_game/js/entities/objects/Chair.js (new)
+- eva_game/js/entities/objects/FireBarrel.js (new)
+- eva_game/js/entities/objects/Crate.js (new)
+- eva_game/js/systems/EnvironmentSystem.js (new)
+- eva_game/js/Game.js (manage environmental objects)
+
+
+3.2 THROW INTERACTION WITH ENVIRONMENT
+---------------------------------------
+NEEDED:
+□ Throw enemy into objects:
+  - Detect collision between thrown enemy and object
+  - Break object on impact
+  - Apply object's special effect to enemy
+  - Fire barrel: enemy catches fire, takes DOT
+  - Sharp objects: enemy takes extra damage
+  - Heavy objects: stun effect
+
+□ Throw objects at enemies:
+  - Pick up breakable objects
+  - Throw object controls (aim with direction)
+  - Object projectile physics
+  - Damage on hit
+  - Object breaks on impact
+
+FILES TO CREATE/MODIFY:
+- eva_game/js/systems/ThrowInteractionSystem.js (new)
+- eva_game/js/systems/GrabSystem.js (extend for objects)
+- eva_game/js/entities/EnvironmentObject.js (add thrown state)
+
+
+================================================================================
+PHASE 4: LEVEL AND ENEMY DESIGN
+================================================================================
+
+4.1 LEVEL STRUCTURE
+-------------------
+CURRENT STATE:
+✗ Single static screen
+
+NEEDED:
+□ Side-scrolling levels:
+  - Level progression (move right to advance)
+  - Multiple screens per level
+  - Vertical boundaries (depth limits)
+  - Smooth camera scrolling
+  - Level completion trigger
+
+□ Level zones:
+  - "Lock" zones where enemies spawn and must be cleared
+  - Boss arenas
+  - Safe zones (story/dialogue)
+  - Environmental hazard zones
+
+□ Level themes:
+  - Level 1: Dark alleyways (grim, gangs, fires)
+  - Level 2: Industrial district
+  - Level 3: Neon slums
+  - Level 4: Corporate sector (cleaner, more sci-fi)
+  - Level 5: High-tech district
+  - Final level: Police HQ or ultimate chaos zone
+
+FILES TO CREATE/MODIFY:
+- eva_game/js/systems/LevelManager.js (new)
+- eva_game/js/levels/Level.js (new base class)
+- eva_game/js/levels/Level1.js (new)
+- eva_game/js/systems/CameraSystem.js (scrolling camera)
+- eva_game/js/data/LevelData.js (new - level definitions)
+
+
+4.2 ENEMY VARIETY
+-----------------
+CURRENT STATE:
+✓ Basic enemy that chases player
+
+NEEDED:
+□ Enemy types:
+  - Thug (basic melee, low health)
+  - Brawler (higher health, grabs player)
+  - Knife fighter (quick attacks, medium damage)
+  - Heavy (slow, high damage, can't be grabbed easily)
+  - Gunner (ranged attacks, stays at distance)
+  - Biker (mobile, hit-and-run tactics)
+
+□ Mini-bosses:
+  - Gang leader (commands thugs)
+  - Martial artist (counters and combos)
+  - Cyborg enforcer (high health, special moves)
+
+□ Final bosses:
+  - Unique per level
+  - Multiple phases
+  - Special mechanics
+  - Require strategy to defeat
+
+□ Enemy behaviors:
+  - AI states (idle, patrol, chase, attack, flee)
+  - Group tactics (surround player)
+  - Block/counter moves
+  - Call for reinforcements
+
+FILES TO CREATE/MODIFY:
+- eva_game/js/entities/Enemy.js (make base class more generic)
+- eva_game/js/entities/enemies/Thug.js (new)
+- eva_game/js/entities/enemies/Brawler.js (new)
+- eva_game/js/entities/enemies/KnifeFighter.js (new)
+- eva_game/js/entities/enemies/Heavy.js (new)
+- eva_game/js/entities/enemies/Gunner.js (new)
+- eva_game/js/entities/bosses/GangLeader.js (new)
+- eva_game/js/systems/AISystem.js (new - enemy AI)
+- eva_game/js/data/EnemyData.js (new - enemy stats and behaviors)
+
+
+4.3 SPAWNING SYSTEM
+-------------------
+NEEDED:
+□ Wave spawning:
+  - Define spawn points per level
+  - Spawn waves of enemies
+  - Difficulty scaling (more enemies, tougher types)
+  - Special event spawns (ambush, reinforcements)
+
+□ Dynamic spawning:
+  - Off-screen spawn only
+  - Maximum enemy count on screen
+  - Spawn based on player progress
+  - Boss spawn conditions
+
+FILES TO CREATE/MODIFY:
+- eva_game/js/systems/SpawnSystem.js (new)
+- eva_game/js/data/SpawnData.js (new - spawn configurations)
+
+
+================================================================================
+PHASE 5: PROGRESSION AND UNLOCKABLES
+================================================================================
+
+5.1 GEAR AND CUSTOMIZATION SYSTEM
+----------------------------------
+CURRENT STATE:
+✗ No progression system
+
+NEEDED:
+□ Gear types:
+  - Headgear (helmets, hats, bandanas)
+  - Body armor (vests, jackets, suits)
+  - Gloves (combat gloves, brass knuckles)
+  - Boots (combat boots, sneakers)
+  - Accessories (sunglasses, belts, badges)
+
+□ Gear properties:
+  - Visual changes (sprite variations)
+  - Stat bonuses:
+    * +Health
+    * +Damage
+    * +Move speed
+    * +Jump height
+    * +Combo meter duration
+  - Small stat changes only (not game-breaking)
+
+□ Gear management:
+  - Gear inventory/collection
+  - Equip/unequip interface
+  - Visual preview
+  - Save equipped gear
+
+FILES TO CREATE/MODIFY:
+- eva_game/js/systems/GearSystem.js (new)
+- eva_game/js/data/GearData.js (new - all gear items)
+- eva_game/js/ui/GearMenu.js (new)
+- eva_game/js/entities/Player.js (apply gear stats)
+
+
+5.2 UNLOCK SYSTEM
+-----------------
+NEEDED:
+□ Challenge types:
+  - Kill mini-boss without taking damage
+  - Achieve combo of X hits
+  - Complete level under time limit
+  - Defeat X enemies without being hit
+  - Use only throws to defeat enemies
+  - Complete level without using special moves
+  - Collect all items in level
+
+□ Unlock tracking:
+  - Track challenge completion
+  - Unlock notifications
+  - Progress toward unlocks
+  - Unlock rewards (gear, characters, levels)
+
+□ Progression data:
+  - Save/load unlock status
+  - Cross-session persistence
+  - Statistics tracking (total enemies killed, highest combo, etc.)
+
+FILES TO CREATE/MODIFY:
+- eva_game/js/systems/UnlockSystem.js (new)
+- eva_game/js/systems/ChallengeSystem.js (new)
+- eva_game/js/data/ChallengeData.js (new)
+- eva_game/js/systems/SaveSystem.js (new)
+
+
+5.3 STATISTICS AND ACHIEVEMENTS
+--------------------------------
+NEEDED:
+□ Track player stats:
+  - Total playtime
+  - Enemies defeated (total and by type)
+  - Highest combo achieved
+  - Levels completed
+  - Deaths
+  - Items used
+  - Damage dealt/received
+
+□ Achievement system:
+  - Milestone achievements
+  - Hidden achievements
+  - Achievement notifications
+  - Achievement rewards
+
+FILES TO CREATE/MODIFY:
+- eva_game/js/systems/StatisticsSystem.js (new)
+- eva_game/js/systems/AchievementSystem.js (new)
+- eva_game/js/data/AchievementData.js (new)
+
+
+================================================================================
+PHASE 6: VISUAL AND AUDIO POLISH
+================================================================================
+
+6.1 VISUAL EFFECTS
+------------------
+CURRENT STATE:
+✓ Basic shapes for player/enemies
+✓ Simple health bars
+
+NEEDED:
+□ Combat effects:
+  - Hit sparks/impact effects
+  - Dust clouds on ground impacts
+  - Speed lines for fast attacks
+  - Screen shake on heavy hits
+  - Slow-motion on finishers (optional)
+
+□ Environmental effects:
+  - Fire particles from barrels
+  - Smoke from destroyed objects
+  - Sparks from breaking metal
+  - Glass shatter effects
+  - Background parallax scrolling
+
+□ UI effects:
+  - Combo counter animations
+  - Damage numbers
+  - Health bar animations
+  - Level transitions
+  - Victory/defeat screens
+
+FILES TO CREATE/MODIFY:
+- eva_game/js/systems/ParticleSystem.js (new)
+- eva_game/js/systems/EffectsSystem.js (new)
+- eva_game/js/ui/CombatUI.js (new)
+- engine/core/Renderer.js (may need particle support)
+
+
+6.2 ANIMATION SYSTEM
+--------------------
+CURRENT STATE:
+✓ Basic animation states (idle, walk, punch)
+✗ No actual sprite animation
+
+NEEDED:
+□ Sprite animation:
+  - Frame-based animation
+  - Animation states per action
+  - Smooth transitions between states
+  - Animation speed control
+
+□ Animation types needed:
+  - Idle (breathing)
+  - Walk/run
+  - Punch variations
+  - Kick variations
+  - Jump
+  - Grab
+  - Throw
+  - Hit reaction
+  - Death/KO
+  - Special moves
+
+FILES TO CREATE/MODIFY:
+- eva_game/js/systems/AnimationSystem.js (new)
+- eva_game/js/data/AnimationData.js (new)
+- eva_game/js/entities/Player.js (integrate animations)
+- eva_game/js/entities/Enemy.js (integrate animations)
+
+NOTE: Initially can use placeholder colored rectangles with different sizes
+      or simple sprite sheets. Full sprite art comes later.
+
+
+6.3 AUDIO SYSTEM
+----------------
+CURRENT STATE:
+✗ No audio
+
+NEEDED:
+□ Sound effects:
+  - Punch/kick impacts
+  - Throw sounds
+  - Object breaking
+  - Enemy hurt/death sounds
+  - Player hurt sounds
+  - Environmental sounds (fire, explosions)
+  - UI sounds (menu navigation, unlock)
+
+□ Music:
+  - Level background music (cyberpunk theme)
+  - Boss battle music
+  - Victory/defeat music
+  - Menu music
+
+□ Audio management:
+  - Sound effect volume
+  - Music volume
+  - Audio on/off toggle
+  - Positional audio (optional)
+
+FILES TO CREATE/MODIFY:
+- eva_game/js/systems/AudioManager.js (new)
+- engine/systems/AudioManager.js (consider extracting if generic)
+
+
+6.4 VISUAL THEME AND ART DIRECTION
+-----------------------------------
+NEEDED:
+□ Cyberpunk aesthetic:
+  - Neon color palette
+  - Dark backgrounds with bright highlights
+  - Rain/weather effects (optional)
+  - Graffiti and urban decay in early levels
+  - Clean high-tech in later levels
+
+□ UI theme:
+  - Cyberpunk HUD design
+  - Glitch effects
+  - Scanline overlays
+  - Retro-futuristic fonts
+
+□ Background layers:
+  - Distant background (static or slow parallax)
+  - Mid background (medium parallax)
+  - Foreground details (fast parallax)
+  - Interactive layer (where combat happens)
+  - Foreground overlay (rain, fog, etc.)
+
+FILES TO CREATE/MODIFY:
+- eva_game/js/systems/BackgroundRenderer.js (new)
+- eva_game/style.css (UI theme)
+- eva_game/assets/ (future art assets)
+
+
+================================================================================
+PHASE 7: UI AND MENUS
+================================================================================
+
+7.1 MAIN MENU
+-------------
+CURRENT STATE:
+✗ No menu system
+
+NEEDED:
+□ Main menu options:
+  - Start Game
+  - Character Select
+  - Options
+  - Unlocks/Achievements
+  - Credits
+  - Exit
+
+□ Menu navigation:
+  - Keyboard/gamepad support
+  - Mouse/touch support
+  - Menu animations
+  - Background visuals
+
+FILES TO CREATE/MODIFY:
+- eva_game/js/ui/MainMenu.js (new)
+- eva_game/js/ui/MenuSystem.js (new)
+- eva_game/index.html (menu structure)
+
+
+7.2 IN-GAME HUD
+---------------
+CURRENT STATE:
+✓ Basic HUD with health, score, level
+
+NEEDED:
+□ Enhanced HUD:
+  - Player 1 health bar (portrait style)
+  - Player 2 health bar (if active)
+  - Boss health bar (when fighting boss)
+  - Combo counter with multiplier
+  - Special move meter
+  - Current level/stage
+  - Time (if time challenges active)
+  - Mini-map (optional)
+
+□ HUD animations:
+  - Health bar drain/gain
+  - Combo counter pulse
+  - Warning flashes (low health)
+  - Score popup
+
+FILES TO CREATE/MODIFY:
+- eva_game/js/ui/GameHUD.js (new)
+- eva_game/index.html (HUD elements)
+- eva_game/style.css (HUD styling)
+
+
+7.3 PAUSE MENU
+--------------
+NEEDED:
+□ Pause menu:
+  - Resume
+  - Restart level
+  - Options
+  - Quit to main menu
+
+□ Pause features:
+  - Freeze gameplay
+  - Dim background
+  - Show controls help
+
+FILES TO CREATE/MODIFY:
+- eva_game/js/ui/PauseMenu.js (new)
+- eva_game/js/Game.js (pause handling)
+
+
+7.4 OPTIONS MENU
+----------------
+NEEDED:
+□ Options:
+  - Sound volume sliders
+  - Music volume sliders
+  - Controls configuration
+  - Difficulty setting
+  - Display settings (fullscreen, resolution)
+  - Language selection
+
+FILES TO CREATE/MODIFY:
+- eva_game/js/ui/OptionsMenu.js (new)
+- eva_game/js/systems/SettingsManager.js (new)
+
+
+================================================================================
+PHASE 8: SPECIAL MOVES AND ADVANCED MECHANICS
+================================================================================
+
+8.1 SPECIAL MOVES SYSTEM
+-------------------------
+NEEDED:
+□ Special move meter:
+  - Builds with damage dealt and taken
+  - Depletes when using special move
+  - Visual meter on HUD
+
+□ Special moves per character:
+  - EVA:
+    * EMP blast (stuns all enemies in radius)
+    * Tactical roll (invulnerable dodge)
+    * Gadget throw (grenade-like area attack)
+  - TARAS:
+    * Ground pound (area knockdown)
+    * Berserker mode (temporary damage/speed boost)
+    * Power tackle (charging attack)
+
+□ Input commands:
+  - Special button combination
+  - Directional + special button
+  - Hold and release mechanics
+
+FILES TO CREATE/MODIFY:
+- eva_game/js/systems/SpecialMoveSystem.js (new)
+- eva_game/js/data/SpecialMoveData.js (new)
+- eva_game/js/entities/Player.js (special move integration)
+
+
+8.2 ADVANCED COMBAT MECHANICS
+------------------------------
+NEEDED:
+□ Juggling system:
+  - Launch enemies into air
+  - Follow-up air combos
+  - Wall bounce
+  - Ground bounce
+
+□ Counter system:
+  - Block enemy attacks
+  - Counter window
+  - Counter attack bonus damage
+
+□ Team attacks (2-player):
+  - Synchronized attack button
+  - Special team combo moves
+  - Extra damage when both attack same enemy
+
+FILES TO CREATE/MODIFY:
+- eva_game/js/systems/JuggleSystem.js (new)
+- eva_game/js/systems/CounterSystem.js (new)
+- eva_game/js/systems/TeamAttackSystem.js (new)
+
+
+================================================================================
+PHASE 9: CONTENT CREATION
+================================================================================
+
+9.1 LEVEL DESIGN
+----------------
+□ Design 5-7 complete levels
+□ Create level layouts and spawn points
+□ Place environmental objects
+□ Design boss encounters
+□ Balance difficulty progression
+□ Add story/dialogue moments
+
+9.2 ENEMY DESIGN
+----------------
+□ Create enemy stat tables
+□ Design enemy AI behaviors
+□ Create enemy spawn patterns
+□ Design boss mechanics and phases
+□ Test and balance enemy difficulty
+
+9.3 GEAR COLLECTION
+-------------------
+□ Design 30-50 gear pieces
+□ Create stat variations
+□ Design unlock requirements
+□ Create gear visual variants (can be simple color swaps initially)
+
+9.4 CHALLENGES AND ACHIEVEMENTS
+--------------------------------
+□ Design 50+ challenges
+□ Create achievement list
+□ Set unlock rewards
+□ Balance challenge difficulty
+
+
+================================================================================
+PHASE 10: OPTIMIZATION AND POLISH
+================================================================================
+
+10.1 PERFORMANCE OPTIMIZATION
+-----------------------------
+□ Optimize collision detection
+□ Implement object pooling for particles/projectiles
+□ Optimize rendering (cull off-screen entities)
+□ Profile and fix bottlenecks
+□ Test on lower-end hardware
+
+10.2 BALANCING
+--------------
+□ Player damage output
+□ Enemy health and damage
+□ Combo system rewards
+□ Gear stat bonuses
+□ Level difficulty curve
+□ Boss difficulty
+□ Unlock requirements
+
+10.3 PLAYTESTING
+----------------
+□ Single-player testing
+□ Two-player testing
+□ Test all challenges
+□ Test all unlocks
+□ Test edge cases and exploits
+□ Gather feedback
+
+10.4 BUG FIXING
+---------------
+□ Fix collision bugs
+□ Fix input bugs
+□ Fix AI issues
+□ Fix rendering issues
+□ Fix save/load bugs
+
+
+================================================================================
+TECHNICAL ARCHITECTURE SUMMARY
+================================================================================
+
+REUSE FROM ENGINE (engine/):
+----------------------------
+✓ Entity.js - Base class for all game objects
+✓ GameLoop.js - Update/render loop
+✓ Renderer.js - Canvas rendering
+✓ InputManager.js - Input handling
+✓ MathUtils.js - Math helpers
+
+MIGHT EXTRACT TO ENGINE LATER:
+------------------------------
+(Build in eva_game/ first, extract when second game needs it)
+- AnimationSystem.js
+- ParticleSystem.js
+- AudioManager.js
+- StateMachine.js (for AI and game states)
+- SaveSystem.js
+
+GAME-SPECIFIC (stays in eva_game/):
+-----------------------------------
+- All character-specific code (Eva, Taras)
+- All enemy types
+- All level designs
+- Gear and unlock data
+- Story/dialogue
+- Combat move definitions
+- Challenge definitions
+
+
+================================================================================
+IMPLEMENTATION PRIORITY
+================================================================================
+
+PROTOTYPE MVP (Get playable ASAP):
+----------------------------------
+1. Enhanced movement with depth
+2. Improved combat (punch, kick, combo basics)
+3. Grab and throw basic implementation
+4. One test level with scrolling
+5. 2-3 enemy types
+6. Two-player support
+7. Basic environmental objects (1-2 types)
+
+CORE GAMEPLAY:
+--------------
+8. Full combo system
+9. Special moves
+10. More enemy variety (5-6 types)
+11. Mini-boss
+12. Environmental interaction complete
+13. Level progression (3 levels)
+
+PROGRESSION:
+------------
+14. Gear system
+15. Unlock system
+16. Save/load
+17. Challenges
+18. Statistics
+
+POLISH:
+-------
+19. Visual effects
+20. Audio
+21. Animations
+22. UI/menus
+23. More levels
+24. More content (gear, enemies)
+25. Balancing
+26. Playtesting and refinement
+
+
+================================================================================
+NOTES AND CONSIDERATIONS
+================================================================================
+
+SCOPE MANAGEMENT:
+-----------------
+- This is a LARGE scope. Start with MVP and iterate.
+- Many features can be simplified initially (placeholder graphics, basic VFX)
+- Focus on feel and gameplay first, polish later
+- Don't try to implement everything at once
+
+ENGINE EXTRACTION:
+------------------
+- Follow prototyping methodology: build in eva_game/ first
+- Only extract to engine/ when a second game needs the same system
+- Keep game-specific logic out of engine components
+
+COMPLEXITY CONCERNS:
+--------------------
+From MessagesFromVdm: "I'd like advanced environmental interaction, BUT this
+will probably be too complex and won't happen, but just describing what I'd
+like anyway."
+
+RESPONSE: We can implement simplified version for MVP:
+- Breakable objects (simple)
+- Basic throw interaction (medium)
+- Special effects on interaction (simple to medium)
+- Full physics-based interaction can come later if desired
+
+TWO-PLAYER FOCUS:
+-----------------
+- Design all systems with 2-player in mind from the start
+- Grab-and-hold mechanic is CRITICAL for cooperative gameplay
+- Balance difficulty for both solo and duo play
+- Ensure camera works well with two players
+
+VISUAL STYLE:
+-------------
+- Can start with simple geometric shapes (current style)
+- Add sprite sheets progressively
+- Cyberpunk aesthetic through color palette and VFX
+- Dark backgrounds, neon highlights, particle effects
+
+
+================================================================================
+DEVELOPMENT PHASES TIMELINE (ROUGH ESTIMATE)
+================================================================================
+
+Note: These are implementation phases, not time estimates.
+Each phase may take varying amounts of effort.
+
+Phase 1-2: Core beat'em up mechanics + two-player = Foundation
+Phase 3-4: Environment + levels = World building
+Phase 5: Progression = Replayability
+Phase 6: Polish = "Juice" and feel
+Phase 7: UI = User experience
+Phase 8: Advanced mechanics = Depth
+Phase 9: Content = Game length
+Phase 10: Optimization = Release ready
+
+
+================================================================================
+QUESTIONS FOR FUTURE REFINEMENT
+================================================================================
+
+1. Sprite art vs geometric shapes?
+   - Stick with shapes for rapid prototyping?
+   - Pixel art sprites later?
+
+2. How many levels minimum for first release?
+   - 3 levels?
+   - 5 levels?
+   - 7+ levels?
+
+3. Difficulty settings?
+   - Single difficulty?
+   - Easy/Normal/Hard?
+
+4. Controller support priority?
+   - Keyboard only initially?
+   - Gamepad support from start?
+
+5. Localization?
+   - English only?
+   - Russian + English?
+   - More languages?
+
+6. Special moves complexity?
+   - Simple (just powerful attacks)?
+   - Complex (meter management, strategic use)?
+
+
+================================================================================
+CONCLUSION
+================================================================================
+
+This implementation plan provides a comprehensive roadmap for developing
+Eva Game from its current prototype state into a full-featured 2D beat'em up.
+
+The plan is intentionally large-scale to capture the full vision. Implementation
+should proceed incrementally, focusing on getting a fun, playable core before
+expanding to all features.
+
+Next steps:
+1. Review this plan
+2. Prioritize features
+3. Begin with Phase 1 (Enhanced movement and combat)
+4. Build iteratively, testing frequently
+5. Refine based on playability and feedback
+
+The game has a clear vision and interesting cooperative mechanics. The grab-and-
+hold system for two players is particularly unique and should be a focus.
+
+Looking forward to building this!

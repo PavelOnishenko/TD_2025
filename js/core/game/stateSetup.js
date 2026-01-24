@@ -16,7 +16,9 @@ function resetResources(game) {
     game.waveInProgress = false;
     game.gameOver = false;
     game.elapsedTime = 0;
-    game.score = 0;
+    if (game.scoreManager) {
+        game.scoreManager.reset();
+    }
     if (typeof game.ensureEndlessWaveTracking === 'function') {
         game.ensureEndlessWaveTracking();
     }
@@ -140,8 +142,10 @@ const stateSetup = {
             ? cfg.enemyHp
             : 1);
         this.gameOver = false;
-        this.score = 0;
-        this.bestScore = loadBestScore();
+        if (this.scoreManager) {
+            this.scoreManager.reset();
+            this.scoreManager.setBestScore(loadBestScore());
+        }
         this.scorePerKill = scoring.perKill;
         this.waveClearScore = scoring.waveClear;
         this.baseHitPenalty = scoring.baseHitPenalty;

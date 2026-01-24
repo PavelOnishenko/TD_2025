@@ -1,16 +1,6 @@
+import { clamp, clamp01, lerp } from '../../engine/utils/MathUtils.js';
+
 const TAU = Math.PI * 2;
-
-function clamp(value, min, max) {
-    return Math.max(min, Math.min(max, value));
-}
-
-function lerp(a, b, t) {
-    return a + (b - a) * t;
-}
-
-function clamp01(value) {
-    return clamp(value, 0, 1);
-}
 
 function normalizeVector(vector) {
     const x = Number.isFinite(vector?.x) ? vector.x : 0;

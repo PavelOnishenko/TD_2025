@@ -4,10 +4,7 @@ import gameConfig from '../config/gameConfig.js';
 import { getWaveEnergyMultiplier } from '../utils/energyScaling.js';
 import { createFlyingEnergyParticle } from '../systems/effects/flyingEnergy.js';
 import { trackEnemyKill } from '../systems/balanceTracking.js';
-
-function clamp(value, min, max) {
-    return Math.max(min, Math.min(max, value));
-}
+import { clamp } from '../../engine/utils/MathUtils.js';
 
 function getEnergyGainForKill(game, enemy) {
     const baseEnergy = gameConfig.player.energyPerKill;
@@ -123,7 +120,7 @@ export function applyProjectileDamage(game, projectile, enemyIndex, options = {}
 
     const { spawnImpactEffect = true, spawnKillEffect = true, hitVariant = null, killVariant = null, impactX = null, impactY = null } = options;
     const damage = calculateDamage(projectile, enemy);
-    enemy.hp -= damage;
+    enemy.takeDamage(damage);
     const isColorMatch = projectile.color === enemy.color;
     playHitSound(game.audio, projectile);
 
@@ -155,7 +152,7 @@ export function applyProjectileDamage(game, projectile, enemyIndex, options = {}
     }
 
     let enemyRemoved = false;
-    if (enemy.hp <= 0) {
+    if (enemy.isDead()) {
         enemyRemoved = true;
         game.enemies.splice(enemyIndex, 1);
         const energyGain = getEnergyGainForKill(game, enemy);

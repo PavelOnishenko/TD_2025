@@ -10,7 +10,7 @@ import {
     submitHighScore,
     resolvePlayerDisplayName,
     normalizeScore,
-} from './highScores.js';
+} from '../../engine/services/HighScoreService.js';
 import { translate, setActiveLocale, applyLocalization } from './localization.js';
 import { DEFAULT_TIME_SCALE, MAX_TIME_SCALE, MIN_TIME_SCALE } from '../core/game/world.js';
 import { trackTowerPlaced, trackTowerMerged, trackTowerUpgraded, trackTowerRemoved, trackLifeLost } from './balanceTracking.js';
@@ -1286,8 +1286,8 @@ export function updateHUD(game) {
 }
 
 function resolveScorePair(game) {
-    const current = Number.isFinite(game.score) ? Math.max(0, Math.floor(game.score)) : 0;
-    const bestCandidate = Number.isFinite(game.bestScore) ? Math.max(0, Math.floor(game.bestScore)) : 0;
+    const current = game.scoreManager ? game.scoreManager.getCurrentScore() : 0;
+    const bestCandidate = game.scoreManager ? game.scoreManager.getBestScore() : 0;
     const best = Math.max(current, bestCandidate);
     return { current, best };
 }

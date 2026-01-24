@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RGFN - Turn-Based RPG</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="css/battle-splash.css">
+    <link rel="stylesheet" href="css/item-discovery-splash.css">
+</head>
+<body>
+    <div id="game-container">
+        <div id="hud">
+            <div class="hud-section">
+                <h1>RGFN</h1>
+                <div id="mode-indicator">World Map</div>
+            </div>
+            <div class="hud-section stats">
+                <div class="stat">Level: <span id="player-level">1</span></div>
+                <div class="stat">XP: <span id="player-xp">0</span>/<span id="player-xp-next">5</span></div>
+                <div class="stat">HP: <span id="player-hp">5</span>/<span id="player-max-hp">5</span></div>
+                <div class="stat">DMG: <span id="player-dmg">2</span></div>
+                <div class="stat">Armor: <span id="player-armor">0</span></div>
+                <div class="stat">Weapon: <span id="player-weapon">None</span></div>
+            </div>
+            <div class="hud-section stats">
+                <div class="stat">Skill Points: <span id="skill-points">0</span></div>
+                <div class="stat-row">
+                    <span>Vitality: <span id="stat-vitality">0</span></span>
+                    <button id="add-vitality-btn" class="stat-btn" title="Each point: +1 Max HP">+</button>
+                </div>
+                <div class="stat-row">
+                    <span>Toughness: <span id="stat-toughness">0</span></span>
+                    <button id="add-toughness-btn" class="stat-btn" title="3 points: +1 Armor">+</button>
+                </div>
+                <div class="stat-row">
+                    <span>Strength: <span id="stat-strength">0</span></span>
+                    <button id="add-strength-btn" class="stat-btn" title="2 points: +1 Damage">+</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="game-area">
+            <canvas id="game-canvas" width="800" height="600"></canvas>
+
+            <div id="battle-sidebar" class="hidden">
+                <h2>Combat</h2>
+                <div id="enemy-info">
+                    <div class="enemy-stat">Enemy: <span id="enemy-name">-</span></div>
+                    <div class="enemy-stat">HP: <span id="enemy-hp">-</span>/<span id="enemy-max-hp">-</span></div>
+                </div>
+                <div id="battle-instructions">
+                    <p><strong>Your Turn:</strong></p>
+                    <p>Move with Arrow Keys/WASD</p>
+                    <p id="attack-range-text">Attack when adjacent (1 tile)</p>
+                </div>
+                <div id="battle-actions">
+                    <button id="attack-btn" class="action-btn">Attack</button>
+                    <button id="flee-btn" class="action-btn">Flee (50%)</button>
+                    <button id="wait-btn" class="action-btn">Wait</button>
+                </div>
+                <div id="battle-log-container">
+                    <h3>Battle Log</h3>
+                    <div id="battle-log"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="controls">
+            <p>Arrow Keys / WASD: Move</p>
+            <p>Battle: Move each turn OR click Attack/Flee</p>
+        </div>
+    </div>
+
+    <script type="module" src="dist/main.js"></script>
+</body>
+</html>

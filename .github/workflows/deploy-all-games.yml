@@ -1,0 +1,186 @@
+name: Deploy All Games to GitHub Pages
+
+on:
+  push:
+    branches: [ release ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build TypeScript games
+        run: |
+          npm run build:eva
+          npm run build:rgfn
+
+      - name: Create deployment structure
+        run: |
+          mkdir -p deploy/neon-void
+          mkdir -p deploy/eva-game
+          mkdir -p deploy/rgfn-game
+
+          # Copy Neon Void (root game) - JavaScript game
+          cp -r js assets engine style.css deploy/neon-void/
+          cp index.html deploy/neon-void/
+
+          # Copy Eva Game - only production files
+          cp -r eva_game/dist eva_game/assets eva_game/style.css deploy/eva-game/
+          cp eva_game/index.html deploy/eva-game/
+
+          # Copy RGFN Game - only production files
+          cp -r rgfn_game/dist rgfn_game/css rgfn_game/style.css deploy/rgfn-game/
+          cp rgfn_game/index.html deploy/rgfn-game/
+
+          # Copy shared engine (needed by Eva and RGFN games)
+          cp -r engine deploy/
+
+      - name: Create landing page
+        run: |
+          cat > deploy/index.html << 'EOF'
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>TD 2025 - Game Collection</title>
+              <style>
+                  * {
+                      margin: 0;
+                      padding: 0;
+                      box-sizing: border-box;
+                  }
+                  body {
+                      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                      min-height: 100vh;
+                      display: flex;
+                      justify-content: center;
+                      align-items: center;
+                      padding: 20px;
+                  }
+                  .container {
+                      max-width: 1200px;
+                      width: 100%;
+                  }
+                  h1 {
+                      text-align: center;
+                      color: white;
+                      font-size: 3rem;
+                      margin-bottom: 2rem;
+                      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+                  }
+                  .games-grid {
+                      display: grid;
+                      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+                      gap: 2rem;
+                      padding: 2rem;
+                  }
+                  .game-card {
+                      background: white;
+                      border-radius: 15px;
+                      padding: 2rem;
+                      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+                      transition: transform 0.3s ease, box-shadow 0.3s ease;
+                      text-decoration: none;
+                      color: inherit;
+                      display: block;
+                  }
+                  .game-card:hover {
+                      transform: translateY(-10px);
+                      box-shadow: 0 15px 40px rgba(0,0,0,0.4);
+                  }
+                  .game-card h2 {
+                      color: #667eea;
+                      margin-bottom: 1rem;
+                      font-size: 2rem;
+                  }
+                  .game-card p {
+                      color: #666;
+                      line-height: 1.6;
+                      margin-bottom: 1rem;
+                  }
+                  .game-card .play-button {
+                      display: inline-block;
+                      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                      color: white;
+                      padding: 0.75rem 2rem;
+                      border-radius: 25px;
+                      font-weight: bold;
+                      margin-top: 1rem;
+                      transition: opacity 0.3s ease;
+                  }
+                  .game-card:hover .play-button {
+                      opacity: 0.9;
+                  }
+                  @media (max-width: 768px) {
+                      h1 {
+                          font-size: 2rem;
+                      }
+                      .games-grid {
+                          grid-template-columns: 1fr;
+                      }
+                  }
+              </style>
+          </head>
+          <body>
+              <div class="container">
+                  <h1>TD 2025 Game Collection</h1>
+                  <div class="games-grid">
+                      <a href="./neon-void/" class="game-card">
+                          <h2>Neon Void</h2>
+                          <p>A fast-paced tower defense game with neon graphics. Build towers, upgrade your defenses, and survive waves of enemies in this strategic challenge.</p>
+                          <span class="play-button">Play Now →</span>
+                      </a>
+                      <a href="./eva-game/" class="game-card">
+                          <h2>Eva Game</h2>
+                          <p>An action-packed beat'em up prototype. Fight through waves of enemies with fluid combat mechanics and responsive controls.</p>
+                          <span class="play-button">Play Now →</span>
+                      </a>
+                      <a href="./rgfn-game/" class="game-card">
+                          <h2>RGFN</h2>
+                          <p>A turn-based RPG experience. Engage in strategic battles, manage resources, and explore a rich game world.</p>
+                          <span class="play-button">Play Now →</span>
+                      </a>
+                  </div>
+              </div>
+          </body>
+          </html>
+          EOF
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './deploy'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

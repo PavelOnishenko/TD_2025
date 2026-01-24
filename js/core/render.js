@@ -2,6 +2,7 @@ import { drawExplosions, drawColorSwitchBursts } from '../systems/effects.js';
 import { drawStarfield } from './starfield.js';
 import { drawPortal } from './portal.js';
 import { drawFlyingEnergy } from '../systems/effects/flyingEnergy.js';
+import { clamp, clamp01, lerp } from '../../engine/utils/MathUtils.js';
 
 const ENERGY_PALETTES = {
     red: {
@@ -195,17 +196,6 @@ function getRocketPalette(color) {
     return ROCKET_COLORS[color] ?? ROCKET_COLORS.default;
 }
 
-function clamp(value, min, max) {
-    return Math.max(min, Math.min(max, value));
-}
-
-function clamp01(value) {
-    return clamp(value, 0, 1);
-}
-
-function lerp(a, b, t) {
-    return a + (b - a) * t;
-}
 
 function easeInOutCubic(t) {
     const clamped = clamp01(t);

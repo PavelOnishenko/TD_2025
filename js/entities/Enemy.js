@@ -1,7 +1,8 @@
 import { drawEnemyEngineGlow } from '../systems/effects.js';
 import gameConfig from '../config/gameConfig.js';
+import Damageable from '../../engine/core/Damageable.js';
 
-export default class Enemy {
+export default class Enemy extends Damageable {
     constructor(
         maxHp,
         color,
@@ -11,6 +12,9 @@ export default class Enemy {
         speedY = gameConfig.enemies.swarm.speed.y,
         spriteKey = 'swarm'
     ) {
+        // Initialize Damageable with maxHp
+        super(maxHp);
+
         this.x = x;
         this.y = y;
         const { width, height } = gameConfig.enemies.dimensions;
@@ -21,8 +25,6 @@ export default class Enemy {
             : 1;
         this.speedX = speedX * speedMultiplier;
         this.speedY = speedY * speedMultiplier;
-        this.maxHp = maxHp;
-        this.hp = this.maxHp;
         this.color = color;
         this.spriteKey = spriteKey;
         if (typeof Enemy._glowPhaseCursor !== 'number') {
@@ -54,7 +56,7 @@ export default class Enemy {
         ctx.fillStyle = 'red';
         ctx.fillRect(barX, barY, barWidth, barHeight);
         ctx.fillStyle = 'green';
-        ctx.fillRect(barX, barY, barWidth * (this.hp / this.maxHp), barHeight);
+        ctx.fillRect(barX, barY, barWidth * this.getHealthPercent(), barHeight);
         ctx.strokeStyle = 'black';
         ctx.strokeRect(barX, barY, barWidth, barHeight);
     }
