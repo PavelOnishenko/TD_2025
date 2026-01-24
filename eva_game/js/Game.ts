@@ -238,6 +238,9 @@ export default class Game {
             return;
         }
 
+        let closestHitEnemy: Enemy | null = null;
+        let closestDistance = Infinity;
+
         for (const enemy of this.enemies) {
             // Skip dead enemies for collision detection
             if (enemy.animationState === 'death' || enemy.isDead) {
@@ -254,10 +257,19 @@ export default class Game {
                 this.handleEnemyAttackHit(enemy);
             }
 
-            // Check if player attack hits enemy
+            // Check if player attack hits enemy - find the closest one
             if (this.player.isAttacking && this.player.checkAttackHit(enemy)) {
-                this.handlePlayerAttackHit(enemy);
+                const distance = Math.abs(enemy.x - this.player.x);
+                if (distance < closestDistance) {
+                    closestDistance = distance;
+                    closestHitEnemy = enemy;
+                }
             }
+        }
+
+        // Only hit the closest enemy
+        if (closestHitEnemy) {
+            this.handlePlayerAttackHit(closestHitEnemy);
         }
     }
 
