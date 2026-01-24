@@ -17,8 +17,9 @@ export default class Tower {
         this.y = y;
         this.id = towerIdCounter++;
         const config = gameConfig.towers;
-        this.w = config.width;
-        this.h = config.height;
+        const scale = Number.isFinite(config.scale) ? config.scale : 1;
+        this.w = config.width * scale;
+        this.h = config.height * scale;
         this.baseRange = config.baseRange;
         this.lastShot = 0;
         this.color = color;

@@ -32,6 +32,7 @@ export const balanceConfig = {
         },
     },
     towers: {
+        scale: 1.5,  // Масштаб всех башен (можно настраивать)
         baseRange: 140,
         rangePerLevel: 0.2,
         rangeBonusMultiplier: 1.3,
@@ -46,6 +47,7 @@ export const balanceConfig = {
         upgradeUnlockWave: 15,
     },
     enemies: {
+        scale: 1.5,  // Масштаб всех врагов (можно настраивать)
         defaultSpawn: { x: -600, y: 600 },
         speedMultiplier: 0.9,
         tank: { hpMultiplier: 35.7, speed: { x: 100, y: 0 }, },

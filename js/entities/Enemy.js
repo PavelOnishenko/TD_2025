@@ -18,8 +18,9 @@ export default class Enemy extends Damageable {
         this.x = x;
         this.y = y;
         const { width, height } = gameConfig.enemies.dimensions;
-        this.w = width;
-        this.h = height;
+        const scale = Number.isFinite(gameConfig.enemies.scale) ? gameConfig.enemies.scale : 1;
+        this.w = width * scale;
+        this.h = height * scale;
         const speedMultiplier = Number.isFinite(gameConfig.enemies.speedMultiplier)
             ? gameConfig.enemies.speedMultiplier
             : 1;
