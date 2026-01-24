@@ -21,37 +21,6 @@ const MODES = {
     BATTLE: 'BATTLE',
 };
 
-interface HUDElements {
-    modeIndicator: HTMLElement;
-    playerLevel: HTMLElement;
-    playerXp: HTMLElement;
-    playerXpNext: HTMLElement;
-    playerHp: HTMLElement;
-    playerMaxHp: HTMLElement;
-    playerDmg: HTMLElement;
-    playerArmor: HTMLElement;
-    playerWeapon: HTMLElement;
-    skillPoints: HTMLElement;
-    statVitality: HTMLElement;
-    statToughness: HTMLElement;
-    statStrength: HTMLElement;
-    addVitalityBtn: HTMLButtonElement;
-    addToughnessBtn: HTMLButtonElement;
-    addStrengthBtn: HTMLButtonElement;
-}
-
-interface BattleUI {
-    sidebar: HTMLElement;
-    enemyName: HTMLElement;
-    enemyHp: HTMLElement;
-    enemyMaxHp: HTMLElement;
-    attackBtn: HTMLButtonElement;
-    fleeBtn: HTMLButtonElement;
-    waitBtn: HTMLButtonElement;
-    log: HTMLElement;
-    attackRangeText: HTMLElement;
-}
-
 export default class Game {
     private canvas: HTMLCanvasElement;
     private renderer: Renderer;
@@ -65,8 +34,8 @@ export default class Game {
     private currentEnemies: Skeleton[];
     private turnTransitioning: boolean;
     private stateMachine: StateMachine;
-    private hudElements: HUDElements;
-    private battleUI: BattleUI;
+    private hudElements;
+    private battleUI;
     private selectedEnemy: Skeleton | null;
     private battleSplash: BattleSplash;
     private itemDiscoverySplash: ItemDiscoverySplash;
@@ -104,8 +73,8 @@ export default class Game {
             });
 
         // UI elements
-        this.hudElements = {} as HUDElements;
-        this.battleUI = {} as BattleUI;
+        this.hudElements = {};
+        this.battleUI = {};
         this.setupUI();
 
         // Initialize systems
