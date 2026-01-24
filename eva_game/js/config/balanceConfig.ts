@@ -41,6 +41,11 @@ export interface BalanceConfig {
     separation: {
       distance: number;           // pixels
       strength: number;           // multiplier
+      minSpacing: number;         // pixels - minimum allowed distance between enemies
+    };
+    positioning: {
+      preferredSideDistance: number;     // pixels - how far to the side enemies position
+      verticalApproachThreshold: number; // multiplier - ratio to determine vertical approach
     };
   };
 
