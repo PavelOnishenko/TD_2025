@@ -673,27 +673,98 @@ function drawPlatforms(game) {
     });
 }
 
+// Helper function to compute perspective-adjusted cell corners
+function getCellPerspectiveCorners(cell) {
+    // Perspective parameters
+    const vanishingPointY = 200; // Y-coordinate of vanishing point (horizon)
+    const perspectiveStrength = 0.35; // How much perspective to apply (0 = none, 1 = maximum)
+
+    // Calculate depth based on cell's Y position
+    // Higher Y values (bottom row) are closer to camera
+    // Lower Y values (top row) are farther from camera
+    const depth = (cell.y - vanishingPointY) / 600;
+    const depthFactor = 1 - (depth * perspectiveStrength);
+
+    // Calculate horizontal perspective based on distance from center
+    const screenCenterX = 270; // Center of screen
+    const cellCenterX = cell.x + cell.w / 2;
+    const horizontalOffset = cellCenterX - screenCenterX;
+
+    // Apply perspective scaling to width
+    const perspectiveWidth = cell.w * depthFactor;
+    const perspectiveHeight = cell.h * depthFactor;
+
+    // Calculate corner positions
+    const topLeft = {
+        x: cell.x + (cell.w - perspectiveWidth) / 2,
+        y: cell.y
+    };
+    const topRight = {
+        x: cell.x + cell.w - (cell.w - perspectiveWidth) / 2,
+        y: cell.y
+    };
+    const bottomLeft = {
+        x: cell.x,
+        y: cell.y + cell.h
+    };
+    const bottomRight = {
+        x: cell.x + cell.w,
+        y: cell.y + cell.h
+    };
+
+    return { topLeft, topRight, bottomLeft, bottomRight };
+}
+
+// Helper function to draw a perspective quad
+function drawPerspectiveQuad(ctx, corners, fillStyle) {
+    ctx.beginPath();
+    ctx.moveTo(corners.topLeft.x, corners.topLeft.y);
+    ctx.lineTo(corners.topRight.x, corners.topRight.y);
+    ctx.lineTo(corners.bottomRight.x, corners.bottomRight.y);
+    ctx.lineTo(corners.bottomLeft.x, corners.bottomLeft.y);
+    ctx.closePath();
+    ctx.fillStyle = fillStyle;
+    ctx.fill();
+}
+
 function drawGrid(game) {
     const ctx = game.ctx;
     const grid = game.getAllCells();
     const cellImage = game.assets?.cell;
     const isPreparationPhase = !game.waveInProgress;
     const elapsed = game.elapsedTime ?? 0;
+
     grid.forEach(cell => {
         const centerX = cell.x + cell.w / 2;
         const centerY = cell.y + cell.h / 2;
+        const corners = getCellPerspectiveCorners(cell);
         let pulseIntensity = 0;
 
         if (!cell.occupied && cellImage) {
-            ctx.drawImage(cellImage, cell.x, cell.y, cell.w, cell.h);
+            // Draw cell image with perspective transformation
+            ctx.save();
+            ctx.beginPath();
+            ctx.moveTo(corners.topLeft.x, corners.topLeft.y);
+            ctx.lineTo(corners.topRight.x, corners.topRight.y);
+            ctx.lineTo(corners.bottomRight.x, corners.bottomRight.y);
+            ctx.lineTo(corners.bottomLeft.x, corners.bottomLeft.y);
+            ctx.closePath();
+            ctx.clip();
+
+            // Draw image fitting the quad bounds
+            const minX = Math.min(corners.topLeft.x, corners.bottomLeft.x);
+            const maxX = Math.max(corners.topRight.x, corners.bottomRight.x);
+            const minY = Math.min(corners.topLeft.y, corners.topRight.y);
+            const maxY = Math.max(corners.bottomLeft.y, corners.bottomRight.y);
+            ctx.drawImage(cellImage, minX, minY, maxX - minX, maxY - minY);
+            ctx.restore();
         }
 
         if (!cell.occupied && cell.hover > 0) {
             const alpha = Math.min(0.35, 0.18 + cell.hover * 0.35);
             ctx.save();
             ctx.globalAlpha = alpha;
-            ctx.fillStyle = 'rgba(160, 220, 255, 1)';
-            ctx.fillRect(cell.x, cell.y, cell.w, cell.h);
+            drawPerspectiveQuad(ctx, corners, 'rgba(160, 220, 255, 1)');
             ctx.restore();
         }
 
@@ -742,8 +813,7 @@ function drawGrid(game) {
             const alpha = Math.min(1, cell.highlight * 3);
             ctx.save();
             ctx.globalAlpha = alpha;
-            ctx.fillStyle = 'red';
-            ctx.fillRect(cell.x, cell.y, cell.w, cell.h);
+            drawPerspectiveQuad(ctx, corners, 'red');
             ctx.restore();
         }
 
@@ -760,7 +830,13 @@ function drawGrid(game) {
             ctx.globalCompositeOperation = 'lighter';
             ctx.lineWidth = thickness;
             ctx.strokeStyle = color;
-            ctx.strokeRect(cell.x + thickness * 0.75, cell.y + thickness * 0.75, cell.w - thickness * 1.5, cell.h - thickness * 1.5);
+            ctx.beginPath();
+            ctx.moveTo(corners.topLeft.x, corners.topLeft.y);
+            ctx.lineTo(corners.topRight.x, corners.topRight.y);
+            ctx.lineTo(corners.bottomRight.x, corners.bottomRight.y);
+            ctx.lineTo(corners.bottomLeft.x, corners.bottomLeft.y);
+            ctx.closePath();
+            ctx.stroke();
             ctx.restore();
         }
 
@@ -777,7 +853,13 @@ function drawGrid(game) {
             ctx.globalCompositeOperation = 'lighter';
             ctx.lineWidth = thickness;
             ctx.strokeStyle = color;
-            ctx.strokeRect(cell.x + thickness, cell.y + thickness, cell.w - thickness * 2, cell.h - thickness * 2);
+            ctx.beginPath();
+            ctx.moveTo(corners.topLeft.x, corners.topLeft.y);
+            ctx.lineTo(corners.topRight.x, corners.topRight.y);
+            ctx.lineTo(corners.bottomRight.x, corners.bottomRight.y);
+            ctx.lineTo(corners.bottomLeft.x, corners.bottomLeft.y);
+            ctx.closePath();
+            ctx.stroke();
             ctx.restore();
         }
     });
