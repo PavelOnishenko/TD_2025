@@ -288,48 +288,91 @@ export default class StickFigure {
 
     /**
      * Get death pose with animation progress (0-1)
-     * Falls to the ground gradually
+     * Falls to the ground gradually, lying on back with feet pointing in movement direction
      */
     public static getDeathPose(progress: number): StickFigurePose {
         // Smooth fall using easing
         const fallProgress = 1 - Math.pow(1 - progress, 3); // Ease out cubic
-        const rotation = fallProgress * 90; // Rotate 90 degrees to horizontal
-        const dropHeight = fallProgress * 15;
 
-        // Simplified: just drop to ground
+        // Get the idle (standing) pose
+        const standingPose = this.getIdlePose();
+
+        // Define the final lying-down pose (lying on back, body horizontal)
+        // Body extends horizontally with head on left, feet on right (when facingRight=true)
+        const lyingPose: StickFigurePose = {
+            // Head is on the left side when lying down
+            headY: 15, // Near ground level
+
+            // Torso center (between head and hips)
+            torsoEndY: 15,
+
+            // Left arm (far arm when lying on back) - slightly back
+            leftShoulderX: -8,
+            leftShoulderY: 15,
+            leftElbowX: -15,
+            leftElbowY: 12,
+            leftHandX: -20,
+            leftHandY: 10,
+
+            // Right arm (near arm when lying on back) - slightly forward
+            rightShoulderX: 8,
+            rightShoulderY: 15,
+            rightElbowX: 15,
+            rightElbowY: 18,
+            rightHandX: 20,
+            rightHandY: 20,
+
+            // Left leg (far leg when lying on back) - extended toward feet direction
+            leftHipX: -2,
+            leftHipY: 15,
+            leftKneeX: 8,
+            leftKneeY: 16,
+            leftFootX: 18,
+            leftFootY: 17,
+
+            // Right leg (near leg when lying on back) - extended toward feet direction
+            rightHipX: 2,
+            rightHipY: 15,
+            rightKneeX: 12,
+            rightKneeY: 14,
+            rightFootX: 22,
+            rightFootY: 13
+        };
+
+        // Interpolate between standing and lying poses
+        const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+
         return {
-            headY: -20 + dropHeight + rotation * 0.3,
-            torsoEndY: 5 + dropHeight + rotation * 0.4,
+            headY: lerp(standingPose.headY, lyingPose.headY, fallProgress),
+            torsoEndY: lerp(standingPose.torsoEndY, lyingPose.torsoEndY, fallProgress),
 
-            // Arms fall limply
-            leftShoulderX: -5,
-            leftShoulderY: -12 + dropHeight + rotation * 0.3,
-            leftElbowX: -8 - fallProgress * 8,
-            leftElbowY: 0 + dropHeight + rotation * 0.4,
-            leftHandX: -12 - fallProgress * 10,
-            leftHandY: 5 + dropHeight + rotation * 0.5,
+            leftShoulderX: lerp(standingPose.leftShoulderX, lyingPose.leftShoulderX, fallProgress),
+            leftShoulderY: lerp(standingPose.leftShoulderY, lyingPose.leftShoulderY, fallProgress),
+            leftElbowX: lerp(standingPose.leftElbowX, lyingPose.leftElbowX, fallProgress),
+            leftElbowY: lerp(standingPose.leftElbowY, lyingPose.leftElbowY, fallProgress),
+            leftHandX: lerp(standingPose.leftHandX, lyingPose.leftHandX, fallProgress),
+            leftHandY: lerp(standingPose.leftHandY, lyingPose.leftHandY, fallProgress),
 
-            rightShoulderX: 5,
-            rightShoulderY: -12 + dropHeight + rotation * 0.3,
-            rightElbowX: 8 + fallProgress * 8,
-            rightElbowY: 0 + dropHeight + rotation * 0.4,
-            rightHandX: 12 + fallProgress * 10,
-            rightHandY: 5 + dropHeight + rotation * 0.5,
+            rightShoulderX: lerp(standingPose.rightShoulderX, lyingPose.rightShoulderX, fallProgress),
+            rightShoulderY: lerp(standingPose.rightShoulderY, lyingPose.rightShoulderY, fallProgress),
+            rightElbowX: lerp(standingPose.rightElbowX, lyingPose.rightElbowX, fallProgress),
+            rightElbowY: lerp(standingPose.rightElbowY, lyingPose.rightElbowY, fallProgress),
+            rightHandX: lerp(standingPose.rightHandX, lyingPose.rightHandX, fallProgress),
+            rightHandY: lerp(standingPose.rightHandY, lyingPose.rightHandY, fallProgress),
 
-            // Legs collapse
-            leftHipX: -3,
-            leftHipY: 5 + dropHeight + rotation * 0.4,
-            leftKneeX: -3 - fallProgress * 5,
-            leftKneeY: 15 + dropHeight + rotation * 0.5,
-            leftFootX: -3 - fallProgress * 8,
-            leftFootY: 25 + dropHeight + rotation * 0.6,
+            leftHipX: lerp(standingPose.leftHipX, lyingPose.leftHipX, fallProgress),
+            leftHipY: lerp(standingPose.leftHipY, lyingPose.leftHipY, fallProgress),
+            leftKneeX: lerp(standingPose.leftKneeX, lyingPose.leftKneeX, fallProgress),
+            leftKneeY: lerp(standingPose.leftKneeY, lyingPose.leftKneeY, fallProgress),
+            leftFootX: lerp(standingPose.leftFootX, lyingPose.leftFootX, fallProgress),
+            leftFootY: lerp(standingPose.leftFootY, lyingPose.leftFootY, fallProgress),
 
-            rightHipX: 3,
-            rightHipY: 5 + dropHeight + rotation * 0.4,
-            rightKneeX: 3 + fallProgress * 5,
-            rightKneeY: 15 + dropHeight + rotation * 0.5,
-            rightFootX: 3 + fallProgress * 8,
-            rightFootY: 25 + dropHeight + rotation * 0.6
+            rightHipX: lerp(standingPose.rightHipX, lyingPose.rightHipX, fallProgress),
+            rightHipY: lerp(standingPose.rightHipY, lyingPose.rightHipY, fallProgress),
+            rightKneeX: lerp(standingPose.rightKneeX, lyingPose.rightKneeX, fallProgress),
+            rightKneeY: lerp(standingPose.rightKneeY, lyingPose.rightKneeY, fallProgress),
+            rightFootX: lerp(standingPose.rightFootX, lyingPose.rightFootX, fallProgress),
+            rightFootY: lerp(standingPose.rightFootY, lyingPose.rightFootY, fallProgress)
         };
     }
 

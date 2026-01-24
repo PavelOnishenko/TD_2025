@@ -27,6 +27,8 @@ export default class Enemy extends Entity {
     public facingRight: boolean = true;
     public animationState: AnimationState = 'idle';
     public color: string;
+    public isDead: boolean = false; // Track if enemy is dead (after death animation completes)
+    public justDied: boolean = false; // True for one frame when enemy dies (for score tracking)
 
     private attackCooldownTimer: number = 0;
     private hasDealtDamageThisAttack: boolean = false; // Track if damage was dealt in current attack
@@ -53,6 +55,14 @@ export default class Enemy extends Entity {
     }
 
     public update(deltaTime: number): void {
+        // Clear the justDied flag (it's only true for one frame)
+        this.justDied = false;
+
+        // Dead enemies only update their animation progress
+        if (this.isDead) {
+            return;
+        }
+
         this.move(deltaTime);
         this.updateAttackCooldown(deltaTime);
         this.updatePunchAnimation(deltaTime);
@@ -126,6 +136,12 @@ export default class Enemy extends Entity {
                     this.deathAnimationTimer -= deltaTime * 1000;
                     const deathProgress = 1 - (this.deathAnimationTimer / balanceConfig.enemy.attack.deathAnimationDuration);
                     this.animationProgress = Math.max(0, Math.min(1, deathProgress));
+
+                    // When animation completes, mark as dead (but keep rendering)
+                    if (this.deathAnimationTimer <= 0) {
+                        this.isDead = true;
+                        this.animationProgress = 1; // Keep at final pose
+                    }
                 }
                 break;
 
@@ -362,12 +378,16 @@ export default class Enemy extends Entity {
     }
 
     public takeDamage(amount: number): void {
+        // Can't take damage if already dead
+        if (this.animationState === 'death') {
+            return;
+        }
+
         this.health -= amount;
         if (this.health <= 0) {
             this.health = 0;
             this.triggerDeathAnimation();
-            // Mark as inactive immediately so Game.ts can remove it
-            this.active = false;
+            // Don't set active = false - let the death animation play
         } else {
             this.triggerHurtAnimation();
         }
@@ -388,7 +408,7 @@ export default class Enemy extends Entity {
         this.animationProgress = 0;
         this.velocityX = 0;
         this.velocityY = 0;
-        // Note: active flag is already set to false in takeDamage()
+        this.justDied = true; // Set flag for score tracking
     }
 
     public draw(ctx: CanvasRenderingContext2D, viewport?: Viewport): void {
@@ -426,6 +446,11 @@ export default class Enemy extends Entity {
     }
 
     private drawHealthBar(ctx: CanvasRenderingContext2D, screenX: number, screenY: number): void {
+        // Don't draw health bar for dead enemies
+        if (this.animationState === 'death') {
+            return;
+        }
+
         const barWidth: number = this.width;
         const barHeight: number = 3;
         const barY: number = screenY - this.height / 2 - 8;
