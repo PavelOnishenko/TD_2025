@@ -106,7 +106,7 @@ export const balanceConfig: BalanceConfig = {
     speed: 80,
     attack: {
       armLength: 50,          // horizontal range of punch (like arm length)
-      verticalThreshold: 30,  // vertical offset tolerance
+      verticalThreshold: 8,   // vertical offset tolerance (small value to restrict attacks to mostly horizontal)
       cooldown: 1500,
       damage: 10,
       punchDuration: 300,
