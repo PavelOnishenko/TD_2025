@@ -442,7 +442,7 @@ export default class Enemy extends Entity {
                 break;
         }
 
-        StickFigure.draw(ctx, screenX, screenY, pose, this.color, this.facingRight);
+        StickFigure.draw(ctx, screenX, screenY, pose, this.color, this.facingRight, balanceConfig.enemy.scale);
     }
 
     private drawHealthBar(ctx: CanvasRenderingContext2D, screenX: number, screenY: number): void {

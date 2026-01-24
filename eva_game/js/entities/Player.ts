@@ -288,7 +288,7 @@ export default class Player extends Entity {
 
         const color: string = '#64c8ff';
 
-        StickFigure.draw(ctx, screenX, screenY, pose, color, this.facingRight);
+        StickFigure.draw(ctx, screenX, screenY, pose, color, this.facingRight, balanceConfig.player.scale);
     }
 
     private drawHealthBar(ctx: CanvasRenderingContext2D, screenX: number, screenY: number): void {
