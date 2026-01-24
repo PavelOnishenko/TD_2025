@@ -150,10 +150,13 @@ export default class Enemy extends Entity {
         const dy: number = targetY - this.y;
         const distance: number = Math.sqrt(dx * dx + dy * dy);
 
-        // Check if we're within attack range
         const attackConfig = balanceConfig.enemy.attack;
+        const collisionConfig = balanceConfig.collision.characterSeparation;
         const horizontalDistance: number = Math.abs(dx);
         const verticalDistance: number = Math.abs(dy);
+
+        // Check if we're too close to the player (prevent merging)
+        const tooCloseToPlayer: boolean = distance < collisionConfig.distance;
 
         // Check if we're facing the target (or will be after updating facing direction)
         const wouldBeFacingTarget: boolean = (dx > 0 && this.facingRight) || (dx < 0 && !this.facingRight) || dx === 0;
@@ -164,45 +167,82 @@ export default class Enemy extends Entity {
             horizontalDistance < attackConfig.armLength &&
             verticalDistance < attackConfig.verticalThreshold;
 
+        // If too close to player and can't attack, move away or circle around
+        if (tooCloseToPlayer && !inAttackRange) {
+            // Move to a flanking position - circle around to the side
+            this.moveToFlankingPosition(dx, dy, distance, otherEnemies);
+            return;
+        }
+
+        // If at good distance but wrong angle (e.g., above/below), circle to the sides
+        if (!tooCloseToPlayer && !inAttackRange && horizontalDistance < verticalDistance) {
+            // We're more vertically aligned than horizontally - move to the side
+            this.moveToFlankingPosition(dx, dy, distance, otherEnemies);
+            return;
+        }
+
         this.updateFacingDirection(dx);
 
         // Calculate separation from other enemies to prevent clustering
         const enemySeparation = this.calculateSeparation(otherEnemies);
+        const separationMagnitude = Math.sqrt(enemySeparation.x * enemySeparation.x + enemySeparation.y * enemySeparation.y);
 
-        // Calculate separation from player to prevent merging
-        const playerSeparation = player ? this.calculatePlayerSeparation(player) : { x: 0, y: 0 };
-
-        // Combine both separation forces
-        const totalSeparation = {
-            x: enemySeparation.x + playerSeparation.x,
-            y: enemySeparation.y + playerSeparation.y
-        };
-
-        // Calculate separation magnitude to determine if we need to move
-        const separationMagnitude = Math.sqrt(totalSeparation.x * totalSeparation.x + totalSeparation.y * totalSeparation.y);
-
-        // Stop only if in attack range AND no significant separation force is pushing us
-        // This allows enemies to spread out around the player even when in attack range
-        if (inAttackRange && separationMagnitude < 0.1) {
-            this.velocityX = 0;
-            this.velocityY = 0;
+        // If in attack range, stop or only apply enemy separation
+        if (inAttackRange) {
+            if (separationMagnitude < 0.1) {
+                // Perfect position, stop
+                this.velocityX = 0;
+                this.velocityY = 0;
+            } else {
+                // Need to spread out from other enemies
+                this.velocityX = (enemySeparation.x / separationMagnitude) * balanceConfig.enemy.speed;
+                this.velocityY = (enemySeparation.y / separationMagnitude) * balanceConfig.enemy.speed;
+            }
             return;
         }
 
-        // If in attack range but separation is pushing us, prioritize separation over player-seeking
-        if (inAttackRange) {
-            // Apply only separation force to spread out around player
-            const separationDistance = Math.sqrt(totalSeparation.x * totalSeparation.x + totalSeparation.y * totalSeparation.y);
-            if (separationDistance > 0) {
-                this.velocityX = (totalSeparation.x / separationDistance) * balanceConfig.enemy.speed;
-                this.velocityY = (totalSeparation.y / separationDistance) * balanceConfig.enemy.speed;
-            } else {
-                this.velocityX = 0;
-                this.velocityY = 0;
-            }
+        // Not in attack range, move toward player while avoiding other enemies
+        this.setVelocityWithSeparation(dx, dy, distance, enemySeparation);
+    }
+
+    private moveToFlankingPosition(dx: number, dy: number, distance: number, otherEnemies?: Enemy[]): void {
+        // Calculate a flanking position - move to the side of the player
+        // Choose left or right based on which is closer
+        const moveRight = dx > 0;
+
+        // Calculate perpendicular direction (to circle around)
+        // If player is to the right, move in a combination of right and sideways
+        let targetDirX = dx;
+        let targetDirY = dy;
+
+        // If we're too vertically aligned, prioritize horizontal movement
+        if (Math.abs(dy) > Math.abs(dx)) {
+            // Move horizontally to get to the side
+            targetDirX = moveRight ? 1 : -1;
+            targetDirY = dy > 0 ? 0.3 : -0.3; // Small vertical component
         } else {
-            // Not in attack range, combine player-seeking with enemy separation
-            this.setVelocityWithSeparation(dx, dy, distance, totalSeparation);
+            // Move in an arc to circle around
+            targetDirX = dx;
+            targetDirY = dy * 0.5; // Reduce vertical component
+        }
+
+        this.updateFacingDirection(targetDirX);
+
+        // Calculate separation from other enemies
+        const enemySeparation = this.calculateSeparation(otherEnemies);
+
+        // Combine flanking movement with enemy separation
+        const finalDirX = targetDirX + enemySeparation.x;
+        const finalDirY = targetDirY + enemySeparation.y;
+
+        const finalDistance = Math.sqrt(finalDirX * finalDirX + finalDirY * finalDirY);
+
+        if (finalDistance > 0) {
+            this.velocityX = (finalDirX / finalDistance) * balanceConfig.enemy.speed;
+            this.velocityY = (finalDirY / finalDistance) * balanceConfig.enemy.speed;
+        } else {
+            this.velocityX = targetDirX * balanceConfig.enemy.speed;
+            this.velocityY = targetDirY * balanceConfig.enemy.speed;
         }
     }
 
@@ -244,25 +284,6 @@ export default class Enemy extends Entity {
         if (separationCount > 0) {
             separation.x /= separationCount;
             separation.y /= separationCount;
-        }
-
-        return separation;
-    }
-
-    private calculatePlayerSeparation(player: Player): { x: number; y: number } {
-        const separation = { x: 0, y: 0 };
-        const config = balanceConfig.collision.characterSeparation;
-
-        const dx = this.x - player.x;
-        const dy = this.y - player.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-
-        // If too close to player, push away with strong force
-        if (distance > 0 && distance < config.distance) {
-            // Normalize and weight by how close they are (closer = stronger push)
-            const strength = (1 - distance / config.distance) * config.strength;
-            separation.x = (dx / distance) * strength;
-            separation.y = (dy / distance) * strength;
         }
 
         return separation;
