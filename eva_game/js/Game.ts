@@ -7,6 +7,7 @@ import { GameOverCallback } from './types/game.js';
 import Player from './entities/Player.js';
 import Enemy from './entities/Enemy.js';
 import { balanceConfig } from './config/balanceConfig.js';
+import { decorationConfig } from './config/decorationConfig.js';
 
 // Color palette for enemies - each enemy gets a unique color
 const ENEMY_COLORS: string[] = [
@@ -333,7 +334,7 @@ export default class Game {
         this.renderer.fillRect(0, roadY, balanceConfig.world.width, roadHeight, '#4a4a6a');
 
         // Draw road grid only in playable area
-        this.drawRoadGrid(50, roadY, roadHeight);
+        this.drawRoadGrid(roadY, roadHeight);
 
         // Dividing line between background and road
         this.ctx.strokeStyle = '#f39c12';
@@ -344,25 +345,73 @@ export default class Game {
         this.ctx.stroke();
     }
 
-    private drawRoadGrid(gridSize: number, roadY: number, roadHeight: number): void {
-        this.ctx.strokeStyle = 'rgba(100, 100, 150, 0.3)';
-        this.ctx.lineWidth = 1;
+    private drawRoadGrid(roadY: number, roadHeight: number): void {
+        const gridConfig = decorationConfig.grid;
 
-        // Vertical grid lines across the entire road
-        for (let x = 0; x <= balanceConfig.world.width; x += gridSize) {
+        this.ctx.strokeStyle = gridConfig.strokeColor;
+        this.ctx.lineWidth = gridConfig.lineWidth;
+
+        const roadBottom = roadY + roadHeight;
+        const centerX = balanceConfig.world.width / 2;
+        const worldWidth = balanceConfig.world.width;
+
+        // Perspective factor from config
+        const perspectiveFactor = gridConfig.perspective.factor;
+
+        // Clip to road area only - no drawing outside road bounds
+        this.ctx.save();
+        this.ctx.beginPath();
+        this.ctx.rect(0, roadY, worldWidth, roadHeight);
+        this.ctx.clip();
+
+        // Calculate extended range to cover full width at the top
+        // To reach topX=0, we need bottomX = centerX * (1 - 1/perspectiveFactor)
+        // To reach topX=width, we need bottomX = centerX * (1 + 1/perspectiveFactor)
+        const expansionFactor = 1 / perspectiveFactor;
+        const extendedLeft = centerX * (1 - expansionFactor);
+        const extendedRight = centerX * (1 + expansionFactor);
+
+        // Draw vertical lines with perspective (converging towards center)
+        // Use extended range to ensure full coverage at the top
+        for (let x = extendedLeft; x <= extendedRight; x += gridConfig.cellSize) {
+            // Calculate how far this line is from center (normalized)
+            const offsetFromCenter = (x - centerX) / centerX;
+
+            // Top point: closer to center (perspective effect)
+            const topX = centerX + (offsetFromCenter * centerX * perspectiveFactor);
+
+            // Bottom point: at the actual x position (no perspective)
+            const bottomX = x;
+
             this.ctx.beginPath();
-            this.ctx.moveTo(x, roadY);
-            this.ctx.lineTo(x, roadY + roadHeight);
+            this.ctx.moveTo(topX, roadY);
+            this.ctx.lineTo(bottomX, roadBottom);
             this.ctx.stroke();
         }
 
-        // Horizontal grid lines only in the road area
-        for (let y = roadY; y <= roadY + roadHeight; y += gridSize) {
+        // Draw horizontal lines with perspective (getting narrower towards top)
+        const numHorizontalLines = Math.floor(roadHeight / gridConfig.cellSize);
+        for (let i = 0; i <= numHorizontalLines; i++) {
+            const y = roadY + (i * gridConfig.cellSize);
+
+            // Calculate depth factor (0 at top, 1 at bottom)
+            const depth = (y - roadY) / roadHeight;
+
+            // Interpolate width based on depth
+            const widthAtThisDepth = perspectiveFactor + (1 - perspectiveFactor) * depth;
+            const halfWidth = (worldWidth / 2) * widthAtThisDepth;
+
+            const leftX = centerX - halfWidth;
+            const rightX = centerX + halfWidth;
+
             this.ctx.beginPath();
-            this.ctx.moveTo(0, y);
-            this.ctx.lineTo(balanceConfig.world.width, y);
+            this.ctx.moveTo(leftX, y);
+            this.ctx.lineTo(rightX, y);
             this.ctx.stroke();
         }
+
+        // Restore context to remove clipping
+        this.ctx.restore();
     }
 
     private drawEntities(): void {
