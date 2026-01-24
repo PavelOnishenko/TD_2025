@@ -346,19 +346,54 @@ export default class Game {
         this.ctx.strokeStyle = 'rgba(100, 100, 150, 0.3)';
         this.ctx.lineWidth = 1;
 
-        // Vertical grid lines across the entire road
-        for (let x = 0; x <= balanceConfig.world.width; x += gridSize) {
+        const roadBottom = roadY + roadHeight;
+        const centerX = balanceConfig.world.width / 2;
+
+        // Vanishing point for perspective (above the road, creates depth effect)
+        const vanishingPointY = roadY - 100;
+
+        // Perspective factor: how much the grid narrows at the top
+        // 0.3 means the top will be 30% of the full width
+        const perspectiveFactor = 0.3;
+
+        // Draw vertical lines with perspective (converging towards center)
+        const numVerticalLines = Math.floor(balanceConfig.world.width / gridSize);
+        for (let i = 0; i <= numVerticalLines; i++) {
+            const x = i * gridSize;
+
+            // Calculate how far this line is from center (normalized -1 to 1)
+            const offsetFromCenter = (x - centerX) / centerX;
+
+            // Top point: closer to center (perspective effect)
+            const topX = centerX + (offsetFromCenter * centerX * perspectiveFactor);
+
+            // Bottom point: at the actual x position (no perspective)
+            const bottomX = x;
+
             this.ctx.beginPath();
-            this.ctx.moveTo(x, roadY);
-            this.ctx.lineTo(x, roadY + roadHeight);
+            this.ctx.moveTo(topX, roadY);
+            this.ctx.lineTo(bottomX, roadBottom);
             this.ctx.stroke();
         }
 
-        // Horizontal grid lines only in the road area
-        for (let y = roadY; y <= roadY + roadHeight; y += gridSize) {
+        // Draw horizontal lines with perspective (getting narrower towards top)
+        const numHorizontalLines = Math.floor(roadHeight / gridSize);
+        for (let i = 0; i <= numHorizontalLines; i++) {
+            const y = roadY + (i * gridSize);
+
+            // Calculate depth factor (0 at top, 1 at bottom)
+            const depth = (y - roadY) / roadHeight;
+
+            // Interpolate width based on depth
+            const widthAtThisDepth = perspectiveFactor + (1 - perspectiveFactor) * depth;
+            const halfWidth = (balanceConfig.world.width / 2) * widthAtThisDepth;
+
+            const leftX = centerX - halfWidth;
+            const rightX = centerX + halfWidth;
+
             this.ctx.beginPath();
-            this.ctx.moveTo(0, y);
-            this.ctx.lineTo(balanceConfig.world.width, y);
+            this.ctx.moveTo(leftX, y);
+            this.ctx.lineTo(rightX, y);
             this.ctx.stroke();
         }
     }
