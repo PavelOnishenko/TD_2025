@@ -3,7 +3,7 @@ import Renderer from '../../engine/core/Renderer.js';
 import InputManager from '../../engine/systems/InputManager.js';
 import ScoreManager from '../../engine/core/ScoreManager.js';
 import { Viewport, WorldBounds } from './types/engine.js';
-import { GameOverCallback } from './types/game.js';
+import { GameOverCallback, AttackPosition } from './types/game.js';
 import Player from './entities/Player.js';
 import Enemy from './entities/Enemy.js';
 import { balanceConfig } from './config/balanceConfig.js';
@@ -39,6 +39,7 @@ export default class Game {
     private level: number = 1;
     private viewport?: Viewport;
     private nextColorIndex: number = 0;
+    private attackPositions: AttackPosition[] = [];
 
     public gameOver: boolean = false;
     public isPaused: boolean = false;
@@ -131,9 +132,120 @@ export default class Game {
         this.level = 1;
         this.enemies = [];
         this.nextColorIndex = 0;
+        this.attackPositions = [];
         this.initializeGame();
         this.updateHUD();
         this.loop.start();
+    }
+
+    /**
+     * Update attack positions based on player location
+     * Two positions: left and right side of the player
+     */
+    private updateAttackPositions(): void {
+        if (!this.player) {
+            return;
+        }
+
+        const distance = balanceConfig.enemy.attackPositions.distanceFromPlayer;
+
+        // Left attack position
+        const leftPos: AttackPosition = {
+            x: this.player.x - distance,
+            y: this.player.y,
+            side: 'left',
+            occupied: false,
+            occupiedBy: null,
+        };
+
+        // Right attack position
+        const rightPos: AttackPosition = {
+            x: this.player.x + distance,
+            y: this.player.y,
+            side: 'right',
+            occupied: false,
+            occupiedBy: null,
+        };
+
+        this.attackPositions = [leftPos, rightPos];
+    }
+
+    /**
+     * Assign each enemy to their preferred attack position
+     * Enemies prefer the closest available position
+     */
+    private assignEnemyAttackPositions(): void {
+        if (!this.player || this.attackPositions.length === 0) {
+            return;
+        }
+
+        // Clear all occupation data
+        for (const pos of this.attackPositions) {
+            pos.occupied = false;
+            pos.occupiedBy = null;
+        }
+
+        // Get all alive enemies and sort by distance to player
+        const aliveEnemies = this.enemies.filter(
+            e => e.animationState !== 'death' && !e.isDead
+        );
+
+        // For each enemy, find their preferred attack position
+        for (const enemy of aliveEnemies) {
+            let closestPos: AttackPosition | null = null;
+            let closestDistance = Infinity;
+
+            // Find the closest available position
+            for (const pos of this.attackPositions) {
+                if (pos.occupied) {
+                    continue;
+                }
+
+                const dx = pos.x - enemy.x;
+                const dy = pos.y - enemy.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+
+                if (distance < closestDistance) {
+                    closestDistance = distance;
+                    closestPos = pos;
+                }
+            }
+
+            // If we found an available position, assign it
+            if (closestPos) {
+                closestPos.occupied = true;
+                closestPos.occupiedBy = enemy.id;
+            }
+        }
+    }
+
+    /**
+     * Get the target attack position for a specific enemy
+     */
+    private getEnemyTargetPosition(enemy: Enemy): { x: number; y: number } {
+        // Find which position this enemy should go to
+        for (const pos of this.attackPositions) {
+            if (pos.occupiedBy === enemy.id) {
+                return { x: pos.x, y: pos.y };
+            }
+        }
+
+        // If no position is assigned, find the closest one
+        let closestPos = this.attackPositions[0];
+        let closestDistance = Infinity;
+
+        for (const pos of this.attackPositions) {
+            const dx = pos.x - enemy.x;
+            const dy = pos.y - enemy.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance < closestDistance) {
+                closestDistance = distance;
+                closestPos = pos;
+            }
+        }
+
+        return { x: closestPos.x, y: closestPos.y };
     }
 
     private update(deltaTime: number): void {
@@ -142,6 +254,8 @@ export default class Game {
         }
 
         this.updatePlayer(deltaTime);
+        this.updateAttackPositions();
+        this.assignEnemyAttackPositions();
         this.updateEnemies(deltaTime);
         this.checkCollisions();
         this.updateHUD();
@@ -213,8 +327,12 @@ export default class Game {
 
             // Only update alive enemies
             if (enemy.animationState !== 'death' && !enemy.isDead) {
-                // Pass all enemies so they can avoid clustering
-                enemy.moveToward(this.player.x, this.player.y, deltaTime, this.enemies);
+                // Get the target attack position for this enemy
+                const targetPos = this.getEnemyTargetPosition(enemy);
+
+                // Move toward the assigned attack position, not directly to the player
+                enemy.moveToward(targetPos.x, targetPos.y, deltaTime, this.enemies);
+
                 // Keep enemies within road bounds
                 this.keepEnemyInBounds(enemy);
                 aliveEnemyCount++;
@@ -307,6 +425,7 @@ export default class Game {
     private render(): void {
         this.renderer.beginFrame();
         this.drawBackground();
+        this.drawAttackPositions();
         this.drawEntities();
         this.renderer.endFrame();
     }
@@ -358,6 +477,54 @@ export default class Game {
             this.ctx.moveTo(0, y);
             this.ctx.lineTo(balanceConfig.world.width, y);
             this.ctx.stroke();
+        }
+    }
+
+    /**
+     * Draw visual indicators for attack positions on the floor
+     */
+    private drawAttackPositions(): void {
+        const radius = balanceConfig.enemy.attackPositions.visualRadius;
+
+        for (const pos of this.attackPositions) {
+            // Draw outer circle (always visible)
+            this.ctx.beginPath();
+            this.ctx.arc(pos.x, pos.y, radius, 0, Math.PI * 2);
+            this.ctx.strokeStyle = pos.occupied ? '#ff4444' : '#44ff44';
+            this.ctx.lineWidth = 2;
+            this.ctx.stroke();
+
+            // Draw inner circle with transparency
+            this.ctx.beginPath();
+            this.ctx.arc(pos.x, pos.y, radius * 0.6, 0, Math.PI * 2);
+            this.ctx.fillStyle = pos.occupied ? 'rgba(255, 68, 68, 0.3)' : 'rgba(68, 255, 68, 0.3)';
+            this.ctx.fill();
+
+            // Draw crosshair in the center
+            this.ctx.strokeStyle = pos.occupied ? '#ff4444' : '#44ff44';
+            this.ctx.lineWidth = 1;
+
+            // Horizontal line
+            this.ctx.beginPath();
+            this.ctx.moveTo(pos.x - radius * 0.4, pos.y);
+            this.ctx.lineTo(pos.x + radius * 0.4, pos.y);
+            this.ctx.stroke();
+
+            // Vertical line
+            this.ctx.beginPath();
+            this.ctx.moveTo(pos.x, pos.y - radius * 0.4);
+            this.ctx.lineTo(pos.x, pos.y + radius * 0.4);
+            this.ctx.stroke();
+
+            // Add label (L or R) below the position
+            this.ctx.font = '10px monospace';
+            this.ctx.fillStyle = pos.occupied ? '#ff4444' : '#44ff44';
+            this.ctx.textAlign = 'center';
+            this.ctx.fillText(
+                pos.side === 'left' ? 'L' : 'R',
+                pos.x,
+                pos.y + radius + 12
+            );
         }
     }
 

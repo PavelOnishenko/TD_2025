@@ -46,6 +46,11 @@ export const balanceConfig = {
       distance: 70,
       strength: 1.2,
     },
+    // Attack positions - optimal positions for enemies to attack from
+    attackPositions: {
+      distanceFromPlayer: 55,  // Distance from player (approximately arm length)
+      visualRadius: 8,         // Radius of visual indicator on floor
+    },
   },
 
   // Spawn settings (from other branch)

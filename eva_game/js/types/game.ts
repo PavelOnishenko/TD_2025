@@ -12,3 +12,15 @@ export interface GameConfig {
 export interface GameOverCallback {
     (finalScore: number): void;
 }
+
+/**
+ * Attack position - optimal positions for enemies to attack the player from
+ * Only one enemy can occupy each position at a time
+ */
+export interface AttackPosition {
+    x: number;
+    y: number;
+    side: 'left' | 'right';
+    occupied: boolean;
+    occupiedBy: number | null;  // Enemy ID that occupies this position
+}
