@@ -673,6 +673,30 @@ function drawPlatforms(game) {
     });
 }
 
+// Helper function to draw isometric diamond shape
+function drawIsometricCell(ctx, cell, fillStyle, strokeStyle = null, lineWidth = 2) {
+    const centerX = cell.x + cell.w / 2;
+    const centerY = cell.y + cell.h / 2;
+
+    ctx.beginPath();
+    ctx.moveTo(centerX, cell.y); // Top point
+    ctx.lineTo(cell.x + cell.w, centerY); // Right point
+    ctx.lineTo(centerX, cell.y + cell.h); // Bottom point
+    ctx.lineTo(cell.x, centerY); // Left point
+    ctx.closePath();
+
+    if (fillStyle) {
+        ctx.fillStyle = fillStyle;
+        ctx.fill();
+    }
+
+    if (strokeStyle) {
+        ctx.strokeStyle = strokeStyle;
+        ctx.lineWidth = lineWidth;
+        ctx.stroke();
+    }
+}
+
 function drawGrid(game) {
     const ctx = game.ctx;
     const grid = game.getAllCells();
@@ -684,16 +708,24 @@ function drawGrid(game) {
         const centerY = cell.y + cell.h / 2;
         let pulseIntensity = 0;
 
-        if (!cell.occupied && cellImage) {
-            ctx.drawImage(cellImage, cell.x, cell.y, cell.w, cell.h);
+        // Draw isometric grid cell background
+        if (!cell.occupied) {
+            // Draw isometric cell with gradient
+            ctx.save();
+            const gradient = ctx.createLinearGradient(cell.x, cell.y, cell.x + cell.w, cell.y + cell.h);
+            gradient.addColorStop(0, 'rgba(60, 180, 200, 0.15)');
+            gradient.addColorStop(0.5, 'rgba(80, 200, 220, 0.25)');
+            gradient.addColorStop(1, 'rgba(60, 180, 200, 0.15)');
+
+            drawIsometricCell(ctx, cell, gradient, 'rgba(100, 220, 255, 0.4)', 1.5);
+            ctx.restore();
         }
 
         if (!cell.occupied && cell.hover > 0) {
             const alpha = Math.min(0.35, 0.18 + cell.hover * 0.35);
             ctx.save();
             ctx.globalAlpha = alpha;
-            ctx.fillStyle = 'rgba(160, 220, 255, 1)';
-            ctx.fillRect(cell.x, cell.y, cell.w, cell.h);
+            drawIsometricCell(ctx, cell, 'rgba(160, 220, 255, 1)');
             ctx.restore();
         }
 
@@ -742,8 +774,7 @@ function drawGrid(game) {
             const alpha = Math.min(1, cell.highlight * 3);
             ctx.save();
             ctx.globalAlpha = alpha;
-            ctx.fillStyle = 'red';
-            ctx.fillRect(cell.x, cell.y, cell.w, cell.h);
+            drawIsometricCell(ctx, cell, 'red');
             ctx.restore();
         }
 
@@ -756,11 +787,17 @@ function drawGrid(game) {
                 ? `rgba(150, 210, 255, ${alpha})`
                 : `rgba(255, 200, 160, ${alpha})`;
 
+            // Create inset cell for merge selection border
+            const insetCell = {
+                x: cell.x + thickness * 2,
+                y: cell.y + thickness * 1.5,
+                w: cell.w - thickness * 4,
+                h: cell.h - thickness * 3
+            };
+
             ctx.save();
             ctx.globalCompositeOperation = 'lighter';
-            ctx.lineWidth = thickness;
-            ctx.strokeStyle = color;
-            ctx.strokeRect(cell.x + thickness * 0.75, cell.y + thickness * 0.75, cell.w - thickness * 1.5, cell.h - thickness * 1.5);
+            drawIsometricCell(ctx, insetCell, null, color, thickness);
             ctx.restore();
         }
 
@@ -773,11 +810,17 @@ function drawGrid(game) {
                 ? `rgba(130, 180, 255, ${alpha})`
                 : `rgba(255, 180, 120, ${alpha})`;
 
+            // Create inset cell for merge hint border
+            const insetCell = {
+                x: cell.x + thickness * 2,
+                y: cell.y + thickness * 1.5,
+                w: cell.w - thickness * 4,
+                h: cell.h - thickness * 3
+            };
+
             ctx.save();
             ctx.globalCompositeOperation = 'lighter';
-            ctx.lineWidth = thickness;
-            ctx.strokeStyle = color;
-            ctx.strokeRect(cell.x + thickness, cell.y + thickness, cell.w - thickness * 2, cell.h - thickness * 2);
+            drawIsometricCell(ctx, insetCell, null, color, thickness);
             ctx.restore();
         }
     });
