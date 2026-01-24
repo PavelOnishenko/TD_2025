@@ -3,78 +3,7 @@
  * Centralized location for all game balance parameters
  */
 
-export interface BalanceConfig {
-  player: {
-    maxHealth: number;
-    width: number;
-    height: number;
-
-    speed: number;
-    attack: {
-      duration: number;           // ms
-      cooldown: number;           // ms
-      armLength: number;          // pixels - horizontal range in facing direction
-      verticalThreshold: number;  // pixels - vertical offset up/down where hits still land
-      damage: number;             // damage dealt to enemies
-      knockbackForce: number;     // force applied to enemies when hit
-      hurtAnimationDuration: number;  // ms
-      deathAnimationDuration: number; // ms
-    };
-  };
-
-  enemy: {
-    maxHealth: number;
-
-    width: number;
-    height: number;
-
-    speed: number;
-    attack: {
-      armLength: number;          // pixels - horizontal range in facing direction
-      verticalThreshold: number;  // pixels - vertical offset up/down where hits still land
-      cooldown: number;           // ms
-      damage: number;             // damage dealt to player
-      punchDuration: number;      // ms
-      hurtAnimationDuration: number;  // ms
-      deathAnimationDuration: number; // ms
-    };
-    separation: {
-      distance: number;           // pixels
-      strength: number;           // multiplier
-    };
-  };
-
-  spawn: {
-    initialEnemyCount: number;
-    waveSize: number;
-    spawnDelay: number;            // ms
-    minDistanceFromPlayer: number;
-    maxDistanceFromPlayer: number;
-  };
-
-  game: {
-    canvasWidth: number;
-    canvasHeight: number;
-  };
-
-  world: {
-    width: number;
-    height: number;
-  };
-
-  // Split-screen layout for beat 'em up style
-  layout: {
-    backgroundHeight: number;  // Height of top background/wall area
-    roadHeight: number;        // Height of bottom playable road area
-  };
-
-  // Collision settings for beat 'em up depth
-  collision: {
-    feetColliderHeight: number;  // Height of feet collider (pixels from bottom)
-  };
-}
-
-export const balanceConfig: BalanceConfig = {
+export const balanceConfig = {
   player: {
     maxHealth: 100,
 
