@@ -7,6 +7,7 @@ import { GameOverCallback } from './types/game.js';
 import Player from './entities/Player.js';
 import Enemy from './entities/Enemy.js';
 import { balanceConfig } from './config/balanceConfig.js';
+import { decorationConfig } from './config/decorationConfig.js';
 
 // Color palette for enemies - each enemy gets a unique color
 const ENEMY_COLORS: string[] = [
@@ -331,7 +332,7 @@ export default class Game {
         this.renderer.fillRect(0, roadY, balanceConfig.world.width, roadHeight, '#4a4a6a');
 
         // Draw road grid only in playable area
-        this.drawRoadGrid(50, roadY, roadHeight);
+        this.drawRoadGrid(roadY, roadHeight);
 
         // Dividing line between background and road
         this.ctx.strokeStyle = '#f39c12';
@@ -342,24 +343,25 @@ export default class Game {
         this.ctx.stroke();
     }
 
-    private drawRoadGrid(gridSize: number, roadY: number, roadHeight: number): void {
-        this.ctx.strokeStyle = 'rgba(100, 100, 150, 0.3)';
-        this.ctx.lineWidth = 1;
+    private drawRoadGrid(roadY: number, roadHeight: number): void {
+        const gridConfig = decorationConfig.grid;
+
+        this.ctx.strokeStyle = gridConfig.strokeColor;
+        this.ctx.lineWidth = gridConfig.lineWidth;
 
         const roadBottom = roadY + roadHeight;
         const centerX = balanceConfig.world.width / 2;
 
         // Vanishing point for perspective (above the road, creates depth effect)
-        const vanishingPointY = roadY - 100;
+        const vanishingPointY = roadY - gridConfig.perspective.vanishingPointOffset;
 
-        // Perspective factor: how much the grid narrows at the top
-        // 0.3 means the top will be 30% of the full width
-        const perspectiveFactor = 0.3;
+        // Perspective factor from config
+        const perspectiveFactor = gridConfig.perspective.factor;
 
         // Draw vertical lines with perspective (converging towards center)
-        const numVerticalLines = Math.floor(balanceConfig.world.width / gridSize);
+        const numVerticalLines = Math.floor(balanceConfig.world.width / gridConfig.cellSize);
         for (let i = 0; i <= numVerticalLines; i++) {
-            const x = i * gridSize;
+            const x = i * gridConfig.cellSize;
 
             // Calculate how far this line is from center (normalized -1 to 1)
             const offsetFromCenter = (x - centerX) / centerX;
@@ -377,9 +379,9 @@ export default class Game {
         }
 
         // Draw horizontal lines with perspective (getting narrower towards top)
-        const numHorizontalLines = Math.floor(roadHeight / gridSize);
+        const numHorizontalLines = Math.floor(roadHeight / gridConfig.cellSize);
         for (let i = 0; i <= numHorizontalLines; i++) {
-            const y = roadY + (i * gridSize);
+            const y = roadY + (i * gridConfig.cellSize);
 
             // Calculate depth factor (0 at top, 1 at bottom)
             const depth = (y - roadY) / roadHeight;
