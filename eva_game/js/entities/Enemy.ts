@@ -412,6 +412,13 @@ export default class Enemy extends Entity {
     }
 
     public draw(ctx: CanvasRenderingContext2D, viewport?: Viewport): void {
+        // Don't draw enemies outside the visible game arena (in the "darkness" beyond the edges)
+        // They still exist as physical objects but are invisible until they enter the playable area
+        const halfWidth = this.width / 2;
+        if (this.x + halfWidth < 0 || this.x - halfWidth > balanceConfig.world.width) {
+            return; // Enemy is outside the visible arena, don't render
+        }
+
         const screenX: number = this.x;
         const screenY: number = this.y;
 
