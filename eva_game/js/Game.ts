@@ -7,6 +7,7 @@ import { GameOverCallback } from './types/game.js';
 import Player from './entities/Player.js';
 import Enemy from './entities/Enemy.js';
 import { balanceConfig } from './config/balanceConfig.js';
+import { getViewportMetrics } from '../../engine/systems/ViewportManager.js';
 
 // Color palette for enemies - each enemy gets a unique color
 const ENEMY_COLORS: string[] = [
@@ -40,6 +41,7 @@ export default class Game {
     private viewport?: Viewport;
     private nextColorIndex: number = 0;
 
+    public worldBounds: WorldBounds;
     public gameOver: boolean = false;
     public isPaused: boolean = false;
     public onGameOver: GameOverCallback | null = null;
@@ -51,6 +53,14 @@ export default class Game {
             throw new Error('Failed to get 2D context from canvas');
         }
         this.ctx = context;
+
+        // Initialize world bounds with default values (will be updated by viewport)
+        this.worldBounds = {
+            minX: 0,
+            maxX: balanceConfig.world.width,
+            minY: 0,
+            maxY: balanceConfig.world.height,
+        };
 
         this.renderer = new Renderer(canvas, this.ctx);
         this.input = new InputManager();
@@ -74,7 +84,7 @@ export default class Game {
     }
 
     private initializeGame(): void {
-        const centerX: number = balanceConfig.world.width / 2;
+        const centerX: number = this.getWorldWidth() / 2;
         // Spawn player in the middle of the allowed Y range
         const roadY: number = balanceConfig.layout.backgroundHeight;
         const roadHeight: number = balanceConfig.layout.roadHeight;
@@ -95,10 +105,11 @@ export default class Game {
         const enemyHalfHeight: number = balanceConfig.enemy.height / 2;
         const enemyHalfWidth: number = balanceConfig.enemy.width / 2;
         const feetColliderHeight: number = balanceConfig.collision.feetColliderHeight;
+        const worldWidth = this.getWorldWidth();
 
         for (let i = 0; i < count; i++) {
             // Spawn enemies off-screen to the right, with some spacing between them
-            const x: number = balanceConfig.world.width + enemyHalfWidth + (i * 60);
+            const x: number = worldWidth + enemyHalfWidth + (i * 60);
             // Spawn enemies within allowed Y range (using feet collider bounds)
             const minY: number = roadY - enemyHalfHeight + feetColliderHeight;
             const maxY: number = roadBottom - enemyHalfHeight;
@@ -169,9 +180,10 @@ export default class Game {
 
         const halfWidth: number = this.player.width / 2;
         const halfHeight: number = this.player.height / 2;
+        const worldWidth = this.getWorldWidth();
 
         // Horizontal bounds: entire world width
-        this.player.x = Math.max(halfWidth, Math.min(balanceConfig.world.width - halfWidth, this.player.x));
+        this.player.x = Math.max(halfWidth, Math.min(worldWidth - halfWidth, this.player.x));
 
         // Vertical bounds: only feet collider restricted to road area
         const roadY: number = balanceConfig.layout.backgroundHeight;
@@ -319,18 +331,19 @@ export default class Game {
         const bgHeight = balanceConfig.layout.backgroundHeight;
         const roadY = bgHeight;
         const roadHeight = balanceConfig.layout.roadHeight;
+        const worldWidth = this.getWorldWidth();
 
         // Top part: Background wall (non-playable)
-        this.renderer.fillRect(0, 0, balanceConfig.world.width, bgHeight, '#1a1a2e');
+        this.renderer.fillRect(0, 0, worldWidth, bgHeight, '#1a1a2e');
 
         // Add some texture to the wall with darker stripes
         this.ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
         for (let y = 0; y < bgHeight; y += 40) {
-            this.ctx.fillRect(0, y, balanceConfig.world.width, 20);
+            this.ctx.fillRect(0, y, worldWidth, 20);
         }
 
         // Bottom part: Road (playable area)
-        this.renderer.fillRect(0, roadY, balanceConfig.world.width, roadHeight, '#4a4a6a');
+        this.renderer.fillRect(0, roadY, worldWidth, roadHeight, '#4a4a6a');
 
         // Draw road grid only in playable area
         this.drawRoadGrid(50, roadY, roadHeight);
@@ -340,16 +353,17 @@ export default class Game {
         this.ctx.lineWidth = 4;
         this.ctx.beginPath();
         this.ctx.moveTo(0, roadY);
-        this.ctx.lineTo(balanceConfig.world.width, roadY);
+        this.ctx.lineTo(worldWidth, roadY);
         this.ctx.stroke();
     }
 
     private drawRoadGrid(gridSize: number, roadY: number, roadHeight: number): void {
         this.ctx.strokeStyle = 'rgba(100, 100, 150, 0.3)';
         this.ctx.lineWidth = 1;
+        const worldWidth = this.getWorldWidth();
 
         // Vertical grid lines across the entire road
-        for (let x = 0; x <= balanceConfig.world.width; x += gridSize) {
+        for (let x = 0; x <= worldWidth; x += gridSize) {
             this.ctx.beginPath();
             this.ctx.moveTo(x, roadY);
             this.ctx.lineTo(x, roadY + roadHeight);
@@ -360,7 +374,7 @@ export default class Game {
         for (let y = roadY; y <= roadY + roadHeight; y += gridSize) {
             this.ctx.beginPath();
             this.ctx.moveTo(0, y);
-            this.ctx.lineTo(balanceConfig.world.width, y);
+            this.ctx.lineTo(worldWidth, y);
             this.ctx.stroke();
         }
     }
@@ -380,11 +394,25 @@ export default class Game {
     }
 
     public computeWorldBounds(): WorldBounds {
+        // Calculate world width based on screen aspect ratio to fill the screen
+        const metrics = getViewportMetrics();
+        const windowAspect = metrics.width / metrics.height;
+        const worldHeight = balanceConfig.world.height;
+        // Calculate width from aspect ratio, but use at least the minimum width from config
+        const worldWidth = Math.max(balanceConfig.world.width, worldHeight * windowAspect);
+
         return {
             minX: 0,
-            maxX: balanceConfig.world.width,
+            maxX: worldWidth,
             minY: 0,
-            maxY: balanceConfig.world.height,
+            maxY: worldHeight,
         };
+    }
+
+    /**
+     * Get the current world width (dynamic based on screen aspect ratio)
+     */
+    private getWorldWidth(): number {
+        return this.worldBounds.maxX - this.worldBounds.minX;
     }
 }
