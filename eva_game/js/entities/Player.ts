@@ -261,6 +261,27 @@ export default class Player extends Entity {
 
         this.drawStickFigure(ctx, screenX, screenY);
         this.drawHealthBar(ctx, screenX, screenY);
+        this.drawCoordinatePoint(ctx, screenX, screenY);
+    }
+
+    private drawCoordinatePoint(ctx: CanvasRenderingContext2D, screenX: number, screenY: number): void {
+        // Draw a small circle at the exact coordinate point
+        ctx.beginPath();
+        ctx.arc(screenX, screenY, 4, 0, Math.PI * 2);
+        ctx.fillStyle = '#ffff00'; // Yellow for player
+        ctx.fill();
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        // Draw coordinate text
+        ctx.font = '10px monospace';
+        ctx.fillStyle = '#ffff00';
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 2;
+        const coordText = `(${Math.round(screenX)}, ${Math.round(screenY)})`;
+        ctx.strokeText(coordText, screenX + 8, screenY - 8);
+        ctx.fillText(coordText, screenX + 8, screenY - 8);
     }
 
     private drawStickFigure(ctx: CanvasRenderingContext2D, screenX: number, screenY: number): void {
