@@ -73,8 +73,11 @@ export const balanceConfig = {
 
   // Split-screen layout for beat 'em up style
   layout: {
-    backgroundHeight: 320,  
-    roadHeight: 480,  
+    backgroundHeight: 320,
+    roadHeight: 480,
+    // Topmost Y coordinate on the road where player's feet collider can go
+    // This is the road boundary for player movement (defaults to backgroundHeight)
+    roadBoundaryTopY: 340,
   },
 
   // Collision settings for beat 'em up depth
@@ -85,12 +88,12 @@ export const balanceConfig = {
   // Attack position settings
   attackPosition: {
     distanceFromPlayer: 45,  // Distance from player center to attack position (arm's length)
-    positionReachedThreshold: 10,  // How close enemy needs to be to consider position reached
+    positionReachedThreshold: 5,  // How close enemy needs to be to consider position reached
     indicatorRadius: 12,  // Radius of the position indicator circle
     indicatorColor: 'rgba(255, 100, 100, 0.6)',  // Color of the position indicator
     lineColor: 'rgba(255, 100, 100, 0.4)',  // Color of the line from enemy to position
     lineWidth: 2,  // Width of the indicator line
-    attackPointThreshold: 4
+    attackPointThreshold: 8
   },
 
   // Waiting point settings - where enemies go after spawning to be visible

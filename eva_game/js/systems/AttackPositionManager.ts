@@ -100,19 +100,30 @@ export default class AttackPositionManager {
         }
 
         // Update the assigned enemy's target position (it moves with player)
-        if (this.assignedEnemy && this.attackSide) {
+        // Also recalculate the attack side based on current enemy position
+        if (this.assignedEnemy) {
+            // Dynamically recalculate which side the enemy should attack from
+            this.attackSide = this.determineSide(this.assignedEnemy, player);
             const position = this.getAttackPosition(player, this.attackSide);
             this.assignedEnemy.assignedAttackPosition = position;
 
+            // Calculate distance to attack position
+            const threshold = balanceConfig.attackPosition.positionReachedThreshold;
+            const dx = this.assignedEnemy.x - position.x;
+            const dy = this.assignedEnemy.y - position.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
             // Check if enemy has reached the attack position
             if (this.assignedEnemy.enemyState === 'movingToAttack') {
-                const threshold = balanceConfig.attackPosition.positionReachedThreshold;
-                const dx = this.assignedEnemy.x - position.x;
-                const dy = this.assignedEnemy.y - position.y;
-                const distance = Math.sqrt(dx * dx + dy * dy);
-
                 if (distance < threshold) {
                     this.assignedEnemy.enemyState = 'attacking';
+                }
+            }
+            // Check if enemy in attacking state has moved too far from attack position
+            // (happens when player moves away) - switch back to movingToAttack
+            else if (this.assignedEnemy.enemyState === 'attacking') {
+                if (distance >= threshold) {
+                    this.assignedEnemy.enemyState = 'movingToAttack';
                 }
             }
         }
@@ -198,12 +209,10 @@ export default class AttackPositionManager {
         ctx.setLineDash([5, 5]); // Dashed line
 
         ctx.beginPath();
-        // Enemy feet position (center-bottom)
-        const enemyFeetY = enemy.y + enemy.height / 2;
-        ctx.moveTo(enemy.x, enemyFeetY);
-        // Attack position (draw at player's feet level)
-        const positionY = y + player.height / 2;
-        ctx.lineTo(x, positionY);
+        // Entity coordinates are now at feet position
+        ctx.moveTo(enemy.x, enemy.y);
+        // Attack position is also at feet level
+        ctx.lineTo(x, y);
         ctx.stroke();
 
         ctx.setLineDash([]); // Reset dash
@@ -211,7 +220,7 @@ export default class AttackPositionManager {
         // Draw circle at attack position
         ctx.fillStyle = config.indicatorColor;
         ctx.beginPath();
-        ctx.arc(x, positionY, config.indicatorRadius, 0, Math.PI * 2);
+        ctx.arc(x, y, config.indicatorRadius, 0, Math.PI * 2);
         ctx.fill();
 
         // Draw circle outline

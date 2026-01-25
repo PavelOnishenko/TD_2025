@@ -315,7 +315,10 @@ export default class Player extends Entity {
     private drawHealthBar(ctx: CanvasRenderingContext2D, screenX: number, screenY: number): void {
         const barWidth: number = this.width;
         const barHeight: number = 4;
-        const barY: number = screenY - this.height / 2 - 10;
+        // screenY is now at feet position, figure extends upward
+        // Visual height: (25 + 20 + 8) * scale = 53 * scale (feet offset + head offset + head radius)
+        const visualHeight: number = 53 * balanceConfig.player.scale;
+        const barY: number = screenY - visualHeight - 10;
 
         ctx.fillStyle = '#333';
         ctx.fillRect(screenX - barWidth / 2, barY, barWidth, barHeight);

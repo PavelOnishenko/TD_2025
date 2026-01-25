@@ -105,12 +105,12 @@ export default class Game {
     private initializeGame(): void {
         const centerX: number = balanceConfig.world.width / 2;
         // Spawn player in the middle of the allowed Y range
-        const roadY: number = balanceConfig.layout.backgroundHeight;
+        const roadBoundaryTop: number = balanceConfig.layout.roadBoundaryTopY;
         const roadHeight: number = balanceConfig.layout.roadHeight;
         const playerHalfHeight: number = balanceConfig.player.height / 2;
         const feetColliderHeight: number = balanceConfig.collision.feetColliderHeight;
-        const roadBottom: number = roadY + roadHeight;
-        const minY: number = roadY - playerHalfHeight + feetColliderHeight;
+        const roadBottom: number = roadBoundaryTop + roadHeight;
+        const minY: number = roadBoundaryTop - playerHalfHeight + feetColliderHeight;
         const maxY: number = roadBottom - playerHalfHeight;
         const playerY: number = (minY + maxY) / 2;
         this.player = new Player(centerX, playerY);
@@ -118,9 +118,9 @@ export default class Game {
     }
 
     private spawnEnemies(count: number): void {
-        const roadY: number = balanceConfig.layout.backgroundHeight;
+        const roadBoundaryTop: number = balanceConfig.layout.roadBoundaryTopY;
         const roadHeight: number = balanceConfig.layout.roadHeight;
-        const roadBottom: number = roadY + roadHeight;
+        const roadBottom: number = roadBoundaryTop + roadHeight;
         const enemyHalfHeight: number = balanceConfig.enemy.height / 2;
         const enemyHalfWidth: number = balanceConfig.enemy.width / 2;
         const feetColliderHeight: number = balanceConfig.collision.feetColliderHeight;
@@ -133,7 +133,7 @@ export default class Game {
             // Spawn enemies off-screen to the right, with some spacing between them
             const x: number = balanceConfig.world.width + enemyHalfWidth + (i * 60);
             // Spawn enemies within allowed Y range (using feet collider bounds)
-            const minY: number = roadY - enemyHalfHeight + feetColliderHeight;
+            const minY: number = roadBoundaryTop - enemyHalfHeight + feetColliderHeight;
             const maxY: number = roadBottom - enemyHalfHeight;
             const y: number = minY + Math.random() * (maxY - minY);
 
@@ -215,11 +215,11 @@ export default class Game {
         this.player.x = Math.max(halfWidth, Math.min(balanceConfig.world.width - halfWidth, this.player.x));
 
         // Vertical bounds: only feet collider restricted to road area
-        const roadY: number = balanceConfig.layout.backgroundHeight;
-        const roadBottom: number = roadY + balanceConfig.layout.roadHeight;
+        const roadBoundaryTop: number = balanceConfig.layout.roadBoundaryTopY;
+        const roadBottom: number = roadBoundaryTop + balanceConfig.layout.roadHeight;
         const feetColliderHeight: number = balanceConfig.collision.feetColliderHeight;
-        // Top of feet collider = y + halfHeight - feetColliderHeight, must be >= roadY
-        const minY: number = roadY - halfHeight + feetColliderHeight;
+        // Top of feet collider = y + halfHeight - feetColliderHeight, must be >= roadBoundaryTop
+        const minY: number = roadBoundaryTop - halfHeight + feetColliderHeight;
         // Bottom of feet collider = y + halfHeight, must be <= roadBottom
         const maxY: number = roadBottom - halfHeight;
         this.player.y = Math.max(minY, Math.min(maxY, this.player.y));
@@ -233,11 +233,11 @@ export default class Game {
         enemy.x = Math.max(halfWidth, enemy.x);
 
         // Vertical bounds: only feet collider restricted to road area
-        const roadY: number = balanceConfig.layout.backgroundHeight;
-        const roadBottom: number = roadY + balanceConfig.layout.roadHeight;
+        const roadBoundaryTop: number = balanceConfig.layout.roadBoundaryTopY;
+        const roadBottom: number = roadBoundaryTop + balanceConfig.layout.roadHeight;
         const feetColliderHeight: number = balanceConfig.collision.feetColliderHeight;
-        // Top of feet collider = y + halfHeight - feetColliderHeight, must be >= roadY
-        const minY: number = roadY - halfHeight + feetColliderHeight;
+        // Top of feet collider = y + halfHeight - feetColliderHeight, must be >= roadBoundaryTop
+        const minY: number = roadBoundaryTop - halfHeight + feetColliderHeight;
         // Bottom of feet collider = y + halfHeight, must be <= roadBottom
         const maxY: number = roadBottom - halfHeight;
         enemy.y = Math.max(minY, Math.min(maxY, enemy.y));
@@ -300,15 +300,11 @@ export default class Game {
                         break;
 
                     case 'attacking':
-                        // At attack position - stay near it but allow small adjustments
-                        if (enemy.assignedAttackPosition) {
-                            enemy.moveToward(
-                                enemy.assignedAttackPosition.x,
-                                enemy.assignedAttackPosition.y,
-                                deltaTime,
-                                this.enemies
-                            );
-                        }
+                        // Enemy is at attack position - no movement, only attacking
+                        // Movement back to attack position is handled by state transition
+                        // to 'movingToAttack' in AttackPositionManager when player moves away
+                        enemy.velocityX = 0;
+                        enemy.velocityY = 0;
                         break;
                 }
 
@@ -418,6 +414,9 @@ export default class Game {
 
         // Draw coordinate debug widgets (in screen space, after endFrame)
         this.drawCoordinateWidgets();
+
+        // Draw enemy states widget on the left side
+        this.drawEnemyStatesWidget();
     }
 
     private drawCoordinateWidgets(): void {
@@ -480,6 +479,114 @@ export default class Game {
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
         ctx.lineWidth = 1;
         ctx.stroke();
+    }
+
+    private drawEnemyStatesWidget(): void {
+        const ctx = this.ctx;
+
+        // Widget styling
+        const padding = 10;
+        const lineHeight = 22;
+        const fontSize = 12;
+        const widgetWidth = 200;
+        const cornerRadius = 6;
+        const colorIndicatorSize = 12;
+        const gap = 6;
+
+        // Calculate widget height based on number of enemies
+        const headerHeight = 28;
+        const enemyRowHeight = lineHeight;
+        const aliveEnemies = this.enemies.filter(e => !e.isDead);
+        const contentHeight = aliveEnemies.length > 0 ? aliveEnemies.length * enemyRowHeight : enemyRowHeight;
+        const widgetHeight = headerHeight + contentHeight + padding * 2;
+
+        // Position at top-left corner (below any potential HUD elements)
+        const baseX = 10;
+        const baseY = 100;
+
+        ctx.save();
+        ctx.setTransform(1, 0, 0, 1, 0, 0); // Reset transform to screen space
+
+        // Draw widget background
+        this.drawWidgetBox(ctx, baseX, baseY, widgetWidth, widgetHeight, cornerRadius, 'rgba(40, 40, 60, 0.85)');
+
+        // Draw header
+        ctx.fillStyle = '#ffcc00';
+        ctx.font = `bold ${fontSize + 2}px monospace`;
+        ctx.fillText('ENEMY STATES', baseX + padding, baseY + padding + fontSize + 2);
+
+        // Draw separator line
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(baseX + padding, baseY + headerHeight);
+        ctx.lineTo(baseX + widgetWidth - padding, baseY + headerHeight);
+        ctx.stroke();
+
+        // Draw enemy entries
+        ctx.font = `${fontSize}px monospace`;
+
+        if (aliveEnemies.length === 0) {
+            ctx.fillStyle = '#888888';
+            ctx.fillText('No enemies', baseX + padding, baseY + headerHeight + padding + fontSize);
+        } else {
+            aliveEnemies.forEach((enemy, index) => {
+                const rowY = baseY + headerHeight + padding + (index * enemyRowHeight);
+
+                // Draw color indicator (small circle)
+                ctx.beginPath();
+                ctx.arc(
+                    baseX + padding + colorIndicatorSize / 2,
+                    rowY + fontSize / 2 - 1,
+                    colorIndicatorSize / 2,
+                    0,
+                    Math.PI * 2
+                );
+                ctx.fillStyle = enemy.color;
+                ctx.fill();
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+
+                // Get state display info
+                const stateInfo = this.getStateDisplayInfo(enemy.enemyState);
+
+                // Draw state text with color coding
+                ctx.fillStyle = stateInfo.color;
+                ctx.fillText(
+                    stateInfo.label,
+                    baseX + padding + colorIndicatorSize + gap,
+                    rowY + fontSize
+                );
+
+                // Draw animation state in smaller text
+                ctx.fillStyle = '#888888';
+                ctx.font = `${fontSize - 2}px monospace`;
+                ctx.fillText(
+                    `[${enemy.animationState}]`,
+                    baseX + padding + colorIndicatorSize + gap + 95,
+                    rowY + fontSize
+                );
+                ctx.font = `${fontSize}px monospace`;
+            });
+        }
+
+        ctx.restore();
+    }
+
+    private getStateDisplayInfo(state: string): { label: string; color: string } {
+        switch (state) {
+            case 'movingToWaitingPoint':
+                return { label: 'Moving to Wait', color: '#aaaaaa' };
+            case 'waiting':
+                return { label: 'Waiting', color: '#ffcc00' };
+            case 'movingToAttack':
+                return { label: 'Approaching', color: '#ff9900' };
+            case 'attacking':
+                return { label: 'ATTACKING', color: '#ff4444' };
+            default:
+                return { label: state, color: '#ffffff' };
+        }
     }
 
     private drawBackground(): void {
