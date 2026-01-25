@@ -8,6 +8,9 @@ export interface Viewport {
     width: number;
     height: number;
     scale: number;
+    offsetX?: number;
+    offsetY?: number;
+    dpr?: number;
 }
 
 export interface Bounds {
