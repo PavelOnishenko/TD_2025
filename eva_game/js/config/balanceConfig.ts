@@ -88,7 +88,7 @@ export const balanceConfig = {
   // Attack position settings
   attackPosition: {
     distanceFromPlayer: 45,  // Distance from player center to attack position (arm's length)
-    positionReachedThreshold: 10,  // How close enemy needs to be to consider position reached
+    positionReachedThreshold: 5,  // How close enemy needs to be to consider position reached
     indicatorRadius: 12,  // Radius of the position indicator circle
     indicatorColor: 'rgba(255, 100, 100, 0.6)',  // Color of the position indicator
     lineColor: 'rgba(255, 100, 100, 0.4)',  // Color of the line from enemy to position
