@@ -426,6 +426,11 @@ export default class Enemy extends Entity {
     }
 
     private drawCoordinatePoint(ctx: CanvasRenderingContext2D, screenX: number, screenY: number): void {
+        // Don't draw coordinate point for dead enemies
+        if (this.animationState === 'death' || this.isDead) {
+            return;
+        }
+
         // Draw a small circle at the exact coordinate point
         ctx.beginPath();
         ctx.arc(screenX, screenY, 4, 0, Math.PI * 2);
