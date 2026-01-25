@@ -77,7 +77,7 @@ export const balanceConfig = {
     roadHeight: 480,
     // Topmost Y coordinate on the road where player's feet collider can go
     // This is the road boundary for player movement (defaults to backgroundHeight)
-    roadBoundaryTopY: 320,
+    roadBoundaryTopY: 340,
   },
 
   // Collision settings for beat 'em up depth
