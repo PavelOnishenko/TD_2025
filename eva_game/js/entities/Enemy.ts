@@ -258,9 +258,15 @@ export default class Enemy extends Entity {
         const dirX: number = dx / distance;
         const dirY: number = dy / distance;
 
-        // Combine player-seeking direction with separation force
-        const finalDirX = dirX + separation.x;
-        const finalDirY = dirY + separation.y;
+        // Reduce separation effect when close to target - prioritize reaching the attack point
+        // At distance 20+, full separation; at distance 0, no separation
+        const separationFactor = Math.min(1.0, distance / 20);
+        const adjustedSepX = separation.x * separationFactor;
+        const adjustedSepY = separation.y * separationFactor;
+
+        // Combine player-seeking direction with reduced separation force
+        const finalDirX = dirX + adjustedSepX;
+        const finalDirY = dirY + adjustedSepY;
 
         // Normalize the combined direction
         const finalDistance = Math.sqrt(finalDirX * finalDirX + finalDirY * finalDirY);
