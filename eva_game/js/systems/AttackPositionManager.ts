@@ -147,12 +147,14 @@ export default class AttackPositionManager {
             }
         }
 
-        // Make sure all non-assigned alive enemies are in waiting state
+        // Make sure all non-assigned alive enemies that have reached waiting point are in waiting state
+        // Don't interfere with enemies still moving to their waiting point
         for (const enemy of enemies) {
             if (enemy !== this.assignedEnemy &&
                 enemy.animationState !== 'death' &&
                 !enemy.isDead &&
-                enemy.enemyState !== 'waiting') {
+                enemy.enemyState !== 'waiting' &&
+                enemy.enemyState !== 'movingToWaitingPoint') {
                 enemy.enemyState = 'waiting';
                 enemy.assignedAttackPosition = null;
             }

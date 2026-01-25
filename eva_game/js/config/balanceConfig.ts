@@ -91,4 +91,11 @@ export const balanceConfig = {
     lineColor: 'rgba(255, 100, 100, 0.4)',  // Color of the line from enemy to position
     lineWidth: 2,  // Width of the indicator line
   },
+
+  // Waiting point settings - where enemies go after spawning to be visible
+  waitingPoint: {
+    distanceFromSpawn: 300,  // Distance to move left from spawn point to reach waiting area
+    positionReachedThreshold: 15,  // How close enemy needs to be to consider waiting point reached
+    verticalSpread: 40,  // Vertical spread for waiting points to avoid stacking
+  },
 };
