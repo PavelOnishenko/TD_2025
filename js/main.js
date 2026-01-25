@@ -34,12 +34,42 @@ function getCanvasContext() {
     return { canvasElement, gameContainerElement, gameInstance: null };
 }
 
+function updateLoadingProgress({ loaded, total, percent, stage }) {
+    const progressFill = document.getElementById('loadingProgressFill');
+    const progressText = document.getElementById('loadingProgressText');
+
+    if (progressFill) {
+        progressFill.style.width = `${percent}%`;
+    }
+
+    if (progressText) {
+        const stageText = stage === 'images' ? 'Loading images'
+            : stage === 'sounds' ? 'Loading sounds'
+            : 'Finalizing';
+        progressText.textContent = `${stageText}... ${percent}%`;
+    }
+}
+
+function hideLoadingProgress() {
+    const loadingProgress = document.getElementById('loadingProgress');
+    const startButton = document.getElementById('startGame');
+
+    if (loadingProgress) {
+        loadingProgress.classList.add('hidden');
+    }
+
+    if (startButton) {
+        startButton.disabled = false;
+    }
+}
+
 async function startGame(context) {
     if (!context.canvasElement) {
         return null;
     }
 
-    const assets = await loadAssets();
+    const assets = await loadAssets({ onProgress: updateLoadingProgress });
+    hideLoadingProgress();
     const game = new Game(context.canvasElement, { width: LOGICAL_W, height: LOGICAL_H, assets });
     context.gameInstance = game;
     registerGlobalGameReference(game);
