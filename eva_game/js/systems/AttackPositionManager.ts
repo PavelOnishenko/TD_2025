@@ -107,15 +107,23 @@ export default class AttackPositionManager {
             const position = this.getAttackPosition(player, this.attackSide);
             this.assignedEnemy.assignedAttackPosition = position;
 
+            // Calculate distance to attack position
+            const threshold = balanceConfig.attackPosition.positionReachedThreshold;
+            const dx = this.assignedEnemy.x - position.x;
+            const dy = this.assignedEnemy.y - position.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
             // Check if enemy has reached the attack position
             if (this.assignedEnemy.enemyState === 'movingToAttack') {
-                const threshold = balanceConfig.attackPosition.positionReachedThreshold;
-                const dx = this.assignedEnemy.x - position.x;
-                const dy = this.assignedEnemy.y - position.y;
-                const distance = Math.sqrt(dx * dx + dy * dy);
-
                 if (distance < threshold) {
                     this.assignedEnemy.enemyState = 'attacking';
+                }
+            }
+            // Check if enemy in attacking state has moved too far from attack position
+            // (happens when player moves away) - switch back to movingToAttack
+            else if (this.assignedEnemy.enemyState === 'attacking') {
+                if (distance >= threshold) {
+                    this.assignedEnemy.enemyState = 'movingToAttack';
                 }
             }
         }
