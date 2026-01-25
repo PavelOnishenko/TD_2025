@@ -44,9 +44,12 @@ export interface StickFigurePose {
 export default class StickFigure {
     private static readonly HEAD_RADIUS = 8;
     private static readonly LINE_WIDTH = 3;
+    // Feet Y position in the idle pose (used to anchor drawing at feet)
+    private static readonly FEET_Y_OFFSET = 25;
 
     /**
      * Draw a stick figure at the specified position with the given pose
+     * The (x, y) coordinates represent the feet position (ground level)
      */
     public static draw(
         ctx: CanvasRenderingContext2D,
@@ -69,44 +72,59 @@ export default class StickFigure {
         // Scale the head radius
         const headRadius = this.HEAD_RADIUS * scale;
 
+        // Offset drawing so that feet are at the passed y coordinate
+        // In idle pose, feet are at y + FEET_Y_OFFSET * scale relative to center
+        // So we shift drawing up by that amount
+        const drawY = y - this.FEET_Y_OFFSET * scale;
+
         // Draw head
         ctx.beginPath();
-        ctx.arc(x, y + pose.headY * scale, headRadius, 0, Math.PI * 2);
+        ctx.arc(x, drawY + pose.headY * scale, headRadius, 0, Math.PI * 2);
         ctx.fill();
 
         // Draw torso
         ctx.beginPath();
-        ctx.moveTo(x, y + pose.headY * scale + headRadius);
-        ctx.lineTo(x, y + pose.torsoEndY * scale);
+        ctx.moveTo(x, drawY + pose.headY * scale + headRadius);
+        ctx.lineTo(x, drawY + pose.torsoEndY * scale);
         ctx.stroke();
 
         // Draw left arm
         ctx.beginPath();
-        ctx.moveTo(x + pose.leftShoulderX * flip * scale, y + pose.leftShoulderY * scale);
-        ctx.lineTo(x + pose.leftElbowX * flip * scale, y + pose.leftElbowY * scale);
-        ctx.lineTo(x + pose.leftHandX * flip * scale, y + pose.leftHandY * scale);
+        ctx.moveTo(x + pose.leftShoulderX * flip * scale, drawY + pose.leftShoulderY * scale);
+        ctx.lineTo(x + pose.leftElbowX * flip * scale, drawY + pose.leftElbowY * scale);
+        ctx.lineTo(x + pose.leftHandX * flip * scale, drawY + pose.leftHandY * scale);
         ctx.stroke();
 
         // Draw right arm
         ctx.beginPath();
-        ctx.moveTo(x + pose.rightShoulderX * flip * scale, y + pose.rightShoulderY * scale);
-        ctx.lineTo(x + pose.rightElbowX * flip * scale, y + pose.rightElbowY * scale);
-        ctx.lineTo(x + pose.rightHandX * flip * scale, y + pose.rightHandY * scale);
+        ctx.moveTo(x + pose.rightShoulderX * flip * scale, drawY + pose.rightShoulderY * scale);
+        ctx.lineTo(x + pose.rightElbowX * flip * scale, drawY + pose.rightElbowY * scale);
+        ctx.lineTo(x + pose.rightHandX * flip * scale, drawY + pose.rightHandY * scale);
         ctx.stroke();
 
         // Draw left leg
         ctx.beginPath();
-        ctx.moveTo(x + pose.leftHipX * flip * scale, y + pose.leftHipY * scale);
-        ctx.lineTo(x + pose.leftKneeX * flip * scale, y + pose.leftKneeY * scale);
-        ctx.lineTo(x + pose.leftFootX * flip * scale, y + pose.leftFootY * scale);
+        ctx.moveTo(x + pose.leftHipX * flip * scale, drawY + pose.leftHipY * scale);
+        ctx.lineTo(x + pose.leftKneeX * flip * scale, drawY + pose.leftKneeY * scale);
+        ctx.lineTo(x + pose.leftFootX * flip * scale, drawY + pose.leftFootY * scale);
         ctx.stroke();
 
         // Draw right leg
         ctx.beginPath();
-        ctx.moveTo(x + pose.rightHipX * flip * scale, y + pose.rightHipY * scale);
-        ctx.lineTo(x + pose.rightKneeX * flip * scale, y + pose.rightKneeY * scale);
-        ctx.lineTo(x + pose.rightFootX * flip * scale, y + pose.rightFootY * scale);
+        ctx.moveTo(x + pose.rightHipX * flip * scale, drawY + pose.rightHipY * scale);
+        ctx.lineTo(x + pose.rightKneeX * flip * scale, drawY + pose.rightKneeY * scale);
+        ctx.lineTo(x + pose.rightFootX * flip * scale, drawY + pose.rightFootY * scale);
         ctx.stroke();
+    }
+
+    /**
+     * Get the visual height of the stick figure from feet to top of head
+     */
+    public static getVisualHeight(scale: number = 1): number {
+        // Head is at -20, with radius 8, so top is at -28
+        // Feet are at 25
+        // Total height: 25 - (-28) = 53, scaled
+        return (this.FEET_Y_OFFSET + 20 + this.HEAD_RADIUS) * scale;
     }
 
     /**
