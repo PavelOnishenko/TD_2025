@@ -8,6 +8,12 @@ export interface Viewport {
     width: number;
     height: number;
     scale: number;
+    offsetX?: number;
+    offsetY?: number;
+    dpr?: number;
+    worldBounds?: WorldBounds;
+    renderWidth?: number;
+    renderHeight?: number;
 }
 
 export interface Bounds {
@@ -86,11 +92,19 @@ export interface ResizeCanvasOptions {
 
 export declare function resizeCanvas(options: ResizeCanvasOptions): void;
 
+export interface ViewportMetrics {
+    width: number;
+    height: number;
+    dpr: number;
+}
+
 // Module declaration for ViewportManager
 declare module '../../engine/systems/ViewportManager' {
     export function resizeCanvas(options: ResizeCanvasOptions): void;
+    export function getViewportMetrics(windowRef?: Window): ViewportMetrics;
 }
 
 declare module '../../engine/systems/ViewportManager.js' {
     export function resizeCanvas(options: ResizeCanvasOptions): void;
+    export function getViewportMetrics(windowRef?: Window): ViewportMetrics;
 }
