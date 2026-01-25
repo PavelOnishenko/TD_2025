@@ -412,14 +412,12 @@ export default class Enemy extends Entity {
     }
 
     public draw(ctx: CanvasRenderingContext2D, viewport?: Viewport): void {
-        // Don't draw enemies outside the visible game arena (in the "darkness" beyond the edges)
-        // They still exist as physical objects but are invisible until they enter the playable area
+        // Don't draw enemies that are completely off-screen to the left
+        // Right side culling is not needed - enemies spawn from the right and should be visible
+        // as soon as they enter the screen edge
         const halfWidth = this.width / 2;
-        // Use viewport worldBounds for dynamic width, fallback to config for safety
-        // const worldWidth = viewport?.worldBounds?.maxX ?? balanceConfig.world.width;
-        const worldWidth = balanceConfig.world.width;
-        if (this.x + halfWidth < 0 || this.x - halfWidth > worldWidth) {
-            return; // Enemy is outside the visible arena, don't render
+        if (this.x + halfWidth < 0) {
+            return; // Enemy is completely off-screen to the left
         }
 
         const screenX: number = this.x;
