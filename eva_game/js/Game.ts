@@ -300,15 +300,11 @@ export default class Game {
                         break;
 
                     case 'attacking':
-                        // At attack position - stay near it but allow small adjustments
-                        if (enemy.assignedAttackPosition) {
-                            enemy.moveToward(
-                                enemy.assignedAttackPosition.x,
-                                enemy.assignedAttackPosition.y,
-                                deltaTime,
-                                this.enemies
-                            );
-                        }
+                        // Enemy is at attack position - no movement, only attacking
+                        // Movement back to attack position is handled by state transition
+                        // to 'movingToAttack' in AttackPositionManager when player moves away
+                        enemy.velocityX = 0;
+                        enemy.velocityY = 0;
                         break;
                 }
 
