@@ -95,7 +95,7 @@ export const balanceConfig = {
   // Waiting point settings - where enemies go after spawning to be visible
   waitingPoint: {
     distanceFromSpawn: 300,  // Distance to move left from spawn point to reach waiting area
-    positionReachedThreshold: 15,  // How close enemy needs to be to consider waiting point reached
+    positionReachedThreshold: 75,  // How close enemy needs to be to consider waiting point reached
     verticalSpread: 40,  // Vertical spread for waiting points to avoid stacking
   },
 };
