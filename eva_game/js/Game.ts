@@ -99,6 +99,10 @@ export default class Game {
         const enemyHalfHeight: number = balanceConfig.enemy.height / 2;
         const enemyHalfWidth: number = balanceConfig.enemy.width / 2;
         const feetColliderHeight: number = balanceConfig.collision.feetColliderHeight;
+        const waitingConfig = balanceConfig.waitingPoint;
+
+        // Calculate waiting area X position (visible area on the right side)
+        const waitingAreaX: number = balanceConfig.world.width - waitingConfig.distanceFromSpawn;
 
         for (let i = 0; i < count; i++) {
             // Spawn enemies off-screen to the right, with some spacing between them
@@ -113,6 +117,13 @@ export default class Game {
             this.nextColorIndex++;
 
             const enemy: Enemy = new Enemy(x, y, color);
+
+            // Set up waiting point - spread enemies vertically to avoid stacking
+            const verticalOffset: number = (i - (count - 1) / 2) * waitingConfig.verticalSpread;
+            const waitingY: number = Math.max(minY, Math.min(maxY, (minY + maxY) / 2 + verticalOffset));
+            enemy.waitingPoint = { x: waitingAreaX, y: waitingY };
+            enemy.enemyState = 'movingToWaitingPoint';
+
             this.enemies.push(enemy);
         }
     }
@@ -225,6 +236,26 @@ export default class Game {
             if (enemy.animationState !== 'death' && !enemy.isDead) {
                 // Movement based on enemy state
                 switch (enemy.enemyState) {
+                    case 'movingToWaitingPoint':
+                        // Move toward waiting point after spawn
+                        if (enemy.waitingPoint) {
+                            enemy.moveToward(
+                                enemy.waitingPoint.x,
+                                enemy.waitingPoint.y,
+                                deltaTime,
+                                this.enemies
+                            );
+
+                            // Check if reached waiting point
+                            const dx = enemy.x - enemy.waitingPoint.x;
+                            const dy = enemy.y - enemy.waitingPoint.y;
+                            const distance = Math.sqrt(dx * dx + dy * dy);
+                            if (distance < balanceConfig.waitingPoint.positionReachedThreshold) {
+                                enemy.enemyState = 'waiting';
+                            }
+                        }
+                        break;
+
                     case 'waiting':
                         // Waiting enemies stand completely still
                         enemy.velocityX = 0;

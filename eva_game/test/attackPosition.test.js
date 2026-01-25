@@ -142,6 +142,7 @@ test('assignEnemy fails when position is already occupied', () => {
     const player = new Player(500, 400);
     const enemy1 = new Enemy(300, 400);
     const enemy2 = new Enemy(200, 400);
+    enemy2.enemyState = 'waiting'; // Set to waiting state (enemies start in movingToWaitingPoint)
 
     manager.assignEnemy(enemy1, player);
     const result = manager.assignEnemy(enemy2, player);
@@ -188,6 +189,9 @@ test('update assigns closest waiting enemy when no enemy assigned', () => {
     const player = new Player(500, 400);
     const enemy1 = new Enemy(300, 400); // Distance 200
     const enemy2 = new Enemy(350, 400); // Distance 150 - closer
+    // Set enemies to waiting state (they start in movingToWaitingPoint after spawn)
+    enemy1.enemyState = 'waiting';
+    enemy2.enemyState = 'waiting';
     const enemies = [enemy1, enemy2];
 
     manager.update(player, enemies);
@@ -277,6 +281,9 @@ test('update assigns next enemy when current enemy dies', () => {
     const player = new Player(500, 400);
     const enemy1 = new Enemy(350, 400);
     const enemy2 = new Enemy(300, 400);
+    // Set enemies to waiting state (they start in movingToWaitingPoint after spawn)
+    enemy1.enemyState = 'waiting';
+    enemy2.enemyState = 'waiting';
     const enemies = [enemy1, enemy2];
 
     // First update - enemy1 assigned (closer)
@@ -296,10 +303,10 @@ test('update assigns next enemy when current enemy dies', () => {
 // ENEMY STATE BEHAVIOR
 // ============================================================================
 
-test('enemy initializes with waiting state', () => {
+test('enemy initializes with movingToWaitingPoint state', () => {
     const enemy = new Enemy(100, 200);
 
-    assert.equal(enemy.enemyState, 'waiting');
+    assert.equal(enemy.enemyState, 'movingToWaitingPoint');
 });
 
 test('enemy initializes with null assignedAttackPosition', () => {
@@ -395,6 +402,7 @@ test('scenario: single enemy approaches and attacks', () => {
     const player = new Player(500, 400);
     const attackDistance = balanceConfig.attackPosition.distanceFromPlayer;
     const enemy = new Enemy(300, 400); // Starts far away
+    enemy.enemyState = 'waiting'; // Set to waiting state (they start in movingToWaitingPoint after spawn)
     const enemies = [enemy];
 
     // Initial update - enemy assigned, moving to attack
@@ -416,6 +424,10 @@ test('scenario: multiple enemies, only one attacks at a time', () => {
     const enemy1 = new Enemy(350, 400);
     const enemy2 = new Enemy(300, 400);
     const enemy3 = new Enemy(250, 400);
+    // Set enemies to waiting state (they start in movingToWaitingPoint after spawn)
+    enemy1.enemyState = 'waiting';
+    enemy2.enemyState = 'waiting';
+    enemy3.enemyState = 'waiting';
     const enemies = [enemy1, enemy2, enemy3];
 
     // Initial update
@@ -438,6 +450,9 @@ test('scenario: when active enemy dies, next enemy takes over', () => {
     const attackDistance = balanceConfig.attackPosition.distanceFromPlayer;
     const enemy1 = new Enemy(player.x - attackDistance, 400); // At attack position
     const enemy2 = new Enemy(300, 400); // Waiting
+    // Set enemies to waiting state (they start in movingToWaitingPoint after spawn)
+    enemy1.enemyState = 'waiting';
+    enemy2.enemyState = 'waiting';
     const enemies = [enemy1, enemy2];
 
     // First update - enemy1 assigned
@@ -459,6 +474,7 @@ test('scenario: player moves, attack position follows', () => {
     const manager = new AttackPositionManager();
     const player = new Player(500, 400);
     const enemy = new Enemy(300, 400);
+    enemy.enemyState = 'waiting'; // Set to waiting state (they start in movingToWaitingPoint after spawn)
     const enemies = [enemy];
 
     manager.update(player, enemies);
@@ -476,6 +492,7 @@ test('scenario: attack from right side', () => {
     const manager = new AttackPositionManager();
     const player = new Player(500, 400);
     const enemy = new Enemy(700, 400); // Right of player
+    enemy.enemyState = 'waiting'; // Set to waiting state (they start in movingToWaitingPoint after spawn)
     const enemies = [enemy];
 
     manager.update(player, enemies);

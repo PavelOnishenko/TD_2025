@@ -31,8 +31,9 @@ export default class Enemy extends Entity {
     public justDied: boolean = false; // True for one frame when enemy dies (for score tracking)
 
     // Attack position system state
-    public enemyState: EnemyState = 'waiting'; // Current behavior state
+    public enemyState: EnemyState = 'movingToWaitingPoint'; // Current behavior state
     public assignedAttackPosition: { x: number; y: number } | null = null; // Currently assigned attack position
+    public waitingPoint: { x: number; y: number } | null = null; // Point to move to after spawning
 
     private attackCooldownTimer: number = 0;
     private hasDealtDamageThisAttack: boolean = false; // Track if damage was dealt in current attack
