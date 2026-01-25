@@ -100,7 +100,10 @@ export default class AttackPositionManager {
         }
 
         // Update the assigned enemy's target position (it moves with player)
-        if (this.assignedEnemy && this.attackSide) {
+        // Also recalculate the attack side based on current enemy position
+        if (this.assignedEnemy) {
+            // Dynamically recalculate which side the enemy should attack from
+            this.attackSide = this.determineSide(this.assignedEnemy, player);
             const position = this.getAttackPosition(player, this.attackSide);
             this.assignedEnemy.assignedAttackPosition = position;
 
