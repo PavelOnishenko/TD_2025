@@ -188,14 +188,37 @@ function handleImageLoadFailure(key, error) {
 export async function loadAssets({
     loadImageFn = loadImage,
     audioSupportChecker = isAudioSupported,
-    soundCreator = createSound
+    soundCreator = createSound,
+    onProgress = null
 } = {}) {
+    const imageCount = Object.keys(IMAGE_SOURCES).length;
+    const soundCount = Object.keys(SOUND_OPTIONS).length;
+    const totalAssets = imageCount + soundCount;
+    let loadedCount = 0;
+
+    const reportProgress = (stage) => {
+        if (typeof onProgress === 'function') {
+            onProgress({
+                loaded: loadedCount,
+                total: totalAssets,
+                percent: Math.round((loadedCount / totalAssets) * 100),
+                stage
+            });
+        }
+    };
+
+    reportProgress('images');
+
     const imageEntries = await Promise.all(
         Object.entries(IMAGE_SOURCES).map(async ([key, url]) => {
             try {
                 const image = await loadImageFn(url);
+                loadedCount++;
+                reportProgress('images');
                 return [key, image];
             } catch (error) {
+                loadedCount++;
+                reportProgress('images');
                 const fallbackImage = handleImageLoadFailure(key, error);
                 return [key, fallbackImage];
             }
@@ -205,8 +228,12 @@ export async function loadAssets({
 
     const audioSupported = audioSupportChecker();
     if (!audioSupported) {
+        loadedCount = totalAssets;
+        reportProgress('complete');
         return { ...images, sounds: {} };
     }
+
+    reportProgress('sounds');
 
     const soundEntries = [];
     for (const [key, options] of Object.entries(SOUND_OPTIONS)) {
@@ -216,9 +243,12 @@ export async function loadAssets({
         } catch (error) {
             logAssetWarning('sound', key, error, 'Sound will be disabled.');
         }
+        loadedCount++;
+        reportProgress('sounds');
     }
     const sounds = Object.fromEntries(soundEntries);
 
+    reportProgress('complete');
     return { ...images, sounds };
 }
 
