@@ -244,8 +244,8 @@ test('separation averages forces from multiple nearby enemies', () => {
 test('enemy stops when reached target position and no separation needed', () => {
     const targetX = 100;
     const targetY = 400;
-    // Place enemy within positionReachedThreshold (10px) of target
-    const enemy = new Enemy(105, 400); // 5px away from target
+    // Enemy must be within (positionReachedThreshold - attackPointThreshold) = 10 - 8 = 2px to stop
+    const enemy = new Enemy(101, 400); // 1px away from target (within 2px threshold)
 
     enemy.moveToward(targetX, targetY, 0.016, []);
 
