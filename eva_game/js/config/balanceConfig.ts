@@ -90,7 +90,7 @@ export const balanceConfig = {
     indicatorColor: 'rgba(255, 100, 100, 0.6)',  // Color of the position indicator
     lineColor: 'rgba(255, 100, 100, 0.4)',  // Color of the line from enemy to position
     lineWidth: 2,  // Width of the indicator line
-    attackPointThreshold: 4
+    attackPointThreshold: 8
   },
 
   // Waiting point settings - where enemies go after spawning to be visible
