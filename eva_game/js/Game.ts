@@ -42,12 +42,16 @@ export default class Game {
     private viewport?: Viewport;
     private nextColorIndex: number = 0;
     private attackPositionManager: AttackPositionManager;
+    private mouseScreenX: number = 0;
+    private mouseScreenY: number = 0;
+    private canvas: HTMLCanvasElement;
 
     public gameOver: boolean = false;
     public isPaused: boolean = false;
     public onGameOver: GameOverCallback | null = null;
 
     constructor(canvas: HTMLCanvasElement) {
+        this.canvas = canvas;
 
         const context = canvas.getContext('2d');
         if (!context) {
@@ -75,6 +79,27 @@ export default class Game {
 
         document.addEventListener('keydown', (e: KeyboardEvent) => this.input.handleKeyDown(e));
         document.addEventListener('keyup', (e: KeyboardEvent) => this.input.handleKeyUp(e));
+
+        // Track mouse position for coordinate debug widgets
+        this.canvas.addEventListener('mousemove', (e: MouseEvent) => this.handleMouseMove(e));
+    }
+
+    private handleMouseMove(e: MouseEvent): void {
+        const rect = this.canvas.getBoundingClientRect();
+        const dpr = this.viewport?.dpr || window.devicePixelRatio || 1;
+        // Screen coordinates in canvas pixel space (accounting for DPR)
+        this.mouseScreenX = (e.clientX - rect.left) * dpr;
+        this.mouseScreenY = (e.clientY - rect.top) * dpr;
+    }
+
+    private screenToWorld(screenX: number, screenY: number): { x: number; y: number } {
+        const scale = this.viewport?.scale || 1;
+        const offsetX = this.viewport?.offsetX || 0;
+        const offsetY = this.viewport?.offsetY || 0;
+        return {
+            x: (screenX - offsetX) / scale,
+            y: (screenY - offsetY) / scale,
+        };
     }
 
     private initializeGame(): void {
@@ -390,6 +415,71 @@ export default class Game {
         }
         this.drawEntities();
         this.renderer.endFrame();
+
+        // Draw coordinate debug widgets (in screen space, after endFrame)
+        this.drawCoordinateWidgets();
+    }
+
+    private drawCoordinateWidgets(): void {
+        const ctx = this.ctx;
+        const worldCoords = this.screenToWorld(this.mouseScreenX, this.mouseScreenY);
+
+        // Widget styling
+        const padding = 8;
+        const lineHeight = 18;
+        const fontSize = 14;
+        const widgetWidth = 180;
+        const widgetHeight = lineHeight * 2 + padding * 2;
+        const cornerRadius = 6;
+        const gap = 10;
+
+        // Position at bottom-left corner
+        const baseX = 10;
+        const baseY = this.canvas.height - 10;
+
+        ctx.save();
+        ctx.setTransform(1, 0, 0, 1, 0, 0); // Reset transform to screen space
+
+        // Draw World Coords widget (bottom)
+        const worldWidgetY = baseY - widgetHeight;
+        this.drawWidgetBox(ctx, baseX, worldWidgetY, widgetWidth, widgetHeight, cornerRadius, 'rgba(0, 100, 0, 0.8)');
+        ctx.fillStyle = '#00ff00';
+        ctx.font = `bold ${fontSize}px monospace`;
+        ctx.fillText('WORLD COORDS', baseX + padding, worldWidgetY + padding + fontSize);
+        ctx.font = `${fontSize}px monospace`;
+        ctx.fillText(`X: ${Math.round(worldCoords.x)}  Y: ${Math.round(worldCoords.y)}`, baseX + padding, worldWidgetY + padding + fontSize + lineHeight);
+
+        // Draw Screen Coords widget (above world widget)
+        const screenWidgetY = worldWidgetY - widgetHeight - gap;
+        this.drawWidgetBox(ctx, baseX, screenWidgetY, widgetWidth, widgetHeight, cornerRadius, 'rgba(0, 0, 100, 0.8)');
+        ctx.fillStyle = '#00aaff';
+        ctx.font = `bold ${fontSize}px monospace`;
+        ctx.fillText('SCREEN COORDS', baseX + padding, screenWidgetY + padding + fontSize);
+        ctx.font = `${fontSize}px monospace`;
+        ctx.fillText(`X: ${Math.round(this.mouseScreenX)}  Y: ${Math.round(this.mouseScreenY)}`, baseX + padding, screenWidgetY + padding + fontSize + lineHeight);
+
+        ctx.restore();
+    }
+
+    private drawWidgetBox(ctx: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, radius: number, color: string): void {
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.moveTo(x + radius, y);
+        ctx.lineTo(x + width - radius, y);
+        ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+        ctx.lineTo(x + width, y + height - radius);
+        ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+        ctx.lineTo(x + radius, y + height);
+        ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+        ctx.lineTo(x, y + radius);
+        ctx.quadraticCurveTo(x, y, x + radius, y);
+        ctx.closePath();
+        ctx.fill();
+
+        // Border
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
     }
 
     private drawBackground(): void {
