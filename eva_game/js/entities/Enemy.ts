@@ -458,7 +458,10 @@ export default class Enemy extends Entity {
 
         const barWidth: number = this.width;
         const barHeight: number = 3;
-        const barY: number = screenY - this.height / 2 - 8;
+        // screenY is now at feet position, figure extends upward
+        // Visual height: (25 + 20 + 8) * scale = 53 * scale (feet offset + head offset + head radius)
+        const visualHeight: number = 53 * balanceConfig.enemy.scale;
+        const barY: number = screenY - visualHeight - 8;
 
         ctx.fillStyle = '#222';
         ctx.fillRect(screenX - barWidth / 2, barY, barWidth, barHeight);

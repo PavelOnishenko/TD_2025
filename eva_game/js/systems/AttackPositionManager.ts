@@ -198,12 +198,10 @@ export default class AttackPositionManager {
         ctx.setLineDash([5, 5]); // Dashed line
 
         ctx.beginPath();
-        // Enemy feet position (center-bottom)
-        const enemyFeetY = enemy.y + enemy.height / 2;
-        ctx.moveTo(enemy.x, enemyFeetY);
-        // Attack position (draw at player's feet level)
-        const positionY = y + player.height / 2;
-        ctx.lineTo(x, positionY);
+        // Entity coordinates are now at feet position
+        ctx.moveTo(enemy.x, enemy.y);
+        // Attack position is also at feet level
+        ctx.lineTo(x, y);
         ctx.stroke();
 
         ctx.setLineDash([]); // Reset dash
@@ -211,7 +209,7 @@ export default class AttackPositionManager {
         // Draw circle at attack position
         ctx.fillStyle = config.indicatorColor;
         ctx.beginPath();
-        ctx.arc(x, positionY, config.indicatorRadius, 0, Math.PI * 2);
+        ctx.arc(x, y, config.indicatorRadius, 0, Math.PI * 2);
         ctx.fill();
 
         // Draw circle outline
