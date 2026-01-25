@@ -418,6 +418,9 @@ export default class Game {
 
         // Draw coordinate debug widgets (in screen space, after endFrame)
         this.drawCoordinateWidgets();
+
+        // Draw enemy states widget on the left side
+        this.drawEnemyStatesWidget();
     }
 
     private drawCoordinateWidgets(): void {
@@ -480,6 +483,114 @@ export default class Game {
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
         ctx.lineWidth = 1;
         ctx.stroke();
+    }
+
+    private drawEnemyStatesWidget(): void {
+        const ctx = this.ctx;
+
+        // Widget styling
+        const padding = 10;
+        const lineHeight = 22;
+        const fontSize = 12;
+        const widgetWidth = 200;
+        const cornerRadius = 6;
+        const colorIndicatorSize = 12;
+        const gap = 6;
+
+        // Calculate widget height based on number of enemies
+        const headerHeight = 28;
+        const enemyRowHeight = lineHeight;
+        const aliveEnemies = this.enemies.filter(e => !e.isDead);
+        const contentHeight = aliveEnemies.length > 0 ? aliveEnemies.length * enemyRowHeight : enemyRowHeight;
+        const widgetHeight = headerHeight + contentHeight + padding * 2;
+
+        // Position at top-left corner (below any potential HUD elements)
+        const baseX = 10;
+        const baseY = 100;
+
+        ctx.save();
+        ctx.setTransform(1, 0, 0, 1, 0, 0); // Reset transform to screen space
+
+        // Draw widget background
+        this.drawWidgetBox(ctx, baseX, baseY, widgetWidth, widgetHeight, cornerRadius, 'rgba(40, 40, 60, 0.85)');
+
+        // Draw header
+        ctx.fillStyle = '#ffcc00';
+        ctx.font = `bold ${fontSize + 2}px monospace`;
+        ctx.fillText('ENEMY STATES', baseX + padding, baseY + padding + fontSize + 2);
+
+        // Draw separator line
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(baseX + padding, baseY + headerHeight);
+        ctx.lineTo(baseX + widgetWidth - padding, baseY + headerHeight);
+        ctx.stroke();
+
+        // Draw enemy entries
+        ctx.font = `${fontSize}px monospace`;
+
+        if (aliveEnemies.length === 0) {
+            ctx.fillStyle = '#888888';
+            ctx.fillText('No enemies', baseX + padding, baseY + headerHeight + padding + fontSize);
+        } else {
+            aliveEnemies.forEach((enemy, index) => {
+                const rowY = baseY + headerHeight + padding + (index * enemyRowHeight);
+
+                // Draw color indicator (small circle)
+                ctx.beginPath();
+                ctx.arc(
+                    baseX + padding + colorIndicatorSize / 2,
+                    rowY + fontSize / 2 - 1,
+                    colorIndicatorSize / 2,
+                    0,
+                    Math.PI * 2
+                );
+                ctx.fillStyle = enemy.color;
+                ctx.fill();
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+
+                // Get state display info
+                const stateInfo = this.getStateDisplayInfo(enemy.enemyState);
+
+                // Draw state text with color coding
+                ctx.fillStyle = stateInfo.color;
+                ctx.fillText(
+                    stateInfo.label,
+                    baseX + padding + colorIndicatorSize + gap,
+                    rowY + fontSize
+                );
+
+                // Draw animation state in smaller text
+                ctx.fillStyle = '#888888';
+                ctx.font = `${fontSize - 2}px monospace`;
+                ctx.fillText(
+                    `[${enemy.animationState}]`,
+                    baseX + padding + colorIndicatorSize + gap + 95,
+                    rowY + fontSize
+                );
+                ctx.font = `${fontSize}px monospace`;
+            });
+        }
+
+        ctx.restore();
+    }
+
+    private getStateDisplayInfo(state: string): { label: string; color: string } {
+        switch (state) {
+            case 'movingToWaitingPoint':
+                return { label: 'Moving to Wait', color: '#aaaaaa' };
+            case 'waiting':
+                return { label: 'Waiting', color: '#ffcc00' };
+            case 'movingToAttack':
+                return { label: 'Approaching', color: '#ff9900' };
+            case 'attacking':
+                return { label: 'ATTACKING', color: '#ff4444' };
+            default:
+                return { label: state, color: '#ffffff' };
+        }
     }
 
     private drawBackground(): void {
