@@ -238,52 +238,48 @@ test('separation averages forces from multiple nearby enemies', () => {
 });
 
 // ============================================================================
-// ATTACK RANGE AND STOPPING
+// TARGET POSITION REACHING AND STOPPING
 // ============================================================================
 
-test('enemy stops when in attack range and no separation needed', () => {
-    const enemy = new Enemy(130, 400);
-    enemy.facingRight = false; // Facing left toward player
+test('enemy stops when reached target position and no separation needed', () => {
+    const targetX = 100;
+    const targetY = 400;
+    // Place enemy within positionReachedThreshold (10px) of target
+    const enemy = new Enemy(105, 400); // 5px away from target
 
-    const player = new Player(100, 400); // 30px to the left, within armLength (50px)
+    enemy.moveToward(targetX, targetY, 0.016, []);
 
-    enemy.moveToward(player.x, player.y, 0.016, []);
-
-    // Enemy should stop (zero velocity) when in attack range
+    // Enemy should stop (zero velocity) when reached target position
     assert.equal(enemy.velocityX, 0);
     assert.equal(enemy.velocityY, 0);
 });
 
-test('enemy continues moving if in attack range but separation forces exist', () => {
-    const enemy1 = new Enemy(130, 400);
-    enemy1.facingRight = false;
+test('enemy continues moving if reached target but separation forces exist', () => {
+    const targetX = 100;
+    const targetY = 400;
+    // Place enemy within positionReachedThreshold (10px) of target
+    const enemy1 = new Enemy(105, 400); // 5px away from target
 
-    const enemy2 = new Enemy(135, 400); // Very close, creating separation force
+    const enemy2 = new Enemy(110, 400); // Very close, creating separation force
 
-    const player = new Player(100, 400);
+    enemy1.moveToward(targetX, targetY, 0.016, [enemy2]);
 
-    enemy1.moveToward(player.x, player.y, 0.016, [enemy2]);
-
-    // Enemy should still move due to separation, even in attack range
+    // Enemy should still move due to separation, even when reached target
     const hasVelocity = enemy1.velocityX !== 0 || enemy1.velocityY !== 0;
-    assert.ok(hasVelocity, 'enemy should move to separate despite being in attack range');
+    assert.ok(hasVelocity, 'enemy should move to separate despite reaching target');
 });
 
-test('attack range considers vertical threshold', () => {
+test('enemy keeps moving when not within position threshold', () => {
     const enemy = new Enemy(130, 400);
-    enemy.facingRight = false;
 
-    const playerInRange = new Player(100, 410); // 10px vertical offset (within 30px threshold)
-    const playerOutOfRange = new Player(100, 450); // 50px vertical offset (outside threshold)
+    // Target is 30px away - outside positionReachedThreshold (10px)
+    const targetX = 100;
+    const targetY = 400;
 
-    enemy.moveToward(playerInRange.x, playerInRange.y, 0.016, []);
-    const stoppedForInRange = enemy.velocityX === 0 && enemy.velocityY === 0;
+    enemy.moveToward(targetX, targetY, 0.016, []);
+    const stillMoving = enemy.velocityX !== 0 || enemy.velocityY !== 0;
 
-    enemy.moveToward(playerOutOfRange.x, playerOutOfRange.y, 0.016, []);
-    const movingForOutOfRange = enemy.velocityX !== 0 || enemy.velocityY !== 0;
-
-    assert.ok(stoppedForInRange, 'should stop when player is within vertical threshold');
-    assert.ok(movingForOutOfRange, 'should move when player is outside vertical threshold');
+    assert.ok(stillMoving, 'should keep moving when target is not reached');
 });
 
 test('enemy must face player to be in attack range', () => {

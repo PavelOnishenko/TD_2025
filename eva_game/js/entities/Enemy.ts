@@ -170,18 +170,11 @@ export default class Enemy extends Entity {
         const dy: number = targetY - this.y;
         const distance: number = Math.sqrt(dx * dx + dy * dy);
 
-        // Check if we're within attack range
-        const attackConfig = balanceConfig.enemy.attack;
-        const horizontalDistance: number = Math.abs(dx);
-        const verticalDistance: number = Math.abs(dy);
+        // Check if we've reached the target position
+        const positionThreshold = balanceConfig.attackPosition.positionReachedThreshold;
 
-        // Check if we're facing the target (or will be after updating facing direction)
-        const wouldBeFacingTarget: boolean = (dx > 0 && this.facingRight) || (dx < 0 && !this.facingRight) || dx === 0;
-
-        // Check if we're in attack range
-        const inAttackRange: boolean = wouldBeFacingTarget &&
-            horizontalDistance < attackConfig.armLength &&
-            verticalDistance < attackConfig.verticalThreshold;
+        // Check if we're close enough to the target position to stop
+        const reachedTarget: boolean = distance + balanceConfig.attackPosition.attackPointThreshold <= positionThreshold;
 
         this.updateFacingDirection(dx);
 
@@ -191,17 +184,17 @@ export default class Enemy extends Entity {
         // Calculate separation magnitude to determine if we need to move
         const separationMagnitude = Math.sqrt(separation.x * separation.x + separation.y * separation.y);
 
-        // Stop only if in attack range AND no significant separation force is pushing us
-        // This allows enemies to spread out around the player even when in attack range
-        if (inAttackRange && separationMagnitude < 0.1) {
+        // Stop only if reached target AND no significant separation force is pushing us
+        // This allows enemies to spread out even when at their target position
+        if (reachedTarget && separationMagnitude < 0.1) {
             this.velocityX = 0;
             this.velocityY = 0;
             return;
         }
 
-        // If in attack range but separation is pushing us, prioritize separation over player-seeking
-        if (inAttackRange) {
-            // Apply only separation force to spread out around player
+        // If reached target but separation is pushing us, prioritize separation
+        if (reachedTarget) {
+            // Apply only separation force to spread out
             const separationDistance = Math.sqrt(separation.x * separation.x + separation.y * separation.y);
             if (separationDistance > 0) {
                 this.velocityX = (separation.x / separationDistance) * balanceConfig.enemy.speed;
@@ -211,7 +204,7 @@ export default class Enemy extends Entity {
                 this.velocityY = 0;
             }
         } else {
-            // Not in attack range, combine player-seeking with enemy separation
+            // Not at target yet, combine target-seeking with enemy separation
             this.setVelocityWithSeparation(dx, dy, distance, separation);
         }
     }
