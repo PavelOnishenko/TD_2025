@@ -175,7 +175,7 @@ export default class Enemy extends Entity {
         const positionThreshold = balanceConfig.attackPosition.positionReachedThreshold;
 
         // Check if we're close enough to the target position to stop
-        const reachedTarget: boolean = distance + balanceConfig.attackPosition.attackPointThreshold <= positionThreshold;
+        const reachedTarget: boolean = distance <= positionThreshold;
 
         this.updateFacingDirection(dx);
 
