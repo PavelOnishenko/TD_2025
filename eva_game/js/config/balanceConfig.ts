@@ -13,7 +13,7 @@ export const balanceConfig = {
     scale: 1.8,  // Visual scale of the stick figure (1.0 = default size)
 
     // master structure
-    speed: 200,
+    speed: 400,
     attack: {
       duration: 100,
       cooldown: 200,
@@ -34,7 +34,7 @@ export const balanceConfig = {
     height: 55,
     scale: 1.8,  // Visual scale of the stick figure (1.0 = default size)
 
-    speed: 80,
+    speed: 160,
     attack: {
       armLength: 50,          // horizontal range of punch (like arm length)
       verticalThreshold: 30,  // vertical offset tolerance
@@ -80,5 +80,23 @@ export const balanceConfig = {
   // Collision settings for beat 'em up depth
   collision: {
     feetColliderHeight: 15,  // Only bottom 15px acts as ground collider
+  },
+
+  // Attack position settings
+  attackPosition: {
+    distanceFromPlayer: 45,  // Distance from player center to attack position (arm's length)
+    positionReachedThreshold: 10,  // How close enemy needs to be to consider position reached
+    indicatorRadius: 12,  // Radius of the position indicator circle
+    indicatorColor: 'rgba(255, 100, 100, 0.6)',  // Color of the position indicator
+    lineColor: 'rgba(255, 100, 100, 0.4)',  // Color of the line from enemy to position
+    lineWidth: 2,  // Width of the indicator line
+    attackPointThreshold: 4
+  },
+
+  // Waiting point settings - where enemies go after spawning to be visible
+  waitingPoint: {
+    distanceFromSpawn: 300,  // Distance to move left from spawn point to reach waiting area
+    positionReachedThreshold: 75,  // How close enemy needs to be to consider waiting point reached
+    verticalSpread: 40,  // Vertical spread for waiting points to avoid stacking
   },
 };

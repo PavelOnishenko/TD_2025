@@ -6,7 +6,9 @@ import { Viewport, WorldBounds } from './types/engine.js';
 import { GameOverCallback } from './types/game.js';
 import Player from './entities/Player.js';
 import Enemy from './entities/Enemy.js';
+import AttackPositionManager from './systems/AttackPositionManager.js';
 import { balanceConfig } from './config/balanceConfig.js';
+import { decorationConfig } from './config/decorationConfig.js';
 
 // Color palette for enemies - each enemy gets a unique color
 const ENEMY_COLORS: string[] = [
@@ -39,12 +41,17 @@ export default class Game {
     private level: number = 1;
     private viewport?: Viewport;
     private nextColorIndex: number = 0;
+    private attackPositionManager: AttackPositionManager;
+    private mouseScreenX: number = 0;
+    private mouseScreenY: number = 0;
+    private canvas: HTMLCanvasElement;
 
     public gameOver: boolean = false;
     public isPaused: boolean = false;
     public onGameOver: GameOverCallback | null = null;
 
     constructor(canvas: HTMLCanvasElement) {
+        this.canvas = canvas;
 
         const context = canvas.getContext('2d');
         if (!context) {
@@ -55,6 +62,7 @@ export default class Game {
         this.renderer = new Renderer(canvas, this.ctx);
         this.input = new InputManager();
         this.scoreManager = new ScoreManager();
+        this.attackPositionManager = new AttackPositionManager();
         this.loop = new GameLoop(
             (dt: number) => this.update(dt),
             () => this.render()
@@ -71,6 +79,27 @@ export default class Game {
 
         document.addEventListener('keydown', (e: KeyboardEvent) => this.input.handleKeyDown(e));
         document.addEventListener('keyup', (e: KeyboardEvent) => this.input.handleKeyUp(e));
+
+        // Track mouse position for coordinate debug widgets
+        this.canvas.addEventListener('mousemove', (e: MouseEvent) => this.handleMouseMove(e));
+    }
+
+    private handleMouseMove(e: MouseEvent): void {
+        const rect = this.canvas.getBoundingClientRect();
+        const dpr = this.viewport?.dpr || window.devicePixelRatio || 1;
+        // Screen coordinates in canvas pixel space (accounting for DPR)
+        this.mouseScreenX = (e.clientX - rect.left) * dpr;
+        this.mouseScreenY = (e.clientY - rect.top) * dpr;
+    }
+
+    private screenToWorld(screenX: number, screenY: number): { x: number; y: number } {
+        const scale = this.viewport?.scale || 1;
+        const offsetX = this.viewport?.offsetX || 0;
+        const offsetY = this.viewport?.offsetY || 0;
+        return {
+            x: (screenX - offsetX) / scale,
+            y: (screenY - offsetY) / scale,
+        };
     }
 
     private initializeGame(): void {
@@ -95,6 +124,10 @@ export default class Game {
         const enemyHalfHeight: number = balanceConfig.enemy.height / 2;
         const enemyHalfWidth: number = balanceConfig.enemy.width / 2;
         const feetColliderHeight: number = balanceConfig.collision.feetColliderHeight;
+        const waitingConfig = balanceConfig.waitingPoint;
+
+        // Calculate waiting area X position (visible area on the right side)
+        const waitingAreaX: number = balanceConfig.world.width - waitingConfig.distanceFromSpawn;
 
         for (let i = 0; i < count; i++) {
             // Spawn enemies off-screen to the right, with some spacing between them
@@ -109,6 +142,13 @@ export default class Game {
             this.nextColorIndex++;
 
             const enemy: Enemy = new Enemy(x, y, color);
+
+            // Set up waiting point - spread enemies vertically to avoid stacking
+            const verticalOffset: number = (i - (count - 1) / 2) * waitingConfig.verticalSpread;
+            const waitingY: number = Math.max(minY, Math.min(maxY, (minY + maxY) / 2 + verticalOffset));
+            enemy.waitingPoint = { x: waitingAreaX, y: waitingY };
+            enemy.enemyState = 'movingToWaitingPoint';
+
             this.enemies.push(enemy);
         }
     }
@@ -130,6 +170,7 @@ export default class Game {
     public restart(): void {
         this.gameOver = false;
         this.scoreManager.reset();
+        this.attackPositionManager.reset();
         this.level = 1;
         this.enemies = [];
         this.nextColorIndex = 0;
@@ -207,6 +248,9 @@ export default class Game {
             return;
         }
 
+        // Update attack position manager - assigns enemies to positions
+        this.attackPositionManager.update(this.player, this.enemies);
+
         let aliveEnemyCount = 0;
 
         for (let i = this.enemies.length - 1; i >= 0; i--) {
@@ -215,8 +259,59 @@ export default class Game {
 
             // Only update alive enemies
             if (enemy.animationState !== 'death' && !enemy.isDead) {
-                // Pass all enemies so they can avoid clustering
-                enemy.moveToward(this.player.x, this.player.y, deltaTime, this.enemies);
+                // Movement based on enemy state
+                switch (enemy.enemyState) {
+                    case 'movingToWaitingPoint':
+                        // Move toward waiting point after spawn
+                        if (enemy.waitingPoint) {
+                            enemy.moveToward(
+                                enemy.waitingPoint.x,
+                                enemy.waitingPoint.y,
+                                deltaTime,
+                                this.enemies
+                            );
+
+                            // Check if reached waiting point
+                            const dx = enemy.x - enemy.waitingPoint.x;
+                            const dy = enemy.y - enemy.waitingPoint.y;
+                            const distance = Math.sqrt(dx * dx + dy * dy);
+                            if (distance < balanceConfig.waitingPoint.positionReachedThreshold) {
+                                enemy.enemyState = 'waiting';
+                            }
+                        }
+                        break;
+
+                    case 'waiting':
+                        // Waiting enemies stand completely still
+                        enemy.velocityX = 0;
+                        enemy.velocityY = 0;
+                        break;
+
+                    case 'movingToAttack':
+                        // Move toward assigned attack position
+                        if (enemy.assignedAttackPosition) {
+                            enemy.moveToward(
+                                enemy.assignedAttackPosition.x,
+                                enemy.assignedAttackPosition.y,
+                                deltaTime,
+                                this.enemies
+                            );
+                        }
+                        break;
+
+                    case 'attacking':
+                        // At attack position - stay near it but allow small adjustments
+                        if (enemy.assignedAttackPosition) {
+                            enemy.moveToward(
+                                enemy.assignedAttackPosition.x,
+                                enemy.assignedAttackPosition.y,
+                                deltaTime,
+                                this.enemies
+                            );
+                        }
+                        break;
+                }
+
                 // Keep enemies within road bounds
                 this.keepEnemyInBounds(enemy);
                 aliveEnemyCount++;
@@ -248,17 +343,20 @@ export default class Game {
                 continue;
             }
 
-            // Check if enemy can initiate attack based on distance
-            if (enemy.canAttackPlayer(this.player)) {
-                enemy.startAttack();
+            // Only enemies in 'attacking' state can attack the player
+            if (enemy.enemyState === 'attacking') {
+                // Check if enemy can initiate attack based on distance
+                if (enemy.canAttackPlayer(this.player)) {
+                    enemy.startAttack();
+                }
+
+                // Check if enemy's punch hits player during animation
+                if (enemy.checkAttackHit(this.player)) {
+                    this.handleEnemyAttackHit(enemy);
+                }
             }
 
-            // Check if enemy's punch hits player during animation
-            if (enemy.checkAttackHit(this.player)) {
-                this.handleEnemyAttackHit(enemy);
-            }
-
-            // Check if player attack hits enemy
+            // Check if player attack hits enemy (player can attack any enemy)
             if (this.player.isAttacking && this.player.checkAttackHit(enemy)) {
                 this.handlePlayerAttackHit(enemy);
             }
@@ -311,8 +409,77 @@ export default class Game {
     private render(): void {
         this.renderer.beginFrame();
         this.drawBackground();
+        // Draw attack position indicators on the ground (before entities)
+        if (this.player) {
+            this.attackPositionManager.drawIndicators(this.ctx, this.player);
+        }
         this.drawEntities();
         this.renderer.endFrame();
+
+        // Draw coordinate debug widgets (in screen space, after endFrame)
+        this.drawCoordinateWidgets();
+    }
+
+    private drawCoordinateWidgets(): void {
+        const ctx = this.ctx;
+        const worldCoords = this.screenToWorld(this.mouseScreenX, this.mouseScreenY);
+
+        // Widget styling
+        const padding = 8;
+        const lineHeight = 18;
+        const fontSize = 14;
+        const widgetWidth = 180;
+        const widgetHeight = lineHeight * 2 + padding * 2;
+        const cornerRadius = 6;
+        const gap = 10;
+
+        // Position at bottom-left corner
+        const baseX = 10;
+        const baseY = this.canvas.height - 10;
+
+        ctx.save();
+        ctx.setTransform(1, 0, 0, 1, 0, 0); // Reset transform to screen space
+
+        // Draw World Coords widget (bottom)
+        const worldWidgetY = baseY - widgetHeight;
+        this.drawWidgetBox(ctx, baseX, worldWidgetY, widgetWidth, widgetHeight, cornerRadius, 'rgba(0, 100, 0, 0.8)');
+        ctx.fillStyle = '#00ff00';
+        ctx.font = `bold ${fontSize}px monospace`;
+        ctx.fillText('WORLD COORDS', baseX + padding, worldWidgetY + padding + fontSize);
+        ctx.font = `${fontSize}px monospace`;
+        ctx.fillText(`X: ${Math.round(worldCoords.x)}  Y: ${Math.round(worldCoords.y)}`, baseX + padding, worldWidgetY + padding + fontSize + lineHeight);
+
+        // Draw Screen Coords widget (above world widget)
+        const screenWidgetY = worldWidgetY - widgetHeight - gap;
+        this.drawWidgetBox(ctx, baseX, screenWidgetY, widgetWidth, widgetHeight, cornerRadius, 'rgba(0, 0, 100, 0.8)');
+        ctx.fillStyle = '#00aaff';
+        ctx.font = `bold ${fontSize}px monospace`;
+        ctx.fillText('SCREEN COORDS', baseX + padding, screenWidgetY + padding + fontSize);
+        ctx.font = `${fontSize}px monospace`;
+        ctx.fillText(`X: ${Math.round(this.mouseScreenX)}  Y: ${Math.round(this.mouseScreenY)}`, baseX + padding, screenWidgetY + padding + fontSize + lineHeight);
+
+        ctx.restore();
+    }
+
+    private drawWidgetBox(ctx: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, radius: number, color: string): void {
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.moveTo(x + radius, y);
+        ctx.lineTo(x + width - radius, y);
+        ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+        ctx.lineTo(x + width, y + height - radius);
+        ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+        ctx.lineTo(x + radius, y + height);
+        ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+        ctx.lineTo(x, y + radius);
+        ctx.quadraticCurveTo(x, y, x + radius, y);
+        ctx.closePath();
+        ctx.fill();
+
+        // Border
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
     }
 
     private drawBackground(): void {
@@ -333,7 +500,7 @@ export default class Game {
         this.renderer.fillRect(0, roadY, balanceConfig.world.width, roadHeight, '#4a4a6a');
 
         // Draw road grid only in playable area
-        this.drawRoadGrid(50, roadY, roadHeight);
+        this.drawRoadGrid(roadY, roadHeight);
 
         // Dividing line between background and road
         this.ctx.strokeStyle = '#f39c12';
@@ -344,25 +511,73 @@ export default class Game {
         this.ctx.stroke();
     }
 
-    private drawRoadGrid(gridSize: number, roadY: number, roadHeight: number): void {
-        this.ctx.strokeStyle = 'rgba(100, 100, 150, 0.3)';
-        this.ctx.lineWidth = 1;
+    private drawRoadGrid(roadY: number, roadHeight: number): void {
+        const gridConfig = decorationConfig.grid;
 
-        // Vertical grid lines across the entire road
-        for (let x = 0; x <= balanceConfig.world.width; x += gridSize) {
+        this.ctx.strokeStyle = gridConfig.strokeColor;
+        this.ctx.lineWidth = gridConfig.lineWidth;
+
+        const roadBottom = roadY + roadHeight;
+        const centerX = balanceConfig.world.width / 2;
+        const worldWidth = balanceConfig.world.width;
+
+        // Perspective factor from config
+        const perspectiveFactor = gridConfig.perspective.factor;
+
+        // Clip to road area only - no drawing outside road bounds
+        this.ctx.save();
+        this.ctx.beginPath();
+        this.ctx.rect(0, roadY, worldWidth, roadHeight);
+        this.ctx.clip();
+
+        // Calculate extended range to cover full width at the top
+        // To reach topX=0, we need bottomX = centerX * (1 - 1/perspectiveFactor)
+        // To reach topX=width, we need bottomX = centerX * (1 + 1/perspectiveFactor)
+        const expansionFactor = 1 / perspectiveFactor;
+        const extendedLeft = centerX * (1 - expansionFactor);
+        const extendedRight = centerX * (1 + expansionFactor);
+
+        // Draw vertical lines with perspective (converging towards center)
+        // Use extended range to ensure full coverage at the top
+        for (let x = extendedLeft; x <= extendedRight; x += gridConfig.cellSize) {
+            // Calculate how far this line is from center (normalized)
+            const offsetFromCenter = (x - centerX) / centerX;
+
+            // Top point: closer to center (perspective effect)
+            const topX = centerX + (offsetFromCenter * centerX * perspectiveFactor);
+
+            // Bottom point: at the actual x position (no perspective)
+            const bottomX = x;
+
             this.ctx.beginPath();
-            this.ctx.moveTo(x, roadY);
-            this.ctx.lineTo(x, roadY + roadHeight);
+            this.ctx.moveTo(topX, roadY);
+            this.ctx.lineTo(bottomX, roadBottom);
             this.ctx.stroke();
         }
 
-        // Horizontal grid lines only in the road area
-        for (let y = roadY; y <= roadY + roadHeight; y += gridSize) {
+        // Draw horizontal lines with perspective (getting narrower towards top)
+        const numHorizontalLines = Math.floor(roadHeight / gridConfig.cellSize);
+        for (let i = 0; i <= numHorizontalLines; i++) {
+            const y = roadY + (i * gridConfig.cellSize);
+
+            // Calculate depth factor (0 at top, 1 at bottom)
+            const depth = (y - roadY) / roadHeight;
+
+            // Interpolate width based on depth
+            const widthAtThisDepth = perspectiveFactor + (1 - perspectiveFactor) * depth;
+            const halfWidth = (worldWidth / 2) * widthAtThisDepth;
+
+            const leftX = centerX - halfWidth;
+            const rightX = centerX + halfWidth;
+
             this.ctx.beginPath();
-            this.ctx.moveTo(0, y);
-            this.ctx.lineTo(balanceConfig.world.width, y);
+            this.ctx.moveTo(leftX, y);
+            this.ctx.lineTo(rightX, y);
             this.ctx.stroke();
         }
+
+        // Restore context to remove clipping
+        this.ctx.restore();
     }
 
     private drawEntities(): void {

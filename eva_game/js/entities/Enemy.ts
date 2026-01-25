@@ -1,6 +1,6 @@
 import Entity from '../../../engine/core/Entity.js';
 import { Viewport } from '../types/engine.js';
-import { AnimationState } from '../types/game.js';
+import { AnimationState, EnemyState } from '../types/game.js';
 import Player from './Player.js';
 import StickFigure from '../utils/StickFigure.js';
 import { balanceConfig } from '../config/balanceConfig.js';
@@ -29,6 +29,11 @@ export default class Enemy extends Entity {
     public color: string;
     public isDead: boolean = false; // Track if enemy is dead (after death animation completes)
     public justDied: boolean = false; // True for one frame when enemy dies (for score tracking)
+
+    // Attack position system state
+    public enemyState: EnemyState = 'movingToWaitingPoint'; // Current behavior state
+    public assignedAttackPosition: { x: number; y: number } | null = null; // Currently assigned attack position
+    public waitingPoint: { x: number; y: number } | null = null; // Point to move to after spawning
 
     private attackCooldownTimer: number = 0;
     private hasDealtDamageThisAttack: boolean = false; // Track if damage was dealt in current attack
@@ -166,18 +171,11 @@ export default class Enemy extends Entity {
         const dy: number = targetY - this.y;
         const distance: number = Math.sqrt(dx * dx + dy * dy);
 
-        // Check if we're within attack range
-        const attackConfig = balanceConfig.enemy.attack;
-        const horizontalDistance: number = Math.abs(dx);
-        const verticalDistance: number = Math.abs(dy);
+        // Check if we've reached the target position
+        const positionThreshold = balanceConfig.attackPosition.positionReachedThreshold;
 
-        // Check if we're facing the target (or will be after updating facing direction)
-        const wouldBeFacingTarget: boolean = (dx > 0 && this.facingRight) || (dx < 0 && !this.facingRight) || dx === 0;
-
-        // Check if we're in attack range
-        const inAttackRange: boolean = wouldBeFacingTarget &&
-            horizontalDistance < attackConfig.armLength &&
-            verticalDistance < attackConfig.verticalThreshold;
+        // Check if we're close enough to the target position to stop
+        const reachedTarget: boolean = distance + balanceConfig.attackPosition.attackPointThreshold <= positionThreshold;
 
         this.updateFacingDirection(dx);
 
@@ -187,17 +185,17 @@ export default class Enemy extends Entity {
         // Calculate separation magnitude to determine if we need to move
         const separationMagnitude = Math.sqrt(separation.x * separation.x + separation.y * separation.y);
 
-        // Stop only if in attack range AND no significant separation force is pushing us
-        // This allows enemies to spread out around the player even when in attack range
-        if (inAttackRange && separationMagnitude < 0.1) {
+        // Stop only if reached target AND no significant separation force is pushing us
+        // This allows enemies to spread out even when at their target position
+        if (reachedTarget && separationMagnitude < 0.1) {
             this.velocityX = 0;
             this.velocityY = 0;
             return;
         }
 
-        // If in attack range but separation is pushing us, prioritize separation over player-seeking
-        if (inAttackRange) {
-            // Apply only separation force to spread out around player
+        // If reached target but separation is pushing us, prioritize separation
+        if (reachedTarget) {
+            // Apply only separation force to spread out
             const separationDistance = Math.sqrt(separation.x * separation.x + separation.y * separation.y);
             if (separationDistance > 0) {
                 this.velocityX = (separation.x / separationDistance) * balanceConfig.enemy.speed;
@@ -207,7 +205,7 @@ export default class Enemy extends Entity {
                 this.velocityY = 0;
             }
         } else {
-            // Not in attack range, combine player-seeking with enemy separation
+            // Not at target yet, combine target-seeking with enemy separation
             this.setVelocityWithSeparation(dx, dy, distance, separation);
         }
     }
@@ -424,6 +422,27 @@ export default class Enemy extends Entity {
 
         this.drawStickFigure(ctx, screenX, screenY);
         this.drawHealthBar(ctx, screenX, screenY);
+        this.drawCoordinatePoint(ctx, screenX, screenY);
+    }
+
+    private drawCoordinatePoint(ctx: CanvasRenderingContext2D, screenX: number, screenY: number): void {
+        // Draw a small circle at the exact coordinate point
+        ctx.beginPath();
+        ctx.arc(screenX, screenY, 4, 0, Math.PI * 2);
+        ctx.fillStyle = '#ff0000'; // Red for enemies
+        ctx.fill();
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        // Draw coordinate text
+        ctx.font = '10px monospace';
+        ctx.fillStyle = '#ff0000';
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 2;
+        const coordText = `(${Math.round(screenX)}, ${Math.round(screenY)})`;
+        ctx.strokeText(coordText, screenX + 8, screenY - 8);
+        ctx.fillText(coordText, screenX + 8, screenY - 8);
     }
 
     private drawStickFigure(ctx: CanvasRenderingContext2D, screenX: number, screenY: number): void {
