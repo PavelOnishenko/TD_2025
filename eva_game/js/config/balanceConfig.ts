@@ -13,7 +13,7 @@ export const balanceConfig = {
     scale: 1.8,  // Visual scale of the stick figure (1.0 = default size)
 
     // master structure
-    speed: 200,
+    speed: 400,
     attack: {
       duration: 100,
       cooldown: 200,
@@ -34,7 +34,7 @@ export const balanceConfig = {
     height: 55,
     scale: 1.8,  // Visual scale of the stick figure (1.0 = default size)
 
-    speed: 80,
+    speed: 160,
     attack: {
       armLength: 50,          // horizontal range of punch (like arm length)
       verticalThreshold: 30,  // vertical offset tolerance
