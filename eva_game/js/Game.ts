@@ -6,6 +6,7 @@ import { Viewport, WorldBounds } from './types/engine.js';
 import { GameOverCallback } from './types/game.js';
 import Player from './entities/Player.js';
 import Enemy from './entities/Enemy.js';
+import AttackPositionManager from './systems/AttackPositionManager.js';
 import { balanceConfig } from './config/balanceConfig.js';
 import { decorationConfig } from './config/decorationConfig.js';
 
@@ -40,6 +41,7 @@ export default class Game {
     private level: number = 1;
     private viewport?: Viewport;
     private nextColorIndex: number = 0;
+    private attackPositionManager: AttackPositionManager;
 
     public gameOver: boolean = false;
     public isPaused: boolean = false;
@@ -56,6 +58,7 @@ export default class Game {
         this.renderer = new Renderer(canvas, this.ctx);
         this.input = new InputManager();
         this.scoreManager = new ScoreManager();
+        this.attackPositionManager = new AttackPositionManager();
         this.loop = new GameLoop(
             (dt: number) => this.update(dt),
             () => this.render()
@@ -131,6 +134,7 @@ export default class Game {
     public restart(): void {
         this.gameOver = false;
         this.scoreManager.reset();
+        this.attackPositionManager.reset();
         this.level = 1;
         this.enemies = [];
         this.nextColorIndex = 0;
@@ -208,6 +212,9 @@ export default class Game {
             return;
         }
 
+        // Update attack position manager - assigns enemies to positions
+        this.attackPositionManager.update(this.player, this.enemies);
+
         let aliveEnemyCount = 0;
 
         for (let i = this.enemies.length - 1; i >= 0; i--) {
@@ -216,8 +223,39 @@ export default class Game {
 
             // Only update alive enemies
             if (enemy.animationState !== 'death' && !enemy.isDead) {
-                // Pass all enemies so they can avoid clustering
-                enemy.moveToward(this.player.x, this.player.y, deltaTime, this.enemies);
+                // Movement based on enemy state
+                switch (enemy.enemyState) {
+                    case 'waiting':
+                        // Waiting enemies stand completely still
+                        enemy.velocityX = 0;
+                        enemy.velocityY = 0;
+                        break;
+
+                    case 'movingToAttack':
+                        // Move toward assigned attack position
+                        if (enemy.assignedAttackPosition) {
+                            enemy.moveToward(
+                                enemy.assignedAttackPosition.x,
+                                enemy.assignedAttackPosition.y,
+                                deltaTime,
+                                this.enemies
+                            );
+                        }
+                        break;
+
+                    case 'attacking':
+                        // At attack position - stay near it but allow small adjustments
+                        if (enemy.assignedAttackPosition) {
+                            enemy.moveToward(
+                                enemy.assignedAttackPosition.x,
+                                enemy.assignedAttackPosition.y,
+                                deltaTime,
+                                this.enemies
+                            );
+                        }
+                        break;
+                }
+
                 // Keep enemies within road bounds
                 this.keepEnemyInBounds(enemy);
                 aliveEnemyCount++;
@@ -249,17 +287,20 @@ export default class Game {
                 continue;
             }
 
-            // Check if enemy can initiate attack based on distance
-            if (enemy.canAttackPlayer(this.player)) {
-                enemy.startAttack();
+            // Only enemies in 'attacking' state can attack the player
+            if (enemy.enemyState === 'attacking') {
+                // Check if enemy can initiate attack based on distance
+                if (enemy.canAttackPlayer(this.player)) {
+                    enemy.startAttack();
+                }
+
+                // Check if enemy's punch hits player during animation
+                if (enemy.checkAttackHit(this.player)) {
+                    this.handleEnemyAttackHit(enemy);
+                }
             }
 
-            // Check if enemy's punch hits player during animation
-            if (enemy.checkAttackHit(this.player)) {
-                this.handleEnemyAttackHit(enemy);
-            }
-
-            // Check if player attack hits enemy
+            // Check if player attack hits enemy (player can attack any enemy)
             if (this.player.isAttacking && this.player.checkAttackHit(enemy)) {
                 this.handlePlayerAttackHit(enemy);
             }
@@ -312,6 +353,10 @@ export default class Game {
     private render(): void {
         this.renderer.beginFrame();
         this.drawBackground();
+        // Draw attack position indicators on the ground (before entities)
+        if (this.player) {
+            this.attackPositionManager.drawIndicators(this.ctx, this.player);
+        }
         this.drawEntities();
         this.renderer.endFrame();
     }
