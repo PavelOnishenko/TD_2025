@@ -128,22 +128,25 @@ export default class AttackPositionManager {
             }
         }
 
-        // If no enemy assigned, find the closest waiting enemy and assign them
+        // If no enemy assigned, find the closest strafing enemy to the attack position and assign them
         if (!this.assignedEnemy) {
-            const waitingEnemies = enemies.filter(e =>
-                e.enemyState === 'waiting' &&
+            const strafingEnemies = enemies.filter(e =>
+                e.enemyState === 'strafing' &&
                 e.animationState !== 'death' &&
                 !e.isDead
             );
 
-            if (waitingEnemies.length > 0) {
-                // Find closest waiting enemy to player
+            if (strafingEnemies.length > 0) {
+                // Find closest strafing enemy to the attack position
                 let closestEnemy: Enemy | null = null;
                 let closestDistance = Infinity;
 
-                for (const enemy of waitingEnemies) {
-                    const dx = enemy.x - player.x;
-                    const dy = enemy.y - player.y;
+                for (const enemy of strafingEnemies) {
+                    // Calculate distance to the attack position (not to player)
+                    const side = this.determineSide(enemy, player);
+                    const attackPos = this.getAttackPosition(player, side);
+                    const dx = enemy.x - attackPos.x;
+                    const dy = enemy.y - attackPos.y;
                     const distance = Math.sqrt(dx * dx + dy * dy);
 
                     if (distance < closestDistance) {
@@ -153,20 +156,22 @@ export default class AttackPositionManager {
                 }
 
                 if (closestEnemy) {
+                    // Clear strafing target when transitioning to attack
+                    closestEnemy.strafingTarget = null;
                     this.assignEnemy(closestEnemy, player);
                 }
             }
         }
 
-        // Make sure all non-assigned alive enemies that have reached waiting point are in waiting state
+        // Make sure all non-assigned alive enemies that have reached waiting point are in strafing state
         // Don't interfere with enemies still moving to their waiting point
         for (const enemy of enemies) {
             if (enemy !== this.assignedEnemy &&
                 enemy.animationState !== 'death' &&
                 !enemy.isDead &&
-                enemy.enemyState !== 'waiting' &&
+                enemy.enemyState !== 'strafing' &&
                 enemy.enemyState !== 'movingToWaitingPoint') {
-                enemy.enemyState = 'waiting';
+                enemy.enemyState = 'strafing';
                 enemy.assignedAttackPosition = null;
             }
         }
@@ -190,10 +195,16 @@ export default class AttackPositionManager {
     }
 
     /**
-     * Draw attack position indicators
+     * Draw attack position indicators and strafing target indicators
      * This should be called BEFORE drawing entities so indicators appear beneath them
      */
-    public drawIndicators(ctx: CanvasRenderingContext2D, player: Player): void {
+    public drawIndicators(ctx: CanvasRenderingContext2D, player: Player, enemies?: Enemy[]): void {
+        // Draw strafing indicators first (so attack indicators appear on top)
+        if (enemies) {
+            this.drawStrafingIndicators(ctx, enemies);
+        }
+
+        // Draw attack position indicator
         const attackInfo = this.getCurrentAttackPosition(player);
         if (!attackInfo) {
             return;
@@ -227,6 +238,52 @@ export default class AttackPositionManager {
         ctx.strokeStyle = config.indicatorColor;
         ctx.lineWidth = 2;
         ctx.stroke();
+
+        ctx.restore();
+    }
+
+    /**
+     * Draw strafing target indicators for all strafing enemies
+     */
+    private drawStrafingIndicators(ctx: CanvasRenderingContext2D, enemies: Enemy[]): void {
+        const config = balanceConfig.strafing;
+
+        // Get all strafing enemies with valid targets
+        const strafingEnemies = enemies.filter(e =>
+            e.enemyState === 'strafing' &&
+            e.strafingTarget &&
+            e.animationState !== 'death' &&
+            !e.isDead
+        );
+
+        ctx.save();
+
+        for (const enemy of strafingEnemies) {
+            const target = enemy.strafingTarget!;
+
+            // Draw line from enemy feet to strafing target
+            ctx.strokeStyle = config.lineColor;
+            ctx.lineWidth = config.lineWidth;
+            ctx.setLineDash([5, 5]); // Dashed line
+
+            ctx.beginPath();
+            ctx.moveTo(enemy.x, enemy.y);
+            ctx.lineTo(target.x, target.y);
+            ctx.stroke();
+
+            ctx.setLineDash([]); // Reset dash
+
+            // Draw circle at strafing target position
+            ctx.fillStyle = config.indicatorColor;
+            ctx.beginPath();
+            ctx.arc(target.x, target.y, config.indicatorRadius, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Draw circle outline
+            ctx.strokeStyle = config.indicatorColor;
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        }
 
         ctx.restore();
     }
