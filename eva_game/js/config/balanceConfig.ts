@@ -113,5 +113,7 @@ export const balanceConfig = {
     indicatorColor: 'rgba(255, 200, 100, 0.6)',  // Color of the strafing position indicator (orange-ish)
     lineColor: 'rgba(255, 200, 100, 0.4)',  // Color of the line from enemy to strafing position
     lineWidth: 2,  // Width of the indicator line
+    tauntChance: 0.3,  // Chance (0-1) to taunt when reaching a strafing point
+    tauntDuration: 800,  // Duration of taunt animation in milliseconds
   },
 };

@@ -45,6 +45,7 @@ export default class Enemy extends Entity {
     private hurtAnimationTimer: number = 0;
     private deathAnimationTimer: number = 0;
     private punchAnimationTimer: number = 0;
+    private tauntAnimationTimer: number = 0;
 
     private static readonly WALK_ANIMATION_SPEED: number = 2.5; // cycles per second
 
@@ -104,6 +105,12 @@ export default class Enemy extends Entity {
             return;
         }
 
+        // Taunt animation takes priority when active
+        if (this.tauntAnimationTimer > 0) {
+            this.animationState = 'taunt';
+            return;
+        }
+
         this.animationState = (this.velocityX !== 0 || this.velocityY !== 0) ? 'walk' : 'idle';
     }
 
@@ -151,6 +158,20 @@ export default class Enemy extends Entity {
                 }
                 break;
 
+            case 'taunt':
+                // Progress through taunt animation
+                if (this.tauntAnimationTimer > 0) {
+                    this.tauntAnimationTimer -= deltaTime * 1000;
+                    const tauntProgress = 1 - (this.tauntAnimationTimer / balanceConfig.strafing.tauntDuration);
+                    this.animationProgress = Math.max(0, Math.min(1, tauntProgress));
+
+                    if (this.tauntAnimationTimer <= 0) {
+                        this.animationState = 'idle';
+                        this.animationProgress = 0;
+                    }
+                }
+                break;
+
             case 'idle':
             default:
                 // Reset animation progress for idle
@@ -161,8 +182,8 @@ export default class Enemy extends Entity {
     }
 
     public moveToward(targetX: number, targetY: number, deltaTime: number, otherEnemies?: Enemy[]): void {
-        // Don't move if attacking or getting hit
-        if (this.animationState === 'punch' || this.animationState === 'hurt') {
+        // Don't move if attacking, getting hit, or taunting
+        if (this.animationState === 'punch' || this.animationState === 'hurt' || this.animationState === 'taunt') {
             this.velocityX = 0;
             this.velocityY = 0;
             return;
@@ -319,6 +340,15 @@ export default class Enemy extends Entity {
         this.hasDealtDamageThisAttack = false; // Reset damage tracking for new attack
     }
 
+    public startTaunt(): void {
+        this.tauntAnimationTimer = balanceConfig.strafing.tauntDuration;
+        this.animationProgress = 0;
+    }
+
+    public isTaunting(): boolean {
+        return this.tauntAnimationTimer > 0;
+    }
+
     public checkAttackHit(player: Player): boolean {
         // Check if punch animation is active
         if (this.punchAnimationTimer <= 0) {
@@ -467,6 +497,9 @@ export default class Enemy extends Entity {
                 break;
             case 'death':
                 pose = StickFigure.getDeathPose(this.animationProgress);
+                break;
+            case 'taunt':
+                pose = StickFigure.getTauntPose(this.animationProgress);
                 break;
             case 'idle':
             default:
