@@ -18,7 +18,13 @@
         <div class="start-menu start-menu--splash">
             <h1 id="startTitle" class="start-menu__title" data-l10n="start.title">Neon Void</h1>
             <p class="start-menu__tagline" data-l10n="start.tagline">Strategize. Merge. Hold the line.</p>
-            <button id="startGame" class="start-menu__button" type="button" data-l10n="start.button">
+            <div id="loadingProgress" class="loading-progress">
+                <div class="loading-progress__bar">
+                    <div id="loadingProgressFill" class="loading-progress__fill"></div>
+                </div>
+                <p id="loadingProgressText" class="loading-progress__text">Loading...</p>
+            </div>
+            <button id="startGame" class="start-menu__button" type="button" data-l10n="start.button" disabled>
                 Enter the battlefield
             </button>
         </div>
