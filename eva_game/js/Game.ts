@@ -349,11 +349,30 @@ export default class Game {
                             const strafeDy = enemy.y - enemy.strafingTarget.y;
                             const strafeDistance = Math.sqrt(strafeDx * strafeDx + strafeDy * strafeDy);
                             if (strafeDistance < balanceConfig.strafing.positionReachedThreshold) {
-                                // Pick a new random strafing target
-                                enemy.strafingTarget = this.pickStrafingTarget(enemy);
+                                // Roll for taunt chance
+                                if (Math.random() < balanceConfig.strafing.tauntChance) {
+                                    // Transition to taunting state
+                                    enemy.enemyState = 'taunting';
+                                    enemy.startTaunt();
+                                } else {
+                                    // Pick a new random strafing target
+                                    enemy.strafingTarget = this.pickStrafingTarget(enemy);
+                                }
                             }
                         } else {
                             // No strafing target set, pick one
+                            enemy.strafingTarget = this.pickStrafingTarget(enemy);
+                        }
+                        break;
+
+                    case 'taunting':
+                        // Enemy is taunting - don't move, wait for animation to finish
+                        enemy.velocityX = 0;
+                        enemy.velocityY = 0;
+
+                        // When taunt animation completes, go back to strafing
+                        if (!enemy.isTaunting()) {
+                            enemy.enemyState = 'strafing';
                             enemy.strafingTarget = this.pickStrafingTarget(enemy);
                         }
                         break;
@@ -651,6 +670,8 @@ export default class Game {
                 return { label: 'Moving to Wait', color: '#aaaaaa' };
             case 'strafing':
                 return { label: 'Strafing', color: '#ffcc00' };
+            case 'taunting':
+                return { label: 'Taunting', color: '#ff66ff' };
             case 'movingToAttack':
                 return { label: 'Approaching', color: '#ff9900' };
             case 'attacking':
