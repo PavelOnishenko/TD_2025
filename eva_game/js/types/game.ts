@@ -7,11 +7,11 @@ export type AnimationState = 'idle' | 'walk' | 'punch' | 'kick' | 'hurt' | 'deat
 /**
  * Enemy behavior state for attack position system
  * - movingToWaitingPoint: Enemy just spawned and is moving to visible waiting area
- * - waiting: Enemy is at waiting point, waiting for an attack position to become available
+ * - strafing: Enemy is at waiting area, moving randomly around the attack point waiting for their turn
  * - movingToAttack: Enemy is moving toward their assigned attack position
  * - attacking: Enemy is at attack position and actively attacking the player
  */
-export type EnemyState = 'movingToWaitingPoint' | 'waiting' | 'movingToAttack' | 'attacking';
+export type EnemyState = 'movingToWaitingPoint' | 'strafing' | 'movingToAttack' | 'attacking';
 
 export interface GameConfig {
     worldWidth: number;

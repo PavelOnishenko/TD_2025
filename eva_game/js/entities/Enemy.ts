@@ -34,6 +34,7 @@ export default class Enemy extends Entity {
     public enemyState: EnemyState = 'movingToWaitingPoint'; // Current behavior state
     public assignedAttackPosition: { x: number; y: number } | null = null; // Currently assigned attack position
     public waitingPoint: { x: number; y: number } | null = null; // Point to move to after spawning
+    public strafingTarget: { x: number; y: number } | null = null; // Current target point during strafing
 
     private attackCooldownTimer: number = 0;
     private hasDealtDamageThisAttack: boolean = false; // Track if damage was dealt in current attack
