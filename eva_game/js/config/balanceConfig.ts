@@ -105,7 +105,7 @@ export const balanceConfig = {
 
   // Strafing settings - enemies move randomly around attack point while waiting
   strafing: {
-    radius: 150,  // Radius of circular area around attack point where strafing enemies move
+    radius: 100,  // Radius of circular area around attack point where strafing enemies move
     minRadiusFactor: 0.5,  // Minimum radius factor (0-1) - points are selected from radius*minRadiusFactor to radius
     maxAngleDegrees: 60,  // Maximum angle (degrees) between current and new strafing point relative to center
     positionReachedThreshold: 20,  // How close enemy needs to be to strafing target to pick a new point

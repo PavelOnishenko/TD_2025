@@ -244,26 +244,26 @@ export default class Game {
     }
 
     /**
-     * Pick a random strafing target point within a circular area around the current attack position.
+     * Pick a random strafing target point within a circular area around the enemy's waiting point.
+     * The waiting point is set once at spawn and persists for the enemy's lifetime.
      * The point is clamped to stay within road bounds.
      */
     private pickStrafingTarget(enemy: Enemy): { x: number; y: number } {
-        if (!this.player) {
-            // Fallback to enemy's current position if no player
+        // Use the enemy's waiting point as the center (persists for enemy's lifetime)
+        if (!enemy.waitingPoint) {
+            // Fallback to enemy's current position if no waiting point
             return { x: enemy.x, y: enemy.y };
         }
 
-        // Get the attack position (center of the strafing circle)
-        const attackSide = this.attackPositionManager.determineSide(enemy, this.player);
-        const attackPos = this.attackPositionManager.getAttackPosition(this.player, attackSide);
+        const centerPoint = enemy.waitingPoint;
 
         // Pick a random point within the strafing area (outer ring, limited angle)
         const radius = balanceConfig.strafing.radius;
         const minRadiusFactor = balanceConfig.strafing.minRadiusFactor;
         const maxAngleRad = (balanceConfig.strafing.maxAngleDegrees * Math.PI) / 180;
 
-        // Calculate current angle from attack position to enemy's current position
-        const currentAngle = Math.atan2(enemy.y - attackPos.y, enemy.x - attackPos.x);
+        // Calculate current angle from waiting point to enemy's current position
+        const currentAngle = Math.atan2(enemy.y - centerPoint.y, enemy.x - centerPoint.x);
 
         // Select random angle within ±maxAngle of current angle
         const angleOffset = (Math.random() * 2 - 1) * maxAngleRad;
@@ -273,8 +273,8 @@ export default class Game {
         const minRadius = radius * minRadiusFactor;
         const distance = minRadius + Math.random() * (radius - minRadius);
 
-        let targetX = attackPos.x + Math.cos(angle) * distance;
-        let targetY = attackPos.y + Math.sin(angle) * distance;
+        let targetX = centerPoint.x + Math.cos(angle) * distance;
+        let targetY = centerPoint.y + Math.sin(angle) * distance;
 
         // Clamp to road bounds
         const roadBoundaryTop: number = balanceConfig.layout.roadBoundaryTopY;
