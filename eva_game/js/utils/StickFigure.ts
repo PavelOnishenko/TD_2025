@@ -399,6 +399,68 @@ export default class StickFigure {
     }
 
     /**
+     * Get taunt pose with animation progress (0-1)
+     * A beckoning gesture where the enemy raises one arm and makes a "come here" motion
+     */
+    public static getTauntPose(progress: number): StickFigurePose {
+        // Create a beckoning animation cycle
+        // First half: raise arm and beckon, second half: lower arm back
+        const cycleProgress = progress < 0.5
+            ? progress * 2 // 0 to 1 in first half
+            : 2 - progress * 2; // 1 to 0 in second half
+
+        // Beckoning finger curl motion (faster cycle within the raised position)
+        const beckonCycle = Math.sin(progress * Math.PI * 6) * 0.5 + 0.5; // Multiple beckons
+
+        // Arm raise amount
+        const armRaise = cycleProgress * 15;
+        const elbowBend = cycleProgress * 10;
+        const handBeckon = beckonCycle * 8 * cycleProgress; // Only beckon when arm is raised
+
+        // Slight body lean back (cocky pose)
+        const leanBack = cycleProgress * 3;
+
+        // Hip shift for attitude
+        const hipShift = cycleProgress * 2;
+
+        return {
+            headY: -20 - leanBack, // Head tilts back slightly
+            torsoEndY: 5 + leanBack,
+
+            // Left arm stays relaxed at side
+            leftShoulderX: -5,
+            leftShoulderY: -12 + leanBack,
+            leftElbowX: -10,
+            leftElbowY: 2,
+            leftHandX: -8,
+            leftHandY: 10,
+
+            // Right arm raised in beckoning gesture
+            rightShoulderX: 5,
+            rightShoulderY: -12 - armRaise * 0.3,
+            rightElbowX: 15 + elbowBend,
+            rightElbowY: -15 - armRaise,
+            rightHandX: 12 + handBeckon, // Hand moves back and forth for beckoning
+            rightHandY: -20 - armRaise + handBeckon * 0.5,
+
+            // Legs in wide confident stance
+            leftHipX: -3 - hipShift,
+            leftHipY: 5,
+            leftKneeX: -6 - hipShift,
+            leftKneeY: 15,
+            leftFootX: -8 - hipShift,
+            leftFootY: 25,
+
+            rightHipX: 3 + hipShift,
+            rightHipY: 5,
+            rightKneeX: 6 + hipShift,
+            rightKneeY: 15,
+            rightFootX: 8 + hipShift,
+            rightFootY: 25
+        };
+    }
+
+    /**
      * Interpolate between two poses
      */
     public static lerpPose(poseA: StickFigurePose, poseB: StickFigurePose, t: number): StickFigurePose {

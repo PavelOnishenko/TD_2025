@@ -243,6 +243,57 @@ export default class Game {
         enemy.y = Math.max(minY, Math.min(maxY, enemy.y));
     }
 
+    /**
+     * Pick a random strafing target point within a circular area around the current attack position.
+     * The point is clamped to stay within road bounds.
+     */
+    private pickStrafingTarget(enemy: Enemy): { x: number; y: number } {
+        if (!this.player) {
+            // Fallback to enemy's current position if no player
+            return { x: enemy.x, y: enemy.y };
+        }
+
+        // Get the attack position (center of the strafing circle)
+        const attackSide = this.attackPositionManager.determineSide(enemy, this.player);
+        const attackPos = this.attackPositionManager.getAttackPosition(this.player, attackSide);
+
+        // Pick a random point within the strafing area (outer ring, limited angle)
+        const radius = balanceConfig.strafing.radius;
+        const minRadiusFactor = balanceConfig.strafing.minRadiusFactor;
+        const maxAngleRad = (balanceConfig.strafing.maxAngleDegrees * Math.PI) / 180;
+
+        // Calculate current angle from attack position to enemy's current position
+        const currentAngle = Math.atan2(enemy.y - attackPos.y, enemy.x - attackPos.x);
+
+        // Select random angle within ±maxAngle of current angle
+        const angleOffset = (Math.random() * 2 - 1) * maxAngleRad;
+        const angle = currentAngle + angleOffset;
+
+        // Select random distance from outer ring only (minRadius to radius)
+        const minRadius = radius * minRadiusFactor;
+        const distance = minRadius + Math.random() * (radius - minRadius);
+
+        let targetX = attackPos.x + Math.cos(angle) * distance;
+        let targetY = attackPos.y + Math.sin(angle) * distance;
+
+        // Clamp to road bounds
+        const roadBoundaryTop: number = balanceConfig.layout.roadBoundaryTopY;
+        const roadBottom: number = roadBoundaryTop + balanceConfig.layout.roadHeight;
+        const halfHeight: number = enemy.height / 2;
+        const halfWidth: number = enemy.width / 2;
+        const feetColliderHeight: number = balanceConfig.collision.feetColliderHeight;
+
+        const minY: number = roadBoundaryTop - halfHeight + feetColliderHeight;
+        const maxY: number = roadBottom - halfHeight;
+        const minX: number = halfWidth;
+        const maxX: number = balanceConfig.world.width - halfWidth;
+
+        targetX = Math.max(minX, Math.min(maxX, targetX));
+        targetY = Math.max(minY, Math.min(maxY, targetY));
+
+        return { x: targetX, y: targetY };
+    }
+
     private updateEnemies(deltaTime: number): void {
         if (!this.player) {
             return;
@@ -276,15 +327,54 @@ export default class Game {
                             const dy = enemy.y - enemy.waitingPoint.y;
                             const distance = Math.sqrt(dx * dx + dy * dy);
                             if (distance < balanceConfig.waitingPoint.positionReachedThreshold) {
-                                enemy.enemyState = 'waiting';
+                                // Transition to strafing and pick initial strafing target
+                                enemy.enemyState = 'strafing';
+                                enemy.strafingTarget = this.pickStrafingTarget(enemy);
                             }
                         }
                         break;
 
-                    case 'waiting':
-                        // Waiting enemies stand completely still
+                    case 'strafing':
+                        // Move toward current strafing target point
+                        if (enemy.strafingTarget) {
+                            enemy.moveToward(
+                                enemy.strafingTarget.x,
+                                enemy.strafingTarget.y,
+                                deltaTime,
+                                this.enemies
+                            );
+
+                            // Check if reached strafing target
+                            const strafeDx = enemy.x - enemy.strafingTarget.x;
+                            const strafeDy = enemy.y - enemy.strafingTarget.y;
+                            const strafeDistance = Math.sqrt(strafeDx * strafeDx + strafeDy * strafeDy);
+                            if (strafeDistance < balanceConfig.strafing.positionReachedThreshold) {
+                                // Roll for taunt chance
+                                if (Math.random() < balanceConfig.strafing.tauntChance) {
+                                    // Transition to taunting state
+                                    enemy.enemyState = 'taunting';
+                                    enemy.startTaunt();
+                                } else {
+                                    // Pick a new random strafing target
+                                    enemy.strafingTarget = this.pickStrafingTarget(enemy);
+                                }
+                            }
+                        } else {
+                            // No strafing target set, pick one
+                            enemy.strafingTarget = this.pickStrafingTarget(enemy);
+                        }
+                        break;
+
+                    case 'taunting':
+                        // Enemy is taunting - don't move, wait for animation to finish
                         enemy.velocityX = 0;
                         enemy.velocityY = 0;
+
+                        // When taunt animation completes, go back to strafing
+                        if (!enemy.isTaunting()) {
+                            enemy.enemyState = 'strafing';
+                            enemy.strafingTarget = this.pickStrafingTarget(enemy);
+                        }
                         break;
 
                     case 'movingToAttack':
@@ -405,9 +495,9 @@ export default class Game {
     private render(): void {
         this.renderer.beginFrame();
         this.drawBackground();
-        // Draw attack position indicators on the ground (before entities)
+        // Draw attack position and strafing indicators on the ground (before entities)
         if (this.player) {
-            this.attackPositionManager.drawIndicators(this.ctx, this.player);
+            this.attackPositionManager.drawIndicators(this.ctx, this.player, this.enemies);
         }
         this.drawEntities();
         this.renderer.endFrame();
@@ -578,8 +668,10 @@ export default class Game {
         switch (state) {
             case 'movingToWaitingPoint':
                 return { label: 'Moving to Wait', color: '#aaaaaa' };
-            case 'waiting':
-                return { label: 'Waiting', color: '#ffcc00' };
+            case 'strafing':
+                return { label: 'Strafing', color: '#ffcc00' };
+            case 'taunting':
+                return { label: 'Taunting', color: '#ff66ff' };
             case 'movingToAttack':
                 return { label: 'Approaching', color: '#ff9900' };
             case 'attacking':

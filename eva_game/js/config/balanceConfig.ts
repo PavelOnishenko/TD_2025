@@ -102,4 +102,18 @@ export const balanceConfig = {
     positionReachedThreshold: 75,  // How close enemy needs to be to consider waiting point reached
     verticalSpread: 40,  // Vertical spread for waiting points to avoid stacking
   },
+
+  // Strafing settings - enemies move randomly around attack point while waiting
+  strafing: {
+    radius: 150,  // Radius of circular area around attack point where strafing enemies move
+    minRadiusFactor: 0.5,  // Minimum radius factor (0-1) - points are selected from radius*minRadiusFactor to radius
+    maxAngleDegrees: 60,  // Maximum angle (degrees) between current and new strafing point relative to center
+    positionReachedThreshold: 20,  // How close enemy needs to be to strafing target to pick a new point
+    indicatorRadius: 8,  // Radius of the strafing target indicator circle
+    indicatorColor: 'rgba(255, 200, 100, 0.6)',  // Color of the strafing position indicator (orange-ish)
+    lineColor: 'rgba(255, 200, 100, 0.4)',  // Color of the line from enemy to strafing position
+    lineWidth: 2,  // Width of the indicator line
+    tauntChance: 0.3,  // Chance (0-1) to taunt when reaching a strafing point
+    tauntDuration: 800,  // Duration of taunt animation in milliseconds
+  },
 };
