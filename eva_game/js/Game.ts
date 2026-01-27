@@ -256,22 +256,11 @@ export default class Game {
         }
 
         const centerPoint = enemy.waitingPoint;
-
-        // Pick a random point within the strafing area (outer ring, limited angle)
         const radius = balanceConfig.strafing.radius;
-        const minRadiusFactor = balanceConfig.strafing.minRadiusFactor;
-        const maxAngleRad = (balanceConfig.strafing.maxAngleDegrees * Math.PI) / 180;
 
-        // Calculate current angle from waiting point to enemy's current position
-        const currentAngle = Math.atan2(enemy.y - centerPoint.y, enemy.x - centerPoint.x);
-
-        // Select random angle within ±maxAngle of current angle
-        const angleOffset = (Math.random() * 2 - 1) * maxAngleRad;
-        const angle = currentAngle + angleOffset;
-
-        // Select random distance from outer ring only (minRadius to radius)
-        const minRadius = radius * minRadiusFactor;
-        const distance = minRadius + Math.random() * (radius - minRadius);
+        // Pick a random point inside the circle
+        const angle = Math.random() * Math.PI * 2;
+        const distance = Math.random() * radius;
 
         let targetX = centerPoint.x + Math.cos(angle) * distance;
         let targetY = centerPoint.y + Math.sin(angle) * distance;
