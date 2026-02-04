@@ -73,7 +73,8 @@ export default class Game {
     }
 
     private setupInput(): void {
-        this.input.mapAction('attack', ['Space', 'KeyZ']);
+        this.input.mapAction('punch', ['KeyJ']);
+        this.input.mapAction('kick', ['KeyK']);
         this.input.mapAxis('horizontal', ['ArrowLeft', 'KeyA'], ['ArrowRight', 'KeyD']);
         this.input.mapAxis('vertical', ['ArrowUp', 'KeyW'], ['ArrowDown', 'KeyS']);
 

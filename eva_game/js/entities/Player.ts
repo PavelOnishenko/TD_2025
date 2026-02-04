@@ -24,13 +24,15 @@ export default class Player extends Entity {
     // Player-specific properties
     public health: number;
     public maxHealth: number;
-    public attackDamage: number;
     public isAttacking: boolean = false;
     public facingRight: boolean = true;
     public animationState: AnimationState = 'idle';
 
+    // Attack type tracking ('punch' or 'kick')
+    private currentAttackType: 'punch' | 'kick' | null = null;
     private attackTimer: number = 0;
-    private attackCooldownTimer: number = 0;
+    private punchCooldownTimer: number = 0;
+    private kickCooldownTimer: number = 0;
     private hitEnemiesThisAttack: Set<number> = new Set(); // Track enemies hit in current attack
 
     // Animation progress (0-1) for gradual animations
@@ -49,7 +51,16 @@ export default class Player extends Entity {
         this.height = config.height;
         this.maxHealth = config.maxHealth;
         this.health = this.maxHealth;
-        this.attackDamage = config.attack.damage;
+    }
+
+    /**
+     * Get the damage of the current attack based on attack type
+     */
+    public get attackDamage(): number {
+        if (this.currentAttackType === 'kick') {
+            return balanceConfig.player.kick.damage;
+        }
+        return balanceConfig.player.punch.damage;
     }
 
     public handleInput(horizontalInput: number, verticalInput: number, input: InputManager): void {
@@ -80,22 +91,36 @@ export default class Player extends Entity {
     }
 
     private updateAttack(input: InputManager): void {
-        if (this.attackCooldownTimer > 0) {
+        // Check for punch input (J key)
+        if (input.wasActionPressed('punch') && !this.isAttacking && this.punchCooldownTimer <= 0) {
+            this.startPunch();
             return;
         }
 
-        if (input.wasActionPressed('attack') && !this.isAttacking) {
-            this.startAttack();
+        // Check for kick input (K key)
+        if (input.wasActionPressed('kick') && !this.isAttacking && this.kickCooldownTimer <= 0) {
+            this.startKick();
         }
     }
 
-    private startAttack(): void {
-        console.log('Player attack initiated');
+    private startPunch(): void {
+        console.log('Player punch initiated');
         this.isAttacking = true;
-        this.attackTimer = balanceConfig.player.attack.duration;
-        this.attackCooldownTimer = balanceConfig.player.attack.cooldown;
+        this.currentAttackType = 'punch';
+        this.attackTimer = balanceConfig.player.punch.duration;
+        this.punchCooldownTimer = balanceConfig.player.punch.cooldown;
         this.animationState = 'punch';
-        this.hitEnemiesThisAttack.clear(); // Reset hit tracking for new attack
+        this.hitEnemiesThisAttack.clear();
+    }
+
+    private startKick(): void {
+        console.log('Player kick initiated');
+        this.isAttacking = true;
+        this.currentAttackType = 'kick';
+        this.attackTimer = balanceConfig.player.kick.duration;
+        this.kickCooldownTimer = balanceConfig.player.kick.cooldown;
+        this.animationState = 'kick';
+        this.hitEnemiesThisAttack.clear();
     }
 
     public update(deltaTime: number): void {
@@ -109,15 +134,20 @@ export default class Player extends Entity {
             this.attackTimer -= deltaTime * 1000;
             if (this.attackTimer <= 0) {
                 this.isAttacking = false;
-                // Only reset to idle if still in punch animation (don't override hurt/death)
-                if (this.animationState === 'punch') {
+                this.currentAttackType = null;
+                // Only reset to idle if still in attack animation (don't override hurt/death)
+                if (this.animationState === 'punch' || this.animationState === 'kick') {
                     this.animationState = 'idle';
                 }
             }
         }
 
-        if (this.attackCooldownTimer > 0) {
-            this.attackCooldownTimer -= deltaTime * 1000;
+        // Update separate cooldowns for punch and kick
+        if (this.punchCooldownTimer > 0) {
+            this.punchCooldownTimer -= deltaTime * 1000;
+        }
+        if (this.kickCooldownTimer > 0) {
+            this.kickCooldownTimer -= deltaTime * 1000;
         }
     }
 
@@ -132,15 +162,21 @@ export default class Player extends Entity {
 
             case 'punch':
                 // Progress through punch animation during attack
-                const attackProgress = 1 - (this.attackTimer / balanceConfig.player.attack.duration);
-                this.animationProgress = Math.max(0, Math.min(1, attackProgress));
+                const punchProgress = 1 - (this.attackTimer / balanceConfig.player.punch.duration);
+                this.animationProgress = Math.max(0, Math.min(1, punchProgress));
+                break;
+
+            case 'kick':
+                // Progress through kick animation during attack
+                const kickProgress = 1 - (this.attackTimer / balanceConfig.player.kick.duration);
+                this.animationProgress = Math.max(0, Math.min(1, kickProgress));
                 break;
 
             case 'hurt':
                 // Progress through hurt animation
                 if (this.hurtAnimationTimer > 0) {
                     this.hurtAnimationTimer -= deltaTime * 1000;
-                    const hurtProgress = 1 - (this.hurtAnimationTimer / balanceConfig.player.attack.hurtAnimationDuration);
+                    const hurtProgress = 1 - (this.hurtAnimationTimer / balanceConfig.player.hurtAnimationDuration);
                     this.animationProgress = Math.max(0, Math.min(1, hurtProgress));
 
                     if (this.hurtAnimationTimer <= 0) {
@@ -154,7 +190,7 @@ export default class Player extends Entity {
                 // Progress through death animation
                 if (this.deathAnimationTimer > 0) {
                     this.deathAnimationTimer -= deltaTime * 1000;
-                    const deathProgress = 1 - (this.deathAnimationTimer / balanceConfig.player.attack.deathAnimationDuration);
+                    const deathProgress = 1 - (this.deathAnimationTimer / balanceConfig.player.deathAnimationDuration);
                     this.animationProgress = Math.max(0, Math.min(1, deathProgress));
                 }
                 break;
@@ -182,14 +218,14 @@ export default class Player extends Entity {
         // Only trigger hurt if not already in hurt or death state
         if (this.animationState !== 'hurt' && this.animationState !== 'death') {
             this.animationState = 'hurt';
-            this.hurtAnimationTimer = balanceConfig.player.attack.hurtAnimationDuration;
+            this.hurtAnimationTimer = balanceConfig.player.hurtAnimationDuration;
             this.animationProgress = 0;
         }
     }
 
     private triggerDeathAnimation(): void {
         this.animationState = 'death';
-        this.deathAnimationTimer = balanceConfig.player.attack.deathAnimationDuration;
+        this.deathAnimationTimer = balanceConfig.player.deathAnimationDuration;
         this.animationProgress = 0;
         this.velocityX = 0;
         this.velocityY = 0;
@@ -224,7 +260,10 @@ export default class Player extends Entity {
     }
 
     private isEnemyInAttackRange(enemy: Entity): boolean {
-        const attackConfig = balanceConfig.player.attack;
+        // Get the appropriate config based on current attack type
+        const attackConfig = this.currentAttackType === 'kick'
+            ? balanceConfig.player.kick
+            : balanceConfig.player.punch;
 
         // Calculate horizontal distance from player to enemy
         const dx: number = enemy.x - this.x;
@@ -236,9 +275,12 @@ export default class Player extends Entity {
             return false;
         }
 
-        // Check horizontal range (arm length) in facing direction
+        // Check horizontal range (arm length for punch, leg reach for kick) in facing direction
         const horizontalDistance: number = Math.abs(dx);
-        if (horizontalDistance > attackConfig.armLength) {
+        const horizontalReach: number = this.currentAttackType === 'kick'
+            ? attackConfig.legReach
+            : attackConfig.armLength;
+        if (horizontalDistance > horizontalReach) {
             return false;
         }
 
@@ -294,6 +336,9 @@ export default class Player extends Entity {
                 break;
             case 'punch':
                 pose = StickFigure.getPunchPose(this.animationProgress, this.facingRight);
+                break;
+            case 'kick':
+                pose = StickFigure.getKickPose(this.animationProgress, this.facingRight);
                 break;
             case 'hurt':
                 pose = StickFigure.getHurtPose(this.animationProgress);
