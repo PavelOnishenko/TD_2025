@@ -261,6 +261,58 @@ export default class StickFigure {
     }
 
     /**
+     * Get kick pose with animation progress (0-1)
+     * Extends leg forward in a front kick motion
+     */
+    public static getKickPose(progress: number, facingRight: boolean): StickFigurePose {
+        // Ease out for kick extension, ease in for retraction
+        const kickProgress = progress < 0.5
+            ? progress * 2 // Extend: 0 to 1 in first half
+            : 2 - progress * 2; // Retract: 1 to 0 in second half
+
+        const legExtension = kickProgress * 25; // Leg extends forward
+        const kneeRaise = kickProgress * 15; // Knee raises during kick
+        const leanBack = kickProgress * 5; // Body leans back for balance
+        const armBalance = kickProgress * 6; // Arms move for balance
+
+        return {
+            headY: -20 - leanBack * 0.5, // Head tilts back slightly
+            torsoEndY: 5 + leanBack,
+
+            // Arms move for balance during kick
+            leftShoulderX: -5,
+            leftShoulderY: -12 + leanBack,
+            leftElbowX: -12 - armBalance,
+            leftElbowY: -2 - armBalance,
+            leftHandX: -15 - armBalance,
+            leftHandY: 2 - armBalance,
+
+            rightShoulderX: 5,
+            rightShoulderY: -12 + leanBack,
+            rightElbowX: 12 + armBalance,
+            rightElbowY: -2 - armBalance,
+            rightHandX: 15 + armBalance,
+            rightHandY: 2 - armBalance,
+
+            // Standing leg (left) - slightly bent for stability
+            leftHipX: -3,
+            leftHipY: 5 + leanBack,
+            leftKneeX: -5 - leanBack,
+            leftKneeY: 15 + leanBack * 0.5,
+            leftFootX: -5 - leanBack,
+            leftFootY: 25,
+
+            // Kicking leg (right) - extends forward
+            rightHipX: 3,
+            rightHipY: 5 + leanBack,
+            rightKneeX: 3 + legExtension * 0.4,
+            rightKneeY: 8 - kneeRaise,
+            rightFootX: 3 + legExtension,
+            rightFootY: 10 - kneeRaise * 0.8
+        };
+    }
+
+    /**
      * Get hurt pose with animation progress (0-1)
      * Recoils backward with a defensive posture
      */
