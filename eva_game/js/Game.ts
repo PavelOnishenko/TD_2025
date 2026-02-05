@@ -459,6 +459,14 @@ export default class Game {
         }
 
         enemy.takeDamage(this.player.attackDamage);
+        const knockback = this.player.attackKnockback;
+        if (knockback > 0) {
+            const direction = this.player.facingRight ? 1 : -1;
+            const halfWidth = enemy.width / 2;
+            const minX = halfWidth;
+            const maxX = balanceConfig.world.width - halfWidth;
+            enemy.x = Math.max(minX, Math.min(maxX, enemy.x + (direction * knockback)));
+        }
         // takeDamage() now handles setting active = false when health reaches 0
     }
 

@@ -93,12 +93,16 @@ export function createRecordingContext() {
 export function createMockInputManager() {
     const pressedActions = new Set();
     const axisValues = { horizontal: 0, vertical: 0 };
+    const pressedKeys = new Set();
 
     return {
         wasActionPressed(action) {
             const pressed = pressedActions.has(action);
             pressedActions.delete(action); // Consume the press
             return pressed;
+        },
+        isKeyDown(code) {
+            return pressedKeys.has(code);
         },
         isActionDown(action) {
             return pressedActions.has(action);
@@ -109,6 +113,12 @@ export function createMockInputManager() {
         // Test helpers
         simulatePress(action) {
             pressedActions.add(action);
+        },
+        simulateKeyDown(code) {
+            pressedKeys.add(code);
+        },
+        simulateKeyUp(code) {
+            pressedKeys.delete(code);
         },
         setAxis(axis, value) {
             axisValues[axis] = value;

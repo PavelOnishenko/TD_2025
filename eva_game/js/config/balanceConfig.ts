@@ -30,6 +30,14 @@ export const balanceConfig = {
       damage: 25,
       knockbackForce: 100,
     },
+    strongPunch: {
+      duration: 140,
+      cooldown: 350,
+      reach: 70,              // horizontal range of attack
+      verticalThreshold: 30,  // vertical offset tolerance
+      damage: 45,
+      knockbackForce: 180,
+    },
     kick: {
       duration: 150,          // kicks are slightly slower than punches
       cooldown: 300,
