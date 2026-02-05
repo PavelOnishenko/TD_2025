@@ -303,6 +303,10 @@ export default class Enemy extends Entity {
             return false;
         }
 
+        if (player.isInAir) {
+            return false;
+        }
+
         if (this.attackCooldownTimer > 0) {
             return false;
         }
@@ -350,6 +354,10 @@ export default class Enemy extends Entity {
     }
 
     public checkAttackHit(player: Player): boolean {
+        if (player.isInAir) {
+            return false;
+        }
+
         // Check if punch animation is active
         if (this.punchAnimationTimer <= 0) {
             return false;
@@ -379,6 +387,10 @@ export default class Enemy extends Entity {
     }
 
     private isPlayerInAttackRange(player: Player): boolean {
+        if (player.isInAir) {
+            return false;
+        }
+
         const attackConfig = balanceConfig.enemy.attack;
 
         // Calculate horizontal distance from enemy to player

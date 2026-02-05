@@ -114,10 +114,10 @@ test('player punch animation progresses linearly', () => {
     const player = new Player(100, 400);
     const input = createMockInputManager();
 
-    input.simulatePress('attack');
+    input.simulatePress('punch');
     player.handleInput(0, 0, input);
 
-    const duration = balanceConfig.player.attack.duration;
+    const duration = balanceConfig.player.punch.duration;
     const progressAtHalfway = [];
 
     // Check progress at 25%, 50%, 75%
@@ -157,11 +157,11 @@ test('punch animation returns to idle after completion', () => {
     const player = new Player(100, 400);
     const input = createMockInputManager();
 
-    input.simulatePress('attack');
+    input.simulatePress('punch');
     player.handleInput(0, 0, input);
 
     // Advance past full attack duration
-    advanceTime(player, balanceConfig.player.attack.duration + 50);
+    advanceTime(player, balanceConfig.player.punch.duration + 50);
 
     assert.equal(player.animationState, 'idle');
 });
@@ -204,7 +204,7 @@ test('hurt animation progresses to completion', () => {
 
     player.takeDamage(10);
 
-    const duration = balanceConfig.player.attack.hurtAnimationDuration;
+    const duration = balanceConfig.player.hurtAnimationDuration;
 
     advanceTime(player, duration * 0.5);
     const midProgress = player.animationProgress;
@@ -220,7 +220,7 @@ test('hurt animation has correct duration', () => {
 
     player.takeDamage(10);
 
-    const duration = balanceConfig.player.attack.hurtAnimationDuration;
+    const duration = balanceConfig.player.hurtAnimationDuration;
 
     // Should still be in hurt state before duration
     advanceTime(player, duration - 50);
@@ -301,7 +301,7 @@ test('death animation progresses to 1', () => {
 
     player.takeDamage(player.maxHealth);
 
-    const duration = balanceConfig.player.attack.deathAnimationDuration;
+    const duration = balanceConfig.player.deathAnimationDuration;
 
     advanceTime(player, duration + 50);
 
@@ -330,7 +330,7 @@ test('death animation does not loop', () => {
 
     player.takeDamage(player.maxHealth);
 
-    const duration = balanceConfig.player.attack.deathAnimationDuration;
+    const duration = balanceConfig.player.deathAnimationDuration;
 
     advanceTime(player, duration + 500);
 
@@ -346,7 +346,7 @@ test('death animation cannot be interrupted', () => {
 
     // Try various interruptions
     player.handleInput(1, 0, input);
-    input.simulatePress('attack');
+    input.simulatePress('punch');
     player.handleInput(0, 0, input);
     player.takeDamage(10);
 
@@ -369,7 +369,7 @@ test('animation priority: death > hurt > punch > walk > idle', () => {
     assert.equal(player.animationState, 'walk');
 
     // Punch takes over walk
-    input.simulatePress('attack');
+    input.simulatePress('punch');
     player.handleInput(1, 0, input);
     assert.equal(player.animationState, 'punch');
 
@@ -381,7 +381,7 @@ test('animation priority: death > hurt > punch > walk > idle', () => {
     advanceTime(player, 500);
 
     // Start another attack
-    input.simulatePress('attack');
+    input.simulatePress('punch');
     player.handleInput(0, 0, input);
 
     // Death takes over everything
@@ -511,10 +511,10 @@ test('hit window timing is accurate for player attack', () => {
     const enemy = new Enemy(130, 400);
     const input = createMockInputManager();
 
-    input.simulatePress('attack');
+    input.simulatePress('punch');
     player.handleInput(0, 0, input);
 
-    const duration = balanceConfig.player.attack.duration;
+    const duration = balanceConfig.player.punch.duration;
 
     // Before hit window (< 30%)
     advanceTime(player, duration * 0.2);
@@ -525,7 +525,7 @@ test('hit window timing is accurate for player attack', () => {
 
     // Start new attack
     advanceTime(player, 200);
-    input.simulatePress('attack');
+    input.simulatePress('punch');
     player.handleInput(0, 0, input);
 
     // Inside hit window (30-70%)

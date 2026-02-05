@@ -31,10 +31,10 @@ test('player initializes with correct default values', () => {
     assert.equal(player.isAttacking, false);
 });
 
-test('player starts with configured attack damage', () => {
+test('player starts with configured punch damage', () => {
     const player = new Player(100, 400);
 
-    assert.equal(player.attackDamage, balanceConfig.player.attack.damage);
+    assert.equal(player.attackDamage, balanceConfig.player.punch.damage);
 });
 
 test('player starts with zero velocity', () => {
@@ -175,11 +175,11 @@ test('player maintains facing direction when stopped', () => {
 // ATTACK INPUT
 // ============================================================================
 
-test('player starts attack when attack action is pressed', () => {
+test('player starts punch when punch action is pressed', () => {
     const player = new Player(100, 400);
     const input = createMockInputManager();
 
-    input.simulatePress('attack');
+    input.simulatePress('punch');
     player.handleInput(0, 0, input);
 
     assert.equal(player.isAttacking, true);
@@ -191,7 +191,7 @@ test('player cannot move while attacking', () => {
     const input = createMockInputManager();
 
     // First, initiate the attack (with no movement)
-    input.simulatePress('attack');
+    input.simulatePress('punch');
     player.handleInput(0, 0, input);
 
     assert.equal(player.isAttacking, true);
@@ -203,11 +203,11 @@ test('player cannot move while attacking', () => {
     assert.equal(player.velocityY, 0);
 });
 
-test('attack duration lasts correct time', () => {
+test('punch duration lasts correct time', () => {
     const player = new Player(100, 400);
     const input = createMockInputManager();
 
-    input.simulatePress('attack');
+    input.simulatePress('punch');
     player.handleInput(0, 0, input);
 
     assert.equal(player.isAttacking, true);
@@ -218,12 +218,12 @@ test('attack duration lasts correct time', () => {
     assert.equal(player.isAttacking, false);
 });
 
-test('attack has cooldown preventing rapid attacks', () => {
+test('punch has cooldown preventing rapid attacks', () => {
     const player = new Player(100, 400);
     const input = createMockInputManager();
 
     // First attack
-    input.simulatePress('attack');
+    input.simulatePress('punch');
     player.handleInput(0, 0, input);
 
     // Wait for attack to end but not cooldown
@@ -231,35 +231,35 @@ test('attack has cooldown preventing rapid attacks', () => {
     assert.equal(player.isAttacking, false);
 
     // Try to attack again - should fail due to cooldown
-    input.simulatePress('attack');
+    input.simulatePress('punch');
     player.handleInput(0, 0, input);
 
     assert.equal(player.isAttacking, false);
 });
 
-test('player can attack again after cooldown expires', () => {
+test('player can punch again after cooldown expires', () => {
     const player = new Player(100, 400);
     const input = createMockInputManager();
 
     // First attack
-    input.simulatePress('attack');
+    input.simulatePress('punch');
     player.handleInput(0, 0, input);
 
     // Wait for full cooldown (200ms total)
     advanceTime(player, 250);
 
     // Should be able to attack again
-    input.simulatePress('attack');
+    input.simulatePress('punch');
     player.handleInput(0, 0, input);
 
     assert.equal(player.isAttacking, true);
 });
 
-test('player can move again after attack ends', () => {
+test('player can move again after punch ends', () => {
     const player = new Player(100, 400);
     const input = createMockInputManager();
 
-    input.simulatePress('attack');
+    input.simulatePress('punch');
     player.handleInput(0, 0, input);
 
     // Wait for attack to end
@@ -358,7 +358,7 @@ test('punch animation takes priority over walk', () => {
     const player = new Player(100, 400);
     const input = createMockInputManager();
 
-    input.simulatePress('attack');
+    input.simulatePress('punch');
     player.handleInput(1, 0, input);
 
     assert.equal(player.animationState, 'punch');
@@ -368,7 +368,7 @@ test('hurt animation takes priority over punch', () => {
     const player = new Player(100, 400);
     const input = createMockInputManager();
 
-    input.simulatePress('attack');
+    input.simulatePress('punch');
     player.handleInput(0, 0, input);
 
     player.takeDamage(10);
@@ -380,7 +380,7 @@ test('death animation takes priority over all', () => {
     const player = new Player(100, 400);
     const input = createMockInputManager();
 
-    input.simulatePress('attack');
+    input.simulatePress('punch');
     player.handleInput(1, 1, input);
 
     player.takeDamage(player.maxHealth);
@@ -402,7 +402,7 @@ test('animation state returns to idle after punch animation completes', () => {
     const player = new Player(100, 400);
     const input = createMockInputManager();
 
-    input.simulatePress('attack');
+    input.simulatePress('punch');
     player.handleInput(0, 0, input);
     assert.equal(player.animationState, 'punch');
 
@@ -418,7 +418,7 @@ test('animation progress increases during punch', () => {
     const player = new Player(100, 400);
     const input = createMockInputManager();
 
-    input.simulatePress('attack');
+    input.simulatePress('punch');
     player.handleInput(0, 0, input);
 
     const initialProgress = player.animationProgress;
@@ -461,4 +461,48 @@ test('animation progress resets on idle', () => {
     player.update(0.016);
 
     assert.equal(player.animationProgress, 0);
+});
+
+// ============================================================================
+// JUMPING
+// ============================================================================
+
+test('player enters jump state when jump action is pressed', () => {
+    const player = new Player(100, 400);
+    const input = createMockInputManager();
+
+    input.simulatePress('jump');
+    player.handleInput(0, 0, input);
+
+    assert.equal(player.isInAir, true);
+    assert.equal(player.animationState, 'jump');
+});
+
+test('player follows a fixed forward jump trajectory', () => {
+    const player = new Player(100, 400);
+    const input = createMockInputManager();
+    const startX = player.x;
+    const startY = player.y;
+
+    input.simulatePress('jump');
+    player.handleInput(1, 0, input);
+
+    advanceTimeInSteps(player, balanceConfig.player.jump.duration);
+
+    assert.equal(player.isInAir, false);
+    assert.ok(Math.abs(player.x - (startX + balanceConfig.player.jump.distance)) < 0.5);
+    assert.equal(player.y, startY);
+});
+
+test('player ignores movement input while airborne', () => {
+    const player = new Player(100, 400);
+    const input = createMockInputManager();
+
+    input.simulatePress('jump');
+    player.handleInput(0, 0, input);
+
+    player.handleInput(1, 1, input);
+
+    assert.equal(player.velocityX, 0);
+    assert.equal(player.velocityY, 0);
 });
