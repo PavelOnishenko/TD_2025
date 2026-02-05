@@ -261,6 +261,55 @@ export default class StickFigure {
     }
 
     /**
+     * Get strong punch pose with animation progress (0-1)
+     * Adds a forward lean and a stepping motion for extra impact.
+     */
+    public static getStrongPunchPose(progress: number, facingRight: boolean): StickFigurePose {
+        const punchProgress = progress < 0.6
+            ? progress / 0.6
+            : Math.max(0, 1 - (progress - 0.6) / 0.4);
+
+        const extension = punchProgress * 28;
+        const shoulderRotation = punchProgress * 8;
+        const leanForward = punchProgress * 6;
+        const stepForward = punchProgress * 10;
+        const backLegBrace = punchProgress * 6;
+
+        return {
+            headY: -20 + leanForward * 0.4,
+            torsoEndY: 5 + leanForward,
+
+            leftShoulderX: -5,
+            leftShoulderY: -12 + shoulderRotation,
+            leftElbowX: -10 - backLegBrace,
+            leftElbowY: 2,
+            leftHandX: -12 - backLegBrace,
+            leftHandY: 10,
+
+            rightShoulderX: 6,
+            rightShoulderY: -12 - shoulderRotation,
+            rightElbowX: 10 + extension * 0.6,
+            rightElbowY: -10 - shoulderRotation,
+            rightHandX: 12 + extension,
+            rightHandY: -10 - shoulderRotation,
+
+            leftHipX: -4 - backLegBrace * 0.2,
+            leftHipY: 6 + leanForward,
+            leftKneeX: -6 - backLegBrace,
+            leftKneeY: 16 + leanForward,
+            leftFootX: -6 - backLegBrace,
+            leftFootY: 26 + leanForward,
+
+            rightHipX: 4 + stepForward * 0.2,
+            rightHipY: 6 + leanForward,
+            rightKneeX: 6 + stepForward * 0.6,
+            rightKneeY: 12 + leanForward,
+            rightFootX: 6 + stepForward,
+            rightFootY: 20 + leanForward
+        };
+    }
+
+    /**
      * Get kick pose with animation progress (0-1)
      * Extends leg forward in a front kick motion
      */

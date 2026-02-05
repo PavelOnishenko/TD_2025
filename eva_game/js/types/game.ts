@@ -6,6 +6,7 @@ export type AnimationState =
     | 'idle'
     | 'walk'
     | 'punch'
+    | 'strongPunch'
     | 'kick'
     | 'jump'
     | 'fly'

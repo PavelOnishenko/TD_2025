@@ -28,7 +28,15 @@ export const balanceConfig = {
       reach: 60,              // horizontal range of attack
       verticalThreshold: 30,  // vertical offset tolerance
       damage: 25,
-      knockbackForce: 100,
+      knockbackForce: 0,
+    },
+    strongPunch: {
+      duration: 140,
+      cooldown: 350,
+      reach: 70,              // horizontal range of attack
+      verticalThreshold: 30,  // vertical offset tolerance
+      damage: 45,
+      knockbackForce: 150,
     },
     kick: {
       duration: 150,          // kicks are slightly slower than punches
@@ -36,7 +44,7 @@ export const balanceConfig = {
       reach: 70,              // horizontal range of attack
       verticalThreshold: 35,  // vertical offset tolerance (kicks have slightly more range)
       damage: 35,             // kicks deal more damage than punches
-      knockbackForce: 150,
+      knockbackForce: 0,
     },
     hurtAnimationDuration: 400,
     deathAnimationDuration: 1000,

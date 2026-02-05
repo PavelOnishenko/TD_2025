@@ -29,12 +29,15 @@ export default class Player extends Entity {
     public animationState: AnimationState = 'idle';
     public isInAir: boolean = false;
 
-    // Attack type tracking ('punch' or 'kick')
-    private currentAttackType: 'punch' | 'kick' | null = null;
+    // Attack type tracking ('punch', 'strongPunch', or 'kick')
+    private currentAttackType: 'punch' | 'strongPunch' | 'kick' | null = null;
     private attackTimer: number = 0;
     private punchCooldownTimer: number = 0;
     private kickCooldownTimer: number = 0;
+    private strongPunchCooldownTimer: number = 0;
     private hitEnemiesThisAttack: Set<number> = new Set(); // Track enemies hit in current attack
+    private strongPunchStepStartX: number = 0;
+    private strongPunchStepDirection: number = 0;
     private jumpTimer: number = 0;
     private jumpCooldownTimer: number = 0;
     private jumpStartX: number = 0;
@@ -64,10 +67,11 @@ export default class Player extends Entity {
      * Get the damage of the current attack based on attack type
      */
     public get attackDamage(): number {
-        if (this.currentAttackType === 'kick') {
-            return balanceConfig.player.kick.damage;
-        }
-        return balanceConfig.player.punch.damage;
+        return this.getAttackConfig().damage;
+    }
+
+    public get attackKnockback(): number {
+        return this.getAttackConfig().knockbackForce;
     }
 
     public handleInput(horizontalInput: number, verticalInput: number, input: InputManager): void {
@@ -119,8 +123,17 @@ export default class Player extends Entity {
             return;
         }
 
+        const punchPressed = input.wasActionPressed('punch');
+        const wantsStrongPunch = punchPressed && input.isKeyDown('KeyH');
+
+        // Check for strong punch input (H + J)
+        if (wantsStrongPunch && !this.isAttacking && this.strongPunchCooldownTimer <= 0) {
+            this.startStrongPunch();
+            return;
+        }
+
         // Check for punch input (J key)
-        if (input.wasActionPressed('punch') && !this.isAttacking && this.punchCooldownTimer <= 0) {
+        if (punchPressed && !this.isAttacking && this.punchCooldownTimer <= 0) {
             this.startPunch();
             return;
         }
@@ -139,6 +152,18 @@ export default class Player extends Entity {
         this.punchCooldownTimer = balanceConfig.player.punch.cooldown;
         this.animationState = 'punch';
         this.hitEnemiesThisAttack.clear();
+    }
+
+    private startStrongPunch(): void {
+        console.log('Player strong punch initiated');
+        this.isAttacking = true;
+        this.currentAttackType = 'strongPunch';
+        this.attackTimer = balanceConfig.player.strongPunch.duration;
+        this.strongPunchCooldownTimer = balanceConfig.player.strongPunch.cooldown;
+        this.animationState = 'strongPunch';
+        this.hitEnemiesThisAttack.clear();
+        this.strongPunchStepStartX = this.x;
+        this.strongPunchStepDirection = this.facingRight ? 1 : -1;
     }
 
     private startKick(): void {
@@ -162,6 +187,7 @@ export default class Player extends Entity {
             this.move(deltaTime);
         }
         this.updateAttackTimer(deltaTime);
+        this.updateStrongPunchStep();
         this.updateAnimationProgress(deltaTime);
     }
 
@@ -233,19 +259,39 @@ export default class Player extends Entity {
                 this.isAttacking = false;
                 this.currentAttackType = null;
                 // Only reset to idle if still in attack animation (don't override hurt/death)
-                if (this.animationState === 'punch' || this.animationState === 'kick') {
+                if (this.animationState === 'punch' || this.animationState === 'kick' || this.animationState === 'strongPunch') {
                     this.animationState = 'idle';
                 }
             }
         }
 
-        // Update separate cooldowns for punch and kick
+        // Update separate cooldowns for punch, strong punch, and kick
         if (this.punchCooldownTimer > 0) {
             this.punchCooldownTimer -= deltaTime * 1000;
+        }
+        if (this.strongPunchCooldownTimer > 0) {
+            this.strongPunchCooldownTimer -= deltaTime * 1000;
         }
         if (this.kickCooldownTimer > 0) {
             this.kickCooldownTimer -= deltaTime * 1000;
         }
+    }
+
+    private updateStrongPunchStep(): void {
+        if (!this.isAttacking || this.currentAttackType !== 'strongPunch') {
+            return;
+        }
+
+        const attackConfig = balanceConfig.player.strongPunch;
+        const progress = Math.max(0, Math.min(1, 1 - (this.attackTimer / attackConfig.duration)));
+        const stepProgress = Math.min(1, progress / 0.5);
+        const stepDistance = attackConfig.reach * 0.25;
+        const targetX = this.strongPunchStepStartX + (stepDistance * stepProgress * this.strongPunchStepDirection);
+        const halfWidth = this.width / 2;
+        const minX = halfWidth;
+        const maxX = balanceConfig.world.width - halfWidth;
+
+        this.x = Math.max(minX, Math.min(maxX, targetX));
     }
 
     private updateAnimationProgress(deltaTime: number): void {
@@ -265,6 +311,12 @@ export default class Player extends Entity {
                 // Progress through punch animation during attack
                 const punchProgress = 1 - (this.attackTimer / balanceConfig.player.punch.duration);
                 this.animationProgress = Math.max(0, Math.min(1, punchProgress));
+                break;
+
+            case 'strongPunch':
+                // Progress through strong punch animation during attack
+                const strongPunchProgress = 1 - (this.attackTimer / balanceConfig.player.strongPunch.duration);
+                this.animationProgress = Math.max(0, Math.min(1, strongPunchProgress));
                 break;
 
             case 'kick':
@@ -362,9 +414,7 @@ export default class Player extends Entity {
 
     private isEnemyInAttackRange(enemy: Entity): boolean {
         // Get the appropriate config based on current attack type
-        const attackConfig = this.currentAttackType === 'kick'
-            ? balanceConfig.player.kick
-            : balanceConfig.player.punch;
+        const attackConfig = this.getAttackConfig();
 
         // Calculate horizontal distance from player to enemy
         const dx: number = enemy.x - this.x;
@@ -389,6 +439,16 @@ export default class Player extends Entity {
         }
 
         return true;
+    }
+
+    private getAttackConfig() {
+        if (this.currentAttackType === 'kick') {
+            return balanceConfig.player.kick;
+        }
+        if (this.currentAttackType === 'strongPunch') {
+            return balanceConfig.player.strongPunch;
+        }
+        return balanceConfig.player.punch;
     }
 
     private isFacingTowards(dx: number): boolean {
@@ -435,6 +495,9 @@ export default class Player extends Entity {
                 break;
             case 'punch':
                 pose = StickFigure.getPunchPose(this.animationProgress, this.facingRight);
+                break;
+            case 'strongPunch':
+                pose = StickFigure.getStrongPunchPose(this.animationProgress, this.facingRight);
                 break;
             case 'kick':
                 pose = StickFigure.getKickPose(this.animationProgress, this.facingRight);
