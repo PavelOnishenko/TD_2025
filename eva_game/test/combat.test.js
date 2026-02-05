@@ -26,7 +26,7 @@ test('player attack hits enemy in range facing correct direction', () => {
 
     // Start attack and advance to hit window (30%-70% progress)
     const input = createMockInputManager();
-    input.simulatePress('attack');
+    input.simulatePress('punch');
     player.handleInput(0, 0, input);
 
     // Advance to middle of attack (50% progress)
@@ -44,7 +44,7 @@ test('player attack misses enemy behind player', () => {
     const enemy = new Enemy(70, 400); // 30px to the left (behind player)
 
     const input = createMockInputManager();
-    input.simulatePress('attack');
+    input.simulatePress('punch');
     player.handleInput(0, 0, input);
 
     advanceTime(player, 50);
@@ -61,7 +61,7 @@ test('player attack misses enemy too far away', () => {
     const enemy = new Enemy(200, 400); // 100px away, beyond armLength (60px)
 
     const input = createMockInputManager();
-    input.simulatePress('attack');
+    input.simulatePress('punch');
     player.handleInput(0, 0, input);
 
     advanceTime(player, 50);
@@ -78,7 +78,7 @@ test('player attack misses enemy outside vertical threshold', () => {
     const enemy = new Enemy(130, 500); // Horizontally in range, but 100px vertical distance
 
     const input = createMockInputManager();
-    input.simulatePress('attack');
+    input.simulatePress('punch');
     player.handleInput(0, 0, input);
 
     advanceTime(player, 50);
@@ -95,7 +95,7 @@ test('player attack hits enemy within vertical threshold', () => {
     const enemy = new Enemy(130, 420); // 20px vertical offset, within threshold (30px)
 
     const input = createMockInputManager();
-    input.simulatePress('attack');
+    input.simulatePress('punch');
     player.handleInput(0, 0, input);
 
     advanceTime(player, 50);
@@ -116,7 +116,7 @@ test('player attack misses at start of animation (before hit window)', () => {
     const enemy = new Enemy(130, 400);
 
     const input = createMockInputManager();
-    input.simulatePress('attack');
+    input.simulatePress('punch');
     player.handleInput(0, 0, input);
 
     // Don't advance time - still at 0% progress
@@ -135,7 +135,7 @@ test('player attack misses at end of animation (after hit window)', () => {
     const enemy = new Enemy(130, 400);
 
     const input = createMockInputManager();
-    input.simulatePress('attack');
+    input.simulatePress('punch');
     player.handleInput(0, 0, input);
 
     // Advance past hit window (>70% progress)
@@ -153,7 +153,7 @@ test('player attack hits during middle of animation (within hit window)', () => 
     const enemy = new Enemy(130, 400);
 
     const input = createMockInputManager();
-    input.simulatePress('attack');
+    input.simulatePress('punch');
     player.handleInput(0, 0, input);
 
     // Advance to middle of attack (50% progress)
@@ -175,7 +175,7 @@ test('player cannot hit same enemy twice in one attack', () => {
     const enemy = new Enemy(130, 400);
 
     const input = createMockInputManager();
-    input.simulatePress('attack');
+    input.simulatePress('punch');
     player.handleInput(0, 0, input);
 
     advanceTime(player, 40); // Within hit window
@@ -195,7 +195,7 @@ test('player can hit multiple different enemies in one attack', () => {
     const enemy2 = new Enemy(140, 410);
 
     const input = createMockInputManager();
-    input.simulatePress('attack');
+    input.simulatePress('punch');
     player.handleInput(0, 0, input);
 
     advanceTime(player, 50);
@@ -215,7 +215,7 @@ test('player hit tracking resets for new attack', () => {
     const input = createMockInputManager();
 
     // First attack
-    input.simulatePress('attack');
+    input.simulatePress('punch');
     player.handleInput(0, 0, input);
     advanceTime(player, 50);
     const firstAttackHit = player.checkAttackHit(enemy);
@@ -224,7 +224,7 @@ test('player hit tracking resets for new attack', () => {
     advanceTime(player, 200);
 
     // Second attack
-    input.simulatePress('attack');
+    input.simulatePress('punch');
     player.handleInput(0, 0, input);
     advanceTime(player, 50);
     const secondAttackHit = player.checkAttackHit(enemy);
@@ -404,7 +404,7 @@ test('player deals correct damage to enemy', () => {
 
     enemy.takeDamage(player.attackDamage);
 
-    assert.equal(enemy.health, initialHealth - balanceConfig.player.attack.damage);
+    assert.equal(enemy.health, initialHealth - balanceConfig.player.punch.damage);
 });
 
 test('enemy deals correct damage to player', () => {
@@ -507,7 +507,7 @@ test('player attack range respects armLength configuration', () => {
     const player = new Player(100, 400);
     player.facingRight = true;
 
-    const armLength = balanceConfig.player.attack.armLength;
+    const armLength = balanceConfig.player.punch.reach;
 
     // Just within range
     const enemyInRange = new Enemy(100 + armLength - 1, 400);
@@ -516,7 +516,7 @@ test('player attack range respects armLength configuration', () => {
     const enemyOutOfRange = new Enemy(100 + armLength + 1, 400);
 
     const input = createMockInputManager();
-    input.simulatePress('attack');
+    input.simulatePress('punch');
     player.handleInput(0, 0, input);
     advanceTime(player, 50);
 
@@ -553,7 +553,7 @@ test('vertical threshold is symmetric above and below', () => {
     const player = new Player(100, 400);
     player.facingRight = true;
 
-    const threshold = balanceConfig.player.attack.verticalThreshold;
+    const threshold = balanceConfig.player.punch.verticalThreshold;
 
     const enemyAbove = new Enemy(130, 400 - threshold + 5); // Within threshold above
     const enemyBelow = new Enemy(130, 400 + threshold - 5); // Within threshold below
@@ -563,28 +563,28 @@ test('vertical threshold is symmetric above and below', () => {
     const input = createMockInputManager();
 
     // Test enemy above
-    input.simulatePress('attack');
+    input.simulatePress('punch');
     player.handleInput(0, 0, input);
     advanceTime(player, 50);
     assert.equal(player.checkAttackHit(enemyAbove), true);
 
     // Reset and test enemy below
     advanceTime(player, 200);
-    input.simulatePress('attack');
+    input.simulatePress('punch');
     player.handleInput(0, 0, input);
     advanceTime(player, 50);
     assert.equal(player.checkAttackHit(enemyBelow), true);
 
     // Reset and test enemy too high
     advanceTime(player, 200);
-    input.simulatePress('attack');
+    input.simulatePress('punch');
     player.handleInput(0, 0, input);
     advanceTime(player, 50);
     assert.equal(player.checkAttackHit(enemyTooHigh), false);
 
     // Reset and test enemy too low
     advanceTime(player, 200);
-    input.simulatePress('attack');
+    input.simulatePress('punch');
     player.handleInput(0, 0, input);
     advanceTime(player, 50);
     assert.equal(player.checkAttackHit(enemyTooLow), false);
@@ -604,7 +604,7 @@ test('player can hit enemy and enemy can hit player in quick succession', () => 
     const input = createMockInputManager();
 
     // Player attacks first
-    input.simulatePress('attack');
+    input.simulatePress('punch');
     player.handleInput(0, 0, input);
     advanceTime(player, 50);
 
@@ -631,7 +631,7 @@ test('attacks work correctly when combatants are facing each other', () => {
     const input = createMockInputManager();
 
     // Both start attacks
-    input.simulatePress('attack');
+    input.simulatePress('punch');
     player.handleInput(0, 0, input);
     enemy.startAttack();
 
@@ -661,7 +661,7 @@ test('attacks fail when combatants are facing same direction', () => {
 
     const input = createMockInputManager();
 
-    input.simulatePress('attack');
+    input.simulatePress('punch');
     player.handleInput(0, 0, input);
     advanceTime(player, 50);
 
@@ -679,7 +679,7 @@ test('attacks fail when combatants are facing same direction', () => {
 
     const enemy2 = new Enemy(130, 400); // Enemy to the right (behind player who faces left)
 
-    input.simulatePress('attack');
+    input.simulatePress('punch');
     player2.handleInput(0, 0, input);
     advanceTime(player2, 50);
 

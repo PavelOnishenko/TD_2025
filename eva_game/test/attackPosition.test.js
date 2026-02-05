@@ -184,14 +184,14 @@ test('releasePosition clears assignedAttackPosition on enemy', () => {
 // UPDATE BEHAVIOR
 // ============================================================================
 
-test('update assigns closest waiting enemy when no enemy assigned', () => {
+test('update assigns closest strafing enemy when no enemy assigned', () => {
     const manager = new AttackPositionManager();
     const player = new Player(500, 400);
     const enemy1 = new Enemy(300, 400); // Distance 200
     const enemy2 = new Enemy(350, 400); // Distance 150 - closer
-    // Set enemies to waiting state (they start in movingToWaitingPoint after spawn)
-    enemy1.enemyState = 'waiting';
-    enemy2.enemyState = 'waiting';
+    // Set enemies to strafing state (they start in movingToWaitingPoint after spawn)
+    enemy1.enemyState = 'strafing';
+    enemy2.enemyState = 'strafing';
     const enemies = [enemy1, enemy2];
 
     manager.update(player, enemies);
@@ -264,7 +264,7 @@ test('update updates attack position as player moves', () => {
     assert.equal(enemy.assignedAttackPosition.x, 600 - balanceConfig.attackPosition.distanceFromPlayer);
 });
 
-test('update sets non-assigned enemies to waiting state', () => {
+test('update sets non-assigned enemies to strafing state', () => {
     const manager = new AttackPositionManager();
     const player = new Player(500, 400);
     const enemy1 = new Enemy(350, 400); // Closer - will be assigned
@@ -273,7 +273,7 @@ test('update sets non-assigned enemies to waiting state', () => {
 
     manager.update(player, [enemy1, enemy2]);
 
-    assert.equal(enemy2.enemyState, 'waiting');
+    assert.equal(enemy2.enemyState, 'strafing');
 });
 
 test('update assigns next enemy when current enemy dies', () => {
@@ -281,9 +281,9 @@ test('update assigns next enemy when current enemy dies', () => {
     const player = new Player(500, 400);
     const enemy1 = new Enemy(350, 400);
     const enemy2 = new Enemy(300, 400);
-    // Set enemies to waiting state (they start in movingToWaitingPoint after spawn)
-    enemy1.enemyState = 'waiting';
-    enemy2.enemyState = 'waiting';
+    // Set enemies to strafing state (they start in movingToWaitingPoint after spawn)
+    enemy1.enemyState = 'strafing';
+    enemy2.enemyState = 'strafing';
     const enemies = [enemy1, enemy2];
 
     // First update - enemy1 assigned (closer)
@@ -402,7 +402,7 @@ test('scenario: single enemy approaches and attacks', () => {
     const player = new Player(500, 400);
     const attackDistance = balanceConfig.attackPosition.distanceFromPlayer;
     const enemy = new Enemy(300, 400); // Starts far away
-    enemy.enemyState = 'waiting'; // Set to waiting state (they start in movingToWaitingPoint after spawn)
+    enemy.enemyState = 'strafing'; // Set to strafing state (they start in movingToWaitingPoint after spawn)
     const enemies = [enemy];
 
     // Initial update - enemy assigned, moving to attack
@@ -410,7 +410,7 @@ test('scenario: single enemy approaches and attacks', () => {
     assert.equal(enemy.enemyState, 'movingToAttack');
 
     // Move enemy to attack position
-    enemy.x = player.x - attackDistance + 5;
+    enemy.x = player.x - attackDistance + 2;
     enemy.y = player.y;
 
     // Update - enemy reaches position, transitions to attacking
@@ -424,22 +424,22 @@ test('scenario: multiple enemies, only one attacks at a time', () => {
     const enemy1 = new Enemy(350, 400);
     const enemy2 = new Enemy(300, 400);
     const enemy3 = new Enemy(250, 400);
-    // Set enemies to waiting state (they start in movingToWaitingPoint after spawn)
-    enemy1.enemyState = 'waiting';
-    enemy2.enemyState = 'waiting';
-    enemy3.enemyState = 'waiting';
+    // Set enemies to strafing state (they start in movingToWaitingPoint after spawn)
+    enemy1.enemyState = 'strafing';
+    enemy2.enemyState = 'strafing';
+    enemy3.enemyState = 'strafing';
     const enemies = [enemy1, enemy2, enemy3];
 
     // Initial update
     manager.update(player, enemies);
 
     // Only one enemy should be assigned
-    const assignedCount = enemies.filter(e => e.enemyState !== 'waiting').length;
+    const assignedCount = enemies.filter(e => e.enemyState !== 'strafing').length;
     assert.equal(assignedCount, 1);
 
-    // Waiting enemies should not have attack positions
-    const waitingEnemies = enemies.filter(e => e.enemyState === 'waiting');
-    for (const enemy of waitingEnemies) {
+    // Strafing enemies should not have attack positions
+    const strafingEnemies = enemies.filter(e => e.enemyState === 'strafing');
+    for (const enemy of strafingEnemies) {
         assert.equal(enemy.assignedAttackPosition, null);
     }
 });
@@ -450,15 +450,15 @@ test('scenario: when active enemy dies, next enemy takes over', () => {
     const attackDistance = balanceConfig.attackPosition.distanceFromPlayer;
     const enemy1 = new Enemy(player.x - attackDistance, 400); // At attack position
     const enemy2 = new Enemy(300, 400); // Waiting
-    // Set enemies to waiting state (they start in movingToWaitingPoint after spawn)
-    enemy1.enemyState = 'waiting';
-    enemy2.enemyState = 'waiting';
+    // Set enemies to strafing state (they start in movingToWaitingPoint after spawn)
+    enemy1.enemyState = 'strafing';
+    enemy2.enemyState = 'strafing';
     const enemies = [enemy1, enemy2];
 
     // First update - enemy1 assigned
     manager.update(player, enemies);
     assert.equal(manager.getAssignedEnemy(), enemy1);
-    assert.equal(enemy2.enemyState, 'waiting');
+    assert.equal(enemy2.enemyState, 'strafing');
 
     // Enemy1 gets killed
     enemy1.takeDamage(enemy1.maxHealth);
@@ -474,7 +474,7 @@ test('scenario: player moves, attack position follows', () => {
     const manager = new AttackPositionManager();
     const player = new Player(500, 400);
     const enemy = new Enemy(300, 400);
-    enemy.enemyState = 'waiting'; // Set to waiting state (they start in movingToWaitingPoint after spawn)
+    enemy.enemyState = 'strafing'; // Set to strafing state (they start in movingToWaitingPoint after spawn)
     const enemies = [enemy];
 
     manager.update(player, enemies);
@@ -492,7 +492,7 @@ test('scenario: attack from right side', () => {
     const manager = new AttackPositionManager();
     const player = new Player(500, 400);
     const enemy = new Enemy(700, 400); // Right of player
-    enemy.enemyState = 'waiting'; // Set to waiting state (they start in movingToWaitingPoint after spawn)
+    enemy.enemyState = 'strafing'; // Set to strafing state (they start in movingToWaitingPoint after spawn)
     const enemies = [enemy];
 
     manager.update(player, enemies);

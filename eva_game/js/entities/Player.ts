@@ -27,6 +27,7 @@ export default class Player extends Entity {
     public isAttacking: boolean = false;
     public facingRight: boolean = true;
     public animationState: AnimationState = 'idle';
+    public isInAir: boolean = false;
 
     // Attack type tracking ('punch' or 'kick')
     private currentAttackType: 'punch' | 'kick' | null = null;
@@ -34,6 +35,11 @@ export default class Player extends Entity {
     private punchCooldownTimer: number = 0;
     private kickCooldownTimer: number = 0;
     private hitEnemiesThisAttack: Set<number> = new Set(); // Track enemies hit in current attack
+    private jumpTimer: number = 0;
+    private jumpCooldownTimer: number = 0;
+    private jumpStartX: number = 0;
+    private jumpStartY: number = 0;
+    private jumpDirectionX: number = 0;
 
     // Animation progress (0-1) for gradual animations
     public animationProgress: number = 0;
@@ -64,12 +70,29 @@ export default class Player extends Entity {
     }
 
     public handleInput(horizontalInput: number, verticalInput: number, input: InputManager): void {
+        if (this.updateJumpInput(horizontalInput, input)) {
+            return;
+        }
+
         this.updateMovement(horizontalInput, verticalInput);
         this.updateAttack(input);
     }
 
+    private updateJumpInput(horizontalInput: number, input: InputManager): boolean {
+        if (this.isInAir || this.isAttacking || this.animationState === 'hurt' || this.animationState === 'death') {
+            return false;
+        }
+
+        if (input.wasActionPressed('jump') && this.jumpCooldownTimer <= 0) {
+            this.startJump(horizontalInput);
+            return true;
+        }
+
+        return false;
+    }
+
     private updateMovement(horizontalInput: number, verticalInput: number): void {
-        if (this.isAttacking) {
+        if (this.isAttacking || this.isInAir) {
             this.velocityX = 0;
             this.velocityY = 0;
             return;
@@ -91,6 +114,10 @@ export default class Player extends Entity {
     }
 
     private updateAttack(input: InputManager): void {
+        if (this.isInAir) {
+            return;
+        }
+
         // Check for punch input (J key)
         if (input.wasActionPressed('punch') && !this.isAttacking && this.punchCooldownTimer <= 0) {
             this.startPunch();
@@ -124,9 +151,75 @@ export default class Player extends Entity {
     }
 
     public update(deltaTime: number): void {
-        this.move(deltaTime);
+        if (this.jumpCooldownTimer > 0) {
+            this.jumpCooldownTimer -= deltaTime * 1000;
+        }
+
+        if (this.isInAir) {
+            this.updateJump(deltaTime);
+        } else {
+            this.move(deltaTime);
+        }
         this.updateAttackTimer(deltaTime);
         this.updateAnimationProgress(deltaTime);
+    }
+
+    private startJump(horizontalInput: number): void {
+        const jumpConfig = balanceConfig.player.jump;
+        this.isInAir = true;
+        this.jumpTimer = jumpConfig.duration;
+        this.jumpCooldownTimer = jumpConfig.cooldown;
+        this.jumpStartX = this.x;
+        this.jumpStartY = this.y;
+        this.jumpDirectionX = horizontalInput === 0 ? 0 : Math.sign(horizontalInput);
+        this.velocityX = 0;
+        this.velocityY = 0;
+        this.isAttacking = false;
+        this.currentAttackType = null;
+        this.animationState = 'jump';
+        this.animationProgress = 0;
+
+        if (this.jumpDirectionX !== 0) {
+            this.facingRight = this.jumpDirectionX > 0;
+        }
+    }
+
+    private updateJump(deltaTime: number): void {
+        const jumpConfig = balanceConfig.player.jump;
+        const totalDuration = jumpConfig.duration;
+        const takeoffDuration = jumpConfig.takeoffDuration;
+        const landingDuration = jumpConfig.landingDuration;
+        const flightDuration = Math.max(0, totalDuration - takeoffDuration - landingDuration);
+
+        this.jumpTimer -= deltaTime * 1000;
+        const elapsed = Math.max(0, totalDuration - this.jumpTimer);
+        const progress = totalDuration > 0 ? Math.min(1, elapsed / totalDuration) : 1;
+        const distance = jumpConfig.distance * this.jumpDirectionX;
+
+        this.x = this.jumpStartX + distance * progress;
+        this.y = this.jumpStartY - jumpConfig.height * Math.sin(progress * Math.PI);
+
+        if (elapsed <= takeoffDuration) {
+            this.animationState = 'jump';
+            this.animationProgress = takeoffDuration > 0 ? elapsed / takeoffDuration : 1;
+        } else if (elapsed < takeoffDuration + flightDuration) {
+            this.animationState = 'fly';
+            this.animationProgress = flightDuration > 0 ? (elapsed - takeoffDuration) / flightDuration : 0.5;
+        } else {
+            this.animationState = 'land';
+            this.animationProgress = landingDuration > 0
+                ? (elapsed - takeoffDuration - flightDuration) / landingDuration
+                : 1;
+        }
+
+        if (this.jumpTimer <= 0) {
+            this.isInAir = false;
+            this.jumpTimer = 0;
+            this.x = this.jumpStartX + distance;
+            this.y = this.jumpStartY;
+            this.animationState = 'idle';
+            this.animationProgress = 0;
+        }
     }
 
     private updateAttackTimer(deltaTime: number): void {
@@ -152,6 +245,10 @@ export default class Player extends Entity {
     }
 
     private updateAnimationProgress(deltaTime: number): void {
+        if (this.isInAir) {
+            return;
+        }
+
         // Update animation progress based on current state
         switch (this.animationState) {
             case 'walk':
@@ -336,6 +433,15 @@ export default class Player extends Entity {
                 break;
             case 'kick':
                 pose = StickFigure.getKickPose(this.animationProgress, this.facingRight);
+                break;
+            case 'jump':
+                pose = StickFigure.getJumpPose(this.animationProgress);
+                break;
+            case 'fly':
+                pose = StickFigure.getFlyPose(this.animationProgress);
+                break;
+            case 'land':
+                pose = StickFigure.getLandPose(this.animationProgress);
                 break;
             case 'hurt':
                 pose = StickFigure.getHurtPose(this.animationProgress);

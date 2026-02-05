@@ -313,6 +313,133 @@ export default class StickFigure {
     }
 
     /**
+     * Get jump takeoff pose with animation progress (0-1)
+     * Starts in a crouch and extends upward for takeoff.
+     */
+    public static getJumpPose(progress: number): StickFigurePose {
+        const crouch = (1 - progress) * 8;
+        const armSwing = progress * 6;
+        const torsoLift = progress * 2;
+
+        return {
+            headY: -20 + crouch - torsoLift,
+            torsoEndY: 5 + crouch - torsoLift,
+
+            leftShoulderX: -5,
+            leftShoulderY: -12 + crouch - torsoLift,
+            leftElbowX: -10 - armSwing,
+            leftElbowY: 0 - armSwing,
+            leftHandX: -12 - armSwing,
+            leftHandY: 6 - armSwing,
+
+            rightShoulderX: 5,
+            rightShoulderY: -12 + crouch - torsoLift,
+            rightElbowX: 10 + armSwing,
+            rightElbowY: 0 - armSwing,
+            rightHandX: 12 + armSwing,
+            rightHandY: 6 - armSwing,
+
+            leftHipX: -3,
+            leftHipY: 5 + crouch,
+            leftKneeX: -4,
+            leftKneeY: 15 + crouch,
+            leftFootX: -4,
+            leftFootY: 25,
+
+            rightHipX: 3,
+            rightHipY: 5 + crouch,
+            rightKneeX: 4,
+            rightKneeY: 15 + crouch,
+            rightFootX: 4,
+            rightFootY: 25
+        };
+    }
+
+    /**
+     * Get mid-air pose with animation progress (0-1)
+     * Legs tuck in, arms spread for balance.
+     */
+    public static getFlyPose(progress: number): StickFigurePose {
+        const bob = Math.sin(progress * Math.PI * 2) * 2;
+        const tuck = 6;
+
+        return {
+            headY: -20 + bob,
+            torsoEndY: 4 + bob,
+
+            leftShoulderX: -5,
+            leftShoulderY: -12 + bob,
+            leftElbowX: -14,
+            leftElbowY: -4 + bob,
+            leftHandX: -16,
+            leftHandY: 0 + bob,
+
+            rightShoulderX: 5,
+            rightShoulderY: -12 + bob,
+            rightElbowX: 14,
+            rightElbowY: -4 + bob,
+            rightHandX: 16,
+            rightHandY: 0 + bob,
+
+            leftHipX: -3,
+            leftHipY: 5 + bob,
+            leftKneeX: -6,
+            leftKneeY: 12 + bob - tuck,
+            leftFootX: -6,
+            leftFootY: 18 + bob - tuck,
+
+            rightHipX: 3,
+            rightHipY: 5 + bob,
+            rightKneeX: 6,
+            rightKneeY: 12 + bob - tuck,
+            rightFootX: 6,
+            rightFootY: 18 + bob - tuck
+        };
+    }
+
+    /**
+     * Get landing pose with animation progress (0-1)
+     * Starts in a crouch and returns to standing.
+     */
+    public static getLandPose(progress: number): StickFigurePose {
+        const crouch = (1 - progress) * 8;
+        const armBalance = (1 - progress) * 4;
+
+        return {
+            headY: -20 + crouch,
+            torsoEndY: 5 + crouch,
+
+            leftShoulderX: -5,
+            leftShoulderY: -12 + crouch,
+            leftElbowX: -10 - armBalance,
+            leftElbowY: 0 - armBalance,
+            leftHandX: -12 - armBalance,
+            leftHandY: 6 - armBalance,
+
+            rightShoulderX: 5,
+            rightShoulderY: -12 + crouch,
+            rightElbowX: 10 + armBalance,
+            rightElbowY: 0 - armBalance,
+            rightHandX: 12 + armBalance,
+            rightHandY: 6 - armBalance,
+
+            leftHipX: -3,
+            leftHipY: 5 + crouch,
+            leftKneeX: -4,
+            leftKneeY: 15 + crouch,
+            leftFootX: -4,
+            leftFootY: 25,
+
+            rightHipX: 3,
+            rightHipY: 5 + crouch,
+            rightKneeX: 4,
+            rightKneeY: 15 + crouch,
+            rightFootX: 4,
+            rightFootY: 25
+        };
+    }
+
+    /**
      * Get hurt pose with animation progress (0-1)
      * Recoils backward with a defensive posture
      */

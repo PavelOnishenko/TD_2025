@@ -14,6 +14,14 @@ export const balanceConfig = {
 
     // master structure
     speed: 400,
+    jump: {
+      duration: 700,
+      height: 140,
+      distance: 180,
+      takeoffDuration: 180,
+      landingDuration: 180,
+      cooldown: 250,
+    },
     punch: {
       duration: 100,
       cooldown: 200,
