@@ -123,7 +123,15 @@ export default class Renderer {
     computeSortKey(entity) {
         const y = typeof entity.y === 'number' ? entity.y : 0;
         const height = typeof entity.h === 'number' ? entity.h : 0;
-        return y + height;
+        const baseKey = y + height;
+
+        // Corpses should always render behind living entities
+        const isDead = entity.isDead === true || entity.animationState === 'death';
+        if (isDead) {
+            return baseKey - 10000;
+        }
+
+        return baseKey;
     }
 
     drawParticles(particles) {
