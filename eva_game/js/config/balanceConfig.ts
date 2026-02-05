@@ -14,16 +14,40 @@ export const balanceConfig = {
 
     // master structure
     speed: 400,
-    attack: {
+    jump: {
+      duration: 700,
+      height: 140,
+      distance: 180,
+      takeoffDuration: 180,
+      landingDuration: 180,
+      cooldown: 250,
+    },
+    punch: {
       duration: 100,
       cooldown: 200,
-      armLength: 60,          // horizontal range of punch (like arm length)
+      reach: 60,              // horizontal range of attack
       verticalThreshold: 30,  // vertical offset tolerance
       damage: 25,
-      knockbackForce: 100,
-      hurtAnimationDuration: 400,
-      deathAnimationDuration: 1000,
+      knockbackForce: 0,
     },
+    strongPunch: {
+      duration: 140,
+      cooldown: 350,
+      reach: 70,              // horizontal range of attack
+      verticalThreshold: 30,  // vertical offset tolerance
+      damage: 45,
+      knockbackForce: 150,
+    },
+    kick: {
+      duration: 150,          // kicks are slightly slower than punches
+      cooldown: 300,
+      reach: 70,              // horizontal range of attack
+      verticalThreshold: 35,  // vertical offset tolerance (kicks have slightly more range)
+      damage: 35,             // kicks deal more damage than punches
+      knockbackForce: 0,
+    },
+    hurtAnimationDuration: 400,
+    deathAnimationDuration: 1000,
   },
 
   enemy: {

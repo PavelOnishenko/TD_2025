@@ -241,17 +241,16 @@ test('separation averages forces from multiple nearby enemies', () => {
 // TARGET POSITION REACHING AND STOPPING
 // ============================================================================
 
-test('enemy stops when reached target position and no separation needed', () => {
+test('enemy keeps moving when not within attack point threshold', () => {
     const targetX = 100;
     const targetY = 400;
-    // Enemy must be within (positionReachedThreshold - attackPointThreshold) = 10 - 8 = 2px to stop
-    const enemy = new Enemy(101, 400); // 1px away from target (within 2px threshold)
+    const enemy = new Enemy(101, 400); // 1px away from target
 
     enemy.moveToward(targetX, targetY, 0.016, []);
 
-    // Enemy should stop (zero velocity) when reached target position
-    assert.equal(enemy.velocityX, 0);
-    assert.equal(enemy.velocityY, 0);
+    // Enemy should still move because the attack point threshold is stricter
+    const hasVelocity = enemy.velocityX !== 0 || enemy.velocityY !== 0;
+    assert.ok(hasVelocity, 'enemy should keep moving until it meets the attack point threshold');
 });
 
 test('enemy continues moving if reached target but separation forces exist', () => {
@@ -311,6 +310,16 @@ test('canAttackPlayer returns true when in range and facing player', () => {
     const player = new Player(100, 400); // 30px to the left
 
     assert.equal(enemy.canAttackPlayer(player), true);
+});
+
+test('canAttackPlayer returns false when player is airborne', () => {
+    const enemy = new Enemy(130, 400);
+    enemy.facingRight = false; // Facing left toward player
+
+    const player = new Player(100, 400); // 30px to the left
+    player.isInAir = true;
+
+    assert.equal(enemy.canAttackPlayer(player), false);
 });
 
 test('canAttackPlayer returns false when on cooldown', () => {

@@ -73,7 +73,9 @@ export default class Game {
     }
 
     private setupInput(): void {
-        this.input.mapAction('attack', ['Space', 'KeyZ']);
+        this.input.mapAction('punch', ['KeyJ']);
+        this.input.mapAction('kick', ['KeyK']);
+        this.input.mapAction('jump', ['Space']);
         this.input.mapAxis('horizontal', ['ArrowLeft', 'KeyA'], ['ArrowRight', 'KeyD']);
         this.input.mapAxis('vertical', ['ArrowUp', 'KeyW'], ['ArrowDown', 'KeyS']);
 
@@ -214,15 +216,17 @@ export default class Game {
         // Horizontal bounds: entire world width
         this.player.x = Math.max(halfWidth, Math.min(balanceConfig.world.width - halfWidth, this.player.x));
 
-        // Vertical bounds: only feet collider restricted to road area
-        const roadBoundaryTop: number = balanceConfig.layout.roadBoundaryTopY;
-        const roadBottom: number = roadBoundaryTop + balanceConfig.layout.roadHeight;
-        const feetColliderHeight: number = balanceConfig.collision.feetColliderHeight;
-        // Top of feet collider = y + halfHeight - feetColliderHeight, must be >= roadBoundaryTop
-        const minY: number = roadBoundaryTop - halfHeight + feetColliderHeight;
-        // Bottom of feet collider = y + halfHeight, must be <= roadBottom
-        const maxY: number = roadBottom - halfHeight;
-        this.player.y = Math.max(minY, Math.min(maxY, this.player.y));
+        if (!this.player.isInAir) {
+            // Vertical bounds: only feet collider restricted to road area
+            const roadBoundaryTop: number = balanceConfig.layout.roadBoundaryTopY;
+            const roadBottom: number = roadBoundaryTop + balanceConfig.layout.roadHeight;
+            const feetColliderHeight: number = balanceConfig.collision.feetColliderHeight;
+            // Top of feet collider = y + halfHeight - feetColliderHeight, must be >= roadBoundaryTop
+            const minY: number = roadBoundaryTop - halfHeight + feetColliderHeight;
+            // Bottom of feet collider = y + halfHeight, must be <= roadBottom
+            const maxY: number = roadBottom - halfHeight;
+            this.player.y = Math.max(minY, Math.min(maxY, this.player.y));
+        }
     }
 
     private keepEnemyInBounds(enemy: Enemy): void {
@@ -455,6 +459,14 @@ export default class Game {
         }
 
         enemy.takeDamage(this.player.attackDamage);
+        const knockback = this.player.attackKnockback;
+        if (knockback > 0) {
+            const direction = this.player.facingRight ? 1 : -1;
+            const halfWidth = enemy.width / 2;
+            const minX = halfWidth;
+            const maxX = balanceConfig.world.width - halfWidth;
+            enemy.x = Math.max(minX, Math.min(maxX, enemy.x + (direction * knockback)));
+        }
         // takeDamage() now handles setting active = false when health reaches 0
     }
 

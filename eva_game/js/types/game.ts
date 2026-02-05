@@ -2,7 +2,18 @@
  * Game-specific type definitions and interfaces
  */
 
-export type AnimationState = 'idle' | 'walk' | 'punch' | 'kick' | 'hurt' | 'death' | 'taunt';
+export type AnimationState =
+    | 'idle'
+    | 'walk'
+    | 'punch'
+    | 'strongPunch'
+    | 'kick'
+    | 'jump'
+    | 'fly'
+    | 'land'
+    | 'hurt'
+    | 'death'
+    | 'taunt';
 
 /**
  * Enemy behavior state for attack position system
