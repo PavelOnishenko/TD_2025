@@ -40,6 +40,7 @@ export default class Player extends Entity {
     private jumpStartX: number = 0;
     private jumpStartY: number = 0;
     private jumpDirectionX: number = 0;
+    private jumpVisualOffset: number = 0;
 
     // Animation progress (0-1) for gradual animations
     public animationProgress: number = 0;
@@ -172,6 +173,7 @@ export default class Player extends Entity {
         this.jumpStartX = this.x;
         this.jumpStartY = this.y;
         this.jumpDirectionX = horizontalInput === 0 ? 0 : Math.sign(horizontalInput);
+        this.jumpVisualOffset = 0;
         this.velocityX = 0;
         this.velocityY = 0;
         this.isAttacking = false;
@@ -197,7 +199,8 @@ export default class Player extends Entity {
         const distance = jumpConfig.distance * this.jumpDirectionX;
 
         this.x = this.jumpStartX + distance * progress;
-        this.y = this.jumpStartY - jumpConfig.height * Math.sin(progress * Math.PI);
+        this.y = this.jumpStartY;
+        this.jumpVisualOffset = -jumpConfig.height * Math.sin(progress * Math.PI);
 
         if (elapsed <= takeoffDuration) {
             this.animationState = 'jump';
@@ -217,6 +220,7 @@ export default class Player extends Entity {
             this.jumpTimer = 0;
             this.x = this.jumpStartX + distance;
             this.y = this.jumpStartY;
+            this.jumpVisualOffset = 0;
             this.animationState = 'idle';
             this.animationProgress = 0;
         }
@@ -393,11 +397,12 @@ export default class Player extends Entity {
 
     public draw(ctx: CanvasRenderingContext2D, viewport?: Viewport): void {
         const screenX: number = this.x;
-        const screenY: number = this.y;
+        const baseY: number = this.y;
+        const screenY: number = baseY + this.jumpVisualOffset;
 
         this.drawStickFigure(ctx, screenX, screenY);
         this.drawHealthBar(ctx, screenX, screenY);
-        this.drawCoordinatePoint(ctx, screenX, screenY);
+        this.drawCoordinatePoint(ctx, screenX, baseY);
     }
 
     private drawCoordinatePoint(ctx: CanvasRenderingContext2D, screenX: number, screenY: number): void {
