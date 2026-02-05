@@ -275,12 +275,9 @@ export default class Player extends Entity {
             return false;
         }
 
-        // Check horizontal range (arm length for punch, leg reach for kick) in facing direction
+        // Check horizontal range in facing direction
         const horizontalDistance: number = Math.abs(dx);
-        const horizontalReach: number = this.currentAttackType === 'kick'
-            ? attackConfig.legReach
-            : attackConfig.armLength;
-        if (horizontalDistance > horizontalReach) {
+        if (horizontalDistance > attackConfig.reach) {
             return false;
         }
 

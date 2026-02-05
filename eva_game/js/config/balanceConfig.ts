@@ -17,7 +17,7 @@ export const balanceConfig = {
     punch: {
       duration: 100,
       cooldown: 200,
-      armLength: 60,          // horizontal range of punch (like arm length)
+      reach: 60,              // horizontal range of attack
       verticalThreshold: 30,  // vertical offset tolerance
       damage: 25,
       knockbackForce: 100,
@@ -25,7 +25,7 @@ export const balanceConfig = {
     kick: {
       duration: 150,          // kicks are slightly slower than punches
       cooldown: 300,
-      legReach: 70,           // horizontal range of kick (like leg reach)
+      reach: 70,              // horizontal range of attack
       verticalThreshold: 35,  // vertical offset tolerance (kicks have slightly more range)
       damage: 35,             // kicks deal more damage than punches
       knockbackForce: 150,
