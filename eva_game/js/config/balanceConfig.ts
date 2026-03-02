@@ -29,12 +29,6 @@ export const balanceConfig = {
       verticalThreshold: 30,  // vertical offset tolerance
       damage: 25,
       knockbackForce: 0,
-      animation: {
-        firstStrikeStart: 0,
-        firstStrikeEnd: 0.5,
-        secondStrikeStart: 0.62,
-        secondStrikeEnd: 1,
-      },
     },
     strongPunch: {
       duration: 140,

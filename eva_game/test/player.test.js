@@ -255,6 +255,27 @@ test('player can punch again after cooldown expires', () => {
     assert.equal(player.isAttacking, true);
 });
 
+test('player alternates punch hand between consecutive presses', () => {
+    const player = new Player(100, 400);
+    const input = createMockInputManager();
+
+    input.simulatePress('punch');
+    player.handleInput(0, 0, input);
+    assert.equal(player.currentPunchHand, 'right');
+
+    advanceTime(player, balanceConfig.player.punch.cooldown + 10);
+
+    input.simulatePress('punch');
+    player.handleInput(0, 0, input);
+    assert.equal(player.currentPunchHand, 'left');
+
+    advanceTime(player, balanceConfig.player.punch.cooldown + 10);
+
+    input.simulatePress('punch');
+    player.handleInput(0, 0, input);
+    assert.equal(player.currentPunchHand, 'right');
+});
+
 test('player can move again after punch ends', () => {
     const player = new Player(100, 400);
     const input = createMockInputManager();

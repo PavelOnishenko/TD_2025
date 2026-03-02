@@ -141,47 +141,22 @@ test('player punch animation progresses linearly', () => {
     assert.ok(Math.abs(progressAtHalfway[2] - 0.75) < 0.1);
 });
 
-test('player punch pose starts with right-hand strike', () => {
-    const earlyPose = StickFigure.getPunchPose(0.25, true);
-    const latePose = StickFigure.getPunchPose(0.75, true);
+test('player punch pose extends right hand when right hand is selected', () => {
+    const rightHandPose = StickFigure.getPunchPose(0.25, true, 'right');
 
-    const earlyRightReach = earlyPose.rightHandX - earlyPose.rightShoulderX;
-    const earlyLeftReach = Math.abs(earlyPose.leftHandX - earlyPose.leftShoulderX);
-    const lateRightReach = latePose.rightHandX - latePose.rightShoulderX;
-    const lateLeftReach = Math.abs(latePose.leftHandX - latePose.leftShoulderX);
-
-    assert.ok(earlyRightReach > earlyLeftReach, 'first strike should extend right hand more than left');
-    assert.ok(lateLeftReach > lateRightReach, 'second strike should extend left hand more than right');
+    assert.ok(
+        rightHandPose.rightHandY < rightHandPose.leftHandY,
+        'right-hand punch should drive the right fist forward/upward'
+    );
 });
 
-test('player punch pose has a small delay between right and left strikes', () => {
-    const transitionPose = StickFigure.getPunchPose(0.5, true);
+test('player punch pose extends left hand when left hand is selected', () => {
+    const leftHandPose = StickFigure.getPunchPose(0.25, true, 'left');
 
-    const rightReach = transitionPose.rightHandX - transitionPose.rightShoulderX;
-    const leftReach = Math.abs(transitionPose.leftHandX - transitionPose.leftShoulderX);
-
-    assert.ok(rightReach < 10, 'right hand should retract around strike transition');
-    assert.ok(leftReach < 10, 'left hand should not fully extend before delayed second strike');
-});
-
-test('player punch pose timing can be configured', () => {
-    const timing = {
-        firstStrikeStart: 0,
-        firstStrikeEnd: 0.35,
-        secondStrikeStart: 0.75,
-        secondStrikeEnd: 1,
-    };
-
-    const midPose = StickFigure.getPunchPose(0.55, true, timing);
-    const secondStrikePose = StickFigure.getPunchPose(0.9, true, timing);
-
-    const midRightReach = midPose.rightHandX - midPose.rightShoulderX;
-    const midLeftReach = Math.abs(midPose.leftHandX - midPose.leftShoulderX);
-    const lateRightReach = secondStrikePose.rightHandX - secondStrikePose.rightShoulderX;
-    const lateLeftReach = Math.abs(secondStrikePose.leftHandX - secondStrikePose.leftShoulderX);
-
-    assert.ok(midRightReach < 10 && midLeftReach < 10, 'both hands should be retracted during configured delay');
-    assert.ok(lateLeftReach > lateRightReach, 'late window should prioritize configured second strike hand');
+    assert.ok(
+        leftHandPose.leftHandY < leftHandPose.rightHandY,
+        'left-hand punch should drive the left fist forward/upward'
+    );
 });
 
 test('enemy punch animation progresses over 300ms', () => {

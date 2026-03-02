@@ -41,24 +41,11 @@ export interface StickFigurePose {
     rightFootY: number;
 }
 
-export interface PunchAnimationTimingConfig {
-    firstStrikeStart: number;
-    firstStrikeEnd: number;
-    secondStrikeStart: number;
-    secondStrikeEnd: number;
-}
-
 export default class StickFigure {
     private static readonly HEAD_RADIUS = 8;
     private static readonly LINE_WIDTH = 3;
     // Feet Y position in the idle pose (used to anchor drawing at feet)
     private static readonly FEET_Y_OFFSET = 25;
-    private static readonly DEFAULT_PUNCH_TIMING: PunchAnimationTimingConfig = {
-        firstStrikeStart: 0,
-        firstStrikeEnd: 0.45,
-        secondStrikeStart: 0.55,
-        secondStrikeEnd: 1,
-    };
 
     /**
      * Draw a stick figure at the specified position with the given pose
@@ -230,34 +217,38 @@ export default class StickFigure {
     public static getPunchPose(
         progress: number,
         facingRight: boolean,
-        timing: PunchAnimationTimingConfig = this.DEFAULT_PUNCH_TIMING
+        strikingHand: 'left' | 'right' = 'right'
     ): StickFigurePose {
-        const firstStrikeProgress = this.getStaggeredStrikeProgress(progress, timing.firstStrikeStart, timing.firstStrikeEnd);
-        const secondStrikeProgress = this.getStaggeredStrikeProgress(progress, timing.secondStrikeStart, timing.secondStrikeEnd);
+        // Ease out for extension, ease in for retraction
+        const punchProgress = progress < 0.5
+            ? progress * 2
+            : 2 - progress * 2;
 
-        const rightExtension = firstStrikeProgress * 20;
-        const leftExtension = secondStrikeProgress * 20;
-        const shoulderRotation = Math.max(firstStrikeProgress, secondStrikeProgress) * 5;
-        const legBrace = (firstStrikeProgress + secondStrikeProgress) * 2;
-        const torsoSnap = (firstStrikeProgress - secondStrikeProgress) * 2;
+        const extension = punchProgress * 20;
+        const shoulderRotation = punchProgress * 5;
+        const legBrace = punchProgress * 4;
+        const strikeWithRight = strikingHand === 'right';
+
+        const rightExtension = strikeWithRight ? extension : 0;
+        const leftExtension = strikeWithRight ? 0 : extension;
 
         return {
-            headY: -20 - torsoSnap * 0.5,
-            torsoEndY: 5 + shoulderRotation + torsoSnap,
+            headY: -20,
+            torsoEndY: 5 + shoulderRotation,
 
             leftShoulderX: -5,
-            leftShoulderY: -12 + shoulderRotation - secondStrikeProgress,
+            leftShoulderY: -12 + shoulderRotation,
             leftElbowX: -8 - legBrace + leftExtension * 0.6,
-            leftElbowY: 0 - secondStrikeProgress * 8,
+            leftElbowY: strikeWithRight ? 0 : -8 - shoulderRotation,
             leftHandX: -8 - legBrace + leftExtension,
-            leftHandY: 8 - secondStrikeProgress * 16,
+            leftHandY: strikeWithRight ? 8 : -8 - shoulderRotation,
 
             rightShoulderX: 5,
-            rightShoulderY: -12 - shoulderRotation - firstStrikeProgress,
+            rightShoulderY: -12 - shoulderRotation,
             rightElbowX: 8 + legBrace + rightExtension * 0.6,
-            rightElbowY: 0 - firstStrikeProgress * 8,
+            rightElbowY: strikeWithRight ? -8 - shoulderRotation : 0,
             rightHandX: 8 + legBrace + rightExtension,
-            rightHandY: 8 - firstStrikeProgress * 16,
+            rightHandY: strikeWithRight ? -8 - shoulderRotation : 8,
 
             // Brace legs for punch
             leftHipX: -3,
@@ -274,17 +265,6 @@ export default class StickFigure {
             rightFootX: 3 + legBrace,
             rightFootY: 25
         };
-    }
-
-    private static getStaggeredStrikeProgress(progress: number, start: number, end: number): number {
-        if (progress <= start || progress >= end) {
-            return 0;
-        }
-
-        const localProgress = (progress - start) / (end - start);
-        return localProgress < 0.5
-            ? localProgress * 2
-            : 2 - localProgress * 2;
     }
 
     /**
