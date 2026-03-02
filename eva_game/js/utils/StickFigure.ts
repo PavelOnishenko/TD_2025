@@ -41,11 +41,24 @@ export interface StickFigurePose {
     rightFootY: number;
 }
 
+export interface PunchAnimationTimingConfig {
+    firstStrikeStart: number;
+    firstStrikeEnd: number;
+    secondStrikeStart: number;
+    secondStrikeEnd: number;
+}
+
 export default class StickFigure {
     private static readonly HEAD_RADIUS = 8;
     private static readonly LINE_WIDTH = 3;
     // Feet Y position in the idle pose (used to anchor drawing at feet)
     private static readonly FEET_Y_OFFSET = 25;
+    private static readonly DEFAULT_PUNCH_TIMING: PunchAnimationTimingConfig = {
+        firstStrikeStart: 0,
+        firstStrikeEnd: 0.45,
+        secondStrikeStart: 0.55,
+        secondStrikeEnd: 1,
+    };
 
     /**
      * Draw a stick figure at the specified position with the given pose
@@ -214,9 +227,13 @@ export default class StickFigure {
      * Get punch/strike pose with animation progress (0-1)
      * Gradually extends the arm forward for a punch
      */
-    public static getPunchPose(progress: number, facingRight: boolean): StickFigurePose {
-        const firstStrikeProgress = this.getStaggeredStrikeProgress(progress, 0, 0.45);
-        const secondStrikeProgress = this.getStaggeredStrikeProgress(progress, 0.55, 1);
+    public static getPunchPose(
+        progress: number,
+        facingRight: boolean,
+        timing: PunchAnimationTimingConfig = this.DEFAULT_PUNCH_TIMING
+    ): StickFigurePose {
+        const firstStrikeProgress = this.getStaggeredStrikeProgress(progress, timing.firstStrikeStart, timing.firstStrikeEnd);
+        const secondStrikeProgress = this.getStaggeredStrikeProgress(progress, timing.secondStrikeStart, timing.secondStrikeEnd);
 
         const rightExtension = firstStrikeProgress * 20;
         const leftExtension = secondStrikeProgress * 20;

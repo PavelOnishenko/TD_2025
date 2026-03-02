@@ -164,6 +164,26 @@ test('player punch pose has a small delay between right and left strikes', () =>
     assert.ok(leftReach < 10, 'left hand should not fully extend before delayed second strike');
 });
 
+test('player punch pose timing can be configured', () => {
+    const timing = {
+        firstStrikeStart: 0,
+        firstStrikeEnd: 0.35,
+        secondStrikeStart: 0.75,
+        secondStrikeEnd: 1,
+    };
+
+    const midPose = StickFigure.getPunchPose(0.55, true, timing);
+    const secondStrikePose = StickFigure.getPunchPose(0.9, true, timing);
+
+    const midRightReach = midPose.rightHandX - midPose.rightShoulderX;
+    const midLeftReach = Math.abs(midPose.leftHandX - midPose.leftShoulderX);
+    const lateRightReach = secondStrikePose.rightHandX - secondStrikePose.rightShoulderX;
+    const lateLeftReach = Math.abs(secondStrikePose.leftHandX - secondStrikePose.leftShoulderX);
+
+    assert.ok(midRightReach < 10 && midLeftReach < 10, 'both hands should be retracted during configured delay');
+    assert.ok(lateLeftReach > lateRightReach, 'late window should prioritize configured second strike hand');
+});
+
 test('enemy punch animation progresses over 300ms', () => {
     const enemy = new Enemy(100, 400);
 

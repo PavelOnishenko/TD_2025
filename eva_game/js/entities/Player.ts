@@ -494,7 +494,11 @@ export default class Player extends Entity {
                 pose = StickFigure.getWalkPose(this.animationProgress);
                 break;
             case 'punch':
-                pose = StickFigure.getPunchPose(this.animationProgress, this.facingRight);
+                pose = StickFigure.getPunchPose(
+                    this.animationProgress,
+                    this.facingRight,
+                    balanceConfig.player.punch.animation
+                );
                 break;
             case 'strongPunch':
                 pose = StickFigure.getStrongPunchPose(this.animationProgress, this.facingRight);
