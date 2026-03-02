@@ -23,7 +23,7 @@ export const balanceConfig = {
       cooldown: 250,
     },
     punch: {
-      duration: 100,
+      duration: 180,
       cooldown: 200,
       reach: 60,              // horizontal range of attack
       verticalThreshold: 30,  // vertical offset tolerance

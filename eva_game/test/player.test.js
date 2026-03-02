@@ -212,8 +212,8 @@ test('punch duration lasts correct time', () => {
 
     assert.equal(player.isAttacking, true);
 
-    // Advance time past attack duration (100ms)
-    advanceTime(player, 150);
+    // Advance time past attack duration
+    advanceTime(player, balanceConfig.player.punch.duration + 50);
 
     assert.equal(player.isAttacking, false);
 });
@@ -227,7 +227,7 @@ test('punch has cooldown preventing rapid attacks', () => {
     player.handleInput(0, 0, input);
 
     // Wait for attack to end but not cooldown
-    advanceTime(player, 150);
+    advanceTime(player, balanceConfig.player.punch.duration + 10);
     assert.equal(player.isAttacking, false);
 
     // Try to attack again - should fail due to cooldown
@@ -255,6 +255,27 @@ test('player can punch again after cooldown expires', () => {
     assert.equal(player.isAttacking, true);
 });
 
+test('player alternates punch hand between consecutive presses', () => {
+    const player = new Player(100, 400);
+    const input = createMockInputManager();
+
+    input.simulatePress('punch');
+    player.handleInput(0, 0, input);
+    assert.equal(player.currentPunchHand, 'right');
+
+    advanceTime(player, balanceConfig.player.punch.cooldown + 10);
+
+    input.simulatePress('punch');
+    player.handleInput(0, 0, input);
+    assert.equal(player.currentPunchHand, 'left');
+
+    advanceTime(player, balanceConfig.player.punch.cooldown + 10);
+
+    input.simulatePress('punch');
+    player.handleInput(0, 0, input);
+    assert.equal(player.currentPunchHand, 'right');
+});
+
 test('player can move again after punch ends', () => {
     const player = new Player(100, 400);
     const input = createMockInputManager();
@@ -263,7 +284,7 @@ test('player can move again after punch ends', () => {
     player.handleInput(0, 0, input);
 
     // Wait for attack to end
-    advanceTime(player, 150);
+    advanceTime(player, balanceConfig.player.punch.duration + 10);
 
     // Should be able to move
     player.handleInput(1, 0, input);
@@ -406,7 +427,7 @@ test('animation state returns to idle after punch animation completes', () => {
     player.handleInput(0, 0, input);
     assert.equal(player.animationState, 'punch');
 
-    advanceTime(player, 150);
+    advanceTime(player, balanceConfig.player.punch.duration + 10);
     assert.equal(player.animationState, 'idle');
 });
 
