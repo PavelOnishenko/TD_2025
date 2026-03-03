@@ -20,44 +20,16 @@ export const KICK_KEYFRAMES: ImportedKeyframe[] = [
             leftCalfLength: 35,
             rightThighLength: 40,
             rightCalfLength: 35,
-            hipLength: 23,
-            shoulderLength: 37,
-            leftShoulderAngle: -0.08,
-            leftElbowAngle: 0.06,
-            rightShoulderAngle: 0.16,
-            rightElbowAngle: -0.03,
-            leftHipAngle: -0.02,
-            leftKneeAngle: 0,
-            rightHipAngle: 0.02,
+            hipLength: 30,
+            shoulderLength: 30,
+            leftShoulderAngle: -0.23,
+            leftElbowAngle: 0.31,
+            rightShoulderAngle: 0.22,
+            rightElbowAngle: -0.27,
+            leftHipAngle: -0.01,
+            leftKneeAngle: -0.08,
+            rightHipAngle: 0.01,
             rightKneeAngle: 0
-        }
-    },
-    {
-        time: 0.45,
-        params: {
-            x: 400,
-            y: 300,
-            headTilt: 0.05,
-            torsoAngle: -0.08,
-            torsoLength: 50,
-            leftUpperArmLength: 35,
-            leftForearmLength: 30,
-            rightUpperArmLength: 35,
-            rightForearmLength: 30,
-            leftThighLength: 40,
-            leftCalfLength: 35,
-            rightThighLength: 40,
-            rightCalfLength: 35,
-            hipLength: 23,
-            shoulderLength: 37,
-            leftShoulderAngle: -0.3,
-            leftElbowAngle: 0.12,
-            rightShoulderAngle: 0.45,
-            rightElbowAngle: -0.3,
-            leftHipAngle: -0.2,
-            leftKneeAngle: -0.15,
-            rightHipAngle: -1.05,
-            rightKneeAngle: -0.95
         }
     },
     {
@@ -65,8 +37,8 @@ export const KICK_KEYFRAMES: ImportedKeyframe[] = [
         params: {
             x: 400,
             y: 300,
-            headTilt: 0,
-            torsoAngle: 0,
+            headTilt: -0.03,
+            torsoAngle: 0.27,
             torsoLength: 50,
             leftUpperArmLength: 35,
             leftForearmLength: 30,
@@ -76,23 +48,50 @@ export const KICK_KEYFRAMES: ImportedKeyframe[] = [
             leftCalfLength: 35,
             rightThighLength: 40,
             rightCalfLength: 35,
-            hipLength: 23,
-            shoulderLength: 37,
-            leftShoulderAngle: -0.08,
-            leftElbowAngle: 0.06,
-            rightShoulderAngle: 0.16,
-            rightElbowAngle: -0.03,
-            leftHipAngle: -0.02,
-            leftKneeAngle: 0,
-            rightHipAngle: 0.02,
-            rightKneeAngle: 0
+            hipLength: 27,
+            shoulderLength: 35,
+            leftShoulderAngle: -0.55,
+            leftElbowAngle: 0.35,
+            rightShoulderAngle: 0.82,
+            rightElbowAngle: -0.27,
+            leftHipAngle: 0,
+            leftKneeAngle: 0.02,
+            rightHipAngle: -0.74,
+            rightKneeAngle: -1.57
+        }
+    },
+    {
+        time: 2,
+        params: {
+            x: 400,
+            y: 300,
+            headTilt: -0.09,
+            torsoAngle: 0.32,
+            torsoLength: 50,
+            leftUpperArmLength: 35,
+            leftForearmLength: 30,
+            rightUpperArmLength: 35,
+            rightForearmLength: 30,
+            leftThighLength: 40,
+            leftCalfLength: 35,
+            rightThighLength: 40,
+            rightCalfLength: 35,
+            hipLength: 27,
+            shoulderLength: 35,
+            leftShoulderAngle: -0.55,
+            leftElbowAngle: -0.03,
+            rightShoulderAngle: 0.22,
+            rightElbowAngle: -0.27,
+            leftHipAngle: 0.05,
+            leftKneeAngle: -0.05,
+            rightHipAngle: 1.57,
+            rightKneeAngle: -0.15
         }
     }
 ];
 
 export const KICK_META: ImportedAnimationMeta = {
-    name: 'Kick',
-    duration: 1,
+    name: "Kick",
+    duration: 2,
     loop: false
 };
-

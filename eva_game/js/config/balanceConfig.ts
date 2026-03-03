@@ -39,7 +39,7 @@ export const balanceConfig = {
       knockbackForce: 150,
     },
     kick: {
-      duration: 150,          // kicks are slightly slower than punches
+      duration: 450,          // kicks are slightly slower than punches
       cooldown: 300,
       reach: 70,              // horizontal range of attack
       verticalThreshold: 35,  // vertical offset tolerance (kicks have slightly more range)
