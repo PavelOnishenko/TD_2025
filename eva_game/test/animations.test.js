@@ -9,6 +9,7 @@ import Player from '../dist/entities/Player.js';
 import Enemy from '../dist/entities/Enemy.js';
 import { balanceConfig } from '../dist/config/balanceConfig.js';
 import StickFigure from '../dist/utils/StickFigure.js';
+import { KICK_KEYFRAMES, KICK_META } from '../dist/animations/kickImported.js';
 import {
     createMockInputManager,
     advanceTime,
@@ -156,6 +157,16 @@ test('player punch pose extends left hand when left hand is selected', () => {
     assert.ok(
         leftHandPose.leftHandY < leftHandPose.rightHandY,
         'left-hand punch should drive the left fist forward/upward'
+    );
+});
+
+test('imported kick animation generates a forward right foot at impact', () => {
+    const idlePose = StickFigure.getPoseFromImportedAnimation(KICK_KEYFRAMES, KICK_META, 0);
+    const impactPose = StickFigure.getPoseFromImportedAnimation(KICK_KEYFRAMES, KICK_META, 0.45);
+
+    assert.ok(
+        Math.abs(impactPose.rightFootX - impactPose.rightHipX) > Math.abs(idlePose.rightFootX - idlePose.rightHipX),
+        'imported kick should increase right leg horizontal extension at impact'
     );
 });
 

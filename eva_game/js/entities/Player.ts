@@ -4,6 +4,7 @@ import { Viewport } from '../types/engine.js';
 import { AnimationState } from '../types/game.js';
 import StickFigure from '../utils/StickFigure.js';
 import { balanceConfig } from '../config/balanceConfig.js';
+import { KICK_KEYFRAMES, KICK_META } from '../animations/kickImported.js';
 
 export default class Player extends Entity {
     // Explicitly declare inherited properties from Entity
@@ -505,7 +506,7 @@ export default class Player extends Entity {
                 pose = StickFigure.getStrongPunchPose(this.animationProgress, this.facingRight);
                 break;
             case 'kick':
-                pose = StickFigure.getKickPose(this.animationProgress, this.facingRight);
+                pose = StickFigure.getPoseFromImportedAnimation(KICK_KEYFRAMES, KICK_META, this.animationProgress);
                 break;
             case 'jump':
                 pose = StickFigure.getJumpPose(this.animationProgress);
