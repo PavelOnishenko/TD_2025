@@ -8,6 +8,7 @@ import type {
     ImportedAnimationParams,
     ImportedKeyframe
 } from '../animations/types.js';
+import { decorationConfig } from '../config/decorationConfig.js';
 
 export interface StickFigurePose {
     // Head
@@ -49,7 +50,6 @@ export interface StickFigurePose {
 
 export default class StickFigure {
     private static readonly HEAD_RADIUS = 8;
-    private static readonly LINE_WIDTH = 3;
     // Feet Y position in the idle pose (used to anchor drawing at feet)
     private static readonly FEET_Y_OFFSET = 25;
     private static readonly IMPORT_SCALE = 0.5;
@@ -69,7 +69,9 @@ export default class StickFigure {
     ): void {
         ctx.strokeStyle = color;
         ctx.fillStyle = color;
-        ctx.lineWidth = this.LINE_WIDTH * scale;
+        const limbLineWidth = decorationConfig.stickFigure.limbLineWidth * scale;
+        const coreBoneLineWidth = decorationConfig.stickFigure.coreBoneLineWidth * scale;
+        ctx.lineWidth = limbLineWidth;
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
 
@@ -106,6 +108,7 @@ export default class StickFigure {
         const headBottomY = drawY + pose.headY * scale + headRadius;
 
         // Draw neck (head -> shoulder center)
+        ctx.lineWidth = coreBoneLineWidth;
         ctx.beginPath();
         ctx.moveTo(x, headBottomY);
         ctx.lineTo(shoulderCenterX, shoulderCenterY);
@@ -130,6 +133,7 @@ export default class StickFigure {
         ctx.stroke();
 
         // Draw left arm
+        ctx.lineWidth = limbLineWidth;
         ctx.beginPath();
         ctx.moveTo(leftShoulderX, leftShoulderY);
         ctx.lineTo(x + pose.leftElbowX * flip * scale, drawY + pose.leftElbowY * scale);
