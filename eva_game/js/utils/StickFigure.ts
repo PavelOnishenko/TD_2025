@@ -53,6 +53,7 @@ export default class StickFigure {
     // Feet Y position in the idle pose (used to anchor drawing at feet)
     private static readonly FEET_Y_OFFSET = 25;
     private static readonly IMPORT_SCALE = 0.5;
+    private static readonly IMPORT_BONE_SCALE_MULTIPLIER = 0.76;
 
     /**
      * Draw a stick figure at the specified position with the given pose
@@ -508,7 +509,7 @@ export default class StickFigure {
     }
 
     private static convertImportedParamsToPose(params: ImportedAnimationParams): StickFigurePose {
-        const scale = this.IMPORT_SCALE;
+        const scale = this.IMPORT_SCALE * this.IMPORT_BONE_SCALE_MULTIPLIER;
         const torsoTopX = 0;
         const torsoTopY = -20;
         const torsoAngle = params.torsoAngle;
