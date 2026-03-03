@@ -109,28 +109,16 @@ export default class StickFigure {
 
         // Draw neck (head -> shoulder center)
         ctx.lineWidth = coreBoneLineWidth;
-        ctx.beginPath();
-        ctx.moveTo(x, headBottomY);
-        ctx.lineTo(shoulderCenterX, shoulderCenterY);
-        ctx.stroke();
+        this.drawCoreBoneRect(ctx, x, headBottomY, shoulderCenterX, shoulderCenterY, coreBoneLineWidth);
 
         // Draw shoulder bone
-        ctx.beginPath();
-        ctx.moveTo(leftShoulderX, leftShoulderY);
-        ctx.lineTo(rightShoulderX, rightShoulderY);
-        ctx.stroke();
+        this.drawCoreBoneRect(ctx, leftShoulderX, leftShoulderY, rightShoulderX, rightShoulderY, coreBoneLineWidth);
 
         // Draw torso (shoulder center -> hip center)
-        ctx.beginPath();
-        ctx.moveTo(shoulderCenterX, shoulderCenterY);
-        ctx.lineTo(hipCenterX, hipCenterY);
-        ctx.stroke();
+        this.drawCoreBoneRect(ctx, shoulderCenterX, shoulderCenterY, hipCenterX, hipCenterY, coreBoneLineWidth);
 
         // Draw hip bone
-        ctx.beginPath();
-        ctx.moveTo(leftHipX, leftHipY);
-        ctx.lineTo(rightHipX, rightHipY);
-        ctx.stroke();
+        this.drawCoreBoneRect(ctx, leftHipX, leftHipY, rightHipX, rightHipY, coreBoneLineWidth);
 
         // Draw left arm
         ctx.lineWidth = limbLineWidth;
@@ -160,6 +148,30 @@ export default class StickFigure {
         ctx.lineTo(x + pose.rightKneeX * flip * scale, drawY + pose.rightKneeY * scale);
         ctx.lineTo(x + pose.rightFootX * flip * scale, drawY + pose.rightFootY * scale);
         ctx.stroke();
+    }
+
+    private static drawCoreBoneRect(
+        ctx: CanvasRenderingContext2D,
+        startX: number,
+        startY: number,
+        endX: number,
+        endY: number,
+        thickness: number
+    ): void {
+        const deltaX = endX - startX;
+        const deltaY = endY - startY;
+        const length = Math.hypot(deltaX, deltaY);
+
+        if (length === 0) {
+            return;
+        }
+
+        const angle = Math.atan2(deltaY, deltaX);
+        ctx.save();
+        ctx.translate(startX, startY);
+        ctx.rotate(angle);
+        ctx.fillRect(0, -thickness / 2, length, thickness);
+        ctx.restore();
     }
 
     /**
