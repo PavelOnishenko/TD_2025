@@ -8,6 +8,7 @@ import assert from 'node:assert/strict';
 import Player from '../dist/entities/Player.js';
 import Enemy from '../dist/entities/Enemy.js';
 import { balanceConfig } from '../dist/config/balanceConfig.js';
+import StickFigure from '../dist/utils/StickFigure.js';
 import {
     createMockInputManager,
     advanceTime,
@@ -138,6 +139,24 @@ test('player punch animation progresses linearly', () => {
     assert.ok(Math.abs(progressAtHalfway[0] - 0.25) < 0.1);
     assert.ok(Math.abs(progressAtHalfway[1] - 0.5) < 0.1);
     assert.ok(Math.abs(progressAtHalfway[2] - 0.75) < 0.1);
+});
+
+test('player punch pose extends right hand when right hand is selected', () => {
+    const rightHandPose = StickFigure.getPunchPose(0.25, true, 'right');
+
+    assert.ok(
+        rightHandPose.rightHandY < rightHandPose.leftHandY,
+        'right-hand punch should drive the right fist forward/upward'
+    );
+});
+
+test('player punch pose extends left hand when left hand is selected', () => {
+    const leftHandPose = StickFigure.getPunchPose(0.25, true, 'left');
+
+    assert.ok(
+        leftHandPose.leftHandY < leftHandPose.rightHandY,
+        'left-hand punch should drive the left fist forward/upward'
+    );
 });
 
 test('enemy punch animation progresses over 300ms', () => {

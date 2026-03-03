@@ -44,6 +44,8 @@ export default class Player extends Entity {
     private jumpStartY: number = 0;
     private jumpDirectionX: number = 0;
     private jumpVisualOffset: number = 0;
+    private nextPunchHand: 'left' | 'right' = 'right';
+    private currentPunchHand: 'left' | 'right' = 'right';
 
     // Animation progress (0-1) for gradual animations
     public animationProgress: number = 0;
@@ -148,6 +150,8 @@ export default class Player extends Entity {
         console.log('Player punch initiated');
         this.isAttacking = true;
         this.currentAttackType = 'punch';
+        this.currentPunchHand = this.nextPunchHand;
+        this.nextPunchHand = this.nextPunchHand === 'left' ? 'right' : 'left';
         this.attackTimer = balanceConfig.player.punch.duration;
         this.punchCooldownTimer = balanceConfig.player.punch.cooldown;
         this.animationState = 'punch';
@@ -258,6 +262,7 @@ export default class Player extends Entity {
             if (this.attackTimer <= 0) {
                 this.isAttacking = false;
                 this.currentAttackType = null;
+                this.currentPunchHand = this.nextPunchHand;
                 // Only reset to idle if still in attack animation (don't override hurt/death)
                 if (this.animationState === 'punch' || this.animationState === 'kick' || this.animationState === 'strongPunch') {
                     this.animationState = 'idle';
@@ -494,7 +499,7 @@ export default class Player extends Entity {
                 pose = StickFigure.getWalkPose(this.animationProgress);
                 break;
             case 'punch':
-                pose = StickFigure.getPunchPose(this.animationProgress, this.facingRight);
+                pose = StickFigure.getPunchPose(this.animationProgress, this.facingRight, this.currentPunchHand);
                 break;
             case 'strongPunch':
                 pose = StickFigure.getStrongPunchPose(this.animationProgress, this.facingRight);

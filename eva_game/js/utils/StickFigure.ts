@@ -214,34 +214,41 @@ export default class StickFigure {
      * Get punch/strike pose with animation progress (0-1)
      * Gradually extends the arm forward for a punch
      */
-    public static getPunchPose(progress: number, facingRight: boolean): StickFigurePose {
-        // Ease out for punch extension, ease in for retraction
+    public static getPunchPose(
+        progress: number,
+        facingRight: boolean,
+        strikingHand: 'left' | 'right' = 'right'
+    ): StickFigurePose {
+        // Ease out for extension, ease in for retraction
         const punchProgress = progress < 0.5
-            ? progress * 2 // Extend: 0 to 1 in first half
-            : 2 - progress * 2; // Retract: 1 to 0 in second half
+            ? progress * 2
+            : 2 - progress * 2;
 
         const extension = punchProgress * 20;
         const shoulderRotation = punchProgress * 5;
         const legBrace = punchProgress * 4;
+        const strikeWithRight = strikingHand === 'right';
+
+        const rightExtension = strikeWithRight ? extension : 0;
+        const leftExtension = strikeWithRight ? 0 : extension;
 
         return {
             headY: -20,
             torsoEndY: 5 + shoulderRotation,
 
-            // Punch with right arm (direction handled by flip in draw)
             leftShoulderX: -5,
             leftShoulderY: -12 + shoulderRotation,
-            leftElbowX: -8 - legBrace,
-            leftElbowY: 0,
-            leftHandX: -8 - legBrace,
-            leftHandY: 8,
+            leftElbowX: -8 - legBrace + leftExtension * 0.6,
+            leftElbowY: strikeWithRight ? 0 : -8 - shoulderRotation,
+            leftHandX: -8 - legBrace + leftExtension,
+            leftHandY: strikeWithRight ? 8 : -8 - shoulderRotation,
 
             rightShoulderX: 5,
             rightShoulderY: -12 - shoulderRotation,
-            rightElbowX: 8 + extension * 0.6,
-            rightElbowY: -8 - shoulderRotation,
-            rightHandX: 8 + extension,
-            rightHandY: -8 - shoulderRotation,
+            rightElbowX: 8 + legBrace + rightExtension * 0.6,
+            rightElbowY: strikeWithRight ? -8 - shoulderRotation : 0,
+            rightHandX: 8 + legBrace + rightExtension,
+            rightHandY: strikeWithRight ? -8 - shoulderRotation : 8,
 
             // Brace legs for punch
             leftHipX: -3,
