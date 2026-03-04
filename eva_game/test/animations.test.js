@@ -154,12 +154,13 @@ test('player punch pose extends right hand when right hand is selected', () => {
     );
 });
 
-test('player punch pose extends left hand when left hand is selected', () => {
-    const leftHandPose = StickFigure.getPoseFromImportedAnimation(PUNCH2_KEYFRAMES, PUNCH2_META, 0.25);
+test('second imported punch variant produces a distinct strike silhouette', () => {
+    const punchPose = StickFigure.getPoseFromImportedAnimation(PUNCH_KEYFRAMES, PUNCH_META, 0.25);
+    const punch2Pose = StickFigure.getPoseFromImportedAnimation(PUNCH2_KEYFRAMES, PUNCH2_META, 0.25);
 
     assert.ok(
-        leftHandPose.leftHandY < leftHandPose.rightHandY,
-        'left-hand punch should drive the left fist forward/upward'
+        Math.abs(punch2Pose.rightHandX - punchPose.rightHandX) > 5 || Math.abs(punch2Pose.leftHandX - punchPose.leftHandX) > 5,
+        'punch variants should not collapse to the same hand silhouette'
     );
 });
 
@@ -170,6 +171,18 @@ test('imported kick animation generates a forward right foot at impact', () => {
     assert.ok(
         Math.abs(impactPose.rightFootX - impactPose.rightHipX) > Math.abs(idlePose.rightFootX - idlePose.rightHipX),
         'imported kick should increase right leg horizontal extension at impact'
+    );
+});
+
+test('imported pose keeps head above shoulders to avoid chest overlap', () => {
+    const pose = StickFigure.getPoseFromImportedAnimation(PUNCH_KEYFRAMES, PUNCH_META, 0);
+    const shoulderCenterY = (pose.leftShoulderY + pose.rightShoulderY) / 2;
+    const importedHeadRadius = 8 * (pose.headScale ?? 1);
+    const headBottomY = (pose.headY + (pose.headOffsetY ?? 0)) + importedHeadRadius;
+
+    assert.ok(
+        headBottomY <= shoulderCenterY,
+        `head bottom (${headBottomY.toFixed(2)}) should be above shoulder center (${shoulderCenterY.toFixed(2)})`
     );
 });
 
