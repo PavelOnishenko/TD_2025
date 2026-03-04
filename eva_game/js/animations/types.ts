@@ -37,9 +37,7 @@ export interface ImportedAnimationMeta {
     loop: boolean;
 }
 
-export interface ImportedAnimationAsset {
-    keyframes: ImportedKeyframe[];
-    meta: ImportedAnimationMeta;
-    fallbackPose: (progress: number) => StickFigurePose;
+export interface AnimationClip {
+    name: string;
+    getPose: (progress: number, facingRight: boolean, punchHand?: 'left' | 'right') => StickFigurePose;
 }
-

@@ -3,6 +3,7 @@ import { Viewport } from '../types/engine.js';
 import { AnimationState, EnemyState } from '../types/game.js';
 import Player from './Player.js';
 import StickFigure from '../utils/StickFigure.js';
+import { ENEMY_ANIMATIONS, EnemyAnimationState } from '../animations/enemyAnimations.js';
 import { balanceConfig } from '../config/balanceConfig.js';
 
 export default class Enemy extends Entity {
@@ -494,30 +495,8 @@ export default class Enemy extends Entity {
     }
 
     private drawStickFigure(ctx: CanvasRenderingContext2D, screenX: number, screenY: number): void {
-        // Get pose based on current animation state
-        let pose = StickFigure.getIdlePose();
-
-        switch (this.animationState) {
-            case 'walk':
-                pose = StickFigure.getWalkPose(this.animationProgress);
-                break;
-            case 'punch':
-                pose = StickFigure.getPunchPose(this.animationProgress, this.facingRight);
-                break;
-            case 'hurt':
-                pose = StickFigure.getHurtPose(this.animationProgress);
-                break;
-            case 'death':
-                pose = StickFigure.getDeathPose(this.animationProgress);
-                break;
-            case 'taunt':
-                pose = StickFigure.getTauntPose(this.animationProgress);
-                break;
-            case 'idle':
-            default:
-                pose = StickFigure.getIdlePose();
-                break;
-        }
+        const clip = ENEMY_ANIMATIONS[this.animationState as EnemyAnimationState];
+        const pose = clip.getPose(this.animationProgress, this.facingRight);
 
         StickFigure.draw(ctx, screenX, screenY, pose, this.color, this.facingRight, balanceConfig.enemy.scale);
     }

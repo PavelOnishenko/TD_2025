@@ -4,7 +4,7 @@ import { Viewport } from '../types/engine.js';
 import { AnimationState } from '../types/game.js';
 import StickFigure from '../utils/StickFigure.js';
 import { balanceConfig } from '../config/balanceConfig.js';
-import { KICK_KEYFRAMES, KICK_META } from '../animations/kickImported.js';
+import { PLAYER_ANIMATIONS, PlayerAnimationState } from '../animations/playerAnimations.js';
 
 export default class Player extends Entity {
     // Explicitly declare inherited properties from Entity
@@ -492,43 +492,8 @@ export default class Player extends Entity {
     }
 
     private drawStickFigure(ctx: CanvasRenderingContext2D, screenX: number, screenY: number): void {
-        // Get pose based on current animation state
-        let pose = StickFigure.getIdlePose();
-
-        switch (this.animationState) {
-            case 'walk':
-                pose = StickFigure.getWalkPose(this.animationProgress);
-                break;
-            case 'punch':
-                pose = StickFigure.getPunchPose(this.animationProgress, this.facingRight, this.currentPunchHand);
-                break;
-            case 'strongPunch':
-                pose = StickFigure.getStrongPunchPose(this.animationProgress, this.facingRight);
-                break;
-            case 'kick':
-                pose = StickFigure.getPoseFromImportedAnimation(KICK_KEYFRAMES, KICK_META, this.animationProgress);
-                break;
-            case 'jump':
-                pose = StickFigure.getJumpPose(this.animationProgress);
-                break;
-            case 'fly':
-                pose = StickFigure.getFlyPose(this.animationProgress);
-                break;
-            case 'land':
-                pose = StickFigure.getLandPose(this.animationProgress);
-                break;
-            case 'hurt':
-                pose = StickFigure.getHurtPose(this.animationProgress);
-                break;
-            case 'death':
-                pose = StickFigure.getDeathPose(this.animationProgress);
-                break;
-            case 'idle':
-            default:
-                pose = StickFigure.getIdlePose();
-                break;
-        }
-
+        const clip = PLAYER_ANIMATIONS[this.animationState as PlayerAnimationState];
+        const pose = clip.getPose(this.animationProgress, this.facingRight, this.currentPunchHand);
         const color: string = '#64c8ff';
 
         StickFigure.draw(ctx, screenX, screenY, pose, color, this.facingRight, balanceConfig.player.scale);
