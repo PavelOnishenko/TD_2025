@@ -10,6 +10,8 @@ import Enemy from '../dist/entities/Enemy.js';
 import { balanceConfig } from '../dist/config/balanceConfig.js';
 import StickFigure from '../dist/utils/StickFigure.js';
 import { KICK_KEYFRAMES, KICK_META } from '../dist/animations/kickImported.js';
+import { PUNCH_KEYFRAMES, PUNCH_META } from '../dist/animations/punchImported.js';
+import { PUNCH2_KEYFRAMES, PUNCH2_META } from '../dist/animations/punch2Imported.js';
 import {
     createMockInputManager,
     advanceTime,
@@ -143,7 +145,7 @@ test('player punch animation progresses linearly', () => {
 });
 
 test('player punch pose extends right hand when right hand is selected', () => {
-    const rightHandPose = StickFigure.getPunchPose(0.25, true, 'right');
+    const rightHandPose = StickFigure.getPoseFromImportedAnimation(PUNCH_KEYFRAMES, PUNCH_META, 0.25);
 
     assert.ok(
         rightHandPose.rightHandY < rightHandPose.leftHandY,
@@ -152,7 +154,7 @@ test('player punch pose extends right hand when right hand is selected', () => {
 });
 
 test('player punch pose extends left hand when left hand is selected', () => {
-    const leftHandPose = StickFigure.getPunchPose(0.25, true, 'left');
+    const leftHandPose = StickFigure.getPoseFromImportedAnimation(PUNCH2_KEYFRAMES, PUNCH2_META, 0.25);
 
     assert.ok(
         leftHandPose.leftHandY < leftHandPose.rightHandY,

@@ -4,7 +4,17 @@ import { Viewport } from '../types/engine.js';
 import { AnimationState } from '../types/game.js';
 import StickFigure from '../utils/StickFigure.js';
 import { balanceConfig } from '../config/balanceConfig.js';
+import { IDLE_KEYFRAMES, IDLE_META } from '../animations/idleImported.js';
+import { WALK_KEYFRAMES, WALK_META } from '../animations/walkImported.js';
+import { PUNCH_KEYFRAMES, PUNCH_META } from '../animations/punchImported.js';
+import { PUNCH2_KEYFRAMES, PUNCH2_META } from '../animations/punch2Imported.js';
+import { STRONG_PUNCH_KEYFRAMES, STRONG_PUNCH_META } from '../animations/strongPunchImported.js';
 import { KICK_KEYFRAMES, KICK_META } from '../animations/kickImported.js';
+import { JUMP_KEYFRAMES, JUMP_META } from '../animations/jumpImported.js';
+import { FLY_KEYFRAMES, FLY_META } from '../animations/flyImported.js';
+import { LAND_KEYFRAMES, LAND_META } from '../animations/landImported.js';
+import { HURT_KEYFRAMES, HURT_META } from '../animations/hurtImported.js';
+import { DEATH_KEYFRAMES, DEATH_META } from '../animations/deathImported.js';
 
 export default class Player extends Entity {
     // Explicitly declare inherited properties from Entity
@@ -492,40 +502,41 @@ export default class Player extends Entity {
     }
 
     private drawStickFigure(ctx: CanvasRenderingContext2D, screenX: number, screenY: number): void {
-        // Get pose based on current animation state
-        let pose = StickFigure.getIdlePose();
+        let pose = StickFigure.getPoseFromImportedAnimation(IDLE_KEYFRAMES, IDLE_META, 0);
 
         switch (this.animationState) {
             case 'walk':
-                pose = StickFigure.getWalkPose(this.animationProgress);
+                pose = StickFigure.getPoseFromImportedAnimation(WALK_KEYFRAMES, WALK_META, this.animationProgress);
                 break;
             case 'punch':
-                pose = StickFigure.getPunchPose(this.animationProgress, this.facingRight, this.currentPunchHand);
+                pose = this.currentPunchHand === 'left'
+                    ? StickFigure.getPoseFromImportedAnimation(PUNCH2_KEYFRAMES, PUNCH2_META, this.animationProgress)
+                    : StickFigure.getPoseFromImportedAnimation(PUNCH_KEYFRAMES, PUNCH_META, this.animationProgress);
                 break;
             case 'strongPunch':
-                pose = StickFigure.getStrongPunchPose(this.animationProgress, this.facingRight);
+                pose = StickFigure.getPoseFromImportedAnimation(STRONG_PUNCH_KEYFRAMES, STRONG_PUNCH_META, this.animationProgress);
                 break;
             case 'kick':
                 pose = StickFigure.getPoseFromImportedAnimation(KICK_KEYFRAMES, KICK_META, this.animationProgress);
                 break;
             case 'jump':
-                pose = StickFigure.getJumpPose(this.animationProgress);
+                pose = StickFigure.getPoseFromImportedAnimation(JUMP_KEYFRAMES, JUMP_META, this.animationProgress);
                 break;
             case 'fly':
-                pose = StickFigure.getFlyPose(this.animationProgress);
+                pose = StickFigure.getPoseFromImportedAnimation(FLY_KEYFRAMES, FLY_META, this.animationProgress);
                 break;
             case 'land':
-                pose = StickFigure.getLandPose(this.animationProgress);
+                pose = StickFigure.getPoseFromImportedAnimation(LAND_KEYFRAMES, LAND_META, this.animationProgress);
                 break;
             case 'hurt':
-                pose = StickFigure.getHurtPose(this.animationProgress);
+                pose = StickFigure.getPoseFromImportedAnimation(HURT_KEYFRAMES, HURT_META, this.animationProgress);
                 break;
             case 'death':
-                pose = StickFigure.getDeathPose(this.animationProgress);
+                pose = StickFigure.getPoseFromImportedAnimation(DEATH_KEYFRAMES, DEATH_META, this.animationProgress);
                 break;
             case 'idle':
             default:
-                pose = StickFigure.getIdlePose();
+                pose = StickFigure.getPoseFromImportedAnimation(IDLE_KEYFRAMES, IDLE_META, 0);
                 break;
         }
 

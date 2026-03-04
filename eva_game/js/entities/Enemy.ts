@@ -4,6 +4,12 @@ import { AnimationState, EnemyState } from '../types/game.js';
 import Player from './Player.js';
 import StickFigure from '../utils/StickFigure.js';
 import { balanceConfig } from '../config/balanceConfig.js';
+import { IDLE_KEYFRAMES, IDLE_META } from '../animations/idleImported.js';
+import { WALK_KEYFRAMES, WALK_META } from '../animations/walkImported.js';
+import { PUNCH_KEYFRAMES, PUNCH_META } from '../animations/punchImported.js';
+import { HURT_KEYFRAMES, HURT_META } from '../animations/hurtImported.js';
+import { DEATH_KEYFRAMES, DEATH_META } from '../animations/deathImported.js';
+import { TAUNT_KEYFRAMES, TAUNT_META } from '../animations/tauntImported.js';
 
 export default class Enemy extends Entity {
     // Explicitly declare inherited properties from Entity
@@ -494,28 +500,27 @@ export default class Enemy extends Entity {
     }
 
     private drawStickFigure(ctx: CanvasRenderingContext2D, screenX: number, screenY: number): void {
-        // Get pose based on current animation state
-        let pose = StickFigure.getIdlePose();
+        let pose = StickFigure.getPoseFromImportedAnimation(IDLE_KEYFRAMES, IDLE_META, 0);
 
         switch (this.animationState) {
             case 'walk':
-                pose = StickFigure.getWalkPose(this.animationProgress);
+                pose = StickFigure.getPoseFromImportedAnimation(WALK_KEYFRAMES, WALK_META, this.animationProgress);
                 break;
             case 'punch':
-                pose = StickFigure.getPunchPose(this.animationProgress, this.facingRight);
+                pose = StickFigure.getPoseFromImportedAnimation(PUNCH_KEYFRAMES, PUNCH_META, this.animationProgress);
                 break;
             case 'hurt':
-                pose = StickFigure.getHurtPose(this.animationProgress);
+                pose = StickFigure.getPoseFromImportedAnimation(HURT_KEYFRAMES, HURT_META, this.animationProgress);
                 break;
             case 'death':
-                pose = StickFigure.getDeathPose(this.animationProgress);
+                pose = StickFigure.getPoseFromImportedAnimation(DEATH_KEYFRAMES, DEATH_META, this.animationProgress);
                 break;
             case 'taunt':
-                pose = StickFigure.getTauntPose(this.animationProgress);
+                pose = StickFigure.getPoseFromImportedAnimation(TAUNT_KEYFRAMES, TAUNT_META, this.animationProgress);
                 break;
             case 'idle':
             default:
-                pose = StickFigure.getIdlePose();
+                pose = StickFigure.getPoseFromImportedAnimation(IDLE_KEYFRAMES, IDLE_META, 0);
                 break;
         }
 

@@ -1,34 +1,8 @@
 import type { StickFigurePose } from '../utils/StickFigure.js';
 
-export interface ImportedAnimationParams {
-    x: number;
-    y: number;
-    headTilt: number;
-    torsoAngle: number;
-    torsoLength: number;
-    leftUpperArmLength: number;
-    leftForearmLength: number;
-    rightUpperArmLength: number;
-    rightForearmLength: number;
-    leftThighLength: number;
-    leftCalfLength: number;
-    rightThighLength: number;
-    rightCalfLength: number;
-    hipLength: number;
-    shoulderLength: number;
-    leftShoulderAngle: number;
-    leftElbowAngle: number;
-    rightShoulderAngle: number;
-    rightElbowAngle: number;
-    leftHipAngle: number;
-    leftKneeAngle: number;
-    rightHipAngle: number;
-    rightKneeAngle: number;
-}
-
-export interface ImportedKeyframe {
+export interface ImportedPoseKeyframe {
     time: number;
-    params: ImportedAnimationParams;
+    pose: StickFigurePose;
 }
 
 export interface ImportedAnimationMeta {
@@ -38,8 +12,6 @@ export interface ImportedAnimationMeta {
 }
 
 export interface ImportedAnimationAsset {
-    keyframes: ImportedKeyframe[];
+    keyframes: ImportedPoseKeyframe[];
     meta: ImportedAnimationMeta;
-    fallbackPose: (progress: number) => StickFigurePose;
 }
-
