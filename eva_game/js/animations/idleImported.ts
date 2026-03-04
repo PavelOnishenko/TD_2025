@@ -1,35 +1,32 @@
-import type { ImportedAnimationMeta, ImportedPoseKeyframe } from './types.js';
+import type { ImportedAnimationMeta, ImportedKeyframe } from './types.js';
 
-export const IDLE_KEYFRAMES: ImportedPoseKeyframe[] = [
+export const IDLE_KEYFRAMES: ImportedKeyframe[] = [
     {
         "time": 0,
-        "pose": {
-            "headY": -20,
-            "torsoEndY": 5,
-            "leftShoulderX": -5,
-            "leftShoulderY": -12,
-            "leftElbowX": -8,
-            "leftElbowY": 0,
-            "leftHandX": -8,
-            "leftHandY": 8,
-            "rightShoulderX": 5,
-            "rightShoulderY": -12,
-            "rightElbowX": 8,
-            "rightElbowY": 0,
-            "rightHandX": 8,
-            "rightHandY": 8,
-            "leftHipX": -3,
-            "leftHipY": 5,
-            "leftKneeX": -3,
-            "leftKneeY": 15,
-            "leftFootX": -3,
-            "leftFootY": 25,
-            "rightHipX": 3,
-            "rightHipY": 5,
-            "rightKneeX": 3,
-            "rightKneeY": 15,
-            "rightFootX": 3,
-            "rightFootY": 25
+        "params": {
+            "x": 400,
+            "y": 300,
+            "headTilt": 0,
+            "torsoAngle": 0,
+            "torsoLength": 50,
+            "leftUpperArmLength": 35,
+            "leftForearmLength": 30,
+            "rightUpperArmLength": 35,
+            "rightForearmLength": 30,
+            "leftThighLength": 40,
+            "leftCalfLength": 35,
+            "rightThighLength": 40,
+            "rightCalfLength": 35,
+            "hipLength": 30,
+            "shoulderLength": 30,
+            "leftShoulderAngle": -0.23,
+            "leftElbowAngle": 0.31,
+            "rightShoulderAngle": 0.22,
+            "rightElbowAngle": -0.27,
+            "leftHipAngle": -0.01,
+            "leftKneeAngle": -0.08,
+            "rightHipAngle": 0.01,
+            "rightKneeAngle": 0
         }
     }
 ];

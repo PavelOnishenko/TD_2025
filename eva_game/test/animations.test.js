@@ -12,6 +12,7 @@ import StickFigure from '../dist/utils/StickFigure.js';
 import { KICK_KEYFRAMES, KICK_META } from '../dist/animations/kickImported.js';
 import { PUNCH_KEYFRAMES, PUNCH_META } from '../dist/animations/punchImported.js';
 import { PUNCH2_KEYFRAMES, PUNCH2_META } from '../dist/animations/punch2Imported.js';
+import { HURT_KEYFRAMES } from '../dist/animations/hurtImported.js';
 import {
     createMockInputManager,
     advanceTime,
@@ -170,6 +171,26 @@ test('imported kick animation generates a forward right foot at impact', () => {
         Math.abs(impactPose.rightFootX - impactPose.rightHipX) > Math.abs(idlePose.rightFootX - idlePose.rightHipX),
         'imported kick should increase right leg horizontal extension at impact'
     );
+});
+
+test('imported keyframes are parameter-based and include required pose params', () => {
+    const requiredKeys = [
+        'x', 'y', 'headTilt', 'torsoAngle', 'torsoLength',
+        'leftUpperArmLength', 'leftForearmLength', 'rightUpperArmLength', 'rightForearmLength',
+        'leftThighLength', 'leftCalfLength', 'rightThighLength', 'rightCalfLength',
+        'hipLength', 'shoulderLength',
+        'leftShoulderAngle', 'leftElbowAngle', 'rightShoulderAngle', 'rightElbowAngle',
+        'leftHipAngle', 'leftKneeAngle', 'rightHipAngle', 'rightKneeAngle'
+    ];
+
+    for (const keyframe of [PUNCH_KEYFRAMES[0], PUNCH2_KEYFRAMES[0], KICK_KEYFRAMES[0], HURT_KEYFRAMES[0]]) {
+        assert.ok(keyframe.params, 'keyframe should expose params');
+        assert.equal(keyframe.pose, undefined, 'keyframe should not use legacy pose field');
+
+        for (const key of requiredKeys) {
+            assert.equal(typeof keyframe.params[key], 'number', `params.${key} should be numeric`);
+        }
+    }
 });
 
 test('enemy punch animation progresses over 300ms', () => {

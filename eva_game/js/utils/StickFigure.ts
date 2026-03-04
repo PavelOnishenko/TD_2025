@@ -2,7 +2,7 @@
  * StickFigure utility for drawing animated stick figure characters.
  */
 
-import type { ImportedAnimationMeta, ImportedPoseKeyframe } from '../animations/types.js';
+import type { ImportedAnimationMeta, ImportedAnimationParams, ImportedKeyframe } from '../animations/types.js';
 import { decorationConfig } from '../config/decorationConfig.js';
 
 export interface StickFigurePose {
@@ -37,6 +37,8 @@ export interface StickFigurePose {
 export default class StickFigure {
     private static readonly HEAD_RADIUS = 8;
     private static readonly FEET_Y_OFFSET = 25;
+    private static readonly IMPORT_SCALE = 0.5;
+    private static readonly IMPORT_BONE_SCALE_MULTIPLIER = 0.76;
 
     public static draw(
         ctx: CanvasRenderingContext2D,
@@ -123,7 +125,9 @@ export default class StickFigure {
         const deltaX = endX - startX;
         const deltaY = endY - startY;
         const length = Math.hypot(deltaX, deltaY);
-        if (length === 0) return;
+        if (length === 0) {
+            return;
+        }
 
         const angle = Math.atan2(deltaY, deltaX);
         ctx.save();
@@ -138,7 +142,7 @@ export default class StickFigure {
     }
 
     public static getPoseFromImportedAnimation(
-        keyframes: ImportedPoseKeyframe[],
+        keyframes: ImportedKeyframe[],
         meta: ImportedAnimationMeta,
         progress: number
     ): StickFigurePose {
@@ -146,19 +150,30 @@ export default class StickFigure {
             throw new Error('Animation keyframes cannot be empty');
         }
 
+        const normalizedProgress = Math.max(0, Math.min(1, progress));
+        const time = normalizedProgress * meta.duration;
+        const params = this.interpolateImportedParams(keyframes, meta, time);
+        return this.convertImportedParamsToPose(params);
+    }
+
+    private static interpolateImportedParams(
+        keyframes: ImportedKeyframe[],
+        meta: ImportedAnimationMeta,
+        time: number
+    ): ImportedAnimationParams {
         if (keyframes.length === 1) {
-            return keyframes[0].pose;
+            return keyframes[0].params;
         }
 
+        const duration = Math.max(0.0001, meta.duration);
+        const wrappedTime = meta.loop ? ((time % duration) + duration) % duration : Math.max(0, Math.min(duration, time));
         const sorted = [...keyframes].sort((a, b) => a.time - b.time);
-        const clampedProgress = Math.max(0, Math.min(1, progress));
-        const animationTime = clampedProgress * meta.duration;
 
         let previous = sorted[0];
         let next = sorted[sorted.length - 1];
 
         for (let i = 0; i < sorted.length - 1; i++) {
-            if (animationTime >= sorted[i].time && animationTime <= sorted[i + 1].time) {
+            if (wrappedTime >= sorted[i].time && wrappedTime <= sorted[i + 1].time) {
                 previous = sorted[i];
                 next = sorted[i + 1];
                 break;
@@ -166,44 +181,106 @@ export default class StickFigure {
         }
 
         if (previous.time === next.time) {
-            return previous.pose;
+            return previous.params;
         }
 
-        const span = next.time - previous.time;
-        const localProgress = (animationTime - previous.time) / span;
-        return this.lerpPose(previous.pose, next.pose, localProgress);
+        const localProgress = (wrappedTime - previous.time) / (next.time - previous.time);
+        return this.lerpImportedParams(previous.params, next.params, localProgress);
     }
 
-    public static lerpPose(poseA: StickFigurePose, poseB: StickFigurePose, t: number): StickFigurePose {
-        const lerp = (a: number, b: number) => a + (b - a) * t;
+    private static lerpImportedParams(a: ImportedAnimationParams, b: ImportedAnimationParams, t: number): ImportedAnimationParams {
+        const lerp = (start: number, end: number): number => start + (end - start) * t;
+        return {
+            x: lerp(a.x, b.x),
+            y: lerp(a.y, b.y),
+            headTilt: lerp(a.headTilt, b.headTilt),
+            torsoAngle: lerp(a.torsoAngle, b.torsoAngle),
+            torsoLength: lerp(a.torsoLength, b.torsoLength),
+            leftUpperArmLength: lerp(a.leftUpperArmLength, b.leftUpperArmLength),
+            leftForearmLength: lerp(a.leftForearmLength, b.leftForearmLength),
+            rightUpperArmLength: lerp(a.rightUpperArmLength, b.rightUpperArmLength),
+            rightForearmLength: lerp(a.rightForearmLength, b.rightForearmLength),
+            leftThighLength: lerp(a.leftThighLength, b.leftThighLength),
+            leftCalfLength: lerp(a.leftCalfLength, b.leftCalfLength),
+            rightThighLength: lerp(a.rightThighLength, b.rightThighLength),
+            rightCalfLength: lerp(a.rightCalfLength, b.rightCalfLength),
+            hipLength: lerp(a.hipLength, b.hipLength),
+            shoulderLength: lerp(a.shoulderLength, b.shoulderLength),
+            leftShoulderAngle: lerp(a.leftShoulderAngle, b.leftShoulderAngle),
+            leftElbowAngle: lerp(a.leftElbowAngle, b.leftElbowAngle),
+            rightShoulderAngle: lerp(a.rightShoulderAngle, b.rightShoulderAngle),
+            rightElbowAngle: lerp(a.rightElbowAngle, b.rightElbowAngle),
+            leftHipAngle: lerp(a.leftHipAngle, b.leftHipAngle),
+            leftKneeAngle: lerp(a.leftKneeAngle, b.leftKneeAngle),
+            rightHipAngle: lerp(a.rightHipAngle, b.rightHipAngle),
+            rightKneeAngle: lerp(a.rightKneeAngle, b.rightKneeAngle)
+        };
+    }
+
+    private static convertImportedParamsToPose(params: ImportedAnimationParams): StickFigurePose {
+        const scale = this.IMPORT_SCALE * this.IMPORT_BONE_SCALE_MULTIPLIER;
+        const torsoTopX = 0;
+        const torsoTopY = -20;
+        const torsoEndX = torsoTopX + Math.sin(params.torsoAngle) * params.torsoLength * scale;
+        const torsoEndY = torsoTopY + Math.cos(params.torsoAngle) * params.torsoLength * scale;
+
+        const shoulderHalf = (params.shoulderLength * scale) / 2;
+        const hipHalf = (params.hipLength * scale) / 2;
+
+        const leftShoulderX = torsoTopX - shoulderHalf;
+        const rightShoulderX = torsoTopX + shoulderHalf;
+        const shouldersY = torsoTopY + 2;
+
+        const leftHipX = torsoEndX - hipHalf;
+        const rightHipX = torsoEndX + hipHalf;
+        const hipsY = torsoEndY;
+
+        const leftElbow = this.pointFromAngle(leftShoulderX, shouldersY, params.leftUpperArmLength * scale, params.leftShoulderAngle);
+        const leftHand = this.pointFromAngle(leftElbow.x, leftElbow.y, params.leftForearmLength * scale, params.leftShoulderAngle + params.leftElbowAngle);
+
+        const rightElbow = this.pointFromAngle(rightShoulderX, shouldersY, params.rightUpperArmLength * scale, params.rightShoulderAngle);
+        const rightHand = this.pointFromAngle(rightElbow.x, rightElbow.y, params.rightForearmLength * scale, params.rightShoulderAngle + params.rightElbowAngle);
+
+        const leftKnee = this.pointFromAngle(leftHipX, hipsY, params.leftThighLength * scale, params.leftHipAngle);
+        const leftFoot = this.pointFromAngle(leftKnee.x, leftKnee.y, params.leftCalfLength * scale, params.leftHipAngle + params.leftKneeAngle);
+
+        const rightKnee = this.pointFromAngle(rightHipX, hipsY, params.rightThighLength * scale, params.rightHipAngle);
+        const rightFoot = this.pointFromAngle(rightKnee.x, rightKnee.y, params.rightCalfLength * scale, params.rightHipAngle + params.rightKneeAngle);
 
         return {
-            headY: lerp(poseA.headY, poseB.headY),
-            torsoEndY: lerp(poseA.torsoEndY, poseB.torsoEndY),
-            leftShoulderX: lerp(poseA.leftShoulderX, poseB.leftShoulderX),
-            leftShoulderY: lerp(poseA.leftShoulderY, poseB.leftShoulderY),
-            leftElbowX: lerp(poseA.leftElbowX, poseB.leftElbowX),
-            leftElbowY: lerp(poseA.leftElbowY, poseB.leftElbowY),
-            leftHandX: lerp(poseA.leftHandX, poseB.leftHandX),
-            leftHandY: lerp(poseA.leftHandY, poseB.leftHandY),
-            rightShoulderX: lerp(poseA.rightShoulderX, poseB.rightShoulderX),
-            rightShoulderY: lerp(poseA.rightShoulderY, poseB.rightShoulderY),
-            rightElbowX: lerp(poseA.rightElbowX, poseB.rightElbowX),
-            rightElbowY: lerp(poseA.rightElbowY, poseB.rightElbowY),
-            rightHandX: lerp(poseA.rightHandX, poseB.rightHandX),
-            rightHandY: lerp(poseA.rightHandY, poseB.rightHandY),
-            leftHipX: lerp(poseA.leftHipX, poseB.leftHipX),
-            leftHipY: lerp(poseA.leftHipY, poseB.leftHipY),
-            leftKneeX: lerp(poseA.leftKneeX, poseB.leftKneeX),
-            leftKneeY: lerp(poseA.leftKneeY, poseB.leftKneeY),
-            leftFootX: lerp(poseA.leftFootX, poseB.leftFootX),
-            leftFootY: lerp(poseA.leftFootY, poseB.leftFootY),
-            rightHipX: lerp(poseA.rightHipX, poseB.rightHipX),
-            rightHipY: lerp(poseA.rightHipY, poseB.rightHipY),
-            rightKneeX: lerp(poseA.rightKneeX, poseB.rightKneeX),
-            rightKneeY: lerp(poseA.rightKneeY, poseB.rightKneeY),
-            rightFootX: lerp(poseA.rightFootX, poseB.rightFootX),
-            rightFootY: lerp(poseA.rightFootY, poseB.rightFootY)
+            headY: torsoTopY - params.headTilt * 8,
+            torsoEndY,
+            leftShoulderX,
+            leftShoulderY: shouldersY,
+            leftElbowX: leftElbow.x,
+            leftElbowY: leftElbow.y,
+            leftHandX: leftHand.x,
+            leftHandY: leftHand.y,
+            rightShoulderX,
+            rightShoulderY: shouldersY,
+            rightElbowX: rightElbow.x,
+            rightElbowY: rightElbow.y,
+            rightHandX: rightHand.x,
+            rightHandY: rightHand.y,
+            leftHipX,
+            leftHipY: hipsY,
+            leftKneeX: leftKnee.x,
+            leftKneeY: leftKnee.y,
+            leftFootX: leftFoot.x,
+            leftFootY: leftFoot.y,
+            rightHipX,
+            rightHipY: hipsY,
+            rightKneeX: rightKnee.x,
+            rightKneeY: rightKnee.y,
+            rightFootX: rightFoot.x,
+            rightFootY: rightFoot.y
+        };
+    }
+
+    private static pointFromAngle(originX: number, originY: number, length: number, angle: number): { x: number; y: number } {
+        return {
+            x: originX + Math.sin(angle) * length,
+            y: originY + Math.cos(angle) * length
         };
     }
 }
