@@ -7,6 +7,8 @@ import { decorationConfig } from '../config/decorationConfig.js';
 
 export interface StickFigurePose {
     headY: number;
+    headScale?: number;
+    headOffsetY?: number;
     torsoEndY: number;
     leftShoulderX: number;
     leftShoulderY: number;
@@ -39,6 +41,8 @@ export default class StickFigure {
     private static readonly FEET_Y_OFFSET = 25;
     private static readonly IMPORT_SCALE = 0.5;
     private static readonly IMPORT_BONE_SCALE_MULTIPLIER = 0.76;
+    private static readonly IMPORT_HEAD_SCALE_MULTIPLIER = 0.82;
+    private static readonly IMPORT_HEAD_UP_OFFSET = -6;
 
     public static draw(
         ctx: CanvasRenderingContext2D,
@@ -61,11 +65,11 @@ export default class StickFigure {
         ctx.lineJoin = 'round';
 
         const flip = facingRight ? 1 : -1;
-        const headRadius = this.HEAD_RADIUS * scale;
+        const headRadius = this.HEAD_RADIUS * scale * (pose.headScale ?? 1);
         const drawY = y - this.FEET_Y_OFFSET * scale;
 
         const headX = x;
-        const headY = drawY + pose.headY * scale;
+        const headY = drawY + (pose.headY + (pose.headOffsetY ?? 0)) * scale;
         if (hasOutline) {
             ctx.beginPath();
             ctx.arc(headX, headY, headRadius, 0, Math.PI * 2);
@@ -338,6 +342,8 @@ export default class StickFigure {
 
         return {
             headY: torsoTopY - params.headTilt * 8,
+            headScale: this.IMPORT_HEAD_SCALE_MULTIPLIER,
+            headOffsetY: this.IMPORT_HEAD_UP_OFFSET,
             torsoEndY,
             leftShoulderX,
             leftShoulderY: shouldersY,
