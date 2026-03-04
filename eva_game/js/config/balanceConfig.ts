@@ -31,7 +31,7 @@ export const balanceConfig = {
       knockbackForce: 0,
     },
     strongPunch: {
-      duration: 140,
+      duration: 280,
       cooldown: 350,
       reach: 70,              // horizontal range of attack
       verticalThreshold: 30,  // vertical offset tolerance
