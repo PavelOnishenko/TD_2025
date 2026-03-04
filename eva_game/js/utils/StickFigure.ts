@@ -53,6 +53,9 @@ export default class StickFigure {
         ctx.fillStyle = color;
         const limbLineWidth = decorationConfig.stickFigure.limbLineWidth * scale;
         const coreBoneLineWidth = decorationConfig.stickFigure.coreBoneLineWidth * scale;
+        const outlineWidth = decorationConfig.stickFigure.outlineWidth * scale;
+        const hasOutline = outlineWidth > 0;
+        const outlineColor = decorationConfig.stickFigure.outlineColor;
         ctx.lineWidth = limbLineWidth;
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
@@ -61,8 +64,18 @@ export default class StickFigure {
         const headRadius = this.HEAD_RADIUS * scale;
         const drawY = y - this.FEET_Y_OFFSET * scale;
 
+        const headX = x;
+        const headY = drawY + pose.headY * scale;
+        if (hasOutline) {
+            ctx.beginPath();
+            ctx.arc(headX, headY, headRadius, 0, Math.PI * 2);
+            ctx.fillStyle = outlineColor;
+            ctx.fill();
+        }
+
         ctx.beginPath();
-        ctx.arc(x, drawY + pose.headY * scale, headRadius, 0, Math.PI * 2);
+        ctx.arc(headX, headY, Math.max(0, headRadius - outlineWidth), 0, Math.PI * 2);
+        ctx.fillStyle = color;
         ctx.fill();
 
         const leftShoulderX = x + pose.leftShoulderX * flip * scale;
@@ -82,35 +95,102 @@ export default class StickFigure {
         const headBottomY = drawY + pose.headY * scale + headRadius;
 
         ctx.lineWidth = coreBoneLineWidth;
-        this.drawCoreBoneRect(ctx, x, headBottomY, shoulderCenterX, shoulderCenterY, coreBoneLineWidth);
-        this.drawCoreBoneRect(ctx, leftShoulderX, leftShoulderY, rightShoulderX, rightShoulderY, coreBoneLineWidth);
-        this.drawCoreBoneRect(ctx, shoulderCenterX, shoulderCenterY, hipCenterX, hipCenterY, coreBoneLineWidth);
-        this.drawCoreBoneRect(ctx, leftHipX, leftHipY, rightHipX, rightHipY, coreBoneLineWidth);
+        this.drawCoreBoneRect(ctx, x, headBottomY, shoulderCenterX, shoulderCenterY, coreBoneLineWidth, color, hasOutline, outlineColor, outlineWidth);
+        this.drawCoreBoneRect(ctx, leftShoulderX, leftShoulderY, rightShoulderX, rightShoulderY, coreBoneLineWidth, color, hasOutline, outlineColor, outlineWidth);
+        this.drawCoreBoneRect(ctx, shoulderCenterX, shoulderCenterY, hipCenterX, hipCenterY, coreBoneLineWidth, color, hasOutline, outlineColor, outlineWidth);
+        this.drawCoreBoneRect(ctx, leftHipX, leftHipY, rightHipX, rightHipY, coreBoneLineWidth, color, hasOutline, outlineColor, outlineWidth);
 
         ctx.lineWidth = limbLineWidth;
+        this.drawLimb(
+            ctx,
+            [
+                [leftShoulderX, leftShoulderY],
+                [x + pose.leftElbowX * flip * scale, drawY + pose.leftElbowY * scale],
+                [x + pose.leftHandX * flip * scale, drawY + pose.leftHandY * scale]
+            ],
+            limbLineWidth,
+            color,
+            hasOutline,
+            outlineColor,
+            outlineWidth
+        );
 
-        ctx.beginPath();
-        ctx.moveTo(leftShoulderX, leftShoulderY);
-        ctx.lineTo(x + pose.leftElbowX * flip * scale, drawY + pose.leftElbowY * scale);
-        ctx.lineTo(x + pose.leftHandX * flip * scale, drawY + pose.leftHandY * scale);
-        ctx.stroke();
+        this.drawLimb(
+            ctx,
+            [
+                [rightShoulderX, rightShoulderY],
+                [x + pose.rightElbowX * flip * scale, drawY + pose.rightElbowY * scale],
+                [x + pose.rightHandX * flip * scale, drawY + pose.rightHandY * scale]
+            ],
+            limbLineWidth,
+            color,
+            hasOutline,
+            outlineColor,
+            outlineWidth
+        );
 
-        ctx.beginPath();
-        ctx.moveTo(rightShoulderX, rightShoulderY);
-        ctx.lineTo(x + pose.rightElbowX * flip * scale, drawY + pose.rightElbowY * scale);
-        ctx.lineTo(x + pose.rightHandX * flip * scale, drawY + pose.rightHandY * scale);
-        ctx.stroke();
+        this.drawLimb(
+            ctx,
+            [
+                [leftHipX, leftHipY],
+                [x + pose.leftKneeX * flip * scale, drawY + pose.leftKneeY * scale],
+                [x + pose.leftFootX * flip * scale, drawY + pose.leftFootY * scale]
+            ],
+            limbLineWidth,
+            color,
+            hasOutline,
+            outlineColor,
+            outlineWidth
+        );
 
-        ctx.beginPath();
-        ctx.moveTo(leftHipX, leftHipY);
-        ctx.lineTo(x + pose.leftKneeX * flip * scale, drawY + pose.leftKneeY * scale);
-        ctx.lineTo(x + pose.leftFootX * flip * scale, drawY + pose.leftFootY * scale);
-        ctx.stroke();
+        this.drawLimb(
+            ctx,
+            [
+                [rightHipX, rightHipY],
+                [x + pose.rightKneeX * flip * scale, drawY + pose.rightKneeY * scale],
+                [x + pose.rightFootX * flip * scale, drawY + pose.rightFootY * scale]
+            ],
+            limbLineWidth,
+            color,
+            hasOutline,
+            outlineColor,
+            outlineWidth
+        );
+    }
 
+    private static drawLimb(
+        ctx: CanvasRenderingContext2D,
+        points: Array<[number, number]>,
+        baseWidth: number,
+        color: string,
+        hasOutline: boolean,
+        outlineColor: string,
+        outlineWidth: number
+    ): void {
+        if (points.length < 2) {
+            return;
+        }
+
+        if (hasOutline) {
+            this.strokePolyline(ctx, points, baseWidth + outlineWidth * 2, outlineColor);
+        }
+
+        this.strokePolyline(ctx, points, baseWidth, color);
+    }
+
+    private static strokePolyline(
+        ctx: CanvasRenderingContext2D,
+        points: Array<[number, number]>,
+        lineWidth: number,
+        color: string
+    ): void {
+        ctx.lineWidth = lineWidth;
+        ctx.strokeStyle = color;
         ctx.beginPath();
-        ctx.moveTo(rightHipX, rightHipY);
-        ctx.lineTo(x + pose.rightKneeX * flip * scale, drawY + pose.rightKneeY * scale);
-        ctx.lineTo(x + pose.rightFootX * flip * scale, drawY + pose.rightFootY * scale);
+        ctx.moveTo(points[0][0], points[0][1]);
+        for (let i = 1; i < points.length; i++) {
+            ctx.lineTo(points[i][0], points[i][1]);
+        }
         ctx.stroke();
     }
 
@@ -120,7 +200,11 @@ export default class StickFigure {
         startY: number,
         endX: number,
         endY: number,
-        thickness: number
+        thickness: number,
+        color: string,
+        hasOutline: boolean,
+        outlineColor: string,
+        outlineWidth: number
     ): void {
         const deltaX = endX - startX;
         const deltaY = endY - startY;
@@ -133,6 +217,11 @@ export default class StickFigure {
         ctx.save();
         ctx.translate(startX, startY);
         ctx.rotate(angle);
+        if (hasOutline) {
+            ctx.fillStyle = outlineColor;
+            ctx.fillRect(0, -(thickness / 2 + outlineWidth), length, thickness + outlineWidth * 2);
+        }
+        ctx.fillStyle = color;
         ctx.fillRect(0, -thickness / 2, length, thickness);
         ctx.restore();
     }
