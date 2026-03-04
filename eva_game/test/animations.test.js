@@ -13,6 +13,7 @@ import { KICK_KEYFRAMES, KICK_META } from '../dist/animations/kickImported.js';
 import { PUNCH_KEYFRAMES, PUNCH_META } from '../dist/animations/punchImported.js';
 import { PUNCH2_KEYFRAMES, PUNCH2_META } from '../dist/animations/punch2Imported.js';
 import { HURT_KEYFRAMES } from '../dist/animations/hurtImported.js';
+import { DEATH_KEYFRAMES, DEATH_META } from '../dist/animations/deathImported.js';
 import {
     createMockInputManager,
     advanceTime,
@@ -183,6 +184,16 @@ test('imported pose keeps head above shoulders to avoid chest overlap', () => {
     assert.ok(
         headBottomY <= shoulderCenterY,
         `head bottom (${headBottomY.toFixed(2)}) should be above shoulder center (${shoulderCenterY.toFixed(2)})`
+    );
+});
+
+test('imported death animation moves the body downward as y increases', () => {
+    const startPose = StickFigure.getPoseFromImportedAnimation(DEATH_KEYFRAMES, DEATH_META, 0);
+    const endPose = StickFigure.getPoseFromImportedAnimation(DEATH_KEYFRAMES, DEATH_META, 1);
+
+    assert.ok(
+        endPose.leftHipY > startPose.leftHipY,
+        `death end hip Y (${endPose.leftHipY.toFixed(2)}) should be greater than start (${startPose.leftHipY.toFixed(2)})`
     );
 });
 

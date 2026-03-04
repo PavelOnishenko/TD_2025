@@ -43,6 +43,8 @@ export default class StickFigure {
     private static readonly IMPORT_BONE_SCALE_MULTIPLIER = 0.76;
     private static readonly IMPORT_HEAD_SCALE_MULTIPLIER = 0.82;
     private static readonly IMPORT_HEAD_UP_OFFSET = -9;
+    private static readonly IMPORT_ORIGIN_X = 400;
+    private static readonly IMPORT_ORIGIN_Y = 300;
 
     public static draw(
         ctx: CanvasRenderingContext2D,
@@ -312,6 +314,8 @@ export default class StickFigure {
 
     private static convertImportedParamsToPose(params: ImportedAnimationParams): StickFigurePose {
         const scale = this.IMPORT_SCALE * this.IMPORT_BONE_SCALE_MULTIPLIER;
+        const translationX = (params.x - this.IMPORT_ORIGIN_X) * scale;
+        const translationY = (params.y - this.IMPORT_ORIGIN_Y) * scale;
         const torsoTopX = 0;
         const torsoTopY = -20;
         const torsoEndX = torsoTopX + Math.sin(params.torsoAngle) * params.torsoLength * scale;
@@ -341,34 +345,34 @@ export default class StickFigure {
         const rightFoot = this.pointFromAngle(rightKnee.x, rightKnee.y, params.rightCalfLength * scale, params.rightHipAngle + params.rightKneeAngle);
 
         return {
-            headY: torsoTopY - params.headTilt * 8,
+            headY: torsoTopY - params.headTilt * 8 + translationY,
             headScale: this.IMPORT_HEAD_SCALE_MULTIPLIER,
             headOffsetY: this.IMPORT_HEAD_UP_OFFSET,
-            torsoEndY,
-            leftShoulderX,
-            leftShoulderY: shouldersY,
-            leftElbowX: leftElbow.x,
-            leftElbowY: leftElbow.y,
-            leftHandX: leftHand.x,
-            leftHandY: leftHand.y,
-            rightShoulderX,
-            rightShoulderY: shouldersY,
-            rightElbowX: rightElbow.x,
-            rightElbowY: rightElbow.y,
-            rightHandX: rightHand.x,
-            rightHandY: rightHand.y,
-            leftHipX,
-            leftHipY: hipsY,
-            leftKneeX: leftKnee.x,
-            leftKneeY: leftKnee.y,
-            leftFootX: leftFoot.x,
-            leftFootY: leftFoot.y,
-            rightHipX,
-            rightHipY: hipsY,
-            rightKneeX: rightKnee.x,
-            rightKneeY: rightKnee.y,
-            rightFootX: rightFoot.x,
-            rightFootY: rightFoot.y
+            torsoEndY: torsoEndY + translationY,
+            leftShoulderX: leftShoulderX + translationX,
+            leftShoulderY: shouldersY + translationY,
+            leftElbowX: leftElbow.x + translationX,
+            leftElbowY: leftElbow.y + translationY,
+            leftHandX: leftHand.x + translationX,
+            leftHandY: leftHand.y + translationY,
+            rightShoulderX: rightShoulderX + translationX,
+            rightShoulderY: shouldersY + translationY,
+            rightElbowX: rightElbow.x + translationX,
+            rightElbowY: rightElbow.y + translationY,
+            rightHandX: rightHand.x + translationX,
+            rightHandY: rightHand.y + translationY,
+            leftHipX: leftHipX + translationX,
+            leftHipY: hipsY + translationY,
+            leftKneeX: leftKnee.x + translationX,
+            leftKneeY: leftKnee.y + translationY,
+            leftFootX: leftFoot.x + translationX,
+            leftFootY: leftFoot.y + translationY,
+            rightHipX: rightHipX + translationX,
+            rightHipY: hipsY + translationY,
+            rightKneeX: rightKnee.x + translationX,
+            rightKneeY: rightKnee.y + translationY,
+            rightFootX: rightFoot.x + translationX,
+            rightFootY: rightFoot.y + translationY
         };
     }
 
