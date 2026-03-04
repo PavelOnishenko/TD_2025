@@ -1,5 +1,3 @@
-import type { StickFigurePose } from '../utils/StickFigure.js';
-
 export interface ImportedAnimationParams {
     x: number;
     y: number;
@@ -40,6 +38,4 @@ export interface ImportedAnimationMeta {
 export interface ImportedAnimationAsset {
     keyframes: ImportedKeyframe[];
     meta: ImportedAnimationMeta;
-    fallbackPose: (progress: number) => StickFigurePose;
 }
-
