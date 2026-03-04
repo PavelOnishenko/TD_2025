@@ -42,7 +42,7 @@ export default class StickFigure {
     private static readonly IMPORT_SCALE = 0.5;
     private static readonly IMPORT_BONE_SCALE_MULTIPLIER = 0.76;
     private static readonly IMPORT_HEAD_SCALE_MULTIPLIER = 0.82;
-    private static readonly IMPORT_HEAD_UP_OFFSET = -6;
+    private static readonly IMPORT_HEAD_UP_OFFSET = -9;
     private static readonly IMPORT_ORIGIN_X = 400;
     private static readonly IMPORT_ORIGIN_Y = 300;
 
