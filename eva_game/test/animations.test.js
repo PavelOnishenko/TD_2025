@@ -8,6 +8,12 @@ import assert from 'node:assert/strict';
 import Player from '../dist/entities/Player.js';
 import Enemy from '../dist/entities/Enemy.js';
 import { balanceConfig } from '../dist/config/balanceConfig.js';
+import StickFigure from '../dist/utils/StickFigure.js';
+import { KICK_KEYFRAMES, KICK_META } from '../dist/animations/kickImported.js';
+import { PUNCH_KEYFRAMES, PUNCH_META } from '../dist/animations/punchImported.js';
+import { PUNCH2_KEYFRAMES, PUNCH2_META } from '../dist/animations/punch2Imported.js';
+import { HURT_KEYFRAMES } from '../dist/animations/hurtImported.js';
+import { DEATH_KEYFRAMES, DEATH_META } from '../dist/animations/deathImported.js';
 import {
     createMockInputManager,
     advanceTime,
@@ -138,6 +144,77 @@ test('player punch animation progresses linearly', () => {
     assert.ok(Math.abs(progressAtHalfway[0] - 0.25) < 0.1);
     assert.ok(Math.abs(progressAtHalfway[1] - 0.5) < 0.1);
     assert.ok(Math.abs(progressAtHalfway[2] - 0.75) < 0.1);
+});
+
+test('player punch pose extends right hand when right hand is selected', () => {
+    const rightHandPose = StickFigure.getPoseFromImportedAnimation(PUNCH_KEYFRAMES, PUNCH_META, 0.25);
+
+    assert.ok(
+        rightHandPose.rightHandY < rightHandPose.leftHandY,
+        'right-hand punch should drive the right fist forward/upward'
+    );
+});
+
+test('second imported punch variant produces a distinct strike silhouette', () => {
+    const punchPose = StickFigure.getPoseFromImportedAnimation(PUNCH_KEYFRAMES, PUNCH_META, 0.25);
+    const punch2Pose = StickFigure.getPoseFromImportedAnimation(PUNCH2_KEYFRAMES, PUNCH2_META, 0.25);
+
+    assert.ok(
+        Math.abs(punch2Pose.rightHandX - punchPose.rightHandX) > 5 || Math.abs(punch2Pose.leftHandX - punchPose.leftHandX) > 5,
+        'punch variants should not collapse to the same hand silhouette'
+    );
+});
+
+test('imported kick animation generates a forward right foot at impact', () => {
+    const idlePose = StickFigure.getPoseFromImportedAnimation(KICK_KEYFRAMES, KICK_META, 0);
+    const impactPose = StickFigure.getPoseFromImportedAnimation(KICK_KEYFRAMES, KICK_META, 0.45);
+
+    assert.ok(
+        Math.abs(impactPose.rightFootX - impactPose.rightHipX) > Math.abs(idlePose.rightFootX - idlePose.rightHipX),
+        'imported kick should increase right leg horizontal extension at impact'
+    );
+});
+
+test('imported pose keeps head above shoulders to avoid chest overlap', () => {
+    const pose = StickFigure.getPoseFromImportedAnimation(PUNCH_KEYFRAMES, PUNCH_META, 0);
+    const shoulderCenterY = (pose.leftShoulderY + pose.rightShoulderY) / 2;
+    const importedHeadRadius = 8 * (pose.headScale ?? 1);
+    const headBottomY = (pose.headY + (pose.headOffsetY ?? 0)) + importedHeadRadius;
+
+    assert.ok(
+        headBottomY <= shoulderCenterY,
+        `head bottom (${headBottomY.toFixed(2)}) should be above shoulder center (${shoulderCenterY.toFixed(2)})`
+    );
+});
+
+test('imported death animation moves the body downward as y increases', () => {
+    const startPose = StickFigure.getPoseFromImportedAnimation(DEATH_KEYFRAMES, DEATH_META, 0);
+    const endPose = StickFigure.getPoseFromImportedAnimation(DEATH_KEYFRAMES, DEATH_META, 1);
+
+    assert.ok(
+        endPose.leftHipY > startPose.leftHipY,
+        `death end hip Y (${endPose.leftHipY.toFixed(2)}) should be greater than start (${startPose.leftHipY.toFixed(2)})`
+    );
+});
+
+test('imported keyframes are parameter-based and include required pose params', () => {
+    const requiredKeys = [
+        'x', 'y', 'headTilt', 'torsoAngle', 'torsoLength',
+        'leftUpperArmLength', 'leftForearmLength', 'rightUpperArmLength', 'rightForearmLength',
+        'leftThighLength', 'leftCalfLength', 'rightThighLength', 'rightCalfLength',
+        'hipLength', 'shoulderLength',
+        'leftShoulderAngle', 'leftElbowAngle', 'rightShoulderAngle', 'rightElbowAngle',
+        'leftHipAngle', 'leftKneeAngle', 'rightHipAngle', 'rightKneeAngle'
+    ];
+
+    for (const keyframe of [PUNCH_KEYFRAMES[0], PUNCH2_KEYFRAMES[0], KICK_KEYFRAMES[0], HURT_KEYFRAMES[0]]) {
+        assert.ok(keyframe.params, 'keyframe should expose params');
+        assert.equal(keyframe.pose, undefined, 'keyframe should not use legacy pose field');
+
+        for (const key of requiredKeys) {
+            assert.equal(typeof keyframe.params[key], 'number', `params.${key} should be numeric`);
+        }
+    }
 });
 
 test('enemy punch animation progresses over 300ms', () => {

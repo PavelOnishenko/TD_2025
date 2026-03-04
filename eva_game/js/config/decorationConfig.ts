@@ -19,4 +19,17 @@ export const decorationConfig = {
       factor: 0.45
     },
   },
+
+
+  stickFigure: {
+    // Base line width for limbs (arms + legs)
+    limbLineWidth: 3,
+
+    // Width for core skeleton bones (neck, shoulders, torso, hips)
+    coreBoneLineWidth: 5,
+
+    // Strong body border around all figure parts for readability
+    outlineColor: '#111111',
+    outlineWidth: 2,
+  },
 };
