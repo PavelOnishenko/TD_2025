@@ -103,3 +103,87 @@ button:hover {
 button:active {
     transform: scale(0.95);
 }
+
+#animation-debug-player {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 18px;
+    background: rgba(4, 8, 16, 0.96);
+    z-index: 1000;
+}
+
+#animation-debug-player.hidden {
+    display: none;
+}
+
+#animation-debug-player h3 {
+    margin: 0;
+    color: #7ce3ff;
+    font-size: 26px;
+}
+
+#animation-debug-player select,
+#animation-debug-player input[type="range"] {
+    width: 100%;
+}
+
+#animation-debug-player .animation-debug-select,
+#animation-debug-player .animation-debug-timeline {
+    max-width: 520px;
+}
+
+#animation-debug-player button {
+    margin-top: 0;
+    padding: 10px 14px;
+    font-size: 14px;
+}
+
+.animation-debug-controls {
+    display: flex;
+    gap: 8px;
+    width: 520px;
+    max-width: 100%;
+}
+
+.animation-debug-controls button {
+    flex: 1;
+}
+
+.animation-debug-body {
+    display: grid;
+    grid-template-columns: minmax(280px, 1fr) minmax(360px, 1fr);
+    gap: 14px;
+    flex: 1;
+    min-height: 0;
+}
+
+#animation-debug-player canvas {
+    width: 100%;
+    height: 100%;
+    min-height: 320px;
+    border: 1px solid #2e4a73;
+    border-radius: 8px;
+    background: #101521;
+}
+
+.animation-debug-params {
+    margin: 0;
+    font-family: monospace;
+    font-size: 12px;
+    line-height: 1.35;
+    color: #dff7ff;
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 8px;
+    padding: 12px;
+    overflow: auto;
+    min-height: 0;
+}
+
+.animation-debug-tip {
+    margin: 0;
+    font-size: 12px;
+    color: #8ea9cc;
+}
