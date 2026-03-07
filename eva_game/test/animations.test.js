@@ -9,11 +9,11 @@ import Player from '../dist/entities/Player.js';
 import Enemy from '../dist/entities/Enemy.js';
 import { balanceConfig } from '../dist/config/balanceConfig.js';
 import StickFigure from '../dist/utils/StickFigure.js';
-import { KICK_KEYFRAMES, KICK_META } from '../dist/animations/kickImported.js';
-import { PUNCH_KEYFRAMES, PUNCH_META } from '../dist/animations/punchImported.js';
-import { PUNCH2_KEYFRAMES, PUNCH2_META } from '../dist/animations/punch2Imported.js';
-import { HURT_KEYFRAMES } from '../dist/animations/hurtImported.js';
-import { DEATH_KEYFRAMES, DEATH_META } from '../dist/animations/deathImported.js';
+import { KICK_KEYFRAMES, KICK_META } from '../dist/animations/imported/kickImported.js';
+import { PUNCH_KEYFRAMES, PUNCH_META } from '../dist/animations/imported/punchImported.js';
+import { PUNCH2_KEYFRAMES, PUNCH2_META } from '../dist/animations/imported/punch2Imported.js';
+import { HURT_KEYFRAMES } from '../dist/animations/imported/hurtImported.js';
+import { DEATH_KEYFRAMES, DEATH_META } from '../dist/animations/imported/deathImported.js';
 import {
     createMockInputManager,
     advanceTime,

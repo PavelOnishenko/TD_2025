@@ -3,14 +3,14 @@
 
 import type { ImportedAnimationMeta, ImportedKeyframe } from './types.js';
 
-export const PUNCH_KEYFRAMES: ImportedKeyframe[] = [
+export const STRONG_PUNCH_KEYFRAMES: ImportedKeyframe[] = [
     {
         time: 0,
         params: {
-            x: 400,
-            y: 300,
-            headTilt: 0,
-            torsoAngle: 0,
+            x: 384,
+            y: 307,
+            headTilt: -0.28,
+            torsoAngle: 0.44,
             torsoLength: 50,
             leftUpperArmLength: 35,
             leftForearmLength: 30,
@@ -22,8 +22,8 @@ export const PUNCH_KEYFRAMES: ImportedKeyframe[] = [
             rightCalfLength: 35,
             hipLength: 19,
             shoulderLength: 26,
-            leftShoulderAngle: 0.22,
-            leftElbowAngle: 2.74,
+            leftShoulderAngle: -0.88,
+            leftElbowAngle: 3.14,
             rightShoulderAngle: 1.05,
             rightElbowAngle: 2.1,
             leftHipAngle: -0.03,
@@ -35,10 +35,10 @@ export const PUNCH_KEYFRAMES: ImportedKeyframe[] = [
     {
         time: 1,
         params: {
-            x: 400,
-            y: 300,
-            headTilt: 0,
-            torsoAngle: 0,
+            x: 409,
+            y: 302,
+            headTilt: 0.57,
+            torsoAngle: -0.18,
             torsoLength: 50,
             leftUpperArmLength: 46,
             leftForearmLength: 30,
@@ -52,8 +52,8 @@ export const PUNCH_KEYFRAMES: ImportedKeyframe[] = [
             shoulderLength: 25,
             leftShoulderAngle: 1.48,
             leftElbowAngle: 0.1,
-            rightShoulderAngle: 0.61,
-            rightElbowAngle: 2.37,
+            rightShoulderAngle: 0.31,
+            rightElbowAngle: 1.27,
             leftHipAngle: -0.03,
             leftKneeAngle: -0.04,
             rightHipAngle: -0.02,
@@ -90,8 +90,8 @@ export const PUNCH_KEYFRAMES: ImportedKeyframe[] = [
     }
 ];
 
-export const PUNCH_META: ImportedAnimationMeta = {
-    name: "Punch",
+export const STRONG_PUNCH_META: ImportedAnimationMeta = {
+    name: "StrongPunch",
     duration: 2,
     loop: false
 };
