@@ -6,6 +6,7 @@ import type { ImportedAnimationMeta, ImportedAnimationParams, ImportedKeyframe }
 import { decorationConfig } from '../config/decorationConfig.js';
 
 export interface StickFigurePose {
+    torsoTopX?: number;
     headY: number;
     headScale?: number;
     headOffsetY?: number;
@@ -70,7 +71,8 @@ export default class StickFigure {
         const headRadius = this.HEAD_RADIUS * scale * (pose.headScale ?? 1);
         const drawY = y - this.FEET_Y_OFFSET * scale;
 
-        const headX = x;
+        const torsoTopX = x + (pose.torsoTopX ?? 0) * flip * scale;
+        const headX = torsoTopX;
         const headY = drawY + (pose.headY + (pose.headOffsetY ?? 0)) * scale;
         if (hasOutline) {
             ctx.beginPath();
@@ -101,7 +103,7 @@ export default class StickFigure {
         const headBottomY = drawY + pose.headY * scale + headRadius;
 
         ctx.lineWidth = coreBoneLineWidth;
-        this.drawCoreBoneRect(ctx, x, headBottomY, shoulderCenterX, shoulderCenterY, coreBoneLineWidth, color, hasOutline, outlineColor, outlineWidth);
+        this.drawCoreBoneRect(ctx, torsoTopX, headBottomY, shoulderCenterX, shoulderCenterY, coreBoneLineWidth, color, hasOutline, outlineColor, outlineWidth);
         this.drawCoreBoneRect(ctx, leftShoulderX, leftShoulderY, rightShoulderX, rightShoulderY, coreBoneLineWidth, color, hasOutline, outlineColor, outlineWidth);
         this.drawCoreBoneRect(ctx, shoulderCenterX, shoulderCenterY, hipCenterX, hipCenterY, coreBoneLineWidth, color, hasOutline, outlineColor, outlineWidth);
         this.drawCoreBoneRect(ctx, leftHipX, leftHipY, rightHipX, rightHipY, coreBoneLineWidth, color, hasOutline, outlineColor, outlineWidth);
@@ -345,6 +347,7 @@ export default class StickFigure {
         const rightFoot = this.pointFromAngle(rightKnee.x, rightKnee.y, params.rightCalfLength * scale, params.rightHipAngle + params.rightKneeAngle);
 
         return {
+            torsoTopX: translationX,
             headY: torsoTopY - params.headTilt * 8 + translationY,
             headScale: this.IMPORT_HEAD_SCALE_MULTIPLIER,
             headOffsetY: this.IMPORT_HEAD_UP_OFFSET,

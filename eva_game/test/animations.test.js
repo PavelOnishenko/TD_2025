@@ -187,6 +187,74 @@ test('imported pose keeps head above shoulders to avoid chest overlap', () => {
     );
 });
 
+
+test('imported x translation shifts head and shoulder anchor together', () => {
+    const keyframes = [
+        {
+            time: 0,
+            params: {
+                x: 400,
+                y: 300,
+                headTilt: 0,
+                torsoAngle: 0,
+                torsoLength: 50,
+                leftUpperArmLength: 30,
+                leftForearmLength: 30,
+                rightUpperArmLength: 30,
+                rightForearmLength: 30,
+                leftThighLength: 35,
+                leftCalfLength: 35,
+                rightThighLength: 35,
+                rightCalfLength: 35,
+                hipLength: 30,
+                shoulderLength: 30,
+                leftShoulderAngle: 0,
+                leftElbowAngle: 0,
+                rightShoulderAngle: 0,
+                rightElbowAngle: 0,
+                leftHipAngle: 0,
+                leftKneeAngle: 0,
+                rightHipAngle: 0,
+                rightKneeAngle: 0
+            }
+        },
+        {
+            time: 1,
+            params: {
+                x: 450,
+                y: 300,
+                headTilt: 0,
+                torsoAngle: 0,
+                torsoLength: 50,
+                leftUpperArmLength: 30,
+                leftForearmLength: 30,
+                rightUpperArmLength: 30,
+                rightForearmLength: 30,
+                leftThighLength: 35,
+                leftCalfLength: 35,
+                rightThighLength: 35,
+                rightCalfLength: 35,
+                hipLength: 30,
+                shoulderLength: 30,
+                leftShoulderAngle: 0,
+                leftElbowAngle: 0,
+                rightShoulderAngle: 0,
+                rightElbowAngle: 0,
+                leftHipAngle: 0,
+                leftKneeAngle: 0,
+                rightHipAngle: 0,
+                rightKneeAngle: 0
+            }
+        }
+    ];
+    const meta = { duration: 1, loop: false };
+
+    const startPose = StickFigure.getPoseFromImportedAnimation(keyframes, meta, 0);
+    const endPose = StickFigure.getPoseFromImportedAnimation(keyframes, meta, 1);
+
+    assert.ok(endPose.torsoTopX > startPose.torsoTopX, 'torso top should move when imported x changes');
+});
+
 test('imported death animation moves the body downward as y increases', () => {
     const startPose = StickFigure.getPoseFromImportedAnimation(DEATH_KEYFRAMES, DEATH_META, 0);
     const endPose = StickFigure.getPoseFromImportedAnimation(DEATH_KEYFRAMES, DEATH_META, 1);
