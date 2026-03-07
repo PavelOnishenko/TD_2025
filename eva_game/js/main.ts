@@ -1,4 +1,5 @@
 import Game from './Game.js';
+import AnimationDebugPlayer from './debug/AnimationDebugPlayer.js';
 import { resizeCanvas } from '../../engine/systems/ViewportManager.js';
 
 const canvas = document.getElementById('game-canvas') as HTMLCanvasElement;
@@ -8,8 +9,11 @@ const restartButton = document.getElementById('restart-button') as HTMLButtonEle
 const startOverlay = document.getElementById('start-overlay') as HTMLDivElement;
 const pauseOverlay = document.getElementById('pause-overlay') as HTMLDivElement;
 const gameoverOverlay = document.getElementById('gameover-overlay') as HTMLDivElement;
+const gameContainer = document.getElementById('game-container') as HTMLDivElement;
 
 let game: Game | null = null;
+let animationDebugPlayer: AnimationDebugPlayer | null = null;
+let debugPlayerPausedGame: boolean = false;
 
 function initialize(): void {
     if (!canvas) {
@@ -17,6 +21,27 @@ function initialize(): void {
     }
 
     game = new Game(canvas);
+    if (gameContainer) {
+        animationDebugPlayer = new AnimationDebugPlayer(gameContainer, (isVisible: boolean): void => {
+            if (!game || game.gameOver) {
+                return;
+            }
+
+            if (isVisible) {
+                if (!game.isPaused) {
+                    game.pause();
+                    debugPlayerPausedGame = true;
+                }
+                pauseOverlay.classList.add('hidden');
+                return;
+            }
+
+            if (debugPlayerPausedGame) {
+                game.resume();
+                debugPlayerPausedGame = false;
+            }
+        });
+    }
     game.onGameOver = (finalScore: number): void => {
         const finalScoreElement = document.getElementById('final-score');
         if (finalScoreElement) {
@@ -61,7 +86,16 @@ function setupEventListeners(): void {
     restartButton.addEventListener('click', handleRestart);
 
     document.addEventListener('keydown', (event: KeyboardEvent): void => {
+        if (event.code === 'Backquote') {
+            event.preventDefault();
+            animationDebugPlayer?.toggle();
+            return;
+        }
+
         if (event.code === 'Escape' && game && !game.gameOver) {
+            if (animationDebugPlayer?.isOpen()) {
+                return;
+            }
             togglePause();
         }
     });
@@ -82,6 +116,7 @@ function handleResume(): void {
     }
 
     pauseOverlay.classList.add('hidden');
+    debugPlayerPausedGame = false;
     game.resume();
 }
 
@@ -91,6 +126,7 @@ function handleRestart(): void {
     }
 
     gameoverOverlay.classList.add('hidden');
+    debugPlayerPausedGame = false;
     game.restart();
 }
 
@@ -101,6 +137,7 @@ function togglePause(): void {
 
     if (game.isPaused) {
         pauseOverlay.classList.add('hidden');
+        debugPlayerPausedGame = false;
         game.resume();
     } else {
         pauseOverlay.classList.remove('hidden');
