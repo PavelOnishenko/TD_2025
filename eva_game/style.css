@@ -103,3 +103,69 @@ button:hover {
 button:active {
     transform: scale(0.95);
 }
+
+#animation-debug-player {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 360px;
+    max-height: calc(100vh - 32px);
+    overflow: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px;
+    background: rgba(8, 12, 22, 0.95);
+    border: 1px solid #2e4a73;
+    border-radius: 8px;
+    z-index: 1000;
+}
+
+#animation-debug-player.hidden {
+    display: none;
+}
+
+#animation-debug-player h3 {
+    margin: 0;
+    color: #7ce3ff;
+    font-size: 18px;
+}
+
+#animation-debug-player select,
+#animation-debug-player input[type="range"] {
+    width: 100%;
+}
+
+#animation-debug-player button {
+    margin-top: 0;
+    padding: 8px 12px;
+    font-size: 14px;
+}
+
+.animation-debug-controls {
+    display: flex;
+    gap: 8px;
+}
+
+.animation-debug-controls button {
+    flex: 1;
+}
+
+.animation-debug-params {
+    margin: 0;
+    font-family: monospace;
+    font-size: 12px;
+    line-height: 1.35;
+    color: #dff7ff;
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 6px;
+    padding: 10px;
+    max-height: 220px;
+    overflow: auto;
+}
+
+.animation-debug-tip {
+    margin: 0;
+    font-size: 12px;
+    color: #8ea9cc;
+}
