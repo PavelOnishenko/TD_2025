@@ -86,8 +86,11 @@ The RGFN game has complex systems that would benefit from tests:
 
 4. **Combat Mechanics**
    - `player.takeDamage(8)` with 3 armor: Should take 5 damage
-   - `player.takeDamage(2)` with 3 armor: Should take 0 damage
+   - `player.takeDamage(2)` with 3 armor: Should take 1 damage (minimum chip damage)
    - Skeleton dies → XP awarded correctly
+
+
+**Armor rule note:** Armor reduces incoming damage, but positive hits always deal at least 1 damage.
 
 5. **Stat Allocation**
    - `player.addStat('vitality')`: Decrements skill points, increases maxHp
