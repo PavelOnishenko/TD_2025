@@ -10,7 +10,8 @@ import { PUNCH_KEYFRAMES, PUNCH_META } from '../animations/imported/punchImporte
 import { PUNCH2_KEYFRAMES, PUNCH2_META } from '../animations/imported/punch2Imported.js';
 import { STRONG_PUNCH_KEYFRAMES, STRONG_PUNCH_META } from '../animations/imported/strongPunchImported.js';
 import { KICK_KEYFRAMES, KICK_META } from '../animations/imported/kickImported.js';
-import { KICK2_KEYFRAMES, KICK2_META } from '../animations/imported/kick2Imported.js';
+import { AXE_KICK_KEYFRAMES, AXE_KICK_META } from '../animations/imported/axeKickImported.js';
+import { AXE_KICK2_KEYFRAMES, AXE_KICK2_META } from '../animations/imported/axeKick2Imported.js';
 import { JUMP_KEYFRAMES, JUMP_META } from '../animations/imported/jumpImported.js';
 import { FLY_KEYFRAMES, FLY_META } from '../animations/imported/flyImported.js';
 import { LAND_KEYFRAMES, LAND_META } from '../animations/imported/landImported.js';
@@ -587,8 +588,8 @@ export default class Player extends Entity {
                 break;
             case 'axeKick':
                 pose = this.currentAxeKickLeg === 'left'
-                    ? StickFigure.getPoseFromImportedAnimation(KICK2_KEYFRAMES, KICK2_META, this.animationProgress)
-                    : StickFigure.getPoseFromImportedAnimation(KICK_KEYFRAMES, KICK_META, this.animationProgress);
+                    ? StickFigure.getPoseFromImportedAnimation(AXE_KICK2_KEYFRAMES, AXE_KICK2_META, this.animationProgress)
+                    : StickFigure.getPoseFromImportedAnimation(AXE_KICK_KEYFRAMES, AXE_KICK_META, this.animationProgress);
                 break;
             case 'jump':
                 pose = StickFigure.getPoseFromImportedAnimation(JUMP_KEYFRAMES, JUMP_META, this.animationProgress);

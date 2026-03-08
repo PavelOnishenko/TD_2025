@@ -3,7 +3,7 @@
 
 import type { ImportedAnimationMeta, ImportedKeyframe } from '../types.js';
 
-export const KICK2_KEYFRAMES: ImportedKeyframe[] = [
+export const AXE_KICK_KEYFRAMES: ImportedKeyframe[] = [
     {
         time: 0,
         params: {
@@ -22,14 +22,14 @@ export const KICK2_KEYFRAMES: ImportedKeyframe[] = [
             rightCalfLength: 35,
             hipLength: 30,
             shoulderLength: 30,
-            leftShoulderAngle: -0.23,
-            leftElbowAngle: 2.7,
-            rightShoulderAngle: 1.08,
-            rightElbowAngle: 2.15,
-            leftHipAngle: -0.04,
-            leftKneeAngle: -0.06,
+            leftShoulderAngle: -0.3,
+            leftElbowAngle: 2.45,
+            rightShoulderAngle: 1.0,
+            rightElbowAngle: 2.05,
+            leftHipAngle: -0.05,
+            leftKneeAngle: -0.04,
             rightHipAngle: -0.02,
-            rightKneeAngle: 0.04
+            rightKneeAngle: 0.03
         }
     },
     {
@@ -37,8 +37,8 @@ export const KICK2_KEYFRAMES: ImportedKeyframe[] = [
         params: {
             x: 400,
             y: 300,
-            headTilt: -0.03,
-            torsoAngle: 0.27,
+            headTilt: -0.15,
+            torsoAngle: -0.2,
             torsoLength: 50,
             leftUpperArmLength: 35,
             leftForearmLength: 30,
@@ -48,25 +48,25 @@ export const KICK2_KEYFRAMES: ImportedKeyframe[] = [
             leftCalfLength: 35,
             rightThighLength: 40,
             rightCalfLength: 35,
-            hipLength: 27,
-            shoulderLength: 35,
-            leftShoulderAngle: -0.55,
-            leftElbowAngle: 0.35,
-            rightShoulderAngle: 0.82,
-            rightElbowAngle: -0.27,
-            leftHipAngle: 0,
-            leftKneeAngle: 0.02,
-            rightHipAngle: -0.74,
-            rightKneeAngle: -1.57
+            hipLength: 30,
+            shoulderLength: 33,
+            leftShoulderAngle: -0.95,
+            leftElbowAngle: 1.0,
+            rightShoulderAngle: 1.15,
+            rightElbowAngle: 0.7,
+            leftHipAngle: -0.04,
+            leftKneeAngle: -0.05,
+            rightHipAngle: -1.25,
+            rightKneeAngle: -1.1
         }
     },
     {
         time: 2,
         params: {
-            x: 400,
+            x: 401,
             y: 300,
-            headTilt: -0.09,
-            torsoAngle: 0.32,
+            headTilt: -0.28,
+            torsoAngle: -0.35,
             torsoLength: 50,
             leftUpperArmLength: 35,
             leftForearmLength: 30,
@@ -76,20 +76,48 @@ export const KICK2_KEYFRAMES: ImportedKeyframe[] = [
             leftCalfLength: 35,
             rightThighLength: 40,
             rightCalfLength: 35,
-            hipLength: 27,
-            shoulderLength: 35,
-            leftShoulderAngle: -0.55,
-            leftElbowAngle: -0.03,
-            rightShoulderAngle: 0.22,
-            rightElbowAngle: -0.27,
-            leftHipAngle: 0.05,
+            hipLength: 30,
+            shoulderLength: 34,
+            leftShoulderAngle: -1.3,
+            leftElbowAngle: 0.5,
+            rightShoulderAngle: 1.35,
+            rightElbowAngle: 0.45,
+            leftHipAngle: -0.05,
             leftKneeAngle: -0.05,
-            rightHipAngle: 1.57,
-            rightKneeAngle: -0.15
+            rightHipAngle: -1.57,
+            rightKneeAngle: -0.25
         }
     },
     {
         time: 3,
+        params: {
+            x: 402,
+            y: 300,
+            headTilt: 0.08,
+            torsoAngle: 0.22,
+            torsoLength: 50,
+            leftUpperArmLength: 35,
+            leftForearmLength: 30,
+            rightUpperArmLength: 35,
+            rightForearmLength: 30,
+            leftThighLength: 40,
+            leftCalfLength: 35,
+            rightThighLength: 40,
+            rightCalfLength: 35,
+            hipLength: 29,
+            shoulderLength: 33,
+            leftShoulderAngle: -0.1,
+            leftElbowAngle: 1.35,
+            rightShoulderAngle: 0.35,
+            rightElbowAngle: -0.35,
+            leftHipAngle: -0.02,
+            leftKneeAngle: -0.03,
+            rightHipAngle: 1.32,
+            rightKneeAngle: -0.08
+        }
+    },
+    {
+        time: 4,
         params: {
             x: 400,
             y: 300,
@@ -118,8 +146,8 @@ export const KICK2_KEYFRAMES: ImportedKeyframe[] = [
     }
 ];
 
-export const KICK2_META: ImportedAnimationMeta = {
-    name: "Kick2",
-    duration: 3,
+export const AXE_KICK_META: ImportedAnimationMeta = {
+    name: 'AxeKick',
+    duration: 4,
     loop: false
 };

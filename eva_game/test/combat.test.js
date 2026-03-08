@@ -722,16 +722,19 @@ test('attacks fail when combatants are facing same direction', () => {
 });
 
 
-test('enemy enters knocked down state and recovers after duration', () => {
+test('enemy knockdown flows through fall -> ground -> get up -> idle', () => {
     const enemy = new Enemy(200, 400);
 
     enemy.startKnockdown(180);
+    assert.equal(enemy.animationState, 'knockdownFall');
+
+    advanceTime(enemy, balanceConfig.enemy.animation.knockdownFallDuration + 20);
     assert.equal(enemy.animationState, 'knockedDown');
 
-    advanceTime(enemy, balanceConfig.enemy.animation.knockedDownDuration * 0.5);
-    assert.equal(enemy.animationState, 'knockedDown');
+    advanceTime(enemy, balanceConfig.enemy.animation.knockedDownDuration + 20);
+    assert.equal(enemy.animationState, 'getUp');
 
-    advanceTime(enemy, balanceConfig.enemy.animation.knockedDownDuration);
+    advanceTime(enemy, balanceConfig.enemy.animation.getUpDuration + 20);
     assert.equal(enemy.animationState, 'idle');
 });
 

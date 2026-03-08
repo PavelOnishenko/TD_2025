@@ -10,6 +10,8 @@ import { PUNCH_KEYFRAMES, PUNCH_META } from '../animations/imported/punchImporte
 import { HURT_KEYFRAMES, HURT_META } from '../animations/imported/hurtImported.js';
 import { DEATH_KEYFRAMES, DEATH_META } from '../animations/imported/deathImported.js';
 import { TAUNT_KEYFRAMES, TAUNT_META } from '../animations/imported/tauntImported.js';
+import { KNOCKDOWN_FALL_KEYFRAMES, KNOCKDOWN_FALL_META } from '../animations/imported/knockdownFallImported.js';
+import { GET_UP_KEYFRAMES, GET_UP_META } from '../animations/imported/getUpImported.js';
 
 export default class Enemy extends Entity {
     // Explicitly declare inherited properties from Entity
@@ -52,7 +54,9 @@ export default class Enemy extends Entity {
     private deathAnimationTimer: number = 0;
     private punchAnimationTimer: number = 0;
     private tauntAnimationTimer: number = 0;
+    private knockdownFallTimer: number = 0;
     private knockedDownTimer: number = 0;
+    private getUpTimer: number = 0;
 
 
     constructor(x: number, y: number, color: string = '#ff6b6b') {
@@ -79,7 +83,7 @@ export default class Enemy extends Entity {
         this.move(deltaTime);
         this.updateAttackCooldown(deltaTime);
         this.updatePunchAnimation(deltaTime);
-        this.updateKnockedDown(deltaTime);
+        this.updateKnockdownState(deltaTime);
         this.updateAnimationState();
         this.updateAnimationProgress(deltaTime);
     }
@@ -100,22 +104,41 @@ export default class Enemy extends Entity {
         }
     }
 
-    private updateKnockedDown(deltaTime: number): void {
-        if (this.knockedDownTimer <= 0) {
+    private updateKnockdownState(deltaTime: number): void {
+        if (this.knockdownFallTimer > 0) {
+            this.knockdownFallTimer -= deltaTime * 1000;
+            if (this.knockdownFallTimer <= 0) {
+                this.knockdownFallTimer = 0;
+                this.animationState = 'knockedDown';
+                this.animationProgress = 0;
+            }
             return;
         }
 
-        this.knockedDownTimer -= deltaTime * 1000;
-        if (this.knockedDownTimer <= 0) {
-            this.knockedDownTimer = 0;
-            this.animationState = 'idle';
-            this.animationProgress = 0;
+        if (this.knockedDownTimer > 0) {
+            this.knockedDownTimer -= deltaTime * 1000;
+            if (this.knockedDownTimer <= 0) {
+                this.knockedDownTimer = 0;
+                this.getUpTimer = balanceConfig.enemy.animation.getUpDuration;
+                this.animationState = 'getUp';
+                this.animationProgress = 0;
+            }
+            return;
+        }
+
+        if (this.getUpTimer > 0) {
+            this.getUpTimer -= deltaTime * 1000;
+            if (this.getUpTimer <= 0) {
+                this.getUpTimer = 0;
+                this.animationState = 'idle';
+                this.animationProgress = 0;
+            }
         }
     }
 
     private updateAnimationState(): void {
         // Don't change animation state if dead or hurt
-        if (this.animationState === 'death' || this.animationState === 'hurt' || this.animationState === 'knockedDown') {
+        if (this.animationState === 'death' || this.animationState === 'hurt' || this.animationState === 'knockdownFall' || this.animationState === 'knockedDown' || this.animationState === 'getUp') {
             return;
         }
 
@@ -149,8 +172,18 @@ export default class Enemy extends Entity {
                 this.animationProgress = Math.max(0, Math.min(1, punchProgress));
                 break;
 
+            case 'knockdownFall':
+                const fallProgress = 1 - (this.knockdownFallTimer / balanceConfig.enemy.animation.knockdownFallDuration);
+                this.animationProgress = Math.max(0, Math.min(1, fallProgress));
+                break;
+
             case 'knockedDown':
-                this.animationProgress = Math.min(1, this.animationProgress + deltaTime * 1.8);
+                this.animationProgress = 1;
+                break;
+
+            case 'getUp':
+                const getUpProgress = 1 - (this.getUpTimer / balanceConfig.enemy.animation.getUpDuration);
+                this.animationProgress = Math.max(0, Math.min(1, getUpProgress));
                 break;
 
             case 'hurt':
@@ -207,7 +240,7 @@ export default class Enemy extends Entity {
 
     public moveToward(targetX: number, targetY: number, deltaTime: number, otherEnemies?: Enemy[]): void {
         // Don't move if attacking, getting hit, or taunting
-        if (this.animationState === 'punch' || this.animationState === 'hurt' || this.animationState === 'taunt' || this.animationState === 'knockedDown') {
+        if (this.animationState === 'punch' || this.animationState === 'hurt' || this.animationState === 'taunt' || this.animationState === 'knockdownFall' || this.animationState === 'knockedDown' || this.animationState === 'getUp') {
             this.velocityX = 0;
             this.velocityY = 0;
             return;
@@ -323,7 +356,7 @@ export default class Enemy extends Entity {
 
     public canAttackPlayer(player: Player): boolean {
         // Can't attack while getting hit
-        if (this.animationState === 'hurt' || this.animationState === 'knockedDown') {
+        if (this.animationState === 'hurt' || this.animationState === 'knockdownFall' || this.animationState === 'knockedDown' || this.animationState === 'getUp') {
             return false;
         }
 
@@ -363,6 +396,10 @@ export default class Enemy extends Entity {
     }
 
     public startAttack(): void {
+        if (this.animationState === 'hurt' || this.animationState === 'death' || this.animationState === 'knockdownFall' || this.animationState === 'knockedDown' || this.animationState === 'getUp') {
+            return;
+        }
+
         this.attackCooldownTimer = balanceConfig.enemy.attack.cooldown;
         this.punchAnimationTimer = balanceConfig.enemy.attack.punchDuration;
         this.hasDealtDamageThisAttack = false; // Reset damage tracking for new attack
@@ -378,8 +415,10 @@ export default class Enemy extends Entity {
     }
 
     public startKnockdown(targetX: number): void {
+        this.knockdownFallTimer = balanceConfig.enemy.animation.knockdownFallDuration;
         this.knockedDownTimer = balanceConfig.enemy.animation.knockedDownDuration;
-        this.animationState = 'knockedDown';
+        this.getUpTimer = 0;
+        this.animationState = 'knockdownFall';
         this.animationProgress = 0;
         this.velocityX = 0;
         this.velocityY = 0;
@@ -393,7 +432,7 @@ export default class Enemy extends Entity {
     }
 
     public checkAttackHit(player: Player): boolean {
-        if (player.isInAir) {
+        if (player.isInAir || this.animationState === 'knockdownFall' || this.animationState === 'knockedDown' || this.animationState === 'getUp') {
             return false;
         }
 
@@ -548,8 +587,14 @@ export default class Enemy extends Entity {
             case 'death':
                 pose = StickFigure.getPoseFromImportedAnimation(DEATH_KEYFRAMES, DEATH_META, this.animationProgress);
                 break;
+            case 'knockdownFall':
+                pose = StickFigure.getPoseFromImportedAnimation(KNOCKDOWN_FALL_KEYFRAMES, KNOCKDOWN_FALL_META, this.animationProgress);
+                break;
             case 'knockedDown':
-                pose = StickFigure.getPoseFromImportedAnimation(DEATH_KEYFRAMES, DEATH_META, Math.min(0.6, this.animationProgress + 0.35));
+                pose = StickFigure.getPoseFromImportedAnimation(KNOCKDOWN_FALL_KEYFRAMES, KNOCKDOWN_FALL_META, 1);
+                break;
+            case 'getUp':
+                pose = StickFigure.getPoseFromImportedAnimation(GET_UP_KEYFRAMES, GET_UP_META, this.animationProgress);
                 break;
             case 'taunt':
                 pose = StickFigure.getPoseFromImportedAnimation(TAUNT_KEYFRAMES, TAUNT_META, this.animationProgress);

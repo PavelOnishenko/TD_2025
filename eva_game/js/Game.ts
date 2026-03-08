@@ -475,9 +475,11 @@ export default class Game {
         }
 
         if (this.player.currentAttack === 'axeKick') {
-            const closeRange = balanceConfig.player.axeKick.knockdownRange;
-            const distanceX = Math.abs(enemy.x - this.player.x);
-            if (distanceX <= closeRange) {
+            const knockdownRadius = balanceConfig.player.axeKick.knockdownRadius;
+            const distanceX = enemy.x - this.player.x;
+            const distanceY = enemy.y - this.player.y;
+            const distanceToLanding = Math.hypot(distanceX, distanceY);
+            if (distanceToLanding <= knockdownRadius) {
                 const dropOffset = this.player.facingRight ? 8 : -8;
                 enemy.startKnockdown(this.player.x + dropOffset);
             }

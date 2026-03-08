@@ -54,7 +54,7 @@ export const balanceConfig = {
       damage: 40,
       knockbackForce: 0,
       stepDistance: 1,
-      knockdownRange: 22,
+      knockdownRadius: 44,
     },
     animation: {
       walkCycleDuration: 600,
@@ -84,7 +84,9 @@ export const balanceConfig = {
       hurtDuration: 400,
       deathDuration: 1000,
       tauntDuration: 800,
-      knockedDownDuration: 700,
+      knockdownFallDuration: 320,
+      knockedDownDuration: 520,
+      getUpDuration: 420,
     },
     separation: {
       distance: 70,

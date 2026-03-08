@@ -14,7 +14,9 @@ export type AnimationState =
     | 'land'
     | 'hurt'
     | 'death'
+    | 'knockdownFall'
     | 'knockedDown'
+    | 'getUp'
     | 'taunt';
 
 /**
