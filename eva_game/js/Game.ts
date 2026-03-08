@@ -459,6 +459,12 @@ export default class Game {
         }
 
         enemy.takeDamage(this.player.attackDamage);
+
+        // Skip secondary effects when enemy dies from this hit
+        if (enemy.animationState === 'death' || enemy.isDead) {
+            return;
+        }
+
         const knockback = this.player.attackKnockback;
         if (knockback > 0) {
             const direction = this.player.facingRight ? 1 : -1;
@@ -467,7 +473,15 @@ export default class Game {
             const maxX = balanceConfig.world.width - halfWidth;
             enemy.x = Math.max(minX, Math.min(maxX, enemy.x + (direction * knockback)));
         }
-        // takeDamage() now handles setting active = false when health reaches 0
+
+        if (this.player.currentAttack === 'axeKick') {
+            const closeRange = balanceConfig.player.axeKick.knockdownRange;
+            const distanceX = Math.abs(enemy.x - this.player.x);
+            if (distanceX <= closeRange) {
+                const dropOffset = this.player.facingRight ? 8 : -8;
+                enemy.startKnockdown(this.player.x + dropOffset);
+            }
+        }
     }
 
     private endGame(): void {

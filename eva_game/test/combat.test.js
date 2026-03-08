@@ -233,6 +233,40 @@ test('player hit tracking resets for new attack', () => {
     assert.equal(secondAttackHit, true);
 });
 
+
+test('H+K triggers axe kick attack state', () => {
+    const player = new Player(100, 400);
+    const input = createMockInputManager();
+
+    input.simulateKeyDown('KeyH');
+    input.simulatePress('kick');
+    player.handleInput(0, 0, input);
+
+    assert.equal(player.isAttacking, true);
+    assert.equal(player.animationState, 'axeKick');
+    assert.equal(player.currentAttack, 'axeKick');
+});
+
+test('axe kick alternates kick leg animation between uses', () => {
+    const player = new Player(100, 400);
+    const input = createMockInputManager();
+
+    input.simulateKeyDown('KeyH');
+    input.simulatePress('kick');
+    player.handleInput(0, 0, input);
+    const firstAttackState = player.animationState;
+
+    advanceTime(player, balanceConfig.player.axeKick.duration + 20);
+    advanceTime(player, balanceConfig.player.axeKick.cooldown + 20);
+
+    input.simulatePress('kick');
+    player.handleInput(0, 0, input);
+
+    assert.equal(firstAttackState, 'axeKick');
+    assert.equal(player.animationState, 'axeKick');
+    assert.equal(player.currentAttack, 'axeKick');
+});
+
 // ============================================================================
 // ENEMY ATTACK HIT DETECTION
 // ============================================================================
@@ -685,4 +719,31 @@ test('attacks fail when combatants are facing same direction', () => {
 
     // Player can't hit enemy behind them (player faces left, enemy is to the right)
     assert.equal(player2.checkAttackHit(enemy2), false);
+});
+
+
+test('enemy enters knocked down state and recovers after duration', () => {
+    const enemy = new Enemy(200, 400);
+
+    enemy.startKnockdown(180);
+    assert.equal(enemy.animationState, 'knockedDown');
+
+    advanceTime(enemy, balanceConfig.enemy.animation.knockedDownDuration * 0.5);
+    assert.equal(enemy.animationState, 'knockedDown');
+
+    advanceTime(enemy, balanceConfig.enemy.animation.knockedDownDuration);
+    assert.equal(enemy.animationState, 'idle');
+});
+
+test('knocked down enemy cannot attack player', () => {
+    const enemy = new Enemy(130, 400);
+    enemy.facingRight = false;
+    const player = new Player(100, 400);
+
+    enemy.startKnockdown(120);
+
+    assert.equal(enemy.canAttackPlayer(player), false);
+    enemy.startAttack();
+    advanceTime(enemy, balanceConfig.enemy.attack.punchDuration * 0.5);
+    assert.equal(enemy.checkAttackHit(player), false);
 });

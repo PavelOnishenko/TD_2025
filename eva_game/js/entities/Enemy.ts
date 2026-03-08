@@ -52,6 +52,7 @@ export default class Enemy extends Entity {
     private deathAnimationTimer: number = 0;
     private punchAnimationTimer: number = 0;
     private tauntAnimationTimer: number = 0;
+    private knockedDownTimer: number = 0;
 
 
     constructor(x: number, y: number, color: string = '#ff6b6b') {
@@ -78,6 +79,7 @@ export default class Enemy extends Entity {
         this.move(deltaTime);
         this.updateAttackCooldown(deltaTime);
         this.updatePunchAnimation(deltaTime);
+        this.updateKnockedDown(deltaTime);
         this.updateAnimationState();
         this.updateAnimationProgress(deltaTime);
     }
@@ -98,9 +100,22 @@ export default class Enemy extends Entity {
         }
     }
 
+    private updateKnockedDown(deltaTime: number): void {
+        if (this.knockedDownTimer <= 0) {
+            return;
+        }
+
+        this.knockedDownTimer -= deltaTime * 1000;
+        if (this.knockedDownTimer <= 0) {
+            this.knockedDownTimer = 0;
+            this.animationState = 'idle';
+            this.animationProgress = 0;
+        }
+    }
+
     private updateAnimationState(): void {
         // Don't change animation state if dead or hurt
-        if (this.animationState === 'death' || this.animationState === 'hurt') {
+        if (this.animationState === 'death' || this.animationState === 'hurt' || this.animationState === 'knockedDown') {
             return;
         }
 
@@ -132,6 +147,10 @@ export default class Enemy extends Entity {
                 // Progress through punch animation
                 const punchProgress = 1 - (this.punchAnimationTimer / balanceConfig.enemy.attack.punchDuration);
                 this.animationProgress = Math.max(0, Math.min(1, punchProgress));
+                break;
+
+            case 'knockedDown':
+                this.animationProgress = Math.min(1, this.animationProgress + deltaTime * 1.8);
                 break;
 
             case 'hurt':
@@ -188,7 +207,7 @@ export default class Enemy extends Entity {
 
     public moveToward(targetX: number, targetY: number, deltaTime: number, otherEnemies?: Enemy[]): void {
         // Don't move if attacking, getting hit, or taunting
-        if (this.animationState === 'punch' || this.animationState === 'hurt' || this.animationState === 'taunt') {
+        if (this.animationState === 'punch' || this.animationState === 'hurt' || this.animationState === 'taunt' || this.animationState === 'knockedDown') {
             this.velocityX = 0;
             this.velocityY = 0;
             return;
@@ -304,7 +323,7 @@ export default class Enemy extends Entity {
 
     public canAttackPlayer(player: Player): boolean {
         // Can't attack while getting hit
-        if (this.animationState === 'hurt') {
+        if (this.animationState === 'hurt' || this.animationState === 'knockedDown') {
             return false;
         }
 
@@ -356,6 +375,21 @@ export default class Enemy extends Entity {
 
     public isTaunting(): boolean {
         return this.tauntAnimationTimer > 0;
+    }
+
+    public startKnockdown(targetX: number): void {
+        this.knockedDownTimer = balanceConfig.enemy.animation.knockedDownDuration;
+        this.animationState = 'knockedDown';
+        this.animationProgress = 0;
+        this.velocityX = 0;
+        this.velocityY = 0;
+        this.punchAnimationTimer = 0;
+        this.tauntAnimationTimer = 0;
+
+        const halfWidth = this.width / 2;
+        const minX = halfWidth;
+        const maxX = balanceConfig.world.width - halfWidth;
+        this.x = Math.max(minX, Math.min(maxX, targetX));
     }
 
     public checkAttackHit(player: Player): boolean {
@@ -513,6 +547,9 @@ export default class Enemy extends Entity {
                 break;
             case 'death':
                 pose = StickFigure.getPoseFromImportedAnimation(DEATH_KEYFRAMES, DEATH_META, this.animationProgress);
+                break;
+            case 'knockedDown':
+                pose = StickFigure.getPoseFromImportedAnimation(DEATH_KEYFRAMES, DEATH_META, Math.min(0.6, this.animationProgress + 0.35));
                 break;
             case 'taunt':
                 pose = StickFigure.getPoseFromImportedAnimation(TAUNT_KEYFRAMES, TAUNT_META, this.animationProgress);

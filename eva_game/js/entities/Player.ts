@@ -10,6 +10,7 @@ import { PUNCH_KEYFRAMES, PUNCH_META } from '../animations/imported/punchImporte
 import { PUNCH2_KEYFRAMES, PUNCH2_META } from '../animations/imported/punch2Imported.js';
 import { STRONG_PUNCH_KEYFRAMES, STRONG_PUNCH_META } from '../animations/imported/strongPunchImported.js';
 import { KICK_KEYFRAMES, KICK_META } from '../animations/imported/kickImported.js';
+import { KICK2_KEYFRAMES, KICK2_META } from '../animations/imported/kick2Imported.js';
 import { JUMP_KEYFRAMES, JUMP_META } from '../animations/imported/jumpImported.js';
 import { FLY_KEYFRAMES, FLY_META } from '../animations/imported/flyImported.js';
 import { LAND_KEYFRAMES, LAND_META } from '../animations/imported/landImported.js';
@@ -41,11 +42,12 @@ export default class Player extends Entity {
     public isInAir: boolean = false;
 
     // Attack type tracking ('punch', 'strongPunch', or 'kick')
-    private currentAttackType: 'punch' | 'strongPunch' | 'kick' | null = null;
+    private currentAttackType: 'punch' | 'strongPunch' | 'kick' | 'axeKick' | null = null;
     private attackTimer: number = 0;
     private punchCooldownTimer: number = 0;
     private kickCooldownTimer: number = 0;
     private strongPunchCooldownTimer: number = 0;
+    private axeKickCooldownTimer: number = 0;
     private hitEnemiesThisAttack: Set<number> = new Set(); // Track enemies hit in current attack
     private strongPunchStepStartX: number = 0;
     private strongPunchStepDirection: number = 0;
@@ -57,6 +59,10 @@ export default class Player extends Entity {
     private jumpVisualOffset: number = 0;
     private nextPunchHand: 'left' | 'right' = 'right';
     private currentPunchHand: 'left' | 'right' = 'right';
+    private nextAxeKickLeg: 'left' | 'right' = 'right';
+    private currentAxeKickLeg: 'left' | 'right' = 'right';
+    private axeKickStepStartX: number = 0;
+    private axeKickStepDirection: number = 0;
 
     // Animation progress (0-1) for gradual animations
     public animationProgress: number = 0;
@@ -150,8 +156,17 @@ export default class Player extends Entity {
             return;
         }
 
+        const kickPressed = input.wasActionPressed('kick');
+        const wantsAxeKick = kickPressed && input.isKeyDown('KeyH');
+
+        // Check for axe kick input (H + K)
+        if (wantsAxeKick && !this.isAttacking && this.axeKickCooldownTimer <= 0) {
+            this.startAxeKick();
+            return;
+        }
+
         // Check for kick input (K key)
-        if (input.wasActionPressed('kick') && !this.isAttacking && this.kickCooldownTimer <= 0) {
+        if (kickPressed && !this.isAttacking && this.kickCooldownTimer <= 0) {
             this.startKick();
         }
     }
@@ -190,6 +205,20 @@ export default class Player extends Entity {
         this.hitEnemiesThisAttack.clear();
     }
 
+    private startAxeKick(): void {
+        console.log('Player axe kick initiated');
+        this.isAttacking = true;
+        this.currentAttackType = 'axeKick';
+        this.currentAxeKickLeg = this.nextAxeKickLeg;
+        this.nextAxeKickLeg = this.nextAxeKickLeg === 'left' ? 'right' : 'left';
+        this.attackTimer = balanceConfig.player.axeKick.duration;
+        this.axeKickCooldownTimer = balanceConfig.player.axeKick.cooldown;
+        this.animationState = 'axeKick';
+        this.hitEnemiesThisAttack.clear();
+        this.axeKickStepStartX = this.x;
+        this.axeKickStepDirection = this.facingRight ? 1 : -1;
+    }
+
     public update(deltaTime: number): void {
         if (this.jumpCooldownTimer > 0) {
             this.jumpCooldownTimer -= deltaTime * 1000;
@@ -202,6 +231,7 @@ export default class Player extends Entity {
         }
         this.updateAttackTimer(deltaTime);
         this.updateStrongPunchStep();
+        this.updateAxeKickStep();
         this.updateAnimationProgress(deltaTime);
     }
 
@@ -274,7 +304,7 @@ export default class Player extends Entity {
                 this.currentAttackType = null;
                 this.currentPunchHand = this.nextPunchHand;
                 // Only reset to idle if still in attack animation (don't override hurt/death)
-                if (this.animationState === 'punch' || this.animationState === 'kick' || this.animationState === 'strongPunch') {
+                if (this.animationState === 'punch' || this.animationState === 'kick' || this.animationState === 'strongPunch' || this.animationState === 'axeKick') {
                     this.animationState = 'idle';
                 }
             }
@@ -290,6 +320,9 @@ export default class Player extends Entity {
         if (this.kickCooldownTimer > 0) {
             this.kickCooldownTimer -= deltaTime * 1000;
         }
+        if (this.axeKickCooldownTimer > 0) {
+            this.axeKickCooldownTimer -= deltaTime * 1000;
+        }
     }
 
     private updateStrongPunchStep(): void {
@@ -302,6 +335,22 @@ export default class Player extends Entity {
         const stepProgress = Math.min(1, progress / 0.5);
         const stepDistance = attackConfig.reach * 0.25;
         const targetX = this.strongPunchStepStartX + (stepDistance * stepProgress * this.strongPunchStepDirection);
+        const halfWidth = this.width / 2;
+        const minX = halfWidth;
+        const maxX = balanceConfig.world.width - halfWidth;
+
+        this.x = Math.max(minX, Math.min(maxX, targetX));
+    }
+
+    private updateAxeKickStep(): void {
+        if (!this.isAttacking || this.currentAttackType !== 'axeKick') {
+            return;
+        }
+
+        const attackConfig = balanceConfig.player.axeKick;
+        const progress = Math.max(0, Math.min(1, 1 - (this.attackTimer / attackConfig.duration)));
+        const stepProgress = Math.min(1, progress / 0.5);
+        const targetX = this.axeKickStepStartX + (attackConfig.stepDistance * stepProgress * this.axeKickStepDirection);
         const halfWidth = this.width / 2;
         const minX = halfWidth;
         const maxX = balanceConfig.world.width - halfWidth;
@@ -338,6 +387,12 @@ export default class Player extends Entity {
                 // Progress through kick animation during attack
                 const kickProgress = 1 - (this.attackTimer / balanceConfig.player.kick.duration);
                 this.animationProgress = Math.max(0, Math.min(1, kickProgress));
+                break;
+
+            case 'axeKick':
+                // Progress through axe kick animation during attack
+                const axeKickProgress = 1 - (this.attackTimer / balanceConfig.player.axeKick.duration);
+                this.animationProgress = Math.max(0, Math.min(1, axeKickProgress));
                 break;
 
             case 'hurt':
@@ -404,11 +459,8 @@ export default class Player extends Entity {
             return false;
         }
 
-        // Only detect hits when arm is actually extended (mid-animation)
-        // Hit window is during the extension phase of the punch
-        const hitWindowStart = 0.3;
-        const hitWindowEnd = 0.7;
-        if (this.animationProgress < hitWindowStart || this.animationProgress > hitWindowEnd) {
+        // Hit windows are attack-specific
+        if (!this.isWithinAttackHitWindow()) {
             return false;
         }
 
@@ -456,12 +508,27 @@ export default class Player extends Entity {
         return true;
     }
 
+    public get currentAttack(): 'punch' | 'strongPunch' | 'kick' | 'axeKick' | null {
+        return this.currentAttackType;
+    }
+
+    private isWithinAttackHitWindow(): boolean {
+        if (this.currentAttackType === 'axeKick') {
+            return this.animationProgress >= 0.45 && this.animationProgress <= 0.82;
+        }
+
+        return this.animationProgress >= 0.3 && this.animationProgress <= 0.7;
+    }
+
     private getAttackConfig() {
         if (this.currentAttackType === 'kick') {
             return balanceConfig.player.kick;
         }
         if (this.currentAttackType === 'strongPunch') {
             return balanceConfig.player.strongPunch;
+        }
+        if (this.currentAttackType === 'axeKick') {
+            return balanceConfig.player.axeKick;
         }
         return balanceConfig.player.punch;
     }
@@ -517,6 +584,11 @@ export default class Player extends Entity {
                 break;
             case 'kick':
                 pose = StickFigure.getPoseFromImportedAnimation(KICK_KEYFRAMES, KICK_META, this.animationProgress);
+                break;
+            case 'axeKick':
+                pose = this.currentAxeKickLeg === 'left'
+                    ? StickFigure.getPoseFromImportedAnimation(KICK2_KEYFRAMES, KICK2_META, this.animationProgress)
+                    : StickFigure.getPoseFromImportedAnimation(KICK_KEYFRAMES, KICK_META, this.animationProgress);
                 break;
             case 'jump':
                 pose = StickFigure.getPoseFromImportedAnimation(JUMP_KEYFRAMES, JUMP_META, this.animationProgress);
