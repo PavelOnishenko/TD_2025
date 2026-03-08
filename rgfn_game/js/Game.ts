@@ -221,6 +221,8 @@ export default class Game {
 
             if (encounter.type === 'battle') {
                 this.stateMachine.transition(MODES.BATTLE, encounter.enemies);
+            } else if (encounter.type === 'none') {
+                this.addBattleLog('A dragon flies past without noticing you.', 'system');
             } else if (encounter.type === 'item') {
                 this.handleItemDiscovery(encounter.item);
             }
@@ -259,7 +261,7 @@ export default class Game {
             this.turnTransitioning = false;
 
             this.clearBattleLog();
-            this.addBattleLog(`Encountered ${enemies.length} skeleton${enemies.length > 1 ? 's' : ''}!`, 'system');
+            this.addBattleLog(`Encountered ${this.describeEncounter(enemies)}!`, 'system');
      
             // Update HUD to show current player stats
             this.updateHUD();
@@ -422,14 +424,18 @@ export default class Game {
 
             if (inRange) {
                 this.addBattleLog(`${enemy.name} attacks!`, 'enemy');
-                const damageBeforeArmor = enemy.damage;
+                const damageBeforeArmor = enemy.getAttackDamage();
                 const damageAfterArmor = damageBeforeArmor <= 0
                     ? 0
                     : Math.max(
                         balanceConfig.combat.minDamageAfterArmor,
                         damageBeforeArmor - this.player.armor
                     );
-                this.player.takeDamage(enemy.damage);
+                this.player.takeDamage(damageBeforeArmor);
+
+                if (damageBeforeArmor > enemy.damage) {
+                    this.addBattleLog(`${enemy.name} lands a devastating strike!`, 'enemy');
+                }
 
                 if (this.player.armor > 0 && damageAfterArmor < damageBeforeArmor) {
                     this.addBattleLog(`Player takes ${damageAfterArmor} damage (${damageBeforeArmor - damageAfterArmor} blocked by armor)!`, 'damage');
@@ -489,6 +495,14 @@ export default class Game {
         }
 
         if (target) {
+            if (target.shouldAvoidHit()) {
+                this.addBattleLog('You attack!', 'player');
+                this.addBattleLog(`${target.name} dodges the hit!`, 'enemy');
+                this.turnManager.nextTurn();
+                setTimeout(() => this.processTurn(), timingConfig.battle.playerActionDelay);
+                return;
+            }
+
             this.addBattleLog('You attack!', 'player');
             target.takeDamage(this.player.damage);
             this.addBattleLog(`${target.name} takes ${this.player.damage} damage!`, 'damage');
@@ -653,6 +667,19 @@ export default class Game {
 
     private clearBattleLog(): void {
         this.battleUI.log.innerHTML = '';
+    }
+
+    private describeEncounter(enemies: Skeleton[]): string {
+        if (enemies.length === 0) {
+            return 'nothing';
+        }
+
+        const enemyName = enemies[0].name;
+        if (enemies.length === 1) {
+            return enemyName;
+        }
+
+        return `${enemies.length} ${enemyName}s`;
     }
 
     // ============ HUD ============
