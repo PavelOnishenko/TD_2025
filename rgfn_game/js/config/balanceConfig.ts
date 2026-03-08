@@ -72,6 +72,9 @@ export const balanceConfig = {
 
     // ============ COMBAT SETTINGS ============
     combat: {
+        // Armor can never fully negate a positive hit
+        minDamageAfterArmor: 1,
+
         // Flee success chance
         fleeChance: 0.5,
     },

@@ -423,7 +423,12 @@ export default class Game {
             if (inRange) {
                 this.addBattleLog(`${enemy.name} attacks!`, 'enemy');
                 const damageBeforeArmor = enemy.damage;
-                const damageAfterArmor = Math.max(0, damageBeforeArmor - this.player.armor);
+                const damageAfterArmor = damageBeforeArmor <= 0
+                    ? 0
+                    : Math.max(
+                        balanceConfig.combat.minDamageAfterArmor,
+                        damageBeforeArmor - this.player.armor
+                    );
                 this.player.takeDamage(enemy.damage);
 
                 if (this.player.armor > 0 && damageAfterArmor < damageBeforeArmor) {
