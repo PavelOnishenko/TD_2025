@@ -350,8 +350,19 @@ export default class Player extends Entity {
 
         const attackConfig = balanceConfig.player.axeKick;
         const progress = Math.max(0, Math.min(1, 1 - (this.attackTimer / attackConfig.duration)));
-        const stepProgress = Math.min(1, progress / 0.5);
-        const targetX = this.axeKickStepStartX + (attackConfig.stepDistance * stepProgress * this.axeKickStepDirection);
+        const firstEnd = Math.max(0.05, Math.min(0.95, attackConfig.firstStepEndProgress));
+        const secondEnd = Math.max(firstEnd + 0.01, Math.min(1, attackConfig.secondStepEndProgress));
+
+        // Axe kick has two strikes; move a bit on each strike window.
+        const firstStepProgress = Math.min(1, progress / firstEnd);
+        const secondStepProgress = progress <= firstEnd
+            ? 0
+            : Math.min(1, (progress - firstEnd) / (secondEnd - firstEnd));
+        const totalStepDistance =
+            attackConfig.firstStepDistance * firstStepProgress
+            + attackConfig.secondStepDistance * secondStepProgress;
+
+        const targetX = this.axeKickStepStartX + (totalStepDistance * this.axeKickStepDirection);
         const halfWidth = this.width / 2;
         const minX = halfWidth;
         const maxX = balanceConfig.world.width - halfWidth;

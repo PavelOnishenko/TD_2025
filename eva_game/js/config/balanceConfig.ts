@@ -53,7 +53,10 @@ export const balanceConfig = {
       verticalThreshold: 35,
       damage: 40,
       knockbackForce: 0,
-      stepDistance: 1,
+      firstStepDistance: 5,
+      secondStepDistance: 5,
+      firstStepEndProgress: 0.52,
+      secondStepEndProgress: 0.85,
       knockdownRadius: 44,
     },
     animation: {

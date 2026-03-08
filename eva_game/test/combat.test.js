@@ -267,6 +267,32 @@ test('axe kick alternates kick leg animation between uses', () => {
     assert.equal(player.currentAttack, 'axeKick');
 });
 
+
+test('axe kick applies forward step on both strike phases', () => {
+    const player = new Player(200, 400);
+    player.facingRight = true;
+    const input = createMockInputManager();
+
+    input.simulateKeyDown('KeyH');
+    input.simulatePress('kick');
+    player.handleInput(0, 0, input);
+
+    const startX = player.x;
+
+    advanceTime(player, balanceConfig.player.axeKick.duration * balanceConfig.player.axeKick.firstStepEndProgress);
+    const afterFirstPhase = player.x;
+
+    advanceTime(
+        player,
+        balanceConfig.player.axeKick.duration
+            * (balanceConfig.player.axeKick.secondStepEndProgress - balanceConfig.player.axeKick.firstStepEndProgress)
+    );
+    const afterSecondPhase = player.x;
+
+    assert.equal(afterFirstPhase > startX, true);
+    assert.equal(afterSecondPhase > afterFirstPhase, true);
+});
+
 // ============================================================================
 // ENEMY ATTACK HIT DETECTION
 // ============================================================================
