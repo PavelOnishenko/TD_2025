@@ -31,6 +31,47 @@ export const balanceConfig = {
             width: 30,
             height: 30,
         },
+        zombie: {
+            hp: 7,
+            damage: 1,
+            xpValue: 5,
+            name: 'Zombie',
+            width: 30,
+            height: 30,
+        },
+        ninja: {
+            hp: 5,
+            damage: 3,
+            xpValue: 7,
+            name: 'Ninja',
+            width: 30,
+            height: 30,
+            behavior: {
+                avoidHitChance: 0.5,
+            },
+        },
+        darkKnight: {
+            hp: 15,
+            damage: 5,
+            xpValue: 12,
+            name: 'Dark Knight',
+            width: 32,
+            height: 32,
+            behavior: {
+                doubleDamageChance: 0.5,
+            },
+        },
+        dragon: {
+            hp: 50,
+            damage: 10,
+            xpValue: 25,
+            name: 'Dragon',
+            width: 40,
+            height: 40,
+            behavior: {
+                passEncounterChance: 0.5,
+            },
+        },
     },
 
     // ============ STAT CONVERSION RATES ============
@@ -95,5 +136,16 @@ export const balanceConfig = {
         // Enemy count range per encounter
         minEnemies: 1,
         maxEnemies: 3,
+
+        enemyWeights: {
+            skeleton: 4,
+            zombie: 2,
+            ninja: 1,
+            darkKnight: 1,
+            dragon: 1,
+        },
+
+        zombieMinGroup: 1,
+        zombieMaxGroup: 2,
     },
 };

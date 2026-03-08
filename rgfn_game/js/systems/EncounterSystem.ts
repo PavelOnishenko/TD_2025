@@ -1,10 +1,11 @@
 import { randomInt } from '../../../engine/utils/MathUtils.js';
-import Skeleton from '../entities/Skeleton.js';
+import Skeleton, { EnemyConfig } from '../entities/Skeleton.js';
 import { balanceConfig } from '../config/balanceConfig.js';
 import Item, { BOW_ITEM } from '../entities/Item.js';
 
 export type EncounterResult =
     | { type: 'battle', enemies: Skeleton[] }
+    | { type: 'none' }
     | { type: 'item', item: Item };
 
 export default class EncounterSystem {
@@ -48,17 +49,74 @@ export default class EncounterSystem {
             return { type: 'item', item: bow };
         }
 
-        // Generate normal enemy encounter
-        const enemyCount = randomInt(
-            balanceConfig.encounters.minEnemies,
-            balanceConfig.encounters.maxEnemies
-        );
-        const enemies: Skeleton[] = [];
+        const encounterType = this.rollEncounterType();
 
-        for (let i = 0; i < enemyCount; i++) {
-            enemies.push(new Skeleton(0, 0));
+        if (encounterType === 'dragon') {
+            const dragon = new Skeleton(0, 0, balanceConfig.enemies.dragon);
+            if (dragon.shouldPassEncounter()) {
+                return { type: 'none' };
+            }
+
+            return { type: 'battle', enemies: [dragon] };
         }
 
+        const enemies = this.createEnemiesForEncounter(encounterType);
         return { type: 'battle', enemies };
+    }
+
+    private createEnemiesForEncounter(encounterType: string): Skeleton[] {
+        const enemies: Skeleton[] = [];
+
+        if (encounterType === 'skeleton') {
+            const count = randomInt(
+                balanceConfig.encounters.minEnemies,
+                balanceConfig.encounters.maxEnemies
+            );
+
+            for (let i = 0; i < count; i++) {
+                enemies.push(new Skeleton(0, 0, balanceConfig.enemies.skeleton));
+            }
+
+            return enemies;
+        }
+
+        if (encounterType === 'zombie') {
+            const count = randomInt(
+                balanceConfig.encounters.zombieMinGroup,
+                balanceConfig.encounters.zombieMaxGroup
+            );
+
+            for (let i = 0; i < count; i++) {
+                enemies.push(new Skeleton(0, 0, balanceConfig.enemies.zombie));
+            }
+
+            return enemies;
+        }
+
+        const configMap: Record<string, EnemyConfig> = {
+            ninja: balanceConfig.enemies.ninja,
+            darkKnight: balanceConfig.enemies.darkKnight,
+        };
+
+        const config = configMap[encounterType] ?? balanceConfig.enemies.skeleton;
+        enemies.push(new Skeleton(0, 0, config));
+        return enemies;
+    }
+
+    private rollEncounterType(): string {
+        const weights = balanceConfig.encounters.enemyWeights;
+        const orderedTypes = ['skeleton', 'zombie', 'ninja', 'darkKnight', 'dragon'];
+        const totalWeight = orderedTypes.reduce((sum, type) => sum + weights[type], 0);
+
+        let roll = randomInt(0, totalWeight - 1);
+
+        for (const type of orderedTypes) {
+            roll -= weights[type];
+            if (roll < 0) {
+                return type;
+            }
+        }
+
+        return 'skeleton';
     }
 }
