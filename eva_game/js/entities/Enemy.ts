@@ -4,12 +4,12 @@ import { AnimationState, EnemyState } from '../types/game.js';
 import Player from './Player.js';
 import StickFigure from '../utils/StickFigure.js';
 import { balanceConfig } from '../config/balanceConfig.js';
-import { IDLE_KEYFRAMES, IDLE_META } from '../animations/idleImported.js';
-import { WALK_KEYFRAMES, WALK_META } from '../animations/walkImported.js';
-import { PUNCH_KEYFRAMES, PUNCH_META } from '../animations/punchImported.js';
-import { HURT_KEYFRAMES, HURT_META } from '../animations/hurtImported.js';
-import { DEATH_KEYFRAMES, DEATH_META } from '../animations/deathImported.js';
-import { TAUNT_KEYFRAMES, TAUNT_META } from '../animations/tauntImported.js';
+import { IDLE_KEYFRAMES, IDLE_META } from '../animations/imported/idleImported.js';
+import { WALK_KEYFRAMES, WALK_META } from '../animations/imported/walkImported.js';
+import { PUNCH_KEYFRAMES, PUNCH_META } from '../animations/imported/punchImported.js';
+import { HURT_KEYFRAMES, HURT_META } from '../animations/imported/hurtImported.js';
+import { DEATH_KEYFRAMES, DEATH_META } from '../animations/imported/deathImported.js';
+import { TAUNT_KEYFRAMES, TAUNT_META } from '../animations/imported/tauntImported.js';
 
 export default class Enemy extends Entity {
     // Explicitly declare inherited properties from Entity

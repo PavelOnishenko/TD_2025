@@ -6,7 +6,9 @@ import type { ImportedAnimationMeta, ImportedAnimationParams, ImportedKeyframe }
 import { decorationConfig } from '../config/decorationConfig.js';
 
 export interface StickFigurePose {
+    torsoTopX?: number;
     headY: number;
+    headTilt?: number;
     headScale?: number;
     headOffsetY?: number;
     torsoEndY: number;
@@ -67,22 +69,8 @@ export default class StickFigure {
         ctx.lineJoin = 'round';
 
         const flip = facingRight ? 1 : -1;
-        const headRadius = this.HEAD_RADIUS * scale * (pose.headScale ?? 1);
         const drawY = y - this.FEET_Y_OFFSET * scale;
-
-        const headX = x;
-        const headY = drawY + (pose.headY + (pose.headOffsetY ?? 0)) * scale;
-        if (hasOutline) {
-            ctx.beginPath();
-            ctx.arc(headX, headY, headRadius, 0, Math.PI * 2);
-            ctx.fillStyle = outlineColor;
-            ctx.fill();
-        }
-
-        ctx.beginPath();
-        ctx.arc(headX, headY, Math.max(0, headRadius - outlineWidth), 0, Math.PI * 2);
-        ctx.fillStyle = color;
-        ctx.fill();
+        const headRadius = this.HEAD_RADIUS * scale * (pose.headScale ?? 1);
 
         const leftShoulderX = x + pose.leftShoulderX * flip * scale;
         const leftShoulderY = drawY + pose.leftShoulderY * scale;
@@ -98,10 +86,34 @@ export default class StickFigure {
         const shoulderCenterY = (leftShoulderY + rightShoulderY) / 2;
         const hipCenterX = (leftHipX + rightHipX) / 2;
         const hipCenterY = (leftHipY + rightHipY) / 2;
-        const headBottomY = drawY + pose.headY * scale + headRadius;
+
+        const torsoTopX = x + (pose.torsoTopX ?? 0) * flip * scale;
+        const baseHeadY = drawY + (pose.headY + (pose.headOffsetY ?? 0)) * scale;
+        const neckToHeadDistance = Math.max(headRadius, shoulderCenterY - baseHeadY);
+        const headTilt = pose.headTilt ?? 0;
+        const headX = torsoTopX + Math.sin(headTilt) * neckToHeadDistance * flip;
+        const headY = shoulderCenterY - Math.cos(headTilt) * neckToHeadDistance;
+
+        if (hasOutline) {
+            ctx.beginPath();
+            ctx.arc(headX, headY, headRadius, 0, Math.PI * 2);
+            ctx.fillStyle = outlineColor;
+            ctx.fill();
+        }
+
+        ctx.beginPath();
+        ctx.arc(headX, headY, Math.max(0, headRadius - outlineWidth), 0, Math.PI * 2);
+        ctx.fillStyle = color;
+        ctx.fill();
+
+        const headToShoulderX = shoulderCenterX - headX;
+        const headToShoulderY = shoulderCenterY - headY;
+        const headToShoulderDistance = Math.hypot(headToShoulderX, headToShoulderY) || 1;
+        const headBottomX = headX + (headToShoulderX / headToShoulderDistance) * headRadius;
+        const headBottomY = headY + (headToShoulderY / headToShoulderDistance) * headRadius;
 
         ctx.lineWidth = coreBoneLineWidth;
-        this.drawCoreBoneRect(ctx, x, headBottomY, shoulderCenterX, shoulderCenterY, coreBoneLineWidth, color, hasOutline, outlineColor, outlineWidth);
+        this.drawCoreBoneRect(ctx, headBottomX, headBottomY, shoulderCenterX, shoulderCenterY, coreBoneLineWidth, color, hasOutline, outlineColor, outlineWidth);
         this.drawCoreBoneRect(ctx, leftShoulderX, leftShoulderY, rightShoulderX, rightShoulderY, coreBoneLineWidth, color, hasOutline, outlineColor, outlineWidth);
         this.drawCoreBoneRect(ctx, shoulderCenterX, shoulderCenterY, hipCenterX, hipCenterY, coreBoneLineWidth, color, hasOutline, outlineColor, outlineWidth);
         this.drawCoreBoneRect(ctx, leftHipX, leftHipY, rightHipX, rightHipY, coreBoneLineWidth, color, hasOutline, outlineColor, outlineWidth);
@@ -345,7 +357,9 @@ export default class StickFigure {
         const rightFoot = this.pointFromAngle(rightKnee.x, rightKnee.y, params.rightCalfLength * scale, params.rightHipAngle + params.rightKneeAngle);
 
         return {
-            headY: torsoTopY - params.headTilt * 8 + translationY,
+            torsoTopX: translationX,
+            headY: torsoTopY + translationY,
+            headTilt: params.headTilt,
             headScale: this.IMPORT_HEAD_SCALE_MULTIPLIER,
             headOffsetY: this.IMPORT_HEAD_UP_OFFSET,
             torsoEndY: torsoEndY + translationY,

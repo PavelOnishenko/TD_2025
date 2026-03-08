@@ -9,11 +9,11 @@ import Player from '../dist/entities/Player.js';
 import Enemy from '../dist/entities/Enemy.js';
 import { balanceConfig } from '../dist/config/balanceConfig.js';
 import StickFigure from '../dist/utils/StickFigure.js';
-import { KICK_KEYFRAMES, KICK_META } from '../dist/animations/kickImported.js';
-import { PUNCH_KEYFRAMES, PUNCH_META } from '../dist/animations/punchImported.js';
-import { PUNCH2_KEYFRAMES, PUNCH2_META } from '../dist/animations/punch2Imported.js';
-import { HURT_KEYFRAMES } from '../dist/animations/hurtImported.js';
-import { DEATH_KEYFRAMES, DEATH_META } from '../dist/animations/deathImported.js';
+import { KICK_KEYFRAMES, KICK_META } from '../dist/animations/imported/kickImported.js';
+import { PUNCH_KEYFRAMES, PUNCH_META } from '../dist/animations/imported/punchImported.js';
+import { PUNCH2_KEYFRAMES, PUNCH2_META } from '../dist/animations/imported/punch2Imported.js';
+import { HURT_KEYFRAMES } from '../dist/animations/imported/hurtImported.js';
+import { DEATH_KEYFRAMES, DEATH_META } from '../dist/animations/imported/deathImported.js';
 import {
     createMockInputManager,
     advanceTime,
@@ -185,6 +185,152 @@ test('imported pose keeps head above shoulders to avoid chest overlap', () => {
         headBottomY <= shoulderCenterY,
         `head bottom (${headBottomY.toFixed(2)}) should be above shoulder center (${shoulderCenterY.toFixed(2)})`
     );
+});
+
+
+
+test('imported head tilt rotates around neck while preserving neck-to-head distance', () => {
+    const keyframes = [
+        {
+            time: 0,
+            params: {
+                x: 400,
+                y: 300,
+                headTilt: 0,
+                torsoAngle: 0,
+                torsoLength: 50,
+                leftUpperArmLength: 30,
+                leftForearmLength: 30,
+                rightUpperArmLength: 30,
+                rightForearmLength: 30,
+                leftThighLength: 35,
+                leftCalfLength: 35,
+                rightThighLength: 35,
+                rightCalfLength: 35,
+                hipLength: 30,
+                shoulderLength: 30,
+                leftShoulderAngle: 0,
+                leftElbowAngle: 0,
+                rightShoulderAngle: 0,
+                rightElbowAngle: 0,
+                leftHipAngle: 0,
+                leftKneeAngle: 0,
+                rightHipAngle: 0,
+                rightKneeAngle: 0
+            }
+        },
+        {
+            time: 1,
+            params: {
+                x: 400,
+                y: 300,
+                headTilt: 1.2,
+                torsoAngle: 0,
+                torsoLength: 50,
+                leftUpperArmLength: 30,
+                leftForearmLength: 30,
+                rightUpperArmLength: 30,
+                rightForearmLength: 30,
+                leftThighLength: 35,
+                leftCalfLength: 35,
+                rightThighLength: 35,
+                rightCalfLength: 35,
+                hipLength: 30,
+                shoulderLength: 30,
+                leftShoulderAngle: 0,
+                leftElbowAngle: 0,
+                rightShoulderAngle: 0,
+                rightElbowAngle: 0,
+                leftHipAngle: 0,
+                leftKneeAngle: 0,
+                rightHipAngle: 0,
+                rightKneeAngle: 0
+            }
+        }
+    ];
+    const meta = { duration: 1, loop: false };
+
+    const neutralPose = StickFigure.getPoseFromImportedAnimation(keyframes, meta, 0);
+    const tiltedPose = StickFigure.getPoseFromImportedAnimation(keyframes, meta, 1);
+
+    const neutralNeckToHeadY = ((neutralPose.leftShoulderY + neutralPose.rightShoulderY) / 2) - (neutralPose.headY + (neutralPose.headOffsetY ?? 0));
+    const tiltedNeckToHeadY = ((tiltedPose.leftShoulderY + tiltedPose.rightShoulderY) / 2) - (tiltedPose.headY + (tiltedPose.headOffsetY ?? 0));
+
+    assert.ok(
+        Math.abs(tiltedNeckToHeadY - neutralNeckToHeadY) < 0.01,
+        'head tilt should not move the head vertically away from the neck pivot in imported pose data'
+    );
+    assert.ok(
+        Math.abs(tiltedPose.headTilt ?? 0) > 0.5,
+        'tilted imported pose should preserve headTilt value for rendering'
+    );
+});
+
+test('imported x translation shifts head and shoulder anchor together', () => {
+    const keyframes = [
+        {
+            time: 0,
+            params: {
+                x: 400,
+                y: 300,
+                headTilt: 0,
+                torsoAngle: 0,
+                torsoLength: 50,
+                leftUpperArmLength: 30,
+                leftForearmLength: 30,
+                rightUpperArmLength: 30,
+                rightForearmLength: 30,
+                leftThighLength: 35,
+                leftCalfLength: 35,
+                rightThighLength: 35,
+                rightCalfLength: 35,
+                hipLength: 30,
+                shoulderLength: 30,
+                leftShoulderAngle: 0,
+                leftElbowAngle: 0,
+                rightShoulderAngle: 0,
+                rightElbowAngle: 0,
+                leftHipAngle: 0,
+                leftKneeAngle: 0,
+                rightHipAngle: 0,
+                rightKneeAngle: 0
+            }
+        },
+        {
+            time: 1,
+            params: {
+                x: 450,
+                y: 300,
+                headTilt: 0,
+                torsoAngle: 0,
+                torsoLength: 50,
+                leftUpperArmLength: 30,
+                leftForearmLength: 30,
+                rightUpperArmLength: 30,
+                rightForearmLength: 30,
+                leftThighLength: 35,
+                leftCalfLength: 35,
+                rightThighLength: 35,
+                rightCalfLength: 35,
+                hipLength: 30,
+                shoulderLength: 30,
+                leftShoulderAngle: 0,
+                leftElbowAngle: 0,
+                rightShoulderAngle: 0,
+                rightElbowAngle: 0,
+                leftHipAngle: 0,
+                leftKneeAngle: 0,
+                rightHipAngle: 0,
+                rightKneeAngle: 0
+            }
+        }
+    ];
+    const meta = { duration: 1, loop: false };
+
+    const startPose = StickFigure.getPoseFromImportedAnimation(keyframes, meta, 0);
+    const endPose = StickFigure.getPoseFromImportedAnimation(keyframes, meta, 1);
+
+    assert.ok(endPose.torsoTopX > startPose.torsoTopX, 'torso top should move when imported x changes');
 });
 
 test('imported death animation moves the body downward as y increases', () => {
