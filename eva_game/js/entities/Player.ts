@@ -64,7 +64,6 @@ export default class Player extends Entity {
     private hurtAnimationTimer: number = 0;
     private deathAnimationTimer: number = 0;
 
-    private static readonly WALK_ANIMATION_SPEED: number = 3; // cycles per second
 
     constructor(x: number, y: number) {
         super(x, y);
@@ -319,7 +318,7 @@ export default class Player extends Entity {
         switch (this.animationState) {
             case 'walk':
                 // Continuous cycling animation for walking
-                this.walkAnimationTime += deltaTime * Player.WALK_ANIMATION_SPEED;
+                this.walkAnimationTime += deltaTime * (1000 / balanceConfig.player.animation.walkCycleDuration);
                 this.animationProgress = (this.walkAnimationTime % 1);
                 break;
 
@@ -345,7 +344,7 @@ export default class Player extends Entity {
                 // Progress through hurt animation
                 if (this.hurtAnimationTimer > 0) {
                     this.hurtAnimationTimer -= deltaTime * 1000;
-                    const hurtProgress = 1 - (this.hurtAnimationTimer / balanceConfig.player.hurtAnimationDuration);
+                    const hurtProgress = 1 - (this.hurtAnimationTimer / balanceConfig.player.animation.hurtDuration);
                     this.animationProgress = Math.max(0, Math.min(1, hurtProgress));
 
                     if (this.hurtAnimationTimer <= 0) {
@@ -359,7 +358,7 @@ export default class Player extends Entity {
                 // Progress through death animation
                 if (this.deathAnimationTimer > 0) {
                     this.deathAnimationTimer -= deltaTime * 1000;
-                    const deathProgress = 1 - (this.deathAnimationTimer / balanceConfig.player.deathAnimationDuration);
+                    const deathProgress = 1 - (this.deathAnimationTimer / balanceConfig.player.animation.deathDuration);
                     this.animationProgress = Math.max(0, Math.min(1, deathProgress));
                 }
                 break;
@@ -387,14 +386,14 @@ export default class Player extends Entity {
         // Only trigger hurt if not already in hurt or death state
         if (this.animationState !== 'hurt' && this.animationState !== 'death') {
             this.animationState = 'hurt';
-            this.hurtAnimationTimer = balanceConfig.player.hurtAnimationDuration;
+            this.hurtAnimationTimer = balanceConfig.player.animation.hurtDuration;
             this.animationProgress = 0;
         }
     }
 
     private triggerDeathAnimation(): void {
         this.animationState = 'death';
-        this.deathAnimationTimer = balanceConfig.player.deathAnimationDuration;
+        this.deathAnimationTimer = balanceConfig.player.animation.deathDuration;
         this.animationProgress = 0;
         this.velocityX = 0;
         this.velocityY = 0;

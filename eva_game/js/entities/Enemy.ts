@@ -53,7 +53,6 @@ export default class Enemy extends Entity {
     private punchAnimationTimer: number = 0;
     private tauntAnimationTimer: number = 0;
 
-    private static readonly WALK_ANIMATION_SPEED: number = 2.5; // cycles per second
 
     constructor(x: number, y: number, color: string = '#ff6b6b') {
         super(x, y);
@@ -125,7 +124,7 @@ export default class Enemy extends Entity {
         switch (this.animationState) {
             case 'walk':
                 // Continuous cycling animation for walking
-                this.walkAnimationTime += deltaTime * Enemy.WALK_ANIMATION_SPEED;
+                this.walkAnimationTime += deltaTime * (1000 / balanceConfig.enemy.animation.walkCycleDuration);
                 this.animationProgress = (this.walkAnimationTime % 1);
                 break;
 
@@ -139,7 +138,7 @@ export default class Enemy extends Entity {
                 // Progress through hurt animation
                 if (this.hurtAnimationTimer > 0) {
                     this.hurtAnimationTimer -= deltaTime * 1000;
-                    const hurtProgress = 1 - (this.hurtAnimationTimer / balanceConfig.enemy.attack.hurtAnimationDuration);
+                    const hurtProgress = 1 - (this.hurtAnimationTimer / balanceConfig.enemy.animation.hurtDuration);
                     this.animationProgress = Math.max(0, Math.min(1, hurtProgress));
 
                     if (this.hurtAnimationTimer <= 0) {
@@ -153,7 +152,7 @@ export default class Enemy extends Entity {
                 // Progress through death animation
                 if (this.deathAnimationTimer > 0) {
                     this.deathAnimationTimer -= deltaTime * 1000;
-                    const deathProgress = 1 - (this.deathAnimationTimer / balanceConfig.enemy.attack.deathAnimationDuration);
+                    const deathProgress = 1 - (this.deathAnimationTimer / balanceConfig.enemy.animation.deathDuration);
                     this.animationProgress = Math.max(0, Math.min(1, deathProgress));
 
                     // When animation completes, mark as dead (but keep rendering)
@@ -168,7 +167,7 @@ export default class Enemy extends Entity {
                 // Progress through taunt animation
                 if (this.tauntAnimationTimer > 0) {
                     this.tauntAnimationTimer -= deltaTime * 1000;
-                    const tauntProgress = 1 - (this.tauntAnimationTimer / balanceConfig.strafing.tauntDuration);
+                    const tauntProgress = 1 - (this.tauntAnimationTimer / balanceConfig.enemy.animation.tauntDuration);
                     this.animationProgress = Math.max(0, Math.min(1, tauntProgress));
 
                     if (this.tauntAnimationTimer <= 0) {
@@ -351,7 +350,7 @@ export default class Enemy extends Entity {
     }
 
     public startTaunt(): void {
-        this.tauntAnimationTimer = balanceConfig.strafing.tauntDuration;
+        this.tauntAnimationTimer = balanceConfig.enemy.animation.tauntDuration;
         this.animationProgress = 0;
     }
 
@@ -444,14 +443,14 @@ export default class Enemy extends Entity {
         // Only trigger hurt if not already in hurt or death state
         if (this.animationState !== 'hurt' && this.animationState !== 'death') {
             this.animationState = 'hurt';
-            this.hurtAnimationTimer = balanceConfig.enemy.attack.hurtAnimationDuration;
+            this.hurtAnimationTimer = balanceConfig.enemy.animation.hurtDuration;
             this.animationProgress = 0;
         }
     }
 
     private triggerDeathAnimation(): void {
         this.animationState = 'death';
-        this.deathAnimationTimer = balanceConfig.enemy.attack.deathAnimationDuration;
+        this.deathAnimationTimer = balanceConfig.enemy.animation.deathDuration;
         this.animationProgress = 0;
         this.velocityX = 0;
         this.velocityY = 0;

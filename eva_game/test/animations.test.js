@@ -427,7 +427,7 @@ test('hurt animation progresses to completion', () => {
 
     player.takeDamage(10);
 
-    const duration = balanceConfig.player.hurtAnimationDuration;
+    const duration = balanceConfig.player.animation.hurtDuration;
 
     advanceTime(player, duration * 0.5);
     const midProgress = player.animationProgress;
@@ -443,7 +443,7 @@ test('hurt animation has correct duration', () => {
 
     player.takeDamage(10);
 
-    const duration = balanceConfig.player.hurtAnimationDuration;
+    const duration = balanceConfig.player.animation.hurtDuration;
 
     // Should still be in hurt state before duration
     advanceTime(player, duration - 50);
@@ -459,7 +459,7 @@ test('enemy hurt animation has correct duration', () => {
 
     enemy.takeDamage(10);
 
-    const duration = balanceConfig.enemy.attack.hurtAnimationDuration;
+    const duration = balanceConfig.enemy.animation.hurtDuration;
 
     // Should still be in hurt state before duration
     advanceTime(enemy, duration - 50);
@@ -524,7 +524,7 @@ test('death animation progresses to 1', () => {
 
     player.takeDamage(player.maxHealth);
 
-    const duration = balanceConfig.player.deathAnimationDuration;
+    const duration = balanceConfig.player.animation.deathDuration;
 
     advanceTime(player, duration + 50);
 
@@ -537,7 +537,7 @@ test('enemy death animation has correct duration', () => {
 
     enemy.takeDamage(enemy.maxHealth);
 
-    const duration = balanceConfig.enemy.attack.deathAnimationDuration;
+    const duration = balanceConfig.enemy.animation.deathDuration;
 
     // Should still be animating before duration
     advanceTime(enemy, duration - 100);
@@ -553,7 +553,7 @@ test('death animation does not loop', () => {
 
     player.takeDamage(player.maxHealth);
 
-    const duration = balanceConfig.player.deathAnimationDuration;
+    const duration = balanceConfig.player.animation.deathDuration;
 
     advanceTime(player, duration + 500);
 

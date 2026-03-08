@@ -46,8 +46,11 @@ export const balanceConfig = {
       damage: 35,             // kicks deal more damage than punches
       knockbackForce: 0,
     },
-    hurtAnimationDuration: 400,
-    deathAnimationDuration: 1000,
+    animation: {
+      walkCycleDuration: 600,
+      hurtDuration: 400,
+      deathDuration: 1000,
+    },
   },
 
   enemy: {
@@ -65,8 +68,12 @@ export const balanceConfig = {
       cooldown: 1500,
       damage: 10,
       punchDuration: 300,
-      hurtAnimationDuration: 400,
-      deathAnimationDuration: 1000,
+    },
+    animation: {
+      walkCycleDuration: 700,
+      hurtDuration: 400,
+      deathDuration: 1000,
+      tauntDuration: 800,
     },
     separation: {
       distance: 70,
@@ -136,6 +143,5 @@ export const balanceConfig = {
     lineColor: 'rgba(255, 200, 100, 0.4)',  // Color of the line from enemy to strafing position
     lineWidth: 2,  // Width of the indicator line
     tauntChance: 0.3,  // Chance (0-1) to taunt when reaching a strafing point
-    tauntDuration: 800,  // Duration of taunt animation in milliseconds
   },
 };
