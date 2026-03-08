@@ -11,6 +11,11 @@ export const balanceConfig = {
         baseDamage: 2,
         baseArmor: 0,
 
+        // Initial allocated stats at game start
+        initialVitality: 0,
+        initialToughness: 0,
+        initialStrength: 0,
+
         // Visual properties
         width: 32,
         height: 32,

@@ -66,10 +66,10 @@ export default class Player extends DamageableEntity {
         this.width = balanceConfig.player.width;
         this.height = balanceConfig.player.height;
 
-        // Initialize stats
-        this.vitality = 0;
-        this.toughness = 0;
-        this.strength = 0;
+        // Initialize stats from balance config
+        this.vitality = balanceConfig.player.initialVitality;
+        this.toughness = balanceConfig.player.initialToughness;
+        this.strength = balanceConfig.player.initialStrength;
         this.skillPoints = 0;
 
         // Calculate initial stats
