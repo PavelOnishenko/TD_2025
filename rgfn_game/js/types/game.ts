@@ -50,6 +50,7 @@ export interface TimingConfig {
         gameOverDelay: number;
         battleStartSplashDuration: number;
         battleEndSplashDuration: number;
+        itemDiscoverySplashDuration: number;
     };
 }
 
