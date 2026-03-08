@@ -1,3 +1,4 @@
+import timingConfig from '../config/timingConfig.js';
 import { theme } from '../config/ThemeConfig.js';
 
 /**
@@ -10,6 +11,9 @@ export class BattleSplash {
     private title: HTMLElement | null = null;
     private subtitle: HTMLElement | null = null;
     private decorativeBorder: HTMLElement | null = null;
+    private dismissTimeoutId: number | null = null;
+    private dismissCallback: (() => void) | null = null;
+    private onOverlayClickBound = (event: MouseEvent) => this.handleOverlayClick(event);
 
     constructor() {
         this.createUI();
@@ -74,9 +78,7 @@ export class BattleSplash {
         // Show with animation
         this.show(() => {
             // Hide after duration and call callback
-            setTimeout(() => {
-                this.hide(callback);
-            }, 2000); // 2 seconds display time
+            this.scheduleDismiss(callback, timingConfig.battle.battleStartSplashDuration);
         });
     }
 
@@ -102,10 +104,56 @@ export class BattleSplash {
         // Show with animation
         this.show(() => {
             // Hide after duration and call callback
-            setTimeout(() => {
-                this.hide(callback);
-            }, 2500); // 2.5 seconds display time for end screens
+            this.scheduleDismiss(callback, timingConfig.battle.battleEndSplashDuration);
         });
+    }
+
+    /**
+     * Schedules splash dismissal and allows left-click skipping
+     */
+    private scheduleDismiss(callback: () => void, duration: number): void {
+        if (!this.overlay) return;
+
+        this.clearDismissTimeout();
+        this.overlay.addEventListener('click', this.onOverlayClickBound);
+
+        this.dismissCallback = callback;
+        this.dismissTimeoutId = window.setTimeout(() => {
+            this.dismiss();
+        }, duration);
+    }
+
+    /**
+     * Handles skip via left mouse click
+     */
+    private handleOverlayClick(event: MouseEvent): void {
+        if (event.button !== 0) return;
+
+        this.dismiss();
+    }
+
+    /**
+     * Dismisses splash safely exactly once
+     */
+    private dismiss(): void {
+        if (!this.overlay || this.overlay.style.display === 'none' || !this.dismissCallback) return;
+
+        const callback = this.dismissCallback;
+        this.dismissCallback = null;
+
+        this.clearDismissTimeout();
+        this.overlay.removeEventListener('click', this.onOverlayClickBound);
+        this.hide(callback);
+    }
+
+    /**
+     * Clears pending dismiss timeout
+     */
+    private clearDismissTimeout(): void {
+        if (this.dismissTimeoutId !== null) {
+            window.clearTimeout(this.dismissTimeoutId);
+            this.dismissTimeoutId = null;
+        }
     }
 
     /**
