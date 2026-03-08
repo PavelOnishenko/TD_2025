@@ -233,6 +233,66 @@ test('player hit tracking resets for new attack', () => {
     assert.equal(secondAttackHit, true);
 });
 
+
+test('H+K triggers axe kick attack state', () => {
+    const player = new Player(100, 400);
+    const input = createMockInputManager();
+
+    input.simulateKeyDown('KeyH');
+    input.simulatePress('kick');
+    player.handleInput(0, 0, input);
+
+    assert.equal(player.isAttacking, true);
+    assert.equal(player.animationState, 'axeKick');
+    assert.equal(player.currentAttack, 'axeKick');
+});
+
+test('axe kick alternates kick leg animation between uses', () => {
+    const player = new Player(100, 400);
+    const input = createMockInputManager();
+
+    input.simulateKeyDown('KeyH');
+    input.simulatePress('kick');
+    player.handleInput(0, 0, input);
+    const firstAttackState = player.animationState;
+
+    advanceTime(player, balanceConfig.player.axeKick.duration + 20);
+    advanceTime(player, balanceConfig.player.axeKick.cooldown + 20);
+
+    input.simulatePress('kick');
+    player.handleInput(0, 0, input);
+
+    assert.equal(firstAttackState, 'axeKick');
+    assert.equal(player.animationState, 'axeKick');
+    assert.equal(player.currentAttack, 'axeKick');
+});
+
+
+test('axe kick applies forward step on both strike phases', () => {
+    const player = new Player(200, 400);
+    player.facingRight = true;
+    const input = createMockInputManager();
+
+    input.simulateKeyDown('KeyH');
+    input.simulatePress('kick');
+    player.handleInput(0, 0, input);
+
+    const startX = player.x;
+
+    advanceTime(player, balanceConfig.player.axeKick.duration * balanceConfig.player.axeKick.firstStepEndProgress);
+    const afterFirstPhase = player.x;
+
+    advanceTime(
+        player,
+        balanceConfig.player.axeKick.duration
+            * (balanceConfig.player.axeKick.secondStepEndProgress - balanceConfig.player.axeKick.firstStepEndProgress)
+    );
+    const afterSecondPhase = player.x;
+
+    assert.equal(afterFirstPhase > startX, true);
+    assert.equal(afterSecondPhase > afterFirstPhase, true);
+});
+
 // ============================================================================
 // ENEMY ATTACK HIT DETECTION
 // ============================================================================
@@ -685,4 +745,34 @@ test('attacks fail when combatants are facing same direction', () => {
 
     // Player can't hit enemy behind them (player faces left, enemy is to the right)
     assert.equal(player2.checkAttackHit(enemy2), false);
+});
+
+
+test('enemy knockdown flows through fall -> ground -> get up -> idle', () => {
+    const enemy = new Enemy(200, 400);
+
+    enemy.startKnockdown(180);
+    assert.equal(enemy.animationState, 'knockdownFall');
+
+    advanceTime(enemy, balanceConfig.enemy.animation.knockdownFallDuration + 20);
+    assert.equal(enemy.animationState, 'knockedDown');
+
+    advanceTime(enemy, balanceConfig.enemy.animation.knockedDownDuration + 20);
+    assert.equal(enemy.animationState, 'getUp');
+
+    advanceTime(enemy, balanceConfig.enemy.animation.getUpDuration + 20);
+    assert.equal(enemy.animationState, 'idle');
+});
+
+test('knocked down enemy cannot attack player', () => {
+    const enemy = new Enemy(130, 400);
+    enemy.facingRight = false;
+    const player = new Player(100, 400);
+
+    enemy.startKnockdown(120);
+
+    assert.equal(enemy.canAttackPlayer(player), false);
+    enemy.startAttack();
+    advanceTime(enemy, balanceConfig.enemy.attack.punchDuration * 0.5);
+    assert.equal(enemy.checkAttackHit(player), false);
 });

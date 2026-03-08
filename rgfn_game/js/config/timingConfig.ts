@@ -34,10 +34,13 @@ export const timingConfig: TimingConfig = {
         gameOverDelay: 2000,
 
         // Duration to display battle start splash screen (ms)
-        battleStartSplashDuration: 2000,
+        battleStartSplashDuration: 1200,
 
         // Duration to display battle end splash screen (ms)
-        battleEndSplashDuration: 2500,
+        battleEndSplashDuration: 1400,
+
+        // Duration to display item discovery splash screen (ms)
+        itemDiscoverySplashDuration: 1600,
     },
 };
 

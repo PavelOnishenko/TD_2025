@@ -459,6 +459,12 @@ export default class Game {
         }
 
         enemy.takeDamage(this.player.attackDamage);
+
+        // Skip secondary effects when enemy dies from this hit
+        if (enemy.animationState === 'death' || enemy.isDead) {
+            return;
+        }
+
         const knockback = this.player.attackKnockback;
         if (knockback > 0) {
             const direction = this.player.facingRight ? 1 : -1;
@@ -467,7 +473,17 @@ export default class Game {
             const maxX = balanceConfig.world.width - halfWidth;
             enemy.x = Math.max(minX, Math.min(maxX, enemy.x + (direction * knockback)));
         }
-        // takeDamage() now handles setting active = false when health reaches 0
+
+        if (this.player.currentAttack === 'axeKick') {
+            const knockdownRadius = balanceConfig.player.axeKick.knockdownRadius;
+            const distanceX = enemy.x - this.player.x;
+            const distanceY = enemy.y - this.player.y;
+            const distanceToLanding = Math.hypot(distanceX, distanceY);
+            if (distanceToLanding <= knockdownRadius) {
+                const dropOffset = this.player.facingRight ? 8 : -8;
+                enemy.startKnockdown(this.player.x + dropOffset);
+            }
+        }
     }
 
     private endGame(): void {
@@ -496,6 +512,10 @@ export default class Game {
     private render(): void {
         this.renderer.beginFrame();
         this.drawBackground();
+
+        // Show the area-of-effect knockdown radius while axe kick is active
+        this.drawAxeKickKnockdownIndicator();
+
         // Draw attack position and strafing indicators on the ground (before entities)
         if (this.player) {
             this.attackPositionManager.drawIndicators(this.ctx, this.player, this.enemies);
@@ -508,6 +528,32 @@ export default class Game {
 
         // Draw enemy states widget on the left side
         this.drawEnemyStatesWidget();
+    }
+
+    private drawAxeKickKnockdownIndicator(): void {
+        if (!this.player || this.player.currentAttack !== 'axeKick') {
+            return;
+        }
+
+        const radius = balanceConfig.player.axeKick.knockdownRadius;
+        const progress = this.player.animationProgress;
+        const pulse = 0.65 + (0.35 * Math.sin(progress * Math.PI * 4));
+        const isInHitWindow = progress >= 0.45 && progress <= 0.82;
+        const fillAlpha = isInHitWindow ? 0.16 : 0.08;
+        const strokeAlpha = isInHitWindow ? 0.75 : 0.45;
+
+        this.ctx.save();
+        this.ctx.beginPath();
+        this.ctx.arc(this.player.x, this.player.y, radius, 0, Math.PI * 2);
+        this.ctx.fillStyle = `rgba(255, 190, 70, ${fillAlpha})`;
+        this.ctx.fill();
+
+        this.ctx.lineWidth = 2;
+        this.ctx.setLineDash([8, 6]);
+        this.ctx.lineDashOffset = -progress * 20;
+        this.ctx.strokeStyle = `rgba(255, 220, 120, ${strokeAlpha * pulse})`;
+        this.ctx.stroke();
+        this.ctx.restore();
     }
 
     private drawCoordinateWidgets(): void {

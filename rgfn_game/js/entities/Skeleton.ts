@@ -3,6 +3,22 @@ import { withDamageable } from '../../../engine/core/Damageable.js';
 import { balanceConfig } from '../config/balanceConfig.js';
 import { theme } from '../config/ThemeConfig.js';
 
+export interface EnemyBehavior {
+    avoidHitChance?: number;
+    doubleDamageChance?: number;
+    passEncounterChance?: number;
+}
+
+export interface EnemyConfig {
+    hp: number;
+    damage: number;
+    xpValue: number;
+    name: string;
+    width: number;
+    height: number;
+    behavior?: EnemyBehavior;
+}
+
 // Extend Entity with Damageable functionality
 const DamageableEntity = withDamageable(Entity);
 
@@ -37,18 +53,20 @@ export default class Skeleton extends DamageableEntity {
     public damage: number;
     public name: string;
     public xpValue: number;
+    public behavior: EnemyBehavior;
     public gridCol?: number;
     public gridRow?: number;
 
-    constructor(x: number, y: number) {
+    constructor(x: number, y: number, enemyConfig?: EnemyConfig) {
         super(x, y);
-        const config = balanceConfig.enemies.skeleton;
+        const config: EnemyConfig = enemyConfig ?? balanceConfig.enemies.skeleton;
 
         this.width = config.width;
         this.height = config.height;
         this.damage = config.damage;
         this.name = config.name;
         this.xpValue = config.xpValue;
+        this.behavior = config.behavior ?? {};
 
         // Initialize Damageable functionality
         this.initDamageable(config.hp);
@@ -92,6 +110,25 @@ export default class Skeleton extends DamageableEntity {
 
         // Health bar
         this.drawHealthBar(ctx, screenX, screenY);
+    }
+
+    public shouldAvoidHit(): boolean {
+        const chance = this.behavior.avoidHitChance ?? 0;
+        return chance > 0 && Math.random() < chance;
+    }
+
+    public getAttackDamage(): number {
+        const chance = this.behavior.doubleDamageChance ?? 0;
+        if (chance > 0 && Math.random() < chance) {
+            return this.damage * 2;
+        }
+
+        return this.damage;
+    }
+
+    public shouldPassEncounter(): boolean {
+        const chance = this.behavior.passEncounterChance ?? 0;
+        return chance > 0 && Math.random() < chance;
     }
 
     private drawHealthBar(ctx: CanvasRenderingContext2D, screenX: number, screenY: number): void {

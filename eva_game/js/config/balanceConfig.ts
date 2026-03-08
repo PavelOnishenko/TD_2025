@@ -46,6 +46,19 @@ export const balanceConfig = {
       damage: 35,             // kicks deal more damage than punches
       knockbackForce: 0,
     },
+    axeKick: {
+      duration: 320,
+      cooldown: 320,
+      reach: 72,
+      verticalThreshold: 35,
+      damage: 40,
+      knockbackForce: 0,
+      firstStepDistance: 5,
+      secondStepDistance: 5,
+      firstStepEndProgress: 0.52,
+      secondStepEndProgress: 0.85,
+      knockdownRadius: 44,
+    },
     animation: {
       walkCycleDuration: 600,
       hurtDuration: 400,
@@ -74,6 +87,9 @@ export const balanceConfig = {
       hurtDuration: 400,
       deathDuration: 1000,
       tauntDuration: 800,
+      knockdownFallDuration: 320,
+      knockedDownDuration: 520,
+      getUpDuration: 420,
     },
     separation: {
       distance: 70,

@@ -8,11 +8,15 @@ export type AnimationState =
     | 'punch'
     | 'strongPunch'
     | 'kick'
+    | 'axeKick'
     | 'jump'
     | 'fly'
     | 'land'
     | 'hurt'
     | 'death'
+    | 'knockdownFall'
+    | 'knockedDown'
+    | 'getUp'
     | 'taunt';
 
 /**
