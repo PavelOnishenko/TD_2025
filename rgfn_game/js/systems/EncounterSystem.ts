@@ -11,14 +11,12 @@ export type EncounterResult =
 export default class EncounterSystem {
     private encounterRate: number;
     private stepsSinceEncounter: number;
-    private minStepsBeforeEncounter: number;
     private bowFound: boolean;
     private itemDiscoveryChance: number;
 
     constructor(encounterRate?: number) {
         this.encounterRate = encounterRate ?? balanceConfig.encounters.encounterRate;
         this.stepsSinceEncounter = 0;
-        this.minStepsBeforeEncounter = balanceConfig.encounters.minStepsBeforeEncounter;
         this.bowFound = false;
         this.itemDiscoveryChance = 0.15; // 15% chance to find item instead of enemies
     }
@@ -28,10 +26,6 @@ export default class EncounterSystem {
     }
 
     public checkEncounter(): boolean {
-        if (this.stepsSinceEncounter < this.minStepsBeforeEncounter) {
-            return false;
-        }
-
         const roll = Math.random();
         if (roll < this.encounterRate) {
             this.stepsSinceEncounter = 0;
