@@ -12,8 +12,9 @@ import {
     levelConfig
 } from '../config/levelConfig.js';
 import { balanceConfig } from '../config/balanceConfig.js';
-import { theme } from '../config/ThemeConfig.js';
 import Item from './Item.js';
+import PlayerInventory from './PlayerInventory.js';
+import PlayerRenderer from './PlayerRenderer.js';
 
 // Extend Entity with Damageable functionality
 const DamageableEntity = withDamageable(Entity);
@@ -66,8 +67,16 @@ export default class Player extends DamageableEntity {
     public gold: number = 20;
 
     // Equipment & Inventory
-    public equippedWeapon: Item | null = null;
-    private inventory: Item[] = [];
+    private readonly inventorySystem: PlayerInventory;
+    private readonly renderer: PlayerRenderer;
+
+    public get equippedWeapon(): Item | null {
+        return this.inventorySystem.getEquippedWeapon();
+    }
+
+    public set equippedWeapon(weapon: Item | null) {
+        this.inventorySystem.setEquippedWeapon(weapon);
+    }
 
     constructor(x: number, y: number) {
         super(x, y);
@@ -81,8 +90,11 @@ export default class Player extends DamageableEntity {
         this.agility = balanceConfig.player.initialAgility;
         this.skillPoints = 0;
 
-        // Initialize inventory
-        this.inventory = [];
+        this.inventorySystem = new PlayerInventory({
+            onWeaponChanged: () => this.updateStats(),
+            onHealingPotionUsed: () => this.heal(5)
+        });
+        this.renderer = new PlayerRenderer();
 
         // Calculate initial stats
         this.updateStats();
@@ -221,18 +233,7 @@ export default class Player extends DamageableEntity {
      * @returns true if item was added successfully
      */
     public addItemToInventory(item: Item): boolean {
-        if (this.inventory.length >= balanceConfig.player.inventorySize) {
-            return false;
-        }
-
-        this.inventory.push(item);
-
-        if (item.type === 'weapon') {
-            this.equippedWeapon = item;
-            this.updateStats();
-        }
-
-        return true;
+        return this.inventorySystem.addItem(item);
     }
 
     /**
@@ -240,41 +241,26 @@ export default class Player extends DamageableEntity {
      * @returns true if a potion was used
      */
     public useHealingPotion(): boolean {
-        const potionIndex = this.inventory.findIndex((item) => item.id === 'healingPotion');
-        if (potionIndex === -1) {
-            return false;
-        }
-
-        this.inventory.splice(potionIndex, 1);
-        this.heal(5);
-        return true;
+        return this.inventorySystem.useHealingPotion();
     }
 
     /**
      * Returns a copy of inventory contents for UI rendering.
      */
     public getInventory(): Item[] {
-        return [...this.inventory];
+        return this.inventorySystem.getItems();
     }
 
     public getHealingPotionCount(): number {
-        return this.inventory.filter((item) => item.id === 'healingPotion').length;
+        return this.inventorySystem.getHealingPotionCount();
     }
 
     public removeHealingPotionFromInventory(): boolean {
-        const potionIndex = this.inventory.findIndex((item) => item.id === 'healingPotion');
-        if (potionIndex === -1) {
-            return false;
-        }
-
-        this.inventory.splice(potionIndex, 1);
-        return true;
+        return this.inventorySystem.removeHealingPotion();
     }
 
     public unequipWeapon(): Item | null {
-        const weapon = this.equippedWeapon;
-        this.equippedWeapon = null;
-        return weapon;
+        return this.inventorySystem.unequipWeapon();
     }
 
     /**
@@ -282,17 +268,14 @@ export default class Player extends DamageableEntity {
      * @returns number of cells the player can attack from
      */
     public getAttackRange(): number {
-        if (this.equippedWeapon) {
-            return this.equippedWeapon.attackRange;
-        }
-        return 1; // Default melee range
+        return this.inventorySystem.getAttackRange();
     }
 
     /**
      * Check if the player has a specific item equipped
      */
     public hasWeapon(): boolean {
-        return this.equippedWeapon !== null;
+        return this.inventorySystem.hasWeapon();
     }
 
     public getAvoidFormulaText(): string {
@@ -326,67 +309,6 @@ export default class Player extends DamageableEntity {
     }
 
     public draw(ctx: CanvasRenderingContext2D, viewport?: any): void {
-        const screenX = this.x;
-        const screenY = this.y;
-        const left = screenX - this.width / 2;
-        const top = screenY - this.height / 2;
-
-        // Cloak/body silhouette
-        ctx.fillStyle = theme.entities.player.body;
-        ctx.beginPath();
-        ctx.moveTo(screenX, top + 2);
-        ctx.lineTo(left + 4, top + this.height - 2);
-        ctx.lineTo(left + this.width - 4, top + this.height - 2);
-        ctx.closePath();
-        ctx.fill();
-
-        // Tunic highlight
-        ctx.fillStyle = theme.entities.player.face;
-        ctx.fillRect(screenX - 4, top + 10, 8, 10);
-
-        // Head
-        ctx.fillStyle = theme.entities.player.face;
-        ctx.beginPath();
-        ctx.arc(screenX, top + 8, 6, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Hair/hood outline
-        ctx.fillStyle = theme.ui.primaryAccent;
-        ctx.beginPath();
-        ctx.arc(screenX, top + 8, 7, Math.PI, Math.PI * 2);
-        ctx.fill();
-
-        // Face features
-        ctx.fillStyle = theme.ui.primaryAccent;
-        ctx.fillRect(screenX - 3, top + 7, 2, 2);
-        ctx.fillRect(screenX + 1, top + 7, 2, 2);
-        ctx.fillRect(screenX - 2, top + 11, 4, 1);
-
-        // Shoulder armor
-        ctx.fillStyle = theme.ui.secondaryAccent;
-        ctx.fillRect(left + 2, top + 12, 5, 4);
-        ctx.fillRect(left + this.width - 7, top + 12, 5, 4);
-
-        // Health bar
-        this.drawHealthBar(ctx, screenX, screenY);
-    }
-
-    private drawHealthBar(ctx: CanvasRenderingContext2D, screenX: number, screenY: number): void {
-        const barWidth = this.width;
-        const barHeight = 4;
-        const barY = screenY - this.height / 2 - 8;
-
-        // Background
-        ctx.fillStyle = theme.entities.player.healthBg;
-        ctx.fillRect(screenX - barWidth / 2, barY, barWidth, barHeight);
-
-        // Health
-        const healthPercent = this.hp / this.maxHp;
-        const healthBarWidth = barWidth * healthPercent;
-        const color = healthPercent > 0.6 ? theme.entities.player.healthHigh :
-                      healthPercent > 0.3 ? theme.entities.player.healthMid :
-                      theme.entities.player.healthLow;
-        ctx.fillStyle = color;
-        ctx.fillRect(screenX - barWidth / 2, barY, healthBarWidth, barHeight);
+        this.renderer.draw(ctx, this);
     }
 }
