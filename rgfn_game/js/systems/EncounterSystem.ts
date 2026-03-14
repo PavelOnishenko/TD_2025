@@ -12,14 +12,12 @@ export default class EncounterSystem {
     private encounterRate: number;
     private stepsSinceEncounter: number;
     private bowFound: boolean;
-    private healingPotionFound: boolean;
     private itemDiscoveryChance: number;
 
     constructor(encounterRate?: number) {
         this.encounterRate = encounterRate ?? balanceConfig.encounters.encounterRate;
         this.stepsSinceEncounter = 0;
         this.bowFound = false;
-        this.healingPotionFound = false;
         this.itemDiscoveryChance = 0.15; // 15% chance to find item instead of enemies
     }
 
@@ -42,27 +40,19 @@ export default class EncounterSystem {
     }
 
     public generateEncounter(): EncounterResult {
-        // Check if we should discover an item (only if discoverable items remain)
-        const canDiscoverItem = !this.bowFound || !this.healingPotionFound;
-        if (canDiscoverItem && Math.random() < this.itemDiscoveryChance) {
-            const undiscoveredItems: Item[] = [];
+        // Check if we should discover an item.
+        // Bow is unique, while healing potions can be found repeatedly.
+        if (Math.random() < this.itemDiscoveryChance) {
+            const discoverableItems: Item[] = [new Item(HEALING_POTION_ITEM)];
 
             if (!this.bowFound) {
-                undiscoveredItems.push(new Item(BOW_ITEM));
+                discoverableItems.push(new Item(BOW_ITEM));
             }
 
-            if (!this.healingPotionFound) {
-                undiscoveredItems.push(new Item(HEALING_POTION_ITEM));
-            }
+            const discoveredItem = discoverableItems[randomInt(0, discoverableItems.length - 1)];
 
-            const discoveredItem = undiscoveredItems[randomInt(0, undiscoveredItems.length - 1)];
-
-            if (discoveredItem.name === BOW_ITEM.name) {
+            if (discoveredItem.id === 'bow') {
                 this.bowFound = true;
-            }
-
-            if (discoveredItem.name === HEALING_POTION_ITEM.name) {
-                this.healingPotionFound = true;
             }
 
             return { type: 'item', item: discoveredItem };

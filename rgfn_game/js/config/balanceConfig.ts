@@ -19,6 +19,9 @@ export const balanceConfig = {
         // Visual properties
         width: 32,
         height: 32,
+
+        // Inventory slots available to hold discovered items
+        inventorySize: 6,
     },
 
     // ============ ENEMY STATS ============

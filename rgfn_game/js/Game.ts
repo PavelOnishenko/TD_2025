@@ -94,6 +94,7 @@ export default class Game {
     private setupUI(): void {
         this.hudElements = {
             modeIndicator: document.getElementById('mode-indicator')!,
+            usePotionBtn: document.getElementById('use-potion-btn')! as HTMLButtonElement,
             playerLevel: document.getElementById('player-level')!,
             playerXp: document.getElementById('player-xp')!,
             playerXpNext: document.getElementById('player-xp-next')!,
@@ -109,6 +110,9 @@ export default class Game {
             addVitalityBtn: document.getElementById('add-vitality-btn')! as HTMLButtonElement,
             addToughnessBtn: document.getElementById('add-toughness-btn')! as HTMLButtonElement,
             addStrengthBtn: document.getElementById('add-strength-btn')! as HTMLButtonElement,
+            inventoryCount: document.getElementById('inventory-count')!,
+            inventoryCapacity: document.getElementById('inventory-capacity')!,
+            inventoryGrid: document.getElementById('inventory-grid')!,
         };
 
         this.battleUI = {
@@ -119,6 +123,7 @@ export default class Game {
             attackBtn: document.getElementById('attack-btn')! as HTMLButtonElement,
             fleeBtn: document.getElementById('flee-btn')! as HTMLButtonElement,
             waitBtn: document.getElementById('wait-btn')! as HTMLButtonElement,
+            usePotionBtn: document.getElementById('battle-use-potion-btn')! as HTMLButtonElement,
             log: document.getElementById('battle-log')!,
             attackRangeText: document.getElementById('attack-range-text')!,
         };
@@ -127,6 +132,9 @@ export default class Game {
         this.battleUI.attackBtn.addEventListener('click', () => this.handleAttack());
         this.battleUI.fleeBtn.addEventListener('click', () => this.handleFlee());
         this.battleUI.waitBtn.addEventListener('click', () => this.handleWait());
+        this.battleUI.usePotionBtn.addEventListener('click', () => this.handleUsePotion(true));
+
+        this.hudElements.usePotionBtn.addEventListener('click', () => this.handleUsePotion(false));
 
         // Stat allocation button events
         this.hudElements.addVitalityBtn.addEventListener('click', () => this.handleAddStat('vitality'));
@@ -236,10 +244,12 @@ export default class Game {
     private handleItemDiscovery(item: Item): void {
         // Show item discovery splash screen
         this.itemDiscoverySplash.showItemDiscovery(item, () => {
-            // After splash, equip the item
-            this.player.equipItem(item);
+            const addedToInventory = this.player.addItemToInventory(item);
 
-            // Update HUD to show the equipped item
+            if (!addedToInventory) {
+                this.addBattleLog(`Inventory full. ${item.name} was left behind.`, 'system');
+            }
+
             this.updateHUD();
         });
     }
@@ -592,6 +602,42 @@ export default class Game {
         setTimeout(() => this.processTurn(), timingConfig.battle.waitActionDelay);
     }
 
+
+    private handleUsePotion(fromBattleControls: boolean): void {
+        const inBattle = this.stateMachine.isInState(MODES.BATTLE);
+
+        if (fromBattleControls && !inBattle) {
+            return;
+        }
+
+        if (inBattle &&
+            (!this.turnManager.isPlayerTurn() ||
+             !this.turnManager.waitingForPlayer ||
+             this.turnTransitioning)) {
+            return;
+        }
+
+        const usedPotion = this.player.useHealingPotion();
+        if (!usedPotion) {
+            this.addBattleLog('No healing potions in inventory.', 'system');
+            this.updateHUD();
+            return;
+        }
+
+        this.addBattleLog('You drink a healing potion (+5 HP).', inBattle ? 'player' : 'system');
+        this.updateHUD();
+
+        if (!inBattle) {
+            return;
+        }
+
+        this.enableBattleButtons(false);
+        this.turnTransitioning = true;
+        this.turnManager.waitingForPlayer = false;
+        this.turnManager.nextTurn();
+        setTimeout(() => this.processTurn(), timingConfig.battle.playerActionDelay);
+    }
+
     private endBattle(result: 'victory' | 'defeat' | 'fled'): void {
         if (result === 'victory') {
             this.addBattleLog('Victory!', 'system');
@@ -659,6 +705,7 @@ export default class Game {
         this.battleUI.attackBtn.disabled = !enabled;
         this.battleUI.fleeBtn.disabled = !enabled;
         this.battleUI.waitBtn.disabled = !enabled;
+        this.battleUI.usePotionBtn.disabled = !enabled;
     }
 
     private addBattleLog(message: string, type: string = 'system'): void {
@@ -708,6 +755,17 @@ export default class Game {
             this.hudElements.playerWeapon.textContent = 'None';
         }
 
+        // Update inventory display
+        const inventory = this.player.getInventory();
+        this.hudElements.inventoryCount.textContent = String(inventory.length);
+        this.hudElements.inventoryCapacity.textContent = String(balanceConfig.player.inventorySize);
+        this.renderInventory(inventory);
+
+        // Potion buttons
+        const hasPotion = this.player.getHealingPotionCount() > 0;
+        this.hudElements.usePotionBtn.disabled = !hasPotion;
+        this.battleUI.usePotionBtn.disabled = !hasPotion;
+
         // Update attack range text in battle UI
         const attackRange = this.player.getAttackRange();
         if (attackRange === 1) {
@@ -718,6 +776,30 @@ export default class Game {
 
         // Update stat button states
         this.updateStatButtons();
+    }
+
+    private renderInventory(inventory: Item[]): void {
+        this.hudElements.inventoryGrid.innerHTML = '';
+
+        for (let index = 0; index < balanceConfig.player.inventorySize; index++) {
+            const slot = document.createElement('div');
+            slot.className = 'inventory-slot';
+
+            const item = inventory[index];
+            if (item) {
+                slot.title = item.name;
+
+                const sprite = document.createElement('div');
+                sprite.className = item.id === 'bow'
+                    ? 'item-sprite bow-sprite'
+                    : 'item-sprite potion-sprite';
+                slot.appendChild(sprite);
+            } else {
+                slot.classList.add('empty');
+            }
+
+            this.hudElements.inventoryGrid.appendChild(slot);
+        }
     }
 
     private updateStatButtons(): void {
