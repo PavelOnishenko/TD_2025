@@ -2,14 +2,32 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import EncounterSystem from '../../dist/systems/EncounterSystem.js';
-import { withMockedRandom } from '../helpers/testUtils.js';
+import Skeleton from '../../dist/entities/Skeleton.js';
 import { balanceConfig } from '../../dist/config/balanceConfig.js';
+import { withPatchedProperty, withPatchedMethod, withFixedRandom } from '../helpers/testUtils.js';
+
+function setupEventType(encounters, eventType) {
+  encounters.rollEncounterEventType = () => eventType;
+}
+
+function setupEncounterType(encounters, encounterType) {
+  encounters.rollEncounterType = () => encounterType;
+}
+
+function setupDragonPassingCheck(doesPass) {
+  return withPatchedMethod(Skeleton.prototype, 'shouldPassEncounter', () => doesPass);
+}
 
 test('EncounterSystem checkEncounter uses discovered tile rate override', () => {
-  const encounters = new EncounterSystem(0.1);
+  const encounters = new EncounterSystem(0);
 
-  const none = withMockedRandom([0.2], () => encounters.checkEncounter(false));
-  const discovered = withMockedRandom([0.1], () => encounters.checkEncounter(true));
+  const none = encounters.checkEncounter(false);
+  const discovered = withPatchedProperty(
+    balanceConfig.encounters,
+    'discoveredEncounterRate',
+    1,
+    () => encounters.checkEncounter(true)
+  );
 
   assert.equal(none, false);
   assert.equal(discovered, true);
@@ -18,25 +36,29 @@ test('EncounterSystem checkEncounter uses discovered tile rate override', () => 
 test('EncounterSystem can generate item discovery encounters repeatedly', () => {
   const encounters = new EncounterSystem(1);
 
-  const first = withMockedRandom([0.1], () => encounters.generateEncounter());
-  const second = withMockedRandom([0.1], () => encounters.generateEncounter());
+  const [first, second] = withPatchedProperty(encounters, 'itemDiscoveryChance', 0, () => {
+    encounters.queueForcedEncounter('item');
+    encounters.queueForcedEncounter('item');
+    return [encounters.generateEncounter(), encounters.generateEncounter()];
+  });
 
   assert.equal(first.type, 'item');
+  assert.equal(first.item.id, 'bow');
   assert.equal(second.type, 'item');
+  assert.equal(second.item.id, 'bow');
 });
 
 test('EncounterSystem marks bow as unique once discovered', () => {
   const encounters = new EncounterSystem(1);
 
-  const first = withMockedRandom([
-    0.1, // item encounter
-    0.9, // choose bow from discoverable items [potion, bow]
-  ], () => encounters.generateEncounter());
+  const first = withPatchedProperty(encounters, 'itemDiscoveryChance', 0, () => {
+    encounters.queueForcedEncounter('item');
+    return encounters.generateEncounter();
+  });
 
-  const second = withMockedRandom([
-    0.1, // item encounter
-    0.0, // only potion remains after bow discovery
-  ], () => encounters.generateEncounter());
+  const second = withPatchedProperty(encounters, 'itemDiscoveryChance', 1, () => (
+    withFixedRandom(0, () => encounters.generateEncounter())
+  ));
 
   assert.equal(first.type, 'item');
   assert.equal(first.item.id, 'bow');
@@ -47,28 +69,31 @@ test('EncounterSystem marks bow as unique once discovered', () => {
 test('EncounterSystem handles dragon pass encounter branch', () => {
   const encounters = new EncounterSystem(1);
 
-  const result = withMockedRandom([
-    0.9, // no item
-    0.95, // roll dragon from weighted table
-    0.1, // dragon passes
-  ], () => encounters.generateEncounter());
+  withPatchedProperty(encounters, 'itemDiscoveryChance', 0, () => {
+    setupEventType(encounters, 'monster');
+    setupEncounterType(encounters, 'dragon');
 
-  assert.equal(result.type, 'none');
+    setupDragonPassingCheck(true)(() => {
+      const result = encounters.generateEncounter();
+      assert.equal(result.type, 'none');
+    });
+  });
 });
 
 test('EncounterSystem can generate grouped enemies', () => {
   const encounters = new EncounterSystem(1);
 
-  const skeletonBattle = withMockedRandom([
-    0.9, // no item
-    0.1, // skeleton type
-    0.6, // randomInt => 2 enemies (range 1..3)
-  ], () => encounters.generateEncounter());
+  withPatchedProperty(encounters, 'itemDiscoveryChance', 0, () => {
+    setupEventType(encounters, 'monster');
+    setupEncounterType(encounters, 'skeleton');
 
-  assert.equal(skeletonBattle.type, 'battle');
-  assert.equal(
-    skeletonBattle.enemies.length >= balanceConfig.encounters.minEnemies &&
-    skeletonBattle.enemies.length <= balanceConfig.encounters.maxEnemies,
-    true
-  );
+    const skeletonBattle = encounters.generateEncounter();
+
+    assert.equal(skeletonBattle.type, 'battle');
+    assert.equal(
+      skeletonBattle.enemies.length >= balanceConfig.encounters.minEnemies &&
+      skeletonBattle.enemies.length <= balanceConfig.encounters.maxEnemies,
+      true
+    );
+  });
 });

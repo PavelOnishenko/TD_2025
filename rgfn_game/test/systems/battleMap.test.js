@@ -41,6 +41,26 @@ test('BattleMap movement fails when blocked and succeeds when free', () => {
   assert.equal(map.moveEntity(player, 'left'), true);
 });
 
+test('BattleMap movement allows stepping onto dead entities but not living ones', () => {
+  const map = new BattleMap();
+  const player = createCombatEntity('Player', 0, 0, false);
+  const deadSkeleton = createCombatEntity('Skeleton', 0, 0, true);
+  const livingZombie = createCombatEntity('Zombie', 0, 0, false);
+  map.setup(player, [deadSkeleton, livingZombie]);
+
+  player.gridCol = 4;
+  player.gridRow = 4;
+  deadSkeleton.gridCol = 5;
+  deadSkeleton.gridRow = 4;
+  livingZombie.gridCol = 6;
+  livingZombie.gridRow = 4;
+
+  assert.equal(map.moveEntity(player, 'right'), true);
+  assert.deepEqual([player.gridCol, player.gridRow], [5, 4]);
+  assert.equal(map.moveEntity(player, 'right'), false);
+  assert.deepEqual([player.gridCol, player.gridRow], [5, 4]);
+});
+
 test('BattleMap moveEntityToward prefers primary axis and falls back to alternate', () => {
   const map = new BattleMap();
   const mover = createCombatEntity('Skeleton', 4, 4, false);
@@ -59,6 +79,55 @@ test('BattleMap moveEntityToward prefers primary axis and falls back to alternat
   assert.deepEqual([mover.gridCol, mover.gridRow], [4, 5]);
 });
 
+test('BattleMap moveEntityToward returns false when both primary and alternate moves are blocked', () => {
+  const map = new BattleMap();
+  const mover = createCombatEntity('Skeleton', 0, 0, false);
+  const target = createCombatEntity('Player', 0, 0, false);
+  const blockPrimary = createCombatEntity('Zombie', 0, 0, false);
+  const blockAlternate = createCombatEntity('Zombie', 0, 0, false);
+
+  map.setup(target, [mover, blockPrimary, blockAlternate]);
+  mover.gridCol = 4;
+  mover.gridRow = 4;
+  target.gridCol = 7;
+  target.gridRow = 6;
+  blockPrimary.gridCol = 5;
+  blockPrimary.gridRow = 4;
+  blockAlternate.gridCol = 4;
+  blockAlternate.gridRow = 5;
+
+  assert.equal(map.moveEntityToward(mover, target), false);
+  assert.deepEqual([mover.gridCol, mover.gridRow], [4, 4]);
+});
+
+test('BattleMap moveEntityToward can move when entities have no preset grid coordinates', () => {
+  const map = new BattleMap();
+  const mover = createCombatEntity('Skeleton', 0, 0, false);
+  const target = createCombatEntity('Player', 96, 96, false);
+
+  map.setup(target, [mover]);
+
+  delete mover.gridCol;
+  delete mover.gridRow;
+  delete target.gridCol;
+  delete target.gridRow;
+
+  assert.equal(map.moveEntityToward(mover, target), true);
+  assert.deepEqual([mover.gridCol, mover.gridRow], [0, 0]);
+});
+
+test('BattleMap moveEntity prevents moving out of map bounds', () => {
+  const map = new BattleMap();
+  const player = createCombatEntity('Player', 0, 0, false);
+
+  map.setup(player, []);
+  player.gridCol = 0;
+  player.gridRow = 0;
+
+  assert.equal(map.moveEntity(player, 'up'), false);
+  assert.equal(map.moveEntity(player, 'left'), false);
+  assert.deepEqual([player.gridCol, player.gridRow], [0, 0]);
+});
 test('BattleMap isEntityOnEdge returns true only on battle map borders', () => {
   const map = new BattleMap();
   const player = createCombatEntity('Player', 0, 0, false);
