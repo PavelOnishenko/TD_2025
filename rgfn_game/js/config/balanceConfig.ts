@@ -16,7 +16,7 @@ export const balanceConfig = {
         initialToughness: 0,
         initialStrength: 0,
         initialAgility: 0,
-        initialSkillPoints: 0,
+        initialSkillPoints: 100,
 
         // Visual properties
         width: 32,
