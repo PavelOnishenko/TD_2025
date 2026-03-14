@@ -1,16 +1,117 @@
 import { drawTowerMuzzleFlashIfNeeded, drawTowerPlacementFlash, drawTowerTopGlowIfNeeded } from '../systems/effects.js';
 import { getHowler } from '../systems/audio.js';
 import gameConfig from '../config/gameConfig.js';
-const towerGameConfig = gameConfig;
+
+interface Point {
+    x: number;
+    y: number;
+}
+
+interface LevelConfig {
+    damage: number;
+    fireInterval: number;
+}
+
+interface TowerAssets {
+    [key: string]: CanvasImageSource | undefined;
+}
+
+interface UpgradeGameState {
+    energy: number;
+    upgradeModeActive?: boolean;
+    getUpgradeCost?: (level: number) => number;
+}
+
+interface HowlLike {
+    _src?: string | string[];
+    stop?: () => void;
+}
+
+interface HowlerLike {
+    _howls?: HowlLike[];
+}
+
+interface TowerConfigShape {
+    towers: {
+        width: number;
+        height: number;
+        baseRange: number;
+        rangePerLevel: number;
+        rangeBonusMultiplier: number;
+        flashDuration: number;
+        placementFlashDuration: number;
+        mergePulseWaveDuration: number;
+        errorPulseDuration: number;
+        glowSpeeds: number[];
+        removalHoldDuration?: number;
+        removalIndicatorDecay?: number;
+        levels: LevelConfig[];
+        levelIndicator?: {
+            fontSize?: number;
+            offsetX?: number;
+            offsetY?: number;
+            padding?: number;
+            backgroundAlpha?: number;
+            styles?: Record<number, Record<string, unknown>>;
+        };
+        upgradeCostText?: {
+            fontSize?: number;
+            fontFamily?: string;
+            fontWeight?: string;
+            colorAffordable?: string;
+            colorUnaffordable?: string;
+            backgroundAlpha?: number;
+            padding?: number;
+            offsetY?: number;
+        };
+    };
+}
+
+const towerGameConfig = gameConfig as unknown as TowerConfigShape;
+
 let towerIdCounter = 1;
+
 const DEFAULT_PLACEMENT_ANCHOR = Object.freeze({
     // The anchor describes the fraction of the sprite width/height between the
     // top-left corner and the point that should sit on the cell origin.
     x: -0.5,
     y: 0,
 });
+
 export default class Tower {
-    constructor(x, y, color = 'red', level = 1) {
+    public x: number;
+    public y: number;
+    public id: number;
+    public w: number;
+    public h: number;
+    public baseRange: number;
+    public range: number;
+    public damage: number;
+    public lastShot: number;
+    public color: string;
+    public level: number;
+    public fireInterval: number;
+    public flashDuration: number;
+    public flashTimer: number;
+    public placementFlashDuration: number;
+    public placementFlashTimer: number;
+    public glowTime: number;
+    public glowSpeed: number;
+    public mergeHint: number;
+    public mergePulseWaveDuration: number;
+    public mergePulseWaveTimer: number;
+    public errorPulseDuration: number;
+    public errorPulseTimer: number;
+    public removalChargeDuration: number;
+    public removalChargeTimer: number;
+    public removalChargeActive: boolean;
+    public removalChargePending: boolean;
+    public removalChargeDecayRate: number;
+    public mergeSelected: boolean;
+    public hovered: boolean;
+    public hoverAmount: number;
+
+    constructor(x: number, y: number, color = 'red', level = 1) {
         this.x = x;
         this.y = y;
         this.id = towerIdCounter++;
@@ -42,7 +143,8 @@ export default class Tower {
         this.hoverAmount = 0;
         this.updateStats();
     }
-    getLevelConfig(level = this.level) {
+
+    getLevelConfig(level = this.level): LevelConfig {
         const levelConfigs = towerGameConfig.towers?.levels;
         if (!Array.isArray(levelConfigs)) {
             throw new Error('Missing or invalid tower level configuration in gameConfig');
@@ -52,9 +154,10 @@ export default class Tower {
         if (!config || typeof config !== 'object') {
             throw new Error(`Invalid tower level configuration for tower level ${level}: ${config}`);
         }
-        return config;
+        return config as LevelConfig;
     }
-    updateStats() {
+
+    updateStats(): void {
         const config = towerGameConfig.towers;
         const rangeMultiplier = 1 + config.rangePerLevel * (this.level - 1);
         const rangeIncreaseFactor = config.rangeBonusMultiplier;
@@ -64,26 +167,30 @@ export default class Tower {
             throw new Error(`Invalid damage override for tower level ${this.level}: ${damage}`);
         }
         this.damage = damage;
+
         const glowSpeeds = config.glowSpeeds;
         const clampedLevel = Math.max(1, Math.min(this.level, glowSpeeds.length));
         const speedIndex = clampedLevel - 1;
         this.glowSpeed = glowSpeeds[speedIndex] ?? glowSpeeds[glowSpeeds.length - 1];
         this.fireInterval = this.getConfiguredFireInterval();
     }
-    getConfiguredFireInterval() {
+
+    getConfiguredFireInterval(): number {
         const { fireInterval } = this.getLevelConfig();
         if (Number.isFinite(fireInterval) && fireInterval > 0) {
             return fireInterval;
         }
         throw new Error(`Invalid fire interval for tower level ${this.level}: ${fireInterval}`);
     }
-    getFireInterval() {
+
+    getFireInterval(): number {
         if (!Number.isFinite(this.fireInterval) || this.fireInterval <= 0) {
             this.fireInterval = this.getConfiguredFireInterval();
         }
         return this.fireInterval;
     }
-    update(dt) {
+
+    update(dt: number): void {
         if (this.flashTimer > 0) {
             this.flashTimer = Math.max(0, this.flashTimer - dt);
         }
@@ -102,55 +209,64 @@ export default class Tower {
         }
         if (this.hovered) {
             this.hoverAmount = 1;
-        }
-        else if (this.hoverAmount > 0) {
+        } else if (this.hoverAmount > 0) {
             this.hoverAmount = Math.max(0, this.hoverAmount - dt * 3.5);
         }
         this.updateRemovalCharge(dt);
     }
-    triggerFlash() {
+
+    triggerFlash(): void {
         this.flashTimer = this.flashDuration;
     }
-    triggerPlacementFlash() {
+
+    triggerPlacementFlash(): void {
         this.placementFlashTimer = this.placementFlashDuration;
     }
-    triggerMergePulse() {
+
+    triggerMergePulse(): void {
         this.mergePulseWaveTimer = this.mergePulseWaveDuration;
     }
-    triggerErrorPulse() {
+
+    triggerErrorPulse(): void {
         this.errorPulseTimer = this.errorPulseDuration;
     }
-    getErrorPulseStrength() {
+
+    getErrorPulseStrength(): number {
         if (this.errorPulseDuration <= 0) {
             return 0;
         }
         const normalized = this.errorPulseTimer / this.errorPulseDuration;
         return Math.max(0, Math.min(1, normalized));
     }
-    center() {
-        return { x: this.x + this.w / 2, y: this.y + this.h / 2 };
+
+    center(): Point {
+        return { x: this.x + this.w / 2, y: this.y + this.h / 2};
     }
+
     /**
      * Aligns the tower so its sprite anchor sits on the provided cell.
      * @param {{ x: number, y: number }} cell
      */
-    alignToCell(cell) {
+    alignToCell(cell: Point): void {
         const offset = this.getPlacementOffset();
         this.x = cell.x - offset.x;
         this.y = cell.y - offset.y;
     }
+
     /**
      * Computes the offset between the sprite origin and the visual anchor.
      * @returns {{ x: number, y: number }}
      */
-    getPlacementOffset() {
+    getPlacementOffset(): Point {
         const anchor = Tower.getPlacementAnchor();
         return { x: this.w * anchor.x, y: this.h * anchor.y };
     }
-    static getPlacementAnchor() {
+
+    static getPlacementAnchor(): Readonly<Point> {
         return DEFAULT_PLACEMENT_ANCHOR;
     }
-    beginRemovalCharge() {
+
+    beginRemovalCharge(): boolean {
         if (this.removalChargePending) {
             return false;
         }
@@ -159,7 +275,8 @@ export default class Tower {
         this.removalChargePending = false;
         return true;
     }
-    cancelRemovalCharge() {
+
+    cancelRemovalCharge(): void {
         this.removalChargeActive = false;
         if (!this.removalChargePending) {
             if (!Number.isFinite(this.removalChargeDuration) || this.removalChargeDuration <= 0) {
@@ -167,7 +284,7 @@ export default class Tower {
             }
         }
         // Abruptly stop the removal charge sound if it is playing
-        const howler = getHowler();
+        const howler = getHowler() as HowlerLike | null;
         const howls = howler && Array.isArray(howler._howls) ? howler._howls : null;
         if (howls) {
             for (const h of howls) {
@@ -179,32 +296,36 @@ export default class Tower {
                             h.stop();
                         }
                     }
-                }
-                catch {
+                } catch {
                     // ignore any Howler internals differences
                 }
             }
         }
     }
-    isRemovalCharging() {
+
+    isRemovalCharging(): boolean {
         return Boolean(this.removalChargeActive);
     }
-    shouldTriggerRemoval() {
+
+    shouldTriggerRemoval(): boolean {
         return Boolean(this.removalChargePending);
     }
-    acknowledgeRemoval() {
+
+    acknowledgeRemoval(): void {
         this.removalChargePending = false;
         this.removalChargeActive = false;
         this.removalChargeTimer = 0;
     }
-    getRemovalChargeProgress() {
+
+    getRemovalChargeProgress(): number {
         if (!Number.isFinite(this.removalChargeDuration) || this.removalChargeDuration <= 0) {
             return 0;
         }
         const normalized = this.removalChargeTimer / this.removalChargeDuration;
         return Math.max(0, Math.min(1, normalized));
     }
-    draw(ctx, assets, game = null) {
+
+    draw(ctx: CanvasRenderingContext2D, assets: TowerAssets, game: UpgradeGameState | null = null): void {
         const c = this.center();
         this.drawHover(ctx, c);
         ctx.fillStyle = this.color;
@@ -215,35 +336,41 @@ export default class Tower {
         this.drawMergeHint(ctx, c);
         drawTowerPlacementFlash(ctx, this);
         drawTowerTopGlowIfNeeded(ctx, this);
+
         if (this.flashTimer > 0) {
             drawTowerMuzzleFlashIfNeeded(ctx, this);
         }
+
         this.drawRemovalChargeIndicator(ctx, c);
         this.drawLevelIndicator(ctx);
+        
         if (game && game.upgradeModeActive) {
             this.drawUpgradeCost(ctx, game);
         }
     }
-    setHover(strength = 1) {
+
+    setHover(strength = 1): void {
         if (!Number.isFinite(strength)) {
             return;
         }
         this.setHovered(true);
         this.hoverAmount = Math.max(this.hoverAmount, Math.max(0, Math.min(1, strength)));
     }
-    setHovered(isHovered) {
+
+    setHovered(isHovered: boolean): void {
         this.hovered = Boolean(isHovered);
         if (this.hovered) {
             this.hoverAmount = 1;
-        }
-        else {
+        } else {
             this.hoverAmount = 0;
         }
     }
-    drawHover(ctx, center) {
+
+    drawHover(ctx: CanvasRenderingContext2D, center: Point): void {
         if (this.hoverAmount <= 0) {
             return;
         }
+
         const intensity = Math.min(1, this.hoverAmount * 1.1);
         const pulse = (Math.sin(this.glowTime * 2.2) + 1) / 2;
         const radius = Math.max(this.w, this.h) * (0.55 + 0.07 * pulse);
@@ -251,6 +378,7 @@ export default class Tower {
         const color = this.color === 'blue'
             ? `rgba(150, 210, 255, ${alpha})`
             : `rgba(255, 200, 150, ${alpha})`;
+
         ctx.save();
         ctx.globalCompositeOperation = 'lighter';
         ctx.fillStyle = color;
@@ -259,7 +387,8 @@ export default class Tower {
         ctx.fill();
         ctx.restore();
     }
-    drawBody(ctx, assets) {
+
+    drawBody(ctx: CanvasRenderingContext2D, assets: TowerAssets): void {
         const propertyName = `tower_${this.level}${this.color.charAt(0)}`;
         const sprite = assets[propertyName];
         if (!sprite) {
@@ -268,10 +397,12 @@ export default class Tower {
         }
         ctx.drawImage(sprite, this.x, this.y, this.w, this.h);
     }
-    drawMergeHint(ctx, center) {
+
+    drawMergeHint(ctx: CanvasRenderingContext2D, center: Point): void {
         if (this.mergeHint <= 0) {
             return;
         }
+
         const pulse = (Math.sin(this.glowTime * 2) + 1) / 2;
         const intensity = Math.min(1, this.mergeHint);
         const baseRadius = Math.max(this.w, this.h) * 0.6;
@@ -280,6 +411,7 @@ export default class Tower {
         const color = this.color === 'red'
             ? `rgba(255, 180, 120, ${alpha})`
             : `rgba(130, 180, 255, ${alpha})`;
+
         ctx.save();
         ctx.globalCompositeOperation = 'lighter';
         ctx.globalAlpha = intensity;
@@ -289,10 +421,12 @@ export default class Tower {
         ctx.fill();
         ctx.restore();
     }
-    drawMergeSelection(ctx, center) {
+
+    drawMergeSelection(ctx: CanvasRenderingContext2D, center: Point): void {
         if (!this.mergeSelected) {
             return;
         }
+
         const pulse = (Math.sin(this.glowTime * 2.4) + 1) / 2;
         const radius = Math.max(this.w, this.h) * (0.7 + 0.14 * pulse);
         const alpha = 0.55 + 0.35 * pulse;
@@ -300,6 +434,7 @@ export default class Tower {
         const color = this.color === 'blue'
             ? `rgba(160, 220, 255, ${alpha})`
             : `rgba(255, 200, 150, ${alpha})`;
+
         ctx.save();
         ctx.globalCompositeOperation = 'lighter';
         ctx.lineWidth = lineWidth;
@@ -309,10 +444,12 @@ export default class Tower {
         ctx.stroke();
         ctx.restore();
     }
-    drawMergePulseWave(ctx, center) {
+
+    drawMergePulseWave(ctx: CanvasRenderingContext2D, center: Point): void {
         if (this.mergePulseWaveTimer <= 0) {
             return;
         }
+
         const progress = 1 - (this.mergePulseWaveTimer / this.mergePulseWaveDuration);
         const eased = easeOutCubic(progress);
         const intensity = 1 - progress;
@@ -324,6 +461,7 @@ export default class Tower {
         const color = this.color === 'red'
             ? `rgba(255, 205, 160, ${alpha})`
             : `rgba(160, 210, 255, ${alpha})`;
+
         ctx.save();
         ctx.globalCompositeOperation = 'lighter';
         ctx.lineWidth = lineWidth;
@@ -331,6 +469,7 @@ export default class Tower {
         ctx.beginPath();
         ctx.arc(center.x, center.y + yOffset, radius, 0, Math.PI * 2);
         ctx.stroke();
+
         ctx.globalAlpha = Math.min(0.55, alpha + 0.15);
         ctx.fillStyle = `rgba(255,255,255,${0.35 * intensity})`;
         ctx.beginPath();
@@ -338,17 +477,21 @@ export default class Tower {
         ctx.fill();
         ctx.restore();
     }
-    drawErrorPulse(ctx, center) {
+
+    drawErrorPulse(ctx: CanvasRenderingContext2D, center: Point): void {
         if (this.errorPulseTimer <= 0) {
             return;
         }
+
         const strength = this.getErrorPulseStrength();
         if (strength <= 0) {
             return;
         }
+
         const eased = easeOutCubic(strength);
         const scale = 1 + 0.08 * eased;
         const baseAlpha = 0.42 * eased;
+
         ctx.save();
         ctx.translate(center.x, center.y);
         ctx.scale(scale, scale);
@@ -356,6 +499,7 @@ export default class Tower {
         ctx.fillStyle = 'rgba(255, 64, 64, 0.95)';
         ctx.fillRect(-this.w / 2, -this.h / 2, this.w, this.h);
         ctx.restore();
+
         ctx.save();
         ctx.translate(center.x, center.y);
         ctx.scale(scale, scale);
@@ -365,36 +509,45 @@ export default class Tower {
         ctx.strokeRect(-this.w / 2 + 3, -this.h / 2 + 3, this.w - 6, this.h - 6);
         ctx.restore();
     }
-    drawLevelIndicator(ctx) {
+
+    drawLevelIndicator(ctx: CanvasRenderingContext2D): void {
         const config = towerGameConfig.towers?.levelIndicator ?? {};
         const fontSize = config.fontSize ?? 16;
         const offsetX = config.offsetX ?? 0;
         const offsetY = config.offsetY ?? 4;
         const padding = config.padding ?? 4;
         const backgroundAlpha = config.backgroundAlpha ?? 0.85;
+
         const text = String(this.level);
+
         ctx.save();
         ctx.font = `bold ${fontSize}px sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'bottom';
+
         // Position at bottom-center of the tower with configurable offset
         const textX = this.x + this.w / 2 + offsetX;
         const textY = this.y + this.h + fontSize + offsetY;
+
         // Get color and intensity based on level
-        const levelStyle = this.getLevelIndicatorStyle(this.level);
+        const levelStyle = this.getLevelIndicatorStyle(this.level) as any;
+
         // Draw semi-transparent background for better visibility
         const metrics = ctx.measureText(text);
         const bgWidth = metrics.width + padding * 2;
         const bgHeight = fontSize + padding * 2;
         const bgX = textX - bgWidth / 2;
         const bgY = textY - bgHeight + padding;
+
         // Background with subtle glow
         ctx.fillStyle = `rgba(0, 0, 0, ${backgroundAlpha})`;
         ctx.fillRect(bgX, bgY, bgWidth, bgHeight);
+
         // Add outer glow effect based on level
         if (levelStyle.glowIntensity > 0) {
             const pulse = (Math.sin(this.glowTime * 1.5) + 1) / 2;
             const glowAlpha = levelStyle.glowIntensity * (0.3 + 0.15 * pulse);
+
             ctx.shadowColor = levelStyle.glowColor;
             ctx.shadowBlur = 8 + 4 * pulse;
             ctx.globalAlpha = glowAlpha;
@@ -403,15 +556,19 @@ export default class Tower {
             ctx.globalAlpha = 1;
             ctx.shadowBlur = 0;
         }
+
         // Draw border
         ctx.strokeStyle = levelStyle.borderColor;
         ctx.lineWidth = 1.5;
         ctx.strokeRect(bgX, bgY, bgWidth, bgHeight);
+
         // Draw text with glow
         ctx.shadowColor = levelStyle.textGlow;
         ctx.shadowBlur = levelStyle.textGlowSize;
+
         ctx.fillStyle = levelStyle.textColor;
         ctx.fillText(text, textX, textY);
+
         // Extra bright overlay for higher levels
         if (this.level >= 4) {
             ctx.shadowBlur = levelStyle.textGlowSize * 1.5;
@@ -419,11 +576,14 @@ export default class Tower {
             ctx.fillText(text, textX, textY);
             ctx.globalAlpha = 1;
         }
+
         ctx.restore();
     }
-    getLevelIndicatorStyle(level) {
+
+    getLevelIndicatorStyle(level: number): Record<string, unknown> {
         const config = towerGameConfig.towers?.levelIndicator ?? {};
         const styles = config.styles ?? {};
+
         // Fallback default style if config is missing
         const defaultStyle = {
             textColor: 'rgba(255, 255, 255, 1)',
@@ -433,20 +593,25 @@ export default class Tower {
             glowColor: 'rgba(255, 255, 255, 0.3)',
             glowIntensity: 0.5
         };
+
         // Return style for the level, defaulting to level 6 style, then default style
         return styles[level] || styles[6] || defaultStyle;
     }
-    drawUpgradeCost(ctx, game) {
+
+    drawUpgradeCost(ctx: CanvasRenderingContext2D, game: UpgradeGameState): void {
         const MAX_UPGRADE_LEVEL = 6;
         if (this.level >= MAX_UPGRADE_LEVEL) {
             return;
         }
+
         const cost = typeof game.getUpgradeCost === 'function'
             ? game.getUpgradeCost(this.level)
             : null;
+        
         if (!Number.isFinite(cost) || cost <= 0) {
             return;
         }
+
         const config = towerGameConfig.towers?.upgradeCostText ?? {};
         const fontSize = Number.isFinite(config.fontSize) ? config.fontSize : 12;
         const fontFamily = typeof config.fontFamily === 'string' ? config.fontFamily : 'sans-serif';
@@ -456,9 +621,11 @@ export default class Tower {
         const backgroundAlpha = Number.isFinite(config.backgroundAlpha) ? config.backgroundAlpha : 0.6;
         const padding = Number.isFinite(config.padding) ? config.padding : 4;
         const offsetY = Number.isFinite(config.offsetY) ? config.offsetY : -8;
+
         const c = this.center();
         const textY = this.y + offsetY;
         const text = String(cost);
+        
         // Draw background for better visibility
         ctx.save();
         const fontString = `${fontWeight} ${fontSize}px ${fontFamily}`;
@@ -469,9 +636,11 @@ export default class Tower {
         const bgY = textY - fontSize / 2 - padding;
         const bgWidth = textWidth + padding * 2;
         const bgHeight = fontSize + padding * 2;
+
         // Semi-transparent background
         ctx.fillStyle = `rgba(0, 0, 0, ${backgroundAlpha})`;
         ctx.fillRect(bgX, bgY, bgWidth, bgHeight);
+
         // Draw text
         const canAfford = game.energy >= cost;
         ctx.fillStyle = canAfford ? colorAffordable : colorUnaffordable;
@@ -480,15 +649,20 @@ export default class Tower {
         ctx.fillText(text, c.x, textY);
         ctx.restore();
     }
-    updateRemovalCharge(dt) {
+
+    updateRemovalCharge(dt: number): void {
         if (!Number.isFinite(this.removalChargeDuration) || this.removalChargeDuration <= 0) {
             this.removalChargeActive = false;
             this.removalChargePending = false;
             this.removalChargeTimer = 0;
             return;
         }
+
         if (this.removalChargeActive) {
-            this.removalChargeTimer = Math.min(this.removalChargeDuration, this.removalChargeTimer + dt);
+            this.removalChargeTimer = Math.min(
+                this.removalChargeDuration,
+                this.removalChargeTimer + dt
+            );
             if (this.removalChargeTimer >= this.removalChargeDuration) {
                 this.removalChargeTimer = this.removalChargeDuration;
                 this.removalChargeActive = false;
@@ -496,12 +670,15 @@ export default class Tower {
             }
             return;
         }
+
         if (this.removalChargePending) {
             return;
         }
+
         if (this.removalChargeTimer <= 0) {
             return;
         }
+
         const decayRate = Number.isFinite(this.removalChargeDecayRate)
             ? Math.max(0, this.removalChargeDecayRate)
             : 0;
@@ -511,16 +688,19 @@ export default class Tower {
         }
         this.removalChargeTimer = Math.max(0, this.removalChargeTimer - decayRate * dt);
     }
-    drawRemovalChargeIndicator(ctx, center) {
+
+    drawRemovalChargeIndicator(ctx: CanvasRenderingContext2D, center: Point): void {
         const progress = this.getRemovalChargeProgress();
         if (progress <= 0) {
             return;
         }
+
         const pulse = 0.6 + 0.4 * Math.sin(this.glowTime * 2.1);
         const intensity = this.removalChargeActive ? 1 : progress;
         const radius = Math.max(this.w, this.h) * (0.45 + 0.08 * pulse * intensity);
         const startAngle = -Math.PI / 2;
         const endAngle = startAngle + Math.PI * 2 * progress;
+
         const arcOuterAlpha = 0.28 + 0.45 * intensity;
         const arcInnerAlpha = 0.18 + 0.35 * intensity;
         const arcColor = this.color === 'red'
@@ -529,6 +709,7 @@ export default class Tower {
         const innerArcColor = this.color === 'red'
             ? `rgba(255, 220, 200, ${arcInnerAlpha})`
             : `rgba(190, 225, 255, ${arcInnerAlpha})`;
+
         ctx.save();
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
@@ -537,11 +718,13 @@ export default class Tower {
         ctx.beginPath();
         ctx.arc(center.x, center.y, radius, startAngle, endAngle, false);
         ctx.stroke();
+
         ctx.lineWidth = Math.max(2, this.w * 0.045);
         ctx.strokeStyle = innerArcColor;
         ctx.beginPath();
         ctx.arc(center.x, center.y, radius * 0.8, startAngle, endAngle, false);
         ctx.stroke();
+
         const columnWidth = this.w * 0.62;
         const columnHeight = this.h * progress;
         const columnX = this.x + (this.w - columnWidth) / 2;
@@ -552,8 +735,7 @@ export default class Tower {
             gradient.addColorStop(0, `rgba(255, 150, 80, ${0.82 * intensity})`);
             gradient.addColorStop(0.45, `rgba(255, 90, 60, ${0.55 * intensity})`);
             gradient.addColorStop(1, `rgba(255, 200, 150, ${0.32 * intensity})`);
-        }
-        else {
+        } else {
             gradient.addColorStop(0, `rgba(140, 200, 255, ${0.85 * intensity})`);
             gradient.addColorStop(0.45, `rgba(90, 150, 255, ${0.55 * intensity})`);
             gradient.addColorStop(1, `rgba(210, 235, 255, ${0.34 * intensity})`);
@@ -561,6 +743,7 @@ export default class Tower {
         ctx.globalCompositeOperation = 'lighter';
         ctx.fillStyle = gradient;
         ctx.fillRect(columnX, columnTop, columnWidth, columnHeight);
+
         const frameAlpha = 0.2 + 0.3 * intensity;
         ctx.globalCompositeOperation = 'source-over';
         ctx.strokeStyle = `rgba(255, 255, 255, ${frameAlpha})`;
@@ -569,9 +752,9 @@ export default class Tower {
         ctx.restore();
     }
 }
-function easeOutCubic(t) {
+
+function easeOutCubic(t: number): number {
     const clamped = Math.max(0, Math.min(1, t));
     const inverted = 1 - clamped;
     return 1 - inverted * inverted * inverted;
 }
-//# sourceMappingURL=Tower.js.map
