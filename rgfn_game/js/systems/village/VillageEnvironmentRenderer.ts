@@ -1,4 +1,4 @@
-import { theme } from '../config/ThemeConfig.js';
+import { theme } from '../../config/ThemeConfig.js';
 
 export default class VillageEnvironmentRenderer {
     private static readonly OUTLINE_COLOR = '#1d1b22';

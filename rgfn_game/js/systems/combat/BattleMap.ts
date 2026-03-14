@@ -1,5 +1,5 @@
-import GridMap from '../utils/GridMap.js';
-import { CombatEntity, Direction } from '../types/game.js';
+import GridMap from '../../utils/GridMap.js';
+import { CombatEntity, Direction } from '../../types/game.js';
 import BattleMapView from './BattleMapView.js';
 
 export default class BattleMap {

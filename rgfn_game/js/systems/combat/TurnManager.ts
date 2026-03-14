@@ -1,4 +1,4 @@
-import { CombatEntity } from '../types/game.js';
+import { CombatEntity } from '../../types/game.js';
 
 export default class TurnManager {
     private entities: CombatEntity[];

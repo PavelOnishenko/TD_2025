@@ -1,5 +1,5 @@
-import Player from '../entities/Player.js';
-import Item, { BOW_ITEM, HEALING_POTION_ITEM } from '../entities/Item.js';
+import Player from '../../entities/Player.js';
+import Item, { BOW_ITEM, HEALING_POTION_ITEM } from '../../entities/Item.js';
 
 const VILLAGE_BOW_BUY_PRICE = 15;
 const VILLAGE_BOW_SELL_PRICE = 8;
