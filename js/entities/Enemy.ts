@@ -1,11 +1,77 @@
 import { drawEnemyEngineGlow } from '../systems/effects.js';
 import gameConfig from '../config/gameConfig.js';
 import Damageable from '../../engine/core/Damageable.js';
+
+type EnemyColor = 'red' | 'blue' | string;
+
+interface EnemyAssets {
+    [key: string]: CanvasImageSource;
+}
+
+interface EnemyFlamePlacement {
+    anchorX?: number;
+    anchorY?: number;
+    offsetX?: number;
+    offsetY?: number;
+    angleDegrees?: number;
+}
+
+interface EnemyPalette {
+    core: string;
+    mid: string;
+    halo: string;
+    flare: string;
+    trail: string;
+    spark: string;
+}
+
+interface EnemyFlameState {
+    anchor: { x: number; y: number };
+    offset: { x: number; y: number };
+    angle: number;
+}
+
+type EngineGlowDrawer = (ctx: CanvasRenderingContext2D, enemy: Enemy) => void;
+
 const DEG_TO_RAD = Math.PI / 180;
-const enemyConfig = gameConfig;
-class Enemy extends Damageable {
-    constructor(maxHp, color, x, y, speedX = enemyConfig.enemies.swarm.speed.x, speedY = enemyConfig.enemies.swarm.speed.y, spriteKey = 'swarm') {
+
+interface EnemyConfigShape {
+    enemies: {
+        dimensions: { width: number; height: number };
+        speedMultiplier?: number;
+        swarm: { speed: { x: number; y: number } };
+        tank: { speed: { x: number; y: number } };
+    };
+}
+
+const enemyConfig = gameConfig as unknown as EnemyConfigShape;
+
+export default class Enemy extends Damageable {
+    public static engineGlowDrawer: EngineGlowDrawer | null = drawEnemyEngineGlow;
+    private static _glowPhaseCursor = 0;
+
+    public x: number;
+    public y: number;
+    public w: number;
+    public h: number;
+    public speedX: number;
+    public speedY: number;
+    public color: EnemyColor;
+    public spriteKey: string;
+    public glowPhase: number;
+    public engineFlame: EnemyFlameState;
+
+    constructor(
+        maxHp: number,
+        color: EnemyColor,
+        x: number,
+        y: number,
+        speedX = enemyConfig.enemies.swarm.speed.x,
+        speedY = enemyConfig.enemies.swarm.speed.y,
+        spriteKey = 'swarm',
+    ) {
         super(maxHp);
+
         this.x = x;
         this.y = y;
         const { width, height } = enemyConfig.enemies.dimensions;
@@ -18,19 +84,23 @@ class Enemy extends Damageable {
         this.speedY = speedY * speedMultiplier;
         this.color = color;
         this.spriteKey = spriteKey;
+
         this.glowPhase = Enemy._glowPhaseCursor;
         Enemy._glowPhaseCursor = (Enemy._glowPhaseCursor + Math.PI * 0.85) % (Math.PI * 2);
+
         this.engineFlame = {
             anchor: { x: this.w * 0.5, y: this.h * 0.5 },
             offset: { x: 0, y: 0 },
             angle: -35,
         };
     }
-    update(dt) {
+
+    public update(dt: number): void {
         this.x += this.speedX * dt;
         this.y += this.speedY * dt;
     }
-    draw(ctx, assets) {
+
+    public draw(ctx: CanvasRenderingContext2D, assets: EnemyAssets): void {
         const propertyName = `${this.spriteKey}_${this.color.charAt(0)}`;
         const sprite = assets[propertyName];
         if (typeof Enemy.engineGlowDrawer === 'function') {
@@ -39,18 +109,21 @@ class Enemy extends Damageable {
         if (sprite) {
             ctx.drawImage(sprite, this.x, this.y, this.w, this.h);
         }
+
         const barWidth = this.w;
         const barHeight = 4;
         const barX = this.x;
         const barY = this.y - barHeight - 2;
+
         ctx.fillStyle = 'red';
         ctx.fillRect(barX, barY, barWidth, barHeight);
         ctx.fillStyle = 'green';
-        ctx.fillRect(barX, barY, barWidth * this.getHealthPercent(), barHeight);
+        ctx.fillRect(barX, barY, barWidth * (this as any).getHealthPercent(), barHeight);
         ctx.strokeStyle = 'black';
         ctx.strokeRect(barX, barY, barWidth, barHeight);
     }
-    setEngineFlamePlacement({ anchorX, anchorY, offsetX, offsetY, angleDegrees }) {
+
+    public setEngineFlamePlacement({ anchorX, anchorY, offsetX, offsetY, angleDegrees }: EnemyFlamePlacement): void {
         if (typeof anchorX === 'number') {
             this.engineFlame.anchor.x = anchorX;
         }
@@ -67,8 +140,10 @@ class Enemy extends Damageable {
             this.engineFlame.angle = angleDegrees * DEG_TO_RAD;
         }
     }
-    canRenderGlow(ctx) {
-        return (typeof ctx.save === 'function' &&
+
+    public canRenderGlow(ctx: CanvasRenderingContext2D): boolean {
+        return (
+            typeof ctx.save === 'function' &&
             typeof ctx.restore === 'function' &&
             typeof ctx.beginPath === 'function' &&
             typeof ctx.arc === 'function' &&
@@ -78,10 +153,12 @@ class Enemy extends Damageable {
             typeof ctx.translate === 'function' &&
             typeof ctx.scale === 'function' &&
             typeof ctx.createRadialGradient === 'function' &&
-            typeof ctx.createLinearGradient === 'function');
+            typeof ctx.createLinearGradient === 'function'
+        );
     }
-    getGlowPalette() {
-        const palettes = {
+
+    public getGlowPalette(): EnemyPalette {
+        const palettes: Record<string, EnemyPalette> = {
             red: {
                 core: 'rgba(255, 243, 232, 1)', mid: 'rgba(255, 186, 140, 0.85)', halo: 'rgba(255, 90, 40, 0.24)',
                 flare: 'rgba(255, 154, 84, 0.7)', trail: 'rgba(255, 94, 48, 0)', spark: 'rgba(255, 246, 235, 0.95)',
@@ -91,26 +168,40 @@ class Enemy extends Damageable {
                 flare: 'rgba(152, 214, 255, 0.75)', trail: 'rgba(66, 156, 255, 0)', spark: 'rgba(255, 255, 255, 0.92)',
             },
         };
+
         return palettes[this.color] ?? {
             core: 'rgba(255, 248, 220, 1)', mid: 'rgba(255, 224, 150, 0.8)', halo: 'rgba(255, 200, 80, 0.22)',
             flare: 'rgba(255, 210, 120, 0.65)', trail: 'rgba(255, 190, 90, 0)', spark: 'rgba(255, 255, 245, 0.9)',
         };
     }
-    isOutOfBounds(canvasHeight) {
+
+    public isOutOfBounds(canvasHeight: number): boolean {
         return this.y >= canvasHeight;
     }
 }
-Enemy.engineGlowDrawer = drawEnemyEngineGlow;
-Enemy._glowPhaseCursor = 0;
-export default Enemy;
+
 export class TankEnemy extends Enemy {
-    constructor(maxHp = 15, color = 'red', x = 0, y = 0, speedX = enemyConfig.enemies.tank.speed.x, speedY = enemyConfig.enemies.tank.speed.y) {
+    constructor(
+        maxHp = 15,
+        color: EnemyColor = 'red',
+        x = 0,
+        y = 0,
+        speedX = enemyConfig.enemies.tank.speed.x,
+        speedY = enemyConfig.enemies.tank.speed.y,
+    ) {
         super(maxHp, color, x, y, speedX, speedY, 'tank');
     }
 }
+
 export class SwarmEnemy extends Enemy {
-    constructor(maxHp = 1, color = 'red', x = 0, y = 0, speedX = enemyConfig.enemies.swarm.speed.x, speedY = enemyConfig.enemies.swarm.speed.y) {
+    constructor(
+        maxHp = 1,
+        color: EnemyColor = 'red',
+        x = 0,
+        y = 0,
+        speedX = enemyConfig.enemies.swarm.speed.x,
+        speedY = enemyConfig.enemies.swarm.speed.y,
+    ) {
         super(maxHp, color, x, y, speedX, speedY, 'swarm');
     }
 }
-//# sourceMappingURL=Enemy.js.map
