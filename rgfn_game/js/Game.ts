@@ -100,6 +100,7 @@ export default class Game {
             playerHp: document.getElementById('player-hp')!,
             playerMaxHp: document.getElementById('player-max-hp')!,
             playerDmg: document.getElementById('player-dmg')!,
+            playerDmgFormula: document.getElementById('player-dmg-formula')!,
             playerArmor: document.getElementById('player-armor')!,
             playerWeapon: document.getElementById('player-weapon')!,
             skillPoints: document.getElementById('skill-points')!,
@@ -706,6 +707,7 @@ export default class Game {
         this.hudElements.playerHp.textContent = String(this.player.hp);
         this.hudElements.playerMaxHp.textContent = String(this.player.maxHp);
         this.hudElements.playerDmg.textContent = String(this.player.damage);
+        this.hudElements.playerDmgFormula.textContent = this.player.getDamageFormulaText();
         this.hudElements.playerArmor.textContent = String(this.player.armor);
         this.hudElements.skillPoints.textContent = String(this.player.skillPoints);
         this.hudElements.statVitality.textContent = String(this.player.vitality);

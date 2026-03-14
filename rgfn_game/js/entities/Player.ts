@@ -3,6 +3,8 @@ import { withDamageable } from '../../../engine/core/Damageable.js';
 import {
     getXpForLevel,
     calculateMaxHp,
+    calculateMeleeDamageBonus,
+    calculateBowDamageBonus,
     calculateTotalMeleeDamage,
     calculateTotalBowDamage,
     calculateAvoidChance,
@@ -235,6 +237,25 @@ export default class Player extends DamageableEntity {
      */
     public hasWeapon(): boolean {
         return this.equippedWeapon !== null;
+    }
+
+    public getDamageFormulaText(): string {
+        const isBowAttack = this.getAttackRange() > 1;
+        const baseDamage = balanceConfig.player.baseDamage;
+
+        if (isBowAttack) {
+            const strengthBonus = Math.floor(this.strength / balanceConfig.stats.strengthToBowDamage);
+            const agilityBonus = Math.floor(this.agility / balanceConfig.stats.agilityToBowDamage);
+            const total = baseDamage + calculateBowDamageBonus(this.strength, this.agility);
+
+            return `Bow: ${baseDamage} + ⌊STR/${balanceConfig.stats.strengthToBowDamage}⌋ (${strengthBonus}) + ⌊AGI/${balanceConfig.stats.agilityToBowDamage}⌋ (${agilityBonus}) = ${total}`;
+        }
+
+        const strengthBonus = Math.floor(this.strength / balanceConfig.stats.strengthToMeleeDamage);
+        const agilityBonus = Math.floor(this.agility / balanceConfig.stats.agilityToMeleeDamage);
+        const total = baseDamage + calculateMeleeDamageBonus(this.strength, this.agility);
+
+        return `Melee: ${baseDamage} + ⌊STR/${balanceConfig.stats.strengthToMeleeDamage}⌋ (${strengthBonus}) + ⌊AGI/${balanceConfig.stats.agilityToMeleeDamage}⌋ (${agilityBonus}) = ${total}`;
     }
 
     public draw(ctx: CanvasRenderingContext2D, viewport?: any): void {
