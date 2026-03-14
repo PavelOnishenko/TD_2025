@@ -63,9 +63,11 @@ export default class Player extends DamageableEntity {
     public strength: number = 0;
     public agility: number = 0;
     public skillPoints: number = 0;
+    public gold: number = 20;
 
-    // Equipment
+    // Equipment & Inventory
     public equippedWeapon: Item | null = null;
+    private inventory: Item[] = [];
 
     constructor(x: number, y: number) {
         super(x, y);
@@ -78,6 +80,9 @@ export default class Player extends DamageableEntity {
         this.strength = balanceConfig.player.initialStrength;
         this.agility = balanceConfig.player.initialAgility;
         this.skillPoints = 0;
+
+        // Initialize inventory
+        this.inventory = [];
 
         // Calculate initial stats
         this.updateStats();
@@ -212,13 +217,54 @@ export default class Player extends DamageableEntity {
     }
 
     /**
-     * Equip an item (automatically equipped when obtained)
+     * Add an item to inventory and auto-equip weapons when obtained.
+     * @returns true if item was added successfully
      */
-    public equipItem(item: Item): void {
+    public addItemToInventory(item: Item): boolean {
+        if (this.inventory.length >= balanceConfig.player.inventorySize) {
+            return false;
+        }
+
+        this.inventory.push(item);
+
         if (item.type === 'weapon') {
             this.equippedWeapon = item;
             this.updateStats();
         }
+
+        return true;
+    }
+
+    /**
+     * Use one healing potion from inventory if available.
+     * @returns true if a potion was used
+     */
+    public useHealingPotion(): boolean {
+        const potionIndex = this.inventory.findIndex((item) => item.id === 'healingPotion');
+        if (potionIndex === -1) {
+            return false;
+        }
+
+        this.inventory.splice(potionIndex, 1);
+        this.heal(5);
+        return true;
+    }
+
+    /**
+     * Returns a copy of inventory contents for UI rendering.
+     */
+    public getInventory(): Item[] {
+        return [...this.inventory];
+    }
+
+    public getHealingPotionCount(): number {
+        return this.inventory.filter((item) => item.id === 'healingPotion').length;
+    }
+
+    public unequipWeapon(): Item | null {
+        const weapon = this.equippedWeapon;
+        this.equippedWeapon = null;
+        return weapon;
     }
 
     /**

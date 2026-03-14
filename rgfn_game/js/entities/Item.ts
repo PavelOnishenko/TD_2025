@@ -1,7 +1,10 @@
 /**
  * Item - Represents items that can be discovered and equipped by the player
  */
+export type ItemId = 'bow' | 'healingPotion';
+
 export interface ItemData {
+    id: ItemId;
     name: string;
     description: string;
     type: 'weapon' | 'armor' | 'consumable';
@@ -9,12 +12,14 @@ export interface ItemData {
 }
 
 export default class Item {
+    public id: ItemId;
     public name: string;
     public description: string;
     public type: 'weapon' | 'armor' | 'consumable';
     public attackRange: number;
 
     constructor(data: ItemData) {
+        this.id = data.id;
         this.name = data.name;
         this.description = data.description;
         this.type = data.type;
@@ -24,8 +29,16 @@ export default class Item {
 
 // Predefined items
 export const BOW_ITEM: ItemData = {
+    id: 'bow',
     name: 'Bow',
     description: 'A sturdy bow that allows you to attack from 2 cells away',
     type: 'weapon',
     attackRange: 2
+};
+
+export const HEALING_POTION_ITEM: ItemData = {
+    id: 'healingPotion',
+    name: 'Healing Potion',
+    description: 'A restorative potion that heals 5 HP when used',
+    type: 'consumable'
 };
