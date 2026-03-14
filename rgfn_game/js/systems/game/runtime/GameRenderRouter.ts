@@ -1,0 +1,58 @@
+import Renderer from '../../../../../engine/core/Renderer.js';
+import BattleMap from '../../combat/BattleMap.js';
+import WorldMap from '../../world/WorldMap.js';
+import Player from '../../../entities/Player.js';
+import Skeleton from '../../../entities/Skeleton.js';
+import TurnManager from '../../combat/TurnManager.js';
+import VillageEnvironmentRenderer from '../../village/VillageEnvironmentRenderer.js';
+import VillageLifeRenderer from '../../village/VillageLifeRenderer.js';
+import { theme } from '../../../config/ThemeConfig.js';
+
+type RenderDependencies = {
+    canvas: HTMLCanvasElement;
+    renderer: Renderer;
+    worldMap: WorldMap;
+    player: Player;
+    battleMap: BattleMap;
+    turnManager: TurnManager;
+    villageEnvironmentRenderer: VillageEnvironmentRenderer;
+    villageLifeRenderer: VillageLifeRenderer;
+};
+
+export default class GameRenderRouter {
+    private readonly deps: RenderDependencies;
+
+    constructor(deps: RenderDependencies) {
+        this.deps = deps;
+    }
+
+    public renderWorldMode(): void {
+        this.deps.worldMap.draw(this.deps.renderer.ctx, this.deps.renderer);
+        this.deps.player.draw(this.deps.renderer.ctx);
+    }
+
+    public renderVillageMode(): void {
+        const time = performance.now() * 0.001;
+        const ctx = this.deps.renderer.ctx;
+        const width = this.deps.canvas.width;
+        const height = this.deps.canvas.height;
+        this.deps.villageEnvironmentRenderer.render(ctx, width, height, time);
+        this.deps.villageLifeRenderer.update(time);
+        this.deps.villageLifeRenderer.render(ctx, time);
+        ctx.fillStyle = theme.ui.primaryAccent;
+        ctx.font = 'bold 34px Georgia, serif';
+        ctx.fillText(this.deps.villageLifeRenderer.getVillageName(), 24, 56);
+    }
+
+    public renderBattleMode(enemies: Skeleton[], selectedEnemy: Skeleton | null): void {
+        const currentEntity = this.deps.turnManager.getCurrentEntity();
+        this.deps.battleMap.draw(
+            this.deps.renderer.ctx,
+            this.deps.renderer,
+            currentEntity,
+            selectedEnemy,
+        );
+        const activeEntities = enemies.filter((enemy) => enemy.active);
+        this.deps.renderer.drawEntities([this.deps.player, ...activeEntities]);
+    }
+}

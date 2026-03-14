@@ -16,11 +16,9 @@ import BattleUiController from './systems/BattleUiController.js';
 import WorldModeController from './systems/WorldModeController.js';
 import Player from './entities/Player.js';
 import Skeleton from './entities/Skeleton.js';
-import timingConfig from './config/timingConfig.js';
-import { Direction } from './types/game.js';
 import { BattleSplash } from './ui/BattleSplash.js';
 import { ItemDiscoverySplash } from './ui/ItemDiscoverySplash.js';
-import { applyThemeToCSS, theme } from './config/ThemeConfig.js';
+import { applyThemeToCSS } from './config/ThemeConfig.js';
 import GameUiFactory from './systems/game/GameUiFactory.js';
 import GameInputSetup from './systems/game/GameInputSetup.js';
 import GameUiEventBinder from './systems/game/GameUiEventBinder.js';
@@ -28,453 +26,141 @@ import BattleTurnController from './systems/game/BattleTurnController.js';
 import BattlePlayerActionController from './systems/game/BattlePlayerActionController.js';
 import BattleCommandController from './systems/game/BattleCommandController.js';
 import { BattleUI, DeveloperUI, HudElements, VillageUI } from './systems/game/GameUiTypes.js';
+import GameModeStateMachine, { MODES } from './systems/game/runtime/GameModeStateMachine.js';
+import GameRenderRouter from './systems/game/runtime/GameRenderRouter.js';
+import GameVillageCoordinator from './systems/game/runtime/GameVillageCoordinator.js';
+import GameHudCoordinator from './systems/game/runtime/GameHudCoordinator.js';
+import GameBattleCoordinator from './systems/game/runtime/GameBattleCoordinator.js';
 
-const MODES = {
-    WORLD_MAP: 'WORLD_MAP',
-    BATTLE: 'BATTLE',
-    VILLAGE: 'VILLAGE',
-};
-
-
+type UIBundle = { hudElements: HudElements; battleUI: BattleUI; villageUI: VillageUI; developerUI: DeveloperUI };
 
 export default class Game {
-    private canvas: HTMLCanvasElement;
-    private renderer: Renderer;
-    private input: InputManager;
-    private loop: GameLoop;
-    private player: Player;
-    private worldMap: WorldMap;
-    private battleMap: BattleMap;
-    private turnManager: TurnManager;
-    private encounterSystem: EncounterSystem;
-    private currentEnemies: Skeleton[];
-    private turnTransitioning: boolean;
-    private stateMachine: StateMachine;
-    private hudElements: HudElements;
-    private battleUI: BattleUI;
-    private villageUI: VillageUI;
-    private battleSplash: BattleSplash;
-    private itemDiscoverySplash: ItemDiscoverySplash;
-    private developerUI: DeveloperUI;
-    private villagePopulation: VillagePopulation;
-    private villageEnvironmentRenderer: VillageEnvironmentRenderer;
-    private villageLifeRenderer: VillageLifeRenderer;
-    private villageActionsController: VillageActionsController | null;
-    private developerEventController: DeveloperEventController | null;
-    private hudController: HudController | null;
-    private battleUiController: BattleUiController | null;
-    private worldModeController: WorldModeController | null;
-    private battleTurnController: BattleTurnController | null;
-    private battlePlayerActionController: BattlePlayerActionController | null;
-    private battleCommandController: BattleCommandController | null;
+    private readonly canvas: HTMLCanvasElement;
+    private readonly renderer: Renderer;
+    private readonly input: InputManager;
+    private readonly loop: GameLoop;
+    private readonly stateMachine: StateMachine;
+    private readonly renderRouter: GameRenderRouter;
+    private readonly villageCoordinator: GameVillageCoordinator;
+    private readonly hudCoordinator: GameHudCoordinator;
+    private readonly battleCoordinator: GameBattleCoordinator;
+    private readonly worldModeController: WorldModeController;
 
     constructor(canvas: HTMLCanvasElement) {
         this.canvas = canvas;
         this.renderer = new Renderer(canvas);
         this.input = new InputManager();
-        this.loop = new GameLoop(
-            (dt: number) => this.update(dt),
-            (dt: number) => this.render(dt)
-        );
-
-        // Game state
-        this.player = new Player(0, 0);
-        this.worldMap = new WorldMap(20, 15, 40);
-        this.battleMap = new BattleMap();
-        this.turnManager = new TurnManager();
-        this.encounterSystem = new EncounterSystem();
-        this.currentEnemies = [];
-        this.turnTransitioning = false;
-
-        // State machine for game modes
-        this.stateMachine = new StateMachine(MODES.WORLD_MAP);
-        this.stateMachine
-            .addState(MODES.WORLD_MAP, {
-                enter: () => this.enterWorldMode(),
-                update: (dt: number) => this.updateWorldMode(dt),
-            })
-            .addState(MODES.BATTLE, {
-                enter: (enemies: Skeleton[]) => this.enterBattleMode(enemies),
-                update: (dt: number) => this.updateBattleMode(dt),
-                exit: () => this.exitBattleMode(),
-            })
-            .addState(MODES.VILLAGE, {
-                enter: () => this.enterVillageMode(),
-                update: () => {},
-                exit: () => this.exitVillageMode(),
-            });
-
-        // UI elements
-        this.hudElements = {} as HudElements;
-        this.battleUI = {} as BattleUI;
-        this.villageUI = {} as VillageUI;
-        this.developerUI = {} as DeveloperUI;
-        this.villagePopulation = new VillagePopulation();
-        this.villageEnvironmentRenderer = new VillageEnvironmentRenderer();
-        this.villageLifeRenderer = new VillageLifeRenderer(this.villagePopulation);
-        this.villageActionsController = null;
-        this.developerEventController = null;
-        this.hudController = null;
-        this.battleUiController = null;
-        this.worldModeController = null;
-        this.battleTurnController = null;
-        this.battlePlayerActionController = null;
-        this.battleCommandController = null;
-
-        const uiBundle = new GameUiFactory().create();
-        this.hudElements = uiBundle.hudElements;
-        this.battleUI = uiBundle.battleUI;
-        this.villageUI = uiBundle.villageUI;
-        this.developerUI = uiBundle.developerUI;
-
-        this.villageActionsController = new VillageActionsController(this.player, this.villageUI, {
-            onUpdateHUD: () => this.updateHUD(),
-            onLeaveVillage: () => this.stateMachine.transition(MODES.WORLD_MAP),
+        this.loop = new GameLoop((dt: number) => this.update(dt), () => this.render());
+        const player = new Player(0, 0);
+        const worldMap = new WorldMap(20, 15, 40);
+        const battleMap = new BattleMap();
+        const turnManager = new TurnManager();
+        const encounterSystem = new EncounterSystem();
+        const villageLifeRenderer = new VillageLifeRenderer(new VillagePopulation());
+        const ui = new GameUiFactory().create();
+        const battleUiController = new BattleUiController(ui.battleUI, battleMap, turnManager, player);
+        this.hudCoordinator = new GameHudCoordinator(player, new HudController(player, ui.hudElements, ui.battleUI), battleUiController);
+        const villageActionsController = new VillageActionsController(player, ui.villageUI, {
+            onUpdateHUD: () => this.hudCoordinator.updateHUD(), onLeaveVillage: () => this.stateMachine.transition(MODES.WORLD_MAP),
         });
-
-        this.developerEventController = new DeveloperEventController(this.developerUI, this.encounterSystem, {
-            addVillageLog: (message: string, type: string = 'system') => this.villageActionsController!.addLog(message, type),
-            getEventLabel: (type: ForcedEncounterType) => this.getDeveloperEventLabel(type),
+        this.villageCoordinator = new GameVillageCoordinator(ui.hudElements, ui.battleUI, ui.villageUI, villageLifeRenderer, villageActionsController);
+        this.stateMachine = this.createStateMachine(ui);
+        const battlePlayerActionController = new BattlePlayerActionController(turnManager, battleUiController, {
+            onAddBattleLog: (m: string, t: string = 'system') => this.hudCoordinator.addBattleLog(m, t),
+            onEnableBattleButtons: (enabled: boolean) => this.hudCoordinator.enableBattleButtons(enabled),
+            onProcessTurn: () => this.battleCoordinator.processTurn(),
+            onPlayerTurnTransitionStart: () => this.battleCoordinator.onPlayerTurnTransitionStart(),
         });
-
-        // Initialize systems
-        this.battleSplash = new BattleSplash();
-        this.itemDiscoverySplash = new ItemDiscoverySplash();
-
-        this.battleUiController = new BattleUiController(this.battleUI, this.battleMap, this.turnManager, this.player);
-        this.hudController = new HudController(this.player, this.hudElements, this.battleUI);
-        this.worldModeController = new WorldModeController(
-            this.input,
-            this.player,
-            this.worldMap,
-            this.encounterSystem,
-            this.itemDiscoverySplash,
-            {
-                onEnterVillage: () => this.stateMachine.transition(MODES.VILLAGE),
-                onStartBattle: (enemies: Skeleton[]) => this.stateMachine.transition(MODES.BATTLE, enemies),
-                onAddBattleLog: (message: string, type: string = 'system') => this.addBattleLog(message, type),
-                onUpdateHUD: () => this.updateHUD(),
-            }
-        );
-
+        const battleCommandController = new BattleCommandController(this.stateMachine, player, battleMap, turnManager, {
+            onUpdateHUD: () => this.hudCoordinator.updateHUD(),
+            onAddBattleLog: (m: string, t: string = 'system') => this.hudCoordinator.addBattleLog(m, t),
+            onEnableBattleButtons: (enabled: boolean) => this.hudCoordinator.enableBattleButtons(enabled),
+            onProcessTurn: () => this.battleCoordinator.processTurn(),
+            onEndBattle: (result: 'victory' | 'fled') => this.battleCoordinator.endBattle(result),
+            onPlayerTurnTransitionStart: () => this.battleCoordinator.onPlayerTurnTransitionStart(),
+            onPlayerTurnReady: () => this.battleCoordinator.onPlayerTurnReady(),
+            getSelectedEnemy: () => battlePlayerActionController.getSelectedEnemy(),
+            setSelectedEnemy: (enemy: Skeleton | null) => battlePlayerActionController.setSelectedEnemy(enemy),
+        });
+        const battleTurnController = new BattleTurnController(battleMap, turnManager, player, {
+            onAddBattleLog: (m: string, t: string = 'system') => this.hudCoordinator.addBattleLog(m, t),
+            onUpdateHUD: () => this.hudCoordinator.updateHUD(),
+            onEnableBattleButtons: (enabled: boolean) => this.hudCoordinator.enableBattleButtons(enabled),
+            onBattleEnd: (result: 'victory' | 'defeat') => this.battleCoordinator.endBattle(result),
+            onPlayerTurnReady: () => this.battleCoordinator.onPlayerTurnReady(),
+        });
+        this.battleCoordinator = new GameBattleCoordinator(this.input, this.stateMachine, {
+            player, battleMap, turnManager, battleSplash: new BattleSplash(), hudElements: ui.hudElements, battleUI: ui.battleUI, villageUI: ui.villageUI,
+        }, { battlePlayerActionController, battleCommandController, battleTurnController }, {
+            onClearBattleLog: () => this.hudCoordinator.clearBattleLog(),
+            onAddBattleLog: (m: string, t: string = 'system') => this.hudCoordinator.addBattleLog(m, t),
+            onUpdateHUD: () => this.hudCoordinator.updateHUD(),
+            onDescribeEncounter: (enemies: Skeleton[]) => this.hudCoordinator.describeEncounter(enemies),
+            onGameOver: () => this.gameOver(),
+        });
+        this.worldModeController = new WorldModeController(this.input, player, worldMap, encounterSystem, new ItemDiscoverySplash(), {
+            onEnterVillage: () => this.stateMachine.transition(MODES.VILLAGE),
+            onStartBattle: (enemies: Skeleton[]) => this.stateMachine.transition(MODES.BATTLE, enemies),
+            onAddBattleLog: (m: string, t: string = 'system') => this.hudCoordinator.addBattleLog(m, t),
+            onUpdateHUD: () => this.hudCoordinator.updateHUD(),
+        });
+        this.renderRouter = new GameRenderRouter({
+            canvas: this.canvas, renderer: this.renderer, worldMap, player, battleMap, turnManager,
+            villageEnvironmentRenderer: new VillageEnvironmentRenderer(), villageLifeRenderer,
+        });
+        this.bindUi(ui, villageActionsController, encounterSystem);
+        this.configureInput();
         applyThemeToCSS();
-
-        this.battlePlayerActionController = new BattlePlayerActionController(this.turnManager, this.battleUiController, {
-            onAddBattleLog: (message: string, type: string = 'system') => this.addBattleLog(message, type),
-            onEnableBattleButtons: (enabled: boolean) => this.enableBattleButtons(enabled),
-            onProcessTurn: () => this.processTurn(),
-            onPlayerTurnTransitionStart: () => {
-                this.turnTransitioning = true;
-            },
-        });
-
-        this.battleCommandController = new BattleCommandController(this.stateMachine, this.player, this.battleMap, this.turnManager, {
-            onUpdateHUD: () => this.updateHUD(),
-            onAddBattleLog: (message: string, type: string = 'system') => this.addBattleLog(message, type),
-            onEnableBattleButtons: (enabled: boolean) => this.enableBattleButtons(enabled),
-            onProcessTurn: () => this.processTurn(),
-            onEndBattle: (result: 'victory' | 'fled') => this.endBattle(result),
-            onPlayerTurnTransitionStart: () => {
-                this.turnTransitioning = true;
-            },
-            onPlayerTurnReady: () => {
-                this.turnTransitioning = false;
-            },
-            getSelectedEnemy: () => this.battlePlayerActionController!.getSelectedEnemy(),
-            setSelectedEnemy: (enemy: Skeleton | null) => this.battlePlayerActionController!.setSelectedEnemy(enemy),
-        });
-
-        this.battleTurnController = new BattleTurnController(this.battleMap, this.turnManager, this.player, {
-            onAddBattleLog: (message: string, type: string = 'system') => this.addBattleLog(message, type),
-            onUpdateHUD: () => this.updateHUD(),
-            onEnableBattleButtons: (enabled: boolean) => this.enableBattleButtons(enabled),
-            onBattleEnd: (result: 'victory' | 'defeat') => this.endBattle(result),
-            onPlayerTurnReady: () => {
-                this.turnTransitioning = false;
-                this.turnManager.waitingForPlayer = true;
-                this.updateBattleUI();
-            },
-        });
-
-        new GameUiEventBinder(
-            this.canvas,
-            this.hudElements,
-            this.battleUI,
-            this.villageUI,
-            this.developerUI,
-            this.villageActionsController,
-            this.developerEventController,
-            {
-                onAttack: () => this.handleAttack(),
-                onFlee: () => this.handleFlee(),
-                onWait: () => this.handleWait(),
-                onUsePotionFromBattle: () => this.handleUsePotion(true),
-                onUsePotionFromHud: () => this.handleUsePotion(false),
-                onAddStat: (stat) => this.handleAddStat(stat),
-                onCanvasClick: (event) => this.handleCanvasClick(event),
-            },
-        ).bind(() => this.villageLifeRenderer.getVillageName());
-
-        // Input mapping
-        new GameInputSetup(this.input, {
-            onToggleDeveloperModal: () => this.developerEventController!.toggleModal(),
-        }).configure();
-
-        // Initialize player position
-        const [px, py] = this.worldMap.getPlayerPixelPosition();
-        this.player.x = px;
-        this.player.y = py;
+        const [x, y] = worldMap.getPlayerPixelPosition();
+        player.x = x;
+        player.y = y;
     }
 
-    public start(): void {
-        this.updateHUD();
-        this.loop.start();
+    public start(): void { this.hudCoordinator.updateHUD(); this.loop.start(); }
+
+    private createStateMachine(ui: UIBundle): StateMachine {
+        return new GameModeStateMachine<Skeleton>({
+            onEnterWorld: () => this.worldModeController.enterWorldMode(ui.hudElements.modeIndicator, ui.battleUI.sidebar, ui.villageUI.sidebar),
+            onUpdateWorld: () => this.worldModeController.updateWorldMode(),
+            onEnterBattle: (enemies: Skeleton[]) => this.battleCoordinator.enterBattleMode(enemies),
+            onUpdateBattle: () => this.battleCoordinator.updateBattleMode(),
+            onExitBattle: () => this.battleCoordinator.exitBattleMode(),
+            onEnterVillage: () => this.villageCoordinator.enterVillageMode(this.canvas.width, this.canvas.height),
+            onExitVillage: () => this.villageCoordinator.exitVillageMode(),
+        }).create();
     }
 
-    private update(deltaTime: number): void {
-        this.stateMachine.update(deltaTime);
-        this.input.update();
+    private bindUi(ui: UIBundle, villageActionsController: VillageActionsController, encounterSystem: EncounterSystem): void {
+        const devController = new DeveloperEventController(ui.developerUI, encounterSystem, {
+            addVillageLog: (m: string, t: string = 'system') => villageActionsController.addLog(m, t),
+            getEventLabel: (type: ForcedEncounterType) => this.villageCoordinator.getDeveloperEventLabel(type),
+        });
+        new GameUiEventBinder(this.canvas, ui.hudElements, ui.battleUI, ui.villageUI, ui.developerUI, villageActionsController, devController, {
+            onAttack: () => this.battleCoordinator.handleAttack(), onFlee: () => this.battleCoordinator.handleFlee(),
+            onWait: () => this.battleCoordinator.handleWait(), onUsePotionFromBattle: () => this.battleCoordinator.handleUsePotion(true),
+            onUsePotionFromHud: () => this.battleCoordinator.handleUsePotion(false),
+            onAddStat: (stat) => this.hudCoordinator.handleAddStat(stat), onCanvasClick: (event) => this.battleCoordinator.handleCanvasClick(event, this.canvas),
+        }).bind(() => this.villageCoordinator.getVillageName());
+        this.devController = devController;
     }
 
-    private render(deltaTime: number): void {
+    private devController: DeveloperEventController | null = null;
+
+    private configureInput(): void {
+        new GameInputSetup(this.input, { onToggleDeveloperModal: () => this.devController!.toggleModal() }).configure();
+    }
+
+    private update(deltaTime: number): void { this.stateMachine.update(deltaTime); this.input.update(); }
+
+    private render(): void {
         this.renderer.beginFrame();
-
-        if (this.stateMachine.isInState(MODES.WORLD_MAP)) {
-            this.renderWorldMode();
-        } else if (this.stateMachine.isInState(MODES.VILLAGE)) {
-            this.renderVillageMode();
-        } else if (this.stateMachine.isInState(MODES.BATTLE)) {
-            this.renderBattleMode();
+        if (this.stateMachine.isInState(MODES.WORLD_MAP)) this.renderRouter.renderWorldMode();
+        if (this.stateMachine.isInState(MODES.VILLAGE)) this.renderRouter.renderVillageMode();
+        if (this.stateMachine.isInState(MODES.BATTLE)) {
+            this.renderRouter.renderBattleMode(this.battleCoordinator.getCurrentEnemies(), this.battleCoordinator.getSelectedEnemy());
         }
-
         this.renderer.endFrame();
     }
 
-    // ============ WORLD MAP MODE ============
-
-    private enterWorldMode(): void {
-        this.worldModeController!.enterWorldMode(
-            this.hudElements.modeIndicator,
-            this.battleUI.sidebar,
-            this.villageUI.sidebar,
-        );
-    }
-
-    private updateWorldMode(deltaTime: number): void {
-        void deltaTime;
-        this.worldModeController!.updateWorldMode();
-    }
-
-    private renderWorldMode(): void {
-        this.worldMap.draw(this.renderer.ctx, this.renderer);
-        this.player.draw(this.renderer.ctx);
-    }
-
-    private renderVillageMode(): void {
-        const ctx = this.renderer.ctx;
-        const width = this.canvas.width;
-        const height = this.canvas.height;
-        const time = performance.now() * 0.001;
-
-        this.villageEnvironmentRenderer.render(ctx, width, height, time);
-        this.villageLifeRenderer.update(time);
-        this.villageLifeRenderer.render(ctx, time);
-
-        ctx.fillStyle = theme.ui.primaryAccent;
-        ctx.font = 'bold 34px Georgia, serif';
-        ctx.fillText(this.villageLifeRenderer.getVillageName(), 24, 56);
-    }
-
-    // ============ VILLAGE MODE ============
-
-    private enterVillageMode(): void {
-        this.hudElements.modeIndicator.textContent = 'Village';
-        this.battleUI.sidebar.classList.add('hidden');
-        this.villageLifeRenderer.initialize(this.canvas.width, this.canvas.height);
-        this.villageActionsController!.enterVillage(this.villageLifeRenderer.getVillageName());
-    }
-
-    private exitVillageMode(): void {
-        this.villageActionsController!.exitVillage();
-    }
-
-    private getDeveloperEventLabel(type: ForcedEncounterType): string {
-        const labels: Record<ForcedEncounterType, string> = {
-            skeleton: 'Skeleton battle',
-            zombie: 'Zombie battle',
-            ninja: 'Ninja battle',
-            darkKnight: 'Dark Knight battle',
-            dragon: 'Dragon battle',
-            item: 'Item discovery',
-            none: 'No encounter',
-            village: 'Village',
-        };
-
-        return labels[type] ?? type;
-    }
-
-    private enterBattleMode(enemies: Skeleton[]): void {
-        this.hudElements.modeIndicator.textContent = 'Battle!';
-        this.battleUI.sidebar.classList.remove('hidden');
-        this.villageUI.sidebar.classList.add('hidden');
-
-        this.currentEnemies = enemies;
-        this.battlePlayerActionController!.setSelectedEnemy(null);
-
-        // Show battle start splash screen, then continue with battle setup
-        this.battleSplash.showBattleStart(enemies.length, () => {
-            this.battleMap.setup(this.player, this.currentEnemies);
-            this.turnManager.initializeTurns([this.player, ...this.currentEnemies]);
-            this.turnTransitioning = false;
-
-            this.clearBattleLog();
-            this.addBattleLog(`Encountered ${this.describeEncounter(enemies)}!`, 'system');
-     
-            // Update HUD to show current player stats
-            this.updateHUD();
-            this.processTurn();
-        });
-      
-    }
-    private updateBattleMode(deltaTime: number): void {
-        void deltaTime;
-        this.battlePlayerActionController!.updateBattleMode(() => this.getPressedDirection());
-    }
-
-    private getPressedDirection(): Direction | null {
-        if (this.input.wasActionPressed('moveUp')) {
-            return 'up';
-        }
-
-        if (this.input.wasActionPressed('moveDown')) {
-            return 'down';
-        }
-
-        if (this.input.wasActionPressed('moveLeft')) {
-            return 'left';
-        }
-
-        if (this.input.wasActionPressed('moveRight')) {
-            return 'right';
-        }
-
-        return null;
-    }
-
-    private handleCanvasClick(event: MouseEvent): void {
-        if (!this.stateMachine.isInState(MODES.BATTLE) || this.turnTransitioning) {
-            return;
-        }
-
-        this.battlePlayerActionController!.handleCanvasClick(event, this.canvas);
-    }
-
-    private processTurn(): void {
-        this.battleTurnController!.processTurn();
-    }
-
-    private handleAttack(): void {
-        if (this.turnTransitioning) {
-            return;
-        }
-
-        this.battleCommandController!.handleAttack();
-    }
-
-    private handleFlee(): void {
-        if (this.turnTransitioning) {
-            return;
-        }
-
-        this.battleCommandController!.handleFlee();
-    }
-
-    private handleWait(): void {
-        if (this.turnTransitioning) {
-            return;
-        }
-
-        this.battleCommandController!.handleWait();
-    }
-
-    private handleUsePotion(fromBattleControls: boolean): void {
-        if (this.turnTransitioning && this.stateMachine.isInState(MODES.BATTLE)) {
-            return;
-        }
-
-        this.battleCommandController!.handleUsePotion(fromBattleControls);
-    }
-
-    private endBattle(result: 'victory' | 'defeat' | 'fled'): void {
-        if (result === 'victory') {
-            this.addBattleLog('Victory!', 'system');
-            // Show victory splash screen
-            this.battleSplash.showBattleEnd('victory', () => {
-                this.stateMachine.transition(MODES.WORLD_MAP);
-            });
-        } else if (result === 'defeat') {
-            this.addBattleLog('Game Over!', 'system');
-            // Show defeat splash screen
-            this.battleSplash.showBattleEnd('defeat', () => {
-                this.gameOver();
-            });
-        } else if (result === 'fled') {
-            this.stateMachine.transition(MODES.WORLD_MAP);
-        }
-    }
-
-    private exitBattleMode(): void {
-        this.currentEnemies = [];
-    }
-
-    private renderBattleMode(): void {
-        const currentEntity = this.turnManager.getCurrentEntity();
-        this.battleMap.draw(this.renderer.ctx, this.renderer, currentEntity, this.battlePlayerActionController!.getSelectedEnemy());
-
-        // Draw all entities
-        const entities = [this.player, ...this.currentEnemies.filter(e => e.active)];
-        this.renderer.drawEntities(entities);
-    }
-
-    // ============ BATTLE UI ============
-
-    private updateBattleUI(): void {
-        this.battlePlayerActionController!.updateBattleUI();
-    }
-
-    private enableBattleButtons(enabled: boolean): void {
-        this.battleUiController!.setButtonsEnabled(enabled);
-    }
-
-    private addBattleLog(message: string, type: string = 'system'): void {
-        this.battleUiController!.addBattleLog(message, type);
-    }
-
-    private clearBattleLog(): void {
-        this.battleUiController!.clearBattleLog();
-    }
-
-    private describeEncounter(enemies: Skeleton[]): string {
-        return this.battleUiController!.describeEncounter(enemies);
-    }
-
-    // ============ HUD ============
-
-    private updateHUD(): void {
-        this.hudController!.updateHUD();
-    }
-
-    private handleAddStat(stat: 'vitality' | 'toughness' | 'strength' | 'agility'): void {
-        if (this.player.addStat(stat)) {
-            this.updateHUD();
-            this.addBattleLog(`+1 ${stat.charAt(0).toUpperCase() + stat.slice(1)}!`, 'system');
-        }
-    }
-
-    // ============ GAME OVER ============
-
-    private gameOver(): void {
-        this.loop.stop();
-        alert('Game Over! Refresh to restart.');
-    }
+    private gameOver(): void { this.loop.stop(); alert('Game Over! Refresh to restart.'); }
 }
