@@ -14,6 +14,24 @@ export function withMockedRandom(values, fn) {
   }
 }
 
+export function withFixedRandom(value, fn) {
+  return withMockedRandom([value], fn);
+}
+
+export function withPatchedProperty(target, key, value, fn) {
+  const original = target[key];
+  target[key] = value;
+  try {
+    return fn();
+  } finally {
+    target[key] = original;
+  }
+}
+
+export function withPatchedMethod(target, key, implementation) {
+  return (fn) => withPatchedProperty(target, key, implementation, fn);
+}
+
 export function createMockCanvasContext() {
   const calls = [];
   const ctx = {

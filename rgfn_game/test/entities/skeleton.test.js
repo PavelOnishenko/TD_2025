@@ -3,7 +3,17 @@ import assert from 'node:assert/strict';
 
 import Skeleton from '../../dist/entities/Skeleton.js';
 import { balanceConfig } from '../../dist/config/balanceConfig.js';
-import { withMockedRandom, createMockCanvasContext } from '../helpers/testUtils.js';
+import { createMockCanvasContext } from '../helpers/testUtils.js';
+
+function createEnemyWithBehavior(baseConfig, behavior) {
+  return new Skeleton(0, 0, {
+    ...baseConfig,
+    behavior: {
+      ...(baseConfig.behavior ?? {}),
+      ...behavior,
+    },
+  });
+}
 
 test('Skeleton initializes from config and deactivates on death', () => {
   const skeleton = new Skeleton(0, 0, balanceConfig.enemies.zombie);
@@ -16,18 +26,20 @@ test('Skeleton initializes from config and deactivates on death', () => {
   assert.equal(skeleton.active, false);
 });
 
-test('Skeleton behavior checks use configured chances', () => {
-  const ninja = new Skeleton(0, 0, balanceConfig.enemies.ninja);
-  const knight = new Skeleton(0, 0, balanceConfig.enemies.darkKnight);
-  const dragon = new Skeleton(0, 0, balanceConfig.enemies.dragon);
+test('Skeleton behavior checks follow configured avoid/damage/pass semantics', () => {
+  const ninjaAlwaysAvoids = createEnemyWithBehavior(balanceConfig.enemies.ninja, { avoidHitChance: 1 });
+  const ninjaNeverAvoids = createEnemyWithBehavior(balanceConfig.enemies.ninja, { avoidHitChance: 0 });
 
-  withMockedRandom([0.1], () => assert.equal(ninja.shouldAvoidHit(), true));
-  withMockedRandom([0.9], () => assert.equal(ninja.shouldAvoidHit(), false));
+  const knightAlwaysCrits = createEnemyWithBehavior(balanceConfig.enemies.darkKnight, { doubleDamageChance: 1 });
+  const knightNeverCrits = createEnemyWithBehavior(balanceConfig.enemies.darkKnight, { doubleDamageChance: 0 });
 
-  withMockedRandom([0.2], () => assert.equal(knight.getAttackDamage(), knight.damage * 2));
-  withMockedRandom([0.9], () => assert.equal(knight.getAttackDamage(), knight.damage));
+  const dragonAlwaysPasses = createEnemyWithBehavior(balanceConfig.enemies.dragon, { passEncounterChance: 1 });
 
-  withMockedRandom([0.1], () => assert.equal(dragon.shouldPassEncounter(), true));
+  assert.equal(ninjaAlwaysAvoids.shouldAvoidHit(), true);
+  assert.equal(ninjaNeverAvoids.shouldAvoidHit(), false);
+  assert.equal(knightAlwaysCrits.getAttackDamage(), knightAlwaysCrits.damage * 2);
+  assert.equal(knightNeverCrits.getAttackDamage(), knightNeverCrits.damage);
+  assert.equal(dragonAlwaysPasses.shouldPassEncounter(), true);
 });
 
 test('Skeleton draw executes correct branch and health bar drawing', () => {
