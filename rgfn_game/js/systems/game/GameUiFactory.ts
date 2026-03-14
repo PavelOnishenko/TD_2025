@@ -1,4 +1,5 @@
 import { BattleUI, DeveloperUI, GameUiBundle, HudElements, VillageUI } from './GameUiTypes.js';
+import { balanceConfig } from '../../config/balanceConfig.js';
 
 export default class GameUiFactory {
     public create(): GameUiBundle {
@@ -42,13 +43,17 @@ export default class GameUiFactory {
     }
 
     private createBattleUi(): BattleUI {
+        const fleeBtn = document.getElementById('flee-btn')! as HTMLButtonElement;
+        const fleePercent = Math.round(balanceConfig.combat.fleeChance * 100);
+        fleeBtn.textContent = `Flee (${fleePercent}%)`;
+
         return {
             sidebar: document.getElementById('battle-sidebar')!,
             enemyName: document.getElementById('enemy-name')!,
             enemyHp: document.getElementById('enemy-hp')!,
             enemyMaxHp: document.getElementById('enemy-max-hp')!,
             attackBtn: document.getElementById('attack-btn')! as HTMLButtonElement,
-            fleeBtn: document.getElementById('flee-btn')! as HTMLButtonElement,
+            fleeBtn,
             waitBtn: document.getElementById('wait-btn')! as HTMLButtonElement,
             usePotionBtn: document.getElementById('battle-use-potion-btn')! as HTMLButtonElement,
             log: document.getElementById('battle-log')!,
