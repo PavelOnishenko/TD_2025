@@ -14,6 +14,7 @@ import VillageLifeRenderer from './systems/village/VillageLifeRenderer.js';
 import HudController from './systems/HudController.js';
 import BattleUiController from './systems/BattleUiController.js';
 import WorldModeController from './systems/WorldModeController.js';
+import AmbientMusicSystem from './systems/audio/AmbientMusicSystem.js';
 import Player from './entities/Player.js';
 import Skeleton from './entities/Skeleton.js';
 import { BattleSplash } from './ui/BattleSplash.js';
@@ -45,6 +46,8 @@ export default class Game {
     private readonly hudCoordinator: GameHudCoordinator;
     private readonly battleCoordinator: GameBattleCoordinator;
     private readonly worldModeController: WorldModeController;
+    private readonly ambientMusic: AmbientMusicSystem;
+    private lastAmbientMode: typeof MODES.WORLD_MAP | typeof MODES.VILLAGE | typeof MODES.BATTLE = MODES.WORLD_MAP;
 
     constructor(canvas: HTMLCanvasElement) {
         this.canvas = canvas;
@@ -108,6 +111,8 @@ export default class Game {
             canvas: this.canvas, renderer: this.renderer, worldMap, player, battleMap, turnManager,
             villageEnvironmentRenderer: new VillageEnvironmentRenderer(), villageLifeRenderer,
         });
+        this.ambientMusic = new AmbientMusicSystem();
+        this.ambientMusic.attachAutoStart();
         this.bindUi(ui, villageActionsController, encounterSystem);
         this.configureInput();
         applyThemeToCSS();
@@ -150,7 +155,11 @@ export default class Game {
         new GameInputSetup(this.input, { onToggleDeveloperModal: () => this.devController!.toggleModal() }).configure();
     }
 
-    private update(deltaTime: number): void { this.stateMachine.update(deltaTime); this.input.update(); }
+    private update(deltaTime: number): void {
+        this.stateMachine.update(deltaTime);
+        this.syncAmbientMusicToMode();
+        this.input.update();
+    }
 
     private render(): void {
         this.renderer.beginFrame();
@@ -162,5 +171,17 @@ export default class Game {
         this.renderer.endFrame();
     }
 
-    private gameOver(): void { this.loop.stop(); alert('Game Over! Refresh to restart.'); }
+    private syncAmbientMusicToMode(): void {
+        const mode = this.stateMachine.getCurrentState() as typeof MODES.WORLD_MAP | typeof MODES.VILLAGE | typeof MODES.BATTLE;
+        if (mode !== this.lastAmbientMode) {
+            this.ambientMusic.setMode(mode);
+            this.lastAmbientMode = mode;
+        }
+    }
+
+    private gameOver(): void {
+        this.ambientMusic.stop();
+        this.loop.stop();
+        alert('Game Over! Refresh to restart.');
+    }
 }
