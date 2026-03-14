@@ -7,19 +7,19 @@ import { TimingConfig } from '../types/game.js';
 export const timingConfig: TimingConfig = {
     battle: {
         // Delay after player action before processing next turn (ms)
-        playerActionDelay: 100,
+        playerActionDelay: 10,
 
         // Delay after enemy turn before processing next turn (ms)
-        enemyTurnDelay: 100,
+        enemyTurnDelay: 10,
 
         // Delay before enemy executes their action (ms)
-        enemyActionStartDelay: 400,
+        enemyActionStartDelay: 40,
 
         // Delay after failed flee attempt (ms)
         fleeFailedDelay: 500,
 
         // Small delay before accepting player input at turn start (ms)
-        turnStartInputDelay: 100,
+        turnStartInputDelay: 10,
 
         // Delay before ending battle after defeat (ms)
         defeatEndDelay: 1500,
