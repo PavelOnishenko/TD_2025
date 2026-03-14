@@ -363,6 +363,7 @@ export default class Game {
             } else if (encounter.type === 'item') {
                 this.handleItemDiscovery(encounter.item);
             } else if (encounter.type === 'village') {
+                this.worldMap.markVillageAtPlayerPosition();
                 this.stateMachine.transition(MODES.VILLAGE);
             }
         }

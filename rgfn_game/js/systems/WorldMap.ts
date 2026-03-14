@@ -143,6 +143,10 @@ export default class WorldMap {
         return this.villages.has(this.getCellKey(this.playerGridPos.col, this.playerGridPos.row));
     }
 
+    public markVillageAtPlayerPosition(): void {
+        this.villages.add(this.getCellKey(this.playerGridPos.col, this.playerGridPos.row));
+    }
+
     public isPlayerOnEdge(): boolean {
         const { columns, rows } = this.grid.getDimensions();
         const { col, row } = this.playerGridPos;
@@ -202,10 +206,6 @@ export default class WorldMap {
             const col = Number(colText);
             const row = Number(rowText);
 
-            if (col === this.playerGridPos.col && row === this.playerGridPos.row) {
-                return;
-            }
-
             const fogState = this.getFogState(col, row);
             if (fogState === FOG_STATE.UNKNOWN) {
                 return;
@@ -216,25 +216,32 @@ export default class WorldMap {
                 return;
             }
 
-            const brightness = fogState === FOG_STATE.DISCOVERED ? 1 : 0.7;
-            const roofColor = this.withAlpha(theme.ui.secondaryAccent, 0.95 * brightness);
-            const wallColor = this.withAlpha(theme.ui.primaryAccent, 0.22 * brightness);
             const x = cell.x + cell.width / 2;
             const y = cell.y + cell.height / 2;
+            const villageGlow = fogState === FOG_STATE.DISCOVERED ? 0.95 : 0.82;
 
-            ctx.fillStyle = wallColor;
-            ctx.fillRect(x - 7, y - 1, 14, 10);
-
-            ctx.fillStyle = roofColor;
+            ctx.save();
+            ctx.shadowColor = this.withAlpha('#FFF3A8', 0.95);
+            ctx.shadowBlur = 18;
+            ctx.fillStyle = this.withAlpha('#FFE66D', villageGlow);
             ctx.beginPath();
-            ctx.moveTo(x - 9, y - 1);
-            ctx.lineTo(x, y - 10);
-            ctx.lineTo(x + 9, y - 1);
+            ctx.arc(x, y + 1, 10, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+
+            ctx.fillStyle = this.withAlpha('#2E1400', 0.55);
+            ctx.fillRect(x - 8, y, 16, 11);
+
+            ctx.fillStyle = this.withAlpha('#FF7E2D', villageGlow);
+            ctx.beginPath();
+            ctx.moveTo(x - 10, y);
+            ctx.lineTo(x, y - 12);
+            ctx.lineTo(x + 10, y);
             ctx.closePath();
             ctx.fill();
 
-            ctx.fillStyle = this.withAlpha(theme.worldMap.background, 0.9 * brightness);
-            ctx.fillRect(x - 2, y + 3, 4, 6);
+            ctx.fillStyle = this.withAlpha('#FFF8D0', 0.98);
+            ctx.fillRect(x - 3, y + 3, 6, 8);
         });
     }
 
