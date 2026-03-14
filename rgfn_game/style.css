@@ -95,6 +95,14 @@ h1 {
 }
 .stat span { color: var(--color-enemy); font-weight: 700; }
 
+.stat-detail {
+    margin-top: 3px;
+    font-size: 12px;
+    color: var(--color-text-muted);
+    line-height: 1.25;
+    font-family: 'Courier New', monospace;
+}
+
 .stat-row {
     display: flex;
     justify-content: space-between;
