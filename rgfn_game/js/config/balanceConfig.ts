@@ -139,7 +139,7 @@ export const balanceConfig = {
         minDamageAfterArmor: 1,
 
         // Flee success chance
-        fleeChance: 0.4,
+        fleeChance: 0.3,
     },
 
     // ============ ENCOUNTER SETTINGS ============
