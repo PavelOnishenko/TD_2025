@@ -34,7 +34,7 @@ body {
 html { height: 100%; }
 
 #game-container {
-    width: min(1280px, 100%);
+    width: min(1420px, 100%);
     height: 100%;
     display: flex;
     flex-direction: column;
@@ -48,10 +48,16 @@ html { height: 100%; }
 }
 
 #hud {
+    flex: 1;
+    min-height: 0;
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    grid-template-columns: minmax(270px, 1fr) minmax(560px, 2fr) minmax(220px, 0.9fr);
+    grid-template-rows: minmax(0, 1fr) minmax(0, 1fr) auto;
+    grid-template-areas:
+        'stats main actions'
+        'stats main skills'
+        'inventory inventory inventory';
     gap: 14px;
-    align-items: stretch;
     padding: 16px 18px;
     background: linear-gradient(180deg, var(--color-primary-bg), var(--color-secondary-bg));
     border: 2px solid var(--color-secondary-accent);
@@ -66,7 +72,14 @@ html { height: 100%; }
     border: 1px solid var(--color-secondary-accent);
     border-radius: 6px;
     background: rgba(242, 229, 201, 0.4);
+    min-height: 0;
 }
+
+#hud-stats { grid-area: stats; }
+#hud-main { grid-area: main; padding: 8px; }
+#hud-actions { grid-area: actions; }
+#hud-skills { grid-area: skills; }
+#hud-inventory { grid-area: inventory; }
 
 .hud-section.stats { align-items: flex-start; }
 
@@ -97,6 +110,7 @@ h1 {
     color: var(--color-text-primary);
     border-bottom: 1px dotted var(--color-secondary-accent);
     padding-bottom: 3px;
+    width: 100%;
 }
 .stat span { color: var(--color-enemy); font-weight: 700; }
 
@@ -116,6 +130,7 @@ h1 {
     font-size: 14px;
     color: var(--color-text-primary);
     padding: 3px 0;
+    width: 100%;
 }
 .stat-row span span { color: var(--color-enemy); font-weight: 700; }
 
@@ -150,40 +165,65 @@ h1 {
     color: var(--color-disabled);
 }
 
-#game-area {
-    display: flex;
-    gap: 16px;
+#hud-actions {
+    gap: 10px;
     align-items: stretch;
-    flex: 1;
+}
+
+#controls {
+    text-align: center;
+    padding: 10px;
+    background: linear-gradient(180deg, var(--color-primary-bg), var(--color-secondary-bg));
+    border: 2px solid var(--color-secondary-accent);
+    border-radius: 7px;
+}
+#controls p { margin: 4px 0; font-size: 13px; color: var(--color-text-primary); }
+
+#game-area {
+    position: relative;
+    width: 100%;
+    height: 100%;
     min-height: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
 }
 
 #game-canvas {
     border: 3px solid var(--color-secondary-accent);
     border-radius: 6px;
     background-color: var(--color-canvas-bg);
-    flex: 1;
-    min-width: 0;
-    max-height: 100%;
+    width: min(100%, 800px);
+    max-width: 100%;
     height: auto;
+    max-height: 100%;
     aspect-ratio: 4 / 3;
     box-shadow: 0 0 0 2px var(--color-panel-shadow);
 }
 
 #battle-sidebar,
 #village-sidebar {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
     background: linear-gradient(180deg, var(--color-panel-highlight), var(--color-secondary-bg));
     border: 2px solid var(--color-secondary-accent);
     border-radius: 8px;
     padding: 18px;
-    min-width: 240px;
-    width: min(292px, 30vw);
-    max-width: 292px;
+    width: min(292px, 33%);
+    min-width: 230px;
+    max-height: 92%;
+    overflow-y: auto;
     min-height: 0;
     display: flex;
     flex-direction: column;
     gap: 14px;
 }
+
+#battle-sidebar { left: 10px; }
+#village-sidebar { right: 10px; }
+
 #battle-sidebar.hidden,
 #village-sidebar.hidden { display: none; }
 
@@ -257,20 +297,65 @@ h1 {
 #battle-log .system-action,
 #village-log .system-action { color: var(--color-text-muted); font-style: italic; }
 
-#controls {
-    text-align: center;
-    padding: 12px;
-    background: linear-gradient(180deg, var(--color-primary-bg), var(--color-secondary-bg));
-    border: 2px solid var(--color-secondary-accent);
-    border-radius: 7px;
-}
-#controls p { margin: 4px 0; font-size: 13px; color: var(--color-text-primary); }
+@media (max-width: 1320px), (max-height: 920px) {
+    #hud {
+        grid-template-columns: minmax(250px, 1fr) minmax(0, 2fr);
+        grid-template-areas:
+            'stats actions'
+            'main main'
+            'skills skills'
+            'inventory inventory';
+        grid-template-rows: auto minmax(320px, 1fr) auto auto;
+    }
 
-@media (max-width: 1180px), (max-height: 900px) {
-    #game-area { flex-direction: column; }
     #battle-sidebar,
-    #village-sidebar { max-width: none; width: 100%; }
-    #game-canvas { width: 100%; max-height: 60vh; }
+    #village-sidebar {
+        position: static;
+        transform: none;
+        width: 100%;
+        min-width: 0;
+        max-height: none;
+        margin-top: 10px;
+    }
+
+    #game-area {
+        flex-direction: column;
+        justify-content: flex-start;
+        overflow-y: auto;
+    }
+
+    #game-canvas {
+        width: min(100%, 860px);
+        max-height: 62vh;
+    }
+}
+
+@media (max-width: 920px) {
+    body {
+        overflow: auto;
+        height: auto;
+        min-height: 100vh;
+    }
+
+    #game-container {
+        height: auto;
+        min-height: 100vh;
+    }
+
+    #hud {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+            'stats'
+            'actions'
+            'main'
+            'skills'
+            'inventory';
+        grid-template-rows: auto;
+    }
+
+    #game-area {
+        min-height: 280px;
+    }
 }
 
 .inventory-grid {
