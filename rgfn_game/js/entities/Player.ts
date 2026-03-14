@@ -201,6 +201,11 @@ export default class Player extends DamageableEntity {
     public equipItem(item: Item): void {
         if (item.type === 'weapon') {
             this.equippedWeapon = item;
+            return;
+        }
+
+        if (item.type === 'consumable' && item.name === 'Healing Potion') {
+            this.heal(5);
         }
     }
 

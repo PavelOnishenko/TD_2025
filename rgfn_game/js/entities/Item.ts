@@ -29,3 +29,9 @@ export const BOW_ITEM: ItemData = {
     type: 'weapon',
     attackRange: 2
 };
+
+export const HEALING_POTION_ITEM: ItemData = {
+    name: 'Healing Potion',
+    description: 'A restorative potion that heals 5 HP when discovered',
+    type: 'consumable'
+};

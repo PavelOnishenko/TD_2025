@@ -1,7 +1,7 @@
 import { randomInt } from '../../../engine/utils/MathUtils.js';
 import Skeleton, { EnemyConfig } from '../entities/Skeleton.js';
 import { balanceConfig } from '../config/balanceConfig.js';
-import Item, { BOW_ITEM } from '../entities/Item.js';
+import Item, { BOW_ITEM, HEALING_POTION_ITEM } from '../entities/Item.js';
 
 export type EncounterResult =
     | { type: 'battle', enemies: Skeleton[] }
@@ -12,12 +12,14 @@ export default class EncounterSystem {
     private encounterRate: number;
     private stepsSinceEncounter: number;
     private bowFound: boolean;
+    private healingPotionFound: boolean;
     private itemDiscoveryChance: number;
 
     constructor(encounterRate?: number) {
         this.encounterRate = encounterRate ?? balanceConfig.encounters.encounterRate;
         this.stepsSinceEncounter = 0;
         this.bowFound = false;
+        this.healingPotionFound = false;
         this.itemDiscoveryChance = 0.15; // 15% chance to find item instead of enemies
     }
 
@@ -40,11 +42,30 @@ export default class EncounterSystem {
     }
 
     public generateEncounter(): EncounterResult {
-        // Check if we should discover an item (only if bow hasn't been found yet)
-        if (!this.bowFound && Math.random() < this.itemDiscoveryChance) {
-            this.bowFound = true;
-            const bow = new Item(BOW_ITEM);
-            return { type: 'item', item: bow };
+        // Check if we should discover an item (only if discoverable items remain)
+        const canDiscoverItem = !this.bowFound || !this.healingPotionFound;
+        if (canDiscoverItem && Math.random() < this.itemDiscoveryChance) {
+            const undiscoveredItems: Item[] = [];
+
+            if (!this.bowFound) {
+                undiscoveredItems.push(new Item(BOW_ITEM));
+            }
+
+            if (!this.healingPotionFound) {
+                undiscoveredItems.push(new Item(HEALING_POTION_ITEM));
+            }
+
+            const discoveredItem = undiscoveredItems[randomInt(0, undiscoveredItems.length - 1)];
+
+            if (discoveredItem.name === BOW_ITEM.name) {
+                this.bowFound = true;
+            }
+
+            if (discoveredItem.name === HEALING_POTION_ITEM.name) {
+                this.healingPotionFound = true;
+            }
+
+            return { type: 'item', item: discoveredItem };
         }
 
         const encounterType = this.rollEncounterType();
