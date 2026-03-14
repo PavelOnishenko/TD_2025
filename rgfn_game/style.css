@@ -248,3 +248,60 @@ h1 {
 #village-sidebar { max-width: none; width: 100%; }
     #game-canvas { width: 100%; height: auto; max-width: 800px; }
 }
+
+.inventory-grid {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 6px;
+    width: 100%;
+}
+
+.inventory-slot {
+    width: 34px;
+    height: 34px;
+    border: 1px solid var(--color-secondary-accent);
+    border-radius: 4px;
+    background: rgba(242, 229, 201, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.inventory-slot.empty {
+    opacity: 0.4;
+}
+
+.item-sprite {
+    width: 22px;
+    height: 22px;
+    image-rendering: pixelated;
+}
+
+.item-sprite.bow-sprite {
+    background:
+        linear-gradient(90deg, transparent 35%, #5f3b1c 35%, #5f3b1c 48%, transparent 48%),
+        radial-gradient(circle at 80% 50%, transparent 7px, #8f5a2a 7px, #8f5a2a 9px, transparent 9px),
+        radial-gradient(circle at 20% 50%, transparent 7px, #8f5a2a 7px, #8f5a2a 9px, transparent 9px);
+}
+
+.item-sprite.potion-sprite {
+    background:
+        linear-gradient(180deg, #4fc3f7 0 35%, #2e7d32 35% 100%);
+    border: 2px solid #2e2013;
+    border-top-left-radius: 6px;
+    border-top-right-radius: 6px;
+    border-bottom-left-radius: 9px;
+    border-bottom-right-radius: 9px;
+    position: relative;
+}
+
+.item-sprite.potion-sprite::before {
+    content: '';
+    position: absolute;
+    top: -6px;
+    left: 5px;
+    width: 8px;
+    height: 6px;
+    background: #8f5a2a;
+    border: 1px solid #2e2013;
+}
