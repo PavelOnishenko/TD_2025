@@ -10,12 +10,15 @@ export const balanceConfig = {
         baseHp: 5,
         baseDamage: 2,
         baseArmor: 0,
+        baseMana: 3,
 
         // Initial allocated stats at game start
         initialVitality: 0,
         initialToughness: 0,
         initialStrength: 0,
         initialAgility: 0,
+        initialConnection: 0,
+        initialIntelligence: 0,
 
         // Visual properties
         width: 32,
@@ -101,6 +104,10 @@ export const balanceConfig = {
         // Agility-driven evade chance formula tuning
         avoidChanceScale: 0.045,
         avoidChanceCap: 0.45,
+
+        // Magic-related progression
+        connectionToMana: 1,
+        intelligenceToManaDivisor: 3,
     },
 
     // ============ LEVEL SYSTEM ============
@@ -135,6 +142,7 @@ export const balanceConfig = {
 
     // ============ COMBAT SETTINGS ============
     combat: {
+        manaPotionRestore: 4,
         // Armor can never fully negate a positive hit
         minDamageAfterArmor: 1,
 

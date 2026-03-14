@@ -4,6 +4,7 @@ import Item from './Item.js';
 type PlayerInventoryHooks = {
     onWeaponChanged: () => void;
     onHealingPotionUsed: () => void;
+    onManaPotionUsed: () => void;
 };
 
 export default class PlayerInventory {
@@ -28,13 +29,24 @@ export default class PlayerInventory {
     }
 
     public useHealingPotion(): boolean {
-        const potionIndex = this.findHealingPotionIndex();
+        const potionIndex = this.findPotionIndex('healingPotion');
         if (potionIndex === -1) {
             return false;
         }
 
         this.inventory.splice(potionIndex, 1);
         this.hooks.onHealingPotionUsed();
+        return true;
+    }
+
+    public useManaPotion(): boolean {
+        const potionIndex = this.findPotionIndex('manaPotion');
+        if (potionIndex === -1) {
+            return false;
+        }
+
+        this.inventory.splice(potionIndex, 1);
+        this.hooks.onManaPotionUsed();
         return true;
     }
 
@@ -46,14 +58,16 @@ export default class PlayerInventory {
         return this.inventory.filter((item) => item.id === 'healingPotion').length;
     }
 
-    public removeHealingPotion(): boolean {
-        const potionIndex = this.findHealingPotionIndex();
-        if (potionIndex === -1) {
-            return false;
-        }
+    public getManaPotionCount(): number {
+        return this.inventory.filter((item) => item.id === 'manaPotion').length;
+    }
 
-        this.inventory.splice(potionIndex, 1);
-        return true;
+    public removeHealingPotion(): boolean {
+        return this.removePotionById('healingPotion');
+    }
+
+    public removeManaPotion(): boolean {
+        return this.removePotionById('manaPotion');
     }
 
     public unequipWeapon(): Item | null {
@@ -79,7 +93,17 @@ export default class PlayerInventory {
         this.hooks.onWeaponChanged();
     }
 
-    private findHealingPotionIndex(): number {
-        return this.inventory.findIndex((item) => item.id === 'healingPotion');
+    private removePotionById(id: 'healingPotion' | 'manaPotion'): boolean {
+        const potionIndex = this.findPotionIndex(id);
+        if (potionIndex === -1) {
+            return false;
+        }
+
+        this.inventory.splice(potionIndex, 1);
+        return true;
+    }
+
+    private findPotionIndex(id: 'healingPotion' | 'manaPotion'): number {
+        return this.inventory.findIndex((item) => item.id === id);
     }
 }

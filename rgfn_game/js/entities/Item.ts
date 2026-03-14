@@ -1,7 +1,7 @@
 /**
  * Item - Represents items that can be discovered and equipped by the player
  */
-export type ItemId = 'bow' | 'healingPotion';
+export type ItemId = 'bow' | 'healingPotion' | 'manaPotion';
 
 export interface ItemData {
     id: ItemId;
@@ -40,5 +40,12 @@ export const HEALING_POTION_ITEM: ItemData = {
     id: 'healingPotion',
     name: 'Healing Potion',
     description: 'A restorative potion that heals 5 HP when used',
+    type: 'consumable'
+};
+
+export const MANA_POTION_ITEM: ItemData = {
+    id: 'manaPotion',
+    name: 'Mana Potion',
+    description: 'A restorative potion that recovers mana when used',
     type: 'consumable'
 };

@@ -9,6 +9,7 @@ import {
     calculateTotalBowDamage,
     calculateAvoidChance,
     calculateArmor,
+    calculateMana,
     levelConfig
 } from '../config/levelConfig.js';
 import { balanceConfig } from '../config/balanceConfig.js';
@@ -16,11 +17,11 @@ import Item from './Item.js';
 import PlayerInventory from './PlayerInventory.js';
 import PlayerRenderer from './PlayerRenderer.js';
 
-// Extend Entity with Damageable functionality
 const DamageableEntity = withDamageable(Entity);
 
+type PlayerStat = 'vitality' | 'toughness' | 'strength' | 'agility' | 'connection' | 'intelligence';
+
 export default class Player extends DamageableEntity {
-    // Explicitly declare inherited properties from Entity
     declare x: number;
     declare y: number;
     declare width: number;
@@ -30,43 +31,44 @@ export default class Player extends DamageableEntity {
     declare active: boolean;
     declare id: number;
 
-    // Explicitly declare inherited methods from Entity
     declare move: (deltaTime: number) => void;
     declare getBounds: () => { left: number; right: number; top: number; bottom: number };
     declare checkCollision: (other: any) => boolean;
 
-    // Explicitly declare inherited properties from Damageable
     declare hp: number;
     declare maxHp: number;
 
-    // Explicitly declare inherited methods from Damageable
     declare initDamageable: (maxHp: number) => void;
     declare heal: (amount: number) => void;
     declare isDead: () => boolean;
     declare getHealthPercent: () => number;
     declare healToFull: () => void;
 
-    // Player-specific properties
     public damage: number;
     public armor: number = 0;
     public avoidChance: number = 0;
     public gridCol?: number;
     public gridRow?: number;
 
-    // Level system
     public level: number = 1;
     public xp: number = 0;
     public xpToNextLevel: number;
 
-    // Stats
     public vitality: number = 0;
     public toughness: number = 0;
     public strength: number = 0;
     public agility: number = 0;
+    public connection: number = 0;
+    public intelligence: number = 0;
     public skillPoints: number = 0;
+    public magicPoints: number = 0;
+    public mana: number = 0;
+    public maxMana: number = 0;
     public gold: number = 20;
 
-    // Equipment & Inventory
+    private rageTurns: number = 0;
+    private rageMultiplier: number = 1;
+
     private readonly inventorySystem: PlayerInventory;
     private readonly renderer: PlayerRenderer;
 
@@ -83,31 +85,28 @@ export default class Player extends DamageableEntity {
         this.width = balanceConfig.player.width;
         this.height = balanceConfig.player.height;
 
-        // Initialize stats from balance config
         this.vitality = balanceConfig.player.initialVitality;
         this.toughness = balanceConfig.player.initialToughness;
         this.strength = balanceConfig.player.initialStrength;
         this.agility = balanceConfig.player.initialAgility;
+        this.connection = balanceConfig.player.initialConnection;
+        this.intelligence = balanceConfig.player.initialIntelligence;
         this.skillPoints = 0;
 
         this.inventorySystem = new PlayerInventory({
             onWeaponChanged: () => this.updateStats(),
-            onHealingPotionUsed: () => this.heal(5)
+            onHealingPotionUsed: () => this.heal(5),
+            onManaPotionUsed: () => this.restoreMana(balanceConfig.combat.manaPotionRestore)
         });
         this.renderer = new PlayerRenderer();
 
-        // Calculate initial stats
         this.updateStats();
+        this.mana = this.maxMana;
         this.xpToNextLevel = getXpForLevel(2);
 
-        // Initialize Damageable functionality with calculated maxHp
         this.initDamageable(this.maxHp);
     }
 
-    /**
-     * Override takeDamage to apply armor reduction before damage.
-     * Armor can never completely negate a positive incoming hit.
-     */
     public takeDamage(amount: number): boolean {
         if (amount <= 0) {
             return super.takeDamage(0);
@@ -121,11 +120,17 @@ export default class Player extends DamageableEntity {
         return super.takeDamage(damageAfterArmor);
     }
 
-    /**
-     * Update derived stats based on allocated stat points
-     */
+    public takeMagicDamage(amount: number): boolean {
+        return super.takeDamage(Math.max(0, amount));
+    }
+
     public updateStats(): void {
+        const previousMaxMana = this.maxMana;
+        const previousMana = this.mana;
+        const hadFullMana = previousMaxMana > 0 && previousMana === previousMaxMana;
+
         this.maxHp = calculateMaxHp(this.vitality);
+        this.maxMana = calculateMana(this.connection, this.intelligence);
         this.armor = calculateArmor(this.toughness);
         this.avoidChance = calculateAvoidChance(this.agility);
 
@@ -134,12 +139,15 @@ export default class Player extends DamageableEntity {
         } else {
             this.damage = calculateTotalMeleeDamage(this.strength, this.agility);
         }
+
+        if (previousMaxMana === 0 || hadFullMana) {
+            this.mana = this.maxMana;
+            return;
+        }
+
+        this.mana = Math.min(this.maxMana, previousMana);
     }
 
-    /**
-     * Add experience points and handle level ups
-     * @returns true if player leveled up
-     */
     public addXp(amount: number): boolean {
         if (this.level >= levelConfig.maxLevel) {
             return false;
@@ -147,7 +155,6 @@ export default class Player extends DamageableEntity {
 
         this.xp += amount;
 
-        // Check for level up
         if (this.xp >= this.xpToNextLevel) {
             this.levelUp();
             return true;
@@ -156,9 +163,6 @@ export default class Player extends DamageableEntity {
         return false;
     }
 
-    /**
-     * Level up the player
-     */
     private levelUp(): void {
         if (this.level >= levelConfig.maxLevel) {
             return;
@@ -166,29 +170,21 @@ export default class Player extends DamageableEntity {
 
         this.level++;
         this.xp -= this.xpToNextLevel;
-
-        // Grant skill points
         this.skillPoints += levelConfig.skillPointsPerLevel;
-
-        // Update XP requirement for next level
         this.xpToNextLevel = getXpForLevel(this.level + 1);
 
-        // Update stats (this recalculates maxHp)
-        const oldMaxHp = this.maxHp;
         this.updateStats();
 
-        // Heal to full HP (use Damageable method)
         this.healToFull();
+        this.mana = this.maxMana;
     }
 
-    /**
-     * Allocate a skill point to a stat
-     * @returns true if allocation was successful
-     */
-    public addStat(stat: 'vitality' | 'toughness' | 'strength' | 'agility', amount: number = 1): boolean {
+    public addStat(stat: PlayerStat, amount: number = 1): boolean {
         if (this.skillPoints < amount) {
             return false;
         }
+
+        const previousIntelligence = this.intelligence;
 
         switch (stat) {
             case 'vitality':
@@ -203,50 +199,96 @@ export default class Player extends DamageableEntity {
             case 'agility':
                 this.agility += amount;
                 break;
+            case 'connection':
+                this.connection += amount;
+                break;
+            case 'intelligence':
+                this.intelligence += amount;
+                break;
             default:
                 return false;
         }
 
         this.skillPoints -= amount;
 
-        // Store current HP percentage
-        const hpPercent = this.hp / this.maxHp;
-
-        // Update derived stats
         this.updateStats();
-
-        // Restore HP percentage (so increasing vitality doesn't heal you mid-battle)
         this.hp = Math.min(this.hp, this.maxHp);
+
+        if (stat === 'intelligence') {
+            const gainedMagicPoints = Math.floor(this.intelligence / 3) - Math.floor(previousIntelligence / 3);
+            if (gainedMagicPoints > 0) {
+                this.magicPoints += gainedMagicPoints;
+            }
+        }
 
         return true;
     }
 
-    /**
-     * Get the actual damage reduction from armor
-     */
+
+    public restoreMana(amount: number): void {
+        if (amount <= 0) {
+            return;
+        }
+
+        this.mana = Math.min(this.maxMana, this.mana + amount);
+    }
+
+    public spendMana(amount: number): boolean {
+        if (amount <= 0) {
+            return true;
+        }
+
+        if (this.mana < amount) {
+            return false;
+        }
+
+        this.mana -= amount;
+        return true;
+    }
+
+    public canSpendMana(amount: number): boolean {
+        return this.mana >= amount;
+    }
+
+    public getPhysicalDamageWithBuff(): number {
+        return Math.round(this.damage * this.rageMultiplier);
+    }
+
+    public getMagicPowerMultiplier(): number {
+        return this.rageMultiplier;
+    }
+
+    public applyRage(turns: number, multiplier: number): void {
+        this.rageTurns = Math.max(this.rageTurns, turns);
+        this.rageMultiplier = Math.max(this.rageMultiplier, multiplier);
+    }
+
+    public consumePlayerTurnEffects(): string[] {
+        const events: string[] = [];
+
+        if (this.rageTurns > 0) {
+            this.rageTurns -= 1;
+            if (this.rageTurns === 0) {
+                this.rageMultiplier = 1;
+                events.push('Rage fades.');
+            }
+        }
+
+        return events;
+    }
+
     public getArmorReduction(): number {
         return this.armor;
     }
 
-    /**
-     * Add an item to inventory and auto-equip weapons when obtained.
-     * @returns true if item was added successfully
-     */
     public addItemToInventory(item: Item): boolean {
         return this.inventorySystem.addItem(item);
     }
 
-    /**
-     * Use one healing potion from inventory if available.
-     * @returns true if a potion was used
-     */
     public useHealingPotion(): boolean {
         return this.inventorySystem.useHealingPotion();
     }
 
-    /**
-     * Returns a copy of inventory contents for UI rendering.
-     */
     public getInventory(): Item[] {
         return this.inventorySystem.getItems();
     }
@@ -255,25 +297,30 @@ export default class Player extends DamageableEntity {
         return this.inventorySystem.getHealingPotionCount();
     }
 
+    public getManaPotionCount(): number {
+        return this.inventorySystem.getManaPotionCount();
+    }
+
+    public useManaPotion(): boolean {
+        return this.inventorySystem.useManaPotion();
+    }
+
     public removeHealingPotionFromInventory(): boolean {
         return this.inventorySystem.removeHealingPotion();
+    }
+
+    public removeManaPotionFromInventory(): boolean {
+        return this.inventorySystem.removeManaPotion();
     }
 
     public unequipWeapon(): Item | null {
         return this.inventorySystem.unequipWeapon();
     }
 
-    /**
-     * Get the player's current attack range
-     * @returns number of cells the player can attack from
-     */
     public getAttackRange(): number {
         return this.inventorySystem.getAttackRange();
     }
 
-    /**
-     * Check if the player has a specific item equipped
-     */
     public hasWeapon(): boolean {
         return this.inventorySystem.hasWeapon();
     }
