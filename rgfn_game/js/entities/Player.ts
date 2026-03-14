@@ -3,7 +3,9 @@ import { withDamageable } from '../../../engine/core/Damageable.js';
 import {
     getXpForLevel,
     calculateMaxHp,
-    calculateTotalDamage,
+    calculateTotalMeleeDamage,
+    calculateTotalBowDamage,
+    calculateAvoidChance,
     calculateArmor,
     levelConfig
 } from '../config/levelConfig.js';
@@ -44,6 +46,7 @@ export default class Player extends DamageableEntity {
     // Player-specific properties
     public damage: number;
     public armor: number = 0;
+    public avoidChance: number = 0;
     public gridCol?: number;
     public gridRow?: number;
 
@@ -56,6 +59,7 @@ export default class Player extends DamageableEntity {
     public vitality: number = 0;
     public toughness: number = 0;
     public strength: number = 0;
+    public agility: number = 0;
     public skillPoints: number = 0;
 
     // Equipment
@@ -70,6 +74,7 @@ export default class Player extends DamageableEntity {
         this.vitality = balanceConfig.player.initialVitality;
         this.toughness = balanceConfig.player.initialToughness;
         this.strength = balanceConfig.player.initialStrength;
+        this.agility = balanceConfig.player.initialAgility;
         this.skillPoints = 0;
 
         // Calculate initial stats
@@ -102,8 +107,14 @@ export default class Player extends DamageableEntity {
      */
     public updateStats(): void {
         this.maxHp = calculateMaxHp(this.vitality);
-        this.damage = calculateTotalDamage(this.strength);
         this.armor = calculateArmor(this.toughness);
+        this.avoidChance = calculateAvoidChance(this.agility);
+
+        if (this.getAttackRange() > 1) {
+            this.damage = calculateTotalBowDamage(this.strength, this.agility);
+        } else {
+            this.damage = calculateTotalMeleeDamage(this.strength, this.agility);
+        }
     }
 
     /**
@@ -155,7 +166,7 @@ export default class Player extends DamageableEntity {
      * Allocate a skill point to a stat
      * @returns true if allocation was successful
      */
-    public addStat(stat: 'vitality' | 'toughness' | 'strength', amount: number = 1): boolean {
+    public addStat(stat: 'vitality' | 'toughness' | 'strength' | 'agility', amount: number = 1): boolean {
         if (this.skillPoints < amount) {
             return false;
         }
@@ -169,6 +180,9 @@ export default class Player extends DamageableEntity {
                 break;
             case 'strength':
                 this.strength += amount;
+                break;
+            case 'agility':
+                this.agility += amount;
                 break;
             default:
                 return false;
@@ -201,6 +215,7 @@ export default class Player extends DamageableEntity {
     public equipItem(item: Item): void {
         if (item.type === 'weapon') {
             this.equippedWeapon = item;
+            this.updateStats();
         }
     }
 

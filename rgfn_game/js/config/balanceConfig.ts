@@ -15,6 +15,7 @@ export const balanceConfig = {
         initialVitality: 0,
         initialToughness: 0,
         initialStrength: 0,
+        initialAgility: 0,
 
         // Visual properties
         width: 32,
@@ -82,8 +83,21 @@ export const balanceConfig = {
         // 3 Toughness points = 1 armor (armor reduces damage by 1)
         toughnessToArmor: 3,
 
-        // 2 Strength points = +1 damage
-        strengthToDamage: 2,
+        // 2 Strength points = +1 melee damage
+        strengthToMeleeDamage: 2,
+
+        // Strength still helps bows, but less efficiently
+        strengthToBowDamage: 4,
+
+        // Agility helps melee a bit
+        agilityToMeleeDamage: 4,
+
+        // Agility is the primary bow damage stat
+        agilityToBowDamage: 2,
+
+        // Agility-driven evade chance formula tuning
+        avoidChanceScale: 0.045,
+        avoidChanceCap: 0.45,
     },
 
     // ============ LEVEL SYSTEM ============
