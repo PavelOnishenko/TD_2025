@@ -2,7 +2,6 @@ import GridMap from '../utils/GridMap.js';
 import { FogState, TerrainData, GridPosition, Direction, GridCell } from '../types/game.js';
 import { theme } from '../config/ThemeConfig.js';
 
-// Fog of war states
 const FOG_STATE = {
     UNKNOWN: 'unknown' as FogState,
     DISCOVERED: 'discovered' as FogState,
@@ -20,74 +19,51 @@ export default class WorldMap {
         this.playerGridPos = { col: Math.floor(columns / 2), row: Math.floor(rows / 2) };
         this.fogStates = new Map();
         this.terrainData = new Map();
-
-        // Initialize fog of war and terrain for all cells
         this.initializeFogOfWar();
         this.generateTerrain();
-
-        // Discover starting cell
         this.discoverCell(this.playerGridPos.col, this.playerGridPos.row);
     }
 
     private initializeFogOfWar(): void {
-        // Set all cells to unknown initially
         this.grid.forEachCell((cell: GridCell, col: number, row: number) => {
-            const key = this.getCellKey(col, row);
-            this.fogStates.set(key, FOG_STATE.UNKNOWN);
+            this.fogStates.set(this.getCellKey(col, row), FOG_STATE.UNKNOWN);
         });
     }
 
     private generateTerrain(): void {
-        // Generate random terrain for each cell
         this.grid.forEachCell((cell: GridCell, col: number, row: number) => {
-            const key = this.getCellKey(col, row);
-            const terrain = this.generateCellTerrain(col, row);
-            this.terrainData.set(key, terrain);
+            this.terrainData.set(this.getCellKey(col, row), this.generateCellTerrain(col, row));
         });
     }
 
     private generateCellTerrain(col: number, row: number): TerrainData {
-        // Generate pseudo-random terrain based on cell coordinates
         const seed = col * 1000 + row;
         const random = this.seededRandom(seed);
-
-        // Choose terrain type
         const terrainTypes = [
-            { type: 'grass' as const, color: theme.worldMap.terrain.grass, probability: 0.4 },
+            { type: 'grass' as const, color: theme.worldMap.terrain.grass, probability: 0.35 },
             { type: 'forest' as const, color: theme.worldMap.terrain.forest, probability: 0.25 },
-            { type: 'mountain' as const, color: theme.worldMap.terrain.mountain, probability: 0.15 },
-            { type: 'water' as const, color: theme.worldMap.terrain.water, probability: 0.15 },
-            { type: 'desert' as const, color: theme.worldMap.terrain.desert, probability: 0.05 }
+            { type: 'mountain' as const, color: theme.worldMap.terrain.mountain, probability: 0.18 },
+            { type: 'water' as const, color: theme.worldMap.terrain.water, probability: 0.14 },
+            { type: 'desert' as const, color: theme.worldMap.terrain.desert, probability: 0.08 }
         ];
 
         let accumulator = 0;
         for (const terrain of terrainTypes) {
             accumulator += terrain.probability;
             if (random < accumulator) {
-                return {
-                    type: terrain.type,
-                    color: terrain.color,
-                    pattern: this.generateTerrainPattern(seed)
-                };
+                return { type: terrain.type, color: terrain.color, pattern: this.generateTerrainPattern(seed) };
             }
         }
 
-        return {
-            type: terrainTypes[0].type,
-            color: terrainTypes[0].color,
-            pattern: this.generateTerrainPattern(seed)
-        };
+        return { type: 'grass', color: theme.worldMap.terrain.grass, pattern: 'plain' };
     }
 
     private generateTerrainPattern(seed: number): TerrainData['pattern'] {
-        // Generate a simple pattern (dots, lines, etc.) for visual variety
         const patterns: TerrainData['pattern'][] = ['dots', 'lines', 'cross', 'plain'];
-        const index = Math.floor(this.seededRandom(seed * 2) * patterns.length);
-        return patterns[index];
+        return patterns[Math.floor(this.seededRandom(seed * 2) * patterns.length)];
     }
 
     private seededRandom(seed: number): number {
-        // Simple seeded random number generator
         const x = Math.sin(seed) * 10000;
         return x - Math.floor(x);
     }
@@ -98,28 +74,22 @@ export default class WorldMap {
 
     private discoverCell(col: number, row: number): void {
         const key = this.getCellKey(col, row);
-
-        // Mark current cell as discovered
         this.fogStates.set(key, FOG_STATE.DISCOVERED);
 
-        // Update all other cells that were discovered back to hidden
         this.grid.forEachCell((cell: GridCell, c: number, r: number) => {
             const cellKey = this.getCellKey(c, r);
-            const state = this.fogStates.get(cellKey);
-            if (state === FOG_STATE.DISCOVERED && cellKey !== key) {
+            if (this.fogStates.get(cellKey) === FOG_STATE.DISCOVERED && cellKey !== key) {
                 this.fogStates.set(cellKey, FOG_STATE.HIDDEN);
             }
         });
     }
 
     private getFogState(col: number, row: number): FogState {
-        const key = this.getCellKey(col, row);
-        return this.fogStates.get(key) || FOG_STATE.UNKNOWN;
+        return this.fogStates.get(this.getCellKey(col, row)) || FOG_STATE.UNKNOWN;
     }
 
     private getTerrain(col: number, row: number): TerrainData | undefined {
-        const key = this.getCellKey(col, row);
-        return this.terrainData.get(key);
+        return this.terrainData.get(this.getCellKey(col, row));
     }
 
     public movePlayer(direction: Direction): boolean {
@@ -127,30 +97,18 @@ export default class WorldMap {
         let newCol = col;
         let newRow = row;
 
-        switch (direction) {
-            case 'up':
-                newRow = row - 1;
-                break;
-            case 'down':
-                newRow = row + 1;
-                break;
-            case 'left':
-                newCol = col - 1;
-                break;
-            case 'right':
-                newCol = col + 1;
-                break;
-        }
+        if (direction === 'up') newRow--;
+        if (direction === 'down') newRow++;
+        if (direction === 'left') newCol--;
+        if (direction === 'right') newCol++;
 
-        // Check if valid position
         if (this.grid.isValidPosition(newCol, newRow)) {
             this.playerGridPos = { col: newCol, row: newRow };
-            // Discover the new cell
             this.discoverCell(newCol, newRow);
-            return true; // Moved successfully
+            return true;
         }
 
-        return false; // Can't move there
+        return false;
     }
 
     public getPlayerPixelPosition(): [number, number] {
@@ -159,24 +117,15 @@ export default class WorldMap {
 
     public draw(ctx: CanvasRenderingContext2D, renderer: any): void {
         const dims = this.grid.getDimensions();
-
-        // Draw grid background
         ctx.fillStyle = theme.worldMap.background;
         ctx.fillRect(0, 0, dims.width, dims.height);
 
-        // Draw all cells based on their fog state
         this.grid.forEachCell((cell: GridCell, col: number, row: number) => {
-            const fogState = this.getFogState(col, row);
-            const terrain = this.getTerrain(col, row);
-
-            this.drawCell(ctx, cell, fogState, terrain, col, row);
+            this.drawCell(ctx, cell, this.getFogState(col, row), this.getTerrain(col, row));
         });
 
-        // Draw grid lines
         ctx.strokeStyle = theme.worldMap.gridLines;
         ctx.lineWidth = 1;
-
-        // Vertical lines
         for (let col = 0; col <= this.grid.columns; col++) {
             const x = col * this.grid.cellSize;
             ctx.beginPath();
@@ -184,8 +133,6 @@ export default class WorldMap {
             ctx.lineTo(x, dims.height);
             ctx.stroke();
         }
-
-        // Horizontal lines
         for (let row = 0; row <= this.grid.rows; row++) {
             const y = row * this.grid.cellSize;
             ctx.beginPath();
@@ -194,133 +141,139 @@ export default class WorldMap {
             ctx.stroke();
         }
 
-        // Highlight player cell
         const playerCell = this.grid.getCellAt(this.playerGridPos.col, this.playerGridPos.row);
         if (playerCell) {
-            ctx.fillStyle = 'rgba(0, 204, 255, 0.3)';
+            ctx.fillStyle = this.withAlpha(theme.worldMap.playerMarker, 0.2);
             ctx.fillRect(playerCell.x, playerCell.y, playerCell.width, playerCell.height);
 
-            // Draw player marker
-            ctx.fillStyle = theme.worldMap.playerMarker;
             const centerX = playerCell.x + playerCell.width / 2;
             const centerY = playerCell.y + playerCell.height / 2;
+            ctx.fillStyle = theme.worldMap.playerMarker;
             ctx.beginPath();
-            ctx.arc(centerX, centerY, 8, 0, Math.PI * 2);
+            ctx.moveTo(centerX, centerY - 8);
+            ctx.lineTo(centerX - 6, centerY + 6);
+            ctx.lineTo(centerX + 6, centerY + 6);
+            ctx.closePath();
             ctx.fill();
         }
     }
 
-    private drawCell(ctx: CanvasRenderingContext2D, cell: GridCell, fogState: FogState, terrain: TerrainData | undefined, col: number, row: number): void {
-        switch (fogState) {
-            case FOG_STATE.UNKNOWN:
-                // Unknown cells - all look identical (dark/mysterious)
-                ctx.fillStyle = theme.worldMap.unknown;
-                ctx.fillRect(cell.x, cell.y, cell.width, cell.height);
+    private drawCell(ctx: CanvasRenderingContext2D, cell: GridCell, fogState: FogState, terrain: TerrainData | undefined): void {
+        if (fogState === FOG_STATE.UNKNOWN) {
+            ctx.fillStyle = theme.worldMap.unknown;
+            ctx.fillRect(cell.x, cell.y, cell.width, cell.height);
+            ctx.fillStyle = this.withAlpha(theme.ui.primaryAccent, 0.35);
+            ctx.font = '18px Georgia';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('?', cell.x + cell.width / 2, cell.y + cell.height / 2);
+            return;
+        }
 
-                // Add subtle question mark or unknown indicator
-                ctx.fillStyle = 'rgba(100, 100, 120, 0.3)';
-                ctx.font = '20px monospace';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText('?', cell.x + cell.width / 2, cell.y + cell.height / 2);
-                break;
+        this.drawTerrain(ctx, cell, terrain, fogState === FOG_STATE.DISCOVERED ? 1 : 0.7);
 
-            case FOG_STATE.DISCOVERED:
-                // Currently visible - show full terrain with bright colors
-                this.drawTerrain(ctx, cell, terrain, 1.0);
-                break;
-
-            case FOG_STATE.HIDDEN:
-                // Visited but not currently visible - show terrain but darker
-                this.drawTerrain(ctx, cell, terrain, 0.5);
-
-                // Add a dark overlay to indicate it's not currently visible
-                ctx.fillStyle = 'rgba(10, 10, 26, 0.4)';
-                ctx.fillRect(cell.x, cell.y, cell.width, cell.height);
-                break;
+        if (fogState === FOG_STATE.HIDDEN) {
+            ctx.fillStyle = this.withAlpha(theme.ui.primaryAccent, 0.16);
+            ctx.fillRect(cell.x, cell.y, cell.width, cell.height);
         }
     }
 
     private drawTerrain(ctx: CanvasRenderingContext2D, cell: GridCell, terrain: TerrainData | undefined, brightness: number): void {
         if (!terrain) return;
 
-        // Parse color and apply brightness
-        const color = this.adjustColorBrightness(terrain.color, brightness);
-        ctx.fillStyle = color;
+        ctx.fillStyle = this.adjustColorBrightness(terrain.color, brightness);
         ctx.fillRect(cell.x, cell.y, cell.width, cell.height);
 
-        // Draw terrain pattern
+        this.drawTerrainIcon(ctx, cell, terrain.type, brightness);
         this.drawTerrainPattern(ctx, cell, terrain.pattern, brightness);
+    }
 
-        // Draw terrain type indicator (small text)
-        ctx.fillStyle = `rgba(255, 255, 255, ${brightness * 0.6})`;
-        ctx.font = '10px monospace';
-        ctx.textAlign = 'left';
-        ctx.textBaseline = 'top';
-        ctx.fillText(terrain.type[0].toUpperCase(), cell.x + 2, cell.y + 2);
+    private drawTerrainIcon(ctx: CanvasRenderingContext2D, cell: GridCell, type: TerrainData['type'], brightness: number): void {
+        const color = this.withAlpha(theme.ui.primaryAccent, 0.26 * brightness);
+        ctx.fillStyle = color;
+        const cx = cell.x + cell.width / 2;
+        const cy = cell.y + cell.height / 2;
+
+        if (type === 'mountain') {
+            ctx.beginPath();
+            ctx.moveTo(cx - 6, cy + 6);
+            ctx.lineTo(cx, cy - 7);
+            ctx.lineTo(cx + 6, cy + 6);
+            ctx.closePath();
+            ctx.fill();
+        } else if (type === 'forest') {
+            ctx.beginPath();
+            ctx.arc(cx, cy - 1, 6, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillRect(cx - 1, cy + 4, 2, 5);
+        } else if (type === 'water') {
+            ctx.fillRect(cx - 7, cy - 1, 14, 2);
+            ctx.fillRect(cx - 5, cy + 3, 10, 2);
+        } else if (type === 'desert') {
+            ctx.beginPath();
+            ctx.arc(cx - 3, cy + 1, 4, Math.PI, Math.PI * 2);
+            ctx.arc(cx + 3, cy + 1, 4, Math.PI, Math.PI * 2);
+            ctx.fill();
+        }
     }
 
     private drawTerrainPattern(ctx: CanvasRenderingContext2D, cell: GridCell, pattern: TerrainData['pattern'], brightness: number): void {
-        ctx.fillStyle = `rgba(255, 255, 255, ${brightness * 0.2})`;
+        ctx.fillStyle = this.withAlpha(theme.ui.primaryAccent, 0.1 * brightness);
         const centerX = cell.x + cell.width / 2;
         const centerY = cell.y + cell.height / 2;
 
-        switch (pattern) {
-            case 'dots':
-                for (let i = 0; i < 3; i++) {
-                    for (let j = 0; j < 3; j++) {
-                        const x = cell.x + (i + 1) * cell.width / 4;
-                        const y = cell.y + (j + 1) * cell.height / 4;
-                        ctx.beginPath();
-                        ctx.arc(x, y, 2, 0, Math.PI * 2);
-                        ctx.fill();
-                    }
+        if (pattern === 'dots') {
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    ctx.beginPath();
+                    ctx.arc(cell.x + (i + 1) * cell.width / 4, cell.y + (j + 1) * cell.height / 4, 1.4, 0, Math.PI * 2);
+                    ctx.fill();
                 }
-                break;
+            }
+            return;
+        }
 
-            case 'lines':
-                ctx.beginPath();
-                for (let i = 0; i < 5; i++) {
-                    const x = cell.x + i * cell.width / 5;
-                    ctx.moveTo(x, cell.y);
-                    ctx.lineTo(x, cell.y + cell.height);
-                }
-                ctx.strokeStyle = `rgba(255, 255, 255, ${brightness * 0.2})`;
-                ctx.lineWidth = 1;
-                ctx.stroke();
-                break;
+        if (pattern === 'lines') {
+            ctx.strokeStyle = this.withAlpha(theme.ui.primaryAccent, 0.15 * brightness);
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            for (let i = 1; i < 5; i++) {
+                const x = cell.x + i * cell.width / 5;
+                ctx.moveTo(x, cell.y);
+                ctx.lineTo(x, cell.y + cell.height);
+            }
+            ctx.stroke();
+            return;
+        }
 
-            case 'cross':
-                ctx.beginPath();
-                ctx.moveTo(cell.x, centerY);
-                ctx.lineTo(cell.x + cell.width, centerY);
-                ctx.moveTo(centerX, cell.y);
-                ctx.lineTo(centerX, cell.y + cell.height);
-                ctx.strokeStyle = `rgba(255, 255, 255, ${brightness * 0.2})`;
-                ctx.lineWidth = 1;
-                ctx.stroke();
-                break;
-
-            case 'plain':
-            default:
-                // No pattern
-                break;
+        if (pattern === 'cross') {
+            ctx.strokeStyle = this.withAlpha(theme.ui.primaryAccent, 0.16 * brightness);
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(cell.x, centerY);
+            ctx.lineTo(cell.x + cell.width, centerY);
+            ctx.moveTo(centerX, cell.y);
+            ctx.lineTo(centerX, cell.y + cell.height);
+            ctx.stroke();
         }
     }
 
     private adjustColorBrightness(color: string, brightness: number): string {
-        // Parse hex color
         const hex = color.replace('#', '');
-        const r = parseInt(hex.substr(0, 2), 16);
-        const g = parseInt(hex.substr(2, 2), 16);
-        const b = parseInt(hex.substr(4, 2), 16);
-
-        // Apply brightness
+        const r = parseInt(hex.substring(0, 2), 16);
+        const g = parseInt(hex.substring(2, 4), 16);
+        const b = parseInt(hex.substring(4, 6), 16);
         const newR = Math.floor(r * brightness);
         const newG = Math.floor(g * brightness);
         const newB = Math.floor(b * brightness);
-
-        // Convert back to hex
         return `#${newR.toString(16).padStart(2, '0')}${newG.toString(16).padStart(2, '0')}${newB.toString(16).padStart(2, '0')}`;
+    }
+
+    private withAlpha(hexColor: string, alpha: number): string {
+        const hex = hexColor.replace('#', '');
+        const r = parseInt(hex.substring(0, 2), 16);
+        const g = parseInt(hex.substring(2, 4), 16);
+        const b = parseInt(hex.substring(4, 6), 16);
+        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
     }
 }
