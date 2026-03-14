@@ -1,4 +1,23 @@
-export const balanceConfig = {
+interface WaveScheduleEntry {
+    difficulty: number;
+    enemyHp: number;
+}
+
+interface BalanceConfig {
+    player: Record<string, unknown>;
+    projectiles: Record<string, unknown>;
+    towers: Record<string, unknown>;
+    enemies: Record<string, unknown>;
+    waves: {
+        difficultyMultiplier: number;
+        schedule: WaveScheduleEntry[];
+        endless: Record<string, number>;
+        formations: Record<string, unknown>;
+    };
+    scoring: Record<string, number>;
+}
+
+export const balanceConfig: BalanceConfig = {
     player: {
         initialLives: 5,
         initialEnergy: 480,
@@ -52,9 +71,9 @@ export const balanceConfig = {
         swarm: { groupSize: 3, hpMultiplier: 10, speed: { x: 200, y: 0 }, },
     },
     waves: {
-        difficultyMultiplier: 1, // todo up this to make waves more epic
+        difficultyMultiplier: 1,    // todo up this to make waves more epic
         schedule: [
-            { difficulty: 13, enemyHp: 1.34 },
+           { difficulty: 13, enemyHp: 1.34 },
             { difficulty: 13, enemyHp: 1.64 },
             { difficulty: 14, enemyHp: 1.94 },
             { difficulty: 14, enemyHp: 2.24 },
@@ -96,7 +115,7 @@ export const balanceConfig = {
             { difficulty: 82, enemyHp: 21 }, // 40
         ],
         endless: {
-            hpGrowth: 1.09,
+            hpGrowth: 1.09, 
             difficultyIncrement: 3,
         },
         formations: {
@@ -213,5 +232,5 @@ tank @1.35 y=760 color=red
         baseHitPenalty: 25,
     },
 };
+
 export default balanceConfig;
-//# sourceMappingURL=balanceConfig.js.map

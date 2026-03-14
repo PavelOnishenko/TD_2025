@@ -1,40 +1,82 @@
 import { balanceConfig } from './balanceConfig.js';
-const hasAcknowledged = (context, id) => Boolean(context?.acknowledgedSteps?.has?.(id));
-const hasMerges = (context) => Number(context?.merges ?? 0) > 0;
-const hasRemovals = (context) => Number(context?.removals ?? 0) > 0;
-const hasEnergyGain = (context) => Number(context?.energyGained ?? 0) > 0;
-const hasEnergyGainFromGame = (game) => Number.isFinite(game?.energy)
+
+interface TutorialContext {
+    acknowledgedSteps?: Set<string>;
+    merges?: number;
+    removals?: number;
+    energyGained?: number;
+    scoreTotal?: number;
+    scoreGained?: number;
+}
+
+interface MergeGridCell {
+    occupied?: boolean;
+}
+
+interface MergeGame {
+    energy?: number;
+    initialEnergy?: number;
+    scoreManager?: {
+        getCurrentScore: () => number;
+        getBestScore: () => number;
+    };
+    grid?: {
+        topCells?: MergeGridCell[];
+        bottomCells?: MergeGridCell[];
+    };
+    getTowerAt?: (cell: MergeGridCell) => unknown;
+    canMergeTowers?: (towerA: unknown, towerB: unknown) => boolean;
+}
+
+interface GameConfig {
+    [key: string]: unknown;
+    towers: Record<string, unknown>;
+    projectiles: Record<string, unknown>;
+    enemies: Record<string, unknown>;
+}
+
+const hasAcknowledged = (context: TutorialContext | undefined, id: string): boolean => Boolean(context?.acknowledgedSteps?.has?.(id));
+const hasMerges = (context: TutorialContext | undefined): boolean => Number(context?.merges ?? 0) > 0;
+const hasRemovals = (context: TutorialContext | undefined): boolean => Number(context?.removals ?? 0) > 0;
+const hasEnergyGain = (context: TutorialContext | undefined): boolean => Number(context?.energyGained ?? 0) > 0;
+const hasEnergyGainFromGame = (game: MergeGame | undefined): boolean => Number.isFinite(game?.energy)
     && Number.isFinite(game?.initialEnergy)
     && game.energy > game.initialEnergy;
-const hasScoreProgress = (game, context) => {
+const hasScoreProgress = (game: MergeGame | undefined, context: TutorialContext | undefined): boolean => {
     const scoreFromContext = Number(context?.scoreTotal ?? 0);
     const gained = Number(context?.scoreGained ?? 0);
     const score = game?.scoreManager ? game.scoreManager.getCurrentScore() : 0;
     const best = game?.scoreManager ? game.scoreManager.getBestScore() : 0;
     return scoreFromContext > 0 || gained > 0 || score > 0 || best > 0;
 };
-const hasMergeableTowers = (game) => {
+const hasMergeableTowers = (game: MergeGame | undefined): boolean => {
     if (!game?.grid) {
         return false;
     }
+
     const rows = [game.grid.topCells, game.grid.bottomCells];
+
     for (const row of rows) {
-        if (!Array.isArray(row))
-            continue;
+        if (!Array.isArray(row)) continue;
+
         for (let i = 0; i < row.length - 1; i++) {
             const cellA = row[i];
             const cellB = row[i + 1];
-            if (!cellA?.occupied || !cellB?.occupied)
-                continue;
+
+            if (!cellA?.occupied || !cellB?.occupied) continue;
+
             const towerA = game.getTowerAt?.(cellA);
             const towerB = game.getTowerAt?.(cellB);
+
             if (game.canMergeTowers?.(towerA, towerB)) {
                 return true;
             }
         }
     }
+
     return false;
 };
+
 const nonBalanceConfig = {
     world: {
         logicalSize: { width: 540, height: 960 },
@@ -398,7 +440,8 @@ const nonBalanceConfig = {
         },
     },
 };
-export const gameConfig = {
+
+export const gameConfig: GameConfig = {
     ...nonBalanceConfig,
     ...balanceConfig,
     towers: {
@@ -414,5 +457,5 @@ export const gameConfig = {
         ...balanceConfig.enemies,
     },
 };
+
 export default gameConfig;
-//# sourceMappingURL=gameConfig.js.map
