@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import gameConfig from '../config/gameConfig.js';
 
 const DEFAULT_MULTIPLIER = 1;

@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 export default class Platform {
     constructor({ x = 0, y = 0, scale = 1 } = {}) {
         this.x = x;

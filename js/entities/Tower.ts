@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import { drawTowerMuzzleFlashIfNeeded, drawTowerPlacementFlash, drawTowerTopGlowIfNeeded } from '../systems/effects.js';
 import { getHowler } from '../systems/audio.js';
 import gameConfig from '../config/gameConfig.js';

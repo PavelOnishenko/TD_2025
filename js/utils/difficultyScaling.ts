@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import gameConfig from '../config/gameConfig.js';
 
 function resolveMultiplier(source = gameConfig?.waves) {

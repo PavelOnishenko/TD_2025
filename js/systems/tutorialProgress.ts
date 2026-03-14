@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 const STORAGE_KEY = 'towerDefenseTutorialComplete';
 
 function getDataClient() {

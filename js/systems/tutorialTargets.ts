@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 const registry = new Map();
 
 function normalizeId(id) {

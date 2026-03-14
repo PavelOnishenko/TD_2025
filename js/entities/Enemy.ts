@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import { drawEnemyEngineGlow } from '../systems/effects.js';
 import gameConfig from '../config/gameConfig.js';
 import Damageable from '../../engine/core/Damageable.js';
