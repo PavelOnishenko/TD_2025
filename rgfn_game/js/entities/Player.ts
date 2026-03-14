@@ -261,6 +261,16 @@ export default class Player extends DamageableEntity {
         return this.inventory.filter((item) => item.id === 'healingPotion').length;
     }
 
+    public removeHealingPotionFromInventory(): boolean {
+        const potionIndex = this.inventory.findIndex((item) => item.id === 'healingPotion');
+        if (potionIndex === -1) {
+            return false;
+        }
+
+        this.inventory.splice(potionIndex, 1);
+        return true;
+    }
+
     public unequipWeapon(): Item | null {
         const weapon = this.equippedWeapon;
         this.equippedWeapon = null;
