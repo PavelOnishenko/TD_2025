@@ -16,6 +16,8 @@
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
+.hidden { display: none !important; }
+
 body {
     font-family: 'Trebuchet MS', 'Verdana', sans-serif;
     background: linear-gradient(165deg, var(--color-panel-highlight), var(--color-primary-bg));
@@ -145,7 +147,8 @@ h1 {
     box-shadow: 0 0 0 2px var(--color-panel-shadow);
 }
 
-#battle-sidebar {
+#battle-sidebar,
+#village-sidebar {
     background: linear-gradient(180deg, var(--color-panel-highlight), var(--color-secondary-bg));
     border: 2px solid var(--color-secondary-accent);
     border-radius: 8px;
@@ -156,9 +159,11 @@ h1 {
     flex-direction: column;
     gap: 14px;
 }
-#battle-sidebar.hidden { display: none; }
+#battle-sidebar.hidden,
+#village-sidebar.hidden { display: none; }
 
-#battle-sidebar h2 {
+#battle-sidebar h2,
+#village-sidebar h2 {
     color: var(--color-enemy);
     text-align: center;
     margin: 0;
@@ -172,7 +177,10 @@ h1 {
 
 #enemy-info,
 #battle-log,
-#battle-instructions {
+#battle-instructions,
+#village-prompt,
+#village-actions,
+#village-log {
     padding: 10px;
     background-color: rgba(242, 229, 201, 0.55);
     border: 1px solid var(--color-secondary-accent);
@@ -185,11 +193,15 @@ h1 {
 #battle-instructions p { margin: 4px 0; font-size: 12px; color: var(--color-text-primary); }
 #battle-instructions strong { color: var(--color-enemy); }
 
-#battle-actions { display: flex; flex-direction: column; gap: 8px; }
+#battle-actions,
+#village-entry-actions,
+#village-action-buttons { display: flex; flex-direction: column; gap: 8px; }
 .action-btn { font-size: 15px; letter-spacing: 0.5px; }
 
-#battle-log-container { display: flex; flex-direction: column; gap: 8px; }
-#battle-log-container h3 {
+#battle-log-container,
+#village-log-container { display: flex; flex-direction: column; gap: 8px; }
+#battle-log-container h3,
+#village-log-container h3 {
     margin: 0;
     font-size: 13px;
     color: var(--color-primary-accent);
@@ -197,19 +209,28 @@ h1 {
     letter-spacing: 1.2px;
 }
 
-#battle-log {
+#battle-log,
+#village-log {
     max-height: 220px;
     overflow-y: auto;
     font-size: 12px;
     line-height: 1.55;
 }
-#battle-log::-webkit-scrollbar { width: 8px; }
-#battle-log::-webkit-scrollbar-track { background: var(--color-secondary-bg); }
-#battle-log::-webkit-scrollbar-thumb { background: var(--color-secondary-accent); border-radius: 4px; }
+#battle-log::-webkit-scrollbar,
+#village-log::-webkit-scrollbar { width: 8px; }
+#battle-log::-webkit-scrollbar-track,
+#village-log::-webkit-scrollbar-track { background: var(--color-secondary-bg); }
+#battle-log::-webkit-scrollbar-thumb,
+#village-log::-webkit-scrollbar-thumb { background: var(--color-secondary-accent); border-radius: 4px; }
 
-#battle-log .player-action { color: var(--color-primary-accent); }
-#battle-log .enemy-action, #battle-log .damage { color: var(--color-enemy); font-weight: bold; }
-#battle-log .system-message { color: var(--color-text-muted); font-style: italic; }
+#battle-log .player-action,
+#village-log .player-action { color: var(--color-primary-accent); }
+#battle-log .enemy-action, #battle-log .damage,
+#village-log .enemy-action, #village-log .damage { color: var(--color-enemy); font-weight: bold; }
+#battle-log .system-message,
+#village-log .system-message { color: var(--color-text-muted); font-style: italic; }
+#battle-log .system-action,
+#village-log .system-action { color: var(--color-text-muted); font-style: italic; }
 
 #controls {
     text-align: center;
@@ -223,6 +244,7 @@ h1 {
 @media (max-width: 1180px) {
     #hud { grid-template-columns: 1fr; }
     #game-area { flex-direction: column; }
-    #battle-sidebar { max-width: none; width: 100%; }
+    #battle-sidebar,
+#village-sidebar { max-width: none; width: 100%; }
     #game-canvas { width: 100%; height: auto; max-width: 800px; }
 }
