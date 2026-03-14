@@ -5,9 +5,9 @@ import {
   getXpForLevel,
   getTotalXpForLevel,
   calculateArmor,
-  calculateDamageBonus,
+  calculateMeleeDamageBonus,
   calculateMaxHp,
-  calculateTotalDamage,
+  calculateTotalMeleeDamage,
   levelConfig,
 } from '../../dist/config/levelConfig.js';
 import { balanceConfig } from '../../dist/config/balanceConfig.js';
@@ -25,7 +25,13 @@ test('getTotalXpForLevel sums all previous levels', () => {
 
 test('stat conversion formulas use balance config rates', () => {
   assert.equal(calculateArmor(8), Math.floor(8 / balanceConfig.stats.toughnessToArmor));
-  assert.equal(calculateDamageBonus(5), Math.floor(5 / balanceConfig.stats.strengthToDamage));
+  assert.equal(
+    calculateMeleeDamageBonus(5, 0),
+    Math.floor(5 / balanceConfig.stats.strengthToMeleeDamage),
+  );
   assert.equal(calculateMaxHp(6), balanceConfig.player.baseHp + 6 * balanceConfig.stats.vitalityToHp);
-  assert.equal(calculateTotalDamage(5), balanceConfig.player.baseDamage + calculateDamageBonus(5));
+  assert.equal(
+    calculateTotalMeleeDamage(5, 0),
+    balanceConfig.player.baseDamage + calculateMeleeDamageBonus(5, 0),
+  );
 });

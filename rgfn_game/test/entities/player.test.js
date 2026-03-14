@@ -54,16 +54,16 @@ test('Player addStat succeeds only with enough skill points and updates stats', 
   assert.equal(player.damage, balanceConfig.player.baseDamage + 1);
 });
 
-test('Player weapon equip changes attack range and weapon state', () => {
+test('Player inventory auto-equips discovered weapons and keeps non-weapons unequipped', () => {
   const player = new Player(0, 0);
-  const armor = new Item({ name: 'Cloth', description: 'Armor', type: 'armor' });
-  const bow = new Item({ name: 'Bow', description: 'Ranged', type: 'weapon', attackRange: 3 });
+  const armor = new Item({ id: 'healingPotion', name: 'Potion', description: 'Heal', type: 'consumable' });
+  const bow = new Item({ id: 'bow', name: 'Bow', description: 'Ranged', type: 'weapon', attackRange: 3 });
 
-  player.equipItem(armor);
+  player.addItemToInventory(armor);
   assert.equal(player.hasWeapon(), false);
   assert.equal(player.getAttackRange(), 1);
 
-  player.equipItem(bow);
+  player.addItemToInventory(bow);
   assert.equal(player.hasWeapon(), true);
   assert.equal(player.getAttackRange(), 3);
 });
