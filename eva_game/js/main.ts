@@ -1,6 +1,7 @@
 import Game from './Game.js';
 import AnimationDebugPlayer from './debug/AnimationDebugPlayer.js';
 import { resizeCanvas } from '../../engine/systems/ViewportManager.js';
+import { registerBackquoteToggle } from '../../engine/systems/developerHotkeys.js';
 
 const canvas = document.getElementById('game-canvas') as HTMLCanvasElement;
 const startButton = document.getElementById('start-button') as HTMLButtonElement;
@@ -85,13 +86,11 @@ function setupEventListeners(): void {
     resumeButton.addEventListener('click', handleResume);
     restartButton.addEventListener('click', handleRestart);
 
-    document.addEventListener('keydown', (event: KeyboardEvent): void => {
-        if (event.code === 'Backquote') {
-            event.preventDefault();
-            animationDebugPlayer?.toggle();
-            return;
-        }
+    registerBackquoteToggle((): void => {
+        animationDebugPlayer?.toggle();
+    }, { target: document });
 
+    document.addEventListener('keydown', (event: KeyboardEvent): void => {
         if (event.code === 'Escape' && game && !game.gameOver) {
             if (animationDebugPlayer?.isOpen()) {
                 return;
