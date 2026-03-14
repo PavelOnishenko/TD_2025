@@ -1,4 +1,5 @@
 import Game from './Game.js';
+import LayoutManager from './ui/LayoutManager.js';
 
 window.addEventListener('load', (): void => {
     const canvas = document.getElementById('game-canvas') as HTMLCanvasElement;
@@ -10,6 +11,7 @@ window.addEventListener('load', (): void => {
 
 
     // Create and start game
+    new LayoutManager();
     const game = new Game(canvas);
     game.start();
 

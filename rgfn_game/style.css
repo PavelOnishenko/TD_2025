@@ -412,3 +412,58 @@ h1 {
     gap: 6px;
     font-size: 14px;
 }
+
+#layout-controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+#layout-controls label {
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+}
+
+#layout-name-input {
+    min-width: 180px;
+    padding: 6px 8px;
+    border: 1px solid var(--color-secondary-accent);
+    border-radius: 4px;
+    background: rgba(242, 229, 201, 0.75);
+    color: var(--color-text-primary);
+}
+
+.layout-panel-enabled {
+    position: relative;
+    min-width: 180px;
+    min-height: 80px;
+}
+
+.layout-panel-enabled.layout-floating {
+    position: fixed;
+    z-index: 2500;
+    margin: 0;
+}
+
+.layout-drag-handle {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    z-index: 2;
+    padding: 3px 7px;
+    font-size: 11px;
+    border-radius: 4px;
+    border: 1px solid var(--color-secondary-accent);
+    background: linear-gradient(180deg, var(--color-panel-highlight), var(--color-secondary-bg));
+    color: var(--color-text-primary);
+    cursor: grab;
+}
+
+.layout-drag-handle:active {
+    cursor: grabbing;
+}

@@ -10,7 +10,7 @@
 </head>
 <body>
     <div id="game-container">
-        <div id="hud">
+        <div id="hud" class="layout-panel" data-layout-panel-id="hud">
             <div class="hud-section">
                 <h1>RGFN</h1>
                 <div id="mode-indicator">World Map</div>
@@ -57,10 +57,10 @@
             </div>
         </div>
 
-        <div id="game-area">
+        <div id="game-area" class="layout-panel" data-layout-panel-id="game-area">
             <canvas id="game-canvas" width="800" height="600"></canvas>
 
-            <div id="battle-sidebar" class="hidden">
+            <div id="battle-sidebar" class="hidden layout-panel" data-layout-panel-id="battle-sidebar">
                 <h2>Combat</h2>
                 <div id="enemy-info">
                     <div class="enemy-stat">Enemy: <span id="enemy-name">-</span></div>
@@ -84,7 +84,7 @@
             </div>
 
 
-            <div id="village-sidebar" class="hidden">
+            <div id="village-sidebar" class="hidden layout-panel" data-layout-panel-id="village-sidebar">
                 <h2>Village</h2>
                 <div id="village-prompt">
                     <p>You found a village. Enter?</p>
@@ -113,7 +113,7 @@
 
 
         <div id="dev-events-modal" class="dev-events-modal hidden" role="dialog" aria-modal="true" aria-labelledby="dev-events-title">
-            <div class="dev-events-panel">
+            <div class="dev-events-panel layout-panel" data-layout-panel-id="dev-events-panel">
                 <div class="dev-events-header">
                     <h2 id="dev-events-title">Developer Event Queue</h2>
                     <button id="dev-events-close-btn" class="action-btn" type="button">Close</button>
@@ -141,7 +141,14 @@
             </div>
         </div>
 
-        <div id="controls">
+        <div id="controls" class="layout-panel" data-layout-panel-id="controls">
+            <div id="layout-controls">
+                <label for="layout-name-input">Layout</label>
+                <input id="layout-name-input" type="text" placeholder="my-layout" maxlength="60" />
+                <button id="layout-save-btn" class="action-btn" type="button">Save</button>
+                <button id="layout-load-btn" class="action-btn" type="button">Load</button>
+                <button id="layout-reset-btn" class="action-btn" type="button">Reset</button>
+            </div>
             <p>Arrow Keys / WASD: Move</p>
             <p>Battle: Move each turn OR click Attack/Flee</p>
         </div>
