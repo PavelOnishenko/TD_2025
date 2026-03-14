@@ -8,7 +8,7 @@ import TurnManager from './systems/TurnManager.js';
 import EncounterSystem from './systems/EncounterSystem.js';
 import Player from './entities/Player.js';
 import Skeleton from './entities/Skeleton.js';
-import Item from './entities/Item.js';
+import Item, { HEALING_POTION_ITEM } from './entities/Item.js';
 import timingConfig from './config/timingConfig.js';
 import { balanceConfig } from './config/balanceConfig.js';
 import { Direction } from './types/game.js';
@@ -24,6 +24,8 @@ const MODES = {
 
 const VILLAGE_BOW_BUY_PRICE = 15;
 const VILLAGE_BOW_SELL_PRICE = 8;
+const VILLAGE_HEALING_POTION_BUY_PRICE = 4;
+const VILLAGE_HEALING_POTION_SELL_PRICE = 2;
 
 export default class Game {
     private canvas: HTMLCanvasElement;
@@ -155,6 +157,8 @@ export default class Game {
             waitBtn: document.getElementById('village-wait-btn')! as HTMLButtonElement,
             buyBtn: document.getElementById('village-buy-btn')! as HTMLButtonElement,
             sellBtn: document.getElementById('village-sell-btn')! as HTMLButtonElement,
+            buyPotionBtn: document.getElementById('village-buy-potion-btn')! as HTMLButtonElement,
+            sellPotionBtn: document.getElementById('village-sell-potion-btn')! as HTMLButtonElement,
             leaveBtn: document.getElementById('village-leave-btn')! as HTMLButtonElement,
         };
 
@@ -171,6 +175,8 @@ export default class Game {
         this.villageUI.waitBtn.addEventListener('click', () => this.handleVillageWait());
         this.villageUI.buyBtn.addEventListener('click', () => this.handleVillageBuy());
         this.villageUI.sellBtn.addEventListener('click', () => this.handleVillageSell());
+        this.villageUI.buyPotionBtn.addEventListener('click', () => this.handleVillageBuyPotion());
+        this.villageUI.sellPotionBtn.addEventListener('click', () => this.handleVillageSellPotion());
         this.villageUI.leaveBtn.addEventListener('click', () => this.handleVillageLeave());
 
         // Stat allocation button events
@@ -375,6 +381,38 @@ export default class Game {
         this.updateVillageButtons();
     }
 
+
+    private handleVillageBuyPotion(): void {
+        if (this.player.gold < VILLAGE_HEALING_POTION_BUY_PRICE) {
+            this.addVillageLog(`Not enough gold. Healing Potion costs ${VILLAGE_HEALING_POTION_BUY_PRICE}.`, 'system');
+            return;
+        }
+
+        const wasAdded = this.player.addItemToInventory(new Item(HEALING_POTION_ITEM));
+        if (!wasAdded) {
+            this.addVillageLog('Your inventory is full. Cannot buy a Healing Potion.', 'system');
+            return;
+        }
+
+        this.player.gold -= VILLAGE_HEALING_POTION_BUY_PRICE;
+        this.addVillageLog(`You bought a Healing Potion for ${VILLAGE_HEALING_POTION_BUY_PRICE} gold.`, 'player');
+        this.updateHUD();
+        this.updateVillageButtons();
+    }
+
+    private handleVillageSellPotion(): void {
+        const soldPotion = this.player.removeHealingPotionFromInventory();
+        if (!soldPotion) {
+            this.addVillageLog('You have no Healing Potion to sell.', 'system');
+            return;
+        }
+
+        this.player.gold += VILLAGE_HEALING_POTION_SELL_PRICE;
+        this.addVillageLog(`You sold a Healing Potion for ${VILLAGE_HEALING_POTION_SELL_PRICE} gold.`, 'player');
+        this.updateHUD();
+        this.updateVillageButtons();
+    }
+
     private handleVillageLeave(): void {
         this.addVillageLog('You leave the village.', 'system');
         this.stateMachine.transition(MODES.WORLD_MAP);
@@ -383,9 +421,12 @@ export default class Game {
     private updateVillageButtons(): void {
         const hasBowEquipped = this.player.equippedWeapon?.name === 'Bow';
         const canAffordBow = this.player.gold >= VILLAGE_BOW_BUY_PRICE;
+        const potionCount = this.player.getHealingPotionCount();
 
         this.villageUI.buyBtn.disabled = hasBowEquipped || !canAffordBow;
         this.villageUI.sellBtn.disabled = !hasBowEquipped;
+        this.villageUI.buyPotionBtn.disabled = this.player.gold < VILLAGE_HEALING_POTION_BUY_PRICE;
+        this.villageUI.sellPotionBtn.disabled = potionCount === 0;
     }
 
     private addVillageLog(message: string, type: string = 'system'): void {
