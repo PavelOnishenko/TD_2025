@@ -6,6 +6,7 @@ import WorldMap from './systems/WorldMap.js';
 import BattleMap from './systems/BattleMap.js';
 import TurnManager from './systems/TurnManager.js';
 import EncounterSystem, { ForcedEncounterType } from './systems/EncounterSystem.js';
+import VillagePopulation, { VillageSpot, VillageVillager } from './systems/VillagePopulation.js';
 import Player from './entities/Player.js';
 import Skeleton from './entities/Skeleton.js';
 import Item, { HEALING_POTION_ITEM } from './entities/Item.js';
@@ -29,14 +30,6 @@ const VILLAGE_BOW_SELL_PRICE = 8;
 const VILLAGE_HEALING_POTION_BUY_PRICE = 4;
 const VILLAGE_HEALING_POTION_SELL_PRICE = 2;
 
-type VillageActivityType = 'chatting' | 'drinking' | 'farming' | 'building' | 'carryingWater' | 'carryingLogs';
-
-type VillageSpot = {
-    x: number;
-    y: number;
-    houseIndex?: number;
-};
-
 type VillageHouse = {
     x: number;
     y: number;
@@ -46,26 +39,6 @@ type VillageHouse = {
     doorOpenAmount: number;
     doorTargetOpenAmount: number;
     doorStateUntil: number;
-};
-
-type VillageVillager = {
-    x: number;
-    y: number;
-    fromSpot: number;
-    toSpot: number;
-    travelStart: number;
-    travelDuration: number;
-    pauseUntil: number;
-    skinColor: string;
-    hairColor: string;
-    shirtColor: string;
-    pantsColor: string;
-    hatColor: string;
-    size: number;
-    activity: VillageActivityType;
-    propSwingOffset: number;
-    armSwingOffset: number;
-    isWalking: boolean;
 };
 
 export default class Game {
@@ -90,7 +63,7 @@ export default class Game {
     private developerUI;
     private villageHouses: VillageHouse[];
     private villageSpots: VillageSpot[];
-    private villageVillagers: VillageVillager[];
+    private villagePopulation: VillagePopulation;
     private currentVillageName: string;
 
     constructor(canvas: HTMLCanvasElement) {
@@ -137,7 +110,7 @@ export default class Game {
         this.developerUI = {};
         this.villageHouses = [];
         this.villageSpots = [];
-        this.villageVillagers = [];
+        this.villagePopulation = new VillagePopulation();
         this.currentVillageName = '';
         this.setupUI();
 
@@ -443,8 +416,8 @@ export default class Game {
         ctx.lineTo(width, height * 0.92);
         ctx.stroke();
 
-        this.updateVillageVillagers(time);
-        this.villageVillagers.forEach((villager) => this.drawVillageVillager(villager, time));
+        this.villagePopulation.update(time, (spotIndex, now) => this.triggerHouseDoorBySpot(spotIndex, now));
+        this.villagePopulation.getVillagers().forEach((villager) => this.drawVillageVillager(villager, time));
 
         ctx.fillStyle = this.withOpacity(theme.ui.primaryAccent, 0.62);
         ctx.font = 'bold 34px Georgia, serif';
@@ -485,8 +458,7 @@ export default class Game {
             { x: width * 0.31, y: height * 0.7 },
         ];
 
-        const villagerCount = 4 + Math.floor(Math.random() * 3);
-        this.villageVillagers = Array.from({ length: villagerCount }, () => this.createVillageVillager(performance.now() * 0.001));
+        this.villagePopulation.initialize(this.villageSpots, performance.now() * 0.001);
     }
 
     private createVillageHouse(x: number, y: number, width: number, height: number, roofColor: string): VillageHouse {
@@ -712,95 +684,6 @@ export default class Game {
             ctx.fillRect(wx, wy, ww, wh);
             ctx.strokeRect(wx, wy, ww, wh);
         });
-    }
-
-    private createVillageVillager(now: number): VillageVillager {
-        const fromSpot = Math.floor(Math.random() * this.villageSpots.length);
-        let toSpot = Math.floor(Math.random() * this.villageSpots.length);
-        if (toSpot === fromSpot) {
-            toSpot = (toSpot + 1) % this.villageSpots.length;
-        }
-
-        const activities: VillageActivityType[] = ['chatting', 'drinking', 'farming', 'building', 'carryingWater', 'carryingLogs'];
-        const skinPalette = ['#f6d1b6', '#deb08c', '#bd865f', '#8f5f3d'];
-        const hairPalette = ['#2f1b14', '#473128', '#6a4a37', '#bfa67a', '#1f2328'];
-        const shirtPalette = [theme.entities.player.body, theme.worldMap.terrain.water, '#c47f2c', '#4ea06d', '#7f6ed6'];
-        const pantsPalette = ['#2f3b4c', '#4d4d52', '#5a3f3f', '#344b2e'];
-        const hatPalette = ['#9c6d44', '#4d6f96', '#6b8d3f', '#7f4b8a', '#3e3e3e'];
-
-        const startSpot = this.villageSpots[fromSpot];
-        return {
-            x: startSpot.x,
-            y: startSpot.y,
-            fromSpot,
-            toSpot,
-            travelStart: now - Math.random() * 1.5,
-            travelDuration: 4.8 + Math.random() * 3.6,
-            pauseUntil: now + 4 + Math.random() * 8,
-            skinColor: skinPalette[Math.floor(Math.random() * skinPalette.length)],
-            hairColor: hairPalette[Math.floor(Math.random() * hairPalette.length)],
-            shirtColor: shirtPalette[Math.floor(Math.random() * shirtPalette.length)],
-            pantsColor: pantsPalette[Math.floor(Math.random() * pantsPalette.length)],
-            hatColor: hatPalette[Math.floor(Math.random() * hatPalette.length)],
-            size: 0.86 + Math.random() * 0.26,
-            activity: activities[Math.floor(Math.random() * activities.length)],
-            propSwingOffset: Math.random() * Math.PI * 2,
-            armSwingOffset: Math.random() * Math.PI * 2,
-            isWalking: true,
-        };
-    }
-
-    private updateVillageVillagers(now: number): void {
-        this.villageVillagers.forEach((villager) => {
-            if (now < villager.pauseUntil) {
-                villager.isWalking = false;
-                return;
-            }
-
-            if (villager.fromSpot === villager.toSpot) {
-                if (Math.random() < 0.62) {
-                    villager.pauseUntil = now + 5 + Math.random() * 10;
-                    villager.isWalking = false;
-                    return;
-                }
-
-                let next = Math.floor(Math.random() * this.villageSpots.length);
-                if (next === villager.fromSpot) {
-                    next = (next + 1) % this.villageSpots.length;
-                }
-                villager.toSpot = next;
-                villager.travelStart = now;
-                villager.travelDuration = 5 + Math.random() * 4;
-                villager.isWalking = true;
-                this.triggerHouseDoorBySpot(villager.fromSpot, now);
-                this.triggerHouseDoorBySpot(villager.toSpot, now);
-            }
-
-            const from = this.villageSpots[villager.fromSpot];
-            const to = this.villageSpots[villager.toSpot];
-            const travelProgress = (now - villager.travelStart) / villager.travelDuration;
-
-            if (travelProgress >= 1) {
-                villager.fromSpot = villager.toSpot;
-                villager.toSpot = villager.fromSpot;
-                villager.travelStart = now;
-                villager.travelDuration = 5 + Math.random() * 4;
-                villager.pauseUntil = now + 6 + Math.random() * 14;
-                villager.isWalking = false;
-                this.triggerHouseDoorBySpot(villager.fromSpot, now);
-
-                const activities: VillageActivityType[] = ['chatting', 'drinking', 'farming', 'building', 'carryingWater', 'carryingLogs'];
-                villager.activity = activities[Math.floor(Math.random() * activities.length)];
-                return;
-            }
-
-            villager.isWalking = true;
-            const smoothProgress = travelProgress * travelProgress * (3 - 2 * travelProgress);
-            villager.x = from.x + (to.x - from.x) * smoothProgress;
-            villager.y = from.y + (to.y - from.y) * smoothProgress;
-        });
-
-        this.villageVillagers.sort((a, b) => a.y - b.y);
     }
 
     private drawVillageVillager(villager: VillageVillager, time: number): void {
