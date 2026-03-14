@@ -1,4 +1,4 @@
-import { theme } from '../config/ThemeConfig.js';
+import { theme } from '../../config/ThemeConfig.js';
 
 export type VillageActivityType = 'chatting' | 'drinking' | 'farming' | 'building' | 'carryingWater' | 'carryingLogs';
 

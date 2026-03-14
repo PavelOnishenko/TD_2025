@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import WorldMap from '../../dist/systems/WorldMap.js';
+import WorldMap from '../../dist/systems/world/WorldMap.js';
 import { createMockCanvasContext } from '../helpers/testUtils.js';
 
 test('WorldMap starts player in center cell and exposes pixel position', () => {

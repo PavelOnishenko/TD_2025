@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import TurnManager from '../../dist/systems/TurnManager.js';
+import TurnManager from '../../dist/systems/combat/TurnManager.js';
 import { createCombatEntity } from '../helpers/testUtils.js';
 
 test('TurnManager initializes turns with only active living entities', () => {

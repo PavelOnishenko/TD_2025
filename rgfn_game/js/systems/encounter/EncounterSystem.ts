@@ -1,7 +1,7 @@
-import { randomInt } from '../../../engine/utils/MathUtils.js';
-import { balanceConfig } from '../config/balanceConfig.js';
-import Item from '../entities/Item.js';
-import Skeleton from '../entities/Skeleton.js';
+import { randomInt } from '../../../../engine/utils/MathUtils.js';
+import { balanceConfig } from '../../config/balanceConfig.js';
+import Item from '../../entities/Item.js';
+import Skeleton from '../../entities/Skeleton.js';
 import EncounterResolver from './EncounterResolver.js';
 
 export type EncounterResult =
