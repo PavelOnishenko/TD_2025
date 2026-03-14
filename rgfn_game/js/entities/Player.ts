@@ -225,23 +225,44 @@ export default class Player extends DamageableEntity {
     public draw(ctx: CanvasRenderingContext2D, viewport?: any): void {
         const screenX = this.x;
         const screenY = this.y;
+        const left = screenX - this.width / 2;
+        const top = screenY - this.height / 2;
 
-        // Player body
+        // Cloak/body silhouette
         ctx.fillStyle = theme.entities.player.body;
-        ctx.fillRect(
-            screenX - this.width / 2,
-            screenY - this.height / 2,
-            this.width,
-            this.height
-        );
+        ctx.beginPath();
+        ctx.moveTo(screenX, top + 2);
+        ctx.lineTo(left + 4, top + this.height - 2);
+        ctx.lineTo(left + this.width - 4, top + this.height - 2);
+        ctx.closePath();
+        ctx.fill();
 
-        // Player face
+        // Tunic highlight
         ctx.fillStyle = theme.entities.player.face;
-        const faceX = screenX - 6;
-        const faceY = screenY - 8;
-        ctx.fillRect(faceX, faceY, 4, 4); // eye
-        ctx.fillRect(faceX + 8, faceY, 4, 4); // eye
-        ctx.fillRect(faceX + 2, faceY + 8, 8, 2); // mouth
+        ctx.fillRect(screenX - 4, top + 10, 8, 10);
+
+        // Head
+        ctx.fillStyle = theme.entities.player.face;
+        ctx.beginPath();
+        ctx.arc(screenX, top + 8, 6, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Hair/hood outline
+        ctx.fillStyle = theme.ui.primaryAccent;
+        ctx.beginPath();
+        ctx.arc(screenX, top + 8, 7, Math.PI, Math.PI * 2);
+        ctx.fill();
+
+        // Face features
+        ctx.fillStyle = theme.ui.primaryAccent;
+        ctx.fillRect(screenX - 3, top + 7, 2, 2);
+        ctx.fillRect(screenX + 1, top + 7, 2, 2);
+        ctx.fillRect(screenX - 2, top + 11, 4, 1);
+
+        // Shoulder armor
+        ctx.fillStyle = theme.ui.secondaryAccent;
+        ctx.fillRect(left + 2, top + 12, 5, 4);
+        ctx.fillRect(left + this.width - 7, top + 12, 5, 4);
 
         // Health bar
         this.drawHealthBar(ctx, screenX, screenY);

@@ -23,7 +23,6 @@ export interface EnemyConfig {
 const DamageableEntity = withDamageable(Entity);
 
 export default class Skeleton extends DamageableEntity {
-    // Explicitly declare inherited properties from Entity
     declare x: number;
     declare y: number;
     declare width: number;
@@ -32,24 +31,17 @@ export default class Skeleton extends DamageableEntity {
     declare velocityY: number;
     declare active: boolean;
     declare id: number;
-
-    // Explicitly declare inherited methods from Entity
     declare move: (deltaTime: number) => void;
     declare getBounds: () => { left: number; right: number; top: number; bottom: number };
     declare checkCollision: (other: any) => boolean;
-
-    // Explicitly declare inherited properties from Damageable
     declare hp: number;
     declare maxHp: number;
-
-    // Explicitly declare inherited methods from Damageable
     declare initDamageable: (maxHp: number) => void;
     declare heal: (amount: number) => void;
     declare isDead: () => boolean;
     declare getHealthPercent: () => number;
     declare healToFull: () => void;
 
-    // Skeleton-specific properties
     public damage: number;
     public name: string;
     public xpValue: number;
@@ -67,12 +59,9 @@ export default class Skeleton extends DamageableEntity {
         this.name = config.name;
         this.xpValue = config.xpValue;
         this.behavior = config.behavior ?? {};
-
-        // Initialize Damageable functionality
         this.initDamageable(config.hp);
     }
 
-    // Override takeDamage to deactivate when dead
     public takeDamage(amount: number): boolean {
         const died = super.takeDamage(amount);
         if (died) {
@@ -82,34 +71,86 @@ export default class Skeleton extends DamageableEntity {
     }
 
     public draw(ctx: CanvasRenderingContext2D, viewport?: any): void {
-        const screenX = this.x;
-        const screenY = this.y;
+        const x = this.x;
+        const y = this.y;
+        const left = x - this.width / 2;
+        const top = y - this.height / 2;
 
-        // Skeleton body
-        ctx.fillStyle = theme.entities.skeleton.body;
-        ctx.fillRect(
-            screenX - this.width / 2,
-            screenY - this.height / 2,
-            this.width,
-            this.height
-        );
-
-        // Skull features
-        ctx.fillStyle = theme.entities.skeleton.features;
-        // Eye sockets
-        ctx.fillRect(screenX - 8, screenY - 8, 5, 5);
-        ctx.fillRect(screenX + 3, screenY - 8, 5, 5);
-        // Nose hole
-        ctx.fillRect(screenX - 2, screenY - 1, 4, 3);
-
-        // Teeth
-        ctx.fillStyle = theme.entities.skeleton.body;
-        for (let i = 0; i < 4; i++) {
-            ctx.fillRect(screenX - 8 + i * 4, screenY + 5, 3, 4);
+        switch (this.name) {
+            case 'Zombie':
+                this.drawZombie(ctx, left, top);
+                break;
+            case 'Ninja':
+                this.drawNinja(ctx, left, top);
+                break;
+            case 'Dark Knight':
+                this.drawDarkKnight(ctx, left, top);
+                break;
+            case 'Dragon':
+                this.drawDragon(ctx, left, top);
+                break;
+            default:
+                this.drawSkeleton(ctx, left, top);
+                break;
         }
 
-        // Health bar
-        this.drawHealthBar(ctx, screenX, screenY);
+        this.drawHealthBar(ctx, x, y);
+    }
+
+    private drawSkeleton(ctx: CanvasRenderingContext2D, left: number, top: number): void {
+        ctx.fillStyle = theme.entities.skeleton.body;
+        ctx.beginPath();
+        ctx.ellipse(left + this.width / 2, top + this.height / 2, this.width * 0.34, this.height * 0.4, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = theme.entities.skeleton.features;
+        ctx.fillRect(left + 8, top + 7, 4, 4);
+        ctx.fillRect(left + this.width - 12, top + 7, 4, 4);
+        ctx.fillRect(left + this.width / 2 - 2, top + 13, 4, 3);
+    }
+
+    private drawZombie(ctx: CanvasRenderingContext2D, left: number, top: number): void {
+        ctx.fillStyle = theme.worldMap.terrain.forest;
+        ctx.fillRect(left + 5, top + 4, this.width - 10, this.height - 7);
+        ctx.fillStyle = theme.entities.player.face;
+        ctx.fillRect(left + 8, top + 7, this.width - 16, 9);
+        ctx.fillStyle = theme.ui.enemyColor;
+        ctx.fillRect(left + 10, top + 10, 3, 2);
+        ctx.fillRect(left + this.width - 13, top + 10, 3, 2);
+    }
+
+    private drawNinja(ctx: CanvasRenderingContext2D, left: number, top: number): void {
+        ctx.fillStyle = theme.ui.primaryAccent;
+        ctx.fillRect(left + 5, top + 5, this.width - 10, this.height - 8);
+        ctx.fillStyle = theme.entities.player.face;
+        ctx.fillRect(left + 8, top + 10, this.width - 16, 5);
+        ctx.fillStyle = theme.ui.enemyColor;
+        ctx.fillRect(left + 9, top + 11, 2, 2);
+        ctx.fillRect(left + this.width - 11, top + 11, 2, 2);
+    }
+
+    private drawDarkKnight(ctx: CanvasRenderingContext2D, left: number, top: number): void {
+        ctx.fillStyle = theme.ui.textMuted;
+        ctx.fillRect(left + 4, top + 4, this.width - 8, this.height - 4);
+        ctx.fillStyle = theme.ui.secondaryAccent;
+        ctx.fillRect(left + this.width / 2 - 1, top + 6, 2, this.height - 8);
+        ctx.fillStyle = theme.ui.enemyColor;
+        ctx.fillRect(left + this.width / 2 - 3, top + 9, 6, 4);
+    }
+
+    private drawDragon(ctx: CanvasRenderingContext2D, left: number, top: number): void {
+        ctx.fillStyle = theme.ui.enemyColor;
+        ctx.beginPath();
+        ctx.moveTo(left + 4, top + this.height - 6);
+        ctx.lineTo(left + this.width / 2, top + 4);
+        ctx.lineTo(left + this.width - 4, top + this.height - 6);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = theme.ui.warningColor;
+        ctx.fillRect(left + this.width / 2 - 2, top + 10, 4, 4);
+        ctx.fillStyle = theme.ui.primaryAccent;
+        ctx.fillRect(left + this.width / 2 - 5, top + this.height - 9, 10, 3);
     }
 
     public shouldAvoidHit(): boolean {
@@ -136,11 +177,9 @@ export default class Skeleton extends DamageableEntity {
         const barHeight = 3;
         const barY = screenY - this.height / 2 - 6;
 
-        // Background
         ctx.fillStyle = theme.entities.skeleton.healthBg;
         ctx.fillRect(screenX - barWidth / 2, barY, barWidth, barHeight);
 
-        // Health
         const healthPercent = this.hp / this.maxHp;
         const healthBarWidth = barWidth * healthPercent;
         ctx.fillStyle = theme.entities.skeleton.healthBar;
