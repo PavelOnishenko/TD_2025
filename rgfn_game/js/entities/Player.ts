@@ -3,7 +3,11 @@ import { withDamageable } from '../../../engine/core/Damageable.js';
 import {
     getXpForLevel,
     calculateMaxHp,
-    calculateTotalDamage,
+    calculateMeleeDamageBonus,
+    calculateBowDamageBonus,
+    calculateTotalMeleeDamage,
+    calculateTotalBowDamage,
+    calculateAvoidChance,
     calculateArmor,
     levelConfig
 } from '../config/levelConfig.js';
@@ -44,6 +48,7 @@ export default class Player extends DamageableEntity {
     // Player-specific properties
     public damage: number;
     public armor: number = 0;
+    public avoidChance: number = 0;
     public gridCol?: number;
     public gridRow?: number;
 
@@ -56,11 +61,13 @@ export default class Player extends DamageableEntity {
     public vitality: number = 0;
     public toughness: number = 0;
     public strength: number = 0;
+    public agility: number = 0;
     public skillPoints: number = 0;
     public gold: number = 20;
 
-    // Equipment
+    // Equipment & Inventory
     public equippedWeapon: Item | null = null;
+    private inventory: Item[] = [];
 
     constructor(x: number, y: number) {
         super(x, y);
@@ -71,7 +78,11 @@ export default class Player extends DamageableEntity {
         this.vitality = balanceConfig.player.initialVitality;
         this.toughness = balanceConfig.player.initialToughness;
         this.strength = balanceConfig.player.initialStrength;
+        this.agility = balanceConfig.player.initialAgility;
         this.skillPoints = 0;
+
+        // Initialize inventory
+        this.inventory = [];
 
         // Calculate initial stats
         this.updateStats();
@@ -103,8 +114,14 @@ export default class Player extends DamageableEntity {
      */
     public updateStats(): void {
         this.maxHp = calculateMaxHp(this.vitality);
-        this.damage = calculateTotalDamage(this.strength);
         this.armor = calculateArmor(this.toughness);
+        this.avoidChance = calculateAvoidChance(this.agility);
+
+        if (this.getAttackRange() > 1) {
+            this.damage = calculateTotalBowDamage(this.strength, this.agility);
+        } else {
+            this.damage = calculateTotalMeleeDamage(this.strength, this.agility);
+        }
     }
 
     /**
@@ -156,7 +173,7 @@ export default class Player extends DamageableEntity {
      * Allocate a skill point to a stat
      * @returns true if allocation was successful
      */
-    public addStat(stat: 'vitality' | 'toughness' | 'strength', amount: number = 1): boolean {
+    public addStat(stat: 'vitality' | 'toughness' | 'strength' | 'agility', amount: number = 1): boolean {
         if (this.skillPoints < amount) {
             return false;
         }
@@ -170,6 +187,9 @@ export default class Player extends DamageableEntity {
                 break;
             case 'strength':
                 this.strength += amount;
+                break;
+            case 'agility':
+                this.agility += amount;
                 break;
             default:
                 return false;
@@ -197,12 +217,58 @@ export default class Player extends DamageableEntity {
     }
 
     /**
-     * Equip an item (automatically equipped when obtained)
+     * Add an item to inventory and auto-equip weapons when obtained.
+     * @returns true if item was added successfully
      */
-    public equipItem(item: Item): void {
+    public addItemToInventory(item: Item): boolean {
+        if (this.inventory.length >= balanceConfig.player.inventorySize) {
+            return false;
+        }
+
+        this.inventory.push(item);
+
         if (item.type === 'weapon') {
             this.equippedWeapon = item;
+            this.updateStats();
         }
+
+        return true;
+    }
+
+    /**
+     * Use one healing potion from inventory if available.
+     * @returns true if a potion was used
+     */
+    public useHealingPotion(): boolean {
+        const potionIndex = this.inventory.findIndex((item) => item.id === 'healingPotion');
+        if (potionIndex === -1) {
+            return false;
+        }
+
+        this.inventory.splice(potionIndex, 1);
+        this.heal(5);
+        return true;
+    }
+
+    /**
+     * Returns a copy of inventory contents for UI rendering.
+     */
+    public getInventory(): Item[] {
+        return [...this.inventory];
+    }
+
+    public getHealingPotionCount(): number {
+        return this.inventory.filter((item) => item.id === 'healingPotion').length;
+    }
+
+    public removeHealingPotionFromInventory(): boolean {
+        const potionIndex = this.inventory.findIndex((item) => item.id === 'healingPotion');
+        if (potionIndex === -1) {
+            return false;
+        }
+
+        this.inventory.splice(potionIndex, 1);
+        return true;
     }
 
     public unequipWeapon(): Item | null {
@@ -227,6 +293,36 @@ export default class Player extends DamageableEntity {
      */
     public hasWeapon(): boolean {
         return this.equippedWeapon !== null;
+    }
+
+    public getAvoidFormulaText(): string {
+        const scale = balanceConfig.stats.avoidChanceScale;
+        const capPercent = Math.round(balanceConfig.stats.avoidChanceCap * 100);
+        const scaledAgility = this.agility * scale;
+        const rawChance = 1 - (1 / (1 + scaledAgility));
+        const finalChance = Math.min(balanceConfig.stats.avoidChanceCap, rawChance);
+        const finalPercent = (finalChance * 100).toFixed(1);
+
+        return `min(${capPercent}%, (1 - 1/(1 + AGI×${scale.toFixed(3)}))×100) = ${finalPercent}%`;
+    }
+
+    public getDamageFormulaText(): string {
+        const isBowAttack = this.getAttackRange() > 1;
+        const baseDamage = balanceConfig.player.baseDamage;
+
+        if (isBowAttack) {
+            const strengthBonus = Math.floor(this.strength / balanceConfig.stats.strengthToBowDamage);
+            const agilityBonus = Math.floor(this.agility / balanceConfig.stats.agilityToBowDamage);
+            const total = baseDamage + calculateBowDamageBonus(this.strength, this.agility);
+
+            return `Bow: ${baseDamage} + ⌊STR/${balanceConfig.stats.strengthToBowDamage}⌋ (${strengthBonus}) + ⌊AGI/${balanceConfig.stats.agilityToBowDamage}⌋ (${agilityBonus}) = ${total}`;
+        }
+
+        const strengthBonus = Math.floor(this.strength / balanceConfig.stats.strengthToMeleeDamage);
+        const agilityBonus = Math.floor(this.agility / balanceConfig.stats.agilityToMeleeDamage);
+        const total = baseDamage + calculateMeleeDamageBonus(this.strength, this.agility);
+
+        return `Melee: ${baseDamage} + ⌊STR/${balanceConfig.stats.strengthToMeleeDamage}⌋ (${strengthBonus}) + ⌊AGI/${balanceConfig.stats.agilityToMeleeDamage}⌋ (${agilityBonus}) = ${total}`;
     }
 
     public draw(ctx: CanvasRenderingContext2D, viewport?: any): void {
