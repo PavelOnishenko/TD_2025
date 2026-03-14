@@ -10,9 +10,10 @@ test('Player initializes with base combat stats', () => {
   const player = new Player(0, 0);
 
   assert.equal(player.maxHp, balanceConfig.player.baseHp);
-  assert.equal(player.damage, balanceConfig.player.baseDamage);
+  assert.equal(player.damage, balanceConfig.combat.fistDamagePerHand * 2);
   assert.equal(player.armor, balanceConfig.player.baseArmor);
   assert.equal(player.level, 1);
+  assert.equal(player.skillPoints, balanceConfig.player.initialSkillPoints);
 });
 
 test('Player takeDamage applies armor and minimum damage rule', () => {
@@ -51,19 +52,23 @@ test('Player addStat succeeds only with enough skill points and updates stats', 
   assert.equal(success, true);
   assert.equal(player.strength, 2);
   assert.equal(player.skillPoints, 0);
-  assert.equal(player.damage, balanceConfig.player.baseDamage + 1);
+  assert.equal(player.damage, balanceConfig.combat.fistDamagePerHand * 2 + 1);
 });
 
 test('Player inventory auto-equips discovered weapons and keeps non-weapons unequipped', () => {
   const player = new Player(0, 0);
-  const armor = new Item({ id: 'healingPotion', name: 'Potion', description: 'Heal', type: 'consumable' });
-  const bow = new Item({ id: 'bow', name: 'Bow', description: 'Ranged', type: 'weapon', attackRange: 3 });
+  const potion = new Item({ id: 'healingPotion', name: 'Potion', description: 'Heal', type: 'consumable' });
+  const bow = new Item({ id: 'bow', name: 'Bow', description: 'Ranged', type: 'weapon', attackRange: 3, handsRequired: 2, damageBonus: 2, requirements: { agility: 0, strength: 0 }, isRanged: true });
 
-  player.addItemToInventory(armor);
+  player.addItemToInventory(potion);
   assert.equal(player.hasWeapon(), false);
   assert.equal(player.getAttackRange(), 1);
 
   player.addItemToInventory(bow);
   assert.equal(player.hasWeapon(), true);
   assert.equal(player.getAttackRange(), 3);
+
+  const armor = new Item({ id: 'armor_t1', name: 'Armor +1', description: 'Armor', type: 'armor', effects: { flatArmor: 1 } });
+  player.addItemToInventory(armor);
+  assert.equal(player.armor, 1);
 });

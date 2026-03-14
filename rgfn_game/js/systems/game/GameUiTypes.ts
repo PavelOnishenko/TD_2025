@@ -42,6 +42,9 @@ export type HudElements = {
     inventoryCount: HTMLElement;
     inventoryCapacity: HTMLElement;
     inventoryGrid: HTMLElement;
+    weaponSlotMain: HTMLButtonElement;
+    weaponSlotOff: HTMLButtonElement;
+    armorSlot: HTMLButtonElement;
 };
 
 export type BattleUI = {

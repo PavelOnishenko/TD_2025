@@ -1,6 +1,6 @@
 import { randomInt } from '../../../../engine/utils/MathUtils.js';
 import Skeleton, { EnemyConfig } from '../../entities/Skeleton.js';
-import Item, { BOW_ITEM, HEALING_POTION_ITEM } from '../../entities/Item.js';
+import Item, { DISCOVERABLE_ITEM_LIBRARY, HEALING_POTION_ITEM } from '../../entities/Item.js';
 import { balanceConfig } from '../../config/balanceConfig.js';
 import type { EncounterResult, ForcedEncounterType } from './EncounterSystem.js';
 
@@ -12,11 +12,9 @@ type EncounterRolls = {
 };
 
 export default class EncounterResolver {
-    private bowFound: boolean;
     private forcedEncounters: ForcedEncounterType[];
 
     constructor() {
-        this.bowFound = false;
         this.forcedEncounters = [];
     }
 
@@ -37,9 +35,8 @@ export default class EncounterResolver {
             return { type: 'village' };
         }
 
-        if (eventType === 'item' && !this.bowFound) {
-            this.bowFound = true;
-            return { type: 'item', item: new Item(BOW_ITEM) };
+        if (eventType === 'item') {
+            return this.createRandomItemEncounter();
         }
 
         const encounterType = rolls.rollEncounterType();
@@ -63,18 +60,25 @@ export default class EncounterResolver {
     }
 
     private createRandomItemEncounter(): EncounterResult {
-        const discoverableItems: Item[] = [new Item(HEALING_POTION_ITEM)];
+        const weightedPool = balanceConfig.items.discoveryPool;
+        const totalWeight = weightedPool.reduce((sum, item) => sum + item.weight, 0);
 
-        if (!this.bowFound) {
-            discoverableItems.push(new Item(BOW_ITEM));
+        if (totalWeight <= 0) {
+            return { type: 'item', item: new Item(HEALING_POTION_ITEM) };
         }
 
-        const discoveredItem = discoverableItems[randomInt(0, discoverableItems.length - 1)];
-        if (discoveredItem.id === 'bow') {
-            this.bowFound = true;
+        let roll = Math.random() * totalWeight;
+        for (const candidate of weightedPool) {
+            roll -= candidate.weight;
+            if (roll <= 0) {
+                const itemData = DISCOVERABLE_ITEM_LIBRARY.find((item) => item.id === candidate.id);
+                if (itemData) {
+                    return { type: 'item', item: new Item(itemData) };
+                }
+            }
         }
 
-        return { type: 'item', item: discoveredItem };
+        return { type: 'item', item: new Item(HEALING_POTION_ITEM) };
     }
 
     private createDragonEncounter(): EncounterResult {
@@ -92,8 +96,7 @@ export default class EncounterResolver {
         }
 
         if (type === 'item') {
-            this.bowFound = true;
-            return { type: 'item', item: new Item(BOW_ITEM) };
+            return this.createRandomItemEncounter();
         }
 
         if (type === 'village') {
