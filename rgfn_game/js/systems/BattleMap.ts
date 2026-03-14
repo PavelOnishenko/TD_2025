@@ -166,6 +166,20 @@ export default class BattleMap {
         return false;
     }
 
+    public isEntityOnEdge(entity: CombatEntity): boolean {
+        const col = entity.gridCol;
+        const row = entity.gridRow;
+
+        if (col === undefined || row === undefined) {
+            return false;
+        }
+
+        const lastCol = this.grid.columns - 1;
+        const lastRow = this.grid.rows - 1;
+
+        return col === 0 || col === lastCol || row === 0 || row === lastRow;
+    }
+
     public draw(ctx: CanvasRenderingContext2D, renderer: any, currentEntity: CombatEntity | null = null, selectedEnemy: CombatEntity | null = null): void {
         const dims = this.grid.getDimensions();
 
