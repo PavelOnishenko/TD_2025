@@ -122,7 +122,7 @@ export default class WorldMap {
         return this.terrainData.get(key);
     }
 
-    public movePlayer(direction: Direction): boolean {
+    public movePlayer(direction: Direction): { moved: boolean; isPreviouslyDiscovered: boolean } {
         const { col, row } = this.playerGridPos;
         let newCol = col;
         let newRow = row;
@@ -144,13 +144,16 @@ export default class WorldMap {
 
         // Check if valid position
         if (this.grid.isValidPosition(newCol, newRow)) {
+            const destinationFogState = this.getFogState(newCol, newRow);
+            const isPreviouslyDiscovered = destinationFogState === FOG_STATE.HIDDEN || destinationFogState === FOG_STATE.DISCOVERED;
+
             this.playerGridPos = { col: newCol, row: newRow };
             // Discover the new cell
             this.discoverCell(newCol, newRow);
-            return true; // Moved successfully
+            return { moved: true, isPreviouslyDiscovered }; // Moved successfully
         }
 
-        return false; // Can't move there
+        return { moved: false, isPreviouslyDiscovered: false }; // Can't move there
     }
 
     public getPlayerPixelPosition(): [number, number] {
