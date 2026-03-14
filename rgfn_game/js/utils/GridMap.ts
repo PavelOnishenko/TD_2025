@@ -43,6 +43,15 @@ export default class GridMap {
         };
     }
 
+
+    public updateLayout(cellSize: number, offsetX: number = this.offsetX, offsetY: number = this.offsetY): void {
+        this.cellSize = cellSize;
+        this.offsetX = offsetX;
+        this.offsetY = offsetY;
+        this.cells = [];
+        this.initializeCells();
+    }
+
     getCellAt(col: number, row: number): GridCell | null {
         if (!this.isValidPosition(col, row)) {
             return null;

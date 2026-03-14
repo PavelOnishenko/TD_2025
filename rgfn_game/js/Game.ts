@@ -45,6 +45,9 @@ export default class Game {
     private readonly hudCoordinator: GameHudCoordinator;
     private readonly battleCoordinator: GameBattleCoordinator;
     private readonly worldModeController: WorldModeController;
+    private readonly worldMap: WorldMap;
+    private readonly battleMap: BattleMap;
+    private readonly player: Player;
 
     constructor(canvas: HTMLCanvasElement) {
         this.canvas = canvas;
@@ -54,6 +57,9 @@ export default class Game {
         const player = new Player(0, 0);
         const worldMap = new WorldMap(20, 15, 40);
         const battleMap = new BattleMap();
+        this.player = player;
+        this.worldMap = worldMap;
+        this.battleMap = battleMap;
         const turnManager = new TurnManager();
         const encounterSystem = new EncounterSystem();
         const villageLifeRenderer = new VillageLifeRenderer(new VillagePopulation());
@@ -110,13 +116,39 @@ export default class Game {
         });
         this.bindUi(ui, villageActionsController, encounterSystem);
         this.configureInput();
+        this.configureViewport();
         applyThemeToCSS();
         const [x, y] = worldMap.getPlayerPixelPosition();
         player.x = x;
         player.y = y;
     }
 
-    public start(): void { this.hudCoordinator.updateHUD(); this.loop.start(); }
+    public start(): void { this.handleResize(); this.hudCoordinator.updateHUD(); this.loop.start(); }
+
+
+    private configureViewport(): void {
+        const onResize = (): void => this.handleResize();
+        window.addEventListener('resize', onResize);
+        onResize();
+    }
+
+    private handleResize(): void {
+        const rect = this.canvas.getBoundingClientRect();
+        const nextWidth = Math.max(160, Math.floor(rect.width));
+        const nextHeight = Math.max(160, Math.floor(rect.height));
+
+        if (nextWidth !== this.canvas.width || nextHeight !== this.canvas.height) {
+            this.canvas.width = nextWidth;
+            this.canvas.height = nextHeight;
+        }
+
+        this.worldMap.resizeToCanvas(this.canvas.width, this.canvas.height);
+        this.battleMap.resizeToCanvas(this.canvas.width, this.canvas.height);
+
+        const [x, y] = this.worldMap.getPlayerPixelPosition();
+        this.player.x = x;
+        this.player.y = y;
+    }
 
     private createStateMachine(ui: UIBundle): StateMachine {
         return new GameModeStateMachine<Skeleton>({

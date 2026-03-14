@@ -121,6 +121,16 @@ export default class WorldMap {
         }
         return { moved: false, isPreviouslyDiscovered: false }; // Can't move there
     }
+    public resizeToCanvas(canvasWidth: number, canvasHeight: number): void {
+        const { columns, rows } = this.grid.getDimensions();
+        const nextCellSize = Math.max(1, Math.floor(Math.min(canvasWidth / columns, canvasHeight / rows)));
+        const mapWidth = columns * nextCellSize;
+        const mapHeight = rows * nextCellSize;
+        const offsetX = Math.floor((canvasWidth - mapWidth) / 2);
+        const offsetY = Math.floor((canvasHeight - mapHeight) / 2);
+        this.grid.updateLayout(nextCellSize, offsetX, offsetY);
+    }
+
     public getPlayerPixelPosition(): [number, number] {
         return this.grid.gridToPixel(this.playerGridPos.col, this.playerGridPos.row);
     }

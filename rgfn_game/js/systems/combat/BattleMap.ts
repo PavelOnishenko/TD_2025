@@ -49,6 +49,24 @@ export default class BattleMap {
         return this.tryMove(entity, next.col, next.row);
     }
 
+    public resizeToCanvas(canvasWidth: number, canvasHeight: number): void {
+        const { columns, rows } = this.grid.getDimensions();
+        const nextCellSize = Math.max(1, Math.floor(Math.min(canvasWidth / columns, canvasHeight / rows)));
+        const mapWidth = columns * nextCellSize;
+        const mapHeight = rows * nextCellSize;
+        const offsetX = Math.floor((canvasWidth - mapWidth) / 2);
+        const offsetY = Math.floor((canvasHeight - mapHeight) / 2);
+        this.grid.updateLayout(nextCellSize, offsetX, offsetY);
+        this.entities.forEach((entity) => {
+            if (entity.gridCol === undefined || entity.gridRow === undefined) {
+                return;
+            }
+            const [x, y] = this.grid.gridToPixel(entity.gridCol, entity.gridRow);
+            entity.x = x;
+            entity.y = y;
+        });
+    }
+
     public draw(
         ctx: CanvasRenderingContext2D,
         _renderer: unknown,
