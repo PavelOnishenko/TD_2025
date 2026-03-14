@@ -1,6 +1,6 @@
 import { randomInt } from '../../../../engine/utils/MathUtils.js';
 import Skeleton, { EnemyConfig } from '../../entities/Skeleton.js';
-import Item, { BOW_ITEM, HEALING_POTION_ITEM } from '../../entities/Item.js';
+import Item, { BOW_ITEM, HEALING_POTION_ITEM, MANA_POTION_ITEM } from '../../entities/Item.js';
 import { balanceConfig } from '../../config/balanceConfig.js';
 import type { EncounterResult, ForcedEncounterType } from './EncounterSystem.js';
 
@@ -63,7 +63,7 @@ export default class EncounterResolver {
     }
 
     private createRandomItemEncounter(): EncounterResult {
-        const discoverableItems: Item[] = [new Item(HEALING_POTION_ITEM)];
+        const discoverableItems: Item[] = [new Item(HEALING_POTION_ITEM), new Item(MANA_POTION_ITEM)];
 
         if (!this.bowFound) {
             discoverableItems.push(new Item(BOW_ITEM));

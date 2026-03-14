@@ -12,6 +12,8 @@ test('Player initializes with base combat stats', () => {
   assert.equal(player.maxHp, balanceConfig.player.baseHp);
   assert.equal(player.damage, balanceConfig.player.baseDamage);
   assert.equal(player.armor, balanceConfig.player.baseArmor);
+  assert.equal(player.maxMana, balanceConfig.player.baseMana);
+  assert.equal(player.mana, balanceConfig.player.baseMana);
   assert.equal(player.level, 1);
 });
 
@@ -38,6 +40,7 @@ test('Player addXp levels up, grants skill points and carries overflow XP', () =
   assert.equal(player.skillPoints, levelConfig.skillPointsPerLevel);
   assert.equal(player.xp, 2);
   assert.equal(player.hp, player.maxHp);
+  assert.equal(player.mana, player.maxMana);
 });
 
 test('Player addStat succeeds only with enough skill points and updates stats', () => {
@@ -52,6 +55,30 @@ test('Player addStat succeeds only with enough skill points and updates stats', 
   assert.equal(player.strength, 2);
   assert.equal(player.skillPoints, 0);
   assert.equal(player.damage, balanceConfig.player.baseDamage + 1);
+});
+
+test('Player keeps full mana state when max mana increases', () => {
+  const player = new Player(0, 0);
+  player.skillPoints = 1;
+
+  assert.equal(player.mana, player.maxMana);
+  const oldMaxMana = player.maxMana;
+
+  player.addStat('connection');
+
+  assert.equal(player.maxMana, oldMaxMana + 1);
+  assert.equal(player.mana, player.maxMana);
+});
+
+test('Player intelligence grants mana fraction and magic points each 3 points', () => {
+  const player = new Player(0, 0);
+  player.skillPoints = 3;
+
+  player.addStat('intelligence', 3);
+
+  assert.equal(player.intelligence, 3);
+  assert.equal(player.magicPoints, 1);
+  assert.equal(player.maxMana, balanceConfig.player.baseMana + 1);
 });
 
 test('Player inventory auto-equips discovered weapons and keeps non-weapons unequipped', () => {
