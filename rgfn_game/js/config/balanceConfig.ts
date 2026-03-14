@@ -145,6 +145,12 @@ export const balanceConfig = {
             dragon: 1,
         },
 
+        eventTypeWeights: [
+            { type: 'monster', weight: 8 },
+            { type: 'item', weight: 2 },
+            { type: 'village', weight: 1 },
+        ],
+
         zombieMinGroup: 1,
         zombieMaxGroup: 2,
     },

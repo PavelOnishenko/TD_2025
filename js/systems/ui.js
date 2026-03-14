@@ -14,6 +14,7 @@ import {
 import { translate, setActiveLocale, applyLocalization } from './localization.js';
 import { DEFAULT_TIME_SCALE, MAX_TIME_SCALE, MIN_TIME_SCALE } from '../core/game/world.js';
 import { trackTowerPlaced, trackTowerMerged, trackTowerUpgraded, trackTowerRemoved, trackLifeLost } from './balanceTracking.js';
+import { registerBackquoteToggle } from '../../engine/systems/developerHotkeys.js';
 
 const SUPPORTED_LANGUAGES = ['en', 'ru'];
 const DEFAULT_LANGUAGE = SUPPORTED_LANGUAGES[0];
@@ -378,18 +379,9 @@ function bindDiagnosticsOverlay(game) {
         refreshDiagnosticsOverlay(game, { dt: 0, force: true });
     };
 
-    const handleKeyDown = (event) => {
-        if (event.code !== 'Backquote') {
-            return;
-        }
-        if (event.ctrlKey || event.metaKey || event.altKey) {
-            return;
-        }
-        event.preventDefault();
+    registerBackquoteToggle(() => {
         toggleOverlay();
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
+    });
     updateVisibility();
 }
 

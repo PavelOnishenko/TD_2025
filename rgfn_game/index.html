@@ -92,6 +92,36 @@
             </div>
         </div>
 
+
+        <div id="dev-events-modal" class="dev-events-modal hidden" role="dialog" aria-modal="true" aria-labelledby="dev-events-title">
+            <div class="dev-events-panel">
+                <div class="dev-events-header">
+                    <h2 id="dev-events-title">Developer Event Queue</h2>
+                    <button id="dev-events-close-btn" class="action-btn" type="button">Close</button>
+                </div>
+                <p class="dev-events-hint">Press <strong>~</strong> to toggle this panel. Queued events are consumed on upcoming encounters.</p>
+                <div class="dev-events-controls">
+                    <label for="dev-event-type">Next event:</label>
+                    <select id="dev-event-type">
+                        <option value="skeleton">Skeleton battle</option>
+                        <option value="zombie">Zombie battle</option>
+                        <option value="ninja">Ninja battle</option>
+                        <option value="darkKnight">Dark Knight battle</option>
+                        <option value="dragon">Dragon battle</option>
+                        <option value="item">Item discovery</option>
+                        <option value="none">No encounter</option>
+                        <option value="village">Village</option>
+                    </select>
+                    <button id="dev-event-add-btn" class="action-btn" type="button">Queue Event</button>
+                    <button id="dev-event-clear-btn" class="action-btn" type="button">Clear Queue</button>
+                </div>
+                <div class="dev-events-queue-wrap">
+                    <h3>Queued events</h3>
+                    <ol id="dev-events-queue" class="dev-events-queue"></ol>
+                </div>
+            </div>
+        </div>
+
         <div id="controls">
             <p>Arrow Keys / WASD: Move</p>
             <p>Battle: Move each turn OR click Attack/Flee</p>

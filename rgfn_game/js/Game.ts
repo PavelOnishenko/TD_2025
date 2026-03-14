@@ -5,7 +5,7 @@ import StateMachine from './utils/StateMachine.js';
 import WorldMap from './systems/WorldMap.js';
 import BattleMap from './systems/BattleMap.js';
 import TurnManager from './systems/TurnManager.js';
-import EncounterSystem from './systems/EncounterSystem.js';
+import EncounterSystem, { ForcedEncounterType } from './systems/EncounterSystem.js';
 import Player from './entities/Player.js';
 import Skeleton from './entities/Skeleton.js';
 import Item from './entities/Item.js';
@@ -14,7 +14,8 @@ import { balanceConfig } from './config/balanceConfig.js';
 import { Direction } from './types/game.js';
 import { BattleSplash } from './ui/BattleSplash.js';
 import { ItemDiscoverySplash } from './ui/ItemDiscoverySplash.js';
-import { applyThemeToCSS } from './config/ThemeConfig.js';
+import { applyThemeToCSS, theme } from './config/ThemeConfig.js';
+import { registerBackquoteToggle } from '../../engine/systems/developerHotkeys.js';
 
 const MODES = {
     WORLD_MAP: 'WORLD_MAP',
@@ -44,6 +45,7 @@ export default class Game {
     private selectedEnemy: Skeleton | null;
     private battleSplash: BattleSplash;
     private itemDiscoverySplash: ItemDiscoverySplash;
+    private developerUI;
 
     constructor(canvas: HTMLCanvasElement) {
         this.canvas = canvas;
@@ -86,6 +88,7 @@ export default class Game {
         this.hudElements = {};
         this.battleUI = {};
         this.villageUI = {};
+        this.developerUI = {};
         this.setupUI();
 
         // Initialize systems
@@ -148,6 +151,15 @@ export default class Game {
             leaveBtn: document.getElementById('village-leave-btn')! as HTMLButtonElement,
         };
 
+        this.developerUI = {
+            modal: document.getElementById('dev-events-modal')!,
+            closeBtn: document.getElementById('dev-events-close-btn')! as HTMLButtonElement,
+            eventType: document.getElementById('dev-event-type')! as HTMLSelectElement,
+            queueList: document.getElementById('dev-events-queue')!,
+            addBtn: document.getElementById('dev-event-add-btn')! as HTMLButtonElement,
+            clearBtn: document.getElementById('dev-event-clear-btn')! as HTMLButtonElement,
+        };
+
         // Battle button events
         this.battleUI.attackBtn.addEventListener('click', () => this.handleAttack());
         this.battleUI.fleeBtn.addEventListener('click', () => this.handleFlee());
@@ -159,6 +171,15 @@ export default class Game {
         this.villageUI.buyBtn.addEventListener('click', () => this.handleVillageBuy());
         this.villageUI.sellBtn.addEventListener('click', () => this.handleVillageSell());
         this.villageUI.leaveBtn.addEventListener('click', () => this.handleVillageLeave());
+
+        this.developerUI.addBtn.addEventListener('click', () => this.handleDeveloperQueueAdd());
+        this.developerUI.clearBtn.addEventListener('click', () => this.handleDeveloperQueueClear());
+        this.developerUI.closeBtn.addEventListener('click', () => this.toggleDeveloperModal(false));
+        this.developerUI.modal.addEventListener('click', (event: MouseEvent) => {
+            if (event.target === this.developerUI.modal) {
+                this.toggleDeveloperModal(false);
+            }
+        });
 
         // Stat allocation button events
         this.hudElements.addVitalityBtn.addEventListener('click', () => this.handleAddStat('vitality'));
@@ -177,6 +198,10 @@ export default class Game {
 
         document.addEventListener('keydown', (e: KeyboardEvent) => this.input.handleKeyDown(e));
         document.addEventListener('keyup', (e: KeyboardEvent) => this.input.handleKeyUp(e));
+
+        registerBackquoteToggle((): void => {
+            this.toggleDeveloperModal();
+        }, { target: document });
     }
 
     public start(): void {
@@ -194,6 +219,8 @@ export default class Game {
 
         if (this.stateMachine.isInState(MODES.WORLD_MAP)) {
             this.renderWorldMode();
+        } else if (this.stateMachine.isInState(MODES.VILLAGE)) {
+            this.renderVillageMode();
         } else if (this.stateMachine.isInState(MODES.BATTLE)) {
             this.renderBattleMode();
         }
@@ -267,6 +294,8 @@ export default class Game {
                 this.addBattleLog('A dragon flies past without noticing you.', 'system');
             } else if (encounter.type === 'item') {
                 this.handleItemDiscovery(encounter.item);
+            } else if (encounter.type === 'village') {
+                this.stateMachine.transition(MODES.VILLAGE);
             }
         }
     }
@@ -285,6 +314,127 @@ export default class Game {
     private renderWorldMode(): void {
         this.worldMap.draw(this.renderer.ctx, this.renderer);
         this.player.draw(this.renderer.ctx);
+    }
+
+    private renderVillageMode(): void {
+        const ctx = this.renderer.ctx;
+        const width = this.canvas.width;
+        const height = this.canvas.height;
+        const time = performance.now() * 0.001;
+
+        const skyGradient = ctx.createLinearGradient(0, 0, 0, height);
+        skyGradient.addColorStop(0, this.mixColors(theme.worldMap.terrain.water, theme.worldMap.background, 0.28));
+        skyGradient.addColorStop(0.58, this.mixColors(theme.worldMap.terrain.water, theme.ui.panelHighlight, 0.55));
+        skyGradient.addColorStop(0.59, this.mixColors(theme.worldMap.terrain.grass, theme.ui.panelHighlight, 0.35));
+        skyGradient.addColorStop(1, this.mixColors(theme.worldMap.terrain.forest, theme.worldMap.terrain.grass, 0.45));
+        ctx.fillStyle = skyGradient;
+        ctx.fillRect(0, 0, width, height);
+
+        const sunPulse = 10 + Math.sin(time * 1.8) * 2;
+        ctx.fillStyle = theme.ui.panelHighlight;
+        ctx.beginPath();
+        ctx.arc(width * 0.84, height * 0.2, 42 + sunPulse, 0, Math.PI * 2);
+        ctx.fill();
+
+        const cloudOffset = (time * 22) % (width + 260);
+        this.drawVillageCloud(width - cloudOffset, 95, 1.1);
+        this.drawVillageCloud(width - cloudOffset * 0.7 - 220, 150, 0.85);
+        this.drawVillageCloud(width - cloudOffset * 1.2 + 120, 72, 0.7);
+
+        ctx.fillStyle = this.mixColors(theme.worldMap.terrain.forest, theme.worldMap.terrain.grass, 0.35);
+        ctx.beginPath();
+        ctx.moveTo(0, height * 0.6);
+        ctx.quadraticCurveTo(width * 0.22, height * 0.5, width * 0.44, height * 0.62);
+        ctx.quadraticCurveTo(width * 0.7, height * 0.72, width, height * 0.58);
+        ctx.lineTo(width, height);
+        ctx.lineTo(0, height);
+        ctx.closePath();
+        ctx.fill();
+
+        this.drawVillageHouse(width * 0.25, height * 0.54, 170, 110, theme.ui.secondaryAccent);
+        this.drawVillageHouse(width * 0.53, height * 0.51, 210, 130, this.mixColors(theme.ui.secondaryAccent, theme.ui.primaryAccent, 0.2));
+
+        ctx.strokeStyle = this.mixColors(theme.ui.panelHighlight, theme.ui.secondaryBg, 0.45);
+        ctx.lineWidth = 24;
+        ctx.beginPath();
+        ctx.moveTo(0, height * 0.85);
+        ctx.quadraticCurveTo(width * 0.4, height * 0.75, width * 0.8, height * 0.88);
+        ctx.lineTo(width, height * 0.92);
+        ctx.stroke();
+
+        const villagerStep = Math.sin(time * 5.5) * 5;
+        this.drawVillager(width * 0.38 + Math.sin(time * 0.8) * 24, height * 0.78, theme.entities.player.body, villagerStep);
+        this.drawVillager(width * 0.66 + Math.cos(time * 0.7) * 16, height * 0.8, theme.worldMap.terrain.water, -villagerStep);
+
+        ctx.fillStyle = this.withOpacity(theme.ui.primaryAccent, 0.62);
+        ctx.font = 'bold 38px Georgia, serif';
+        ctx.fillText('Village Life', 24, 56);
+    }
+
+    private drawVillageCloud(x: number, y: number, scale: number): void {
+        const ctx = this.renderer.ctx;
+
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.scale(scale, scale);
+        ctx.fillStyle = this.withOpacity(theme.ui.panelHighlight, 0.9);
+        ctx.beginPath();
+        ctx.arc(0, 0, 24, 0, Math.PI * 2);
+        ctx.arc(28, -8, 30, 0, Math.PI * 2);
+        ctx.arc(62, 0, 24, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+    }
+
+    private drawVillageHouse(x: number, y: number, width: number, height: number, roofColor: string): void {
+        const ctx = this.renderer.ctx;
+        const roofHeight = height * 0.4;
+
+        ctx.fillStyle = this.mixColors(theme.ui.panelHighlight, theme.ui.secondaryBg, 0.5);
+        ctx.fillRect(x, y, width, height);
+
+        ctx.fillStyle = roofColor;
+        ctx.beginPath();
+        ctx.moveTo(x - 18, y);
+        ctx.lineTo(x + width * 0.5, y - roofHeight);
+        ctx.lineTo(x + width + 18, y);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = this.mixColors(theme.ui.primaryAccent, theme.ui.secondaryAccent, 0.3);
+        ctx.fillRect(x + width * 0.4, y + height * 0.45, width * 0.2, height * 0.55);
+        ctx.fillRect(x + width * 0.12, y + height * 0.3, width * 0.16, height * 0.2);
+        ctx.fillRect(x + width * 0.72, y + height * 0.3, width * 0.16, height * 0.2);
+    }
+
+    private drawVillager(x: number, y: number, shirtColor: string, stepOffset: number): void {
+        const ctx = this.renderer.ctx;
+        ctx.save();
+        ctx.translate(x, y);
+
+        ctx.fillStyle = this.withOpacity(theme.ui.primaryAccent, 0.22);
+        ctx.beginPath();
+        ctx.ellipse(0, 16, 14, 5, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = this.mixColors(theme.ui.panelHighlight, theme.ui.secondaryBg, 0.2);
+        ctx.beginPath();
+        ctx.arc(0, -20, 10, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = shirtColor;
+        ctx.fillRect(-9, -10, 18, 24);
+
+        ctx.strokeStyle = theme.ui.primaryAccent;
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(-5, 14);
+        ctx.lineTo(-6 + stepOffset * 0.3, 34);
+        ctx.moveTo(5, 14);
+        ctx.lineTo(6 - stepOffset * 0.3, 34);
+        ctx.stroke();
+
+        ctx.restore();
     }
 
     // ============ VILLAGE MODE ============
@@ -378,6 +528,107 @@ export default class Game {
         line.classList.add(type + '-action');
         this.villageUI.log.appendChild(line);
         this.villageUI.log.scrollTop = this.villageUI.log.scrollHeight;
+    }
+
+
+    private toggleDeveloperModal(forceVisible?: boolean): void {
+        const shouldShow = typeof forceVisible === 'boolean'
+            ? forceVisible
+            : this.developerUI.modal.classList.contains('hidden');
+
+        this.developerUI.modal.classList.toggle('hidden', !shouldShow);
+        if (shouldShow) {
+            this.renderDeveloperQueue();
+        }
+    }
+
+    private handleDeveloperQueueAdd(): void {
+        const type = this.developerUI.eventType.value as ForcedEncounterType;
+        this.encounterSystem.queueForcedEncounter(type);
+        this.renderDeveloperQueue();
+        this.addVillageLog(`[DEV] Queued event: ${this.getDeveloperEventLabel(type)}`, 'system');
+    }
+
+    private handleDeveloperQueueClear(): void {
+        this.encounterSystem.clearForcedEncounters();
+        this.renderDeveloperQueue();
+    }
+
+    private renderDeveloperQueue(): void {
+        const queue = this.encounterSystem.getForcedEncounterQueue();
+        this.developerUI.queueList.innerHTML = '';
+
+        if (queue.length === 0) {
+            const item = document.createElement('li');
+            item.textContent = 'No queued events.';
+            this.developerUI.queueList.appendChild(item);
+            return;
+        }
+
+        queue.forEach((entry, index) => {
+            const item = document.createElement('li');
+            item.textContent = `${index + 1}. ${this.getDeveloperEventLabel(entry)}`;
+            this.developerUI.queueList.appendChild(item);
+        });
+    }
+
+    private getDeveloperEventLabel(type: ForcedEncounterType): string {
+        const labels: Record<ForcedEncounterType, string> = {
+            skeleton: 'Skeleton battle',
+            zombie: 'Zombie battle',
+            ninja: 'Ninja battle',
+            darkKnight: 'Dark Knight battle',
+            dragon: 'Dragon battle',
+            item: 'Item discovery',
+            none: 'No encounter',
+            village: 'Village',
+        };
+
+        return labels[type] ?? type;
+    }
+
+    private withOpacity(hex: string, alpha: number): string {
+        const normalized = hex.replace('#', '');
+        if (normalized.length !== 6) {
+            return hex;
+        }
+
+        const r = parseInt(normalized.slice(0, 2), 16);
+        const g = parseInt(normalized.slice(2, 4), 16);
+        const b = parseInt(normalized.slice(4, 6), 16);
+
+        if ([r, g, b].some((value) => Number.isNaN(value))) {
+            return hex;
+        }
+
+        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    }
+
+    private mixColors(colorA: string, colorB: string, ratio: number): string {
+        const parse = (value: string): [number, number, number] | null => {
+            const normalized = value.replace('#', '');
+            if (normalized.length !== 6) {
+                return null;
+            }
+            const r = parseInt(normalized.slice(0, 2), 16);
+            const g = parseInt(normalized.slice(2, 4), 16);
+            const b = parseInt(normalized.slice(4, 6), 16);
+            if ([r, g, b].some((item) => Number.isNaN(item))) {
+                return null;
+            }
+            return [r, g, b];
+        };
+
+        const from = parse(colorA);
+        const to = parse(colorB);
+        if (!from || !to) {
+            return colorA;
+        }
+
+        const safeRatio = Math.max(0, Math.min(1, ratio));
+        const blend = (start: number, end: number): number => Math.round(start + (end - start) * safeRatio);
+
+        return `rgb(${blend(from[0], to[0])}, ${blend(from[1], to[1])}, ${blend(from[2], to[2])})`;
     }
 
     // ============ BATTLE MODE ============
