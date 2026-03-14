@@ -202,10 +202,6 @@ export default class WorldMap {
             const col = Number(colText);
             const row = Number(rowText);
 
-            if (col === this.playerGridPos.col && row === this.playerGridPos.row) {
-                return;
-            }
-
             const fogState = this.getFogState(col, row);
             if (fogState === FOG_STATE.UNKNOWN) {
                 return;
