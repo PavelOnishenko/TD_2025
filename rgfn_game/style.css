@@ -26,12 +26,16 @@ body {
     justify-content: center;
     align-items: center;
     min-height: 100vh;
-    padding: 20px;
+    height: 100dvh;
+    padding: 10px;
+    overflow: hidden;
 }
 
+html { height: 100%; }
+
 #game-container {
-    max-width: 1120px;
-    width: 100%;
+    width: min(1280px, 100%);
+    height: 100%;
     display: flex;
     flex-direction: column;
     gap: 16px;
@@ -40,11 +44,12 @@ body {
     border: 3px solid var(--color-secondary-accent);
     border-radius: 10px;
     box-shadow: 0 0 0 2px var(--color-panel-shadow), 0 20px 34px rgba(0, 0, 0, 0.22);
+    overflow: hidden;
 }
 
 #hud {
     display: grid;
-    grid-template-columns: 1.1fr 1fr 1fr;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 14px;
     align-items: stretch;
     padding: 16px 18px;
@@ -145,13 +150,23 @@ h1 {
     color: var(--color-disabled);
 }
 
-#game-area { display: flex; gap: 16px; align-items: flex-start; }
+#game-area {
+    display: flex;
+    gap: 16px;
+    align-items: stretch;
+    flex: 1;
+    min-height: 0;
+}
 
 #game-canvas {
     border: 3px solid var(--color-secondary-accent);
     border-radius: 6px;
     background-color: var(--color-canvas-bg);
-    flex-shrink: 0;
+    flex: 1;
+    min-width: 0;
+    max-height: 100%;
+    height: auto;
+    aspect-ratio: 4 / 3;
     box-shadow: 0 0 0 2px var(--color-panel-shadow);
 }
 
@@ -161,8 +176,10 @@ h1 {
     border: 2px solid var(--color-secondary-accent);
     border-radius: 8px;
     padding: 18px;
-    min-width: 292px;
+    min-width: 240px;
+    width: min(292px, 30vw);
     max-width: 292px;
+    min-height: 0;
     display: flex;
     flex-direction: column;
     gap: 14px;
@@ -219,7 +236,7 @@ h1 {
 
 #battle-log,
 #village-log {
-    max-height: 220px;
+    max-height: 180px;
     overflow-y: auto;
     font-size: 12px;
     line-height: 1.55;
@@ -249,12 +266,11 @@ h1 {
 }
 #controls p { margin: 4px 0; font-size: 13px; color: var(--color-text-primary); }
 
-@media (max-width: 1180px) {
-    #hud { grid-template-columns: 1fr; }
+@media (max-width: 1180px), (max-height: 900px) {
     #game-area { flex-direction: column; }
     #battle-sidebar,
-#village-sidebar { max-width: none; width: 100%; }
-    #game-canvas { width: 100%; height: auto; max-width: 800px; }
+    #village-sidebar { max-width: none; width: 100%; }
+    #game-canvas { width: 100%; max-height: 60vh; }
 }
 
 .inventory-grid {

@@ -77,8 +77,10 @@ export default class BattleUiController {
 
     public selectEnemyFromCanvasClick(event: MouseEvent, canvas: HTMLCanvasElement): Skeleton | null {
         const rect = canvas.getBoundingClientRect();
-        const clickX = event.clientX - rect.left;
-        const clickY = event.clientY - rect.top;
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        const clickX = (event.clientX - rect.left) * scaleX;
+        const clickY = (event.clientY - rect.top) * scaleY;
         const enemies = this.turnManager.getActiveEnemies() as Skeleton[];
 
         for (const enemy of enemies) {

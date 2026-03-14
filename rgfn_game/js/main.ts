@@ -8,9 +8,6 @@ window.addEventListener('load', (): void => {
         return;
     }
 
-    // Set canvas size
-    canvas.width = 800;
-    canvas.height = 600;
 
     // Create and start game
     const game = new Game(canvas);
