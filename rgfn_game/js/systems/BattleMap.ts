@@ -1,209 +1,173 @@
 import GridMap from '../utils/GridMap.js';
-import { CombatEntity, Direction, GridCell } from '../types/game.js';
-import { theme } from '../config/ThemeConfig.js';
+import { CombatEntity, Direction } from '../types/game.js';
+import BattleMapView from './BattleMapView.js';
 
 export default class BattleMap {
-    private grid: GridMap;
+    private readonly grid: GridMap;
+    private readonly view: BattleMapView;
     private entities: CombatEntity[];
 
     constructor() {
         this.grid = new GridMap(10, 8, 48);
+        this.view = new BattleMapView(this.grid);
         this.entities = [];
     }
 
     public setup(player: CombatEntity, enemies: CombatEntity[]): void {
         this.entities = [];
-
-        // Place player at bottom center
-        const playerCol = Math.floor(this.grid.columns / 2);
-        const playerRow = this.grid.rows - 2;
-        player.gridCol = playerCol;
-        player.gridRow = playerRow;
-        const playerPos = this.grid.gridToPixel(playerCol, playerRow);
-        player.x = playerPos[0];
-        player.y = playerPos[1];
-
-        this.entities.push(player);
-
-        // Place enemies at top
-        const startCol = Math.floor((this.grid.columns - enemies.length * 2) / 2);
-        enemies.forEach((enemy, i) => {
-            const col = startCol + i * 2;
-            const row = 1;
-            enemy.gridCol = col;
-            enemy.gridRow = row;
-            const enemyPos = this.grid.gridToPixel(col, row);
-            enemy.x = enemyPos[0];
-            enemy.y = enemyPos[1];
-            this.entities.push(enemy);
-        });
+        this.placePlayer(player);
+        this.placeEnemies(enemies);
     }
 
     public isInMeleeRange(attacker: CombatEntity, target: CombatEntity): boolean {
-        const col1 = attacker.gridCol ?? 0;
-        const row1 = attacker.gridRow ?? 0;
-        const col2 = target.gridCol ?? 0;
-        const row2 = target.gridRow ?? 0;
-        return this.grid.areAdjacent(col1, row1, col2, row2);
+        const source = this.getEntityGridPosition(attacker);
+        const destination = this.getEntityGridPosition(target);
+        return this.grid.areAdjacent(source.col, source.row, destination.col, destination.row);
     }
 
-    /**
-     * Check if target is within attack range
-     * @param attacker - The attacking entity
-     * @param target - The target entity
-     * @param range - Attack range in cells (1 for melee, 2 for bow, etc.)
-     */
     public isInAttackRange(attacker: CombatEntity, target: CombatEntity, range: number): boolean {
-        const col1 = attacker.gridCol ?? 0;
-        const row1 = attacker.gridRow ?? 0;
-        const col2 = target.gridCol ?? 0;
-        const row2 = target.gridRow ?? 0;
-        const distance = this.grid.getDistance(col1, row1, col2, row2);
+        const source = this.getEntityGridPosition(attacker);
+        const destination = this.getEntityGridPosition(target);
+        const distance = this.grid.getDistance(source.col, source.row, destination.col, destination.row);
         return distance <= range;
     }
 
     public moveEntityToward(entity: CombatEntity, targetEntity: CombatEntity): boolean {
-        const targetCol = targetEntity.gridCol ?? 0;
-        const targetRow = targetEntity.gridRow ?? 0;
-
-        let newCol = entity.gridCol ?? 0;
-        let newRow = entity.gridRow ?? 0;
-
-        // Simple pathfinding - move one step closer
-        const colDiff = targetCol - (entity.gridCol ?? 0);
-        const rowDiff = targetRow - (entity.gridRow ?? 0);
-
-        // Prioritize the direction with greater distance
-        const primaryMoveIsCol = Math.abs(colDiff) > Math.abs(rowDiff);
-
-        // Try primary direction first
-        if (primaryMoveIsCol && colDiff !== 0) {
-            newCol += colDiff > 0 ? 1 : -1;
-        } else if (!primaryMoveIsCol && rowDiff !== 0) {
-            newRow += rowDiff > 0 ? 1 : -1;
+        const source = this.getEntityGridPosition(entity);
+        const target = this.getEntityGridPosition(targetEntity);
+        const primaryStep = this.getPrimaryStep(source, target);
+        if (this.tryMove(entity, primaryStep.col, primaryStep.row)) {
+            return true;
         }
-
-        // Check if position is valid and not occupied
-        if (this.grid.isValidPosition(newCol, newRow)) {
-            const occupied = this.entities.some(e =>
-                e !== entity && e.gridCol === newCol && e.gridRow === newRow && !e.isDead()
-            );
-
-            if (!occupied) {
-                entity.gridCol = newCol;
-                entity.gridRow = newRow;
-                const [x, y] = this.grid.gridToPixel(newCol, newRow);
-                entity.x = x;
-                entity.y = y;
-                return true;
-            }
-        }
-
-        // Primary direction blocked, try alternate direction
-        newCol = entity.gridCol ?? 0;
-        newRow = entity.gridRow ?? 0;
-
-        if (!primaryMoveIsCol && colDiff !== 0) {
-            newCol += colDiff > 0 ? 1 : -1;
-        } else if (primaryMoveIsCol && rowDiff !== 0) {
-            newRow += rowDiff > 0 ? 1 : -1;
-        }
-
-        // Check if alternate position is valid and not occupied
-        if (this.grid.isValidPosition(newCol, newRow)) {
-            const occupied = this.entities.some(e =>
-                e !== entity && e.gridCol === newCol && e.gridRow === newRow && !e.isDead()
-            );
-
-            if (!occupied) {
-                entity.gridCol = newCol;
-                entity.gridRow = newRow;
-                const [x, y] = this.grid.gridToPixel(newCol, newRow);
-                entity.x = x;
-                entity.y = y;
-                return true;
-            }
-        }
-
-        return false;
+        const alternateStep = this.getAlternateStep(source, target, primaryStep.movesColumnFirst);
+        return this.tryMove(entity, alternateStep.col, alternateStep.row);
     }
 
     public moveEntity(entity: CombatEntity, direction: Direction): boolean {
-        let newCol = entity.gridCol ?? 0;
-        let newRow = entity.gridRow ?? 0;
-
-        switch (direction) {
-            case 'up':
-                newRow = (entity.gridRow ?? 0) - 1;
-                break;
-            case 'down':
-                newRow = (entity.gridRow ?? 0) + 1;
-                break;
-            case 'left':
-                newCol = (entity.gridCol ?? 0) - 1;
-                break;
-            case 'right':
-                newCol = (entity.gridCol ?? 0) + 1;
-                break;
-        }
-
-        // Check if position is valid and not occupied
-        if (this.grid.isValidPosition(newCol, newRow)) {
-            const occupied = this.entities.some(e =>
-                e !== entity && e.gridCol === newCol && e.gridRow === newRow && !e.isDead()
-            );
-
-            if (!occupied) {
-                entity.gridCol = newCol;
-                entity.gridRow = newRow;
-                const [x, y] = this.grid.gridToPixel(newCol, newRow);
-                entity.x = x;
-                entity.y = y;
-                return true;
-            }
-        }
-
-        return false;
+        const source = this.getEntityGridPosition(entity);
+        const next = this.getDirectionalStep(source, direction);
+        return this.tryMove(entity, next.col, next.row);
     }
 
-    public draw(ctx: CanvasRenderingContext2D, renderer: any, currentEntity: CombatEntity | null = null, selectedEnemy: CombatEntity | null = null): void {
-        const dims = this.grid.getDimensions();
+    public draw(
+        ctx: CanvasRenderingContext2D,
+        _renderer: unknown,
+        currentEntity: CombatEntity | null = null,
+        selectedEnemy: CombatEntity | null = null
+    ): void {
+        this.view.draw(ctx, currentEntity, selectedEnemy);
+    }
 
-        // Draw grid background
-        ctx.fillStyle = theme.battleMap.background;
-        ctx.fillRect(0, 0, dims.width, dims.height);
+    private placePlayer(player: CombatEntity): void {
+        const col = Math.floor(this.grid.columns / 2);
+        const row = this.grid.rows - 2;
+        this.placeEntity(player, col, row);
+    }
 
-        // Draw grid cells with clear borders
-        this.grid.forEachCell((cell: GridCell, col: number, row: number) => {
-            // Alternating tile colors for better visibility
-            const isLight = (col + row) % 2 === 0;
-            ctx.fillStyle = isLight ? theme.battleMap.tileLight : theme.battleMap.tileDark;
-            ctx.fillRect(cell.x, cell.y, cell.width, cell.height);
-
-            // Highlight current entity's cell
-            if (currentEntity && currentEntity.gridCol === col && currentEntity.gridRow === row) {
-                const isPlayer = currentEntity.constructor.name === 'Player';
-                ctx.fillStyle = isPlayer ? theme.battleMap.currentEntityPlayer : theme.battleMap.currentEntityEnemy;
-                ctx.fillRect(cell.x, cell.y, cell.width, cell.height);
-            }
-
-            // Highlight selected enemy's cell
-            if (selectedEnemy && selectedEnemy.gridCol === col && selectedEnemy.gridRow === row) {
-                ctx.fillStyle = theme.battleMap.selectedEnemy;
-                ctx.fillRect(cell.x, cell.y, cell.width, cell.height);
-            }
-
-            // Clear cell borders
-            ctx.strokeStyle = theme.battleMap.gridBorders;
-            ctx.lineWidth = 2;
-            ctx.strokeRect(cell.x, cell.y, cell.width, cell.height);
-
-            if (selectedEnemy && selectedEnemy.gridCol === col && selectedEnemy.gridRow === row) {
-                ctx.strokeStyle = theme.ui.enemyColor;
-                ctx.lineWidth = 4;
-                ctx.strokeRect(cell.x, cell.y, cell.width, cell.height);
-            }
+    private placeEnemies(enemies: CombatEntity[]): void {
+        const startCol = Math.floor((this.grid.columns - enemies.length * 2) / 2);
+        enemies.forEach((enemy, index) => {
+            this.placeEntity(enemy, startCol + index * 2, 1);
         });
+    }
 
+    private placeEntity(entity: CombatEntity, col: number, row: number): void {
+        entity.gridCol = col;
+        entity.gridRow = row;
+        const [x, y] = this.grid.gridToPixel(col, row);
+        entity.x = x;
+        entity.y = y;
+        this.entities.push(entity);
+    }
+
+    private getEntityGridPosition(entity: CombatEntity): { col: number; row: number } {
+        return { col: entity.gridCol ?? 0, row: entity.gridRow ?? 0 };
+    }
+
+    private getPrimaryStep(
+        source: { col: number; row: number },
+        target: { col: number; row: number }
+    ): { col: number; row: number; movesColumnFirst: boolean } {
+        const colDiff = target.col - source.col;
+        const rowDiff = target.row - source.row;
+        const movesColumnFirst = Math.abs(colDiff) > Math.abs(rowDiff);
+        if (movesColumnFirst && colDiff !== 0) {
+            return { col: source.col + Math.sign(colDiff), row: source.row, movesColumnFirst };
+        }
+        if (!movesColumnFirst && rowDiff !== 0) {
+            return { col: source.col, row: source.row + Math.sign(rowDiff), movesColumnFirst };
+        }
+        return { col: source.col, row: source.row, movesColumnFirst };
+    }
+
+    private getAlternateStep(
+        source: { col: number; row: number },
+        target: { col: number; row: number },
+        primaryMovesColumnFirst: boolean
+    ): { col: number; row: number } {
+        const colDiff = target.col - source.col;
+        const rowDiff = target.row - source.row;
+        if (!primaryMovesColumnFirst && colDiff !== 0) {
+            return { col: source.col + Math.sign(colDiff), row: source.row };
+        }
+        if (primaryMovesColumnFirst && rowDiff !== 0) {
+            return { col: source.col, row: source.row + Math.sign(rowDiff) };
+        }
+        return source;
+    }
+
+    private getDirectionalStep(source: { col: number; row: number }, direction: Direction): { col: number; row: number } {
+        if (direction === 'up') {
+            return { col: source.col, row: source.row - 1 };
+        }
+        if (direction === 'down') {
+            return { col: source.col, row: source.row + 1 };
+        }
+        if (direction === 'left') {
+            return { col: source.col - 1, row: source.row };
+        }
+        return { col: source.col + 1, row: source.row };
+    }
+
+    private tryMove(entity: CombatEntity, col: number, row: number): boolean {
+        if (!this.grid.isValidPosition(col, row)) {
+            return false;
+        }
+        if (this.isOccupiedByLivingEntity(entity, col, row)) {
+            return false;
+        }
+        this.placeEntityAtCurrentGridPosition(entity, col, row);
+        return true;
+    }
+
+    public isEntityOnEdge(entity: CombatEntity): boolean {
+        const col = entity.gridCol;
+        const row = entity.gridRow;
+
+        if (col === undefined || row === undefined) {
+            return false;
+        }
+
+        const lastCol = this.grid.columns - 1;
+        const lastRow = this.grid.rows - 1;
+
+        return col === 0 || col === lastCol || row === 0 || row === lastRow;
+    }
+
+   
+    private isOccupiedByLivingEntity(entity: CombatEntity, col: number, row: number): boolean {
+        return this.entities.some((currentEntity) => {
+            const isSameEntity = currentEntity === entity;
+            const sharesGridPosition = currentEntity.gridCol === col && currentEntity.gridRow === row;
+            return !isSameEntity && sharesGridPosition && !currentEntity.isDead();
+        });
+    }
+
+    private placeEntityAtCurrentGridPosition(entity: CombatEntity, col: number, row: number): void {
+        entity.gridCol = col;
+        entity.gridRow = row;
+        const [x, y] = this.grid.gridToPixel(col, row);
+        entity.x = x;
+        entity.y = y;
     }
 }
