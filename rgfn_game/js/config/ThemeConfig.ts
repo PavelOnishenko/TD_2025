@@ -17,6 +17,10 @@ export interface Theme {
     warningColor: string;
     disabledColor: string;
     systemMessageColor: string;
+    textPrimary: string;
+    textMuted: string;
+    panelShadow: string;
+    panelHighlight: string;
   };
 
   // Entity Colors
@@ -64,57 +68,61 @@ export interface Theme {
   };
 }
 
-// Fixed game theme (classic terminal aesthetic)
+// Fixed game theme (light parchment fantasy aesthetic)
 const GAME_THEME: Theme = {
-  name: 'Classic Terminal',
+  name: 'Royal Scroll',
   ui: {
-    primaryBg: '#0a0a0a',
-    secondaryBg: '#1a1a1a',
-    canvasBg: '#000',
-    primaryAccent: '#00ff00',
-    secondaryAccent: '#00ccff',
-    enemyColor: '#ff3333',
-    warningColor: '#ff6600',
-    disabledColor: '#666',
-    systemMessageColor: '#cccccc',
+    primaryBg: '#e8d7b3',
+    secondaryBg: '#d5be93',
+    canvasBg: '#ccaf80',
+    primaryAccent: '#2e2013',
+    secondaryAccent: '#8f5a2a',
+    enemyColor: '#8f1f1f',
+    warningColor: '#b75a1d',
+    disabledColor: '#8d8069',
+    systemMessageColor: '#3f2e1d',
+    textPrimary: '#1f1207',
+    textMuted: '#5b4630',
+    panelShadow: '#947145',
+    panelHighlight: '#f2e5c9',
   },
   entities: {
     player: {
-      body: '#00ccff',
-      face: '#ffffff',
-      healthBg: '#333',
-      healthHigh: '#4ade80',
-      healthMid: '#fbbf24',
-      healthLow: '#ef4444',
+      body: '#2f5ea8',
+      face: '#f2debc',
+      healthBg: '#604429',
+      healthHigh: '#2f7f2f',
+      healthMid: '#b78532',
+      healthLow: '#8f1f1f',
     },
     skeleton: {
-      body: '#e6d5c3',
-      features: '#000',
-      healthBg: '#222',
-      healthBar: '#ff4444',
+      body: '#d8ccbc',
+      features: '#332318',
+      healthBg: '#4f3924',
+      healthBar: '#8f1f1f',
     },
   },
   worldMap: {
-    background: '#0a0a1a',
+    background: '#c9ab7f',
     terrain: {
-      grass: '#4a7c3e',
-      forest: '#2d5a2d',
-      mountain: '#6b6b6b',
-      water: '#3a6ea5',
-      desert: '#c9a86a',
+      grass: '#8da75d',
+      forest: '#577235',
+      mountain: '#948068',
+      water: '#5f8ba8',
+      desert: '#d4b17a',
     },
-    unknown: '#1a1a2a',
-    gridLines: 'rgba(0, 255, 0, 0.1)',
-    playerMarker: '#00ccff',
+    unknown: '#a18a67',
+    gridLines: 'rgba(46, 32, 19, 0.15)',
+    playerMarker: '#8f1f1f',
   },
   battleMap: {
-    background: '#1a0a0a',
-    tileDark: 'rgba(80, 30, 30, 0.4)',
-    tileLight: 'rgba(40, 15, 15, 0.4)',
-    currentEntityPlayer: 'rgba(0, 204, 255, 0.3)',
-    currentEntityEnemy: 'rgba(255, 100, 0, 0.3)',
-    selectedEnemy: 'rgba(0, 255, 0, 0.2)',
-    gridBorders: 'rgba(255, 50, 50, 0.5)',
+    background: '#ceb287',
+    tileDark: 'rgba(159, 124, 78, 0.48)',
+    tileLight: 'rgba(201, 167, 115, 0.52)',
+    currentEntityPlayer: 'rgba(47, 94, 168, 0.3)',
+    currentEntityEnemy: 'rgba(143, 31, 31, 0.28)',
+    selectedEnemy: 'rgba(183, 90, 29, 0.23)',
+    gridBorders: 'rgba(95, 64, 35, 0.45)',
   },
 };
 
@@ -138,4 +146,8 @@ export function applyThemeToCSS(): void {
   root.style.setProperty('--color-warning', theme.ui.warningColor);
   root.style.setProperty('--color-disabled', theme.ui.disabledColor);
   root.style.setProperty('--color-system-message', theme.ui.systemMessageColor);
+  root.style.setProperty('--color-text-primary', theme.ui.textPrimary);
+  root.style.setProperty('--color-text-muted', theme.ui.textMuted);
+  root.style.setProperty('--color-panel-shadow', theme.ui.panelShadow);
+  root.style.setProperty('--color-panel-highlight', theme.ui.panelHighlight);
 }

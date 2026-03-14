@@ -187,7 +187,7 @@ export default class BattleMap {
                 ctx.fillRect(cell.x, cell.y, cell.width, cell.height);
             }
 
-            // Highlight selected enemy's cell with green border
+            // Highlight selected enemy's cell
             if (selectedEnemy && selectedEnemy.gridCol === col && selectedEnemy.gridRow === row) {
                 ctx.fillStyle = theme.battleMap.selectedEnemy;
                 ctx.fillRect(cell.x, cell.y, cell.width, cell.height);
@@ -198,23 +198,12 @@ export default class BattleMap {
             ctx.lineWidth = 2;
             ctx.strokeRect(cell.x, cell.y, cell.width, cell.height);
 
-            // Draw thicker green border for selected enemy
             if (selectedEnemy && selectedEnemy.gridCol === col && selectedEnemy.gridRow === row) {
-                ctx.strokeStyle = 'rgba(0, 255, 0, 0.8)';
+                ctx.strokeStyle = theme.ui.enemyColor;
                 ctx.lineWidth = 4;
                 ctx.strokeRect(cell.x, cell.y, cell.width, cell.height);
             }
         });
 
-        // Draw grid coordinates for reference
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-        ctx.font = '10px monospace';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-
-        this.grid.forEachCell((cell: GridCell, col: number, row: number) => {
-            const [x, y] = this.grid.gridToPixel(col, row);
-            ctx.fillText(`${col},${row}`, x, y - 15);
-        });
     }
 }
