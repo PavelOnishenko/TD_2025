@@ -1,7 +1,8 @@
 import { randomInt } from '../../../engine/utils/MathUtils.js';
-import Skeleton, { EnemyConfig } from '../entities/Skeleton.js';
 import { balanceConfig } from '../config/balanceConfig.js';
-import Item, { BOW_ITEM, HEALING_POTION_ITEM } from '../entities/Item.js';
+import Item from '../entities/Item.js';
+import Skeleton from '../entities/Skeleton.js';
+import EncounterResolver from './EncounterResolver.js';
 
 export type EncounterResult =
     | { type: 'battle', enemies: Skeleton[] }
@@ -14,16 +15,14 @@ export type ForcedEncounterType = 'skeleton' | 'zombie' | 'ninja' | 'darkKnight'
 export default class EncounterSystem {
     private encounterRate: number;
     private stepsSinceEncounter: number;
-    private bowFound: boolean;
     private itemDiscoveryChance: number;
-    private forcedEncounters: ForcedEncounterType[];
+    private encounterResolver: EncounterResolver;
 
     constructor(encounterRate?: number) {
         this.encounterRate = encounterRate ?? balanceConfig.encounters.encounterRate;
         this.stepsSinceEncounter = 0;
-        this.bowFound = false;
-        this.itemDiscoveryChance = 0.15; // 15% chance to find item instead of enemies
-        this.forcedEncounters = [];
+        this.itemDiscoveryChance = 0.15;
+        this.encounterResolver = new EncounterResolver();
     }
 
     public onPlayerMove(): void {
@@ -31,7 +30,7 @@ export default class EncounterSystem {
     }
 
     public checkEncounter(isPreviouslyDiscovered: boolean = false): boolean {
-        if (this.forcedEncounters.length > 0) {
+        if (this.getForcedEncounterQueue().length > 0) {
             this.stepsSinceEncounter = 0;
             return true;
         }
@@ -40,8 +39,7 @@ export default class EncounterSystem {
             ? balanceConfig.encounters.discoveredEncounterRate
             : this.encounterRate;
 
-        const roll = Math.random();
-        if (roll < encounterRate) {
+        if (Math.random() < encounterRate) {
             this.stepsSinceEncounter = 0;
             return true;
         }
@@ -50,132 +48,23 @@ export default class EncounterSystem {
     }
 
     public generateEncounter(): EncounterResult {
-        // Check if we should discover an item.
-        // Bow is unique, while healing potions can be found repeatedly.
-        if (Math.random() < this.itemDiscoveryChance) {
-            const discoverableItems: Item[] = [new Item(HEALING_POTION_ITEM)];
-
-            if (!this.bowFound) {
-                discoverableItems.push(new Item(BOW_ITEM));
-            }
-
-            const discoveredItem = discoverableItems[randomInt(0, discoverableItems.length - 1)];
-
-            if (discoveredItem.id === 'bow') {
-                this.bowFound = true;
-            }
-
-            return { type: 'item', item: discoveredItem };
-
-        }
-        
-        if (this.forcedEncounters.length > 0) {
-            const forcedType = this.forcedEncounters.shift();
-            if (forcedType) {
-                return this.createForcedEncounter(forcedType);
-            }
-        }
-
-        const eventType = this.rollEncounterEventType();
-
-        if (eventType === 'village') {
-            return { type: 'village' };
-        }
-
-        if (eventType === 'item' && !this.bowFound) {
-            this.bowFound = true;
-            const bow = new Item(BOW_ITEM);
-            return { type: 'item', item: bow };
-        }
-
-        const encounterType = this.rollEncounterType();
-
-        if (encounterType === 'dragon') {
-            const dragon = new Skeleton(0, 0, balanceConfig.enemies.dragon);
-            if (dragon.shouldPassEncounter()) {
-                return { type: 'none' };
-            }
-
-            return { type: 'battle', enemies: [dragon] };
-        }
-
-        const enemies = this.createEnemiesForEncounter(encounterType);
-        return { type: 'battle', enemies };
+        return this.encounterResolver.generateEncounter(this.itemDiscoveryChance, {
+            rollEncounterEventType: () => this.rollEncounterEventType(),
+            rollEncounterType: () => this.rollEncounterType(),
+        });
     }
-
-    private createEnemiesForEncounter(encounterType: string): Skeleton[] {
-        const enemies: Skeleton[] = [];
-
-        if (encounterType === 'skeleton') {
-            const count = randomInt(
-                balanceConfig.encounters.minEnemies,
-                balanceConfig.encounters.maxEnemies
-            );
-
-            for (let i = 0; i < count; i++) {
-                enemies.push(new Skeleton(0, 0, balanceConfig.enemies.skeleton));
-            }
-
-            return enemies;
-        }
-
-        if (encounterType === 'zombie') {
-            const count = randomInt(
-                balanceConfig.encounters.zombieMinGroup,
-                balanceConfig.encounters.zombieMaxGroup
-            );
-
-            for (let i = 0; i < count; i++) {
-                enemies.push(new Skeleton(0, 0, balanceConfig.enemies.zombie));
-            }
-
-            return enemies;
-        }
-
-        const configMap: Record<string, EnemyConfig> = {
-            ninja: balanceConfig.enemies.ninja,
-            darkKnight: balanceConfig.enemies.darkKnight,
-        };
-
-        const config = configMap[encounterType] ?? balanceConfig.enemies.skeleton;
-        enemies.push(new Skeleton(0, 0, config));
-        return enemies;
-    }
-
 
     public queueForcedEncounter(type: ForcedEncounterType): void {
-        this.forcedEncounters.push(type);
+        this.encounterResolver.queueForcedEncounter(type);
     }
 
     public clearForcedEncounters(): void {
-        this.forcedEncounters = [];
+        this.encounterResolver.clearForcedEncounters();
     }
 
     public getForcedEncounterQueue(): ForcedEncounterType[] {
-        return [...this.forcedEncounters];
+        return this.encounterResolver.getForcedEncounterQueue();
     }
-
-    private createForcedEncounter(type: ForcedEncounterType): EncounterResult {
-        if (type === 'none') {
-            return { type: 'none' };
-        }
-
-        if (type === 'item') {
-            this.bowFound = true;
-            return { type: 'item', item: new Item(BOW_ITEM) };
-        }
-
-        if (type === 'village') {
-            return { type: 'village' };
-        }
-
-        if (type === 'dragon') {
-            return { type: 'battle', enemies: [new Skeleton(0, 0, balanceConfig.enemies.dragon)] };
-        }
-
-        return { type: 'battle', enemies: this.createEnemiesForEncounter(type) };
-    }
-
 
     private rollEncounterEventType(): 'monster' | 'item' | 'village' {
         const configured = Array.isArray(balanceConfig.encounters.eventTypeWeights)
