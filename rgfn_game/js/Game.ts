@@ -7,10 +7,11 @@ import BattleMap from './systems/BattleMap.js';
 import TurnManager from './systems/TurnManager.js';
 import EncounterSystem, { ForcedEncounterType } from './systems/EncounterSystem.js';
 import VillagePopulation, { VillageSpot, VillageVillager } from './systems/VillagePopulation.js';
+import VillageActionsController from './systems/VillageActionsController.js';
+import DeveloperEventController from './systems/DeveloperEventController.js';
 import Player from './entities/Player.js';
 import Skeleton from './entities/Skeleton.js';
-import Item, { HEALING_POTION_ITEM } from './entities/Item.js';
-import { BOW_ITEM } from './entities/Item.js';
+import Item from './entities/Item.js';
 import timingConfig from './config/timingConfig.js';
 import { balanceConfig } from './config/balanceConfig.js';
 import { Direction } from './types/game.js';
@@ -25,10 +26,6 @@ const MODES = {
     VILLAGE: 'VILLAGE',
 };
 
-const VILLAGE_BOW_BUY_PRICE = 15;
-const VILLAGE_BOW_SELL_PRICE = 8;
-const VILLAGE_HEALING_POTION_BUY_PRICE = 4;
-const VILLAGE_HEALING_POTION_SELL_PRICE = 2;
 
 type VillageHouse = {
     x: number;
@@ -65,6 +62,8 @@ export default class Game {
     private villageSpots: VillageSpot[];
     private villagePopulation: VillagePopulation;
     private currentVillageName: string;
+    private villageActionsController: VillageActionsController | null;
+    private developerEventController: DeveloperEventController | null;
 
     constructor(canvas: HTMLCanvasElement) {
         this.canvas = canvas;
@@ -112,6 +111,8 @@ export default class Game {
         this.villageSpots = [];
         this.villagePopulation = new VillagePopulation();
         this.currentVillageName = '';
+        this.villageActionsController = null;
+        this.developerEventController = null;
         this.setupUI();
 
         // Initialize systems
@@ -195,6 +196,16 @@ export default class Game {
             clearBtn: document.getElementById('dev-event-clear-btn')! as HTMLButtonElement,
         };
 
+        this.villageActionsController = new VillageActionsController(this.player, this.villageUI, {
+            onUpdateHUD: () => this.updateHUD(),
+            onLeaveVillage: () => this.stateMachine.transition(MODES.WORLD_MAP),
+        });
+
+        this.developerEventController = new DeveloperEventController(this.developerUI, this.encounterSystem, {
+            addVillageLog: (message: string, type: string = 'system') => this.villageActionsController!.addLog(message, type),
+            getEventLabel: (type: ForcedEncounterType) => this.getDeveloperEventLabel(type),
+        });
+
         // Battle button events
         this.battleUI.attackBtn.addEventListener('click', () => this.handleAttack());
         this.battleUI.fleeBtn.addEventListener('click', () => this.handleFlee());
@@ -203,21 +214,21 @@ export default class Game {
 
         this.hudElements.usePotionBtn.addEventListener('click', () => this.handleUsePotion(false));
 
-        this.villageUI.enterBtn.addEventListener('click', () => this.handleVillageEnter());
-        this.villageUI.skipBtn.addEventListener('click', () => this.handleVillageSkip());
-        this.villageUI.waitBtn.addEventListener('click', () => this.handleVillageWait());
-        this.villageUI.buyBtn.addEventListener('click', () => this.handleVillageBuy());
-        this.villageUI.sellBtn.addEventListener('click', () => this.handleVillageSell());
-        this.villageUI.buyPotionBtn.addEventListener('click', () => this.handleVillageBuyPotion());
-        this.villageUI.sellPotionBtn.addEventListener('click', () => this.handleVillageSellPotion());
-        this.villageUI.leaveBtn.addEventListener('click', () => this.handleVillageLeave());
+        this.villageUI.enterBtn.addEventListener('click', () => this.villageActionsController!.handleEnter(this.currentVillageName));
+        this.villageUI.skipBtn.addEventListener('click', () => this.villageActionsController!.handleSkip());
+        this.villageUI.waitBtn.addEventListener('click', () => this.villageActionsController!.handleWait());
+        this.villageUI.buyBtn.addEventListener('click', () => this.villageActionsController!.handleBuyBow());
+        this.villageUI.sellBtn.addEventListener('click', () => this.villageActionsController!.handleSellBow());
+        this.villageUI.buyPotionBtn.addEventListener('click', () => this.villageActionsController!.handleBuyPotion());
+        this.villageUI.sellPotionBtn.addEventListener('click', () => this.villageActionsController!.handleSellPotion());
+        this.villageUI.leaveBtn.addEventListener('click', () => this.villageActionsController!.handleLeave());
 
-        this.developerUI.addBtn.addEventListener('click', () => this.handleDeveloperQueueAdd());
-        this.developerUI.clearBtn.addEventListener('click', () => this.handleDeveloperQueueClear());
-        this.developerUI.closeBtn.addEventListener('click', () => this.toggleDeveloperModal(false));
+        this.developerUI.addBtn.addEventListener('click', () => this.developerEventController!.handleQueueAdd());
+        this.developerUI.clearBtn.addEventListener('click', () => this.developerEventController!.handleQueueClear());
+        this.developerUI.closeBtn.addEventListener('click', () => this.developerEventController!.toggleModal(false));
         this.developerUI.modal.addEventListener('click', (event: MouseEvent) => {
             if (event.target === this.developerUI.modal) {
-                this.toggleDeveloperModal(false);
+                this.developerEventController!.toggleModal(false);
             }
         });
 
@@ -241,7 +252,7 @@ export default class Game {
         document.addEventListener('keyup', (e: KeyboardEvent) => this.input.handleKeyUp(e));
 
         registerBackquoteToggle((): void => {
-            this.toggleDeveloperModal();
+            this.developerEventController!.toggleModal();
         }, { target: document });
     }
 
@@ -816,175 +827,16 @@ export default class Game {
     private enterVillageMode(): void {
         this.hudElements.modeIndicator.textContent = 'Village';
         this.battleUI.sidebar.classList.add('hidden');
-        this.villageUI.sidebar.classList.remove('hidden');
-        this.villageUI.prompt.classList.remove('hidden');
-        this.villageUI.actions.classList.add('hidden');
-        this.villageUI.log.innerHTML = '';
         this.initializeVillageScene();
-        this.addVillageLog(`You discover ${this.currentVillageName}. Enter it?`, 'system');
-        this.updateVillageButtons();
+        this.villageActionsController!.enterVillage(this.currentVillageName);
     }
 
     private exitVillageMode(): void {
-        this.villageUI.sidebar.classList.add('hidden');
-    }
-
-    private handleVillageEnter(): void {
-        this.villageUI.prompt.classList.add('hidden');
-        this.villageUI.actions.classList.remove('hidden');
-        this.addVillageLog(`You enter ${this.currentVillageName} market square.`, 'system');
-        this.updateVillageButtons();
-    }
-
-    private handleVillageSkip(): void {
-        this.addVillageLog('You decide not to enter and continue your journey.', 'system');
-        this.stateMachine.transition(MODES.WORLD_MAP);
-    }
-
-    private handleVillageWait(): void {
-        this.player.heal(1);
-        this.addVillageLog('You wait at the inn and recover 1 HP.', 'player');
-        this.updateHUD();
-    }
-
-    private handleVillageBuy(): void {
-        if (this.player.equippedWeapon?.name === 'Bow') {
-            this.addVillageLog('You already have a bow equipped.', 'system');
-            return;
-        }
-
-        if (this.player.gold < VILLAGE_BOW_BUY_PRICE) {
-            this.addVillageLog(`Not enough gold. Bow costs ${VILLAGE_BOW_BUY_PRICE}.`, 'system');
-            return;
-        }
-
-        const bow = new Item(BOW_ITEM);
-        const addedToInventory = this.player.addItemToInventory(bow);
-
-        if (!addedToInventory) {
-            this.addVillageLog('Inventory full. You cannot buy the bow.', 'system');
-            return;
-        }
-
-        this.player.gold -= VILLAGE_BOW_BUY_PRICE;
-        this.addVillageLog(`You bought a Bow for ${VILLAGE_BOW_BUY_PRICE} gold.`, 'player');
-        this.updateHUD();
-        this.updateVillageButtons();
-    }
-
-    private handleVillageSell(): void {
-        const weapon = this.player.equippedWeapon;
-        if (!weapon || weapon.name !== 'Bow') {
-            this.addVillageLog('You have no bow to sell.', 'system');
-            return;
-        }
-
-        this.player.unequipWeapon();
-        this.player.gold += VILLAGE_BOW_SELL_PRICE;
-        this.addVillageLog(`You sold your Bow for ${VILLAGE_BOW_SELL_PRICE} gold.`, 'player');
-        this.updateHUD();
-        this.updateVillageButtons();
-    }
-
-
-    private handleVillageBuyPotion(): void {
-        if (this.player.gold < VILLAGE_HEALING_POTION_BUY_PRICE) {
-            this.addVillageLog(`Not enough gold. Healing Potion costs ${VILLAGE_HEALING_POTION_BUY_PRICE}.`, 'system');
-            return;
-        }
-
-        const wasAdded = this.player.addItemToInventory(new Item(HEALING_POTION_ITEM));
-        if (!wasAdded) {
-            this.addVillageLog('Your inventory is full. Cannot buy a Healing Potion.', 'system');
-            return;
-        }
-
-        this.player.gold -= VILLAGE_HEALING_POTION_BUY_PRICE;
-        this.addVillageLog(`You bought a Healing Potion for ${VILLAGE_HEALING_POTION_BUY_PRICE} gold.`, 'player');
-        this.updateHUD();
-        this.updateVillageButtons();
-    }
-
-    private handleVillageSellPotion(): void {
-        const soldPotion = this.player.removeHealingPotionFromInventory();
-        if (!soldPotion) {
-            this.addVillageLog('You have no Healing Potion to sell.', 'system');
-            return;
-        }
-
-        this.player.gold += VILLAGE_HEALING_POTION_SELL_PRICE;
-        this.addVillageLog(`You sold a Healing Potion for ${VILLAGE_HEALING_POTION_SELL_PRICE} gold.`, 'player');
-        this.updateHUD();
-        this.updateVillageButtons();
-    }
-
-    private handleVillageLeave(): void {
-        this.addVillageLog('You leave the village.', 'system');
-        this.stateMachine.transition(MODES.WORLD_MAP);
-    }
-
-    private updateVillageButtons(): void {
-        const hasBowEquipped = this.player.equippedWeapon?.name === 'Bow';
-        const canAffordBow = this.player.gold >= VILLAGE_BOW_BUY_PRICE;
-        const potionCount = this.player.getHealingPotionCount();
-
-        this.villageUI.buyBtn.disabled = hasBowEquipped || !canAffordBow;
-        this.villageUI.sellBtn.disabled = !hasBowEquipped;
-        this.villageUI.buyPotionBtn.disabled = this.player.gold < VILLAGE_HEALING_POTION_BUY_PRICE;
-        this.villageUI.sellPotionBtn.disabled = potionCount === 0;
-    }
-
-    private addVillageLog(message: string, type: string = 'system'): void {
-        const line = document.createElement('div');
-        line.textContent = message;
-        line.classList.add(type + '-action');
-        this.villageUI.log.appendChild(line);
-        this.villageUI.log.scrollTop = this.villageUI.log.scrollHeight;
-    }
-
-
-    private toggleDeveloperModal(forceVisible?: boolean): void {
-        const shouldShow = typeof forceVisible === 'boolean'
-            ? forceVisible
-            : this.developerUI.modal.classList.contains('hidden');
-
-        this.developerUI.modal.classList.toggle('hidden', !shouldShow);
-        if (shouldShow) {
-            this.renderDeveloperQueue();
-        }
-    }
-
-    private handleDeveloperQueueAdd(): void {
-        const type = this.developerUI.eventType.value as ForcedEncounterType;
-        this.encounterSystem.queueForcedEncounter(type);
-        this.renderDeveloperQueue();
-        this.addVillageLog(`[DEV] Queued event: ${this.getDeveloperEventLabel(type)}`, 'system');
-    }
-
-    private handleDeveloperQueueClear(): void {
-        this.encounterSystem.clearForcedEncounters();
-        this.renderDeveloperQueue();
-    }
-
-    private renderDeveloperQueue(): void {
-        const queue = this.encounterSystem.getForcedEncounterQueue();
-        this.developerUI.queueList.innerHTML = '';
-
-        if (queue.length === 0) {
-            const item = document.createElement('li');
-            item.textContent = 'No queued events.';
-            this.developerUI.queueList.appendChild(item);
-            return;
-        }
-
-        queue.forEach((entry, index) => {
-            const item = document.createElement('li');
-            item.textContent = `${index + 1}. ${this.getDeveloperEventLabel(entry)}`;
-            this.developerUI.queueList.appendChild(item);
-        });
+        this.villageActionsController!.exitVillage();
     }
 
     private getOutlineColor(): string {
+
         return '#1d1b22';
     }
 
