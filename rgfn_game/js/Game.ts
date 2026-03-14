@@ -6,9 +6,11 @@ import WorldMap from './systems/WorldMap.js';
 import BattleMap from './systems/BattleMap.js';
 import TurnManager from './systems/TurnManager.js';
 import EncounterSystem, { ForcedEncounterType } from './systems/EncounterSystem.js';
-import VillagePopulation, { VillageSpot, VillageVillager } from './systems/VillagePopulation.js';
+import VillagePopulation from './systems/VillagePopulation.js';
 import VillageActionsController from './systems/VillageActionsController.js';
 import DeveloperEventController from './systems/DeveloperEventController.js';
+import VillageEnvironmentRenderer from './systems/VillageEnvironmentRenderer.js';
+import VillageLifeRenderer from './systems/VillageLifeRenderer.js';
 import Player from './entities/Player.js';
 import Skeleton from './entities/Skeleton.js';
 import Item from './entities/Item.js';
@@ -27,16 +29,6 @@ const MODES = {
 };
 
 
-type VillageHouse = {
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-    roofColor: string;
-    doorOpenAmount: number;
-    doorTargetOpenAmount: number;
-    doorStateUntil: number;
-};
 
 export default class Game {
     private canvas: HTMLCanvasElement;
@@ -58,10 +50,9 @@ export default class Game {
     private battleSplash: BattleSplash;
     private itemDiscoverySplash: ItemDiscoverySplash;
     private developerUI;
-    private villageHouses: VillageHouse[];
-    private villageSpots: VillageSpot[];
     private villagePopulation: VillagePopulation;
-    private currentVillageName: string;
+    private villageEnvironmentRenderer: VillageEnvironmentRenderer;
+    private villageLifeRenderer: VillageLifeRenderer;
     private villageActionsController: VillageActionsController | null;
     private developerEventController: DeveloperEventController | null;
 
@@ -107,10 +98,9 @@ export default class Game {
         this.battleUI = {};
         this.villageUI = {};
         this.developerUI = {};
-        this.villageHouses = [];
-        this.villageSpots = [];
         this.villagePopulation = new VillagePopulation();
-        this.currentVillageName = '';
+        this.villageEnvironmentRenderer = new VillageEnvironmentRenderer();
+        this.villageLifeRenderer = new VillageLifeRenderer(this.villagePopulation);
         this.villageActionsController = null;
         this.developerEventController = null;
         this.setupUI();
@@ -214,7 +204,7 @@ export default class Game {
 
         this.hudElements.usePotionBtn.addEventListener('click', () => this.handleUsePotion(false));
 
-        this.villageUI.enterBtn.addEventListener('click', () => this.villageActionsController!.handleEnter(this.currentVillageName));
+        this.villageUI.enterBtn.addEventListener('click', () => this.villageActionsController!.handleEnter(this.villageLifeRenderer.getVillageName()));
         this.villageUI.skipBtn.addEventListener('click', () => this.villageActionsController!.handleSkip());
         this.villageUI.waitBtn.addEventListener('click', () => this.villageActionsController!.handleWait());
         this.villageUI.buyBtn.addEventListener('click', () => this.villageActionsController!.handleBuyBow());
@@ -377,449 +367,13 @@ export default class Game {
         const height = this.canvas.height;
         const time = performance.now() * 0.001;
 
-        const skyGradient = ctx.createLinearGradient(0, 0, 0, height);
-        skyGradient.addColorStop(0, this.mixColors(theme.worldMap.terrain.water, theme.worldMap.background, 0.28));
-        skyGradient.addColorStop(0.58, this.mixColors(theme.worldMap.terrain.water, theme.ui.panelHighlight, 0.55));
-        skyGradient.addColorStop(0.59, this.mixColors(theme.worldMap.terrain.grass, theme.ui.panelHighlight, 0.35));
-        skyGradient.addColorStop(1, this.mixColors(theme.worldMap.terrain.forest, theme.worldMap.terrain.grass, 0.45));
-        ctx.fillStyle = skyGradient;
-        ctx.fillRect(0, 0, width, height);
+        this.villageEnvironmentRenderer.render(ctx, width, height, time);
+        this.villageLifeRenderer.update(time);
+        this.villageLifeRenderer.render(ctx, time);
 
-        const sunPulse = 10 + Math.sin(time * 1.8) * 2;
-        ctx.fillStyle = theme.ui.panelHighlight;
-        ctx.beginPath();
-        ctx.arc(width * 0.84, height * 0.2, 42 + sunPulse, 0, Math.PI * 2);
-        ctx.fill();
-
-        const cloudOffset = (time * 22) % (width + 260);
-        this.drawVillageCloud(width - cloudOffset, 95, 1.1);
-        this.drawVillageCloud(width - cloudOffset * 0.7 - 220, 150, 0.85);
-        this.drawVillageCloud(width - cloudOffset * 1.2 + 120, 72, 0.7);
-
-        ctx.fillStyle = this.mixColors(theme.worldMap.terrain.forest, theme.worldMap.terrain.grass, 0.35);
-        ctx.beginPath();
-        ctx.moveTo(0, height * 0.6);
-        ctx.quadraticCurveTo(width * 0.22, height * 0.5, width * 0.44, height * 0.62);
-        ctx.quadraticCurveTo(width * 0.7, height * 0.72, width, height * 0.58);
-        ctx.lineTo(width, height);
-        ctx.lineTo(0, height);
-        ctx.closePath();
-        ctx.fill();
-
-        if (this.villageHouses.length === 0) {
-            this.initializeVillageScene();
-        }
-
-        this.drawVillageField(width * 0.08, height * 0.71, width * 0.33, height * 0.18, time);
-        this.drawVillageBuildSite(width * 0.72, height * 0.74, width * 0.17, height * 0.14);
-        this.drawVillageWell(width * 0.51, height * 0.71, width * 0.08, height * 0.1, time);
-
-        this.updateVillageHouseDoors(time);
-        this.villageHouses.forEach((house) => {
-            this.drawVillageHouse(house);
-        });
-
-        ctx.strokeStyle = this.mixColors(theme.ui.panelHighlight, theme.ui.secondaryBg, 0.45);
-        ctx.lineWidth = 24;
-        ctx.beginPath();
-        ctx.moveTo(0, height * 0.85);
-        ctx.quadraticCurveTo(width * 0.4, height * 0.75, width * 0.8, height * 0.88);
-        ctx.lineTo(width, height * 0.92);
-        ctx.stroke();
-
-        this.villagePopulation.update(time, (spotIndex, now) => this.triggerHouseDoorBySpot(spotIndex, now));
-        this.villagePopulation.getVillagers().forEach((villager) => this.drawVillageVillager(villager, time));
-
-        ctx.fillStyle = this.withOpacity(theme.ui.primaryAccent, 0.62);
+        ctx.fillStyle = theme.ui.primaryAccent;
         ctx.font = 'bold 34px Georgia, serif';
-        ctx.fillText(this.currentVillageName, 24, 56);
-    }
-
-    private initializeVillageScene(): void {
-        const width = this.canvas.width;
-        const height = this.canvas.height;
-        const roofVariants = [
-            theme.ui.secondaryAccent,
-            this.mixColors(theme.ui.secondaryAccent, theme.ui.primaryAccent, 0.2),
-            this.mixColors(theme.ui.secondaryAccent, theme.worldMap.terrain.desert, 0.28),
-            this.mixColors(theme.ui.secondaryAccent, theme.worldMap.terrain.forest, 0.3),
-            this.mixColors(theme.ui.secondaryAccent, theme.worldMap.terrain.mountain, 0.2),
-        ];
-
-        this.currentVillageName = this.generateVillageName();
-
-        this.villageHouses = [
-            this.createVillageHouse(width * 0.1, height * 0.61, 104, 68, roofVariants[0]),
-            this.createVillageHouse(width * 0.26, height * 0.58, 116, 74, roofVariants[1]),
-            this.createVillageHouse(width * 0.45, height * 0.57, 108, 70, roofVariants[2]),
-            this.createVillageHouse(width * 0.64, height * 0.56, 124, 78, roofVariants[3]),
-            this.createVillageHouse(width * 0.82, height * 0.61, 96, 64, roofVariants[4]),
-        ];
-
-        this.villageSpots = [
-            { x: width * 0.13, y: height * 0.8, houseIndex: 0 },
-            { x: width * 0.23, y: height * 0.84 },
-            { x: width * 0.33, y: height * 0.8, houseIndex: 1 },
-            { x: width * 0.43, y: height * 0.84 },
-            { x: width * 0.55, y: height * 0.8, houseIndex: 2 },
-            { x: width * 0.67, y: height * 0.84 },
-            { x: width * 0.79, y: height * 0.81, houseIndex: 3 },
-            { x: width * 0.57, y: height * 0.7 },
-            { x: width * 0.78, y: height * 0.7, houseIndex: 4 },
-            { x: width * 0.31, y: height * 0.7 },
-        ];
-
-        this.villagePopulation.initialize(this.villageSpots, performance.now() * 0.001);
-    }
-
-    private createVillageHouse(x: number, y: number, width: number, height: number, roofColor: string): VillageHouse {
-        return {
-            x,
-            y,
-            width,
-            height,
-            roofColor,
-            doorOpenAmount: 0,
-            doorTargetOpenAmount: 0,
-            doorStateUntil: 0,
-        };
-    }
-
-    private drawVillageField(x: number, y: number, width: number, height: number, time: number): void {
-        const ctx = this.renderer.ctx;
-        const outlineColor = this.getOutlineColor();
-
-        ctx.fillStyle = this.mixColors(theme.worldMap.terrain.grass, theme.worldMap.terrain.forest, 0.55);
-        ctx.fillRect(x, y, width, height);
-        ctx.strokeStyle = outlineColor;
-        ctx.lineWidth = 2;
-        ctx.strokeRect(x, y, width, height);
-
-        const rows = 5;
-        const cols = 10;
-        for (let row = 0; row < rows; row += 1) {
-            for (let col = 0; col < cols; col += 1) {
-                const px = x + 12 + col * ((width - 24) / (cols - 1));
-                const py = y + 14 + row * ((height - 24) / (rows - 1));
-                const sway = Math.sin(time * 0.9 + col * 0.5 + row * 0.7) * 2.2;
-
-                ctx.strokeStyle = this.mixColors(theme.worldMap.terrain.grass, theme.ui.panelHighlight, 0.25);
-                ctx.lineWidth = 1.5;
-                ctx.beginPath();
-                ctx.moveTo(px, py + 6);
-                ctx.lineTo(px - 2 + sway, py - 2);
-                ctx.stroke();
-
-                ctx.strokeStyle = this.withOpacity(outlineColor, 0.55);
-                ctx.beginPath();
-                ctx.moveTo(px, py + 6);
-                ctx.lineTo(px + 2 + sway * 0.6, py - 1);
-                ctx.stroke();
-            }
-        }
-    }
-
-    private drawVillageWell(x: number, y: number, width: number, height: number, time: number): void {
-        const ctx = this.renderer.ctx;
-        const outlineColor = this.getOutlineColor();
-        ctx.fillStyle = this.mixColors(theme.ui.panelHighlight, theme.ui.secondaryBg, 0.4);
-        ctx.fillRect(x, y + height * 0.25, width, height * 0.75);
-
-        ctx.strokeStyle = outlineColor;
-        ctx.lineWidth = 2.5;
-        ctx.strokeRect(x, y + height * 0.25, width, height * 0.75);
-
-        ctx.beginPath();
-        ctx.moveTo(x + width * 0.2, y + height * 0.25);
-        ctx.lineTo(x + width * 0.2, y - height * 0.48);
-        ctx.moveTo(x + width * 0.8, y + height * 0.25);
-        ctx.lineTo(x + width * 0.8, y - height * 0.48);
-        ctx.moveTo(x + width * 0.2, y - height * 0.48);
-        ctx.lineTo(x + width * 0.8, y - height * 0.48);
-        ctx.strokeStyle = outlineColor;
-        ctx.stroke();
-
-        const bucketOffset = Math.sin(time * 1.4) * (height * 0.1);
-        ctx.fillStyle = this.mixColors(theme.worldMap.terrain.water, theme.ui.panelHighlight, 0.4);
-        ctx.fillRect(x + width * 0.4, y - height * 0.22 + bucketOffset, width * 0.22, height * 0.18);
-    }
-
-    private drawVillageBuildSite(x: number, y: number, width: number, height: number): void {
-        const ctx = this.renderer.ctx;
-        const outlineColor = this.getOutlineColor();
-        ctx.fillStyle = this.mixColors(theme.worldMap.terrain.desert, theme.worldMap.terrain.mountain, 0.3);
-        ctx.fillRect(x, y, width, height);
-        ctx.strokeStyle = outlineColor;
-        ctx.lineWidth = 2;
-        ctx.strokeRect(x, y, width, height);
-
-        ctx.fillStyle = this.mixColors(theme.ui.secondaryAccent, theme.worldMap.terrain.forest, 0.2);
-        const planks = [
-            [x + width * 0.08, y + height * 0.25, width * 0.62, height * 0.08],
-            [x + width * 0.12, y + height * 0.42, width * 0.68, height * 0.08],
-            [x + width * 0.2, y + height * 0.6, width * 0.56, height * 0.08],
-        ];
-
-        planks.forEach(([px, py, pw, ph]) => {
-            ctx.fillRect(px, py, pw, ph);
-            ctx.strokeRect(px, py, pw, ph);
-        });
-    }
-
-    private drawVillageCloud(x: number, y: number, scale: number): void {
-        const ctx = this.renderer.ctx;
-
-        ctx.save();
-        ctx.translate(x, y);
-        ctx.scale(scale, scale);
-        const outlineColor = this.getOutlineColor();
-        ctx.fillStyle = this.withOpacity(theme.ui.panelHighlight, 0.9);
-        ctx.beginPath();
-        ctx.arc(0, 0, 24, 0, Math.PI * 2);
-        ctx.arc(28, -8, 30, 0, Math.PI * 2);
-        ctx.arc(62, 0, 24, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.strokeStyle = this.withOpacity(outlineColor, 0.6);
-        ctx.lineWidth = 2;
-        ctx.stroke();
-        ctx.restore();
-    }
-
-    private updateVillageHouseDoors(now: number): void {
-        this.villageHouses.forEach((house) => {
-            const shouldBeOpen = now < house.doorStateUntil;
-            house.doorTargetOpenAmount = shouldBeOpen ? 1 : 0;
-            const speed = shouldBeOpen ? 0.17 : 0.1;
-            house.doorOpenAmount += (house.doorTargetOpenAmount - house.doorOpenAmount) * speed;
-            house.doorOpenAmount = Math.max(0, Math.min(1, house.doorOpenAmount));
-        });
-    }
-
-    private triggerHouseDoorBySpot(spotIndex: number, now: number): void {
-        const spot = this.villageSpots[spotIndex];
-        if (!spot || typeof spot.houseIndex !== 'number') {
-            return;
-        }
-
-        const house = this.villageHouses[spot.houseIndex];
-        if (!house) {
-            return;
-        }
-
-        house.doorStateUntil = Math.max(house.doorStateUntil, now + 2.2);
-    }
-
-    private drawVillageHouse(house: VillageHouse): void {
-        const ctx = this.renderer.ctx;
-        const { x, y, width, height, roofColor, doorOpenAmount } = house;
-        const roofHeight = height * 0.44;
-        const isoDepth = width * 0.16;
-        const outlineColor = this.getOutlineColor();
-        const woodFront = '#7b5736';
-        const woodSide = '#634629';
-        const doorColor = '#6f4a2e';
-
-        ctx.fillStyle = woodFront;
-        ctx.beginPath();
-        ctx.moveTo(x, y);
-        ctx.lineTo(x + width, y);
-        ctx.lineTo(x + width, y + height);
-        ctx.lineTo(x, y + height);
-        ctx.closePath();
-        ctx.fill();
-        ctx.strokeStyle = outlineColor;
-        ctx.lineWidth = 2;
-        ctx.stroke();
-
-        ctx.fillStyle = woodSide;
-        ctx.beginPath();
-        ctx.moveTo(x + width, y);
-        ctx.lineTo(x + width + isoDepth, y - isoDepth * 0.35);
-        ctx.lineTo(x + width + isoDepth, y + height - isoDepth * 0.35);
-        ctx.lineTo(x + width, y + height);
-        ctx.closePath();
-        ctx.fill();
-        ctx.stroke();
-
-        ctx.fillStyle = roofColor;
-        ctx.beginPath();
-        ctx.moveTo(x - 10, y);
-        ctx.lineTo(x + width * 0.48, y - roofHeight);
-        ctx.lineTo(x + width + 10, y);
-        ctx.lineTo(x + width + isoDepth, y - isoDepth * 0.35);
-        ctx.lineTo(x + width * 0.48 + isoDepth, y - roofHeight - isoDepth * 0.35);
-        ctx.lineTo(x - 10 + isoDepth, y - isoDepth * 0.35);
-        ctx.closePath();
-        ctx.fill();
-        ctx.stroke();
-
-        const doorX = x + width * 0.4;
-        const doorY = y + height * 0.46;
-        const doorWidth = width * 0.2;
-        const doorHeight = height * 0.54;
-        const doorSwingRadians = (Math.PI / 2) * doorOpenAmount;
-        const openEdgeX = doorX + Math.cos(doorSwingRadians) * doorWidth;
-        const openEdgeY = doorY - Math.sin(doorSwingRadians) * doorWidth * 0.34;
-
-        // doorway frame (house opening)
-        ctx.fillStyle = '#4f3520';
-        ctx.fillRect(doorX, doorY, doorWidth, doorHeight);
-        ctx.strokeRect(doorX, doorY, doorWidth, doorHeight);
-
-        // actual door quad rotating on left hinge
-        ctx.fillStyle = doorColor;
-        ctx.beginPath();
-        ctx.moveTo(doorX, doorY);
-        ctx.lineTo(openEdgeX, openEdgeY);
-        ctx.lineTo(openEdgeX, openEdgeY + doorHeight);
-        ctx.lineTo(doorX, doorY + doorHeight);
-        ctx.closePath();
-        ctx.fill();
-        ctx.stroke();
-
-        const knobX = doorX + (openEdgeX - doorX) * 0.84;
-        const knobY = doorY + doorHeight * 0.54 + (openEdgeY - doorY) * 0.2;
-        ctx.fillStyle = '#d7b579';
-        ctx.beginPath();
-        ctx.arc(knobX, knobY, 2, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.stroke();
-
-        const windowColor = this.withOpacity(theme.worldMap.terrain.water, 0.55);
-        const windows = [
-            [x + width * 0.12, y + height * 0.32, width * 0.15, height * 0.2],
-            [x + width * 0.7, y + height * 0.32, width * 0.15, height * 0.2],
-        ];
-        ctx.fillStyle = windowColor;
-        windows.forEach(([wx, wy, ww, wh]) => {
-            ctx.fillRect(wx, wy, ww, wh);
-            ctx.strokeRect(wx, wy, ww, wh);
-        });
-    }
-
-    private drawVillageVillager(villager: VillageVillager, time: number): void {
-        const walkSpeed = villager.isWalking ? 4.4 : 1.2;
-        const stepAmplitude = villager.isWalking ? 4.2 : 0.9;
-        const stepOffset = Math.sin(time * walkSpeed + villager.propSwingOffset) * stepAmplitude;
-        const armOffset = Math.sin(time * walkSpeed + villager.armSwingOffset + Math.PI * 0.5) * stepAmplitude;
-        this.drawVillager(villager.x, villager.y, villager.shirtColor, stepOffset, villager, armOffset);
-    }
-
-    private drawVillager(x: number, y: number, shirtColor: string, stepOffset: number, villager?: VillageVillager, armOffset: number = 0): void {
-        const ctx = this.renderer.ctx;
-        const size = villager?.size ?? 1;
-        ctx.save();
-        ctx.translate(x, y);
-        ctx.scale(size, size);
-
-        const outlineColor = this.getOutlineColor();
-
-        ctx.fillStyle = this.withOpacity(theme.ui.primaryAccent, 0.22);
-        ctx.beginPath();
-        ctx.ellipse(0, 16, 14, 5, 0, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.strokeStyle = this.withOpacity(outlineColor, 0.5);
-        ctx.lineWidth = 1;
-        ctx.stroke();
-
-        ctx.fillStyle = villager?.skinColor ?? this.mixColors(theme.ui.panelHighlight, theme.ui.secondaryBg, 0.2);
-        ctx.beginPath();
-        ctx.arc(0, -20, 10, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.strokeStyle = outlineColor;
-        ctx.stroke();
-
-        ctx.fillStyle = villager?.hairColor ?? theme.ui.primaryAccent;
-        ctx.fillRect(-9, -30, 18, 7);
-        ctx.strokeRect(-9, -30, 18, 7);
-
-        if (villager) {
-            ctx.fillStyle = villager.hatColor;
-            ctx.fillRect(-10, -37, 20, 4);
-            ctx.fillRect(-6, -43, 12, 7);
-            ctx.strokeRect(-10, -37, 20, 4);
-            ctx.strokeRect(-6, -43, 12, 7);
-        }
-
-        ctx.fillStyle = shirtColor;
-        ctx.fillRect(-9, -10, 18, 24);
-        ctx.strokeRect(-9, -10, 18, 24);
-
-        if (villager) {
-            ctx.strokeStyle = villager.skinColor;
-            ctx.lineWidth = 2.5;
-            ctx.beginPath();
-            ctx.moveTo(-9, -2);
-            ctx.lineTo(-17 + armOffset * 0.45, 12 + Math.abs(stepOffset) * 0.2);
-            ctx.moveTo(9, -2);
-            ctx.lineTo(17 - armOffset * 0.45, 12 + Math.abs(stepOffset) * 0.2);
-            ctx.stroke();
-        }
-
-        ctx.strokeStyle = theme.ui.primaryAccent;
-        ctx.lineWidth = 3.5;
-        ctx.beginPath();
-        ctx.moveTo(-5, 14);
-        ctx.lineTo(-7 + stepOffset * 0.32, 34);
-        ctx.moveTo(5, 14);
-        ctx.lineTo(7 - stepOffset * 0.32, 34);
-        ctx.stroke();
-
-        if (villager) {
-            ctx.strokeStyle = villager.pantsColor;
-            ctx.lineWidth = 2.8;
-            ctx.beginPath();
-            ctx.moveTo(-5, 14);
-            ctx.lineTo(-6 + stepOffset * 0.24, 34);
-            ctx.moveTo(5, 14);
-            ctx.lineTo(6 - stepOffset * 0.24, 34);
-            ctx.stroke();
-
-            this.drawVillagerActivityProp(villager, stepOffset, armOffset);
-        }
-
-        ctx.restore();
-    }
-
-    private drawVillagerActivityProp(villager: VillageVillager, stepOffset: number, armOffset: number): void {
-        const ctx = this.renderer.ctx;
-        const outlineColor = this.getOutlineColor();
-        ctx.fillStyle = this.mixColors(theme.ui.secondaryAccent, theme.ui.panelHighlight, 0.2);
-        ctx.strokeStyle = outlineColor;
-        ctx.lineWidth = 1.6;
-
-        switch (villager.activity) {
-            case 'drinking':
-                ctx.fillRect(8, -4, 5, 8);
-                ctx.strokeRect(8, -4, 5, 8);
-                break;
-            case 'farming':
-                ctx.beginPath();
-                ctx.moveTo(8, 2);
-                ctx.lineTo(19 + armOffset * 0.2, 12 + stepOffset * 0.2);
-                ctx.stroke();
-                break;
-            case 'building':
-                ctx.fillRect(8, -2, 10, 4);
-                ctx.strokeRect(8, -2, 10, 4);
-                break;
-            case 'carryingWater':
-                ctx.fillRect(-14, 2, 8, 8);
-                ctx.fillRect(8, 2, 8, 8);
-                ctx.strokeRect(-14, 2, 8, 8);
-                ctx.strokeRect(8, 2, 8, 8);
-                break;
-            case 'carryingLogs':
-                ctx.fillRect(-12, 0, 24, 4);
-                ctx.strokeRect(-12, 0, 24, 4);
-                break;
-            case 'chatting':
-            default:
-                ctx.beginPath();
-                ctx.arc(12, -14, 3, 0, Math.PI * 2);
-                ctx.fill();
-                break;
-        }
+        ctx.fillText(this.villageLifeRenderer.getVillageName(), 24, 56);
     }
 
     // ============ VILLAGE MODE ============
@@ -827,25 +381,12 @@ export default class Game {
     private enterVillageMode(): void {
         this.hudElements.modeIndicator.textContent = 'Village';
         this.battleUI.sidebar.classList.add('hidden');
-        this.initializeVillageScene();
-        this.villageActionsController!.enterVillage(this.currentVillageName);
+        this.villageLifeRenderer.initialize(this.canvas.width, this.canvas.height);
+        this.villageActionsController!.enterVillage(this.villageLifeRenderer.getVillageName());
     }
 
     private exitVillageMode(): void {
         this.villageActionsController!.exitVillage();
-    }
-
-    private getOutlineColor(): string {
-
-        return '#1d1b22';
-    }
-
-    private generateVillageName(): string {
-        const first = ['Oak', 'River', 'Sun', 'Stone', 'Amber', 'Willow', 'Moss', 'Silver', 'Pine', 'Moon'];
-        const second = ['ford', 'field', 'brook', 'haven', 'hill', 'cross', 'watch', 'stead', 'rest', 'meadow'];
-        const prefix = first[Math.floor(Math.random() * first.length)];
-        const suffix = second[Math.floor(Math.random() * second.length)];
-        return `${prefix}${suffix}`;
     }
 
     private getDeveloperEventLabel(type: ForcedEncounterType): string {
@@ -862,52 +403,6 @@ export default class Game {
 
         return labels[type] ?? type;
     }
-
-    private withOpacity(hex: string, alpha: number): string {
-        const normalized = hex.replace('#', '');
-        if (normalized.length !== 6) {
-            return hex;
-        }
-
-        const r = parseInt(normalized.slice(0, 2), 16);
-        const g = parseInt(normalized.slice(2, 4), 16);
-        const b = parseInt(normalized.slice(4, 6), 16);
-
-        if ([r, g, b].some((value) => Number.isNaN(value))) {
-            return hex;
-        }
-
-        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-    }
-
-    private mixColors(colorA: string, colorB: string, ratio: number): string {
-        const parse = (value: string): [number, number, number] | null => {
-            const normalized = value.replace('#', '');
-            if (normalized.length !== 6) {
-                return null;
-            }
-            const r = parseInt(normalized.slice(0, 2), 16);
-            const g = parseInt(normalized.slice(2, 4), 16);
-            const b = parseInt(normalized.slice(4, 6), 16);
-            if ([r, g, b].some((item) => Number.isNaN(item))) {
-                return null;
-            }
-            return [r, g, b];
-        };
-
-        const from = parse(colorA);
-        const to = parse(colorB);
-        if (!from || !to) {
-            return colorA;
-        }
-
-        const safeRatio = Math.max(0, Math.min(1, ratio));
-        const blend = (start: number, end: number): number => Math.round(start + (end - start) * safeRatio);
-
-        return `rgb(${blend(from[0], to[0])}, ${blend(from[1], to[1])}, ${blend(from[2], to[2])})`;
-    }
-
-    // ============ BATTLE MODE ============
 
     private enterBattleMode(enemies: Skeleton[]): void {
         this.hudElements.modeIndicator.textContent = 'Battle!';
