@@ -187,23 +187,27 @@ export default class Game {
     private updateWorldMode(deltaTime: number): void {
         // Handle movement
         if (this.input.wasActionPressed('moveUp')) {
-            if (this.worldMap.movePlayer('up')) {
-                this.onPlayerMoved();
+            const moveResult = this.worldMap.movePlayer('up');
+            if (moveResult.moved) {
+                this.onPlayerMoved(moveResult.isPreviouslyDiscovered);
             }
         }
         if (this.input.wasActionPressed('moveDown')) {
-            if (this.worldMap.movePlayer('down')) {
-                this.onPlayerMoved();
+            const moveResult = this.worldMap.movePlayer('down');
+            if (moveResult.moved) {
+                this.onPlayerMoved(moveResult.isPreviouslyDiscovered);
             }
         }
         if (this.input.wasActionPressed('moveLeft')) {
-            if (this.worldMap.movePlayer('left')) {
-                this.onPlayerMoved();
+            const moveResult = this.worldMap.movePlayer('left');
+            if (moveResult.moved) {
+                this.onPlayerMoved(moveResult.isPreviouslyDiscovered);
             }
         }
         if (this.input.wasActionPressed('moveRight')) {
-            if (this.worldMap.movePlayer('right')) {
-                this.onPlayerMoved();
+            const moveResult = this.worldMap.movePlayer('right');
+            if (moveResult.moved) {
+                this.onPlayerMoved(moveResult.isPreviouslyDiscovered);
             }
         }
 
@@ -213,10 +217,10 @@ export default class Game {
         this.player.y = py;
     }
 
-    private onPlayerMoved(): void {
+    private onPlayerMoved(isPreviouslyDiscovered: boolean): void {
         this.encounterSystem.onPlayerMove();
 
-        if (this.encounterSystem.checkEncounter()) {
+        if (this.encounterSystem.checkEncounter(isPreviouslyDiscovered)) {
             const encounter = this.encounterSystem.generateEncounter();
 
             if (encounter.type === 'battle') {
@@ -585,7 +589,7 @@ export default class Game {
 
         this.addBattleLog('You waited.', 'player');
         this.turnManager.nextTurn();
-        setTimeout(() => this.processTurn(), 600);
+        setTimeout(() => this.processTurn(), timingConfig.battle.waitActionDelay);
     }
 
     private endBattle(result: 'victory' | 'defeat' | 'fled'): void {

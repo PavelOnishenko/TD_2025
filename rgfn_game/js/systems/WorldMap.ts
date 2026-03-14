@@ -92,7 +92,7 @@ export default class WorldMap {
         return this.terrainData.get(this.getCellKey(col, row));
     }
 
-    public movePlayer(direction: Direction): boolean {
+    public movePlayer(direction: Direction): { moved: boolean; isPreviouslyDiscovered: boolean } {
         const { col, row } = this.playerGridPos;
         let newCol = col;
         let newRow = row;
@@ -103,12 +103,15 @@ export default class WorldMap {
         if (direction === 'right') newCol++;
 
         if (this.grid.isValidPosition(newCol, newRow)) {
+            const destinationFogState = this.getFogState(newCol, newRow);
+            const isPreviouslyDiscovered = destinationFogState === FOG_STATE.HIDDEN || destinationFogState === FOG_STATE.DISCOVERED;
+
             this.playerGridPos = { col: newCol, row: newRow };
             this.discoverCell(newCol, newRow);
-            return true;
+            return { moved: true, isPreviouslyDiscovered }; // Moved successfully
         }
 
-        return false;
+        return { moved: false, isPreviouslyDiscovered: false }; // Can't move there
     }
 
     public getPlayerPixelPosition(): [number, number] {

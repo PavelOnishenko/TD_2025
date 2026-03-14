@@ -25,9 +25,13 @@ export default class EncounterSystem {
         this.stepsSinceEncounter++;
     }
 
-    public checkEncounter(): boolean {
+    public checkEncounter(isPreviouslyDiscovered: boolean = false): boolean {
+        const encounterRate = isPreviouslyDiscovered
+            ? balanceConfig.encounters.discoveredEncounterRate
+            : this.encounterRate;
+
         const roll = Math.random();
-        if (roll < this.encounterRate) {
+        if (roll < encounterRate) {
             this.stepsSinceEncounter = 0;
             return true;
         }
