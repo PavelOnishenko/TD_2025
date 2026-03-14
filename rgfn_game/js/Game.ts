@@ -8,7 +8,7 @@ import TurnManager from './systems/TurnManager.js';
 import EncounterSystem, { ForcedEncounterType } from './systems/EncounterSystem.js';
 import Player from './entities/Player.js';
 import Skeleton from './entities/Skeleton.js';
-import Item from './entities/Item.js';
+import Item, { BOW_ITEM } from './entities/Item.js';
 import timingConfig from './config/timingConfig.js';
 import { balanceConfig } from './config/balanceConfig.js';
 import { Direction } from './types/game.js';
@@ -108,22 +108,31 @@ export default class Game {
     private setupUI(): void {
         this.hudElements = {
             modeIndicator: document.getElementById('mode-indicator')!,
+            usePotionBtn: document.getElementById('use-potion-btn')! as HTMLButtonElement,
             playerLevel: document.getElementById('player-level')!,
             playerXp: document.getElementById('player-xp')!,
             playerXpNext: document.getElementById('player-xp-next')!,
             playerHp: document.getElementById('player-hp')!,
             playerMaxHp: document.getElementById('player-max-hp')!,
             playerDmg: document.getElementById('player-dmg')!,
+            playerDmgFormula: document.getElementById('player-dmg-formula')!,
             playerArmor: document.getElementById('player-armor')!,
+            playerDodge: document.getElementById('player-dodge')!,
+            playerDodgeFormula: document.getElementById('player-dodge-formula')!,
             playerWeapon: document.getElementById('player-weapon')!,
             playerGold: document.getElementById('player-gold')!,
             skillPoints: document.getElementById('skill-points')!,
             statVitality: document.getElementById('stat-vitality')!,
             statToughness: document.getElementById('stat-toughness')!,
             statStrength: document.getElementById('stat-strength')!,
+            statAgility: document.getElementById('stat-agility')!,
             addVitalityBtn: document.getElementById('add-vitality-btn')! as HTMLButtonElement,
             addToughnessBtn: document.getElementById('add-toughness-btn')! as HTMLButtonElement,
             addStrengthBtn: document.getElementById('add-strength-btn')! as HTMLButtonElement,
+            addAgilityBtn: document.getElementById('add-agility-btn')! as HTMLButtonElement,
+            inventoryCount: document.getElementById('inventory-count')!,
+            inventoryCapacity: document.getElementById('inventory-capacity')!,
+            inventoryGrid: document.getElementById('inventory-grid')!,
         };
 
         this.battleUI = {
@@ -134,6 +143,7 @@ export default class Game {
             attackBtn: document.getElementById('attack-btn')! as HTMLButtonElement,
             fleeBtn: document.getElementById('flee-btn')! as HTMLButtonElement,
             waitBtn: document.getElementById('wait-btn')! as HTMLButtonElement,
+            usePotionBtn: document.getElementById('battle-use-potion-btn')! as HTMLButtonElement,
             log: document.getElementById('battle-log')!,
             attackRangeText: document.getElementById('attack-range-text')!,
         };
@@ -164,6 +174,9 @@ export default class Game {
         this.battleUI.attackBtn.addEventListener('click', () => this.handleAttack());
         this.battleUI.fleeBtn.addEventListener('click', () => this.handleFlee());
         this.battleUI.waitBtn.addEventListener('click', () => this.handleWait());
+        this.battleUI.usePotionBtn.addEventListener('click', () => this.handleUsePotion(true));
+
+        this.hudElements.usePotionBtn.addEventListener('click', () => this.handleUsePotion(false));
 
         this.villageUI.enterBtn.addEventListener('click', () => this.handleVillageEnter());
         this.villageUI.skipBtn.addEventListener('click', () => this.handleVillageSkip());
@@ -185,6 +198,7 @@ export default class Game {
         this.hudElements.addVitalityBtn.addEventListener('click', () => this.handleAddStat('vitality'));
         this.hudElements.addToughnessBtn.addEventListener('click', () => this.handleAddStat('toughness'));
         this.hudElements.addStrengthBtn.addEventListener('click', () => this.handleAddStat('strength'));
+        this.hudElements.addAgilityBtn.addEventListener('click', () => this.handleAddStat('agility'));
 
         // Canvas click for enemy selection
         this.canvas.addEventListener('click', (e: MouseEvent) => this.handleCanvasClick(e));
@@ -301,10 +315,12 @@ export default class Game {
     private handleItemDiscovery(item: Item): void {
         // Show item discovery splash screen
         this.itemDiscoverySplash.showItemDiscovery(item, () => {
-            // After splash, equip the item
-            this.player.equipItem(item);
+            const addedToInventory = this.player.addItemToInventory(item);
 
-            // Update HUD to show the equipped item
+            if (!addedToInventory) {
+                this.addBattleLog(`Inventory full. ${item.name} was left behind.`, 'system');
+            }
+
             this.updateHUD();
         });
     }
@@ -481,13 +497,15 @@ export default class Game {
             return;
         }
 
+        const bow = new Item(BOW_ITEM);
+        const addedToInventory = this.player.addItemToInventory(bow);
+
+        if (!addedToInventory) {
+            this.addVillageLog('Inventory full. You cannot buy the bow.', 'system');
+            return;
+        }
+
         this.player.gold -= VILLAGE_BOW_BUY_PRICE;
-        this.player.equipItem(new Item({
-            name: 'Bow',
-            description: 'A sturdy bow that allows you to attack from 2 cells away',
-            type: 'weapon',
-            attackRange: 2,
-        }));
         this.addVillageLog(`You bought a Bow for ${VILLAGE_BOW_BUY_PRICE} gold.`, 'player');
         this.updateHUD();
         this.updateVillageButtons();
@@ -808,6 +826,14 @@ export default class Game {
 
             if (inRange) {
                 this.addBattleLog(`${enemy.name} attacks!`, 'enemy');
+
+                if (Math.random() < this.player.avoidChance) {
+                    this.addBattleLog('You swiftly evade the hit!', 'system');
+                    this.turnManager.nextTurn();
+                    setTimeout(() => this.processTurn(), timingConfig.battle.enemyTurnDelay);
+                    return;
+                }
+
                 const damageBeforeArmor = enemy.getAttackDamage();
                 const damageAfterArmor = damageBeforeArmor <= 0
                     ? 0
@@ -941,6 +967,11 @@ export default class Game {
             return;
         }
 
+        if (!this.worldMap.isPlayerOnEdge()) {
+            this.addBattleLog('You can only flee when standing on the world map edge.', 'system');
+            return;
+        }
+
         this.enableBattleButtons(false);
         this.turnTransitioning = true;
         this.turnManager.waitingForPlayer = false;
@@ -970,6 +1001,42 @@ export default class Game {
         this.addBattleLog('You waited.', 'player');
         this.turnManager.nextTurn();
         setTimeout(() => this.processTurn(), timingConfig.battle.waitActionDelay);
+    }
+
+
+    private handleUsePotion(fromBattleControls: boolean): void {
+        const inBattle = this.stateMachine.isInState(MODES.BATTLE);
+
+        if (fromBattleControls && !inBattle) {
+            return;
+        }
+
+        if (inBattle &&
+            (!this.turnManager.isPlayerTurn() ||
+             !this.turnManager.waitingForPlayer ||
+             this.turnTransitioning)) {
+            return;
+        }
+
+        const usedPotion = this.player.useHealingPotion();
+        if (!usedPotion) {
+            this.addBattleLog('No healing potions in inventory.', 'system');
+            this.updateHUD();
+            return;
+        }
+
+        this.addBattleLog('You drink a healing potion (+5 HP).', inBattle ? 'player' : 'system');
+        this.updateHUD();
+
+        if (!inBattle) {
+            return;
+        }
+
+        this.enableBattleButtons(false);
+        this.turnTransitioning = true;
+        this.turnManager.waitingForPlayer = false;
+        this.turnManager.nextTurn();
+        setTimeout(() => this.processTurn(), timingConfig.battle.playerActionDelay);
     }
 
     private endBattle(result: 'victory' | 'defeat' | 'fled'): void {
@@ -1037,8 +1104,9 @@ export default class Game {
 
     private enableBattleButtons(enabled: boolean): void {
         this.battleUI.attackBtn.disabled = !enabled;
-        this.battleUI.fleeBtn.disabled = !enabled;
+        this.battleUI.fleeBtn.disabled = !enabled || !this.worldMap.isPlayerOnEdge();
         this.battleUI.waitBtn.disabled = !enabled;
+        this.battleUI.usePotionBtn.disabled = !enabled;
     }
 
     private addBattleLog(message: string, type: string = 'system'): void {
@@ -1075,11 +1143,15 @@ export default class Game {
         this.hudElements.playerHp.textContent = String(this.player.hp);
         this.hudElements.playerMaxHp.textContent = String(this.player.maxHp);
         this.hudElements.playerDmg.textContent = String(this.player.damage);
+        this.hudElements.playerDmgFormula.textContent = this.player.getDamageFormulaText();
         this.hudElements.playerArmor.textContent = String(this.player.armor);
+        this.hudElements.playerDodge.textContent = `${(this.player.avoidChance * 100).toFixed(1)}%`;
+        this.hudElements.playerDodgeFormula.textContent = this.player.getAvoidFormulaText();
         this.hudElements.skillPoints.textContent = String(this.player.skillPoints);
         this.hudElements.statVitality.textContent = String(this.player.vitality);
         this.hudElements.statToughness.textContent = String(this.player.toughness);
         this.hudElements.statStrength.textContent = String(this.player.strength);
+        this.hudElements.statAgility.textContent = String(this.player.agility);
 
         // Update weapon display
         if (this.player.equippedWeapon) {
@@ -1088,6 +1160,17 @@ export default class Game {
             this.hudElements.playerWeapon.textContent = 'None';
         }
         this.hudElements.playerGold.textContent = String(this.player.gold);
+
+        // Update inventory display
+        const inventory = this.player.getInventory();
+        this.hudElements.inventoryCount.textContent = String(inventory.length);
+        this.hudElements.inventoryCapacity.textContent = String(balanceConfig.player.inventorySize);
+        this.renderInventory(inventory);
+
+        // Potion buttons
+        const hasPotion = this.player.getHealingPotionCount() > 0;
+        this.hudElements.usePotionBtn.disabled = !hasPotion;
+        this.battleUI.usePotionBtn.disabled = !hasPotion;
 
         // Update attack range text in battle UI
         const attackRange = this.player.getAttackRange();
@@ -1101,14 +1184,39 @@ export default class Game {
         this.updateStatButtons();
     }
 
+    private renderInventory(inventory: Item[]): void {
+        this.hudElements.inventoryGrid.innerHTML = '';
+
+        for (let index = 0; index < balanceConfig.player.inventorySize; index++) {
+            const slot = document.createElement('div');
+            slot.className = 'inventory-slot';
+
+            const item = inventory[index];
+            if (item) {
+                slot.title = item.name;
+
+                const sprite = document.createElement('div');
+                sprite.className = item.id === 'bow'
+                    ? 'item-sprite bow-sprite'
+                    : 'item-sprite potion-sprite';
+                slot.appendChild(sprite);
+            } else {
+                slot.classList.add('empty');
+            }
+
+            this.hudElements.inventoryGrid.appendChild(slot);
+        }
+    }
+
     private updateStatButtons(): void {
         const hasSkillPoints = this.player.skillPoints > 0;
         this.hudElements.addVitalityBtn.disabled = !hasSkillPoints;
         this.hudElements.addToughnessBtn.disabled = !hasSkillPoints;
         this.hudElements.addStrengthBtn.disabled = !hasSkillPoints;
+        this.hudElements.addAgilityBtn.disabled = !hasSkillPoints;
     }
 
-    private handleAddStat(stat: 'vitality' | 'toughness' | 'strength'): void {
+    private handleAddStat(stat: 'vitality' | 'toughness' | 'strength' | 'agility'): void {
         if (this.player.addStat(stat)) {
             this.updateHUD();
             this.addBattleLog(`+1 ${stat.charAt(0).toUpperCase() + stat.slice(1)}!`, 'system');
@@ -1122,3 +1230,7 @@ export default class Game {
         alert('Game Over! Refresh to restart.');
     }
 }
+
+
+
+

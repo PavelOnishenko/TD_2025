@@ -14,13 +14,21 @@
             <div class="hud-section">
                 <h1>RGFN</h1>
                 <div id="mode-indicator">World Map</div>
+                <button id="use-potion-btn" class="action-btn">Use Potion</button>
             </div>
             <div class="hud-section stats">
                 <div class="stat">Level: <span id="player-level">1</span></div>
                 <div class="stat">XP: <span id="player-xp">0</span>/<span id="player-xp-next">5</span></div>
                 <div class="stat">HP: <span id="player-hp">5</span>/<span id="player-max-hp">5</span></div>
-                <div class="stat">DMG: <span id="player-dmg">2</span></div>
+                <div class="stat">
+                    DMG: <span id="player-dmg">2</span>
+                    <div id="player-dmg-formula" class="stat-detail">Base 2 + STR + AGI = 2 (Melee)</div>
+                </div>
                 <div class="stat">Armor: <span id="player-armor">0</span></div>
+                <div class="stat">
+                    Dodge: <span id="player-dodge">0%</span>
+                    <div id="player-dodge-formula" class="stat-detail">1 - 1/(1 + AGI×0.045), cap 45% = 0%</div>
+                </div>
                 <div class="stat">Weapon: <span id="player-weapon">None</span></div>
                 <div class="stat">Gold: <span id="player-gold">20</span></div>
             </div>
@@ -36,8 +44,16 @@
                 </div>
                 <div class="stat-row">
                     <span>Strength: <span id="stat-strength">0</span></span>
-                    <button id="add-strength-btn" class="stat-btn" title="2 points: +1 Damage">+</button>
+                    <button id="add-strength-btn" class="stat-btn" title="+Melee dmg (major), +Bow dmg (minor)">+</button>
                 </div>
+                <div class="stat-row">
+                    <span>Agility: <span id="stat-agility">0</span></span>
+                    <button id="add-agility-btn" class="stat-btn" title="+Bow dmg (major), +Melee dmg (minor), +Evade chance">+</button>
+                </div>
+            </div>
+            <div class="hud-section stats">
+                <div class="stat">Inventory (<span id="inventory-count">0</span>/<span id="inventory-capacity">6</span>)</div>
+                <div id="inventory-grid" class="inventory-grid"></div>
             </div>
         </div>
 
@@ -57,8 +73,9 @@
                 </div>
                 <div id="battle-actions">
                     <button id="attack-btn" class="action-btn">Attack</button>
-                    <button id="flee-btn" class="action-btn">Flee (50%)</button>
+                    <button id="flee-btn" class="action-btn">Flee (40%)</button>
                     <button id="wait-btn" class="action-btn">Wait</button>
+                    <button id="battle-use-potion-btn" class="action-btn">Drink Potion</button>
                 </div>
                 <div id="battle-log-container">
                     <h3>Battle Log</h3>

@@ -15,10 +15,14 @@ export const balanceConfig = {
         initialVitality: 0,
         initialToughness: 0,
         initialStrength: 0,
+        initialAgility: 0,
 
         // Visual properties
         width: 32,
         height: 32,
+
+        // Inventory slots available to hold discovered items
+        inventorySize: 6,
     },
 
     // ============ ENEMY STATS ============
@@ -82,8 +86,21 @@ export const balanceConfig = {
         // 3 Toughness points = 1 armor (armor reduces damage by 1)
         toughnessToArmor: 3,
 
-        // 2 Strength points = +1 damage
-        strengthToDamage: 2,
+        // 2 Strength points = +1 melee damage
+        strengthToMeleeDamage: 2,
+
+        // Strength still helps bows, but less efficiently
+        strengthToBowDamage: 4,
+
+        // Agility helps melee a bit
+        agilityToMeleeDamage: 4,
+
+        // Agility is the primary bow damage stat
+        agilityToBowDamage: 2,
+
+        // Agility-driven evade chance formula tuning
+        avoidChanceScale: 0.045,
+        avoidChanceCap: 0.45,
     },
 
     // ============ LEVEL SYSTEM ============
@@ -122,16 +139,16 @@ export const balanceConfig = {
         minDamageAfterArmor: 1,
 
         // Flee success chance
-        fleeChance: 0.5,
+        fleeChance: 0.4,
     },
 
     // ============ ENCOUNTER SETTINGS ============
     encounters: {
         // Encounter chance per step
-        encounterRate: 0.8,
+        encounterRate: 0.4,
 
         // Encounter chance per step on already discovered (hidden) tiles
-        discoveredEncounterRate: 0.45,
+        discoveredEncounterRate: 0.2,
 
         // Enemy count range per encounter
         minEnemies: 1,

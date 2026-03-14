@@ -1,7 +1,7 @@
 import { randomInt } from '../../../engine/utils/MathUtils.js';
 import Skeleton, { EnemyConfig } from '../entities/Skeleton.js';
 import { balanceConfig } from '../config/balanceConfig.js';
-import Item, { BOW_ITEM } from '../entities/Item.js';
+import Item, { BOW_ITEM, HEALING_POTION_ITEM } from '../entities/Item.js';
 
 export type EncounterResult =
     | { type: 'battle', enemies: Skeleton[] }
@@ -61,6 +61,24 @@ export default class EncounterSystem {
             this.bowFound = true;
             const bow = new Item(BOW_ITEM);
             return { type: 'item', item: bow };
+        }
+      
+        // Check if we should discover an item.
+        // Bow is unique, while healing potions can be found repeatedly.
+        if (Math.random() < this.itemDiscoveryChance) {
+            const discoverableItems: Item[] = [new Item(HEALING_POTION_ITEM)];
+
+            if (!this.bowFound) {
+                discoverableItems.push(new Item(BOW_ITEM));
+            }
+
+            const discoveredItem = discoverableItems[randomInt(0, discoverableItems.length - 1)];
+
+            if (discoveredItem.id === 'bow') {
+                this.bowFound = true;
+            }
+
+            return { type: 'item', item: discoveredItem };
         }
 
         const encounterType = this.rollEncounterType();

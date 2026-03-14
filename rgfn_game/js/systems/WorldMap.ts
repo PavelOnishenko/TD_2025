@@ -143,6 +143,13 @@ export default class WorldMap {
         return this.villages.has(this.getCellKey(this.playerGridPos.col, this.playerGridPos.row));
     }
 
+    public isPlayerOnEdge(): boolean {
+        const { columns, rows } = this.grid.getDimensions();
+        const { col, row } = this.playerGridPos;
+
+        return col === 0 || row === 0 || col === columns - 1 || row === rows - 1;
+    }
+
     public draw(ctx: CanvasRenderingContext2D, renderer: any): void {
         const dims = this.grid.getDimensions();
         ctx.fillStyle = theme.worldMap.background;
