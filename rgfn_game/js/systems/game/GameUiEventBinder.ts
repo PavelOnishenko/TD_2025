@@ -1,6 +1,7 @@
 import VillageActionsController from '../village/VillageActionsController.js';
 import DeveloperEventController from '../encounter/DeveloperEventController.js';
 import { BattleUI, DeveloperUI, HudElements, VillageUI } from './GameUiTypes.js';
+import { BaseSpellId } from '../magic/MagicSystem.js';
 
 type GameUiEventCallbacks = {
     onAttack: () => void;
@@ -8,7 +9,9 @@ type GameUiEventCallbacks = {
     onWait: () => void;
     onUsePotionFromBattle: () => void;
     onUsePotionFromHud: () => void;
-    onAddStat: (stat: 'vitality' | 'toughness' | 'strength' | 'agility') => void;
+    onAddStat: (stat: 'vitality' | 'toughness' | 'strength' | 'agility' | 'connection' | 'intelligence') => void;
+    onCastSpell: (spellId: BaseSpellId) => void;
+    onUpgradeSpell: (spellId: BaseSpellId) => void;
     onCanvasClick: (event: MouseEvent) => void;
 };
 
@@ -56,6 +59,11 @@ export default class GameUiEventBinder {
         this.battleUI.fleeBtn.addEventListener('click', () => this.callbacks.onFlee());
         this.battleUI.waitBtn.addEventListener('click', () => this.callbacks.onWait());
         this.battleUI.usePotionBtn.addEventListener('click', () => this.callbacks.onUsePotionFromBattle());
+        this.battleUI.spellFireballBtn.addEventListener('click', () => this.callbacks.onCastSpell('fireball'));
+        this.battleUI.spellCurseBtn.addEventListener('click', () => this.callbacks.onCastSpell('curse'));
+        this.battleUI.spellSlowBtn.addEventListener('click', () => this.callbacks.onCastSpell('slow'));
+        this.battleUI.spellRageBtn.addEventListener('click', () => this.callbacks.onCastSpell('rage'));
+        this.battleUI.spellArcaneLanceBtn.addEventListener('click', () => this.callbacks.onCastSpell('arcane-lance'));
         this.hudElements.usePotionBtn.addEventListener('click', () => this.callbacks.onUsePotionFromHud());
     }
 
@@ -86,5 +94,12 @@ export default class GameUiEventBinder {
         this.hudElements.addToughnessBtn.addEventListener('click', () => this.callbacks.onAddStat('toughness'));
         this.hudElements.addStrengthBtn.addEventListener('click', () => this.callbacks.onAddStat('strength'));
         this.hudElements.addAgilityBtn.addEventListener('click', () => this.callbacks.onAddStat('agility'));
+        this.hudElements.addConnectionBtn.addEventListener('click', () => this.callbacks.onAddStat('connection'));
+        this.hudElements.addIntelligenceBtn.addEventListener('click', () => this.callbacks.onAddStat('intelligence'));
+        this.hudElements.upgradeFireballBtn.addEventListener('click', () => this.callbacks.onUpgradeSpell('fireball'));
+        this.hudElements.upgradeCurseBtn.addEventListener('click', () => this.callbacks.onUpgradeSpell('curse'));
+        this.hudElements.upgradeSlowBtn.addEventListener('click', () => this.callbacks.onUpgradeSpell('slow'));
+        this.hudElements.upgradeRageBtn.addEventListener('click', () => this.callbacks.onUpgradeSpell('rage'));
+        this.hudElements.upgradeArcaneLanceBtn.addEventListener('click', () => this.callbacks.onUpgradeSpell('arcane-lance'));
     }
 }

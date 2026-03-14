@@ -48,6 +48,9 @@ export default class Skeleton extends DamageableEntity {
     public behavior: EnemyBehavior;
     public gridCol?: number;
     public gridRow?: number;
+    private cursedArmorReduction: number = 0;
+    private curseTurns: number = 0;
+    private slowTurns: number = 0;
 
     constructor(x: number, y: number, enemyConfig?: EnemyConfig) {
         super(x, y);
@@ -63,11 +66,55 @@ export default class Skeleton extends DamageableEntity {
     }
 
     public takeDamage(amount: number): boolean {
-        const died = super.takeDamage(amount);
+        const effectiveArmor = Math.max(0, this.cursedArmorReduction);
+        const damageAfterArmor = amount <= 0
+            ? 0
+            : Math.max(balanceConfig.combat.minDamageAfterArmor, amount - effectiveArmor);
+        const died = super.takeDamage(damageAfterArmor);
         if (died) {
             this.active = false;
         }
         return died;
+    }
+
+    public takeMagicDamage(amount: number): boolean {
+        const died = super.takeDamage(Math.max(0, amount));
+        if (died) {
+            this.active = false;
+        }
+        return died;
+    }
+
+    public applyCurse(armorReduction: number, duration: number): void {
+        this.cursedArmorReduction = Math.max(this.cursedArmorReduction, armorReduction);
+        this.curseTurns = Math.max(this.curseTurns, duration);
+    }
+
+    public applySlow(duration: number): void {
+        this.slowTurns = Math.max(this.slowTurns, duration);
+    }
+
+    public shouldSkipTurnFromSlow(): boolean {
+        return this.slowTurns > 0;
+    }
+
+    public consumeTurnEffects(): string[] {
+        const events: string[] = [];
+
+        if (this.slowTurns > 0) {
+            this.slowTurns -= 1;
+            events.push(`${this.name} is slowed and skips this turn.`);
+        }
+
+        if (this.curseTurns > 0) {
+            this.curseTurns -= 1;
+            if (this.curseTurns === 0) {
+                this.cursedArmorReduction = 0;
+                events.push(`${this.name} shakes off the curse.`);
+            }
+        }
+
+        return events;
     }
 
     public draw(ctx: CanvasRenderingContext2D, viewport?: any): void {

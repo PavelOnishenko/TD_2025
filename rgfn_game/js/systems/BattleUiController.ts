@@ -12,6 +12,11 @@ type BattleUI = {
     fleeBtn: HTMLButtonElement;
     waitBtn: HTMLButtonElement;
     usePotionBtn: HTMLButtonElement;
+    spellFireballBtn: HTMLButtonElement;
+    spellCurseBtn: HTMLButtonElement;
+    spellSlowBtn: HTMLButtonElement;
+    spellRageBtn: HTMLButtonElement;
+    spellArcaneLanceBtn: HTMLButtonElement;
     log: HTMLElement;
 };
 
@@ -98,6 +103,11 @@ export default class BattleUiController {
         this.battleUI.fleeBtn.disabled = !enabled || !this.battleMap.isEntityOnEdge(this.player);
         this.battleUI.waitBtn.disabled = !enabled;
         this.battleUI.usePotionBtn.disabled = !enabled;
+        this.battleUI.spellFireballBtn.disabled = !enabled;
+        this.battleUI.spellCurseBtn.disabled = !enabled;
+        this.battleUI.spellSlowBtn.disabled = !enabled;
+        this.battleUI.spellRageBtn.disabled = !enabled;
+        this.battleUI.spellArcaneLanceBtn.disabled = !enabled;
     }
 
     public addBattleLog(message: string, type: string = 'system'): void {

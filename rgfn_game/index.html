@@ -20,6 +20,8 @@
                 <div class="stat">Level: <span id="player-level">1</span></div>
                 <div class="stat">XP: <span id="player-xp">0</span>/<span id="player-xp-next">5</span></div>
                 <div class="stat">HP: <span id="player-hp">5</span>/<span id="player-max-hp">5</span></div>
+                <div class="stat">Mana: <span id="player-mana">0</span>/<span id="player-max-mana">0</span></div>
+                <div class="stat">Magic Points: <span id="magic-points">0</span></div>
                 <div class="stat">
                     DMG: <span id="player-dmg">2</span>
                     <div id="player-dmg-formula" class="stat-detail">Base 2 + STR + AGI = 2 (Melee)</div>
@@ -50,11 +52,28 @@
                     <span>Agility: <span id="stat-agility">0</span></span>
                     <button id="add-agility-btn" class="stat-btn" title="+Bow dmg (major), +Melee dmg (minor), +Evade chance">+</button>
                 </div>
+                <div class="stat-row">
+                    <span>Connection: <span id="stat-connection">0</span></span>
+                    <button id="add-connection-btn" class="stat-btn" title="Each point: +1 mana">+</button>
+                </div>
+                <div class="stat-row">
+                    <span>Intelligence: <span id="stat-intelligence">0</span></span>
+                    <button id="add-intelligence-btn" class="stat-btn" title="3 points: +1 magic point and +1 mana">+</button>
+                </div>
             </div>
             <div class="hud-section stats">
                 <div class="stat">Inventory (<span id="inventory-count">0</span>/<span id="inventory-capacity">6</span>)</div>
                 <div id="inventory-grid" class="inventory-grid"></div>
             </div>
+            <div class="hud-section stats">
+                <div class="stat">Spell Levels</div>
+                <div class="stat-row"><span>Fire Ball Lv <span id="spell-level-fireball">1</span></span><button id="upgrade-fireball-btn" class="stat-btn" title="Spend 1 magic point">+</button></div>
+                <div class="stat-row"><span>Curse Lv <span id="spell-level-curse">1</span></span><button id="upgrade-curse-btn" class="stat-btn" title="Spend 1 magic point">+</button></div>
+                <div class="stat-row"><span>Slow Lv <span id="spell-level-slow">1</span></span><button id="upgrade-slow-btn" class="stat-btn" title="Spend 1 magic point">+</button></div>
+                <div class="stat-row"><span>Rage Lv <span id="spell-level-rage">1</span></span><button id="upgrade-rage-btn" class="stat-btn" title="Spend 1 magic point">+</button></div>
+                <div class="stat-row"><span>Arcane Lance Lv <span id="spell-level-arcane-lance">1</span></span><button id="upgrade-arcane-lance-btn" class="stat-btn" title="Spend 1 magic point">+</button></div>
+            </div>
+
         </div>
 
         <div id="game-area">
@@ -76,6 +95,11 @@
                     <button id="flee-btn" class="action-btn">Flee</button>
                     <button id="wait-btn" class="action-btn">Wait</button>
                     <button id="battle-use-potion-btn" class="action-btn">Drink Potion</button>
+                    <button id="spell-fireball-btn" class="action-btn">Fire Ball</button>
+                    <button id="spell-curse-btn" class="action-btn">Curse</button>
+                    <button id="spell-slow-btn" class="action-btn">Slow</button>
+                    <button id="spell-rage-btn" class="action-btn">Rage</button>
+                    <button id="spell-arcane-lance-btn" class="action-btn">Arcane Lance</button>
                 </div>
                 <div id="battle-log-container">
                     <h3>Battle Log</h3>
