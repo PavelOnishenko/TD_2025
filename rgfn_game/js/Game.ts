@@ -19,7 +19,11 @@ import { applyThemeToCSS } from './config/ThemeConfig.js';
 const MODES = {
     WORLD_MAP: 'WORLD_MAP',
     BATTLE: 'BATTLE',
+    VILLAGE: 'VILLAGE',
 };
+
+const VILLAGE_BOW_BUY_PRICE = 15;
+const VILLAGE_BOW_SELL_PRICE = 8;
 
 export default class Game {
     private canvas: HTMLCanvasElement;
@@ -36,6 +40,7 @@ export default class Game {
     private stateMachine: StateMachine;
     private hudElements;
     private battleUI;
+    private villageUI;
     private selectedEnemy: Skeleton | null;
     private battleSplash: BattleSplash;
     private itemDiscoverySplash: ItemDiscoverySplash;
@@ -70,11 +75,17 @@ export default class Game {
                 enter: (enemies: Skeleton[]) => this.enterBattleMode(enemies),
                 update: (dt: number) => this.updateBattleMode(dt),
                 exit: () => this.exitBattleMode(),
+            })
+            .addState(MODES.VILLAGE, {
+                enter: () => this.enterVillageMode(),
+                update: () => {},
+                exit: () => this.exitVillageMode(),
             });
 
         // UI elements
         this.hudElements = {};
         this.battleUI = {};
+        this.villageUI = {};
         this.setupUI();
 
         // Initialize systems
@@ -94,6 +105,7 @@ export default class Game {
     private setupUI(): void {
         this.hudElements = {
             modeIndicator: document.getElementById('mode-indicator')!,
+            usePotionBtn: document.getElementById('use-potion-btn')! as HTMLButtonElement,
             playerLevel: document.getElementById('player-level')!,
             playerXp: document.getElementById('player-xp')!,
             playerXpNext: document.getElementById('player-xp-next')!,
@@ -102,6 +114,7 @@ export default class Game {
             playerDmg: document.getElementById('player-dmg')!,
             playerArmor: document.getElementById('player-armor')!,
             playerWeapon: document.getElementById('player-weapon')!,
+            playerGold: document.getElementById('player-gold')!,
             skillPoints: document.getElementById('skill-points')!,
             statVitality: document.getElementById('stat-vitality')!,
             statToughness: document.getElementById('stat-toughness')!,
@@ -109,6 +122,9 @@ export default class Game {
             addVitalityBtn: document.getElementById('add-vitality-btn')! as HTMLButtonElement,
             addToughnessBtn: document.getElementById('add-toughness-btn')! as HTMLButtonElement,
             addStrengthBtn: document.getElementById('add-strength-btn')! as HTMLButtonElement,
+            inventoryCount: document.getElementById('inventory-count')!,
+            inventoryCapacity: document.getElementById('inventory-capacity')!,
+            inventoryGrid: document.getElementById('inventory-grid')!,
         };
 
         this.battleUI = {
@@ -119,14 +135,38 @@ export default class Game {
             attackBtn: document.getElementById('attack-btn')! as HTMLButtonElement,
             fleeBtn: document.getElementById('flee-btn')! as HTMLButtonElement,
             waitBtn: document.getElementById('wait-btn')! as HTMLButtonElement,
+            usePotionBtn: document.getElementById('battle-use-potion-btn')! as HTMLButtonElement,
             log: document.getElementById('battle-log')!,
             attackRangeText: document.getElementById('attack-range-text')!,
+        };
+
+        this.villageUI = {
+            sidebar: document.getElementById('village-sidebar')!,
+            prompt: document.getElementById('village-prompt')!,
+            actions: document.getElementById('village-actions')!,
+            log: document.getElementById('village-log')!,
+            enterBtn: document.getElementById('village-enter-btn')! as HTMLButtonElement,
+            skipBtn: document.getElementById('village-skip-btn')! as HTMLButtonElement,
+            waitBtn: document.getElementById('village-wait-btn')! as HTMLButtonElement,
+            buyBtn: document.getElementById('village-buy-btn')! as HTMLButtonElement,
+            sellBtn: document.getElementById('village-sell-btn')! as HTMLButtonElement,
+            leaveBtn: document.getElementById('village-leave-btn')! as HTMLButtonElement,
         };
 
         // Battle button events
         this.battleUI.attackBtn.addEventListener('click', () => this.handleAttack());
         this.battleUI.fleeBtn.addEventListener('click', () => this.handleFlee());
         this.battleUI.waitBtn.addEventListener('click', () => this.handleWait());
+        this.battleUI.usePotionBtn.addEventListener('click', () => this.handleUsePotion(true));
+
+        this.hudElements.usePotionBtn.addEventListener('click', () => this.handleUsePotion(false));
+
+        this.villageUI.enterBtn.addEventListener('click', () => this.handleVillageEnter());
+        this.villageUI.skipBtn.addEventListener('click', () => this.handleVillageSkip());
+        this.villageUI.waitBtn.addEventListener('click', () => this.handleVillageWait());
+        this.villageUI.buyBtn.addEventListener('click', () => this.handleVillageBuy());
+        this.villageUI.sellBtn.addEventListener('click', () => this.handleVillageSell());
+        this.villageUI.leaveBtn.addEventListener('click', () => this.handleVillageLeave());
 
         // Stat allocation button events
         this.hudElements.addVitalityBtn.addEventListener('click', () => this.handleAddStat('vitality'));
@@ -174,6 +214,7 @@ export default class Game {
     private enterWorldMode(): void {
         this.hudElements.modeIndicator.textContent = 'World Map';
         this.battleUI.sidebar.classList.add('hidden');
+        this.villageUI.sidebar.classList.add('hidden');
 
         // Reset player position on world map
         const [px, py] = this.worldMap.getPlayerPixelPosition();
@@ -218,6 +259,11 @@ export default class Game {
     }
 
     private onPlayerMoved(isPreviouslyDiscovered: boolean): void {
+        if (this.worldMap.isPlayerOnVillage()) {
+            this.stateMachine.transition(MODES.VILLAGE);
+            return;
+        }
+
         this.encounterSystem.onPlayerMove();
 
         if (this.encounterSystem.checkEncounter(isPreviouslyDiscovered)) {
@@ -236,10 +282,12 @@ export default class Game {
     private handleItemDiscovery(item: Item): void {
         // Show item discovery splash screen
         this.itemDiscoverySplash.showItemDiscovery(item, () => {
-            // After splash, equip the item
-            this.player.equipItem(item);
+            const addedToInventory = this.player.addItemToInventory(item);
 
-            // Update HUD to show the equipped item
+            if (!addedToInventory) {
+                this.addBattleLog(`Inventory full. ${item.name} was left behind.`, 'system');
+            }
+
             this.updateHUD();
         });
     }
@@ -249,11 +297,105 @@ export default class Game {
         this.player.draw(this.renderer.ctx);
     }
 
+    // ============ VILLAGE MODE ============
+
+    private enterVillageMode(): void {
+        this.hudElements.modeIndicator.textContent = 'Village';
+        this.battleUI.sidebar.classList.add('hidden');
+        this.villageUI.sidebar.classList.remove('hidden');
+        this.villageUI.prompt.classList.remove('hidden');
+        this.villageUI.actions.classList.add('hidden');
+        this.villageUI.log.innerHTML = '';
+        this.addVillageLog('You discover a village. Enter it?', 'system');
+        this.updateVillageButtons();
+    }
+
+    private exitVillageMode(): void {
+        this.villageUI.sidebar.classList.add('hidden');
+    }
+
+    private handleVillageEnter(): void {
+        this.villageUI.prompt.classList.add('hidden');
+        this.villageUI.actions.classList.remove('hidden');
+        this.addVillageLog('You enter the village market square.', 'system');
+        this.updateVillageButtons();
+    }
+
+    private handleVillageSkip(): void {
+        this.addVillageLog('You decide not to enter and continue your journey.', 'system');
+        this.stateMachine.transition(MODES.WORLD_MAP);
+    }
+
+    private handleVillageWait(): void {
+        this.player.heal(1);
+        this.addVillageLog('You wait at the inn and recover 1 HP.', 'player');
+        this.updateHUD();
+    }
+
+    private handleVillageBuy(): void {
+        if (this.player.equippedWeapon?.name === 'Bow') {
+            this.addVillageLog('You already have a bow equipped.', 'system');
+            return;
+        }
+
+        if (this.player.gold < VILLAGE_BOW_BUY_PRICE) {
+            this.addVillageLog(`Not enough gold. Bow costs ${VILLAGE_BOW_BUY_PRICE}.`, 'system');
+            return;
+        }
+
+        this.player.gold -= VILLAGE_BOW_BUY_PRICE;
+        this.player.equipItem(new Item({
+            name: 'Bow',
+            description: 'A sturdy bow that allows you to attack from 2 cells away',
+            type: 'weapon',
+            attackRange: 2,
+        }));
+        this.addVillageLog(`You bought a Bow for ${VILLAGE_BOW_BUY_PRICE} gold.`, 'player');
+        this.updateHUD();
+        this.updateVillageButtons();
+    }
+
+    private handleVillageSell(): void {
+        const weapon = this.player.equippedWeapon;
+        if (!weapon || weapon.name !== 'Bow') {
+            this.addVillageLog('You have no bow to sell.', 'system');
+            return;
+        }
+
+        this.player.unequipWeapon();
+        this.player.gold += VILLAGE_BOW_SELL_PRICE;
+        this.addVillageLog(`You sold your Bow for ${VILLAGE_BOW_SELL_PRICE} gold.`, 'player');
+        this.updateHUD();
+        this.updateVillageButtons();
+    }
+
+    private handleVillageLeave(): void {
+        this.addVillageLog('You leave the village.', 'system');
+        this.stateMachine.transition(MODES.WORLD_MAP);
+    }
+
+    private updateVillageButtons(): void {
+        const hasBowEquipped = this.player.equippedWeapon?.name === 'Bow';
+        const canAffordBow = this.player.gold >= VILLAGE_BOW_BUY_PRICE;
+
+        this.villageUI.buyBtn.disabled = hasBowEquipped || !canAffordBow;
+        this.villageUI.sellBtn.disabled = !hasBowEquipped;
+    }
+
+    private addVillageLog(message: string, type: string = 'system'): void {
+        const line = document.createElement('div');
+        line.textContent = message;
+        line.classList.add(type + '-action');
+        this.villageUI.log.appendChild(line);
+        this.villageUI.log.scrollTop = this.villageUI.log.scrollHeight;
+    }
+
     // ============ BATTLE MODE ============
 
     private enterBattleMode(enemies: Skeleton[]): void {
         this.hudElements.modeIndicator.textContent = 'Battle!';
         this.battleUI.sidebar.classList.remove('hidden');
+        this.villageUI.sidebar.classList.add('hidden');
 
         this.currentEnemies = enemies;
         this.selectedEnemy = null; // Reset selection
@@ -592,6 +734,42 @@ export default class Game {
         setTimeout(() => this.processTurn(), timingConfig.battle.waitActionDelay);
     }
 
+
+    private handleUsePotion(fromBattleControls: boolean): void {
+        const inBattle = this.stateMachine.isInState(MODES.BATTLE);
+
+        if (fromBattleControls && !inBattle) {
+            return;
+        }
+
+        if (inBattle &&
+            (!this.turnManager.isPlayerTurn() ||
+             !this.turnManager.waitingForPlayer ||
+             this.turnTransitioning)) {
+            return;
+        }
+
+        const usedPotion = this.player.useHealingPotion();
+        if (!usedPotion) {
+            this.addBattleLog('No healing potions in inventory.', 'system');
+            this.updateHUD();
+            return;
+        }
+
+        this.addBattleLog('You drink a healing potion (+5 HP).', inBattle ? 'player' : 'system');
+        this.updateHUD();
+
+        if (!inBattle) {
+            return;
+        }
+
+        this.enableBattleButtons(false);
+        this.turnTransitioning = true;
+        this.turnManager.waitingForPlayer = false;
+        this.turnManager.nextTurn();
+        setTimeout(() => this.processTurn(), timingConfig.battle.playerActionDelay);
+    }
+
     private endBattle(result: 'victory' | 'defeat' | 'fled'): void {
         if (result === 'victory') {
             this.addBattleLog('Victory!', 'system');
@@ -659,6 +837,7 @@ export default class Game {
         this.battleUI.attackBtn.disabled = !enabled;
         this.battleUI.fleeBtn.disabled = !enabled;
         this.battleUI.waitBtn.disabled = !enabled;
+        this.battleUI.usePotionBtn.disabled = !enabled;
     }
 
     private addBattleLog(message: string, type: string = 'system'): void {
@@ -707,6 +886,18 @@ export default class Game {
         } else {
             this.hudElements.playerWeapon.textContent = 'None';
         }
+        this.hudElements.playerGold.textContent = String(this.player.gold);
+
+        // Update inventory display
+        const inventory = this.player.getInventory();
+        this.hudElements.inventoryCount.textContent = String(inventory.length);
+        this.hudElements.inventoryCapacity.textContent = String(balanceConfig.player.inventorySize);
+        this.renderInventory(inventory);
+
+        // Potion buttons
+        const hasPotion = this.player.getHealingPotionCount() > 0;
+        this.hudElements.usePotionBtn.disabled = !hasPotion;
+        this.battleUI.usePotionBtn.disabled = !hasPotion;
 
         // Update attack range text in battle UI
         const attackRange = this.player.getAttackRange();
@@ -718,6 +909,30 @@ export default class Game {
 
         // Update stat button states
         this.updateStatButtons();
+    }
+
+    private renderInventory(inventory: Item[]): void {
+        this.hudElements.inventoryGrid.innerHTML = '';
+
+        for (let index = 0; index < balanceConfig.player.inventorySize; index++) {
+            const slot = document.createElement('div');
+            slot.className = 'inventory-slot';
+
+            const item = inventory[index];
+            if (item) {
+                slot.title = item.name;
+
+                const sprite = document.createElement('div');
+                sprite.className = item.id === 'bow'
+                    ? 'item-sprite bow-sprite'
+                    : 'item-sprite potion-sprite';
+                slot.appendChild(sprite);
+            } else {
+                slot.classList.add('empty');
+            }
+
+            this.hudElements.inventoryGrid.appendChild(slot);
+        }
     }
 
     private updateStatButtons(): void {
