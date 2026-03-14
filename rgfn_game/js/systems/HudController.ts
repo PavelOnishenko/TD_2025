@@ -97,9 +97,7 @@ export default class HudController {
                 slot.title = item.name;
 
                 const sprite = document.createElement('div');
-                sprite.className = item.id === 'bow'
-                    ? 'item-sprite bow-sprite'
-                    : 'item-sprite potion-sprite';
+                sprite.className = `item-sprite ${item.spriteClass}`;
                 slot.appendChild(sprite);
             } else {
                 slot.classList.add('empty');

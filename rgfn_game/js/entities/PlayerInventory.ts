@@ -2,14 +2,16 @@ import { balanceConfig } from '../config/balanceConfig.js';
 import Item from './Item.js';
 
 type PlayerInventoryHooks = {
-    onWeaponChanged: () => void;
+    onEquipmentChanged: () => void;
     onHealingPotionUsed: () => void;
+    canEquip: (item: Item) => boolean;
 };
 
 export default class PlayerInventory {
     private readonly hooks: PlayerInventoryHooks;
     private readonly inventory: Item[] = [];
     private equippedWeapon: Item | null = null;
+    private equippedArmor: Item | null = null;
 
     constructor(hooks: PlayerInventoryHooks) {
         this.hooks = hooks;
@@ -21,8 +23,8 @@ export default class PlayerInventory {
         }
 
         this.inventory.push(item);
-        if (item.type === 'weapon') {
-            this.setEquippedWeapon(item);
+        if ((item.type === 'weapon' || item.type === 'armor') && this.hooks.canEquip(item)) {
+            this.equipItem(item);
         }
         return true;
     }
@@ -58,7 +60,8 @@ export default class PlayerInventory {
 
     public unequipWeapon(): Item | null {
         const weapon = this.equippedWeapon;
-        this.setEquippedWeapon(null);
+        this.equippedWeapon = null;
+        this.hooks.onEquipmentChanged();
         return weapon;
     }
 
@@ -74,9 +77,30 @@ export default class PlayerInventory {
         return this.equippedWeapon;
     }
 
+    public getEquippedArmor(): Item | null {
+        return this.equippedArmor;
+    }
+
     public setEquippedWeapon(weapon: Item | null): void {
         this.equippedWeapon = weapon;
-        this.hooks.onWeaponChanged();
+        this.hooks.onEquipmentChanged();
+    }
+
+    public setEquippedArmor(armor: Item | null): void {
+        this.equippedArmor = armor;
+        this.hooks.onEquipmentChanged();
+    }
+
+    private equipItem(item: Item): void {
+        if (item.type === 'weapon') {
+            this.equippedWeapon = item;
+        }
+
+        if (item.type === 'armor') {
+            this.equippedArmor = item;
+        }
+
+        this.hooks.onEquipmentChanged();
     }
 
     private findHealingPotionIndex(): number {
