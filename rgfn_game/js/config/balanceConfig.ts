@@ -128,10 +128,10 @@ export const balanceConfig = {
     // ============ ENCOUNTER SETTINGS ============
     encounters: {
         // Encounter chance per step
-        encounterRate: 0.8,
+        encounterRate: 0.4,
 
         // Encounter chance per step on already discovered (hidden) tiles
-        discoveredEncounterRate: 0.45,
+        discoveredEncounterRate: 0.2,
 
         // Enemy count range per encounter
         minEnemies: 1,
