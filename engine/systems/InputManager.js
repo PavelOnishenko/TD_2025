@@ -35,7 +35,6 @@ export default class InputManager {
 
     wasPressed(code) {
         var result = this.keysPressed.has(code);
-        if (result) console.log('wasPressed result:', result);
         return result;
     }
 
@@ -62,10 +61,7 @@ export default class InputManager {
             return false;
         }
 
-        // console.log('Checking wasActionPressed for action:', actionName, 'with keys:', keyCodes);
-        var result = keyCodes.some(code => this.wasPressed(code));
-        if (result) console.log('wasActionPressed result:', result);
-        return result;
+        return keyCodes.some(code => this.wasPressed(code));
     }
 
     wasActionReleased(actionName) {
