@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import EncounterSystem from '../../dist/systems/EncounterSystem.js';
+import EncounterSystem from '../../dist/systems/encounter/EncounterSystem.js';
 import Skeleton from '../../dist/entities/Skeleton.js';
 import { balanceConfig } from '../../dist/config/balanceConfig.js';
 import { withPatchedProperty, withPatchedMethod, withFixedRandom } from '../helpers/testUtils.js';

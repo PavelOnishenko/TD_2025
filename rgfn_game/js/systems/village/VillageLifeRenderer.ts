@@ -1,4 +1,4 @@
-import { theme } from '../config/ThemeConfig.js';
+import { theme } from '../../config/ThemeConfig.js';
 import VillagePopulation, { VillageSpot, VillageVillager } from './VillagePopulation.js';
 
 export type VillageHouse = { x: number; y: number; width: number; height: number; roofColor: string; doorOpenAmount: number; doorTargetOpenAmount: number; doorStateUntil: number; };

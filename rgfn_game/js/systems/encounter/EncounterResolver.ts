@@ -1,7 +1,7 @@
-import { randomInt } from '../../../engine/utils/MathUtils.js';
-import Skeleton, { EnemyConfig } from '../entities/Skeleton.js';
-import Item, { BOW_ITEM, HEALING_POTION_ITEM } from '../entities/Item.js';
-import { balanceConfig } from '../config/balanceConfig.js';
+import { randomInt } from '../../../../engine/utils/MathUtils.js';
+import Skeleton, { EnemyConfig } from '../../entities/Skeleton.js';
+import Item, { BOW_ITEM, HEALING_POTION_ITEM } from '../../entities/Item.js';
+import { balanceConfig } from '../../config/balanceConfig.js';
 import type { EncounterResult, ForcedEncounterType } from './EncounterSystem.js';
 
 type EncounterEventType = 'monster' | 'item' | 'village';

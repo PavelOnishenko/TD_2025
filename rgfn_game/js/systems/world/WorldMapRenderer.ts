@@ -1,6 +1,6 @@
-import GridMap from '../utils/GridMap.js';
-import { FogState, TerrainData, GridCell } from '../types/game.js';
-import { theme } from '../config/ThemeConfig.js';
+import GridMap from '../../utils/GridMap.js';
+import { FogState, TerrainData, GridCell } from '../../types/game.js';
+import { theme } from '../../config/ThemeConfig.js';
 
 export default class WorldMapRenderer {
     public drawBackground(ctx: CanvasRenderingContext2D, width: number, height: number): void {

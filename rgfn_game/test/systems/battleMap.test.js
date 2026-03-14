@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import BattleMap from '../../dist/systems/BattleMap.js';
+import BattleMap from '../../dist/systems/combat/BattleMap.js';
 import { createCombatEntity, createMockCanvasContext } from '../helpers/testUtils.js';
 
 test('BattleMap setup positions player and enemies on grid', () => {

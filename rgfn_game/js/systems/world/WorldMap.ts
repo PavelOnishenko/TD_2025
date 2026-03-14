@@ -1,6 +1,6 @@
-import GridMap from '../utils/GridMap.js';
-import { FogState, TerrainData, GridPosition, Direction, GridCell } from '../types/game.js';
-import { theme } from '../config/ThemeConfig.js';
+import GridMap from '../../utils/GridMap.js';
+import { FogState, TerrainData, GridPosition, Direction, GridCell } from '../../types/game.js';
+import { theme } from '../../config/ThemeConfig.js';
 import WorldMapRenderer from './WorldMapRenderer.js';
 const FOG_STATE = {
     UNKNOWN: 'unknown' as FogState,

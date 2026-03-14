@@ -1,6 +1,6 @@
-import GridMap from '../utils/GridMap.js';
-import { CombatEntity, GridCell } from '../types/game.js';
-import { theme } from '../config/ThemeConfig.js';
+import GridMap from '../../utils/GridMap.js';
+import { CombatEntity, GridCell } from '../../types/game.js';
+import { theme } from '../../config/ThemeConfig.js';
 
 export default class BattleMapView {
     private readonly grid: GridMap;
