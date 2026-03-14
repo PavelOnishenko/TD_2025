@@ -8,7 +8,7 @@ import TurnManager from './systems/TurnManager.js';
 import EncounterSystem from './systems/EncounterSystem.js';
 import Player from './entities/Player.js';
 import Skeleton from './entities/Skeleton.js';
-import Item, { HEALING_POTION_ITEM } from './entities/Item.js';
+import Item, { HEALING_POTION_ITEM }, { BOW_ITEM } from './entities/Item.js';
 import timingConfig from './config/timingConfig.js';
 import { balanceConfig } from './config/balanceConfig.js';
 import { Direction } from './types/game.js';
@@ -355,13 +355,15 @@ export default class Game {
             return;
         }
 
+        const bow = new Item(BOW_ITEM);
+        const addedToInventory = this.player.addItemToInventory(bow);
+
+        if (!addedToInventory) {
+            this.addVillageLog('Inventory full. You cannot buy the bow.', 'system');
+            return;
+        }
+
         this.player.gold -= VILLAGE_BOW_BUY_PRICE;
-        this.player.equipItem(new Item({
-            name: 'Bow',
-            description: 'A sturdy bow that allows you to attack from 2 cells away',
-            type: 'weapon',
-            attackRange: 2,
-        }));
         this.addVillageLog(`You bought a Bow for ${VILLAGE_BOW_BUY_PRICE} gold.`, 'player');
         this.updateHUD();
         this.updateVillageButtons();
@@ -758,6 +760,11 @@ export default class Game {
             return;
         }
 
+        if (!this.worldMap.isPlayerOnEdge()) {
+            this.addBattleLog('You can only flee when standing on the world map edge.', 'system');
+            return;
+        }
+
         this.enableBattleButtons(false);
         this.turnTransitioning = true;
         this.turnManager.waitingForPlayer = false;
@@ -890,7 +897,7 @@ export default class Game {
 
     private enableBattleButtons(enabled: boolean): void {
         this.battleUI.attackBtn.disabled = !enabled;
-        this.battleUI.fleeBtn.disabled = !enabled;
+        this.battleUI.fleeBtn.disabled = !enabled || !this.worldMap.isPlayerOnEdge();
         this.battleUI.waitBtn.disabled = !enabled;
         this.battleUI.usePotionBtn.disabled = !enabled;
     }
@@ -1016,3 +1023,7 @@ export default class Game {
         alert('Game Over! Refresh to restart.');
     }
 }
+
+
+
+
