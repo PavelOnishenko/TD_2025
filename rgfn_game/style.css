@@ -248,3 +248,86 @@ h1 {
 #village-sidebar { max-width: none; width: 100%; }
     #game-canvas { width: 100%; height: auto; max-width: 800px; }
 }
+
+.dev-events-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.65);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 40;
+}
+
+.dev-events-panel {
+    width: min(560px, 100%);
+    max-height: 86vh;
+    overflow-y: auto;
+    background: linear-gradient(180deg, var(--color-panel-highlight), var(--color-primary-bg));
+    border: 2px solid var(--color-secondary-accent);
+    border-radius: 8px;
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+    color: var(--color-text-primary);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.dev-events-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.dev-events-header h2 {
+    margin: 0;
+    color: var(--color-primary-accent);
+    font-family: Georgia, serif;
+    font-size: 22px;
+}
+
+.dev-events-hint {
+    font-size: 13px;
+    color: var(--color-text-muted);
+}
+
+.dev-events-controls {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+}
+
+.dev-events-controls label,
+.dev-events-queue-wrap h3 {
+    color: var(--color-primary-accent);
+    font-size: 14px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin: 0;
+}
+
+#dev-event-type {
+    padding: 7px 10px;
+    border-radius: 4px;
+    border: 1px solid var(--color-secondary-accent);
+    background: var(--color-panel-highlight);
+    color: var(--color-text-primary);
+}
+
+.dev-events-queue-wrap {
+    border: 1px solid var(--color-secondary-accent);
+    border-radius: 6px;
+    padding: 10px;
+    background: color-mix(in srgb, var(--color-panel-highlight) 50%, transparent);
+}
+
+.dev-events-queue {
+    margin: 6px 0 0 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 14px;
+}
