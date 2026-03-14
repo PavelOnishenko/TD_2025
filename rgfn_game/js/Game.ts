@@ -194,6 +194,8 @@ export default class Game {
 
         if (this.stateMachine.isInState(MODES.WORLD_MAP)) {
             this.renderWorldMode();
+        } else if (this.stateMachine.isInState(MODES.VILLAGE)) {
+            this.renderVillageMode();
         } else if (this.stateMachine.isInState(MODES.BATTLE)) {
             this.renderBattleMode();
         }
@@ -285,6 +287,127 @@ export default class Game {
     private renderWorldMode(): void {
         this.worldMap.draw(this.renderer.ctx, this.renderer);
         this.player.draw(this.renderer.ctx);
+    }
+
+    private renderVillageMode(): void {
+        const ctx = this.renderer.ctx;
+        const width = this.canvas.width;
+        const height = this.canvas.height;
+        const time = performance.now() * 0.001;
+
+        const skyGradient = ctx.createLinearGradient(0, 0, 0, height);
+        skyGradient.addColorStop(0, '#78c9ff');
+        skyGradient.addColorStop(0.58, '#a6ddff');
+        skyGradient.addColorStop(0.59, '#95c96f');
+        skyGradient.addColorStop(1, '#6cab4f');
+        ctx.fillStyle = skyGradient;
+        ctx.fillRect(0, 0, width, height);
+
+        const sunPulse = 10 + Math.sin(time * 1.8) * 2;
+        ctx.fillStyle = '#ffe58f';
+        ctx.beginPath();
+        ctx.arc(width * 0.84, height * 0.2, 42 + sunPulse, 0, Math.PI * 2);
+        ctx.fill();
+
+        const cloudOffset = (time * 22) % (width + 260);
+        this.drawVillageCloud(width - cloudOffset, 95, 1.1);
+        this.drawVillageCloud(width - cloudOffset * 0.7 - 220, 150, 0.85);
+        this.drawVillageCloud(width - cloudOffset * 1.2 + 120, 72, 0.7);
+
+        ctx.fillStyle = '#5e8f43';
+        ctx.beginPath();
+        ctx.moveTo(0, height * 0.6);
+        ctx.quadraticCurveTo(width * 0.22, height * 0.5, width * 0.44, height * 0.62);
+        ctx.quadraticCurveTo(width * 0.7, height * 0.72, width, height * 0.58);
+        ctx.lineTo(width, height);
+        ctx.lineTo(0, height);
+        ctx.closePath();
+        ctx.fill();
+
+        this.drawVillageHouse(width * 0.25, height * 0.54, 170, 110, '#af6840');
+        this.drawVillageHouse(width * 0.53, height * 0.51, 210, 130, '#9f5d3a');
+
+        ctx.strokeStyle = '#d7bf89';
+        ctx.lineWidth = 24;
+        ctx.beginPath();
+        ctx.moveTo(0, height * 0.85);
+        ctx.quadraticCurveTo(width * 0.4, height * 0.75, width * 0.8, height * 0.88);
+        ctx.lineTo(width, height * 0.92);
+        ctx.stroke();
+
+        const villagerStep = Math.sin(time * 5.5) * 5;
+        this.drawVillager(width * 0.38 + Math.sin(time * 0.8) * 24, height * 0.78, '#8d4dc9', villagerStep);
+        this.drawVillager(width * 0.66 + Math.cos(time * 0.7) * 16, height * 0.8, '#2f89d1', -villagerStep);
+
+        ctx.fillStyle = 'rgba(22, 37, 18, 0.6)';
+        ctx.font = 'bold 38px Georgia, serif';
+        ctx.fillText('Village Life', 24, 56);
+    }
+
+    private drawVillageCloud(x: number, y: number, scale: number): void {
+        const ctx = this.renderer.ctx;
+
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.scale(scale, scale);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+        ctx.beginPath();
+        ctx.arc(0, 0, 24, 0, Math.PI * 2);
+        ctx.arc(28, -8, 30, 0, Math.PI * 2);
+        ctx.arc(62, 0, 24, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+    }
+
+    private drawVillageHouse(x: number, y: number, width: number, height: number, roofColor: string): void {
+        const ctx = this.renderer.ctx;
+        const roofHeight = height * 0.4;
+
+        ctx.fillStyle = '#dfc79c';
+        ctx.fillRect(x, y, width, height);
+
+        ctx.fillStyle = roofColor;
+        ctx.beginPath();
+        ctx.moveTo(x - 18, y);
+        ctx.lineTo(x + width * 0.5, y - roofHeight);
+        ctx.lineTo(x + width + 18, y);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = '#70482f';
+        ctx.fillRect(x + width * 0.4, y + height * 0.45, width * 0.2, height * 0.55);
+        ctx.fillRect(x + width * 0.12, y + height * 0.3, width * 0.16, height * 0.2);
+        ctx.fillRect(x + width * 0.72, y + height * 0.3, width * 0.16, height * 0.2);
+    }
+
+    private drawVillager(x: number, y: number, shirtColor: string, stepOffset: number): void {
+        const ctx = this.renderer.ctx;
+        ctx.save();
+        ctx.translate(x, y);
+
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.22)';
+        ctx.beginPath();
+        ctx.ellipse(0, 16, 14, 5, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#f0c79a';
+        ctx.beginPath();
+        ctx.arc(0, -20, 10, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = shirtColor;
+        ctx.fillRect(-9, -10, 18, 24);
+
+        ctx.strokeStyle = '#3e2d22';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(-5, 14);
+        ctx.lineTo(-6 + stepOffset * 0.3, 34);
+        ctx.moveTo(5, 14);
+        ctx.lineTo(6 - stepOffset * 0.3, 34);
+        ctx.stroke();
+
+        ctx.restore();
     }
 
     // ============ VILLAGE MODE ============
