@@ -140,6 +140,21 @@ export default class BattleMap {
         return true;
     }
 
+    public isEntityOnEdge(entity: CombatEntity): boolean {
+        const col = entity.gridCol;
+        const row = entity.gridRow;
+
+        if (col === undefined || row === undefined) {
+            return false;
+        }
+
+        const lastCol = this.grid.columns - 1;
+        const lastRow = this.grid.rows - 1;
+
+        return col === 0 || col === lastCol || row === 0 || row === lastRow;
+    }
+
+   
     private isOccupiedByLivingEntity(entity: CombatEntity, col: number, row: number): boolean {
         return this.entities.some((currentEntity) => {
             const isSameEntity = currentEntity === entity;
