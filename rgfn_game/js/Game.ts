@@ -112,16 +112,21 @@ export default class Game {
             playerHp: document.getElementById('player-hp')!,
             playerMaxHp: document.getElementById('player-max-hp')!,
             playerDmg: document.getElementById('player-dmg')!,
+            playerDmgFormula: document.getElementById('player-dmg-formula')!,
             playerArmor: document.getElementById('player-armor')!,
+            playerDodge: document.getElementById('player-dodge')!,
+            playerDodgeFormula: document.getElementById('player-dodge-formula')!,
             playerWeapon: document.getElementById('player-weapon')!,
             playerGold: document.getElementById('player-gold')!,
             skillPoints: document.getElementById('skill-points')!,
             statVitality: document.getElementById('stat-vitality')!,
             statToughness: document.getElementById('stat-toughness')!,
             statStrength: document.getElementById('stat-strength')!,
+            statAgility: document.getElementById('stat-agility')!,
             addVitalityBtn: document.getElementById('add-vitality-btn')! as HTMLButtonElement,
             addToughnessBtn: document.getElementById('add-toughness-btn')! as HTMLButtonElement,
             addStrengthBtn: document.getElementById('add-strength-btn')! as HTMLButtonElement,
+            addAgilityBtn: document.getElementById('add-agility-btn')! as HTMLButtonElement,
             inventoryCount: document.getElementById('inventory-count')!,
             inventoryCapacity: document.getElementById('inventory-capacity')!,
             inventoryGrid: document.getElementById('inventory-grid')!,
@@ -172,6 +177,7 @@ export default class Game {
         this.hudElements.addVitalityBtn.addEventListener('click', () => this.handleAddStat('vitality'));
         this.hudElements.addToughnessBtn.addEventListener('click', () => this.handleAddStat('toughness'));
         this.hudElements.addStrengthBtn.addEventListener('click', () => this.handleAddStat('strength'));
+        this.hudElements.addAgilityBtn.addEventListener('click', () => this.handleAddStat('agility'));
 
         // Canvas click for enemy selection
         this.canvas.addEventListener('click', (e: MouseEvent) => this.handleCanvasClick(e));
@@ -572,6 +578,14 @@ export default class Game {
 
             if (inRange) {
                 this.addBattleLog(`${enemy.name} attacks!`, 'enemy');
+
+                if (Math.random() < this.player.avoidChance) {
+                    this.addBattleLog('You swiftly evade the hit!', 'system');
+                    this.turnManager.nextTurn();
+                    setTimeout(() => this.processTurn(), timingConfig.battle.enemyTurnDelay);
+                    return;
+                }
+
                 const damageBeforeArmor = enemy.getAttackDamage();
                 const damageAfterArmor = damageBeforeArmor <= 0
                     ? 0
@@ -876,11 +890,15 @@ export default class Game {
         this.hudElements.playerHp.textContent = String(this.player.hp);
         this.hudElements.playerMaxHp.textContent = String(this.player.maxHp);
         this.hudElements.playerDmg.textContent = String(this.player.damage);
+        this.hudElements.playerDmgFormula.textContent = this.player.getDamageFormulaText();
         this.hudElements.playerArmor.textContent = String(this.player.armor);
+        this.hudElements.playerDodge.textContent = `${(this.player.avoidChance * 100).toFixed(1)}%`;
+        this.hudElements.playerDodgeFormula.textContent = this.player.getAvoidFormulaText();
         this.hudElements.skillPoints.textContent = String(this.player.skillPoints);
         this.hudElements.statVitality.textContent = String(this.player.vitality);
         this.hudElements.statToughness.textContent = String(this.player.toughness);
         this.hudElements.statStrength.textContent = String(this.player.strength);
+        this.hudElements.statAgility.textContent = String(this.player.agility);
 
         // Update weapon display
         if (this.player.equippedWeapon) {
@@ -942,9 +960,10 @@ export default class Game {
         this.hudElements.addVitalityBtn.disabled = !hasSkillPoints;
         this.hudElements.addToughnessBtn.disabled = !hasSkillPoints;
         this.hudElements.addStrengthBtn.disabled = !hasSkillPoints;
+        this.hudElements.addAgilityBtn.disabled = !hasSkillPoints;
     }
 
-    private handleAddStat(stat: 'vitality' | 'toughness' | 'strength'): void {
+    private handleAddStat(stat: 'vitality' | 'toughness' | 'strength' | 'agility'): void {
         if (this.player.addStat(stat)) {
             this.updateHUD();
             this.addBattleLog(`+1 ${stat.charAt(0).toUpperCase() + stat.slice(1)}!`, 'system');
