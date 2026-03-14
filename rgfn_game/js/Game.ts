@@ -34,6 +34,7 @@ type VillageActivityType = 'chatting' | 'drinking' | 'farming' | 'building' | 'c
 type VillageSpot = {
     x: number;
     y: number;
+    houseIndex?: number;
 };
 
 type VillageHouse = {
@@ -42,8 +43,9 @@ type VillageHouse = {
     width: number;
     height: number;
     roofColor: string;
-    doorOpenPhase: number;
-    doorOpenSpeed: number;
+    doorOpenAmount: number;
+    doorTargetOpenAmount: number;
+    doorStateUntil: number;
 };
 
 type VillageVillager = {
@@ -424,11 +426,12 @@ export default class Game {
         }
 
         this.drawVillageField(width * 0.08, height * 0.71, width * 0.33, height * 0.18, time);
-        this.drawVillageBuildSite(width * 0.72, height * 0.74, width * 0.17, height * 0.14, time);
+        this.drawVillageBuildSite(width * 0.72, height * 0.74, width * 0.17, height * 0.14);
         this.drawVillageWell(width * 0.51, height * 0.71, width * 0.08, height * 0.1, time);
 
+        this.updateVillageHouseDoors(time);
         this.villageHouses.forEach((house) => {
-            this.drawVillageHouse(house, time);
+            this.drawVillageHouse(house);
         });
 
         ctx.strokeStyle = this.mixColors(theme.ui.panelHighlight, theme.ui.secondaryBg, 0.45);
@@ -469,15 +472,15 @@ export default class Game {
         ];
 
         this.villageSpots = [
-            { x: width * 0.13, y: height * 0.8 },
+            { x: width * 0.13, y: height * 0.8, houseIndex: 0 },
             { x: width * 0.23, y: height * 0.84 },
-            { x: width * 0.33, y: height * 0.8 },
+            { x: width * 0.33, y: height * 0.8, houseIndex: 1 },
             { x: width * 0.43, y: height * 0.84 },
-            { x: width * 0.55, y: height * 0.8 },
+            { x: width * 0.55, y: height * 0.8, houseIndex: 2 },
             { x: width * 0.67, y: height * 0.84 },
-            { x: width * 0.79, y: height * 0.81 },
+            { x: width * 0.79, y: height * 0.81, houseIndex: 3 },
             { x: width * 0.57, y: height * 0.7 },
-            { x: width * 0.78, y: height * 0.7 },
+            { x: width * 0.78, y: height * 0.7, houseIndex: 4 },
             { x: width * 0.31, y: height * 0.7 },
         ];
 
@@ -492,8 +495,9 @@ export default class Game {
             width,
             height,
             roofColor,
-            doorOpenPhase: Math.random() * Math.PI * 2,
-            doorOpenSpeed: 0.8 + Math.random() * 0.85,
+            doorOpenAmount: 0,
+            doorTargetOpenAmount: 0,
+            doorStateUntil: 0,
         };
     }
 
@@ -556,7 +560,7 @@ export default class Game {
         ctx.fillRect(x + width * 0.4, y - height * 0.22 + bucketOffset, width * 0.22, height * 0.18);
     }
 
-    private drawVillageBuildSite(x: number, y: number, width: number, height: number, time: number): void {
+    private drawVillageBuildSite(x: number, y: number, width: number, height: number): void {
         const ctx = this.renderer.ctx;
         const outlineColor = this.getOutlineColor();
         ctx.fillStyle = this.mixColors(theme.worldMap.terrain.desert, theme.worldMap.terrain.mountain, 0.3);
@@ -566,11 +570,10 @@ export default class Game {
         ctx.strokeRect(x, y, width, height);
 
         ctx.fillStyle = this.mixColors(theme.ui.secondaryAccent, theme.worldMap.terrain.forest, 0.2);
-        const plankShift = Math.sin(time * 1.5) * 2;
         const planks = [
-            [x + width * 0.08, y + height * 0.25 + plankShift, width * 0.62, height * 0.08],
-            [x + width * 0.12, y + height * 0.42 - plankShift, width * 0.68, height * 0.08],
-            [x + width * 0.2, y + height * 0.6 + plankShift, width * 0.56, height * 0.08],
+            [x + width * 0.08, y + height * 0.25, width * 0.62, height * 0.08],
+            [x + width * 0.12, y + height * 0.42, width * 0.68, height * 0.08],
+            [x + width * 0.2, y + height * 0.6, width * 0.56, height * 0.08],
         ];
 
         planks.forEach(([px, py, pw, ph]) => {
@@ -598,14 +601,41 @@ export default class Game {
         ctx.restore();
     }
 
-    private drawVillageHouse(house: VillageHouse, time: number): void {
+    private updateVillageHouseDoors(now: number): void {
+        this.villageHouses.forEach((house) => {
+            const shouldBeOpen = now < house.doorStateUntil;
+            house.doorTargetOpenAmount = shouldBeOpen ? 1 : 0;
+            const speed = shouldBeOpen ? 0.17 : 0.1;
+            house.doorOpenAmount += (house.doorTargetOpenAmount - house.doorOpenAmount) * speed;
+            house.doorOpenAmount = Math.max(0, Math.min(1, house.doorOpenAmount));
+        });
+    }
+
+    private triggerHouseDoorBySpot(spotIndex: number, now: number): void {
+        const spot = this.villageSpots[spotIndex];
+        if (!spot || typeof spot.houseIndex !== 'number') {
+            return;
+        }
+
+        const house = this.villageHouses[spot.houseIndex];
+        if (!house) {
+            return;
+        }
+
+        house.doorStateUntil = Math.max(house.doorStateUntil, now + 2.2);
+    }
+
+    private drawVillageHouse(house: VillageHouse): void {
         const ctx = this.renderer.ctx;
-        const { x, y, width, height, roofColor, doorOpenPhase, doorOpenSpeed } = house;
+        const { x, y, width, height, roofColor, doorOpenAmount } = house;
         const roofHeight = height * 0.44;
         const isoDepth = width * 0.16;
         const outlineColor = this.getOutlineColor();
+        const woodFront = '#7b5736';
+        const woodSide = '#634629';
+        const doorColor = '#6f4a2e';
 
-        ctx.fillStyle = this.mixColors(theme.ui.panelHighlight, theme.ui.secondaryBg, 0.45);
+        ctx.fillStyle = woodFront;
         ctx.beginPath();
         ctx.moveTo(x, y);
         ctx.lineTo(x + width, y);
@@ -617,7 +647,7 @@ export default class Game {
         ctx.lineWidth = 2;
         ctx.stroke();
 
-        ctx.fillStyle = this.mixColors(theme.ui.panelHighlight, theme.ui.secondaryBg, 0.63);
+        ctx.fillStyle = woodSide;
         ctx.beginPath();
         ctx.moveTo(x + width, y);
         ctx.lineTo(x + width + isoDepth, y - isoDepth * 0.35);
@@ -639,18 +669,37 @@ export default class Game {
         ctx.fill();
         ctx.stroke();
 
-        const doorOpen = Math.max(0, Math.sin(time * doorOpenSpeed + doorOpenPhase));
-        const closedDoorWidth = width * 0.2;
-        const animatedDoorWidth = closedDoorWidth * (1 - doorOpen * 0.68);
-        ctx.fillStyle = this.mixColors(theme.ui.primaryAccent, theme.ui.secondaryAccent, 0.3);
-        ctx.fillRect(x + width * 0.4, y + height * 0.46, animatedDoorWidth, height * 0.54);
-        ctx.strokeRect(x + width * 0.4, y + height * 0.46, animatedDoorWidth, height * 0.54);
+        const doorX = x + width * 0.4;
+        const doorY = y + height * 0.46;
+        const doorWidth = width * 0.2;
+        const doorHeight = height * 0.54;
+        const doorSwingRadians = (Math.PI / 2) * doorOpenAmount;
+        const openEdgeX = doorX + Math.cos(doorSwingRadians) * doorWidth;
+        const openEdgeY = doorY - Math.sin(doorSwingRadians) * doorWidth * 0.34;
 
-        if (doorOpen > 0.3) {
-            ctx.fillStyle = this.withOpacity(theme.ui.secondaryBg, 0.28);
-            ctx.fillRect(x + width * 0.4 + animatedDoorWidth, y + height * 0.46, closedDoorWidth - animatedDoorWidth, height * 0.54);
-            ctx.strokeRect(x + width * 0.4 + animatedDoorWidth, y + height * 0.46, closedDoorWidth - animatedDoorWidth, height * 0.54);
-        }
+        // doorway frame (house opening)
+        ctx.fillStyle = '#4f3520';
+        ctx.fillRect(doorX, doorY, doorWidth, doorHeight);
+        ctx.strokeRect(doorX, doorY, doorWidth, doorHeight);
+
+        // actual door quad rotating on left hinge
+        ctx.fillStyle = doorColor;
+        ctx.beginPath();
+        ctx.moveTo(doorX, doorY);
+        ctx.lineTo(openEdgeX, openEdgeY);
+        ctx.lineTo(openEdgeX, openEdgeY + doorHeight);
+        ctx.lineTo(doorX, doorY + doorHeight);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        const knobX = doorX + (openEdgeX - doorX) * 0.84;
+        const knobY = doorY + doorHeight * 0.54 + (openEdgeY - doorY) * 0.2;
+        ctx.fillStyle = '#d7b579';
+        ctx.beginPath();
+        ctx.arc(knobX, knobY, 2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
 
         const windowColor = this.withOpacity(theme.worldMap.terrain.water, 0.55);
         const windows = [
@@ -722,6 +771,8 @@ export default class Game {
                 villager.travelStart = now;
                 villager.travelDuration = 5 + Math.random() * 4;
                 villager.isWalking = true;
+                this.triggerHouseDoorBySpot(villager.fromSpot, now);
+                this.triggerHouseDoorBySpot(villager.toSpot, now);
             }
 
             const from = this.villageSpots[villager.fromSpot];
@@ -735,6 +786,7 @@ export default class Game {
                 villager.travelDuration = 5 + Math.random() * 4;
                 villager.pauseUntil = now + 6 + Math.random() * 14;
                 villager.isWalking = false;
+                this.triggerHouseDoorBySpot(villager.fromSpot, now);
 
                 const activities: VillageActivityType[] = ['chatting', 'drinking', 'farming', 'building', 'carryingWater', 'carryingLogs'];
                 villager.activity = activities[Math.floor(Math.random() * activities.length)];
@@ -1703,6 +1755,3 @@ export default class Game {
         alert('Game Over! Refresh to restart.');
     }
 }
-
-
-
