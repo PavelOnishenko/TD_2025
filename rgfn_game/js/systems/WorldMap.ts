@@ -13,14 +13,17 @@ export default class WorldMap {
     private playerGridPos: GridPosition;
     private fogStates: Map<string, FogState>;
     private terrainData: Map<string, TerrainData>;
+    private villages: Set<string>;
 
     constructor(columns: number, rows: number, cellSize: number) {
         this.grid = new GridMap(columns, rows, cellSize);
         this.playerGridPos = { col: Math.floor(columns / 2), row: Math.floor(rows / 2) };
         this.fogStates = new Map();
         this.terrainData = new Map();
+        this.villages = new Set();
         this.initializeFogOfWar();
         this.generateTerrain();
+        this.generateVillages();
         this.discoverCell(this.playerGridPos.col, this.playerGridPos.row);
     }
 
@@ -34,6 +37,24 @@ export default class WorldMap {
         this.grid.forEachCell((cell: GridCell, col: number, row: number) => {
             this.terrainData.set(this.getCellKey(col, row), this.generateCellTerrain(col, row));
         });
+    }
+
+    private generateVillages(): void {
+        const dims = this.grid.getDimensions();
+        const villageCount = Math.max(3, Math.floor((dims.columns * dims.rows) * 0.035));
+        const centerCol = Math.floor(dims.columns / 2);
+        const centerRow = Math.floor(dims.rows / 2);
+
+        while (this.villages.size < villageCount) {
+            const col = Math.floor(Math.random() * dims.columns);
+            const row = Math.floor(Math.random() * dims.rows);
+
+            if (col === centerCol && row === centerRow) {
+                continue;
+            }
+
+            this.villages.add(this.getCellKey(col, row));
+        }
     }
 
     private generateCellTerrain(col: number, row: number): TerrainData {
@@ -118,6 +139,10 @@ export default class WorldMap {
         return this.grid.gridToPixel(this.playerGridPos.col, this.playerGridPos.row);
     }
 
+    public isPlayerOnVillage(): boolean {
+        return this.villages.has(this.getCellKey(this.playerGridPos.col, this.playerGridPos.row));
+    }
+
     public draw(ctx: CanvasRenderingContext2D, renderer: any): void {
         const dims = this.grid.getDimensions();
         ctx.fillStyle = theme.worldMap.background;
@@ -145,6 +170,9 @@ export default class WorldMap {
         }
 
         const playerCell = this.grid.getCellAt(this.playerGridPos.col, this.playerGridPos.row);
+
+        this.drawVillages(ctx);
+
         if (playerCell) {
             ctx.fillStyle = this.withAlpha(theme.worldMap.playerMarker, 0.2);
             ctx.fillRect(playerCell.x, playerCell.y, playerCell.width, playerCell.height);
@@ -159,6 +187,48 @@ export default class WorldMap {
             ctx.closePath();
             ctx.fill();
         }
+    }
+
+    private drawVillages(ctx: CanvasRenderingContext2D): void {
+        this.villages.forEach((key) => {
+            const [colText, rowText] = key.split(',');
+            const col = Number(colText);
+            const row = Number(rowText);
+
+            if (col === this.playerGridPos.col && row === this.playerGridPos.row) {
+                return;
+            }
+
+            const fogState = this.getFogState(col, row);
+            if (fogState === FOG_STATE.UNKNOWN) {
+                return;
+            }
+
+            const cell = this.grid.getCellAt(col, row);
+            if (!cell) {
+                return;
+            }
+
+            const brightness = fogState === FOG_STATE.DISCOVERED ? 1 : 0.7;
+            const roofColor = this.withAlpha(theme.ui.secondaryAccent, 0.95 * brightness);
+            const wallColor = this.withAlpha(theme.ui.primaryAccent, 0.22 * brightness);
+            const x = cell.x + cell.width / 2;
+            const y = cell.y + cell.height / 2;
+
+            ctx.fillStyle = wallColor;
+            ctx.fillRect(x - 7, y - 1, 14, 10);
+
+            ctx.fillStyle = roofColor;
+            ctx.beginPath();
+            ctx.moveTo(x - 9, y - 1);
+            ctx.lineTo(x, y - 10);
+            ctx.lineTo(x + 9, y - 1);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.fillStyle = this.withAlpha(theme.worldMap.background, 0.9 * brightness);
+            ctx.fillRect(x - 2, y + 3, 4, 6);
+        });
     }
 
     private drawCell(ctx: CanvasRenderingContext2D, cell: GridCell, fogState: FogState, terrain: TerrainData | undefined): void {

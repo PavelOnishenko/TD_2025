@@ -57,6 +57,7 @@ export default class Player extends DamageableEntity {
     public toughness: number = 0;
     public strength: number = 0;
     public skillPoints: number = 0;
+    public gold: number = 20;
 
     // Equipment
     public equippedWeapon: Item | null = null;
@@ -202,6 +203,12 @@ export default class Player extends DamageableEntity {
         if (item.type === 'weapon') {
             this.equippedWeapon = item;
         }
+    }
+
+    public unequipWeapon(): Item | null {
+        const weapon = this.equippedWeapon;
+        this.equippedWeapon = null;
+        return weapon;
     }
 
     /**
