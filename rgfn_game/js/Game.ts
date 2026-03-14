@@ -589,7 +589,7 @@ export default class Game {
 
         this.addBattleLog('You waited.', 'player');
         this.turnManager.nextTurn();
-        setTimeout(() => this.processTurn(), 600);
+        setTimeout(() => this.processTurn(), timingConfig.battle.waitActionDelay);
     }
 
     private endBattle(result: 'victory' | 'defeat' | 'fled'): void {

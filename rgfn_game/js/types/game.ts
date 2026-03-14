@@ -40,6 +40,7 @@ export interface StateMachineCallbacks {
 export interface TimingConfig {
     battle: {
         playerActionDelay: number;
+        waitActionDelay: number;
         enemyTurnDelay: number;
         enemyActionStartDelay: number;
         fleeFailedDelay: number;

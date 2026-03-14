@@ -9,6 +9,9 @@ export const timingConfig: TimingConfig = {
         // Delay after player action before processing next turn (ms)
         playerActionDelay: 10,
 
+        // Delay after wait action before processing next turn (ms)
+        waitActionDelay: 600,
+
         // Delay after enemy turn before processing next turn (ms)
         enemyTurnDelay: 10,
 
