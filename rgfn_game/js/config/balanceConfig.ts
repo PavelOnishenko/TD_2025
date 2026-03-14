@@ -128,10 +128,7 @@ export const balanceConfig = {
     // ============ ENCOUNTER SETTINGS ============
     encounters: {
         // Encounter chance per step
-        encounterRate: 0.08,
-
-        // Minimum steps before encounter
-        minStepsBeforeEncounter: 10,
+        encounterRate: 0.8,
 
         // Enemy count range per encounter
         minEnemies: 1,
