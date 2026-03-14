@@ -1012,8 +1012,8 @@ export default class Game {
             return;
         }
 
-        if (!this.worldMap.isPlayerOnEdge()) {
-            this.addBattleLog('You can only flee when standing on the world map edge.', 'system');
+        if (!this.battleMap.isEntityOnEdge(this.player)) {
+            this.addBattleLog('You can only flee when standing on the battle map edge.', 'system');
             return;
         }
 
@@ -1149,7 +1149,7 @@ export default class Game {
 
     private enableBattleButtons(enabled: boolean): void {
         this.battleUI.attackBtn.disabled = !enabled;
-        this.battleUI.fleeBtn.disabled = !enabled || !this.worldMap.isPlayerOnEdge();
+        this.battleUI.fleeBtn.disabled = !enabled || !this.battleMap.isEntityOnEdge(this.player);
         this.battleUI.waitBtn.disabled = !enabled;
         this.battleUI.usePotionBtn.disabled = !enabled;
     }
@@ -1275,7 +1275,6 @@ export default class Game {
         alert('Game Over! Refresh to restart.');
     }
 }
-
 
 
 

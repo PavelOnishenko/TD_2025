@@ -128,6 +128,33 @@ test('BattleMap moveEntity prevents moving out of map bounds', () => {
   assert.equal(map.moveEntity(player, 'left'), false);
   assert.deepEqual([player.gridCol, player.gridRow], [0, 0]);
 });
+test('BattleMap isEntityOnEdge returns true only on battle map borders', () => {
+  const map = new BattleMap();
+  const player = createCombatEntity('Player', 0, 0, false);
+  const enemy = createCombatEntity('Skeleton', 0, 0, false);
+
+  map.setup(player, [enemy]);
+
+  player.gridCol = 0;
+  player.gridRow = 3;
+  assert.equal(map.isEntityOnEdge(player), true);
+
+  player.gridCol = 4;
+  player.gridRow = 0;
+  assert.equal(map.isEntityOnEdge(player), true);
+
+  player.gridCol = 9;
+  player.gridRow = 6;
+  assert.equal(map.isEntityOnEdge(player), true);
+
+  player.gridCol = 4;
+  player.gridRow = 7;
+  assert.equal(map.isEntityOnEdge(player), true);
+
+  player.gridCol = 4;
+  player.gridRow = 4;
+  assert.equal(map.isEntityOnEdge(player), false);
+});
 
 test('BattleMap draw paints grid and highlights selected enemy', () => {
   const map = new BattleMap();
