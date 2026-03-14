@@ -292,6 +292,10 @@ export default class Player extends DamageableEntity {
         return this.inventorySystem.unequipWeapon();
     }
 
+    public unequipArmor(): Item | null {
+        return this.inventorySystem.unequipArmor();
+    }
+
     /**
      * Get the player's current attack range
      * @returns number of cells the player can attack from
@@ -336,7 +340,7 @@ export default class Player extends DamageableEntity {
         return `${style}: weapon ${weapon.damageBonus} + off-hand ${offhand} + stat bonus ${statBonus} = ${this.damage}`;
     }
 
-    private canEquipItem(item: Item): boolean {
+    public canEquipItem(item: Item): boolean {
         const requiredAgility = item.requirements.agility ?? 0;
         const requiredStrength = item.requirements.strength ?? 0;
         return this.agility >= requiredAgility && this.strength >= requiredStrength;

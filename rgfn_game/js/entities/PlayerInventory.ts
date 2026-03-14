@@ -65,6 +65,13 @@ export default class PlayerInventory {
         return weapon;
     }
 
+
+    public unequipArmor(): Item | null {
+        const armor = this.equippedArmor;
+        this.equippedArmor = null;
+        this.hooks.onEquipmentChanged();
+        return armor;
+    }
     public getAttackRange(): number {
         return this.equippedWeapon ? this.equippedWeapon.attackRange : 1;
     }

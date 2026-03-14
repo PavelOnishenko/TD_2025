@@ -273,6 +273,47 @@ h1 {
     #game-canvas { width: 100%; max-height: 60vh; }
 }
 
+
+
+.equipment-panel {
+    margin-top: 8px;
+    border: 1px solid var(--color-secondary-accent);
+    border-radius: 6px;
+    padding: 8px;
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.equipment-title {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: var(--color-primary-accent);
+    margin-bottom: 6px;
+}
+
+.equipment-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 6px;
+}
+
+.equipment-slot {
+    width: 100%;
+    text-align: left;
+    border: 1px solid var(--color-secondary-accent);
+    border-radius: 4px;
+    background: color-mix(in srgb, var(--color-panel-highlight) 80%, transparent);
+    color: var(--color-text-primary);
+    padding: 5px 7px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.equipment-hint {
+    margin-top: 6px;
+    font-size: 11px;
+    color: var(--color-text-muted);
+}
 .inventory-grid {
     display: grid;
     grid-template-columns: repeat(6, minmax(0, 1fr));
@@ -289,6 +330,8 @@ h1 {
     display: flex;
     align-items: center;
     justify-content: center;
+    padding: 0;
+    cursor: pointer;
 }
 
 .inventory-slot.empty {
