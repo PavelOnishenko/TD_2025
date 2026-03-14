@@ -97,7 +97,7 @@ export default class Player extends DamageableEntity {
         this.toughness = balanceConfig.player.initialToughness;
         this.strength = balanceConfig.player.initialStrength;
         this.agility = balanceConfig.player.initialAgility;
-        this.skillPoints = 0;
+        this.skillPoints = balanceConfig.player.initialSkillPoints;
 
         this.inventorySystem = new PlayerInventory({
             onEquipmentChanged: () => this.updateStats(),

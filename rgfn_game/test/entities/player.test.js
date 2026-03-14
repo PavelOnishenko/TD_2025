@@ -13,6 +13,7 @@ test('Player initializes with base combat stats', () => {
   assert.equal(player.damage, balanceConfig.combat.fistDamagePerHand * 2);
   assert.equal(player.armor, balanceConfig.player.baseArmor);
   assert.equal(player.level, 1);
+  assert.equal(player.skillPoints, balanceConfig.player.initialSkillPoints);
 });
 
 test('Player takeDamage applies armor and minimum damage rule', () => {
