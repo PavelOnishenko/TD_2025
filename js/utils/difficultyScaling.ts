@@ -1,9 +1,21 @@
-// @ts-nocheck
-
 import gameConfig from '../config/gameConfig.js';
 
-function resolveMultiplier(source = gameConfig?.waves) {
-    const raw = source?.difficultyMultiplier ?? gameConfig?.waves?.difficultyMultiplier;
+interface GameConfigShape {
+    waves?: { difficultyMultiplier?: number };
+}
+
+const typedGameConfig = gameConfig as unknown as GameConfigShape;
+
+interface DifficultySource {
+    difficultyMultiplier?: number;
+}
+
+interface WaveConfig {
+    difficultyMultiplier?: number;
+}
+
+function resolveMultiplier(source: DifficultySource | WaveConfig | undefined = typedGameConfig?.waves): number {
+    const raw = source?.difficultyMultiplier ?? typedGameConfig?.waves?.difficultyMultiplier;
     const multiplier = Number(raw);
     if (!Number.isFinite(multiplier) || multiplier <= 0) {
         return 1;
@@ -11,11 +23,11 @@ function resolveMultiplier(source = gameConfig?.waves) {
     return multiplier;
 }
 
-export function getDifficultyMultiplier(source) {
+export function getDifficultyMultiplier(source?: DifficultySource | WaveConfig): number {
     return resolveMultiplier(source);
 }
 
-export function scaleDifficulty(baseDifficulty, source) {
+export function scaleDifficulty(baseDifficulty: number, source?: DifficultySource | WaveConfig): number {
     const difficulty = Number(baseDifficulty);
     if (!Number.isFinite(difficulty)) {
         return baseDifficulty;

@@ -1,24 +1,58 @@
-// @ts-nocheck
-
 import gameConfig from '../config/gameConfig.js';
+
+interface GameConfigShape {
+    player?: {
+        killEnergyScaling?: KillEnergyScalingConfig;
+    };
+}
+
+const typedGameConfig = gameConfig as unknown as GameConfigShape;
 
 const DEFAULT_MULTIPLIER = 1;
 
-function clamp(value, min, max) {
+interface EnergyBreakpoint {
+    wave: number;
+    bonus: number;
+}
+
+interface RawEnergyBreakpoint {
+    wave?: number;
+    bonus?: number;
+}
+
+interface KillEnergyScalingConfig {
+    baseWave?: number;
+    baseBonus?: number;
+    maxBonus?: number;
+    breakpoints?: RawEnergyBreakpoint[];
+}
+
+interface ResolvedScalingConfig {
+    baseWave: number;
+    baseBonus: number;
+    breakpoints: EnergyBreakpoint[];
+    maxBonus: number | null;
+}
+
+interface WaveState {
+    wave?: number;
+}
+
+function clamp(value: number, min: number, max: number): number {
     return Math.max(min, Math.min(max, value));
 }
 
-function toFiniteNumber(value, fallback) {
+function toFiniteNumber(value: unknown, fallback: number): number {
     const numeric = Number(value);
     return Number.isFinite(numeric) ? numeric : fallback;
 }
 
-function normalizeWaveNumber(value, fallback = 1) {
+function normalizeWaveNumber(value: unknown, fallback = 1): number {
     const wave = Math.floor(toFiniteNumber(value, fallback));
     return Math.max(1, wave);
 }
 
-function normalizeBreakpoints(rawBreakpoints) {
+function normalizeBreakpoints(rawBreakpoints: RawEnergyBreakpoint[] | undefined): EnergyBreakpoint[] {
     if (!Array.isArray(rawBreakpoints)) {
         return [];
     }
@@ -27,25 +61,25 @@ function normalizeBreakpoints(rawBreakpoints) {
         .filter((breakpoint) => Number.isFinite(breakpoint?.wave) && Number.isFinite(breakpoint?.bonus))
         .map((breakpoint) => ({
             wave: normalizeWaveNumber(breakpoint.wave),
-            bonus: breakpoint.bonus,
+            bonus: Number(breakpoint.bonus),
         }))
         .sort((a, b) => a.wave - b.wave);
 }
 
-function resolveScalingConfig(source = gameConfig?.player?.killEnergyScaling) {
+function resolveScalingConfig(source: KillEnergyScalingConfig | undefined = typedGameConfig?.player?.killEnergyScaling): ResolvedScalingConfig | null {
     if (!source) {
         return null;
     }
 
     const baseWave = normalizeWaveNumber(source.baseWave);
     const baseBonus = toFiniteNumber(source.baseBonus, 0);
-    const maxBonus = Number.isFinite(source.maxBonus) ? source.maxBonus : null;
+    const maxBonus = Number.isFinite(source.maxBonus) ? Number(source.maxBonus) : null;
     const breakpoints = normalizeBreakpoints(source.breakpoints);
 
     return { baseWave, baseBonus, breakpoints, maxBonus };
 }
 
-function getBonusAtWave(waveNumber, { baseWave, baseBonus, breakpoints }) {
+function getBonusAtWave(waveNumber: number, { baseWave, baseBonus, breakpoints }: ResolvedScalingConfig): number {
     if (waveNumber <= baseWave) {
         return baseBonus;
     }
@@ -69,11 +103,11 @@ function getBonusAtWave(waveNumber, { baseWave, baseBonus, breakpoints }) {
     return previousBonus;
 }
 
-function applyBonusCap(bonus, maxBonus) {
+function applyBonusCap(bonus: number, maxBonus: number | null): number {
     return maxBonus === null ? bonus : Math.min(bonus, maxBonus);
 }
 
-export function getWaveEnergyMultiplier(game, sourceScaling) {
+export function getWaveEnergyMultiplier(game: WaveState | undefined, sourceScaling?: KillEnergyScalingConfig): number {
     const scaling = resolveScalingConfig(sourceScaling);
 
     if (!scaling) {

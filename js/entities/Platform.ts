@@ -1,13 +1,21 @@
-// @ts-nocheck
+export interface PlatformInit {
+    x?: number;
+    y?: number;
+    scale?: number;
+}
 
 export default class Platform {
-    constructor({ x = 0, y = 0, scale = 1 } = {}) {
+    public x: number;
+    public y: number;
+    public scale: number;
+
+    constructor({ x = 0, y = 0, scale = 1 }: PlatformInit = {}) {
         this.x = x;
         this.y = y;
         this.scale = scale;
     }
 
-    draw(ctx, image) {
+    draw(ctx: CanvasRenderingContext2D | null | undefined, image: (CanvasImageSource & { width: number; height: number }) | null | undefined): void {
         if (!ctx || !image) {
             return;
         }

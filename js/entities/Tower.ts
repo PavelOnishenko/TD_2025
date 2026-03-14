@@ -1,8 +1,73 @@
-// @ts-nocheck
-
 import { drawTowerMuzzleFlashIfNeeded, drawTowerPlacementFlash, drawTowerTopGlowIfNeeded } from '../systems/effects.js';
 import { getHowler } from '../systems/audio.js';
 import gameConfig from '../config/gameConfig.js';
+
+interface Point {
+    x: number;
+    y: number;
+}
+
+interface LevelConfig {
+    damage: number;
+    fireInterval: number;
+}
+
+interface TowerAssets {
+    [key: string]: CanvasImageSource | undefined;
+}
+
+interface UpgradeGameState {
+    energy: number;
+    upgradeModeActive?: boolean;
+    getUpgradeCost?: (level: number) => number;
+}
+
+interface HowlLike {
+    _src?: string | string[];
+    stop?: () => void;
+}
+
+interface HowlerLike {
+    _howls?: HowlLike[];
+}
+
+interface TowerConfigShape {
+    towers: {
+        width: number;
+        height: number;
+        baseRange: number;
+        rangePerLevel: number;
+        rangeBonusMultiplier: number;
+        flashDuration: number;
+        placementFlashDuration: number;
+        mergePulseWaveDuration: number;
+        errorPulseDuration: number;
+        glowSpeeds: number[];
+        removalHoldDuration?: number;
+        removalIndicatorDecay?: number;
+        levels: LevelConfig[];
+        levelIndicator?: {
+            fontSize?: number;
+            offsetX?: number;
+            offsetY?: number;
+            padding?: number;
+            backgroundAlpha?: number;
+            styles?: Record<number, Record<string, unknown>>;
+        };
+        upgradeCostText?: {
+            fontSize?: number;
+            fontFamily?: string;
+            fontWeight?: string;
+            colorAffordable?: string;
+            colorUnaffordable?: string;
+            backgroundAlpha?: number;
+            padding?: number;
+            offsetY?: number;
+        };
+    };
+}
+
+const towerGameConfig = gameConfig as unknown as TowerConfigShape;
 
 let towerIdCounter = 1;
 
@@ -14,11 +79,43 @@ const DEFAULT_PLACEMENT_ANCHOR = Object.freeze({
 });
 
 export default class Tower {
-    constructor(x, y, color = 'red', level = 1) {
+    public x: number;
+    public y: number;
+    public id: number;
+    public w: number;
+    public h: number;
+    public baseRange: number;
+    public range: number;
+    public damage: number;
+    public lastShot: number;
+    public color: string;
+    public level: number;
+    public fireInterval: number;
+    public flashDuration: number;
+    public flashTimer: number;
+    public placementFlashDuration: number;
+    public placementFlashTimer: number;
+    public glowTime: number;
+    public glowSpeed: number;
+    public mergeHint: number;
+    public mergePulseWaveDuration: number;
+    public mergePulseWaveTimer: number;
+    public errorPulseDuration: number;
+    public errorPulseTimer: number;
+    public removalChargeDuration: number;
+    public removalChargeTimer: number;
+    public removalChargeActive: boolean;
+    public removalChargePending: boolean;
+    public removalChargeDecayRate: number;
+    public mergeSelected: boolean;
+    public hovered: boolean;
+    public hoverAmount: number;
+
+    constructor(x: number, y: number, color = 'red', level = 1) {
         this.x = x;
         this.y = y;
         this.id = towerIdCounter++;
-        const config = gameConfig.towers;
+        const config = towerGameConfig.towers;
         this.w = config.width;
         this.h = config.height;
         this.baseRange = config.baseRange;
@@ -30,7 +127,7 @@ export default class Tower {
         this.placementFlashDuration = config.placementFlashDuration;
         this.placementFlashTimer = 0;
         this.glowTime = Math.random() * Math.PI * 2;
-        this.glowSpeed = config.glowSpeeds.at(-1) ?? 2.4;
+        this.glowSpeed = config.glowSpeeds[config.glowSpeeds.length - 1] ?? 2.4;
         this.mergeHint = 0;
         this.mergePulseWaveDuration = config.mergePulseWaveDuration;
         this.mergePulseWaveTimer = 0;
@@ -47,8 +144,8 @@ export default class Tower {
         this.updateStats();
     }
 
-    getLevelConfig(level = this.level) {
-        const levelConfigs = gameConfig.towers?.levels;
+    getLevelConfig(level = this.level): LevelConfig {
+        const levelConfigs = towerGameConfig.towers?.levels;
         if (!Array.isArray(levelConfigs)) {
             throw new Error('Missing or invalid tower level configuration in gameConfig');
         }
@@ -57,11 +154,11 @@ export default class Tower {
         if (!config || typeof config !== 'object') {
             throw new Error(`Invalid tower level configuration for tower level ${level}: ${config}`);
         }
-        return config;
+        return config as LevelConfig;
     }
 
-    updateStats() {
-        const config = gameConfig.towers;
+    updateStats(): void {
+        const config = towerGameConfig.towers;
         const rangeMultiplier = 1 + config.rangePerLevel * (this.level - 1);
         const rangeIncreaseFactor = config.rangeBonusMultiplier;
         this.range = this.baseRange * rangeMultiplier * rangeIncreaseFactor;
@@ -78,7 +175,7 @@ export default class Tower {
         this.fireInterval = this.getConfiguredFireInterval();
     }
 
-    getConfiguredFireInterval() {
+    getConfiguredFireInterval(): number {
         const { fireInterval } = this.getLevelConfig();
         if (Number.isFinite(fireInterval) && fireInterval > 0) {
             return fireInterval;
@@ -86,14 +183,14 @@ export default class Tower {
         throw new Error(`Invalid fire interval for tower level ${this.level}: ${fireInterval}`);
     }
 
-    getFireInterval() {
+    getFireInterval(): number {
         if (!Number.isFinite(this.fireInterval) || this.fireInterval <= 0) {
             this.fireInterval = this.getConfiguredFireInterval();
         }
         return this.fireInterval;
     }
 
-    update(dt) {
+    update(dt: number): void {
         if (this.flashTimer > 0) {
             this.flashTimer = Math.max(0, this.flashTimer - dt);
         }
@@ -118,23 +215,23 @@ export default class Tower {
         this.updateRemovalCharge(dt);
     }
 
-    triggerFlash() {
+    triggerFlash(): void {
         this.flashTimer = this.flashDuration;
     }
 
-    triggerPlacementFlash() {
+    triggerPlacementFlash(): void {
         this.placementFlashTimer = this.placementFlashDuration;
     }
 
-    triggerMergePulse() {
+    triggerMergePulse(): void {
         this.mergePulseWaveTimer = this.mergePulseWaveDuration;
     }
 
-    triggerErrorPulse() {
+    triggerErrorPulse(): void {
         this.errorPulseTimer = this.errorPulseDuration;
     }
 
-    getErrorPulseStrength() {
+    getErrorPulseStrength(): number {
         if (this.errorPulseDuration <= 0) {
             return 0;
         }
@@ -142,7 +239,7 @@ export default class Tower {
         return Math.max(0, Math.min(1, normalized));
     }
 
-    center() {
+    center(): Point {
         return { x: this.x + this.w / 2, y: this.y + this.h / 2};
     }
 
@@ -150,7 +247,7 @@ export default class Tower {
      * Aligns the tower so its sprite anchor sits on the provided cell.
      * @param {{ x: number, y: number }} cell
      */
-    alignToCell(cell) {
+    alignToCell(cell: Point): void {
         const offset = this.getPlacementOffset();
         this.x = cell.x - offset.x;
         this.y = cell.y - offset.y;
@@ -160,16 +257,16 @@ export default class Tower {
      * Computes the offset between the sprite origin and the visual anchor.
      * @returns {{ x: number, y: number }}
      */
-    getPlacementOffset() {
+    getPlacementOffset(): Point {
         const anchor = Tower.getPlacementAnchor();
         return { x: this.w * anchor.x, y: this.h * anchor.y };
     }
 
-    static getPlacementAnchor() {
+    static getPlacementAnchor(): Readonly<Point> {
         return DEFAULT_PLACEMENT_ANCHOR;
     }
 
-    beginRemovalCharge() {
+    beginRemovalCharge(): boolean {
         if (this.removalChargePending) {
             return false;
         }
@@ -179,7 +276,7 @@ export default class Tower {
         return true;
     }
 
-    cancelRemovalCharge() {
+    cancelRemovalCharge(): void {
         this.removalChargeActive = false;
         if (!this.removalChargePending) {
             if (!Number.isFinite(this.removalChargeDuration) || this.removalChargeDuration <= 0) {
@@ -187,7 +284,7 @@ export default class Tower {
             }
         }
         // Abruptly stop the removal charge sound if it is playing
-        const howler = getHowler();
+        const howler = getHowler() as HowlerLike | null;
         const howls = howler && Array.isArray(howler._howls) ? howler._howls : null;
         if (howls) {
             for (const h of howls) {
@@ -206,21 +303,21 @@ export default class Tower {
         }
     }
 
-    isRemovalCharging() {
+    isRemovalCharging(): boolean {
         return Boolean(this.removalChargeActive);
     }
 
-    shouldTriggerRemoval() {
+    shouldTriggerRemoval(): boolean {
         return Boolean(this.removalChargePending);
     }
 
-    acknowledgeRemoval() {
+    acknowledgeRemoval(): void {
         this.removalChargePending = false;
         this.removalChargeActive = false;
         this.removalChargeTimer = 0;
     }
 
-    getRemovalChargeProgress() {
+    getRemovalChargeProgress(): number {
         if (!Number.isFinite(this.removalChargeDuration) || this.removalChargeDuration <= 0) {
             return 0;
         }
@@ -228,7 +325,7 @@ export default class Tower {
         return Math.max(0, Math.min(1, normalized));
     }
 
-    draw(ctx, assets, game = null) {
+    draw(ctx: CanvasRenderingContext2D, assets: TowerAssets, game: UpgradeGameState | null = null): void {
         const c = this.center();
         this.drawHover(ctx, c);
         ctx.fillStyle = this.color;
@@ -252,7 +349,7 @@ export default class Tower {
         }
     }
 
-    setHover(strength = 1) {
+    setHover(strength = 1): void {
         if (!Number.isFinite(strength)) {
             return;
         }
@@ -260,7 +357,7 @@ export default class Tower {
         this.hoverAmount = Math.max(this.hoverAmount, Math.max(0, Math.min(1, strength)));
     }
 
-    setHovered(isHovered) {
+    setHovered(isHovered: boolean): void {
         this.hovered = Boolean(isHovered);
         if (this.hovered) {
             this.hoverAmount = 1;
@@ -269,7 +366,7 @@ export default class Tower {
         }
     }
 
-    drawHover(ctx, center) {
+    drawHover(ctx: CanvasRenderingContext2D, center: Point): void {
         if (this.hoverAmount <= 0) {
             return;
         }
@@ -291,7 +388,7 @@ export default class Tower {
         ctx.restore();
     }
 
-    drawBody(ctx, assets) {
+    drawBody(ctx: CanvasRenderingContext2D, assets: TowerAssets): void {
         const propertyName = `tower_${this.level}${this.color.charAt(0)}`;
         const sprite = assets[propertyName];
         if (!sprite) {
@@ -301,7 +398,7 @@ export default class Tower {
         ctx.drawImage(sprite, this.x, this.y, this.w, this.h);
     }
 
-    drawMergeHint(ctx, center) {
+    drawMergeHint(ctx: CanvasRenderingContext2D, center: Point): void {
         if (this.mergeHint <= 0) {
             return;
         }
@@ -325,7 +422,7 @@ export default class Tower {
         ctx.restore();
     }
 
-    drawMergeSelection(ctx, center) {
+    drawMergeSelection(ctx: CanvasRenderingContext2D, center: Point): void {
         if (!this.mergeSelected) {
             return;
         }
@@ -348,7 +445,7 @@ export default class Tower {
         ctx.restore();
     }
 
-    drawMergePulseWave(ctx, center) {
+    drawMergePulseWave(ctx: CanvasRenderingContext2D, center: Point): void {
         if (this.mergePulseWaveTimer <= 0) {
             return;
         }
@@ -381,7 +478,7 @@ export default class Tower {
         ctx.restore();
     }
 
-    drawErrorPulse(ctx, center) {
+    drawErrorPulse(ctx: CanvasRenderingContext2D, center: Point): void {
         if (this.errorPulseTimer <= 0) {
             return;
         }
@@ -413,8 +510,8 @@ export default class Tower {
         ctx.restore();
     }
 
-    drawLevelIndicator(ctx) {
-        const config = gameConfig.towers?.levelIndicator ?? {};
+    drawLevelIndicator(ctx: CanvasRenderingContext2D): void {
+        const config = towerGameConfig.towers?.levelIndicator ?? {};
         const fontSize = config.fontSize ?? 16;
         const offsetX = config.offsetX ?? 0;
         const offsetY = config.offsetY ?? 4;
@@ -433,7 +530,7 @@ export default class Tower {
         const textY = this.y + this.h + fontSize + offsetY;
 
         // Get color and intensity based on level
-        const levelStyle = this.getLevelIndicatorStyle(this.level);
+        const levelStyle = this.getLevelIndicatorStyle(this.level) as any;
 
         // Draw semi-transparent background for better visibility
         const metrics = ctx.measureText(text);
@@ -483,8 +580,8 @@ export default class Tower {
         ctx.restore();
     }
 
-    getLevelIndicatorStyle(level) {
-        const config = gameConfig.towers?.levelIndicator ?? {};
+    getLevelIndicatorStyle(level: number): Record<string, unknown> {
+        const config = towerGameConfig.towers?.levelIndicator ?? {};
         const styles = config.styles ?? {};
 
         // Fallback default style if config is missing
@@ -501,7 +598,7 @@ export default class Tower {
         return styles[level] || styles[6] || defaultStyle;
     }
 
-    drawUpgradeCost(ctx, game) {
+    drawUpgradeCost(ctx: CanvasRenderingContext2D, game: UpgradeGameState): void {
         const MAX_UPGRADE_LEVEL = 6;
         if (this.level >= MAX_UPGRADE_LEVEL) {
             return;
@@ -515,7 +612,7 @@ export default class Tower {
             return;
         }
 
-        const config = gameConfig.towers?.upgradeCostText ?? {};
+        const config = towerGameConfig.towers?.upgradeCostText ?? {};
         const fontSize = Number.isFinite(config.fontSize) ? config.fontSize : 12;
         const fontFamily = typeof config.fontFamily === 'string' ? config.fontFamily : 'sans-serif';
         const fontWeight = typeof config.fontWeight === 'string' ? config.fontWeight : 'bold';
@@ -553,7 +650,7 @@ export default class Tower {
         ctx.restore();
     }
 
-    updateRemovalCharge(dt) {
+    updateRemovalCharge(dt: number): void {
         if (!Number.isFinite(this.removalChargeDuration) || this.removalChargeDuration <= 0) {
             this.removalChargeActive = false;
             this.removalChargePending = false;
@@ -592,7 +689,7 @@ export default class Tower {
         this.removalChargeTimer = Math.max(0, this.removalChargeTimer - decayRate * dt);
     }
 
-    drawRemovalChargeIndicator(ctx, center) {
+    drawRemovalChargeIndicator(ctx: CanvasRenderingContext2D, center: Point): void {
         const progress = this.getRemovalChargeProgress();
         if (progress <= 0) {
             return;
@@ -656,7 +753,7 @@ export default class Tower {
     }
 }
 
-function easeOutCubic(t) {
+function easeOutCubic(t: number): number {
     const clamped = Math.max(0, Math.min(1, t));
     const inverted = 1 - clamped;
     return 1 - inverted * inverted * inverted;
