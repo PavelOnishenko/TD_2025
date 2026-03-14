@@ -11,12 +11,26 @@
 <body>
     <div id="game-container">
         <div id="hud">
-            <div class="hud-section">
+            <div class="hud-section hud-section--topbar">
                 <h1>RGFN</h1>
                 <div id="mode-indicator">World Map</div>
-                <button id="use-potion-btn" class="action-btn">Use Potion</button>
+                <div class="hud-top-actions">
+                    <button id="use-potion-btn" class="action-btn">Use Potion</button>
+                    <button id="open-stats-window" class="action-btn hud-window-btn" type="button">Stats</button>
+                    <button id="open-skills-window" class="action-btn hud-window-btn" type="button">Skills</button>
+                    <button id="open-inventory-window" class="action-btn hud-window-btn" type="button">Inventory</button>
+                </div>
             </div>
-            <div class="hud-section stats">
+        </div>
+
+        <div id="hud-windows-overlay" class="hud-windows-overlay hidden" aria-hidden="true"></div>
+
+        <section id="stats-window" class="hud-window hidden" aria-hidden="true" role="dialog" aria-modal="false" aria-labelledby="stats-window-title">
+            <div class="hud-window__header">
+                <h2 id="stats-window-title">Stats</h2>
+                <button class="action-btn hud-window-close" data-window-close="stats-window" type="button">Close</button>
+            </div>
+            <div class="hud-window__body stats">
                 <div class="stat">Level: <span id="player-level">1</span></div>
                 <div class="stat">XP: <span id="player-xp">0</span>/<span id="player-xp-next">5</span></div>
                 <div class="stat">HP: <span id="player-hp">5</span>/<span id="player-max-hp">5</span></div>
@@ -32,7 +46,14 @@
                 <div class="stat">Weapon: <span id="player-weapon">None</span></div>
                 <div class="stat">Gold: <span id="player-gold">20</span></div>
             </div>
-            <div class="hud-section stats">
+        </section>
+
+        <section id="skills-window" class="hud-window hidden" aria-hidden="true" role="dialog" aria-modal="false" aria-labelledby="skills-window-title">
+            <div class="hud-window__header">
+                <h2 id="skills-window-title">Skill Points</h2>
+                <button class="action-btn hud-window-close" data-window-close="skills-window" type="button">Close</button>
+            </div>
+            <div class="hud-window__body stats">
                 <div class="stat">Skill Points: <span id="skill-points">0</span></div>
                 <div class="stat-row">
                     <span>Vitality: <span id="stat-vitality">0</span></span>
@@ -51,11 +72,18 @@
                     <button id="add-agility-btn" class="stat-btn" title="+Bow dmg (major), +Melee dmg (minor), +Evade chance">+</button>
                 </div>
             </div>
-            <div class="hud-section stats">
+        </section>
+
+        <section id="inventory-window" class="hud-window hidden" aria-hidden="true" role="dialog" aria-modal="false" aria-labelledby="inventory-window-title">
+            <div class="hud-window__header">
+                <h2 id="inventory-window-title">Inventory</h2>
+                <button class="action-btn hud-window-close" data-window-close="inventory-window" type="button">Close</button>
+            </div>
+            <div class="hud-window__body stats">
                 <div class="stat">Inventory (<span id="inventory-count">0</span>/<span id="inventory-capacity">6</span>)</div>
                 <div id="inventory-grid" class="inventory-grid"></div>
             </div>
-        </div>
+        </section>
 
         <div id="game-area">
             <canvas id="game-canvas" width="800" height="600"></canvas>
