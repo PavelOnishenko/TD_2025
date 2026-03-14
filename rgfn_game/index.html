@@ -120,6 +120,61 @@
             </div>
         </div>
 
+        <div id="game-area">
+            <canvas id="game-canvas" width="800" height="600"></canvas>
+
+            <div id="battle-sidebar" class="hidden">
+                <h2>Combat</h2>
+                <div id="enemy-info">
+                    <div class="enemy-stat">Enemy: <span id="enemy-name">-</span></div>
+                    <div class="enemy-stat">HP: <span id="enemy-hp">-</span>/<span id="enemy-max-hp">-</span></div>
+                </div>
+                <div id="battle-instructions">
+                    <p><strong>Your Turn:</strong></p>
+                    <p>Move with Arrow Keys/WASD</p>
+                    <p id="attack-range-text">Attack when adjacent (1 tile)</p>
+                </div>
+                <div id="battle-actions">
+                    <button id="attack-btn" class="action-btn">Attack</button>
+                    <button id="flee-btn" class="action-btn">Flee</button>
+                    <button id="wait-btn" class="action-btn">Wait</button>
+                    <button id="battle-use-potion-btn" class="action-btn">Drink Potion</button>
+                </div>
+                <div id="battle-log-container">
+                    <h3>Battle Log</h3>
+                    <div id="battle-log"></div>
+                </div>
+            </div>
+
+
+            <div id="village-sidebar" class="hidden">
+                <h2>Village</h2>
+                <div id="village-prompt">
+                    <p>You found a village. Enter?</p>
+                    <div id="village-entry-actions">
+                        <button id="village-enter-btn" class="action-btn">Enter</button>
+                        <button id="village-skip-btn" class="action-btn">Continue</button>
+                    </div>
+                </div>
+                <div id="village-actions" class="hidden">
+                    <p><strong>Village Actions:</strong></p>
+                    <div id="village-action-buttons">
+                        <button id="village-wait-btn" class="action-btn">Wait</button>
+                        <button id="village-buy-btn" class="action-btn">Buy Bow (15g)</button>
+                        <button id="village-sell-btn" class="action-btn">Sell Bow (8g)</button>
+                        <button id="village-buy-potion-btn" class="action-btn">Buy Healing Potion (4g)</button>
+                        <button id="village-sell-potion-btn" class="action-btn">Sell Healing Potion (2g)</button>
+                        <button id="village-leave-btn" class="action-btn">Leave</button>
+                    </div>
+                </div>
+                <div id="village-log-container">
+                    <h3>Village Log</h3>
+                    <div id="village-log"></div>
+                </div>
+            </div>
+        </div>
+
+
         <div id="dev-events-modal" class="dev-events-modal hidden" role="dialog" aria-modal="true" aria-labelledby="dev-events-title">
             <div class="dev-events-panel">
                 <div class="dev-events-header">
