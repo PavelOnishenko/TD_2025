@@ -1,5 +1,5 @@
-import BattleMap from './BattleMap.js';
-import TurnManager from './TurnManager.js';
+import BattleMap from './combat/BattleMap.js';
+import TurnManager from './combat/TurnManager.js';
 import Player from '../entities/Player.js';
 import Skeleton from '../entities/Skeleton.js';
 import { Direction } from '../types/game.js';
