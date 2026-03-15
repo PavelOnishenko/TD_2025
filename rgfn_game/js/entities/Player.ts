@@ -152,9 +152,9 @@ export default class Player extends DamageableEntity {
         const hadFullMana = previousMaxMana > 0 && previousMana === previousMaxMana;
 
         this.maxMana = calculateMana(this.connection, this.intelligence);
-        this.armor = calculateArmor(this.toughness) + armorFlatBonus;
         const equippedArmor = this.equippedArmor;
         const armorFlatBonus = equippedArmor?.effects.flatArmor ?? 0;
+        this.armor = calculateArmor(this.toughness) + armorFlatBonus;
         this.maxHp = calculateMaxHp(this.vitality);
         this.avoidChance = calculateAvoidChance(this.agility);
 
