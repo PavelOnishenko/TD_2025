@@ -11,6 +11,7 @@ type GameUiEventCallbacks = {
     onUseManaPotionFromBattle: () => void;
     onUsePotionFromHud: () => void;
     onUseManaPotionFromHud: () => void;
+    onNewCharacter: () => void;
     onAddStat: (stat: 'vitality' | 'toughness' | 'strength' | 'agility' | 'connection' | 'intelligence') => void;
     onCastSpell: (spellId: BaseSpellId) => void;
     onUpgradeSpell: (spellId: BaseSpellId) => void;
@@ -69,6 +70,7 @@ export default class GameUiEventBinder {
         this.battleUI.spellArcaneLanceBtn.addEventListener('click', () => this.callbacks.onCastSpell('arcane-lance'));
         this.hudElements.usePotionBtn.addEventListener('click', () => this.callbacks.onUsePotionFromHud());
         this.hudElements.useManaPotionBtn.addEventListener('click', () => this.callbacks.onUseManaPotionFromHud());
+        this.hudElements.newCharacterBtn.addEventListener('click', () => this.callbacks.onNewCharacter());
     }
 
     private bindVillageEvents(villageNameProvider: () => string): void {

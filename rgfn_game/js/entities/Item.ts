@@ -189,3 +189,12 @@ export const ITEM_LIBRARY: ItemData[] = [
 ];
 
 export const DISCOVERABLE_ITEM_LIBRARY: ItemData[] = ITEM_LIBRARY;
+
+export function createItemById(id: string): Item | null {
+    const data = ITEM_LIBRARY.find((item) => item.id === id);
+    if (!data) {
+        return null;
+    }
+
+    return new Item(data);
+}

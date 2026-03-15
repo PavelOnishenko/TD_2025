@@ -177,4 +177,32 @@ export default class WorldMap {
             this.renderer.drawVillage(ctx, x, y, villageGlow);
         });
     }
+
+    public getState(): Record<string, unknown> {
+        return {
+            playerGridPos: { ...this.playerGridPos },
+            fogStates: Array.from(this.fogStates.entries()),
+            villages: Array.from(this.villages.values()),
+        };
+    }
+
+    public restoreState(state: Record<string, unknown>): void {
+        const playerGridPos = state.playerGridPos as { col?: unknown; row?: unknown } | undefined;
+        if (playerGridPos && typeof playerGridPos.col === 'number' && typeof playerGridPos.row === 'number' && this.grid.isValidPosition(playerGridPos.col, playerGridPos.row)) {
+            this.playerGridPos = { col: playerGridPos.col, row: playerGridPos.row };
+        }
+
+        if (Array.isArray(state.fogStates)) {
+            this.fogStates = new Map(
+                state.fogStates.filter((entry): entry is [string, FogState] => Array.isArray(entry)
+                    && entry.length === 2
+                    && typeof entry[0] === 'string'
+                    && (entry[1] === FOG_STATE.UNKNOWN || entry[1] === FOG_STATE.HIDDEN || entry[1] === FOG_STATE.DISCOVERED))
+            );
+        }
+
+        if (Array.isArray(state.villages)) {
+            this.villages = new Set(state.villages.filter((entry): entry is string => typeof entry === 'string'));
+        }
+    }
 }

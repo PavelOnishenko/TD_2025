@@ -36,6 +36,15 @@ import MagicSystem from './systems/magic/MagicSystem.js';
 
 type UIBundle = { hudElements: HudElements; battleUI: BattleUI; villageUI: VillageUI; developerUI: DeveloperUI };
 
+type GameSaveState = {
+    version: 1;
+    worldMap: Record<string, unknown>;
+    player: Record<string, unknown>;
+    spellLevels: Record<string, number>;
+};
+
+const SAVE_KEY = 'rgfn_game_save_v1';
+
 export default class Game {
     private readonly canvas: HTMLCanvasElement;
     private readonly renderer: Renderer;
@@ -50,7 +59,9 @@ export default class Game {
     private readonly worldMap: WorldMap;
     private readonly battleMap: BattleMap;
     private readonly player: Player;
+    private readonly magicSystem: MagicSystem;
     private readonly ambientMusic: AmbientMusicSystem;
+    private lastSavedSnapshot: string = '';
     private lastAmbientMode: typeof MODES.WORLD_MAP | typeof MODES.VILLAGE | typeof MODES.BATTLE = MODES.WORLD_MAP;
 
     constructor(canvas: HTMLCanvasElement) {
@@ -70,6 +81,7 @@ export default class Game {
         const ui = new GameUiFactory().create();
         const battleUiController = new BattleUiController(ui.battleUI, battleMap, turnManager, player);
         const magicSystem = new MagicSystem(player);
+        this.magicSystem = magicSystem;
         this.hudCoordinator = new GameHudCoordinator(player, new HudController(player, ui.hudElements, ui.battleUI, magicSystem), battleUiController, magicSystem);
         const villageActionsController = new VillageActionsController(player, ui.villageUI, {
             onUpdateHUD: () => this.hudCoordinator.updateHUD(), onLeaveVillage: () => this.stateMachine.transition(MODES.WORLD_MAP),
@@ -128,6 +140,8 @@ export default class Game {
         const [x, y] = worldMap.getPlayerPixelPosition();
         player.x = x;
         player.y = y;
+        this.loadGame();
+        this.saveGameIfChanged();
     }
 
     public start(): void { this.handleResize(); this.hudCoordinator.updateHUD(); this.loop.start(); }
@@ -180,6 +194,7 @@ export default class Game {
             onUseManaPotionFromBattle: () => this.battleCoordinator.handleUseManaPotion(true),
             onUsePotionFromHud: () => this.battleCoordinator.handleUsePotion(false),
             onUseManaPotionFromHud: () => this.battleCoordinator.handleUseManaPotion(false),
+            onNewCharacter: () => this.startNewCharacter(),
             onAddStat: (stat) => this.hudCoordinator.handleAddStat(stat),
             onCastSpell: (spellId) => this.battleCoordinator.handleCastSpell(spellId),
             onUpgradeSpell: (spellId) => this.hudCoordinator.handleUpgradeSpell(spellId),
@@ -198,6 +213,7 @@ export default class Game {
         this.stateMachine.update(deltaTime);
         this.syncAmbientMusicToMode();
         this.input.update();
+        this.saveGameIfChanged();
     }
 
     private render(): void {
@@ -221,6 +237,56 @@ export default class Game {
     private gameOver(): void {
         this.ambientMusic.stop();
         this.loop.stop();
-        alert('Game Over! Refresh to restart.');
+        alert('Game Over! A new character will be created.');
+        this.startNewCharacter();
+    }
+
+    private buildSaveState(): GameSaveState {
+        return {
+            version: 1,
+            worldMap: this.worldMap.getState(),
+            player: this.player.getState(),
+            spellLevels: this.magicSystem.getSpellLevels(),
+        };
+    }
+
+    private saveGameIfChanged(): void {
+        const snapshot = JSON.stringify(this.buildSaveState());
+        if (snapshot === this.lastSavedSnapshot) {
+            return;
+        }
+
+        this.lastSavedSnapshot = snapshot;
+        window.localStorage.setItem(SAVE_KEY, snapshot);
+    }
+
+    private loadGame(): void {
+        const raw = window.localStorage.getItem(SAVE_KEY);
+        if (!raw) {
+            return;
+        }
+
+        try {
+            const parsed = JSON.parse(raw) as Partial<GameSaveState>;
+            if (parsed.version !== 1 || !parsed.player || !parsed.worldMap || !parsed.spellLevels) {
+                return;
+            }
+
+            this.worldMap.restoreState(parsed.worldMap);
+            this.player.restoreState(parsed.player);
+            this.magicSystem.restoreSpellLevels(parsed.spellLevels);
+
+            const [x, y] = this.worldMap.getPlayerPixelPosition();
+            this.player.x = x;
+            this.player.y = y;
+            this.hudCoordinator.updateHUD();
+        } catch {
+            console.warn('Failed to parse save data, starting a new character.');
+        }
+    }
+
+    private startNewCharacter(): void {
+        window.localStorage.removeItem(SAVE_KEY);
+        window.location.reload();
     }
 }

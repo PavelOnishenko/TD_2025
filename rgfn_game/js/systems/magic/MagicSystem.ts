@@ -25,6 +25,13 @@ export default class MagicSystem {
         return { ...this.spellLevels };
     }
 
+    public restoreSpellLevels(levels: Partial<Record<BaseSpellId, number>>): void {
+        for (const baseId of BASE_SPELL_IDS) {
+            const level = levels[baseId];
+            this.spellLevels[baseId] = typeof level === 'number' && Number.isFinite(level) && level >= 0 ? Math.floor(level) : 0;
+        }
+    }
+
     public getAvailableSpells(): Spell[] {
         const spellBook = createSpellBook();
         return spellBook.filter((spell) => {
