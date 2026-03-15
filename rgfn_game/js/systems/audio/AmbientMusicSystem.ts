@@ -19,11 +19,15 @@ type BarPalette = {
     cadence: number[];
     beatSeconds: number;
     swing: number;
+    beatGenres: MusicGenre[];
+    variantSeed: number;
 };
 
+type MusicGenre = 'medieval' | 'arcaneSynth' | 'tribal' | 'noirJazz' | 'industrial';
+
 /**
- * Generates algorithmic medieval-inspired music with no external assets.
- * The arrangement is regenerated every bar so the tune keeps evolving.
+ * Generates algorithmic genre-shifting music with no external assets.
+ * Every bar contains randomly mixed genre parts, with per-genre variation.
  */
 export default class AmbientMusicSystem {
     private audioContext: AudioContext | null = null;
@@ -53,6 +57,7 @@ export default class AmbientMusicSystem {
         [5, 1, 6, 4],
         [0, 2, 5, 4],
     ];
+    private readonly allGenres: MusicGenre[] = ['medieval', 'arcaneSynth', 'tribal', 'noirJazz', 'industrial'];
 
     public attachAutoStart(): void {
         if (this.unlockBound) return;
@@ -164,38 +169,9 @@ export default class AmbientMusicSystem {
             const chordDegree = palette.cadence[Math.min(palette.cadence.length - 1, Math.floor((beat / 4) * palette.cadence.length))];
             const chordRoot = palette.rootMidi + palette.scale[chordDegree];
             const beatDuration = palette.beatSeconds * (beat % 2 === 0 ? 0.94 : 0.88);
+            const genre = palette.beatGenres[beat % palette.beatGenres.length];
 
-            this.playLuteChord(chordRoot, beatTime, beatDuration, palette);
-            this.playBassNote(chordRoot - 12 + preset.bassOctave * 12, beatTime, beatDuration * 0.95);
-
-            if (this.random() > 0.58) {
-                this.playHammeredDulcimer(chordRoot + (this.random() > 0.5 ? 12 : 0), beatTime + palette.beatSeconds * 0.12, palette.beatSeconds * 0.4, 0.028 + this.random() * 0.018);
-            }
-
-            if (this.random() < preset.countermelodyChance) {
-                const upperDegree = palette.scale[(chordDegree + 4 + Math.floor(this.random() * 3)) % palette.scale.length];
-                this.playReedCounterMelody(palette.rootMidi + 12 + upperDegree, beatTime + palette.beatSeconds * 0.2, palette.beatSeconds * 0.65);
-            }
-
-            if (this.random() < preset.leadChance) {
-                const embellishDegree = palette.scale[(chordDegree + 1 + Math.floor(this.random() * 5)) % palette.scale.length];
-                const leadMidi = palette.rootMidi + 12 + embellishDegree;
-                this.playFluteNote(leadMidi, beatTime + palette.beatSeconds * 0.26, palette.beatSeconds * (0.45 + this.random() * 0.22));
-            }
-
-            if (this.random() < preset.ornamentChance) {
-                this.playOrnamentRun(palette, chordRoot, beatTime + palette.beatSeconds * 0.58, palette.beatSeconds * 0.3);
-            }
-
-            if (this.random() < preset.percussionChance) {
-                this.playFrameDrum(beatTime + palette.beatSeconds * 0.02, palette.beatSeconds * 0.22, beat === 0 || beat === 2 ? 0.35 : 0.2);
-                if (this.random() > 0.45) {
-                    this.playTambourineTick(beatTime + palette.beatSeconds * 0.38, palette.beatSeconds * 0.13, 0.09 + this.random() * 0.07);
-                }
-                if (this.random() > 0.7) {
-                    this.playShaker(beatTime + palette.beatSeconds * 0.72, palette.beatSeconds * 0.2, 0.05 + this.random() * 0.05);
-                }
-            }
+            this.renderGenreBeat(genre, palette, preset, beatTime, beatDuration, chordRoot, chordDegree, beat);
         }
 
         if (this.mode !== MODES.BATTLE && this.random() > 0.35) {
@@ -222,8 +198,151 @@ export default class AmbientMusicSystem {
         const rootMidi = 47 + Math.floor(this.random() * 7) + ((this.barCursor % 2) * 2);
         const beatSeconds = 60 / (preset.tempo + (this.random() * 8 - 4));
         const swing = 0.45 + this.random() * 0.2;
+        const beatGenres = this.buildBeatGenres();
+        const variantSeed = this.random();
 
-        return { rootMidi, scale, cadence, beatSeconds, swing };
+        return { rootMidi, scale, cadence, beatSeconds, swing, beatGenres, variantSeed };
+    }
+
+    private buildBeatGenres(): MusicGenre[] {
+        const modeBias = this.mode === MODES.BATTLE ? ['industrial', 'tribal'] : this.mode === MODES.VILLAGE ? ['medieval', 'noirJazz'] : ['arcaneSynth', 'medieval'];
+        const genres: MusicGenre[] = [];
+
+        for (let beat = 0; beat < 4; beat += 1) {
+            const pickPool = this.random() > 0.55 ? modeBias : this.allGenres;
+            const pick = pickPool[Math.floor(this.random() * pickPool.length)] as MusicGenre;
+            genres.push(pick);
+        }
+
+        const uniqueGenres = new Set(genres);
+        if (uniqueGenres.size < 2) {
+            genres[3] = this.allGenres[Math.floor(this.random() * this.allGenres.length)];
+        }
+
+        return genres;
+    }
+
+    private renderGenreBeat(
+        genre: MusicGenre,
+        palette: BarPalette,
+        preset: MedievalPreset,
+        beatTime: number,
+        beatDuration: number,
+        chordRoot: number,
+        chordDegree: number,
+        beat: number,
+    ): void {
+        switch (genre) {
+            case 'medieval':
+                this.playMedievalBeat(palette, preset, beatTime, beatDuration, chordRoot, chordDegree, beat);
+                break;
+            case 'arcaneSynth':
+                this.playArcaneSynthBeat(palette, preset, beatTime, beatDuration, chordRoot, chordDegree, beat);
+                break;
+            case 'tribal':
+                this.playTribalBeat(palette, preset, beatTime, beatDuration, chordRoot, chordDegree, beat);
+                break;
+            case 'noirJazz':
+                this.playNoirJazzBeat(palette, preset, beatTime, beatDuration, chordRoot, chordDegree, beat);
+                break;
+            case 'industrial':
+                this.playIndustrialBeat(palette, preset, beatTime, beatDuration, chordRoot, chordDegree, beat);
+                break;
+            default:
+                this.playMedievalBeat(palette, preset, beatTime, beatDuration, chordRoot, chordDegree, beat);
+        }
+    }
+
+    private playMedievalBeat(palette: BarPalette, preset: MedievalPreset, beatTime: number, beatDuration: number, chordRoot: number, chordDegree: number, beat: number): void {
+        this.playLuteChord(chordRoot, beatTime, beatDuration, palette);
+        this.playBassNote(chordRoot - 12 + preset.bassOctave * 12, beatTime, beatDuration * 0.95);
+
+        if (this.random() > 0.58) {
+            this.playHammeredDulcimer(chordRoot + (this.random() > 0.5 ? 12 : 0), beatTime + palette.beatSeconds * 0.12, palette.beatSeconds * 0.4, 0.028 + this.random() * 0.018);
+        }
+
+        if (this.random() < preset.countermelodyChance) {
+            const upperDegree = palette.scale[(chordDegree + 4 + Math.floor(this.random() * 3)) % palette.scale.length];
+            this.playReedCounterMelody(palette.rootMidi + 12 + upperDegree, beatTime + palette.beatSeconds * 0.2, palette.beatSeconds * 0.65);
+        }
+
+        if (this.random() < preset.leadChance) {
+            const embellishDegree = palette.scale[(chordDegree + 1 + Math.floor(this.random() * 5)) % palette.scale.length];
+            const leadMidi = palette.rootMidi + 12 + embellishDegree;
+            this.playFluteNote(leadMidi, beatTime + palette.beatSeconds * 0.26, palette.beatSeconds * (0.45 + this.random() * 0.22));
+        }
+
+        if (this.random() < preset.ornamentChance) {
+            this.playOrnamentRun(palette, chordRoot, beatTime + palette.beatSeconds * 0.58, palette.beatSeconds * 0.3);
+        }
+
+        if (this.random() < preset.percussionChance) {
+            this.playFrameDrum(beatTime + palette.beatSeconds * 0.02, palette.beatSeconds * 0.22, beat === 0 || beat === 2 ? 0.35 : 0.2);
+            if (this.random() > 0.45) this.playTambourineTick(beatTime + palette.beatSeconds * 0.38, palette.beatSeconds * 0.13, 0.09 + this.random() * 0.07);
+            if (this.random() > 0.7) this.playShaker(beatTime + palette.beatSeconds * 0.72, palette.beatSeconds * 0.2, 0.05 + this.random() * 0.05);
+        }
+    }
+
+    private playArcaneSynthBeat(palette: BarPalette, preset: MedievalPreset, beatTime: number, beatDuration: number, chordRoot: number, chordDegree: number, beat: number): void {
+        const arpDegree = palette.scale[(chordDegree + Math.floor(this.random() * palette.scale.length)) % palette.scale.length];
+        const arpMidi = palette.rootMidi + 12 + arpDegree + (beat % 2 === 0 ? 0 : 12);
+
+        this.playStringPad(chordRoot + 12, beatTime, beatDuration * (0.7 + this.random() * 0.4), 0.02 + this.random() * 0.02);
+        this.playPluckedVoice(arpMidi, beatTime + beatDuration * 0.1, beatDuration * 0.6, 0.05 + this.random() * 0.02, 'sawtooth', this.random() * 12 - 6);
+
+        if (this.random() < 0.75) {
+            this.playFluteNote(arpMidi + (this.random() > 0.5 ? 7 : 0), beatTime + beatDuration * 0.38, beatDuration * 0.45);
+        }
+
+        if (this.random() < preset.percussionChance * 0.55) {
+            this.playTambourineTick(beatTime + beatDuration * 0.2, beatDuration * 0.16, 0.06 + this.random() * 0.05);
+        }
+    }
+
+    private playTribalBeat(palette: BarPalette, _preset: MedievalPreset, beatTime: number, beatDuration: number, chordRoot: number, _chordDegree: number, beat: number): void {
+        const bassMidi = chordRoot - 24 + (beat % 2 === 0 ? 0 : 7);
+        this.playBassNote(bassMidi, beatTime, beatDuration * 0.85);
+
+        this.playFrameDrum(beatTime + beatDuration * 0.03, beatDuration * 0.28, beat % 2 === 0 ? 0.42 : 0.3);
+        this.playFrameDrum(beatTime + beatDuration * 0.42, beatDuration * 0.2, 0.24 + this.random() * 0.1);
+
+        if (this.random() < 0.68) {
+            this.playShaker(beatTime + beatDuration * 0.7, beatDuration * 0.22, 0.08 + this.random() * 0.05);
+        }
+
+        if (this.random() < 0.45) {
+            this.playReedCounterMelody(chordRoot + 12 + (this.random() > 0.5 ? 3 : 5), beatTime + beatDuration * 0.24, beatDuration * 0.55);
+        }
+    }
+
+    private playNoirJazzBeat(palette: BarPalette, _preset: MedievalPreset, beatTime: number, beatDuration: number, chordRoot: number, _chordDegree: number, beat: number): void {
+        const jazzIntervals = this.random() > 0.5 ? [0, 3, 7, 10] : [0, 4, 7, 10];
+        jazzIntervals.forEach((interval, index) => {
+            this.playPluckedVoice(chordRoot + interval + (index === 3 ? 12 : 0), beatTime + index * 0.012, beatDuration * (0.82 - index * 0.08), 0.035 + this.random() * 0.02, 'triangle', -9 + this.random() * 18);
+        });
+
+        this.playBassNote(chordRoot - 19 + (beat % 2 === 0 ? 0 : 5), beatTime, beatDuration * 0.78);
+        this.playReedCounterMelody(chordRoot + 14 + Math.floor(this.random() * 3), beatTime + beatDuration * 0.27, beatDuration * 0.63);
+
+        if (this.random() < 0.45) {
+            this.playTambourineTick(beatTime + beatDuration * 0.5, beatDuration * 0.1, 0.05 + this.random() * 0.04);
+        }
+    }
+
+    private playIndustrialBeat(palette: BarPalette, _preset: MedievalPreset, beatTime: number, beatDuration: number, chordRoot: number, chordDegree: number, beat: number): void {
+        this.playBassNote(chordRoot - 24, beatTime, beatDuration * 0.98);
+        this.playPluckedVoice(chordRoot + palette.scale[(chordDegree + 2) % palette.scale.length], beatTime + beatDuration * 0.16, beatDuration * 0.42, 0.08 + this.random() * 0.03, 'square', this.random() * 14 - 7);
+
+        this.playFrameDrum(beatTime + beatDuration * 0.01, beatDuration * 0.18, 0.4 + (beat % 2 === 0 ? 0.08 : 0));
+        this.playTambourineTick(beatTime + beatDuration * 0.32, beatDuration * 0.12, 0.08 + this.random() * 0.07);
+
+        if (this.random() < 0.85) {
+            this.playShaker(beatTime + beatDuration * 0.62, beatDuration * 0.24, 0.07 + this.random() * 0.05);
+        }
+
+        if (this.random() < 0.35 + palette.variantSeed * 0.35) {
+            this.playStringPad(chordRoot, beatTime, beatDuration * 0.95, 0.015 + this.random() * 0.015);
+        }
     }
 
     private getPresetForMode(mode: AmbientMode): MedievalPreset {
