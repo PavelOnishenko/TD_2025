@@ -110,12 +110,12 @@ export default class GameUiFactory {
             enterBtn: document.getElementById('village-enter-btn')! as HTMLButtonElement,
             skipBtn: document.getElementById('village-skip-btn')! as HTMLButtonElement,
             waitBtn: document.getElementById('village-wait-btn')! as HTMLButtonElement,
-            buyBtn: document.getElementById('village-buy-btn')! as HTMLButtonElement,
-            sellBtn: document.getElementById('village-sell-btn')! as HTMLButtonElement,
-            buyPotionBtn: document.getElementById('village-buy-potion-btn')! as HTMLButtonElement,
-            sellPotionBtn: document.getElementById('village-sell-potion-btn')! as HTMLButtonElement,
-            buyManaPotionBtn: document.getElementById('village-buy-mana-potion-btn')! as HTMLButtonElement,
-            sellManaPotionBtn: document.getElementById('village-sell-mana-potion-btn')! as HTMLButtonElement,
+            buyOffer1Btn: document.getElementById('village-buy-offer-1-btn')! as HTMLButtonElement,
+            buyOffer2Btn: document.getElementById('village-buy-offer-2-btn')! as HTMLButtonElement,
+            buyOffer3Btn: document.getElementById('village-buy-offer-3-btn')! as HTMLButtonElement,
+            buyOffer4Btn: document.getElementById('village-buy-offer-4-btn')! as HTMLButtonElement,
+            sellSelect: document.getElementById('village-sell-select')! as HTMLSelectElement,
+            sellSelectedBtn: document.getElementById('village-sell-selected-btn')! as HTMLButtonElement,
             leaveBtn: document.getElementById('village-leave-btn')! as HTMLButtonElement,
         };
     }
