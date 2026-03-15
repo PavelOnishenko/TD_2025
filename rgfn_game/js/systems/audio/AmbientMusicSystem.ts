@@ -2,26 +2,46 @@ import { MODES } from '../game/runtime/GameModeStateMachine.js';
 
 type AmbientMode = typeof MODES.WORLD_MAP | typeof MODES.VILLAGE | typeof MODES.BATTLE;
 
+type MedievalPreset = {
+    tempo: number;
+    masterVolume: number;
+    leadChance: number;
+    percussionChance: number;
+    bassOctave: number;
+};
+
 /**
- * Procedurally generates ambient music using the Web Audio API.
- * No external audio assets are required.
+ * Generates algorithmic medieval-inspired music with no external assets.
+ * The arrangement is regenerated every bar so the tune keeps evolving.
  */
 export default class AmbientMusicSystem {
     private audioContext: AudioContext | null = null;
     private masterGain: GainNode | null = null;
-    private droneGain: GainNode | null = null;
-    private pulseGain: GainNode | null = null;
-    private textureGain: GainNode | null = null;
-    private textureFilter: BiquadFilterNode | null = null;
+    private hallReverbGain: GainNode | null = null;
+    private hallConvolver: ConvolverNode | null = null;
     private started = false;
     private unlockBound = false;
+
+    private mode: AmbientMode = MODES.WORLD_MAP;
+    private musicTimer: number | null = null;
+    private barCursor = 0;
+    private readonly random = Math.random;
+
+    private readonly naturalMinorScale = [0, 2, 3, 5, 7, 8, 10];
+    private readonly dorianScale = [0, 2, 3, 5, 7, 9, 10];
+    private readonly cadences = [
+        [0, 3, 4],
+        [5, 3, 4],
+        [0, 6, 4],
+        [0, 5, 4],
+    ];
 
     public attachAutoStart(): void {
         if (this.unlockBound) return;
 
         const startFromInteraction = (): void => {
             this.start().catch((error: unknown) => {
-                console.warn('Ambient music could not start:', error);
+                console.warn('Medieval music could not start:', error);
             });
         };
 
@@ -33,6 +53,7 @@ export default class AmbientMusicSystem {
     public async start(): Promise<void> {
         if (this.started) {
             await this.resume();
+            this.restartScheduler();
             return;
         }
 
@@ -47,15 +68,14 @@ export default class AmbientMusicSystem {
         this.masterGain.gain.value = 0.0001;
         this.masterGain.connect(this.audioContext.destination);
 
-        this.createDroneLayer();
-        this.createPulseLayer();
-        this.createTextureLayer();
+        this.buildHallReverb();
 
-        this.fadeTo(0.15, 4);
-        this.setMode(MODES.WORLD_MAP);
-
+        this.fadeTo(0.12, 4);
         this.started = true;
+
         await this.resume();
+        this.restartScheduler();
+        this.setMode(MODES.WORLD_MAP);
     }
 
     public async resume(): Promise<void> {
@@ -64,133 +84,264 @@ export default class AmbientMusicSystem {
     }
 
     public setMode(mode: AmbientMode): void {
-        if (!this.audioContext || !this.started || !this.masterGain || !this.droneGain || !this.pulseGain || !this.textureGain || !this.textureFilter) return;
+        this.mode = mode;
+        if (!this.audioContext || !this.started) return;
 
-        const now = this.audioContext.currentTime;
-        if (mode === MODES.BATTLE) {
-            this.droneGain.gain.setTargetAtTime(0.055, now, 2.2);
-            this.pulseGain.gain.setTargetAtTime(0.045, now, 1.4);
-            this.textureGain.gain.setTargetAtTime(0.018, now, 1.7);
-            this.textureFilter.frequency.setTargetAtTime(1200, now, 1.8);
-            this.fadeTo(0.24, 2.5);
-            return;
+        const preset = this.getPresetForMode(mode);
+        this.fadeTo(preset.masterVolume, 2.2);
+
+        if (this.hallReverbGain) {
+            const now = this.audioContext.currentTime;
+            const reverbTarget = mode === MODES.BATTLE ? 0.22 : mode === MODES.VILLAGE ? 0.3 : 0.35;
+            this.hallReverbGain.gain.setTargetAtTime(reverbTarget, now, 0.9);
         }
-
-        if (mode === MODES.VILLAGE) {
-            this.droneGain.gain.setTargetAtTime(0.045, now, 2.5);
-            this.pulseGain.gain.setTargetAtTime(0.025, now, 1.8);
-            this.textureGain.gain.setTargetAtTime(0.012, now, 2.2);
-            this.textureFilter.frequency.setTargetAtTime(820, now, 2.5);
-            this.fadeTo(0.17, 2.8);
-            return;
-        }
-
-        this.droneGain.gain.setTargetAtTime(0.05, now, 2.5);
-        this.pulseGain.gain.setTargetAtTime(0.032, now, 1.8);
-        this.textureGain.gain.setTargetAtTime(0.016, now, 2.2);
-        this.textureFilter.frequency.setTargetAtTime(950, now, 2.2);
-        this.fadeTo(0.19, 2.8);
     }
 
     public stop(): void {
-        if (!this.masterGain || !this.audioContext) return;
+        if (!this.masterGain) return;
         this.fadeTo(0.0001, 1.5);
+
+        if (this.musicTimer !== null) {
+            window.clearTimeout(this.musicTimer);
+            this.musicTimer = null;
+        }
     }
 
-    private createDroneLayer(): void {
-        if (!this.audioContext || !this.masterGain) return;
+    private restartScheduler(): void {
+        if (!this.audioContext) return;
 
-        const lowDrone = this.audioContext.createOscillator();
-        lowDrone.type = 'triangle';
-        lowDrone.frequency.value = 82.41;
+        if (this.musicTimer !== null) {
+            window.clearTimeout(this.musicTimer);
+            this.musicTimer = null;
+        }
 
-        const highDrone = this.audioContext.createOscillator();
-        highDrone.type = 'sine';
-        highDrone.frequency.value = 123.47;
+        this.barCursor = 0;
 
-        const droneFilter = this.audioContext.createBiquadFilter();
-        droneFilter.type = 'lowpass';
-        droneFilter.frequency.value = 600;
-        droneFilter.Q.value = 0.6;
+        const scheduleNextBar = (): void => {
+            if (!this.audioContext || this.audioContext.state !== 'running') return;
 
-        this.droneGain = this.audioContext.createGain();
-        this.droneGain.gain.value = 0.048;
+            const preset = this.getPresetForMode(this.mode);
+            this.playGeneratedBar();
 
-        lowDrone.connect(this.droneGain);
-        highDrone.connect(this.droneGain);
-        this.droneGain.connect(droneFilter);
-        droneFilter.connect(this.masterGain);
+            const nextBarMs = Math.max(1400, (60 / preset.tempo) * 4 * 1000);
+            this.musicTimer = window.setTimeout(scheduleNextBar, nextBarMs);
+        };
 
-        lowDrone.start();
-        highDrone.start();
+        scheduleNextBar();
     }
 
-    private createPulseLayer(): void {
+    private playGeneratedBar(): void {
         if (!this.audioContext || !this.masterGain) return;
 
-        const pulse = this.audioContext.createOscillator();
-        pulse.type = 'sine';
-        pulse.frequency.value = 246.94;
+        const preset = this.getPresetForMode(this.mode);
+        const beatSeconds = 60 / preset.tempo;
+        const barLength = beatSeconds * 4;
+        const startTime = this.audioContext.currentTime + 0.03;
 
-        const pulseTremolo = this.audioContext.createOscillator();
-        pulseTremolo.type = 'sine';
-        pulseTremolo.frequency.value = 0.11;
+        const rootMidi = 50 + ((this.barCursor % 2) * 2);
+        const cadence = this.cadences[this.barCursor % this.cadences.length];
+        const scale = this.mode === MODES.BATTLE ? this.dorianScale : this.naturalMinorScale;
 
-        const tremoloDepth = this.audioContext.createGain();
-        tremoloDepth.gain.value = 0.35;
+        for (let beat = 0; beat < 4; beat += 1) {
+            const beatTime = startTime + beat * beatSeconds;
+            const chordDegree = cadence[Math.min(cadence.length - 1, Math.floor(beat / 1.5))];
+            const chordRoot = rootMidi + scale[chordDegree];
 
-        this.pulseGain = this.audioContext.createGain();
-        this.pulseGain.gain.value = 0.03;
+            this.playLuteChord(chordRoot, beatTime, beatSeconds * 0.94);
+            this.playBassNote(chordRoot - 12 + preset.bassOctave * 12, beatTime, beatSeconds * 0.9);
 
-        pulseTremolo.connect(tremoloDepth);
-        tremoloDepth.connect(this.pulseGain.gain);
+            if (this.random() < preset.leadChance) {
+                const embellishDegree = scale[(chordDegree + 2 + Math.floor(this.random() * 3)) % scale.length];
+                const leadMidi = rootMidi + 12 + embellishDegree;
+                this.playFluteNote(leadMidi, beatTime + beatSeconds * 0.3, beatSeconds * 0.55);
+            }
 
-        const pulseFilter = this.audioContext.createBiquadFilter();
-        pulseFilter.type = 'bandpass';
-        pulseFilter.frequency.value = 420;
-        pulseFilter.Q.value = 0.7;
+            if (this.random() < preset.percussionChance) {
+                this.playFrameDrum(beatTime + beatSeconds * 0.02, beatSeconds * 0.22, beat === 0 || beat === 2 ? 0.35 : 0.2);
+            }
+        }
 
-        pulse.connect(this.pulseGain);
-        this.pulseGain.connect(pulseFilter);
-        pulseFilter.connect(this.masterGain);
+        if (this.mode !== MODES.BATTLE && this.random() > 0.55) {
+            const ending = rootMidi + 12 + scale[(this.barCursor + 4) % scale.length];
+            this.playFluteNote(ending, startTime + barLength - beatSeconds * 0.42, beatSeconds * 0.4);
+        }
 
-        pulse.start();
-        pulseTremolo.start();
+        this.barCursor += 1;
     }
 
-    private createTextureLayer(): void {
+    private getPresetForMode(mode: AmbientMode): MedievalPreset {
+        if (mode === MODES.BATTLE) {
+            return {
+                tempo: 118,
+                masterVolume: 0.2,
+                leadChance: 0.35,
+                percussionChance: 0.9,
+                bassOctave: -1,
+            };
+        }
+
+        if (mode === MODES.VILLAGE) {
+            return {
+                tempo: 94,
+                masterVolume: 0.14,
+                leadChance: 0.55,
+                percussionChance: 0.3,
+                bassOctave: -1,
+            };
+        }
+
+        return {
+            tempo: 102,
+            masterVolume: 0.17,
+            leadChance: 0.45,
+            percussionChance: 0.55,
+            bassOctave: -1,
+        };
+    }
+
+    private playLuteChord(rootMidi: number, time: number, duration: number): void {
+        const intervals = [0, 3, 7];
+        intervals.forEach((semitones, index) => {
+            const detune = (index - 1) * 4;
+            this.playPluckedVoice(rootMidi + semitones, time + index * 0.01, duration * (0.9 - index * 0.07), 0.08, 'triangle', detune);
+        });
+    }
+
+    private playBassNote(midi: number, time: number, duration: number): void {
+        this.playPluckedVoice(midi, time, duration, 0.09, 'sawtooth', -3);
+    }
+
+    private playFluteNote(midi: number, time: number, duration: number): void {
         if (!this.audioContext || !this.masterGain) return;
 
-        const noiseBuffer = this.audioContext.createBuffer(1, this.audioContext.sampleRate * 2, this.audioContext.sampleRate);
-        const noiseData = noiseBuffer.getChannelData(0);
-        for (let i = 0; i < noiseData.length; i += 1) noiseData[i] = (Math.random() * 2 - 1) * 0.5;
+        const frequency = this.midiToFrequency(midi);
+        const oscillator = this.audioContext.createOscillator();
+        oscillator.type = 'sine';
+        oscillator.frequency.value = frequency;
+
+        const vibratoLfo = this.audioContext.createOscillator();
+        vibratoLfo.type = 'sine';
+        vibratoLfo.frequency.value = 5.4 + this.random() * 0.8;
+        const vibratoDepth = this.audioContext.createGain();
+        vibratoDepth.gain.value = 2.4;
+        vibratoLfo.connect(vibratoDepth);
+        vibratoDepth.connect(oscillator.frequency);
+
+        const gain = this.audioContext.createGain();
+        gain.gain.setValueAtTime(0.0001, time);
+        gain.gain.linearRampToValueAtTime(0.03, time + 0.06);
+        gain.gain.exponentialRampToValueAtTime(0.002, time + duration);
+
+        const filter = this.audioContext.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.value = 2200;
+        filter.Q.value = 0.7;
+
+        oscillator.connect(filter);
+        filter.connect(gain);
+        this.routeToMasterAndReverb(gain, 0.5);
+
+        oscillator.start(time);
+        vibratoLfo.start(time);
+        oscillator.stop(time + duration + 0.04);
+        vibratoLfo.stop(time + duration + 0.04);
+    }
+
+    private playPluckedVoice(midi: number, time: number, duration: number, level: number, type: OscillatorType, detuneCents: number): void {
+        if (!this.audioContext || !this.masterGain) return;
+
+        const oscillator = this.audioContext.createOscillator();
+        oscillator.type = type;
+        oscillator.frequency.value = this.midiToFrequency(midi);
+        oscillator.detune.value = detuneCents;
+
+        const gain = this.audioContext.createGain();
+        gain.gain.setValueAtTime(0.0001, time);
+        gain.gain.exponentialRampToValueAtTime(level, time + 0.012);
+        gain.gain.exponentialRampToValueAtTime(0.001, time + duration);
+
+        const filter = this.audioContext.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.value = 1650;
+        filter.Q.value = 0.9;
+
+        oscillator.connect(filter);
+        filter.connect(gain);
+        this.routeToMasterAndReverb(gain, 0.25);
+
+        oscillator.start(time);
+        oscillator.stop(time + duration + 0.03);
+    }
+
+    private playFrameDrum(time: number, duration: number, level: number): void {
+        if (!this.audioContext || !this.masterGain) return;
+
+        const noiseBuffer = this.audioContext.createBuffer(1, Math.floor(this.audioContext.sampleRate * duration), this.audioContext.sampleRate);
+        const data = noiseBuffer.getChannelData(0);
+        for (let i = 0; i < data.length; i += 1) {
+            data[i] = (this.random() * 2 - 1) * (1 - i / data.length);
+        }
 
         const noiseSource = this.audioContext.createBufferSource();
         noiseSource.buffer = noiseBuffer;
-        noiseSource.loop = true;
 
-        this.textureFilter = this.audioContext.createBiquadFilter();
-        this.textureFilter.type = 'lowpass';
-        this.textureFilter.frequency.value = 960;
-        this.textureFilter.Q.value = 0.8;
+        const noiseFilter = this.audioContext.createBiquadFilter();
+        noiseFilter.type = 'bandpass';
+        noiseFilter.frequency.value = 240;
+        noiseFilter.Q.value = 0.8;
 
-        const filterLfo = this.audioContext.createOscillator();
-        filterLfo.type = 'sine';
-        filterLfo.frequency.value = 0.07;
-        const filterLfoDepth = this.audioContext.createGain();
-        filterLfoDepth.gain.value = 260;
-        filterLfo.connect(filterLfoDepth);
-        filterLfoDepth.connect(this.textureFilter.frequency);
+        const gain = this.audioContext.createGain();
+        gain.gain.setValueAtTime(0.0001, time);
+        gain.gain.exponentialRampToValueAtTime(level, time + 0.004);
+        gain.gain.exponentialRampToValueAtTime(0.001, time + duration);
 
-        this.textureGain = this.audioContext.createGain();
-        this.textureGain.gain.value = 0.014;
+        noiseSource.connect(noiseFilter);
+        noiseFilter.connect(gain);
+        this.routeToMasterAndReverb(gain, 0.12);
 
-        noiseSource.connect(this.textureFilter);
-        this.textureFilter.connect(this.textureGain);
-        this.textureGain.connect(this.masterGain);
+        noiseSource.start(time);
+    }
 
-        noiseSource.start();
-        filterLfo.start();
+    private routeToMasterAndReverb(source: AudioNode, reverbAmount: number): void {
+        if (!this.masterGain) return;
+        source.connect(this.masterGain);
+
+        if (this.hallReverbGain) {
+            const send = this.audioContext?.createGain();
+            if (send) {
+                send.gain.value = reverbAmount;
+                source.connect(send);
+                send.connect(this.hallReverbGain);
+            }
+        }
+    }
+
+    private buildHallReverb(): void {
+        if (!this.audioContext || !this.masterGain) return;
+
+        this.hallConvolver = this.audioContext.createConvolver();
+        const impulseLengthSeconds = 2.6;
+        const impulse = this.audioContext.createBuffer(2, this.audioContext.sampleRate * impulseLengthSeconds, this.audioContext.sampleRate);
+
+        for (let channel = 0; channel < impulse.numberOfChannels; channel += 1) {
+            const data = impulse.getChannelData(channel);
+            for (let i = 0; i < data.length; i += 1) {
+                const decay = Math.pow(1 - i / data.length, 2.4);
+                data[i] = (this.random() * 2 - 1) * decay;
+            }
+        }
+
+        this.hallConvolver.buffer = impulse;
+
+        this.hallReverbGain = this.audioContext.createGain();
+        this.hallReverbGain.gain.value = 0.35;
+
+        this.hallReverbGain.connect(this.hallConvolver);
+        this.hallConvolver.connect(this.masterGain);
+    }
+
+    private midiToFrequency(midi: number): number {
+        return 440 * Math.pow(2, (midi - 69) / 12);
     }
 
     private fadeTo(targetVolume: number, fadeSeconds: number): void {
