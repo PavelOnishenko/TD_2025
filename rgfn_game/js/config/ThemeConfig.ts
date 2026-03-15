@@ -54,6 +54,14 @@ export interface Theme {
     unknown: string;
     gridLines: string;
     playerMarker: string;
+    iconScale: {
+      character: number;
+      village: number;
+    };
+    questionMarkOffset: {
+      x: number;
+      y: number;
+    };
   };
 
   // Battle Map Colors
@@ -114,6 +122,14 @@ const GAME_THEME: Theme = {
     unknown: '#a18a67',
     gridLines: 'rgba(46, 32, 19, 0.15)',
     playerMarker: '#8f1f1f',
+    iconScale: {
+      character: 1,
+      village: 0.5,
+    },
+    questionMarkOffset: {
+      x: 15,
+      y: 0,
+    },
   },
   battleMap: {
     background: '#ceb287',

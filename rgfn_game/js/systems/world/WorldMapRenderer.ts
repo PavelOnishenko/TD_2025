@@ -46,11 +46,15 @@ export default class WorldMapRenderer {
         ctx.fillRect(cell.x, cell.y, cell.width, cell.height);
         const centerX = cell.x + cell.width / 2;
         const centerY = cell.y + cell.height / 2;
+        const characterScale = theme.worldMap.iconScale.character;
+        console.log(`characterScale: ${characterScale}`)
+        const markerHalfWidth = 6 * characterScale;
+        const markerHeight = 8 * characterScale;
         ctx.fillStyle = theme.worldMap.playerMarker;
         ctx.beginPath();
-        ctx.moveTo(centerX, centerY - 8);
-        ctx.lineTo(centerX - 6, centerY + 6);
-        ctx.lineTo(centerX + 6, centerY + 6);
+        ctx.moveTo(centerX, centerY - markerHeight);
+        ctx.lineTo(centerX - markerHalfWidth, centerY + markerHalfWidth);
+        ctx.lineTo(centerX + markerHalfWidth, centerY + markerHalfWidth);
         ctx.closePath();
         ctx.fill();
     }
@@ -60,22 +64,24 @@ export default class WorldMapRenderer {
         ctx.shadowBlur = 18;
         ctx.fillStyle = this.withAlpha('#FFE66D', glow);
         ctx.beginPath();
-        ctx.arc(x, y + 1, 10, 0, Math.PI * 2);
+        const villageScale = theme.worldMap.iconScale.village;
+        ctx.arc(x, y + 1, 10 * villageScale, 0, Math.PI * 2);
         ctx.fill();
         ctx.restore();
     }
     private drawVillageBody(ctx: CanvasRenderingContext2D, x: number, y: number, glow: number): void {
         ctx.fillStyle = this.withAlpha('#2E1400', 0.55);
-        ctx.fillRect(x - 8, y, 16, 11);
+        const villageScale = theme.worldMap.iconScale.village;
+        ctx.fillRect(x - (8 * villageScale), y, 16 * villageScale, 11 * villageScale);
         ctx.fillStyle = this.withAlpha('#FF7E2D', glow);
         ctx.beginPath();
-        ctx.moveTo(x - 10, y);
-        ctx.lineTo(x, y - 12);
-        ctx.lineTo(x + 10, y);
+        ctx.moveTo(x - (10 * villageScale), y);
+        ctx.lineTo(x, y - (12 * villageScale));
+        ctx.lineTo(x + (10 * villageScale), y);
         ctx.closePath();
         ctx.fill();
         ctx.fillStyle = this.withAlpha('#FFF8D0', 0.98);
-        ctx.fillRect(x - 3, y + 3, 6, 8);
+        ctx.fillRect(x - (3 * villageScale), y + (3 * villageScale), 6 * villageScale, 8 * villageScale);
     }
     private drawUnknownCell(ctx: CanvasRenderingContext2D, cell: GridCell): void {
         ctx.fillStyle = theme.worldMap.unknown;
@@ -84,7 +90,8 @@ export default class WorldMapRenderer {
         ctx.font = '18px Georgia';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('?', cell.x + cell.width / 2, cell.y + cell.height / 2);
+        const questionMarkOffset = theme.worldMap.questionMarkOffset;
+        ctx.fillText('?', cell.x + (cell.width / 2) + questionMarkOffset.x, cell.y + (cell.height / 2) + questionMarkOffset.y);
     }
     private drawTerrain(ctx: CanvasRenderingContext2D, cell: GridCell, terrain: TerrainData | undefined, brightness: number): void {
         if (!terrain) {
