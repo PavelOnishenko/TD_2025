@@ -102,6 +102,7 @@ export default class Player extends DamageableEntity {
         this.inventorySystem = new PlayerInventory({
             onEquipmentChanged: () => this.updateStats(),
             onHealingPotionUsed: () => this.heal(5),
+            onManaPotionUsed: () => this.restoreMana(balanceConfig.combat.manaPotionRestore),
             canEquip: (item) => this.canEquipItem(item),
         });
         this.renderer = new PlayerRenderer();
@@ -147,8 +148,14 @@ export default class Player extends DamageableEntity {
      * Update derived stats based on allocated stat points
      */
     public updateStats(): void {
+        const previousMaxMana = this.maxMana;
+        const previousMana = this.mana;
+        const hadFullMana = previousMaxMana > 0 && previousMana === previousMaxMana;
+
+        this.maxMana = calculateMana(this.connection, this.intelligence);
         const equippedArmor = this.equippedArmor;
         const armorFlatBonus = equippedArmor?.effects.flatArmor ?? 0;
+        this.armor = calculateArmor(this.toughness) + armorFlatBonus;
         this.maxHp = calculateMaxHp(this.vitality);
         this.armor = calculateArmor(this.toughness) + armorFlatBonus;
         this.avoidChance = calculateAvoidChance(this.agility);
