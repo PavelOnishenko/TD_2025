@@ -105,7 +105,6 @@ export default class Player extends DamageableEntity {
         this.inventorySystem = new PlayerInventory({
             onEquipmentChanged: () => this.updateStats(),
             onHealingPotionUsed: () => this.heal(5),
-            onManaPotionUsed: () => this.restoreMana(balanceConfig.combat.manaPotionRestore)
             onManaPotionUsed: () => this.restoreMana(balanceConfig.combat.manaPotionRestore),
             canEquip: (item) => this.canEquipItem(item),
         });
