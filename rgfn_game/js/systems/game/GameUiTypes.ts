@@ -41,6 +41,11 @@ export type HudElements = {
     spellLevelSlow: HTMLElement;
     spellLevelRage: HTMLElement;
     spellLevelArcaneLance: HTMLElement;
+    spellDetailsFireball: HTMLElement;
+    spellDetailsCurse: HTMLElement;
+    spellDetailsSlow: HTMLElement;
+    spellDetailsRage: HTMLElement;
+    spellDetailsArcaneLance: HTMLElement;
     inventoryCount: HTMLElement;
     inventoryCapacity: HTMLElement;
     inventoryGrid: HTMLElement;
