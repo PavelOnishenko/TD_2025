@@ -10,18 +10,22 @@ export default class WorldMapRenderer {
     public drawGrid(ctx: CanvasRenderingContext2D, grid: GridMap, width: number, height: number): void {
         ctx.strokeStyle = theme.worldMap.gridLines;
         ctx.lineWidth = 1;
+        const startX = grid.offsetX;
+        const startY = grid.offsetY;
+        const endX = startX + width;
+        const endY = startY + height;
         for (let col = 0; col <= grid.columns; col++) {
-            const x = col * grid.cellSize;
+            const x = startX + (col * grid.cellSize);
             ctx.beginPath();
-            ctx.moveTo(x, 0);
-            ctx.lineTo(x, height);
+            ctx.moveTo(x, startY);
+            ctx.lineTo(x, endY);
             ctx.stroke();
         }
         for (let row = 0; row <= grid.rows; row++) {
-            const y = row * grid.cellSize;
+            const y = startY + (row * grid.cellSize);
             ctx.beginPath();
-            ctx.moveTo(0, y);
-            ctx.lineTo(width, y);
+            ctx.moveTo(startX, y);
+            ctx.lineTo(endX, y);
             ctx.stroke();
         }
     }
@@ -47,7 +51,6 @@ export default class WorldMapRenderer {
         const centerX = cell.x + cell.width / 2;
         const centerY = cell.y + cell.height / 2;
         const characterScale = theme.worldMap.iconScale.character;
-        console.log(`characterScale: ${characterScale}`)
         const markerHalfWidth = 6 * characterScale;
         const markerHeight = 8 * characterScale;
         ctx.fillStyle = theme.worldMap.playerMarker;
