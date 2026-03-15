@@ -1,4 +1,4 @@
-import Player from '../../../entities/Player.js';
+﻿import Player from '../../../entities/Player.js';
 import BattleUiController from '../../BattleUiController.js';
 import HudController from '../../HudController.js';
 import Skeleton from '../../../entities/Skeleton.js';
@@ -19,6 +19,7 @@ export default class GameHudCoordinator {
 
     public updateHUD(): void {
         this.hudController.updateHUD();
+        this.battleUiController.refreshActionAvailability();
     }
 
     public enableBattleButtons(enabled: boolean): void {
@@ -60,3 +61,4 @@ export default class GameHudCoordinator {
         this.addBattleLog(`Upgraded ${spellId} spell level.`, 'system');
     }
 }
+

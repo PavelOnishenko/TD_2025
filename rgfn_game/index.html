@@ -24,147 +24,174 @@
                 <button id="use-mana-potion-btn" class="action-btn">Use Mana Potion</button>
                 <button id="new-character-btn" class="action-btn">New Character</button>
             </div>
-            <div id="stats-panel" class="hud-section stats hidden">
-                <div class="stat">Level: <span id="player-level">1</span></div>
-                <div class="stat">XP: <span id="player-xp">0</span>/<span id="player-xp-next">5</span></div>
-                <div class="stat">HP: <span id="player-hp">5</span>/<span id="player-max-hp">5</span></div>
-                <div class="stat">Mana: <span id="player-mana">0</span>/<span id="player-max-mana">0</span></div>
-                <div class="stat">Magic Points: <span id="magic-points">0</span></div>
-                <div class="stat">
-                    DMG: <span id="player-dmg">2</span>
-                    <div id="player-dmg-formula" class="stat-detail">Base 2 + STR + AGI = 2 (Melee)</div>
-                </div>
-                <div class="stat">Armor: <span id="player-armor">0</span></div>
-                <div class="stat">
-                    Dodge: <span id="player-dodge">0%</span>
-                    <div id="player-dodge-formula" class="stat-detail">1 - 1/(1 + AGI×0.045), cap 45% = 0%</div>
-                </div>
-                <div class="stat">Weapon: <span id="player-weapon">None</span></div>
-                <div class="stat">Gold: <span id="player-gold">20</span></div>
-                <div class="equipment-panel">
-                    <div class="equipment-title">Equipment</div>
-                    <div class="equipment-grid">
-                        <button id="weapon-slot-main" class="equipment-slot" title="Main hand">Main Hand: Empty</button>
-                        <button id="weapon-slot-off" class="equipment-slot" title="Off hand">Off Hand: Empty</button>
-                        <button id="armor-slot" class="equipment-slot" title="Armor">Armor: Empty</button>
-                    </div>
-                    <div class="equipment-hint">Click inventory items to equip. Click equipped slots to unequip.</div>
-                </div>
-            </div>
-            <div id="skills-panel" class="hud-section stats hidden">
-                <div class="stat">Skill Points: <span id="skill-points">0</span></div>
-                <div class="stat-row">
-                    <span>Vitality: <span id="stat-vitality">0</span></span>
-                    <button id="add-vitality-btn" class="stat-btn" title="Each point: +1 Max HP">+</button>
-                </div>
-                <div class="stat-row">
-                    <span>Toughness: <span id="stat-toughness">0</span></span>
-                    <button id="add-toughness-btn" class="stat-btn" title="3 points: +1 Armor">+</button>
-                </div>
-                <div class="stat-row">
-                    <span>Strength: <span id="stat-strength">0</span></span>
-                    <button id="add-strength-btn" class="stat-btn" title="+Melee dmg (major), +Bow dmg (minor)">+</button>
-                </div>
-                <div class="stat-row">
-                    <span>Agility: <span id="stat-agility">0</span></span>
-                    <button id="add-agility-btn" class="stat-btn" title="+Bow dmg (major), +Melee dmg (minor), +Evade chance">+</button>
-                </div>
-                <div class="stat-row">
-                    <span>Connection: <span id="stat-connection">0</span></span>
-                    <button id="add-connection-btn" class="stat-btn" title="Each point: +1 mana">+</button>
-                </div>
-                <div class="stat-row">
-                    <span>Intelligence: <span id="stat-intelligence">0</span></span>
-                    <button id="add-intelligence-btn" class="stat-btn" title="3 points: +1 magic point and +1 mana">+</button>
-                </div>
-            </div>
-            <div id="inventory-panel" class="hud-section stats hidden">
-                <div class="stat">Inventory (<span id="inventory-count">0</span>/<span id="inventory-capacity">6</span>)</div>
-                <div id="inventory-grid" class="inventory-grid"></div>
-            </div>
-            <div id="magic-panel" class="hud-section stats hidden">
-                <div class="stat">Spell Levels</div>
-                <div class="spell-upgrade-row">
-                    <div class="stat-row"><span>Fire Ball Lv <span id="spell-level-fireball">0</span></span><button id="upgrade-fireball-btn" class="stat-btn" title="Spend 1 magic point">+</button></div>
-                    <div id="spell-details-fireball" class="spell-details"></div>
-                </div>
-                <div class="spell-upgrade-row">
-                    <div class="stat-row"><span>Curse Lv <span id="spell-level-curse">0</span></span><button id="upgrade-curse-btn" class="stat-btn" title="Spend 1 magic point">+</button></div>
-                    <div id="spell-details-curse" class="spell-details"></div>
-                </div>
-                <div class="spell-upgrade-row">
-                    <div class="stat-row"><span>Slow Lv <span id="spell-level-slow">0</span></span><button id="upgrade-slow-btn" class="stat-btn" title="Spend 1 magic point">+</button></div>
-                    <div id="spell-details-slow" class="spell-details"></div>
-                </div>
-                <div class="spell-upgrade-row">
-                    <div class="stat-row"><span>Rage Lv <span id="spell-level-rage">0</span></span><button id="upgrade-rage-btn" class="stat-btn" title="Spend 1 magic point">+</button></div>
-                    <div id="spell-details-rage" class="spell-details"></div>
-                </div>
-                <div class="spell-upgrade-row">
-                    <div class="stat-row"><span>Arcane Lance Lv <span id="spell-level-arcane-lance">0</span></span><button id="upgrade-arcane-lance-btn" class="stat-btn" title="Spend 1 magic point">+</button></div>
-                    <div id="spell-details-arcane-lance" class="spell-details"></div>
-                </div>
-            </div>
-
         </div>
-
         <div id="game-area">
-            <canvas id="game-canvas" width="800" height="600"></canvas>
-
-            <div id="battle-sidebar" class="hidden">
-                <h2>Combat</h2>
-                <div id="enemy-info">
-                    <div class="enemy-stat">Enemy: <span id="enemy-name">-</span></div>
-                    <div class="enemy-stat">HP: <span id="enemy-hp">-</span>/<span id="enemy-max-hp">-</span></div>
-                </div>
-                <div id="battle-instructions">
-                    <p><strong>Your Turn:</strong></p>
-                    <p>Move with Arrow Keys/WASD</p>
-                    <p id="attack-range-text">Attack when adjacent (1 tile)</p>
-                </div>
-                <div id="battle-actions">
-                    <button id="attack-btn" class="action-btn">Attack</button>
-                    <button id="flee-btn" class="action-btn">Flee</button>
-                    <button id="wait-btn" class="action-btn">Wait</button>
-                    <button id="battle-use-potion-btn" class="action-btn">Drink HP Potion</button>
-                    <button id="battle-use-mana-potion-btn" class="action-btn">Drink Mana Potion</button>
-                    <button id="spell-fireball-btn" class="action-btn">Fire Ball</button>
-                    <button id="spell-curse-btn" class="action-btn">Curse</button>
-                    <button id="spell-slow-btn" class="action-btn">Slow</button>
-                    <button id="spell-rage-btn" class="action-btn">Rage</button>
-                    <button id="spell-arcane-lance-btn" class="action-btn">Arcane Lance</button>
-                </div>
-            </div>
-
-
-            <div id="village-sidebar" class="hidden">
-                <h2>Village</h2>
-                <div id="village-prompt">
-                    <p>You found a village. Enter?</p>
-                    <div id="village-entry-actions">
-                        <button id="village-enter-btn" class="action-btn">Enter</button>
-                        <button id="village-skip-btn" class="action-btn">Continue</button>
+            <div class="game-area-row" id="r1">
+                <div class="game-area-cell" id="r1c1">
+                    <div id="stats-panel" class="hud-section stats hidden">
+                        <div class="stat">Level: <span id="player-level">1</span></div>
+                        <div class="stat">XP: <span id="player-xp">0</span>/<span id="player-xp-next">5</span></div>
+                        <div class="stat">HP: <span id="player-hp">5</span>/<span id="player-max-hp">5</span></div>
+                        <div class="stat">Mana: <span id="player-mana">0</span>/<span id="player-max-mana">0</span></div>
+                        <div class="stat">Magic Points: <span id="magic-points">0</span></div>
+                        <div class="stat">
+                            DMG: <span id="player-dmg">2</span>
+                            <div id="player-dmg-formula" class="stat-detail">Base 2 + STR + AGI = 2 (Melee)</div>
+                        </div>
+                        <div class="stat">Armor: <span id="player-armor">0</span></div>
+                        <div class="stat">
+                            Dodge: <span id="player-dodge">0%</span>
+                            <div id="player-dodge-formula" class="stat-detail">1 - 1/(1 + AGI×0.045), cap 45% = 0%</div>
+                        </div>
+                        <div class="stat">Weapon: <span id="player-weapon">None</span></div>
+                        <div class="stat">Gold: <span id="player-gold">20</span></div>
+                        <div class="equipment-panel">
+                            <div class="equipment-title">Equipment</div>
+                            <div class="equipment-grid">
+                                <button id="weapon-slot-main" class="equipment-slot" title="Main hand">Main Hand: Empty</button>
+                                <button id="weapon-slot-off" class="equipment-slot" title="Off hand">Off Hand: Empty</button>
+                                <button id="armor-slot" class="equipment-slot" title="Armor">Armor: Empty</button>
+                            </div>
+                            <div class="equipment-hint">Click inventory items to equip. Click equipped slots to unequip.</div>
+                        </div>
+                    </div>
+                    <div id="skills-panel" class="hud-section stats hidden">
+                        <div class="stat">Skill Points: <span id="skill-points">0</span></div>
+                        <div class="stat-row">
+                            <span>Vitality: <span id="stat-vitality">0</span></span>
+                            <button id="add-vitality-btn" class="stat-btn" title="Each point: +1 Max HP">+</button>
+                        </div>
+                        <div class="stat-row">
+                            <span>Toughness: <span id="stat-toughness">0</span></span>
+                            <button id="add-toughness-btn" class="stat-btn" title="3 points: +1 Armor">+</button>
+                        </div>
+                        <div class="stat-row">
+                            <span>Strength: <span id="stat-strength">0</span></span>
+                            <button id="add-strength-btn" class="stat-btn" title="+Melee dmg (major), +Bow dmg (minor)">+</button>
+                        </div>
+                        <div class="stat-row">
+                            <span>Agility: <span id="stat-agility">0</span></span>
+                            <button id="add-agility-btn" class="stat-btn" title="+Bow dmg (major), +Melee dmg (minor), +Evade chance">+</button>
+                        </div>
+                        <div class="stat-row">
+                            <span>Connection: <span id="stat-connection">0</span></span>
+                            <button id="add-connection-btn" class="stat-btn" title="Each point: +1 mana">+</button>
+                        </div>
+                        <div class="stat-row">
+                            <span>Intelligence: <span id="stat-intelligence">0</span></span>
+                            <button id="add-intelligence-btn" class="stat-btn" title="3 points: +1 magic point and +1 mana">+</button>
+                        </div>
+                    </div>
+                    <div id="inventory-panel" class="hud-section stats hidden">
+                        <div class="stat">Inventory (<span id="inventory-count">0</span>/<span id="inventory-capacity">6</span>)</div>
+                        <div id="inventory-grid" class="inventory-grid"></div>
+                    </div>
+                    <div id="magic-panel" class="hud-section stats hidden">
+                        <div class="stat">Spell Levels</div>
+                        <div class="spell-upgrade-row">
+                            <div class="stat-row"><span>Fire Ball Lv <span id="spell-level-fireball">0</span></span><button id="upgrade-fireball-btn" class="stat-btn" title="Spend 1 magic point">+</button></div>
+                            <div id="spell-details-fireball" class="spell-details"></div>
+                        </div>
+                        <div class="spell-upgrade-row">
+                            <div class="stat-row"><span>Curse Lv <span id="spell-level-curse">0</span></span><button id="upgrade-curse-btn" class="stat-btn" title="Spend 1 magic point">+</button></div>
+                            <div id="spell-details-curse" class="spell-details"></div>
+                        </div>
+                        <div class="spell-upgrade-row">
+                            <div class="stat-row"><span>Slow Lv <span id="spell-level-slow">0</span></span><button id="upgrade-slow-btn" class="stat-btn" title="Spend 1 magic point">+</button></div>
+                            <div id="spell-details-slow" class="spell-details"></div>
+                        </div>
+                        <div class="spell-upgrade-row">
+                            <div class="stat-row"><span>Rage Lv <span id="spell-level-rage">0</span></span><button id="upgrade-rage-btn" class="stat-btn" title="Spend 1 magic point">+</button></div>
+                            <div id="spell-details-rage" class="spell-details"></div>
+                        </div>
+                        <div class="spell-upgrade-row">
+                            <div class="stat-row"><span>Arcane Lance Lv <span id="spell-level-arcane-lance">0</span></span><button id="upgrade-arcane-lance-btn" class="stat-btn" title="Spend 1 magic point">+</button></div>
+                            <div id="spell-details-arcane-lance" class="spell-details"></div>
+                        </div>
                     </div>
                 </div>
-                <div id="village-actions" class="hidden">
-                    <p><strong>Village Actions:</strong></p>
-                    <div id="village-action-buttons">
-                        <button id="village-wait-btn" class="action-btn">Wait</button>
-                        <button id="village-buy-btn" class="action-btn">Buy Bow (15g)</button>
-                        <button id="village-sell-btn" class="action-btn">Sell Bow (8g)</button>
-                        <button id="village-buy-potion-btn" class="action-btn">Buy Healing Potion (4g)</button>
-                        <button id="village-sell-potion-btn" class="action-btn">Sell Healing Potion (2g)</button>
-                        <button id="village-buy-mana-potion-btn" class="action-btn">Buy Mana Potion (5g)</button>
-                        <button id="village-sell-mana-potion-btn" class="action-btn">Sell Mana Potion (3g)</button>
-                        <button id="village-leave-btn" class="action-btn">Leave</button>
+                <div class="game-area-cell" id="r1c2">
+                    <canvas id="game-canvas" width="800" height="600"></canvas>
+                </div>
+                <div class="game-area-cell" id="r1c3">
+                    <div id="battle-sidebar" class="hidden">
+                        <h2>Combat</h2>
+                        <div id="enemy-info">
+                            <div class="enemy-stat">Enemy: <span id="enemy-name">-</span></div>
+                            <div class="enemy-stat">HP: <span id="enemy-hp">-</span>/<span id="enemy-max-hp">-</span></div>
+                        </div>
+                        
+                        <p id="attack-range-text">Attack when adjacent (1 tile)</p>
+                        <div id="battle-actions">
+                            <button id="attack-btn" class="action-btn">Attack</button>
+                            <button id="flee-btn" class="action-btn">Flee</button>
+                            <button id="wait-btn" class="action-btn">Wait</button>
+                            <button id="battle-use-potion-btn" class="action-btn">Drink HP Potion</button>
+                            <button id="battle-use-mana-potion-btn" class="action-btn">Drink Mana Potion</button>
+                            <button id="spell-fireball-btn" class="action-btn">Fire Ball</button>
+                            <button id="spell-curse-btn" class="action-btn">Curse</button>
+                            <button id="spell-slow-btn" class="action-btn">Slow</button>
+                            <button id="spell-rage-btn" class="action-btn">Rage</button>
+                            <button id="spell-arcane-lance-btn" class="action-btn">Arcane Lance</button>
+                        </div>
                     </div>
+                    <div id="village-sidebar" class="hidden">
+                        <h2>Village</h2>
+                        <div id="village-prompt">
+                            <p>You found a village. Enter?</p>
+                            <div id="village-entry-actions">
+                                <button id="village-enter-btn" class="action-btn">Enter</button>
+                                <button id="village-skip-btn" class="action-btn">Continue</button>
+                            </div>
+                        </div>
+                        <div id="village-actions" class="hidden">
+                            <p><strong>Village Actions:</strong></p>
+                            <div id="village-action-buttons">
+                                <button id="village-wait-btn" class="action-btn">Wait</button>
+                                <button id="village-buy-btn" class="action-btn">Buy Bow (15g)</button>
+                                <button id="village-sell-btn" class="action-btn">Sell Bow (8g)</button>
+                                <button id="village-buy-potion-btn" class="action-btn">Buy Healing Potion (4g)</button>
+                                <button id="village-sell-potion-btn" class="action-btn">Sell Healing Potion (2g)</button>
+                                <button id="village-buy-mana-potion-btn" class="action-btn">Buy Mana Potion (5g)</button>
+                                <button id="village-sell-mana-potion-btn" class="action-btn">Sell Mana Potion (3g)</button>
+                                <button id="village-leave-btn" class="action-btn">Leave</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="game-area-cell" id="r1c4">
+                    <div id="game-log-container">
+                            <h3>Log</h3>
+                            <div id="game-log"></div>
+                        </div>
+                </div>
+            </div>
+            <div class="game-area-row" id="r2">
+                <div class="game-area-cell" id="r2c1">
+                </div>
+                <div class="game-area-cell" id="r2c2">
+                </div>
+                <div class="game-area-cell" id="r2c3">
+                </div>
+                <div class="game-area-cell" id="r2c4">
+                </div>
+            </div>
+            <div class="game-area-row" id="r3">
+                <div class="game-area-cell" id="r3c1">
+                    
+                </div>
+                <div class="game-area-cell" id="r3c2">
+                    
+                </div>
+                <div class="game-area-cell" id="r3c3">
+                </div>
+                <div class="game-area-cell" id="r3c4">
                 </div>
             </div>
 
-            <div id="game-log-container">
-                <h3>Log</h3>
-                <div id="game-log"></div>
-            </div>
+            
+
+            
         </div>
 
 

@@ -183,13 +183,29 @@ h1 {
 }
 
 #game-area {
-    display: grid;
-    grid-template-columns: minmax(240px, 300px) minmax(500px, 680px) minmax(260px, 320px);
+    display: flex;
+    flex-flow: column wrap;
     gap: 12px;
-    align-items: start;
+    align-content: flex-start;
     justify-content: center;
     flex: 1;
     min-height: 0;
+}
+
+.game-area-row {
+    display: flex;
+    flex-flow: row wrap;
+    box-sizing: border-box;
+    flex: 0 0 calc((100% - 24px) / 3);
+    min-width: 240px;
+    min-height: 120px;
+}
+
+.game-area-cell {
+    box-sizing: border-box;
+    flex: 0 0 calc((100% - 24px) / 4);
+    min-width: 240px;
+    min-height: 120px;
 }
 
 
@@ -198,8 +214,9 @@ h1 {
     border: 3px solid var(--color-secondary-accent);
     border-radius: 6px;
     background-color: var(--color-canvas-bg);
-    width: min(680px, calc(100dvh - 340px), 100%);
-    height: auto;
+    /* width: min(200px, calc(100dvh - 840px), 100%); */
+    width: 200px;
+    height: 200px;
     aspect-ratio: 1 / 1;
     justify-self: center;
     box-shadow: 0 0 0 2px var(--color-panel-shadow);
@@ -208,6 +225,7 @@ h1 {
 
 #battle-sidebar,
 #village-sidebar {
+    position: relative;
     background: linear-gradient(180deg, var(--color-panel-highlight), var(--color-secondary-bg));
     border: 2px solid var(--color-secondary-accent);
     border-radius: 8px;
@@ -337,7 +355,7 @@ h1 {
     #village-sidebar,
     #game-log-container {
         grid-column: 1;
-        max-width: min(760px, 100%);
+        max-width: min(400px, 100%);
         width: 100%;
     }
 }
@@ -403,6 +421,10 @@ h1 {
     grid-template-columns: repeat(6, minmax(0, 1fr));
     gap: 6px;
     width: 100%;
+}
+
+#skills-panel {
+    position: relative;
 }
 
 .inventory-slot {

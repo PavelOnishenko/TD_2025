@@ -43,6 +43,9 @@ type GameSaveState = {
 };
 
 const SAVE_KEY = 'rgfn_game_save_v1';
+const WORLD_MAP_COLUMNS = 12;
+const WORLD_MAP_ROWS = 9;
+const WORLD_MAP_CELL_SIZE = 40;
 
 export default class Game {
     private readonly canvas: HTMLCanvasElement;
@@ -67,7 +70,7 @@ export default class Game {
         this.input = new InputManager();
         this.loop = new GameLoop((dt: number) => this.update(dt), () => this.render());
         const player = new Player(0, 0);
-        const worldMap = new WorldMap(20, 15, 40);
+        const worldMap = new WorldMap(WORLD_MAP_COLUMNS, WORLD_MAP_ROWS, WORLD_MAP_CELL_SIZE);
         const battleMap = new BattleMap();
         this.player = player;
         this.worldMap = worldMap;
@@ -76,8 +79,8 @@ export default class Game {
         const encounterSystem = new EncounterSystem();
         const villageLifeRenderer = new VillageLifeRenderer(new VillagePopulation());
         const ui = new GameUiFactory().create();
-        const battleUiController = new BattleUiController(ui.battleUI, battleMap, turnManager, player, ui.gameLogUI.log);
         const magicSystem = new MagicSystem(player);
+        const battleUiController = new BattleUiController(ui.battleUI, battleMap, turnManager, player, ui.gameLogUI.log, magicSystem);
         this.magicSystem = magicSystem;
         this.hudCoordinator = new GameHudCoordinator(player, new HudController(player, ui.hudElements, ui.battleUI, magicSystem), battleUiController, magicSystem);
         const villageActionsController = new VillageActionsController(player, ui.villageUI, ui.gameLogUI.log, {
@@ -276,3 +279,5 @@ export default class Game {
         window.location.reload();
     }
 }
+
+
