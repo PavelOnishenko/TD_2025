@@ -122,10 +122,33 @@ export default class GameUiFactory {
 
 
     private createGameLogUi(): GameLogUI {
+        const logElement = document.getElementById('game-log')!;
+
+        this.setupAutoScrollingGameLog(logElement);
+
         return {
-            log: document.getElementById('game-log')!,
+            log: logElement,
         };
     }
+
+    private setupAutoScrollingGameLog(logElement: HTMLElement): void {
+        const scrollToLatest = (): void => {
+            logElement.scrollTop = logElement.scrollHeight;
+        };
+
+        const observer = new MutationObserver((mutations): void => {
+            const hasAddedNodes = mutations.some((mutation) => mutation.addedNodes.length > 0);
+            if (!hasAddedNodes) {
+                return;
+            }
+
+            scrollToLatest();
+        });
+
+        observer.observe(logElement, { childList: true });
+        scrollToLatest();
+    }
+
     private createDeveloperUi(): DeveloperUI {
         return {
             modal: document.getElementById('dev-events-modal')!,
