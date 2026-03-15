@@ -1,4 +1,4 @@
-import { BattleUI, DeveloperUI, GameUiBundle, HudElements, VillageUI } from './GameUiTypes.js';
+import { BattleUI, DeveloperUI, GameLogUI, GameUiBundle, HudElements, VillageUI } from './GameUiTypes.js';
 import { balanceConfig } from '../../config/balanceConfig.js';
 
 export default class GameUiFactory {
@@ -7,6 +7,7 @@ export default class GameUiFactory {
             hudElements: this.createHudElements(),
             battleUI: this.createBattleUi(),
             villageUI: this.createVillageUi(),
+            gameLogUI: this.createGameLogUi(),
             developerUI: this.createDeveloperUi(),
         };
     }
@@ -61,6 +62,14 @@ export default class GameUiFactory {
             weaponSlotMain: document.getElementById('weapon-slot-main')! as HTMLButtonElement,
             weaponSlotOff: document.getElementById('weapon-slot-off')! as HTMLButtonElement,
             armorSlot: document.getElementById('armor-slot')! as HTMLButtonElement,
+            statsPanel: document.getElementById('stats-panel')!,
+            skillsPanel: document.getElementById('skills-panel')!,
+            inventoryPanel: document.getElementById('inventory-panel')!,
+            magicPanel: document.getElementById('magic-panel')!,
+            toggleStatsPanelBtn: document.getElementById('toggle-stats-panel-btn')! as HTMLButtonElement,
+            toggleSkillsPanelBtn: document.getElementById('toggle-skills-panel-btn')! as HTMLButtonElement,
+            toggleInventoryPanelBtn: document.getElementById('toggle-inventory-panel-btn')! as HTMLButtonElement,
+            toggleMagicPanelBtn: document.getElementById('toggle-magic-panel-btn')! as HTMLButtonElement,
         };
     }
 
@@ -84,7 +93,6 @@ export default class GameUiFactory {
             spellSlowBtn: document.getElementById('spell-slow-btn')! as HTMLButtonElement,
             spellRageBtn: document.getElementById('spell-rage-btn')! as HTMLButtonElement,
             spellArcaneLanceBtn: document.getElementById('spell-arcane-lance-btn')! as HTMLButtonElement,
-            log: document.getElementById('battle-log')!,
             attackRangeText: document.getElementById('attack-range-text')!,
         };
     }
@@ -94,7 +102,6 @@ export default class GameUiFactory {
             sidebar: document.getElementById('village-sidebar')!,
             prompt: document.getElementById('village-prompt')!,
             actions: document.getElementById('village-actions')!,
-            log: document.getElementById('village-log')!,
             enterBtn: document.getElementById('village-enter-btn')! as HTMLButtonElement,
             skipBtn: document.getElementById('village-skip-btn')! as HTMLButtonElement,
             waitBtn: document.getElementById('village-wait-btn')! as HTMLButtonElement,
@@ -108,6 +115,12 @@ export default class GameUiFactory {
         };
     }
 
+
+    private createGameLogUi(): GameLogUI {
+        return {
+            log: document.getElementById('game-log')!,
+        };
+    }
     private createDeveloperUi(): DeveloperUI {
         return {
             modal: document.getElementById('dev-events-modal')!,
