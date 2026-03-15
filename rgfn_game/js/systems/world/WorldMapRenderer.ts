@@ -47,6 +47,7 @@ export default class WorldMapRenderer {
         const centerX = cell.x + cell.width / 2;
         const centerY = cell.y + cell.height / 2;
         const characterScale = theme.worldMap.iconScale.character;
+        console.log(`characterScale: ${characterScale}`)
         const markerHalfWidth = 6 * characterScale;
         const markerHeight = 8 * characterScale;
         ctx.fillStyle = theme.worldMap.playerMarker;

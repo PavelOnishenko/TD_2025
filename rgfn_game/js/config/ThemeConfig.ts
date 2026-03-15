@@ -124,10 +124,10 @@ const GAME_THEME: Theme = {
     playerMarker: '#8f1f1f',
     iconScale: {
       character: 1,
-      village: 1,
+      village: 0.5,
     },
     questionMarkOffset: {
-      x: 0,
+      x: 15,
       y: 0,
     },
   },

@@ -13,12 +13,12 @@ export default class PlayerRenderer {
     public draw(ctx: CanvasRenderingContext2D, player: PlayerRenderState): void {
         const screenX = player.x;
         const screenY = player.y;
-        const left = screenX - player.width / 2;
-        const top = screenY - player.height / 2;
+        // const left = screenX - player.width / 2;
+        // const top = screenY - player.height / 2;
 
-        this.drawBody(ctx, screenX, top, left, player.width, player.height);
-        this.drawHead(ctx, screenX, top);
-        this.drawShoulders(ctx, left, top, player.width);
+        // this.drawBody(ctx, screenX, top, left, player.width, player.height);
+        // this.drawHead(ctx, screenX, top);
+        // this.drawShoulders(ctx, left, top, player.width);
         this.drawHealthBar(ctx, player, screenX, screenY);
     }
 
