@@ -152,6 +152,11 @@ export const balanceConfig = {
 
         // Unarmed combat defaults
         fistDamagePerHand: 1,
+
+        // Spell targeting ranges (in battle map tiles)
+        spellRanges: {
+            slow: 4,
+        },
     },
 
 
