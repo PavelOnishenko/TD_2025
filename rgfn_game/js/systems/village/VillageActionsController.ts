@@ -12,7 +12,6 @@ type VillageUI = {
     sidebar: HTMLElement;
     prompt: HTMLElement;
     actions: HTMLElement;
-    log: HTMLElement;
     buyBtn: HTMLButtonElement;
     sellBtn: HTMLButtonElement;
     buyPotionBtn: HTMLButtonElement;
@@ -30,10 +29,12 @@ export default class VillageActionsController {
     private player: Player;
     private villageUI: VillageUI;
     private callbacks: VillageActionsCallbacks;
+    private gameLog: HTMLElement;
 
-    constructor(player: Player, villageUI: VillageUI, callbacks: VillageActionsCallbacks) {
+    constructor(player: Player, villageUI: VillageUI, gameLog: HTMLElement, callbacks: VillageActionsCallbacks) {
         this.player = player;
         this.villageUI = villageUI;
+        this.gameLog = gameLog;
         this.callbacks = callbacks;
     }
 
@@ -41,7 +42,7 @@ export default class VillageActionsController {
         this.villageUI.sidebar.classList.remove('hidden');
         this.villageUI.prompt.classList.remove('hidden');
         this.villageUI.actions.classList.add('hidden');
-        this.villageUI.log.innerHTML = '';
+        this.gameLog.innerHTML = '';
         this.addLog(`You discover ${villageName}. Enter it?`, 'system');
         this.updateButtons();
     }
@@ -177,8 +178,8 @@ export default class VillageActionsController {
         const line = document.createElement('div');
         line.textContent = message;
         line.classList.add(`${type}-action`);
-        this.villageUI.log.appendChild(line);
-        this.villageUI.log.scrollTop = this.villageUI.log.scrollHeight;
+        this.gameLog.appendChild(line);
+        this.gameLog.scrollTop = this.gameLog.scrollHeight;
     }
 
     public updateButtons(): void {

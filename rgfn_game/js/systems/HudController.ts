@@ -50,7 +50,18 @@ type HudElements = {
     weaponSlotMain: HTMLButtonElement;
     weaponSlotOff: HTMLButtonElement;
     armorSlot: HTMLButtonElement;
+    statsPanel: HTMLElement;
+    skillsPanel: HTMLElement;
+    inventoryPanel: HTMLElement;
+    magicPanel: HTMLElement;
+    toggleStatsPanelBtn: HTMLButtonElement;
+    toggleSkillsPanelBtn: HTMLButtonElement;
+    toggleInventoryPanelBtn: HTMLButtonElement;
+    toggleMagicPanelBtn: HTMLButtonElement;
 };
+
+
+type HudPanel = 'stats' | 'skills' | 'inventory' | 'magic';
 
 type BattleUiHudElements = {
     usePotionBtn: HTMLButtonElement;
@@ -128,6 +139,19 @@ export default class HudController {
 
         this.updateStatButtons();
         this.updateSpellButtons();
+        this.updateToggleButtons();
+    }
+
+    public togglePanel(panel: HudPanel): void {
+        const panelMap: Record<HudPanel, HTMLElement> = {
+            stats: this.hudElements.statsPanel,
+            skills: this.hudElements.skillsPanel,
+            inventory: this.hudElements.inventoryPanel,
+            magic: this.hudElements.magicPanel,
+        };
+
+        panelMap[panel].classList.toggle('hidden');
+        this.updateToggleButtons();
     }
 
     private bindEquipmentSlotEvents(): void {
@@ -232,6 +256,13 @@ export default class HudController {
         this.hudElements.upgradeSlowBtn.disabled = !hasMagicPoints;
         this.hudElements.upgradeRageBtn.disabled = !hasMagicPoints;
         this.hudElements.upgradeArcaneLanceBtn.disabled = !hasMagicPoints;
+    }
+
+    private updateToggleButtons(): void {
+        this.hudElements.toggleStatsPanelBtn.classList.toggle('active', !this.hudElements.statsPanel.classList.contains('hidden'));
+        this.hudElements.toggleSkillsPanelBtn.classList.toggle('active', !this.hudElements.skillsPanel.classList.contains('hidden'));
+        this.hudElements.toggleInventoryPanelBtn.classList.toggle('active', !this.hudElements.inventoryPanel.classList.contains('hidden'));
+        this.hudElements.toggleMagicPanelBtn.classList.toggle('active', !this.hudElements.magicPanel.classList.contains('hidden'));
     }
 
     private updateSpellButtons(): void {

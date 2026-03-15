@@ -18,7 +18,6 @@ type BattleUI = {
     spellSlowBtn: HTMLButtonElement;
     spellRageBtn: HTMLButtonElement;
     spellArcaneLanceBtn: HTMLButtonElement;
-    log: HTMLElement;
 };
 
 type SelectionResult = {
@@ -31,12 +30,14 @@ export default class BattleUiController {
     private battleMap: BattleMap;
     private turnManager: TurnManager;
     private player: Player;
+    private gameLog: HTMLElement;
 
-    constructor(battleUI: BattleUI, battleMap: BattleMap, turnManager: TurnManager, player: Player) {
+    constructor(battleUI: BattleUI, battleMap: BattleMap, turnManager: TurnManager, player: Player, gameLog: HTMLElement) {
         this.battleUI = battleUI;
         this.battleMap = battleMap;
         this.turnManager = turnManager;
         this.player = player;
+        this.gameLog = gameLog;
     }
 
     public updateEnemyDisplay(selectedEnemy: Skeleton | null): Skeleton | null {
@@ -116,12 +117,12 @@ export default class BattleUiController {
         const div = document.createElement('div');
         div.textContent = message;
         div.classList.add(type + '-action');
-        this.battleUI.log.appendChild(div);
-        this.battleUI.log.scrollTop = this.battleUI.log.scrollHeight;
+        this.gameLog.appendChild(div);
+        this.gameLog.scrollTop = this.gameLog.scrollHeight;
     }
 
     public clearBattleLog(): void {
-        this.battleUI.log.innerHTML = '';
+        this.gameLog.innerHTML = '';
     }
 
     public describeEncounter(enemies: Skeleton[]): string {

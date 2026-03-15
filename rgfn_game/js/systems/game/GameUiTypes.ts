@@ -46,6 +46,14 @@ export type HudElements = {
     weaponSlotMain: HTMLButtonElement;
     weaponSlotOff: HTMLButtonElement;
     armorSlot: HTMLButtonElement;
+    statsPanel: HTMLElement;
+    skillsPanel: HTMLElement;
+    inventoryPanel: HTMLElement;
+    magicPanel: HTMLElement;
+    toggleStatsPanelBtn: HTMLButtonElement;
+    toggleSkillsPanelBtn: HTMLButtonElement;
+    toggleInventoryPanelBtn: HTMLButtonElement;
+    toggleMagicPanelBtn: HTMLButtonElement;
 };
 
 export type BattleUI = {
@@ -63,7 +71,6 @@ export type BattleUI = {
     spellSlowBtn: HTMLButtonElement;
     spellRageBtn: HTMLButtonElement;
     spellArcaneLanceBtn: HTMLButtonElement;
-    log: HTMLElement;
     attackRangeText: HTMLElement;
 };
 
@@ -71,7 +78,6 @@ export type VillageUI = {
     sidebar: HTMLElement;
     prompt: HTMLElement;
     actions: HTMLElement;
-    log: HTMLElement;
     enterBtn: HTMLButtonElement;
     skipBtn: HTMLButtonElement;
     waitBtn: HTMLButtonElement;
@@ -93,9 +99,14 @@ export type DeveloperUI = {
     clearBtn: HTMLButtonElement;
 };
 
+export type GameLogUI = {
+    log: HTMLElement;
+};
+
 export type GameUiBundle = {
     hudElements: HudElements;
     battleUI: BattleUI;
     villageUI: VillageUI;
+    gameLogUI: GameLogUI;
     developerUI: DeveloperUI;
 };

@@ -37,6 +37,11 @@ export default class GameHudCoordinator {
         return this.battleUiController.describeEncounter(enemies);
     }
 
+
+    public togglePanel(panel: 'stats' | 'skills' | 'inventory' | 'magic'): void {
+        this.hudController.togglePanel(panel);
+    }
+
     public handleAddStat(stat: 'vitality' | 'toughness' | 'strength' | 'agility' | 'connection' | 'intelligence'): void {
         if (!this.player.addStat(stat)) {
             return;

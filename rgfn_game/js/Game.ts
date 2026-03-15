@@ -26,7 +26,7 @@ import GameUiEventBinder from './systems/game/GameUiEventBinder.js';
 import BattleTurnController from './systems/game/BattleTurnController.js';
 import BattlePlayerActionController from './systems/game/BattlePlayerActionController.js';
 import BattleCommandController from './systems/game/BattleCommandController.js';
-import { BattleUI, DeveloperUI, HudElements, VillageUI } from './systems/game/GameUiTypes.js';
+import { BattleUI, DeveloperUI, GameLogUI, HudElements, VillageUI } from './systems/game/GameUiTypes.js';
 import GameModeStateMachine, { MODES } from './systems/game/runtime/GameModeStateMachine.js';
 import GameRenderRouter from './systems/game/runtime/GameRenderRouter.js';
 import GameVillageCoordinator from './systems/game/runtime/GameVillageCoordinator.js';
@@ -34,7 +34,7 @@ import GameHudCoordinator from './systems/game/runtime/GameHudCoordinator.js';
 import GameBattleCoordinator from './systems/game/runtime/GameBattleCoordinator.js';
 import MagicSystem from './systems/magic/MagicSystem.js';
 
-type UIBundle = { hudElements: HudElements; battleUI: BattleUI; villageUI: VillageUI; developerUI: DeveloperUI };
+type UIBundle = { hudElements: HudElements; battleUI: BattleUI; villageUI: VillageUI; gameLogUI: GameLogUI; developerUI: DeveloperUI };
 
 export default class Game {
     private readonly canvas: HTMLCanvasElement;
@@ -68,10 +68,10 @@ export default class Game {
         const encounterSystem = new EncounterSystem();
         const villageLifeRenderer = new VillageLifeRenderer(new VillagePopulation());
         const ui = new GameUiFactory().create();
-        const battleUiController = new BattleUiController(ui.battleUI, battleMap, turnManager, player);
+        const battleUiController = new BattleUiController(ui.battleUI, battleMap, turnManager, player, ui.gameLogUI.log);
         const magicSystem = new MagicSystem(player);
         this.hudCoordinator = new GameHudCoordinator(player, new HudController(player, ui.hudElements, ui.battleUI, magicSystem), battleUiController, magicSystem);
-        const villageActionsController = new VillageActionsController(player, ui.villageUI, {
+        const villageActionsController = new VillageActionsController(player, ui.villageUI, ui.gameLogUI.log, {
             onUpdateHUD: () => this.hudCoordinator.updateHUD(), onLeaveVillage: () => this.stateMachine.transition(MODES.WORLD_MAP),
         });
         this.villageCoordinator = new GameVillageCoordinator(ui.hudElements, ui.battleUI, ui.villageUI, villageLifeRenderer, villageActionsController);
@@ -184,6 +184,7 @@ export default class Game {
             onCastSpell: (spellId) => this.battleCoordinator.handleCastSpell(spellId),
             onUpgradeSpell: (spellId) => this.hudCoordinator.handleUpgradeSpell(spellId),
             onCanvasClick: (event) => this.battleCoordinator.handleCanvasClick(event, this.canvas),
+            onTogglePanel: (panel) => this.hudCoordinator.togglePanel(panel),
         }).bind(() => this.villageCoordinator.getVillageName());
         this.devController = devController;
     }
