@@ -164,14 +164,17 @@ h1 {
 
 
 #game-canvas {
-    grid-column: 2;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 5;
     border: 3px solid var(--color-secondary-accent);
     border-radius: 6px;
     background-color: var(--color-canvas-bg);
-    width: min(760px, 72vh, 100%);
-    height: auto;
+    width: min(40vh, 432px);
+    height: min(40vh, 432px);
     aspect-ratio: 1 / 1;
-    justify-self: center;
     box-shadow: 0 0 0 2px var(--color-panel-shadow);
 }
 

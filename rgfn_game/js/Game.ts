@@ -59,7 +59,7 @@ export default class Game {
         this.input = new InputManager();
         this.loop = new GameLoop((dt: number) => this.update(dt), () => this.render());
         const player = new Player(0, 0);
-        const worldMap = new WorldMap(20, 15, 40);
+        const worldMap = new WorldMap(15, 15, 40);
         const battleMap = new BattleMap();
         this.player = player;
         this.worldMap = worldMap;
