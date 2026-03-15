@@ -1,8 +1,9 @@
-import BattleMap from './combat/BattleMap.js';
+﻿import BattleMap from './combat/BattleMap.js';
 import TurnManager from './combat/TurnManager.js';
 import Player from '../entities/Player.js';
 import Skeleton from '../entities/Skeleton.js';
 import { Direction } from '../types/game.js';
+import MagicSystem from './magic/MagicSystem.js';
 
 type BattleUI = {
     enemyName: HTMLElement;
@@ -31,16 +32,19 @@ export default class BattleUiController {
     private turnManager: TurnManager;
     private player: Player;
     private gameLog: HTMLElement;
+    private magicSystem: MagicSystem;
 
-    constructor(battleUI: BattleUI, battleMap: BattleMap, turnManager: TurnManager, player: Player, gameLog: HTMLElement) {
+    constructor(battleUI: BattleUI, battleMap: BattleMap, turnManager: TurnManager, player: Player, gameLog: HTMLElement, magicSystem: MagicSystem) {
         this.battleUI = battleUI;
         this.battleMap = battleMap;
         this.turnManager = turnManager;
         this.player = player;
         this.gameLog = gameLog;
+        this.magicSystem = magicSystem;
     }
 
     public updateEnemyDisplay(selectedEnemy: Skeleton | null): Skeleton | null {
+        this.refreshActionAvailability();
         const enemies = this.turnManager.getActiveEnemies() as Skeleton[];
         let displayEnemy: Skeleton | null = null;
 
@@ -101,6 +105,7 @@ export default class BattleUiController {
     }
 
     public setButtonsEnabled(enabled: boolean): void {
+        this.refreshActionAvailability();
         this.battleUI.attackBtn.disabled = !enabled;
         this.battleUI.fleeBtn.disabled = !enabled || !this.battleMap.isEntityOnEdge(this.player);
         this.battleUI.waitBtn.disabled = !enabled;
@@ -111,6 +116,27 @@ export default class BattleUiController {
         this.battleUI.spellSlowBtn.disabled = !enabled;
         this.battleUI.spellRageBtn.disabled = !enabled;
         this.battleUI.spellArcaneLanceBtn.disabled = !enabled;
+    }
+
+    public refreshActionAvailability(): void {
+        const hasAttackTarget = this.hasEnemyInAttackRange();
+        const canFlee = this.battleMap.isEntityOnEdge(this.player);
+        const hasHealingPotion = this.player.getHealingPotionCount() > 0;
+        const hasManaPotion = this.player.getManaPotionCount() > 0;
+        const availableSpells = this.magicSystem.getAvailableSpells();
+        const manaBySpell = new Map(availableSpells.map((spell) => [spell.id.split('-lvl-')[0], spell.manaCost]));
+        const hasEnemySpellTarget = hasAttackTarget;
+
+        this.setActionVisible(this.battleUI.attackBtn, hasAttackTarget);
+        this.setActionVisible(this.battleUI.fleeBtn, canFlee);
+        this.setActionVisible(this.battleUI.waitBtn, true);
+        this.setActionVisible(this.battleUI.usePotionBtn, hasHealingPotion);
+        this.setActionVisible(this.battleUI.useManaPotionBtn, hasManaPotion);
+        this.setActionVisible(this.battleUI.spellFireballBtn, hasEnemySpellTarget && this.player.canSpendMana(manaBySpell.get('fireball') ?? Number.POSITIVE_INFINITY));
+        this.setActionVisible(this.battleUI.spellCurseBtn, hasEnemySpellTarget && this.player.canSpendMana(manaBySpell.get('curse') ?? Number.POSITIVE_INFINITY));
+        this.setActionVisible(this.battleUI.spellSlowBtn, hasEnemySpellTarget && this.player.canSpendMana(manaBySpell.get('slow') ?? Number.POSITIVE_INFINITY));
+        this.setActionVisible(this.battleUI.spellRageBtn, this.player.canSpendMana(manaBySpell.get('rage') ?? Number.POSITIVE_INFINITY));
+        this.setActionVisible(this.battleUI.spellArcaneLanceBtn, hasEnemySpellTarget && this.player.canSpendMana(manaBySpell.get('arcane-lance') ?? Number.POSITIVE_INFINITY));
     }
 
     public addBattleLog(message: string, type: string = 'system'): void {
@@ -142,6 +168,12 @@ export default class BattleUiController {
         return enemies.filter(enemy => this.battleMap.isInMeleeRange(this.player, enemy));
     }
 
+    private hasEnemyInAttackRange(): boolean {
+        const attackRange = this.player.getAttackRange();
+        const enemies = this.turnManager.getActiveEnemies() as Skeleton[];
+        return enemies.some((enemy) => this.battleMap.isInAttackRange(this.player, enemy, attackRange));
+    }
+
     private getEnemyInDirection(direction: Direction): Skeleton | null {
         const playerCol = this.player.gridCol ?? 0;
         const playerRow = this.player.gridRow ?? 0;
@@ -155,5 +187,9 @@ export default class BattleUiController {
 
         const enemies = this.turnManager.getActiveEnemies() as Skeleton[];
         return enemies.find(enemy => enemy.gridCol === target.col && enemy.gridRow === target.row) ?? null;
+    }
+
+    private setActionVisible(button: HTMLButtonElement, visible: boolean): void {
+        button.classList.toggle('hidden', !visible);
     }
 }

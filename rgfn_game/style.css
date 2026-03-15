@@ -50,10 +50,10 @@ html { height: 100%; }
 
 #hud {
     display: grid;
-    grid-template-columns: repeat(5, minmax(220px, 1fr));
-    gap: 10px;
-    align-items: stretch;
-    padding: 12px;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+    align-items: start;
+    padding: 10px 12px;
     background: linear-gradient(180deg, var(--color-primary-bg), var(--color-secondary-bg));
     border: 2px solid var(--color-secondary-accent);
     border-radius: 8px;
@@ -70,6 +70,14 @@ html { height: 100%; }
     background: rgba(242, 229, 201, 0.4);
 }
 
+#hud > .hud-section:first-child {
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    min-height: 64px;
+}
+
 .hud-section.stats { align-items: flex-start; }
 
 h1 {
@@ -79,6 +87,13 @@ h1 {
     letter-spacing: 2px;
     text-transform: uppercase;
     margin-bottom: 4px;
+}
+
+#hud > .hud-section:first-child h1 {
+    margin: 0;
+    font-size: clamp(32px, 2.2vw, 44px);
+    line-height: 1;
+    white-space: nowrap;
 }
 
 #mode-indicator {
@@ -91,6 +106,7 @@ h1 {
     display: inline-block;
     border: 1px solid var(--color-secondary-accent);
     background-color: rgba(213, 190, 147, 0.55);
+    white-space: nowrap;
 }
 
 .stat {
@@ -167,13 +183,29 @@ h1 {
 }
 
 #game-area {
-    display: grid;
-    grid-template-columns: minmax(240px, 320px) minmax(520px, 760px) minmax(240px, 300px);
+    display: flex;
+    flex-flow: column wrap;
     gap: 12px;
-    align-items: start;
+    align-content: flex-start;
     justify-content: center;
     flex: 1;
     min-height: 0;
+}
+
+.game-area-row {
+    display: flex;
+    flex-flow: row wrap;
+    box-sizing: border-box;
+    flex: 0 0 calc((100% - 24px) / 3);
+    min-width: 240px;
+    min-height: 120px;
+}
+
+.game-area-cell {
+    box-sizing: border-box;
+    flex: 0 0 calc((100% - 24px) / 4);
+    min-width: 240px;
+    min-height: 120px;
 }
 
 
@@ -182,8 +214,9 @@ h1 {
     border: 3px solid var(--color-secondary-accent);
     border-radius: 6px;
     background-color: var(--color-canvas-bg);
-    width: min(760px, 72vh, 100%);
-    height: auto;
+    /* width: min(200px, calc(100dvh - 840px), 100%); */
+    width: 200px;
+    height: 200px;
     aspect-ratio: 1 / 1;
     justify-self: center;
     box-shadow: 0 0 0 2px var(--color-panel-shadow);
@@ -192,11 +225,12 @@ h1 {
 
 #battle-sidebar,
 #village-sidebar {
+    position: relative;
     background: linear-gradient(180deg, var(--color-panel-highlight), var(--color-secondary-bg));
     border: 2px solid var(--color-secondary-accent);
     border-radius: 8px;
     padding: 18px;
-    grid-column: 3;
+    grid-column: 1;
     min-width: 0;
     width: 100%;
     max-width: 300px;
@@ -210,7 +244,7 @@ h1 {
 
 
 #game-log-container {
-    grid-column: 1;
+    grid-column: 3;
     background: linear-gradient(180deg, var(--color-panel-highlight), var(--color-secondary-bg));
     border: 2px solid var(--color-secondary-accent);
     border-radius: 8px;
@@ -252,8 +286,14 @@ h1 {
 
 .hud-panel-toggles {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(120px, 1fr));
     gap: 6px;
+    flex: 1;
+}
+
+#hud > .hud-section:first-child > .action-btn {
+    min-width: 130px;
+    white-space: nowrap;
 }
 
 .hud-panel-toggles .action-btn.active {
@@ -297,7 +337,15 @@ h1 {
 
 
 @media (max-width: 1380px), (max-height: 900px) {
-    #hud { grid-template-columns: repeat(3, minmax(220px, 1fr)); }
+    #hud > .hud-section:first-child {
+        flex-wrap: wrap;
+    }
+
+    .hud-panel-toggles {
+        grid-template-columns: repeat(2, minmax(120px, 1fr));
+        flex: 0 0 100%;
+    }
+
     #game-area {
         grid-template-columns: minmax(0, 1fr);
         justify-items: center;
@@ -307,17 +355,24 @@ h1 {
     #village-sidebar,
     #game-log-container {
         grid-column: 1;
-        max-width: min(760px, 100%);
+        max-width: min(400px, 100%);
         width: 100%;
     }
 }
 
 @media (max-width: 920px) {
-    #hud { grid-template-columns: repeat(2, minmax(220px, 1fr)); }
+    #hud > .hud-section:first-child {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .hud-panel-toggles {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
 }
 
 @media (max-width: 640px) {
-    #hud { grid-template-columns: minmax(0, 1fr); }
+    .hud-panel-toggles { grid-template-columns: minmax(0, 1fr); }
 }
 
 
@@ -366,6 +421,10 @@ h1 {
     grid-template-columns: repeat(6, minmax(0, 1fr));
     gap: 6px;
     width: 100%;
+}
+
+#skills-panel {
+    position: relative;
 }
 
 .inventory-slot {
