@@ -87,12 +87,12 @@ export type VillageUI = {
     enterBtn: HTMLButtonElement;
     skipBtn: HTMLButtonElement;
     waitBtn: HTMLButtonElement;
-    buyBtn: HTMLButtonElement;
-    sellBtn: HTMLButtonElement;
-    buyPotionBtn: HTMLButtonElement;
-    sellPotionBtn: HTMLButtonElement;
-    buyManaPotionBtn: HTMLButtonElement;
-    sellManaPotionBtn: HTMLButtonElement;
+    buyOffer1Btn: HTMLButtonElement;
+    buyOffer2Btn: HTMLButtonElement;
+    buyOffer3Btn: HTMLButtonElement;
+    buyOffer4Btn: HTMLButtonElement;
+    sellSelect: HTMLSelectElement;
+    sellSelectedBtn: HTMLButtonElement;
     leaveBtn: HTMLButtonElement;
 };
 

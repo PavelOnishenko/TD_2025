@@ -126,8 +126,10 @@ export default class WorldMap {
         const nextCellSize = Math.max(1, Math.floor(Math.min(canvasWidth / columns, canvasHeight / rows)));
         const mapWidth = columns * nextCellSize;
         const mapHeight = rows * nextCellSize;
-        const offsetX = Math.floor((canvasWidth - mapWidth) / 2);
-        const offsetY = Math.floor((canvasHeight - mapHeight) / 2);
+        const baseOffsetX = Math.floor((canvasWidth - mapWidth) / 2);
+        const baseOffsetY = Math.floor((canvasHeight - mapHeight) / 2);
+        const offsetX = baseOffsetX + theme.worldMap.gridOffset.x;
+        const offsetY = baseOffsetY + theme.worldMap.gridOffset.y;
         this.grid.updateLayout(nextCellSize, offsetX, offsetY);
     }
 

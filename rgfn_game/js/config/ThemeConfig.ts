@@ -62,6 +62,10 @@ export interface Theme {
       x: number;
       y: number;
     };
+    gridOffset: {
+      x: number;
+      y: number;
+    };
   };
 
   // Battle Map Colors
@@ -128,6 +132,10 @@ const GAME_THEME: Theme = {
     },
     questionMarkOffset: {
       x: 15,
+      y: 0,
+    },
+    gridOffset: {
+      x: 0,
       y: 0,
     },
   },

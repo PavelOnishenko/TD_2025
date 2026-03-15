@@ -44,7 +44,6 @@
                             <div id="player-dodge-formula" class="stat-detail">1 - 1/(1 + AGI×0.045), cap 45% = 0%</div>
                         </div>
                         <div class="stat">Weapon: <span id="player-weapon">None</span></div>
-                        <div class="stat">Gold: <span id="player-gold">20</span></div>
                     </div>
                     <div id="skills-panel" class="hud-section stats hidden">
                         <div class="stat">Skill Points: <span id="skill-points">0</span></div>
@@ -74,6 +73,7 @@
                         </div>
                     </div>
                     <div id="inventory-panel" class="hud-section stats hidden">
+                        <div class="stat">Gold: <span id="player-gold">20</span></div>
                         <div class="stat">Inventory (<span id="inventory-count">0</span>/<span id="inventory-capacity">6</span>)</div>
                         <div id="inventory-grid" class="inventory-grid"></div>
                         <div class="equipment-panel">
@@ -148,12 +148,20 @@
                             <p><strong>Village Actions:</strong></p>
                             <div id="village-action-buttons">
                                 <button id="village-wait-btn" class="action-btn">Wait</button>
-                                <button id="village-buy-btn" class="action-btn">Buy Bow (15g)</button>
-                                <button id="village-sell-btn" class="action-btn">Sell Bow (8g)</button>
-                                <button id="village-buy-potion-btn" class="action-btn">Buy Healing Potion (4g)</button>
-                                <button id="village-sell-potion-btn" class="action-btn">Sell Healing Potion (2g)</button>
-                                <button id="village-buy-mana-potion-btn" class="action-btn">Buy Mana Potion (5g)</button>
-                                <button id="village-sell-mana-potion-btn" class="action-btn">Sell Mana Potion (3g)</button>
+                                <div class="village-section">
+                                    <p class="village-section-title">Village stock (random quality)</p>
+                                    <div id="village-stock-buttons">
+                                        <button id="village-buy-offer-1-btn" class="action-btn">Offer 1</button>
+                                        <button id="village-buy-offer-2-btn" class="action-btn">Offer 2</button>
+                                        <button id="village-buy-offer-3-btn" class="action-btn">Offer 3</button>
+                                        <button id="village-buy-offer-4-btn" class="action-btn">Offer 4</button>
+                                    </div>
+                                </div>
+                                <div class="village-section">
+                                    <p class="village-section-title">Sell inventory item</p>
+                                    <select id="village-sell-select" class="village-sell-select"></select>
+                                    <button id="village-sell-selected-btn" class="action-btn">Sell selected</button>
+                                </div>
                                 <button id="village-leave-btn" class="action-btn">Leave</button>
                             </div>
                         </div>
