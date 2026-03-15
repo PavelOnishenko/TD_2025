@@ -348,6 +348,12 @@ export default class Player extends DamageableEntity {
         return this.inventorySystem.removeManaPotion();
     }
 
+
+    public removeInventoryItemAt(index: number): Item | null {
+        return this.inventorySystem.removeItemAt(index);
+    }
+
+
     public unequipWeapon(): Item | null {
         return this.inventorySystem.unequipWeapon();
     }
