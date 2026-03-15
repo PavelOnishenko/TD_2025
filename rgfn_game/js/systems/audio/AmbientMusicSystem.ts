@@ -25,6 +25,37 @@ type BarPalette = {
 
 type MusicGenre = 'medieval' | 'arcaneSynth' | 'tribal' | 'noirJazz' | 'industrial';
 
+
+type ActiveBarState = {
+    startTime: number;
+    beatSeconds: number;
+    barLength: number;
+    beatGenres: MusicGenre[];
+};
+
+export type MusicDebugSnapshot = {
+    mode: AmbientMode;
+    started: boolean;
+    audioContextState: AudioContextState | 'unavailable';
+    barCursor: number;
+    currentBarNumber: number;
+    currentBeat: number;
+    currentGenre: MusicGenre | 'n/a';
+    nextBarInSeconds: number;
+    activePreset: MedievalPreset;
+    activePalette: {
+        rootMidi: number;
+        scale: number[];
+        cadence: number[];
+        beatSeconds: number;
+        swing: number;
+        beatGenres: MusicGenre[];
+        variantSeed: number;
+    } | null;
+    masterGain: { current: number; target: number | null };
+    reverbGain: number | null;
+};
+
 /**
  * Generates algorithmic genre-shifting music with no external assets.
  * Every bar contains randomly mixed genre parts, with per-genre variation.
@@ -41,6 +72,10 @@ export default class AmbientMusicSystem {
     private musicTimer: number | null = null;
     private barCursor = 0;
     private readonly random = Math.random;
+    private activePreset: MedievalPreset | null = null;
+    private activePalette: BarPalette | null = null;
+    private activeBarState: ActiveBarState | null = null;
+    private masterVolumeTarget: number | null = null;
 
     private readonly naturalMinorScale = [0, 2, 3, 5, 7, 8, 10];
     private readonly dorianScale = [0, 2, 3, 5, 7, 9, 10];
@@ -111,6 +146,7 @@ export default class AmbientMusicSystem {
         if (!this.audioContext || !this.started) return;
 
         const preset = this.getPresetForMode(mode);
+        this.activePreset = preset;
         this.fadeTo(preset.masterVolume, 2.2);
 
         if (this.hallReverbGain) {
@@ -160,6 +196,10 @@ export default class AmbientMusicSystem {
         const palette = this.buildBarPalette(preset);
         const barLength = palette.beatSeconds * 4;
         const startTime = this.audioContext.currentTime + 0.03;
+
+        this.activePreset = preset;
+        this.activePalette = palette;
+        this.activeBarState = { startTime, beatSeconds: palette.beatSeconds, barLength, beatGenres: [...palette.beatGenres] };
 
         this.playBackgroundDrone(palette, startTime, barLength, preset);
 
@@ -666,6 +706,50 @@ export default class AmbientMusicSystem {
         this.hallConvolver.connect(this.masterGain);
     }
 
+    public getDebugSnapshot(): MusicDebugSnapshot {
+        const contextState = this.audioContext?.state ?? 'unavailable';
+        const now = this.audioContext?.currentTime ?? 0;
+        const activeBar = this.activeBarState;
+        let currentBeat = -1;
+        let currentGenre: MusicGenre | 'n/a' = 'n/a';
+        let nextBarInSeconds = 0;
+
+        if (activeBar) {
+            const elapsed = Math.max(0, now - activeBar.startTime);
+            currentBeat = Math.min(3, Math.floor(elapsed / activeBar.beatSeconds));
+            currentGenre = activeBar.beatGenres[currentBeat] ?? 'n/a';
+            nextBarInSeconds = Math.max(0, activeBar.barLength - elapsed);
+        }
+
+        const preset = this.activePreset ?? this.getPresetForMode(this.mode);
+        const masterCurrent = this.masterGain?.gain.value ?? 0;
+
+        return {
+            mode: this.mode,
+            started: this.started,
+            audioContextState: contextState,
+            barCursor: this.barCursor,
+            currentBarNumber: Math.max(0, this.barCursor),
+            currentBeat,
+            currentGenre,
+            nextBarInSeconds,
+            activePreset: preset,
+            activePalette: this.activePalette
+                ? {
+                    rootMidi: this.activePalette.rootMidi,
+                    scale: [...this.activePalette.scale],
+                    cadence: [...this.activePalette.cadence],
+                    beatSeconds: this.activePalette.beatSeconds,
+                    swing: this.activePalette.swing,
+                    beatGenres: [...this.activePalette.beatGenres],
+                    variantSeed: this.activePalette.variantSeed,
+                }
+                : null,
+            masterGain: { current: masterCurrent, target: this.masterVolumeTarget },
+            reverbGain: this.hallReverbGain?.gain.value ?? null,
+        };
+    }
+
     private midiToFrequency(midi: number): number {
         return 440 * Math.pow(2, (midi - 69) / 12);
     }
@@ -673,6 +757,7 @@ export default class AmbientMusicSystem {
     private fadeTo(targetVolume: number, fadeSeconds: number): void {
         if (!this.masterGain || !this.audioContext) return;
 
+        this.masterVolumeTarget = targetVolume;
         const now = this.audioContext.currentTime;
         this.masterGain.gain.cancelScheduledValues(now);
         this.masterGain.gain.setTargetAtTime(targetVolume, now, Math.max(0.001, fadeSeconds / 4));

@@ -14,7 +14,7 @@ import VillageLifeRenderer from './systems/village/VillageLifeRenderer.js';
 import HudController from './systems/HudController.js';
 import BattleUiController from './systems/BattleUiController.js';
 import WorldModeController from './systems/WorldModeController.js';
-import AmbientMusicSystem from './systems/audio/AmbientMusicSystem.js';
+import AmbientMusicSystem, { MusicDebugSnapshot } from './systems/audio/AmbientMusicSystem.js';
 import Player from './entities/Player.js';
 import Skeleton from './entities/Skeleton.js';
 import { BattleSplash } from './ui/BattleSplash.js';
@@ -52,6 +52,7 @@ export default class Game {
     private readonly player: Player;
     private readonly ambientMusic: AmbientMusicSystem;
     private lastAmbientMode: typeof MODES.WORLD_MAP | typeof MODES.VILLAGE | typeof MODES.BATTLE = MODES.WORLD_MAP;
+    private musicInfoRefreshTimer: number | null = null;
 
     constructor(canvas: HTMLCanvasElement) {
         this.canvas = canvas;
@@ -121,6 +122,7 @@ export default class Game {
         });
         this.ambientMusic = new AmbientMusicSystem();
         this.ambientMusic.attachAutoStart();
+        this.setupMusicInfoPanel();
         this.bindUi(ui, villageActionsController, encounterSystem);
         this.configureInput();
         this.configureViewport();
@@ -218,7 +220,83 @@ export default class Game {
         }
     }
 
+    private setupMusicInfoPanel(): void {
+        const openBtn = document.getElementById('music-info-btn') as HTMLButtonElement | null;
+        const modal = document.getElementById('music-info-modal');
+        const closeBtn = document.getElementById('music-info-close-btn') as HTMLButtonElement | null;
+        const content = document.getElementById('music-info-content');
+        if (!openBtn || !modal || !closeBtn || !content) return;
+
+        const hide = (): void => {
+            modal.classList.add('hidden');
+            this.stopMusicInfoAutoRefresh();
+        };
+
+        openBtn.addEventListener('click', () => {
+            modal.classList.remove('hidden');
+            this.renderMusicInfo(content);
+            this.startMusicInfoAutoRefresh(content);
+        });
+
+        closeBtn.addEventListener('click', hide);
+        modal.addEventListener('click', (event: MouseEvent) => {
+            if (event.target === modal) hide();
+        });
+    }
+
+    private startMusicInfoAutoRefresh(content: HTMLElement): void {
+        this.stopMusicInfoAutoRefresh();
+        this.musicInfoRefreshTimer = window.setInterval(() => this.renderMusicInfo(content), 200);
+    }
+
+    private stopMusicInfoAutoRefresh(): void {
+        if (this.musicInfoRefreshTimer === null) return;
+        window.clearInterval(this.musicInfoRefreshTimer);
+        this.musicInfoRefreshTimer = null;
+    }
+
+    private renderMusicInfo(content: HTMLElement): void {
+        const snapshot = this.ambientMusic.getDebugSnapshot();
+        const output = this.formatMusicSnapshot(snapshot);
+        content.textContent = output;
+    }
+
+    private formatMusicSnapshot(snapshot: MusicDebugSnapshot): string {
+        const palette = snapshot.activePalette;
+        const pretty = {
+            mode: snapshot.mode,
+            started: snapshot.started,
+            audioContextState: snapshot.audioContextState,
+            current: {
+                barCursor: snapshot.barCursor,
+                currentBarNumber: snapshot.currentBarNumber,
+                currentBeat: snapshot.currentBeat,
+                currentGenre: snapshot.currentGenre,
+                nextBarInSeconds: Number(snapshot.nextBarInSeconds.toFixed(3)),
+            },
+            activePreset: snapshot.activePreset,
+            activePalette: palette
+                ? {
+                    ...palette,
+                    beatSeconds: Number(palette.beatSeconds.toFixed(4)),
+                    swing: Number(palette.swing.toFixed(4)),
+                    variantSeed: Number(palette.variantSeed.toFixed(4)),
+                    rootFrequencyHz: Number((440 * Math.pow(2, (palette.rootMidi - 69) / 12)).toFixed(2)),
+                }
+                : null,
+            audioMix: {
+                masterGainCurrent: Number(snapshot.masterGain.current.toFixed(6)),
+                masterGainTarget: snapshot.masterGain.target === null ? null : Number(snapshot.masterGain.target.toFixed(6)),
+                reverbGain: snapshot.reverbGain === null ? null : Number(snapshot.reverbGain.toFixed(6)),
+            },
+            generatedAt: new Date().toLocaleTimeString(),
+        };
+
+        return JSON.stringify(pretty, null, 2);
+    }
+
     private gameOver(): void {
+        this.stopMusicInfoAutoRefresh();
         this.ambientMusic.stop();
         this.loop.stop();
         alert('Game Over! Refresh to restart.');
