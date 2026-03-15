@@ -1,6 +1,7 @@
 /**
  * Item - Represents items that can be discovered and equipped by the player
  */
+export type ItemId = 'bow' | 'healingPotion' | 'manaPotion';
 
 export type EquipmentHands = 1 | 2;
 
@@ -164,8 +165,15 @@ export const HEALING_POTION_ITEM: ItemData = {
     spriteClass: 'potion-sprite',
 };
 
+export const MANA_POTION_ITEM: ItemData = {
+    id: 'manaPotion',
+    name: 'Mana Potion',
+    description: 'A restorative potion that recovers mana when used',
+    type: 'consumable'
+};
 export const ITEM_LIBRARY: ItemData[] = [
     HEALING_POTION_ITEM,
+    MANA_POTION_ITEM,
     BOW_ITEM,
     ...generatedWeapons.filter((item) => item.id !== 'bow_t1'),
     ...ARMOR_VARIANTS.map((armor) => ({
@@ -180,4 +188,4 @@ export const ITEM_LIBRARY: ItemData[] = [
     })),
 ];
 
-export const DISCOVERABLE_ITEM_LIBRARY: ItemData[] = ITEM_LIBRARY.filter((item) => item.id !== 'healingPotion');
+export const DISCOVERABLE_ITEM_LIBRARY: ItemData[] = ITEM_LIBRARY;

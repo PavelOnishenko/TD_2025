@@ -39,6 +39,8 @@ export default class BattleTurnController {
         }
 
         if (this.turnManager.isPlayerTurn()) {
+            const playerEffectMessages = this.player.consumePlayerTurnEffects();
+            playerEffectMessages.forEach((message) => this.callbacks.onAddBattleLog(message, 'system'));
             setTimeout(() => {
                 this.callbacks.onPlayerTurnReady();
                 this.callbacks.onEnableBattleButtons(true);
@@ -52,6 +54,19 @@ export default class BattleTurnController {
 
     private executeEnemyTurn(enemy: Skeleton): void {
         setTimeout(() => {
+            if (enemy.shouldSkipTurnFromSlow()) {
+                const effectMessages = enemy.consumeTurnEffects();
+                effectMessages.forEach((message) => this.callbacks.onAddBattleLog(message, 'system'));
+                this.turnManager.nextTurn();
+                setTimeout(() => this.processTurn(), timingConfig.battle.enemyTurnDelay);
+                return;
+            }
+
+            const effectMessages = enemy.consumeTurnEffects();
+            effectMessages
+                .filter((message) => !message.includes('skips this turn'))
+                .forEach((message) => this.callbacks.onAddBattleLog(message, 'system'));
+
             const inRange = this.battleMap.isInMeleeRange(enemy, this.player);
 
             if (inRange) {

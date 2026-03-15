@@ -1,11 +1,14 @@
 export type HudElements = {
     modeIndicator: HTMLElement;
     usePotionBtn: HTMLButtonElement;
+    useManaPotionBtn: HTMLButtonElement;
     playerLevel: HTMLElement;
     playerXp: HTMLElement;
     playerXpNext: HTMLElement;
     playerHp: HTMLElement;
     playerMaxHp: HTMLElement;
+    playerMana: HTMLElement;
+    playerMaxMana: HTMLElement;
     playerDmg: HTMLElement;
     playerDmgFormula: HTMLElement;
     playerArmor: HTMLElement;
@@ -14,14 +17,29 @@ export type HudElements = {
     playerWeapon: HTMLElement;
     playerGold: HTMLElement;
     skillPoints: HTMLElement;
+    magicPoints: HTMLElement;
     statVitality: HTMLElement;
     statToughness: HTMLElement;
     statStrength: HTMLElement;
     statAgility: HTMLElement;
+    statConnection: HTMLElement;
+    statIntelligence: HTMLElement;
     addVitalityBtn: HTMLButtonElement;
     addToughnessBtn: HTMLButtonElement;
     addStrengthBtn: HTMLButtonElement;
     addAgilityBtn: HTMLButtonElement;
+    addConnectionBtn: HTMLButtonElement;
+    addIntelligenceBtn: HTMLButtonElement;
+    upgradeFireballBtn: HTMLButtonElement;
+    upgradeCurseBtn: HTMLButtonElement;
+    upgradeSlowBtn: HTMLButtonElement;
+    upgradeRageBtn: HTMLButtonElement;
+    upgradeArcaneLanceBtn: HTMLButtonElement;
+    spellLevelFireball: HTMLElement;
+    spellLevelCurse: HTMLElement;
+    spellLevelSlow: HTMLElement;
+    spellLevelRage: HTMLElement;
+    spellLevelArcaneLance: HTMLElement;
     inventoryCount: HTMLElement;
     inventoryCapacity: HTMLElement;
     inventoryGrid: HTMLElement;
@@ -39,6 +57,12 @@ export type BattleUI = {
     fleeBtn: HTMLButtonElement;
     waitBtn: HTMLButtonElement;
     usePotionBtn: HTMLButtonElement;
+    useManaPotionBtn: HTMLButtonElement;
+    spellFireballBtn: HTMLButtonElement;
+    spellCurseBtn: HTMLButtonElement;
+    spellSlowBtn: HTMLButtonElement;
+    spellRageBtn: HTMLButtonElement;
+    spellArcaneLanceBtn: HTMLButtonElement;
     log: HTMLElement;
     attackRangeText: HTMLElement;
 };
@@ -55,6 +79,8 @@ export type VillageUI = {
     sellBtn: HTMLButtonElement;
     buyPotionBtn: HTMLButtonElement;
     sellPotionBtn: HTMLButtonElement;
+    buyManaPotionBtn: HTMLButtonElement;
+    sellManaPotionBtn: HTMLButtonElement;
     leaveBtn: HTMLButtonElement;
 };
 
