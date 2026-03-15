@@ -14,6 +14,7 @@ import {
 } from '../config/levelConfig.js';
 import { balanceConfig } from '../config/balanceConfig.js';
 import Item from './Item.js';
+import { createItemById } from './Item.js';
 import PlayerInventory from './PlayerInventory.js';
 import PlayerRenderer from './PlayerRenderer.js';
 
@@ -404,5 +405,60 @@ export default class Player extends DamageableEntity {
 
     public draw(ctx: CanvasRenderingContext2D, viewport?: any): void {
         this.renderer.draw(ctx, this);
+    }
+
+    public getState(): Record<string, unknown> {
+        const inventoryState = this.inventorySystem.getState();
+        return {
+            level: this.level,
+            xp: this.xp,
+            xpToNextLevel: this.xpToNextLevel,
+            vitality: this.vitality,
+            toughness: this.toughness,
+            strength: this.strength,
+            agility: this.agility,
+            connection: this.connection,
+            intelligence: this.intelligence,
+            skillPoints: this.skillPoints,
+            magicPoints: this.magicPoints,
+            hp: this.hp,
+            mana: this.mana,
+            gold: this.gold,
+            armorAbsorbedHp: this.armorAbsorbedHp,
+            rageTurns: this.rageTurns,
+            rageMultiplier: this.rageMultiplier,
+            inventoryItemIds: inventoryState.inventoryItemIds,
+            equippedWeaponId: inventoryState.equippedWeaponId,
+            equippedArmorId: inventoryState.equippedArmorId,
+        };
+    }
+
+    public restoreState(state: Record<string, unknown>): void {
+        const toNumber = (value: unknown, fallback: number): number => typeof value === 'number' && Number.isFinite(value) ? value : fallback;
+
+        this.level = toNumber(state.level, this.level);
+        this.xp = toNumber(state.xp, this.xp);
+        this.xpToNextLevel = toNumber(state.xpToNextLevel, this.xpToNextLevel);
+        this.vitality = toNumber(state.vitality, this.vitality);
+        this.toughness = toNumber(state.toughness, this.toughness);
+        this.strength = toNumber(state.strength, this.strength);
+        this.agility = toNumber(state.agility, this.agility);
+        this.connection = toNumber(state.connection, this.connection);
+        this.intelligence = toNumber(state.intelligence, this.intelligence);
+        this.skillPoints = toNumber(state.skillPoints, this.skillPoints);
+        this.magicPoints = toNumber(state.magicPoints, this.magicPoints);
+        this.gold = toNumber(state.gold, this.gold);
+        this.armorAbsorbedHp = toNumber(state.armorAbsorbedHp, 0);
+        this.rageTurns = toNumber(state.rageTurns, 0);
+        this.rageMultiplier = toNumber(state.rageMultiplier, 1);
+
+        const inventoryItemIds = Array.isArray(state.inventoryItemIds) ? state.inventoryItemIds.filter((id): id is string => typeof id === 'string') : [];
+        const equippedWeaponId = typeof state.equippedWeaponId === 'string' ? state.equippedWeaponId : null;
+        const equippedArmorId = typeof state.equippedArmorId === 'string' ? state.equippedArmorId : null;
+        this.inventorySystem.restoreState(inventoryItemIds, equippedWeaponId, equippedArmorId, createItemById);
+
+        this.updateStats();
+        this.hp = Math.max(0, Math.min(this.maxHp, toNumber(state.hp, this.hp)));
+        this.mana = Math.max(0, Math.min(this.maxMana, toNumber(state.mana, this.mana)));
     }
 }

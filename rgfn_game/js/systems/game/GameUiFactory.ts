@@ -17,6 +17,7 @@ export default class GameUiFactory {
             modeIndicator: document.getElementById('mode-indicator')!,
             usePotionBtn: document.getElementById('use-potion-btn')! as HTMLButtonElement,
             useManaPotionBtn: document.getElementById('use-mana-potion-btn')! as HTMLButtonElement,
+            newCharacterBtn: document.getElementById('new-character-btn')! as HTMLButtonElement,
             playerLevel: document.getElementById('player-level')!,
             playerXp: document.getElementById('player-xp')!,
             playerXpNext: document.getElementById('player-xp-next')!,

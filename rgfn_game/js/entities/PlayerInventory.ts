@@ -112,6 +112,28 @@ export default class PlayerInventory {
         this.hooks.onEquipmentChanged();
     }
 
+    public restoreState(itemIds: string[], equippedWeaponId: string | null, equippedArmorId: string | null, itemFactory: (id: string) => Item | null): void {
+        this.inventory.length = 0;
+        for (const itemId of itemIds) {
+            const item = itemFactory(itemId);
+            if (item) {
+                this.inventory.push(item);
+            }
+        }
+
+        this.equippedWeapon = equippedWeaponId ? itemFactory(equippedWeaponId) : null;
+        this.equippedArmor = equippedArmorId ? itemFactory(equippedArmorId) : null;
+        this.hooks.onEquipmentChanged();
+    }
+
+    public getState(): { inventoryItemIds: string[]; equippedWeaponId: string | null; equippedArmorId: string | null } {
+        return {
+            inventoryItemIds: this.inventory.map((item) => item.id),
+            equippedWeaponId: this.equippedWeapon?.id ?? null,
+            equippedArmorId: this.equippedArmor?.id ?? null,
+        };
+    }
+
     private equipItem(item: Item): void {
         if (item.type === 'weapon') {
             this.equippedWeapon = item;
