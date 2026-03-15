@@ -71,6 +71,17 @@ export function calculateMaxHp(vitality: number): number {
 }
 
 /**
+ * Calculate max mana from connection and intelligence stats.
+ * Connection gives 1 mana each.
+ * Intelligence gives 1/3 mana each.
+ */
+export function calculateMana(connection: number, intelligence: number): number {
+  const connectionMana = connection * balanceConfig.stats.connectionToMana;
+  const intelligenceMana = intelligence / balanceConfig.stats.intelligenceToManaDivisor;
+  return balanceConfig.player.baseMana + Math.floor(connectionMana + intelligenceMana);
+}
+
+/**
  * Calculate total melee damage from strength/agility stats
  */
 export function calculateTotalMeleeDamage(strength: number, agility: number): number {

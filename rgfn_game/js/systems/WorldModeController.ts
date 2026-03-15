@@ -72,6 +72,8 @@ export default class WorldModeController {
     }
 
     private onPlayerMoved(isPreviouslyDiscovered: boolean): void {
+        this.player.restoreMana(1);
+        this.callbacks.onUpdateHUD();
         if (this.worldMap.isPlayerOnVillage()) {
             this.callbacks.onEnterVillage();
             return;

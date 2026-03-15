@@ -32,6 +32,7 @@ import GameRenderRouter from './systems/game/runtime/GameRenderRouter.js';
 import GameVillageCoordinator from './systems/game/runtime/GameVillageCoordinator.js';
 import GameHudCoordinator from './systems/game/runtime/GameHudCoordinator.js';
 import GameBattleCoordinator from './systems/game/runtime/GameBattleCoordinator.js';
+import MagicSystem from './systems/magic/MagicSystem.js';
 
 type UIBundle = { hudElements: HudElements; battleUI: BattleUI; villageUI: VillageUI; developerUI: DeveloperUI };
 
@@ -68,7 +69,8 @@ export default class Game {
         const villageLifeRenderer = new VillageLifeRenderer(new VillagePopulation());
         const ui = new GameUiFactory().create();
         const battleUiController = new BattleUiController(ui.battleUI, battleMap, turnManager, player);
-        this.hudCoordinator = new GameHudCoordinator(player, new HudController(player, ui.hudElements, ui.battleUI), battleUiController);
+        const magicSystem = new MagicSystem(player);
+        this.hudCoordinator = new GameHudCoordinator(player, new HudController(player, ui.hudElements, ui.battleUI, magicSystem), battleUiController, magicSystem);
         const villageActionsController = new VillageActionsController(player, ui.villageUI, {
             onUpdateHUD: () => this.hudCoordinator.updateHUD(), onLeaveVillage: () => this.stateMachine.transition(MODES.WORLD_MAP),
         });
@@ -80,7 +82,7 @@ export default class Game {
             onProcessTurn: () => this.battleCoordinator.processTurn(),
             onPlayerTurnTransitionStart: () => this.battleCoordinator.onPlayerTurnTransitionStart(),
         });
-        const battleCommandController = new BattleCommandController(this.stateMachine, player, battleMap, turnManager, {
+        const battleCommandController = new BattleCommandController(this.stateMachine, player, battleMap, turnManager, magicSystem, {
             onUpdateHUD: () => this.hudCoordinator.updateHUD(),
             onAddBattleLog: (m: string, t: string = 'system') => this.hudCoordinator.addBattleLog(m, t),
             onEnableBattleButtons: (enabled: boolean) => this.hudCoordinator.enableBattleButtons(enabled),
@@ -175,8 +177,13 @@ export default class Game {
         new GameUiEventBinder(this.canvas, ui.hudElements, ui.battleUI, ui.villageUI, ui.developerUI, villageActionsController, devController, {
             onAttack: () => this.battleCoordinator.handleAttack(), onFlee: () => this.battleCoordinator.handleFlee(),
             onWait: () => this.battleCoordinator.handleWait(), onUsePotionFromBattle: () => this.battleCoordinator.handleUsePotion(true),
+            onUseManaPotionFromBattle: () => this.battleCoordinator.handleUseManaPotion(true),
             onUsePotionFromHud: () => this.battleCoordinator.handleUsePotion(false),
-            onAddStat: (stat) => this.hudCoordinator.handleAddStat(stat), onCanvasClick: (event) => this.battleCoordinator.handleCanvasClick(event, this.canvas),
+            onUseManaPotionFromHud: () => this.battleCoordinator.handleUseManaPotion(false),
+            onAddStat: (stat) => this.hudCoordinator.handleAddStat(stat),
+            onCastSpell: (spellId) => this.battleCoordinator.handleCastSpell(spellId),
+            onUpgradeSpell: (spellId) => this.hudCoordinator.handleUpgradeSpell(spellId),
+            onCanvasClick: (event) => this.battleCoordinator.handleCanvasClick(event, this.canvas),
         }).bind(() => this.villageCoordinator.getVillageName());
         this.devController = devController;
     }
