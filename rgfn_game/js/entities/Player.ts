@@ -71,11 +71,20 @@ export default class Player extends DamageableEntity {
 
     private readonly inventorySystem: PlayerInventory;
     private readonly renderer: PlayerRenderer;
+    private armorAbsorbedHp: number = 0;
 
     public get equippedWeapon(): Item | null {
         return this.inventorySystem.getEquippedWeapon();
     }
 
+
+    public get equippedArmor(): Item | null {
+        return this.inventorySystem.getEquippedArmor();
+    }
+
+    public set equippedArmor(armor: Item | null) {
+        this.inventorySystem.setEquippedArmor(armor);
+    }
     public set equippedWeapon(weapon: Item | null) {
         this.inventorySystem.setEquippedWeapon(weapon);
     }
@@ -91,12 +100,13 @@ export default class Player extends DamageableEntity {
         this.agility = balanceConfig.player.initialAgility;
         this.connection = balanceConfig.player.initialConnection;
         this.intelligence = balanceConfig.player.initialIntelligence;
-        this.skillPoints = 0;
+        this.skillPoints = balanceConfig.player.initialSkillPoints;
 
         this.inventorySystem = new PlayerInventory({
-            onWeaponChanged: () => this.updateStats(),
+            onEquipmentChanged: () => this.updateStats(),
             onHealingPotionUsed: () => this.heal(5),
             onManaPotionUsed: () => this.restoreMana(balanceConfig.combat.manaPotionRestore)
+            canEquip: (item) => this.canEquipItem(item),
         });
         this.renderer = new PlayerRenderer();
 
@@ -112,10 +122,22 @@ export default class Player extends DamageableEntity {
             return super.takeDamage(0);
         }
 
+        const equippedArmor = this.equippedArmor;
+        const armorReductionPercent = equippedArmor?.effects.damageReductionPercent ?? 0;
+        const reducedByPercent = Math.floor(amount * (1 - armorReductionPercent));
+        const armorCap = equippedArmor?.effects.maxAbsorbHp;
+        const armorDepleted = typeof armorCap === 'number' && this.armorAbsorbedHp >= armorCap;
+
+        const effectiveArmor = armorDepleted ? 0 : this.armor;
         const damageAfterArmor = Math.max(
             balanceConfig.combat.minDamageAfterArmor,
-            amount - this.armor
+            reducedByPercent - effectiveArmor
         );
+
+        if (effectiveArmor > 0 && typeof armorCap === 'number') {
+            const absorbed = Math.max(0, reducedByPercent - damageAfterArmor);
+            this.armorAbsorbedHp += absorbed;
+        }
 
         return super.takeDamage(damageAfterArmor);
     }
@@ -129,15 +151,20 @@ export default class Player extends DamageableEntity {
         const previousMana = this.mana;
         const hadFullMana = previousMaxMana > 0 && previousMana === previousMaxMana;
 
-        this.maxHp = calculateMaxHp(this.vitality);
         this.maxMana = calculateMana(this.connection, this.intelligence);
-        this.armor = calculateArmor(this.toughness);
+        this.armor = calculateArmor(this.toughness) + armorFlatBonus;
+        const equippedArmor = this.equippedArmor;
+        const armorFlatBonus = equippedArmor?.effects.flatArmor ?? 0;
+        this.maxHp = calculateMaxHp(this.vitality);
         this.avoidChance = calculateAvoidChance(this.agility);
 
-        if (this.getAttackRange() > 1) {
-            this.damage = calculateTotalBowDamage(this.strength, this.agility);
-        } else {
-            this.damage = calculateTotalMeleeDamage(this.strength, this.agility);
+        const meleeStatBonus = calculateMeleeDamageBonus(this.strength, this.agility);
+        const rangedStatBonus = calculateBowDamageBonus(this.strength, this.agility);
+        const fistBaseDamage = balanceConfig.combat.fistDamagePerHand;
+
+        if (!this.equippedWeapon) {
+            this.damage = fistBaseDamage * 2 + meleeStatBonus;
+            return;
         }
 
         if (previousMaxMana === 0 || hadFullMana) {
@@ -146,6 +173,10 @@ export default class Player extends DamageableEntity {
         }
 
         this.mana = Math.min(this.maxMana, previousMana);
+        const offhandFist = this.equippedWeapon.handsRequired === 1 ? fistBaseDamage : 0;
+        const weaponDamage = this.equippedWeapon.damageBonus;
+        const statBonus = this.equippedWeapon.isRanged ? rangedStatBonus : meleeStatBonus;
+        this.damage = weaponDamage + offhandFist + statBonus;
     }
 
     public addXp(amount: number): boolean {
@@ -173,6 +204,7 @@ export default class Player extends DamageableEntity {
         this.skillPoints += levelConfig.skillPointsPerLevel;
         this.xpToNextLevel = getXpForLevel(this.level + 1);
 
+        // Update stats (this recalculates maxHp)
         this.updateStats();
 
         this.healToFull();
@@ -211,6 +243,8 @@ export default class Player extends DamageableEntity {
 
         this.skillPoints -= amount;
 
+        // Store current HP percentage
+        // Update derived stats
         this.updateStats();
         this.hp = Math.min(this.hp, this.maxHp);
 
@@ -317,6 +351,14 @@ export default class Player extends DamageableEntity {
         return this.inventorySystem.unequipWeapon();
     }
 
+    public unequipArmor(): Item | null {
+        return this.inventorySystem.unequipArmor();
+    }
+
+    /**
+     * Get the player's current attack range
+     * @returns number of cells the player can attack from
+     */
     public getAttackRange(): number {
         return this.inventorySystem.getAttackRange();
     }
@@ -337,22 +379,27 @@ export default class Player extends DamageableEntity {
     }
 
     public getDamageFormulaText(): string {
-        const isBowAttack = this.getAttackRange() > 1;
-        const baseDamage = balanceConfig.player.baseDamage;
+        const fistBaseDamage = balanceConfig.combat.fistDamagePerHand;
+        const weapon = this.equippedWeapon;
 
-        if (isBowAttack) {
-            const strengthBonus = Math.floor(this.strength / balanceConfig.stats.strengthToBowDamage);
-            const agilityBonus = Math.floor(this.agility / balanceConfig.stats.agilityToBowDamage);
-            const total = baseDamage + calculateBowDamageBonus(this.strength, this.agility);
-
-            return `Bow: ${baseDamage} + ⌊STR/${balanceConfig.stats.strengthToBowDamage}⌋ (${strengthBonus}) + ⌊AGI/${balanceConfig.stats.agilityToBowDamage}⌋ (${agilityBonus}) = ${total}`;
+        if (!weapon) {
+            const statBonus = calculateMeleeDamageBonus(this.strength, this.agility);
+            return `Unarmed: ${fistBaseDamage} + ${fistBaseDamage} + melee bonus (${statBonus}) = ${this.damage}`;
         }
 
-        const strengthBonus = Math.floor(this.strength / balanceConfig.stats.strengthToMeleeDamage);
-        const agilityBonus = Math.floor(this.agility / balanceConfig.stats.agilityToMeleeDamage);
-        const total = baseDamage + calculateMeleeDamageBonus(this.strength, this.agility);
+        const statBonus = weapon.isRanged
+            ? calculateBowDamageBonus(this.strength, this.agility)
+            : calculateMeleeDamageBonus(this.strength, this.agility);
+        const offhand = weapon.handsRequired === 1 ? fistBaseDamage : 0;
+        const style = weapon.isRanged ? 'Ranged' : 'Melee';
 
-        return `Melee: ${baseDamage} + ⌊STR/${balanceConfig.stats.strengthToMeleeDamage}⌋ (${strengthBonus}) + ⌊AGI/${balanceConfig.stats.agilityToMeleeDamage}⌋ (${agilityBonus}) = ${total}`;
+        return `${style}: weapon ${weapon.damageBonus} + off-hand ${offhand} + stat bonus ${statBonus} = ${this.damage}`;
+    }
+
+    public canEquipItem(item: Item): boolean {
+        const requiredAgility = item.requirements.agility ?? 0;
+        const requiredStrength = item.requirements.strength ?? 0;
+        return this.agility >= requiredAgility && this.strength >= requiredStrength;
     }
 
     public draw(ctx: CanvasRenderingContext2D, viewport?: any): void {

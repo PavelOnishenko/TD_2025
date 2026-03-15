@@ -288,6 +288,47 @@ h1 {
     #hud { grid-template-columns: minmax(0, 1fr); }
 }
 
+
+
+.equipment-panel {
+    margin-top: 8px;
+    border: 1px solid var(--color-secondary-accent);
+    border-radius: 6px;
+    padding: 8px;
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.equipment-title {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: var(--color-primary-accent);
+    margin-bottom: 6px;
+}
+
+.equipment-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 6px;
+}
+
+.equipment-slot {
+    width: 100%;
+    text-align: left;
+    border: 1px solid var(--color-secondary-accent);
+    border-radius: 4px;
+    background: color-mix(in srgb, var(--color-panel-highlight) 80%, transparent);
+    color: var(--color-text-primary);
+    padding: 5px 7px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.equipment-hint {
+    margin-top: 6px;
+    font-size: 11px;
+    color: var(--color-text-muted);
+}
 .inventory-grid {
     display: grid;
     grid-template-columns: repeat(6, minmax(0, 1fr));
@@ -304,6 +345,8 @@ h1 {
     display: flex;
     align-items: center;
     justify-content: center;
+    padding: 0;
+    cursor: pointer;
 }
 
 .inventory-slot.empty {
@@ -436,4 +479,45 @@ h1 {
     border-bottom-left-radius: 9px;
     border-bottom-right-radius: 9px;
     position: relative;
+}
+.item-sprite.unknown-item-sprite {
+    background: repeating-linear-gradient(45deg, #666 0 4px, #333 4px 8px);
+}
+
+.item-sprite.knife-t1-sprite, .item-sprite.knife-t2-sprite, .item-sprite.knife-t3-sprite, .item-sprite.knife-t4-sprite {
+    background: linear-gradient(135deg, #d6d6d6 0 60%, #5f3b1c 60% 100%);
+    border: 1px solid #2e2013;
+}
+
+.item-sprite.shortSword-t1-sprite, .item-sprite.shortSword-t2-sprite, .item-sprite.shortSword-t3-sprite, .item-sprite.shortSword-t4-sprite {
+    background: linear-gradient(180deg, #c9ced6 0 70%, #8f5a2a 70% 100%);
+    border: 1px solid #2e2013;
+}
+
+.item-sprite.axe-t1-sprite, .item-sprite.axe-t2-sprite, .item-sprite.axe-t3-sprite, .item-sprite.axe-t4-sprite {
+    background: linear-gradient(90deg, #8f5a2a 0 40%, #bcc3cd 40% 100%);
+    border: 1px solid #2e2013;
+}
+
+.item-sprite.twoHandedSword-t1-sprite, .item-sprite.twoHandedSword-t2-sprite, .item-sprite.twoHandedSword-t3-sprite, .item-sprite.twoHandedSword-t4-sprite {
+    background: linear-gradient(180deg, #dae0ea 0 80%, #7b4a24 80% 100%);
+    border: 1px solid #2e2013;
+}
+
+.item-sprite.bow-t1-sprite, .item-sprite.bow-t2-sprite, .item-sprite.bow-t3-sprite, .item-sprite.bow-t4-sprite {
+    background:
+        linear-gradient(90deg, transparent 35%, #5f3b1c 35%, #5f3b1c 48%, transparent 48%),
+        radial-gradient(circle at 80% 50%, transparent 7px, #8f5a2a 7px, #8f5a2a 9px, transparent 9px),
+        radial-gradient(circle at 20% 50%, transparent 7px, #8f5a2a 7px, #8f5a2a 9px, transparent 9px);
+}
+
+.item-sprite.crossbow-t1-sprite, .item-sprite.crossbow-t2-sprite, .item-sprite.crossbow-t3-sprite, .item-sprite.crossbow-t4-sprite {
+    background: linear-gradient(180deg, #4f3823 0 40%, #a9b1bd 40% 65%, #4f3823 65% 100%);
+    border: 1px solid #2e2013;
+}
+
+.item-sprite.armor-t1-sprite, .item-sprite.armor-t2-sprite, .item-sprite.armor-t3-sprite, .item-sprite.armor-t4-sprite {
+    background: linear-gradient(180deg, #6f7f91 0, #4d5d70 100%);
+    border: 1px solid #2e2013;
+    border-radius: 3px;
 }

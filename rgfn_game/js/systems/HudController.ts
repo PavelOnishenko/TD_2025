@@ -47,6 +47,9 @@ type HudElements = {
     inventoryCount: HTMLElement;
     inventoryCapacity: HTMLElement;
     inventoryGrid: HTMLElement;
+    weaponSlotMain: HTMLButtonElement;
+    weaponSlotOff: HTMLButtonElement;
+    armorSlot: HTMLButtonElement;
 };
 
 type BattleUiHudElements = {
@@ -71,6 +74,7 @@ export default class HudController {
         this.hudElements = hudElements;
         this.battleUI = battleUI;
         this.magicSystem = magicSystem;
+        this.bindEquipmentSlotEvents();
     }
 
     public updateHUD(): void {
@@ -105,6 +109,8 @@ export default class HudController {
         this.hudElements.playerWeapon.textContent = this.player.equippedWeapon ? this.player.equippedWeapon.name : 'None';
         this.hudElements.playerGold.textContent = String(this.player.gold);
 
+        this.renderEquipmentSlots();
+
         const inventory = this.player.getInventory();
         this.hudElements.inventoryCount.textContent = String(inventory.length);
         this.hudElements.inventoryCapacity.textContent = String(balanceConfig.player.inventorySize);
@@ -124,32 +130,91 @@ export default class HudController {
         this.updateSpellButtons();
     }
 
+    private bindEquipmentSlotEvents(): void {
+        this.hudElements.weaponSlotMain.addEventListener('click', () => {
+            if (this.player.equippedWeapon) {
+                this.player.unequipWeapon();
+                this.updateHUD();
+            }
+        });
+
+        this.hudElements.weaponSlotOff.addEventListener('click', () => {
+            if (this.player.equippedWeapon?.handsRequired === 1) {
+                this.player.unequipWeapon();
+                this.updateHUD();
+            }
+        });
+
+        this.hudElements.armorSlot.addEventListener('click', () => {
+            if (this.player.equippedArmor) {
+                this.player.unequipArmor();
+                this.updateHUD();
+            }
+        });
+    }
+
+    private renderEquipmentSlots(): void {
+        const weapon = this.player.equippedWeapon;
+        const armor = this.player.equippedArmor;
+
+        if (!weapon) {
+            this.hudElements.weaponSlotMain.textContent = 'Main Hand: Fist';
+            this.hudElements.weaponSlotOff.textContent = 'Off Hand: Fist';
+        } else if (weapon.handsRequired === 2) {
+            this.hudElements.weaponSlotMain.textContent = `Main Hand: ${weapon.name}`;
+            this.hudElements.weaponSlotOff.textContent = `Off Hand: ${weapon.name}`;
+        } else {
+            this.hudElements.weaponSlotMain.textContent = `Main Hand: ${weapon.name}`;
+            this.hudElements.weaponSlotOff.textContent = 'Off Hand: Fist';
+        }
+
+        this.hudElements.armorSlot.textContent = armor
+            ? `Armor: ${armor.name}`
+            : 'Armor: Empty';
+    }
+
     private renderInventory(inventory: Item[]): void {
         this.hudElements.inventoryGrid.innerHTML = '';
 
         for (let index = 0; index < balanceConfig.player.inventorySize; index++) {
-            const slot = document.createElement('div');
+            const slot = document.createElement('button');
+            slot.type = 'button';
             slot.className = 'inventory-slot';
 
             const item = inventory[index];
             if (item) {
-                slot.title = item.name;
+                slot.title = `${item.name} — click to equip`;
 
                 const sprite = document.createElement('div');
-                if (item.id === 'bow') {
-                    sprite.className = 'item-sprite bow-sprite';
-                } else if (item.id === 'manaPotion') {
-                    sprite.className = 'item-sprite mana-potion-sprite';
-                } else {
-                    sprite.className = 'item-sprite potion-sprite';
-                }
+                sprite.className = `item-sprite ${item.spriteClass}`;
                 slot.appendChild(sprite);
+
+                if (item.type === 'weapon' || item.type === 'armor') {
+                    slot.addEventListener('click', () => this.handleEquipFromInventory(item));
+                } else {
+                    slot.disabled = true;
+                }
             } else {
                 slot.classList.add('empty');
+                slot.disabled = true;
             }
 
             this.hudElements.inventoryGrid.appendChild(slot);
         }
+    }
+
+    private handleEquipFromInventory(item: Item): void {
+        if (!this.player.canEquipItem(item)) {
+            return;
+        }
+
+        if (item.type === 'weapon') {
+            this.player.equippedWeapon = item;
+        } else if (item.type === 'armor') {
+            this.player.equippedArmor = item;
+        }
+
+        this.updateHUD();
     }
 
     private updateStatButtons(): void {

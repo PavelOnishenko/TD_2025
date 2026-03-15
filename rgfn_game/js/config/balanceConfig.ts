@@ -19,6 +19,7 @@ export const balanceConfig = {
         initialAgility: 0,
         initialConnection: 0,
         initialIntelligence: 0,
+        initialSkillPoints: 100,
 
         // Visual properties
         width: 32,
@@ -148,6 +149,46 @@ export const balanceConfig = {
 
         // Flee success chance
         fleeChance: 0.3,
+
+        // Unarmed combat defaults
+        fistDamagePerHand: 1,
+    },
+
+
+    // ============ ITEM BALANCE ============
+    items: {
+        // IDs map to Item entries in entities/Item.ts
+        discoveryPool: [
+            { id: 'healingPotion', weight: 4 },
+            { id: 'knife_t1', weight: 10 },
+            { id: 'knife_t2', weight: 10 },
+            { id: 'knife_t3', weight: 10 },
+            { id: 'knife_t4', weight: 10 },
+            { id: 'shortSword_t1', weight: 9 },
+            { id: 'shortSword_t2', weight: 9 },
+            { id: 'shortSword_t3', weight: 9 },
+            { id: 'shortSword_t4', weight: 9 },
+            { id: 'axe_t1', weight: 7 },
+            { id: 'axe_t2', weight: 7 },
+            { id: 'axe_t3', weight: 7 },
+            { id: 'axe_t4', weight: 7 },
+            { id: 'twoHandedSword_t1', weight: 5 },
+            { id: 'twoHandedSword_t2', weight: 5 },
+            { id: 'twoHandedSword_t3', weight: 5 },
+            { id: 'twoHandedSword_t4', weight: 5 },
+            { id: 'bow', weight: 3 },
+            { id: 'bow_t2', weight: 3 },
+            { id: 'bow_t3', weight: 3 },
+            { id: 'bow_t4', weight: 3 },
+            { id: 'crossbow_t1', weight: 2 },
+            { id: 'crossbow_t2', weight: 2 },
+            { id: 'crossbow_t3', weight: 2 },
+            { id: 'crossbow_t4', weight: 2 },
+            { id: 'armor_t1', weight: 1 },
+            { id: 'armor_t2', weight: 1 },
+            { id: 'armor_t3', weight: 1 },
+            { id: 'armor_t4', weight: 1 },
+        ],
     },
 
     // ============ ENCOUNTER SETTINGS ============
