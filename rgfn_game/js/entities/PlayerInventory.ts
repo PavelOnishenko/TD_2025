@@ -72,6 +72,26 @@ export default class PlayerInventory {
         return this.removePotionById('manaPotion');
     }
 
+    public removeItemAt(index: number): Item | null {
+        if (index < 0 || index >= this.inventory.length) {
+            return null;
+        }
+
+        const [removedItem] = this.inventory.splice(index, 1);
+
+        if (this.equippedWeapon === removedItem) {
+            this.equippedWeapon = null;
+            this.hooks.onEquipmentChanged();
+        }
+
+        if (this.equippedArmor === removedItem) {
+            this.equippedArmor = null;
+            this.hooks.onEquipmentChanged();
+        }
+
+        return removedItem;
+    }
+
     public unequipWeapon(): Item | null {
         const weapon = this.equippedWeapon;
         this.equippedWeapon = null;
