@@ -63,6 +63,9 @@ test('Player addStat succeeds only with enough skill points and updates stats', 
 
 test('Player applies melee stat bonus per hand when unarmed', () => {
   const player = new Player(0, 0);
+  player.strength = 0;
+  player.agility = 0;
+  player.updateStats();
   player.skillPoints = 6;
 
   player.addStat('strength', 6);
@@ -110,4 +113,19 @@ test('Player inventory auto-equips discovered weapons and keeps non-weapons uneq
   const armor = new Item({ id: 'armor_t1', name: 'Armor +1', description: 'Armor', type: 'armor', effects: { flatArmor: 1 } });
   player.addItemToInventory(armor);
   assert.equal(player.armor, 1);
+});
+
+
+test('Player recalculates damage when weapon is equipped while preserving full mana', () => {
+  const player = new Player(0, 0);
+  player.strength = 4;
+  player.agility = 0;
+  player.updateStats();
+  player.mana = player.maxMana;
+
+  const shortSword = new Item({ id: 'shortSword_5', name: 'Short Sword +5', description: 'One-handed', type: 'weapon', handsRequired: 1, damageBonus: 5, requirements: { agility: 0, strength: 0 } });
+  player.equippedWeapon = shortSword;
+
+  assert.equal(player.damage, 10);
+  assert.equal(player.mana, player.maxMana);
 });
