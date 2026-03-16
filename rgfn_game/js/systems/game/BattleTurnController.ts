@@ -67,40 +67,11 @@ export default class BattleTurnController {
                 .filter((message) => !message.includes('skips this turn'))
                 .forEach((message) => this.callbacks.onAddBattleLog(message, 'system'));
 
-            const inRange = this.battleMap.isInMeleeRange(enemy, this.player);
+            const attackRange = this.getEnemyAttackRange(enemy);
+            const inRange = this.battleMap.isInAttackRange(enemy, this.player, attackRange);
 
             if (inRange) {
-                this.callbacks.onAddBattleLog(`${enemy.name} attacks!`, 'enemy');
-
-                if (Math.random() < this.player.avoidChance) {
-                    this.callbacks.onAddBattleLog('You swiftly evade the hit!', 'system');
-                    this.turnManager.nextTurn();
-                    setTimeout(() => this.processTurn(), timingConfig.battle.enemyTurnDelay);
-                    return;
-                }
-
-                const damageBeforeArmor = enemy.getAttackDamage();
-                const damageAfterArmor = damageBeforeArmor <= 0
-                    ? 0
-                    : Math.max(balanceConfig.combat.minDamageAfterArmor, damageBeforeArmor - this.player.armor);
-
-                this.player.takeDamage(damageBeforeArmor);
-
-                if (damageBeforeArmor > enemy.damage) {
-                    this.callbacks.onAddBattleLog(`${enemy.name} lands a devastating strike!`, 'enemy');
-                }
-
-                if (this.player.armor > 0 && damageAfterArmor < damageBeforeArmor) {
-                    this.callbacks.onAddBattleLog(
-                        `Player takes ${damageAfterArmor} damage (${damageBeforeArmor - damageAfterArmor} blocked by armor)!`,
-                        'damage',
-                    );
-                } else {
-                    this.callbacks.onAddBattleLog(`Player takes ${damageAfterArmor} damage!`, 'damage');
-                }
-
-                this.callbacks.onUpdateHUD();
-
+                this.performEnemyAttack(enemy);
                 if (this.player.isDead()) {
                     this.callbacks.onAddBattleLog('You have been defeated!', 'system');
                     setTimeout(() => this.callbacks.onBattleEnd('defeat'), timingConfig.battle.defeatEndDelay);
@@ -114,5 +85,48 @@ export default class BattleTurnController {
             this.turnManager.nextTurn();
             setTimeout(() => this.processTurn(), timingConfig.battle.enemyTurnDelay);
         }, timingConfig.battle.enemyActionStartDelay);
+    }
+
+
+    private getEnemyAttackRange(enemy: Skeleton): number {
+        const rangedEnemy = enemy as Skeleton & { getAttackRange?: () => number };
+        return rangedEnemy.getAttackRange ? rangedEnemy.getAttackRange() : 1;
+    }
+
+    private performEnemyAttack(enemy: Skeleton): void {
+        const caster = enemy as Skeleton & { canUseMagic?: () => boolean; getMagicManaCost?: () => number; getMagicDamage?: () => number; spendMana?: (amount: number) => void };
+        if (caster.canUseMagic && caster.canUseMagic() && Math.random() < 0.35) {
+            const magicDamage = caster.getMagicDamage ? caster.getMagicDamage() : enemy.damage;
+            const manaCost = caster.getMagicManaCost ? caster.getMagicManaCost() : 0;
+            if (caster.spendMana) {
+                caster.spendMana(manaCost);
+            }
+            this.player.takeMagicDamage(magicDamage);
+            this.callbacks.onAddBattleLog(`${enemy.name} casts a spell for ${magicDamage} damage!`, 'enemy');
+            this.callbacks.onUpdateHUD();
+            return;
+        }
+
+        this.callbacks.onAddBattleLog(`${enemy.name} attacks!`, 'enemy');
+        if (Math.random() < this.player.avoidChance) {
+            this.callbacks.onAddBattleLog('You swiftly evade the hit!', 'system');
+            return;
+        }
+
+        const damageBeforeArmor = enemy.getAttackDamage();
+        const damageAfterArmor = damageBeforeArmor <= 0 ? 0 : Math.max(balanceConfig.combat.minDamageAfterArmor, damageBeforeArmor - this.player.armor);
+        this.player.takeDamage(damageBeforeArmor);
+
+        if (damageBeforeArmor > enemy.damage) {
+            this.callbacks.onAddBattleLog(`${enemy.name} lands a devastating strike!`, 'enemy');
+        }
+
+        if (this.player.armor > 0 && damageAfterArmor < damageBeforeArmor) {
+            this.callbacks.onAddBattleLog(`Player takes ${damageAfterArmor} damage (${damageBeforeArmor - damageAfterArmor} blocked by armor)!`, 'damage');
+        } else {
+            this.callbacks.onAddBattleLog(`Player takes ${damageAfterArmor} damage!`, 'damage');
+        }
+
+        this.callbacks.onUpdateHUD();
     }
 }

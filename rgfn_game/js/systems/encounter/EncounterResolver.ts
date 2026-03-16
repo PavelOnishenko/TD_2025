@@ -3,8 +3,9 @@ import Skeleton, { EnemyConfig } from '../../entities/Skeleton.js';
 import Item, { DISCOVERABLE_ITEM_LIBRARY, HEALING_POTION_ITEM, MANA_POTION_ITEM } from '../../entities/Item.js';
 import { balanceConfig } from '../../config/balanceConfig.js';
 import type { EncounterResult, ForcedEncounterType } from './EncounterSystem.js';
+import Wanderer from '../../entities/Wanderer.js';
 
-type EncounterEventType = 'monster' | 'item' | 'village';
+type EncounterEventType = 'monster' | 'item' | 'village' | 'traveler';
 
 type EncounterRolls = {
     rollEncounterEventType: () => EncounterEventType;
@@ -37,6 +38,10 @@ export default class EncounterResolver {
 
         if (eventType === 'item') {
             return this.createRandomItemEncounter();
+        }
+
+        if (eventType === 'traveler') {
+            return this.createTravelerEncounter();
         }
 
         const encounterType = rolls.rollEncounterType();
@@ -104,6 +109,10 @@ export default class EncounterResolver {
             return { type: 'village' };
         }
 
+        if (type === 'traveler') {
+            return this.createTravelerEncounter();
+        }
+
         if (type === 'dragon') {
             return { type: 'battle', enemies: [new Skeleton(0, 0, balanceConfig.enemies.dragon)] };
         }
@@ -111,6 +120,12 @@ export default class EncounterResolver {
         return { type: 'battle', enemies: this.createEnemiesForEncounter(type) };
     }
 
+
+    private createTravelerEncounter(): EncounterResult {
+        const traveler = Wanderer.createRandom();
+        const isHostile = Math.random() < 0.5;
+        return { type: 'traveler', traveler, isHostile };
+    }
     private createEnemiesForEncounter(encounterType: string): Skeleton[] {
         if (encounterType === 'skeleton') {
             return this.createEnemyGroup(

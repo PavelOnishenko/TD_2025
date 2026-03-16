@@ -90,3 +90,16 @@ test('EncounterSystem can generate grouped enemies', () => {
     );
   });
 });
+
+
+test('EncounterSystem can generate traveler encounter', () => {
+  const encounters = new EncounterSystem(1);
+
+  const result = withPatchedProperty(encounters, 'itemDiscoveryChance', 0, () => {
+    encounters.queueForcedEncounter('traveler');
+    return encounters.generateEncounter();
+  });
+
+  assert.equal(result.type, 'traveler');
+  assert.equal(result.traveler.level >= 1, true);
+});

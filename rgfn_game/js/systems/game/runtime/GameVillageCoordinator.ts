@@ -49,6 +49,7 @@ export default class GameVillageCoordinator {
             item: 'Item discovery',
             none: 'No encounter',
             village: 'Village',
+            traveler: 'Wanderer',
         };
         return labels[type] ?? type;
     }
