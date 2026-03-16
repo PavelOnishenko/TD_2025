@@ -173,7 +173,6 @@ export default class Player extends DamageableEntity {
         const previousMana = this.mana;
         const hadFullMana = previousMaxMana > 0 && previousMana === previousMaxMana;
         this.maxMana = calculateMana(this.connection, this.intelligence);
-        this.maxMana = calculateMana(this.connection, this.intelligence);
         const equippedArmor = this.equippedArmor;
         const armorFlatBonus = equippedArmor?.effects.flatArmor ?? 0;
         this.armor = calculateArmor(this.toughness) + armorFlatBonus;
@@ -186,21 +185,20 @@ export default class Player extends DamageableEntity {
 
         if (!this.equippedWeapon) {
             this.damage = fistBaseDamage * 2 + (meleeStatBonus * 2);
-            return;
+        } else {
+            const offhandFist = this.equippedWeapon.handsRequired === 1 ? fistBaseDamage : 0;
+            const weaponDamage = this.equippedWeapon.damageBonus;
+            const statBonus = this.equippedWeapon.isRanged
+                ? rangedStatBonus
+                : (this.equippedWeapon.handsRequired === 1 ? meleeStatBonus * 2 : meleeStatBonus);
+            this.damage = weaponDamage + offhandFist + statBonus;
         }
 
         if (previousMaxMana === 0 || hadFullMana) {
             this.mana = this.maxMana;
-            return;
+        } else {
+            this.mana = Math.min(this.maxMana, previousMana);
         }
-
-        this.mana = Math.min(this.maxMana, previousMana);
-        const offhandFist = this.equippedWeapon.handsRequired === 1 ? fistBaseDamage : 0;
-        const weaponDamage = this.equippedWeapon.damageBonus;
-        const statBonus = this.equippedWeapon.isRanged
-            ? rangedStatBonus
-            : (this.equippedWeapon.handsRequired === 1 ? meleeStatBonus * 2 : meleeStatBonus);
-        this.damage = weaponDamage + offhandFist + statBonus;
     }
 
     public addXp(amount: number): boolean {
