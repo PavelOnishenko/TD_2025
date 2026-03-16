@@ -2,6 +2,7 @@ import Player from '../entities/Player.js';
 import Item from '../entities/Item.js';
 import { balanceConfig } from '../config/balanceConfig.js';
 import MagicSystem from './magic/MagicSystem.js';
+import { calculateBowDamageBonus, calculateMeleeDamageBonus } from '../config/levelConfig.js';
 
 type HudElements = {
     usePotionBtn: HTMLButtonElement;
@@ -85,12 +86,14 @@ export default class HudController {
     private hudElements: HudElements;
     private battleUI: BattleUiHudElements;
     private magicSystem: MagicSystem;
+    private gameLog: HTMLElement;
 
-    constructor(player: Player, hudElements: HudElements, battleUI: BattleUiHudElements, magicSystem: MagicSystem) {
+    constructor(player: Player, hudElements: HudElements, battleUI: BattleUiHudElements, magicSystem: MagicSystem, gameLog: HTMLElement) {
         this.player = player;
         this.hudElements = hudElements;
         this.battleUI = battleUI;
         this.magicSystem = magicSystem;
+        this.gameLog = gameLog;
         this.bindEquipmentSlotEvents();
     }
 
@@ -215,14 +218,14 @@ export default class HudController {
 
             const item = inventory[index];
             if (item) {
-                slot.title = `${item.name} — click to equip`;
+                slot.title = this.buildInventoryTooltip(item);
 
                 const sprite = document.createElement('div');
                 sprite.className = `item-sprite ${item.spriteClass}`;
                 slot.appendChild(sprite);
 
                 if (item.type === 'weapon' || item.type === 'armor') {
-                    slot.addEventListener('click', () => this.handleEquipFromInventory(item));
+                    slot.addEventListener('click', () => this.handleEquipFromInventory(item, slot));
                 } else {
                     slot.disabled = true;
                 }
@@ -235,8 +238,9 @@ export default class HudController {
         }
     }
 
-    private handleEquipFromInventory(item: Item): void {
+    private handleEquipFromInventory(item: Item, slotElement: HTMLButtonElement): void {
         if (!this.player.canEquipItem(item)) {
+            this.triggerEquipRequirementsFeedback(item, slotElement);
             return;
         }
 
@@ -247,6 +251,76 @@ export default class HudController {
         }
 
         this.updateHUD();
+    }
+
+    private triggerEquipRequirementsFeedback(item: Item, slotElement: HTMLButtonElement): void {
+        slotElement.classList.remove('inventory-slot-failed');
+        void slotElement.offsetWidth;
+        slotElement.classList.add('inventory-slot-failed');
+
+        const requirements = this.getRequirementEntries(item);
+        const details = requirements
+            .map(({ label, required, current }) => {
+                const missing = Math.max(0, required - current);
+                return `${label}: required ${required}, have ${current}, lack ${missing}`;
+            })
+            .join(' | ');
+
+        this.addLog(`Cannot equip ${item.name}. ${details}`, 'system');
+    }
+
+    private addLog(message: string, type: string = 'system'): void {
+        const div = document.createElement('div');
+        div.textContent = message;
+        div.classList.add(`${type}-action`);
+        this.gameLog.appendChild(div);
+        this.gameLog.scrollTop = this.gameLog.scrollHeight;
+    }
+
+    private buildInventoryTooltip(item: Item): string {
+        const lines = [`${item.name} — click to equip`];
+        const requirements = this.getRequirementEntries(item);
+
+        if (requirements.length > 0) {
+            const requirementText = requirements
+                .map(({ label, required, current }) => `${label} ${current}/${required}`)
+                .join(', ');
+            lines.push(`Requirements: ${requirementText}`);
+        }
+
+        if (item.type === 'weapon') {
+            lines.push(`Damage if requirements met: ${this.calculateWeaponDamageAtRequirements(item)}`);
+        }
+
+        return lines.join('\n');
+    }
+
+    private calculateWeaponDamageAtRequirements(item: Item): number {
+        const requiredStrength = item.requirements.strength ?? 0;
+        const requiredAgility = item.requirements.agility ?? 0;
+        const effectiveStrength = Math.max(this.player.strength, requiredStrength);
+        const effectiveAgility = Math.max(this.player.agility, requiredAgility);
+        const statBonus = item.isRanged
+            ? calculateBowDamageBonus(effectiveStrength, effectiveAgility)
+            : calculateMeleeDamageBonus(effectiveStrength, effectiveAgility);
+        const offHandDamage = item.handsRequired === 1 ? balanceConfig.combat.fistDamagePerHand : 0;
+        return item.damageBonus + offHandDamage + statBonus;
+    }
+
+    private getRequirementEntries(item: Item): Array<{ label: 'AGI' | 'STR'; required: number; current: number }> {
+        const requiredAgility = item.requirements.agility ?? 0;
+        const requiredStrength = item.requirements.strength ?? 0;
+        const entries: Array<{ label: 'AGI' | 'STR'; required: number; current: number }> = [];
+
+        if (requiredAgility > 0) {
+            entries.push({ label: 'AGI', required: requiredAgility, current: this.player.agility });
+        }
+
+        if (requiredStrength > 0) {
+            entries.push({ label: 'STR', required: requiredStrength, current: this.player.strength });
+        }
+
+        return entries;
     }
 
 
