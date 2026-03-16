@@ -17,6 +17,7 @@ test('Player initializes with randomized starting allocation and name', () => {
   assert.equal(player.skillPoints, balanceConfig.player.initialSkillPoints);
   assert.equal(typeof player.name, 'string');
   assert.equal(player.name.length > 0, true);
+  assert.equal(player.gold >= 0 && player.gold <= 5, true);
 });
 
 test('Player takeDamage applies armor and minimum damage rule', () => {
