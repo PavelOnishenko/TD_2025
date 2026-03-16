@@ -82,12 +82,12 @@ export default class GameUiEventBinder {
         this.villageUI.enterBtn.addEventListener('click', () => this.villageActionsController.handleEnter(villageNameProvider()));
         this.villageUI.skipBtn.addEventListener('click', () => this.villageActionsController.handleSkip());
         this.villageUI.waitBtn.addEventListener('click', () => this.villageActionsController.handleWait());
-        this.villageUI.buyBtn.addEventListener('click', () => this.villageActionsController.handleBuyBow());
-        this.villageUI.sellBtn.addEventListener('click', () => this.villageActionsController.handleSellBow());
-        this.villageUI.buyPotionBtn.addEventListener('click', () => this.villageActionsController.handleBuyPotion());
-        this.villageUI.sellPotionBtn.addEventListener('click', () => this.villageActionsController.handleSellPotion());
-        this.villageUI.buyManaPotionBtn.addEventListener('click', () => this.villageActionsController.handleBuyManaPotion());
-        this.villageUI.sellManaPotionBtn.addEventListener('click', () => this.villageActionsController.handleSellManaPotion());
+        this.villageUI.buyOffer1Btn.addEventListener('click', () => this.villageActionsController.handleBuyOffer(0));
+        this.villageUI.buyOffer2Btn.addEventListener('click', () => this.villageActionsController.handleBuyOffer(1));
+        this.villageUI.buyOffer3Btn.addEventListener('click', () => this.villageActionsController.handleBuyOffer(2));
+        this.villageUI.buyOffer4Btn.addEventListener('click', () => this.villageActionsController.handleBuyOffer(3));
+        this.villageUI.sellSelect.addEventListener('change', () => this.villageActionsController.updateButtons());
+        this.villageUI.sellSelectedBtn.addEventListener('click', () => this.villageActionsController.handleSellSelected());
         this.villageUI.leaveBtn.addEventListener('click', () => this.villageActionsController.handleLeave());
     }
 

@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import WorldMap from '../../dist/systems/world/WorldMap.js';
+import { theme } from '../../dist/config/ThemeConfig.js';
 import { createMockCanvasContext } from '../helpers/testUtils.js';
 
 test('WorldMap starts player in center cell and exposes pixel position', () => {
@@ -38,4 +39,26 @@ test('WorldMap draw renders terrain, fog and grid without throwing', () => {
   assert.ok(ctx.calls.some(c => c[0] === 'fillRect'));
   assert.ok(ctx.calls.some(c => c[0] === 'fillText'));
   assert.ok(ctx.calls.some(c => c[0] === 'stroke'));
+});
+
+
+test('WorldMap drawGrid aligns to grid offsets after canvas resize and theme offsets', () => {
+  const worldMap = new WorldMap(4, 4, 16);
+  const ctx = createMockCanvasContext();
+
+  const originalX = theme.worldMap.gridOffset.x;
+  const originalY = theme.worldMap.gridOffset.y;
+  theme.worldMap.gridOffset.x = 2;
+  theme.worldMap.gridOffset.y = 3;
+
+  try {
+    worldMap.resizeToCanvas(102, 102);
+    worldMap.draw(ctx, null);
+  } finally {
+    theme.worldMap.gridOffset.x = originalX;
+    theme.worldMap.gridOffset.y = originalY;
+  }
+
+  const moveToCalls = ctx.calls.filter(c => c[0] === 'moveTo');
+  assert.ok(moveToCalls.some(c => c[1] === 3 && c[2] === 4));
 });
