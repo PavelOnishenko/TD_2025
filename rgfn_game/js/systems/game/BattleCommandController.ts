@@ -7,6 +7,7 @@ import timingConfig from '../../config/timingConfig.js';
 import { balanceConfig } from '../../config/balanceConfig.js';
 import MagicSystem, { BaseSpellId } from '../magic/MagicSystem.js';
 
+
 type BattleCommandCallbacks = {
     onUpdateHUD: () => void;
     onAddBattleLog: (message: string, type?: string) => void;
@@ -72,7 +73,7 @@ export default class BattleCommandController {
         }
 
         const enemies = this.turnManager.getActiveEnemies() as Skeleton[];
-        const target = spellId === 'rage' ? this.player : this.resolveAttackTarget(enemies);
+        const target = spellId === 'rage' ? this.player : this.resolveSpellTarget(spellId, enemies);
         if (!target) {
             this.callbacks.onAddBattleLog('No valid spell target selected.', 'system');
             return;
@@ -188,6 +189,13 @@ export default class BattleCommandController {
         const attackRange = this.player.getAttackRange();
         if (selectedEnemy && !selectedEnemy.isDead() && this.battleMap.isInAttackRange(this.player, selectedEnemy, attackRange)) return selectedEnemy;
         return enemies.find((enemy) => this.battleMap.isInAttackRange(this.player, enemy, attackRange)) ?? null;
+    }
+
+    private resolveSpellTarget(spellId: BaseSpellId, enemies: Skeleton[]): Skeleton | null {
+        const selectedEnemy = this.callbacks.getSelectedEnemy();
+        const spellRange = (spellId === 'slow' ? balanceConfig.combat.spellRanges.slow : undefined) ?? this.player.getAttackRange();
+        if (selectedEnemy && !selectedEnemy.isDead() && this.battleMap.isInAttackRange(this.player, selectedEnemy, spellRange)) return selectedEnemy;
+        return enemies.find((enemy) => this.battleMap.isInAttackRange(this.player, enemy, spellRange)) ?? null;
     }
 
     private performAttack(target: Skeleton): void {
