@@ -222,6 +222,7 @@ export const balanceConfig = {
             { type: 'monster', weight: 8 },
             { type: 'item', weight: 2 },
             { type: 'village', weight: 1 },
+            { type: 'traveler', weight: 2 },
         ],
 
         zombieMinGroup: 1,
