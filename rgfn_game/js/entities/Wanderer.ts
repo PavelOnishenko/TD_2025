@@ -74,6 +74,17 @@ export default class Wanderer extends Skeleton {
         return [...this.inventory];
     }
 
+    public getEncounterDescription(): string {
+        const skills = this.getSkillSummary();
+        const magic = this.magicPoints > 0
+            ? `Magic ${this.magicPoints} (damage ${this.getMagicDamage()}, mana cost ${this.getMagicManaCost()})`
+            : 'No magic';
+        const equippedWeapon = this.equippedWeapon?.name ?? 'Bare hands';
+        const equippedArmor = this.equippedArmor?.name ?? 'No armor';
+
+        return `Skills: ${skills}. ${magic}. Equipped: ${equippedWeapon}, ${equippedArmor}.`;
+    }
+
     public takeDamage(amount: number): boolean {
         if (amount <= 0) {
             return super.takeDamage(0);
@@ -146,6 +157,17 @@ export default class Wanderer extends Skeleton {
 
     private canEquip(item: Item): boolean {
         return this.agility >= (item.requirements.agility ?? 0) && this.strength >= (item.requirements.strength ?? 0);
+    }
+
+    private getSkillSummary(): string {
+        return [
+            `STR ${this.strength}`,
+            `AGI ${this.agility}`,
+            `VIT ${this.vitality}`,
+            `TGH ${this.toughness}`,
+            `CON ${this.connection}`,
+            `INT ${this.intelligence}`,
+        ].join(', ');
     }
 
     private computeDamage(): number {
