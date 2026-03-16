@@ -4,6 +4,7 @@ import Player from '../entities/Player.js';
 import Skeleton from '../entities/Skeleton.js';
 import { Direction } from '../types/game.js';
 import MagicSystem from './magic/MagicSystem.js';
+import { balanceConfig } from '../config/balanceConfig.js';
 
 type BattleUI = {
     enemyName: HTMLElement;
@@ -126,6 +127,7 @@ export default class BattleUiController {
         const availableSpells = this.magicSystem.getAvailableSpells();
         const manaBySpell = new Map(availableSpells.map((spell) => [spell.id.split('-lvl-')[0], spell.manaCost]));
         const hasEnemySpellTarget = hasAttackTarget;
+        const hasEnemySlowTarget = this.hasEnemyInSpellRange('slow');
 
         this.setActionVisible(this.battleUI.attackBtn, hasAttackTarget);
         this.setActionVisible(this.battleUI.fleeBtn, canFlee);
@@ -134,7 +136,7 @@ export default class BattleUiController {
         this.setActionVisible(this.battleUI.useManaPotionBtn, hasManaPotion);
         this.setActionVisible(this.battleUI.spellFireballBtn, hasEnemySpellTarget && this.player.canSpendMana(manaBySpell.get('fireball') ?? Number.POSITIVE_INFINITY));
         this.setActionVisible(this.battleUI.spellCurseBtn, hasEnemySpellTarget && this.player.canSpendMana(manaBySpell.get('curse') ?? Number.POSITIVE_INFINITY));
-        this.setActionVisible(this.battleUI.spellSlowBtn, hasEnemySpellTarget && this.player.canSpendMana(manaBySpell.get('slow') ?? Number.POSITIVE_INFINITY));
+        this.setActionVisible(this.battleUI.spellSlowBtn, hasEnemySlowTarget && this.player.canSpendMana(manaBySpell.get('slow') ?? Number.POSITIVE_INFINITY));
         this.setActionVisible(this.battleUI.spellRageBtn, this.player.canSpendMana(manaBySpell.get('rage') ?? Number.POSITIVE_INFINITY));
         this.setActionVisible(this.battleUI.spellArcaneLanceBtn, hasEnemySpellTarget && this.player.canSpendMana(manaBySpell.get('arcane-lance') ?? Number.POSITIVE_INFINITY));
     }
@@ -172,6 +174,12 @@ export default class BattleUiController {
         const attackRange = this.player.getAttackRange();
         const enemies = this.turnManager.getActiveEnemies() as Skeleton[];
         return enemies.some((enemy) => this.battleMap.isInAttackRange(this.player, enemy, attackRange));
+    }
+
+    private hasEnemyInSpellRange(spellId: 'fireball' | 'curse' | 'slow' | 'arcane-lance'): boolean {
+        const spellRange = (spellId === 'slow' ? balanceConfig.combat.spellRanges.slow : undefined) ?? this.player.getAttackRange();
+        const enemies = this.turnManager.getActiveEnemies() as Skeleton[];
+        return enemies.some((enemy) => this.battleMap.isInAttackRange(this.player, enemy, spellRange));
     }
 
     private getEnemyInDirection(direction: Direction): Skeleton | null {
