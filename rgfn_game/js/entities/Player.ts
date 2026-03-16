@@ -21,6 +21,11 @@ import PlayerRenderer from './PlayerRenderer.js';
 const DamageableEntity = withDamageable(Entity);
 
 type PlayerStat = 'vitality' | 'toughness' | 'strength' | 'agility' | 'connection' | 'intelligence';
+const RANDOM_NAME_POOL = [
+    'Arin', 'Kael', 'Nyx', 'Sable', 'Thorne', 'Mira', 'Orin', 'Vex', 'Lyra', 'Dorian',
+    'Selene', 'Riven', 'Kara', 'Juno', 'Bram', 'Talia', 'Ezra', 'Nora', 'Cassian', 'Iris'
+];
+const RANDOM_STAT_POOL: PlayerStat[] = ['vitality', 'toughness', 'strength', 'agility', 'connection', 'intelligence'];
 
 export default class Player extends DamageableEntity {
     declare x: number;
@@ -46,6 +51,7 @@ export default class Player extends DamageableEntity {
     declare healToFull: () => void;
 
     public damage: number;
+    public name: string;
     public armor: number = 0;
     public avoidChance: number = 0;
     public gridCol?: number;
@@ -92,6 +98,7 @@ export default class Player extends DamageableEntity {
 
     constructor(x: number, y: number) {
         super(x, y);
+        this.name = Player.generateRandomName();
         this.width = balanceConfig.player.width;
         this.height = balanceConfig.player.height;
 
@@ -102,6 +109,7 @@ export default class Player extends DamageableEntity {
         this.connection = balanceConfig.player.initialConnection;
         this.intelligence = balanceConfig.player.initialIntelligence;
         this.skillPoints = balanceConfig.player.initialSkillPoints;
+        this.allocateRandomStartingStats();
 
         this.inventorySystem = new PlayerInventory({
             onEquipmentChanged: () => this.updateStats(),
@@ -116,6 +124,18 @@ export default class Player extends DamageableEntity {
         this.xpToNextLevel = getXpForLevel(2);
 
         this.initDamageable(this.maxHp);
+    }
+
+    private static generateRandomName(): string {
+        return RANDOM_NAME_POOL[Math.floor(Math.random() * RANDOM_NAME_POOL.length)];
+    }
+
+    private allocateRandomStartingStats(): void {
+        const pointsToAllocate = Math.max(0, balanceConfig.player.initialRandomAllocatedSkillPoints ?? 0);
+        for (let i = 0; i < pointsToAllocate; i++) {
+            const randomStat = RANDOM_STAT_POOL[Math.floor(Math.random() * RANDOM_STAT_POOL.length)];
+            this[randomStat] += 1;
+        }
     }
 
     public takeDamage(amount: number): boolean {
@@ -421,6 +441,7 @@ export default class Player extends DamageableEntity {
         const inventoryState = this.inventorySystem.getState();
         return {
             level: this.level,
+            name: this.name,
             xp: this.xp,
             xpToNextLevel: this.xpToNextLevel,
             vitality: this.vitality,
@@ -447,6 +468,7 @@ export default class Player extends DamageableEntity {
         const toNumber = (value: unknown, fallback: number): number => typeof value === 'number' && Number.isFinite(value) ? value : fallback;
 
         this.level = toNumber(state.level, this.level);
+        this.name = typeof state.name === 'string' && state.name.trim().length > 0 ? state.name : this.name;
         this.xp = toNumber(state.xp, this.xp);
         this.xpToNextLevel = toNumber(state.xpToNextLevel, this.xpToNextLevel);
         this.vitality = toNumber(state.vitality, this.vitality);

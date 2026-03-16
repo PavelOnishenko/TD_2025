@@ -4,6 +4,7 @@ export type HudElements = {
     useManaPotionBtn: HTMLButtonElement;
     newCharacterBtn: HTMLButtonElement;
     playerLevel: HTMLElement;
+    playerName: HTMLElement;
     playerXp: HTMLElement;
     playerXpNext: HTMLElement;
     playerHp: HTMLElement;

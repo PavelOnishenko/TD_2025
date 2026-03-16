@@ -19,7 +19,8 @@ export const balanceConfig = {
         initialAgility: 0,
         initialConnection: 0,
         initialIntelligence: 0,
-        initialSkillPoints: 100,
+        initialSkillPoints: 0,
+        initialRandomAllocatedSkillPoints: 5,
 
         // Visual properties
         width: 32,
@@ -31,6 +32,7 @@ export const balanceConfig = {
 
     // ============ ENEMY STATS ============
     enemies: {
+        hpMultiplier: 2,
         skeleton: {
             hp: 3,
             damage: 1,
@@ -220,6 +222,7 @@ export const balanceConfig = {
             { type: 'monster', weight: 8 },
             { type: 'item', weight: 2 },
             { type: 'village', weight: 1 },
+            { type: 'traveler', weight: 2 },
         ],
 
         zombieMinGroup: 1,
