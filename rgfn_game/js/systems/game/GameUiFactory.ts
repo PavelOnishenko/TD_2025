@@ -19,6 +19,7 @@ export default class GameUiFactory {
             useManaPotionBtn: document.getElementById('use-mana-potion-btn')! as HTMLButtonElement,
             newCharacterBtn: document.getElementById('new-character-btn')! as HTMLButtonElement,
             playerLevel: document.getElementById('player-level')!,
+            playerName: document.getElementById('player-name')!,
             playerXp: document.getElementById('player-xp')!,
             playerXpNext: document.getElementById('player-xp-next')!,
             playerHp: document.getElementById('player-hp')!,

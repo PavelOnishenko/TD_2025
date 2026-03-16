@@ -7,6 +7,7 @@ type HudElements = {
     usePotionBtn: HTMLButtonElement;
     useManaPotionBtn: HTMLButtonElement;
     playerLevel: HTMLElement;
+    playerName: HTMLElement;
     playerXp: HTMLElement;
     playerXpNext: HTMLElement;
     playerHp: HTMLElement;
@@ -95,6 +96,7 @@ export default class HudController {
 
     public updateHUD(): void {
         this.hudElements.playerLevel.textContent = String(this.player.level);
+        this.hudElements.playerName.textContent = this.player.name;
         this.hudElements.playerXp.textContent = String(this.player.xp);
         this.hudElements.playerXpNext.textContent = String(this.player.xpToNextLevel);
         this.hudElements.playerHp.textContent = String(this.player.hp);

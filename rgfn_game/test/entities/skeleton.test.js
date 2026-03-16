@@ -19,7 +19,7 @@ test('Skeleton initializes from config and deactivates on death', () => {
   const skeleton = new Skeleton(0, 0, balanceConfig.enemies.zombie);
 
   assert.equal(skeleton.name, 'Zombie');
-  assert.equal(skeleton.hp, balanceConfig.enemies.zombie.hp);
+  assert.equal(skeleton.hp, Math.round(balanceConfig.enemies.zombie.hp * balanceConfig.enemies.hpMultiplier));
 
   const died = skeleton.takeDamage(999);
   assert.equal(died, true);
