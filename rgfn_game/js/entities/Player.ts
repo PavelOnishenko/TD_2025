@@ -71,7 +71,7 @@ export default class Player extends DamageableEntity {
     public magicPoints: number = 0;
     public mana: number = 0;
     public maxMana: number = 0;
-    public gold: number = 20;
+    public gold: number = 0;
 
     private rageTurns: number = 0;
     private rageMultiplier: number = 1;
@@ -121,6 +121,7 @@ export default class Player extends DamageableEntity {
 
         this.updateStats();
         this.mana = this.maxMana;
+        this.gold = Math.floor(Math.random() * 6);
         this.xpToNextLevel = getXpForLevel(2);
 
         this.initDamageable(this.maxHp);
