@@ -71,7 +71,7 @@ export default class Player extends DamageableEntity {
     public magicPoints: number = 0;
     public mana: number = 0;
     public maxMana: number = 0;
-    public gold: number = 20;
+    public gold: number = 0;
 
     private rageTurns: number = 0;
     private rageMultiplier: number = 1;
@@ -121,6 +121,7 @@ export default class Player extends DamageableEntity {
 
         this.updateStats();
         this.mana = this.maxMana;
+        this.gold = Math.floor(Math.random() * 6);
         this.xpToNextLevel = getXpForLevel(2);
 
         this.initDamageable(this.maxHp);
@@ -184,7 +185,7 @@ export default class Player extends DamageableEntity {
         const fistBaseDamage = balanceConfig.combat.fistDamagePerHand;
 
         if (!this.equippedWeapon) {
-            this.damage = fistBaseDamage * 2 + meleeStatBonus;
+            this.damage = fistBaseDamage * 2 + (meleeStatBonus * 2);
             return;
         }
 
@@ -196,7 +197,9 @@ export default class Player extends DamageableEntity {
         this.mana = Math.min(this.maxMana, previousMana);
         const offhandFist = this.equippedWeapon.handsRequired === 1 ? fistBaseDamage : 0;
         const weaponDamage = this.equippedWeapon.damageBonus;
-        const statBonus = this.equippedWeapon.isRanged ? rangedStatBonus : meleeStatBonus;
+        const statBonus = this.equippedWeapon.isRanged
+            ? rangedStatBonus
+            : (this.equippedWeapon.handsRequired === 1 ? meleeStatBonus * 2 : meleeStatBonus);
         this.damage = weaponDamage + offhandFist + statBonus;
     }
 
@@ -410,13 +413,15 @@ export default class Player extends DamageableEntity {
         const weapon = this.equippedWeapon;
 
         if (!weapon) {
-            const statBonus = calculateMeleeDamageBonus(this.strength, this.agility);
-            return `Unarmed: ${fistBaseDamage} + ${fistBaseDamage} + melee bonus (${statBonus}) = ${this.damage}`;
+            const perHandStatBonus = calculateMeleeDamageBonus(this.strength, this.agility);
+            return `Unarmed: (${fistBaseDamage} + ${perHandStatBonus}) + (${fistBaseDamage} + ${perHandStatBonus}) = ${this.damage}`;
         }
 
         const statBonus = weapon.isRanged
             ? calculateBowDamageBonus(this.strength, this.agility)
-            : calculateMeleeDamageBonus(this.strength, this.agility);
+            : (weapon.handsRequired === 1
+                ? calculateMeleeDamageBonus(this.strength, this.agility) * 2
+                : calculateMeleeDamageBonus(this.strength, this.agility));
         const offhand = weapon.handsRequired === 1 ? fistBaseDamage : 0;
         const style = weapon.isRanged ? 'Ranged' : 'Melee';
 

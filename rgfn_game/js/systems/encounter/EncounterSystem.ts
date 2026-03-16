@@ -2,15 +2,17 @@ import { randomInt } from '../../../../engine/utils/MathUtils.js';
 import { balanceConfig } from '../../config/balanceConfig.js';
 import Item from '../../entities/Item.js';
 import Skeleton from '../../entities/Skeleton.js';
+import Wanderer from '../../entities/Wanderer.js';
 import EncounterResolver from './EncounterResolver.js';
 
 export type EncounterResult =
     | { type: 'battle', enemies: Skeleton[] }
     | { type: 'none' }
     | { type: 'item', item: Item }
-    | { type: 'village' };
+    | { type: 'village' }
+    | { type: 'traveler', traveler: Wanderer, isHostile: boolean };
 
-export type ForcedEncounterType = 'skeleton' | 'zombie' | 'ninja' | 'darkKnight' | 'dragon' | 'item' | 'none' | 'village';
+export type ForcedEncounterType = 'skeleton' | 'zombie' | 'ninja' | 'darkKnight' | 'dragon' | 'item' | 'none' | 'village' | 'traveler';
 
 export default class EncounterSystem {
     private encounterRate: number;
@@ -66,16 +68,16 @@ export default class EncounterSystem {
         return this.encounterResolver.getForcedEncounterQueue();
     }
 
-    private rollEncounterEventType(): 'monster' | 'item' | 'village' {
+    private rollEncounterEventType(): 'monster' | 'item' | 'village' | 'traveler' {
         const configured = Array.isArray(balanceConfig.encounters.eventTypeWeights)
             ? balanceConfig.encounters.eventTypeWeights
             : [];
 
-        const entries: Array<{ type: 'monster' | 'item' | 'village'; weight: number }> = [];
+        const entries: Array<{ type: 'monster' | 'item' | 'village' | 'traveler'; weight: number }> = [];
         configured.forEach((entry) => {
             const weight = Number(entry?.weight);
             const type = entry?.type;
-            if ((type === 'monster' || type === 'item' || type === 'village') && weight > 0) {
+            if ((type === 'monster' || type === 'item' || type === 'village' || type === 'traveler') && weight > 0) {
                 entries.push({ type, weight });
             }
         });

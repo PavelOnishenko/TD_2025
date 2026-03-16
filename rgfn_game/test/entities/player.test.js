@@ -17,6 +17,7 @@ test('Player initializes with randomized starting allocation and name', () => {
   assert.equal(player.skillPoints, balanceConfig.player.initialSkillPoints);
   assert.equal(typeof player.name, 'string');
   assert.equal(player.name.length > 0, true);
+  assert.equal(player.gold >= 0 && player.gold <= 5, true);
 });
 
 test('Player takeDamage applies armor and minimum damage rule', () => {
@@ -56,7 +57,17 @@ test('Player addStat succeeds only with enough skill points and updates stats', 
   assert.equal(success, true);
   assert.equal(player.strength >= 2, true);
   assert.equal(player.skillPoints, 0);
-  assert.equal(player.damage >= balanceConfig.combat.fistDamagePerHand * 2 + 1, true);
+  assert.equal(player.damage, balanceConfig.combat.fistDamagePerHand * 2 + 2);
+});
+
+
+test('Player applies melee stat bonus per hand when unarmed', () => {
+  const player = new Player(0, 0);
+  player.skillPoints = 6;
+
+  player.addStat('strength', 6);
+
+  assert.equal(player.damage, 8);
 });
 
 test('Player keeps full mana state when max mana increases', () => {

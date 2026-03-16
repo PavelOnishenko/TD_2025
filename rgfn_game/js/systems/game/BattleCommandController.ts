@@ -6,6 +6,7 @@ import Skeleton from '../../entities/Skeleton.js';
 import timingConfig from '../../config/timingConfig.js';
 import { balanceConfig } from '../../config/balanceConfig.js';
 import MagicSystem, { BaseSpellId } from '../magic/MagicSystem.js';
+import Item from '../../entities/Item.js';
 
 
 type BattleCommandCallbacks = {
@@ -225,8 +226,22 @@ export default class BattleCommandController {
             }
         }
 
+        this.collectLoot(target);
         if (this.callbacks.getSelectedEnemy() === target) {
             this.callbacks.setSelectedEnemy(null);
+        }
+    }
+
+    private collectLoot(target: Skeleton): void {
+        const lootable = target as Skeleton & { getLootItems?: () => Item[] };
+        const loot = lootable.getLootItems ? lootable.getLootItems() : [];
+        for (const item of loot) {
+            if (this.player.addItemToInventory(item)) {
+                this.callbacks.onAddBattleLog(`Looted ${item.name}.`, 'system');
+                continue;
+            }
+
+            this.callbacks.onAddBattleLog(`Could not loot ${item.name}: inventory full.`, 'system');
         }
     }
 }
