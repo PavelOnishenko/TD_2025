@@ -321,6 +321,8 @@ h1 {
 #battle-instructions,
 #village-prompt,
 #village-actions {
+    overflow: auto;
+    min-height: 400px;
     padding: 10px;
     background-color: rgba(242, 229, 201, 0.55);
     border: 1px solid var(--color-secondary-accent);
@@ -392,6 +394,15 @@ h1 {
         grid-column: 1;
         max-width: min(400px, 100%);
         width: 100%;
+    }
+
+    #battle-sidebar {
+        overflow: auto;
+        min-height: 400px;
+    }
+
+    #enemy-info {
+        min-height: 0;
     }
 }
 

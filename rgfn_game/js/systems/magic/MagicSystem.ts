@@ -34,11 +34,24 @@ export default class MagicSystem {
 
     public getAvailableSpells(): Spell[] {
         const spellBook = createSpellBook();
-        return spellBook.filter((spell) => {
-            const [baseId, levelToken] = spell.id.split('-lvl-');
-            const level = Number(levelToken);
-            return this.spellLevels[baseId as BaseSpellId] === level;
-        });
+        const spellsByBase = new Map<BaseSpellId, Spell>();
+
+        for (const spell of spellBook) {
+            const parsed = this.parseSpellId(spell.id);
+            if (!parsed) {
+                continue;
+            }
+
+            const learnedLevel = this.spellLevels[parsed.baseId];
+            if (parsed.level <= learnedLevel) {
+                const current = spellsByBase.get(parsed.baseId);
+                if (!current || this.getSpellLevel(current.id) < parsed.level) {
+                    spellsByBase.set(parsed.baseId, spell);
+                }
+            }
+        }
+
+        return Array.from(spellsByBase.values());
     }
 
     public investSpellPoint(baseId: BaseSpellId): boolean {
@@ -57,7 +70,7 @@ export default class MagicSystem {
             return { ok: false, message: `Learn ${baseId} first (current level 0).` };
         }
 
-        const spell = createSpellBook().find((item) => item.id === `${baseId}-lvl-${level}`);
+        const spell = this.getHighestLearnedSpell(baseId);
         if (!spell) {
             return { ok: false, message: 'Spell level data not found.' };
         }
@@ -67,7 +80,8 @@ export default class MagicSystem {
         }
 
         this.player.spendMana(spell.manaCost);
-        const results = spell.cast({ caster: this.player, target, level });
+        const effectiveLevel = this.getSpellLevel(spell.id);
+        const results = spell.cast({ caster: this.player, target, level: effectiveLevel });
 
         const pieces: string[] = [`${spell.name} cast (-${spell.manaCost} mana).`];
         for (const result of results) {
@@ -87,6 +101,33 @@ export default class MagicSystem {
 
         return { ok: true, message: pieces.join(' ') };
     }
+
+    private getHighestLearnedSpell(baseId: BaseSpellId): Spell | undefined {
+        const learnedLevel = this.spellLevels[baseId];
+        return createSpellBook()
+            .map((spell) => ({ spell, parsed: this.parseSpellId(spell.id) }))
+            .filter((entry) => entry.parsed && entry.parsed.baseId === baseId && entry.parsed.level <= learnedLevel)
+            .sort((a, b) => (b.parsed?.level ?? 0) - (a.parsed?.level ?? 0))[0]?.spell;
+    }
+
+    private parseSpellId(spellId: string): { baseId: BaseSpellId; level: number } | null {
+        const [baseIdToken, levelToken] = spellId.split('-lvl-');
+        if (!BASE_SPELL_IDS.includes(baseIdToken as BaseSpellId)) {
+            return null;
+        }
+
+        const level = Number(levelToken);
+        if (!Number.isFinite(level) || level <= 0) {
+            return null;
+        }
+
+        return { baseId: baseIdToken as BaseSpellId, level };
+    }
+
+    private getSpellLevel(spellId: string): number {
+        return this.parseSpellId(spellId)?.level ?? 0;
+    }
 }
+
 
 export type { BaseSpellId };
