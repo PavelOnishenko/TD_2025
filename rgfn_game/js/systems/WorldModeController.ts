@@ -116,12 +116,12 @@ export default class WorldModeController {
 
     private handleTravelerEncounter(traveler: Wanderer, isHostile: boolean): void {
         if (isHostile) {
-            this.callbacks.onAddBattleLog(`${traveler.name} turns hostile!`, 'enemy');
+            this.callbacks.onAddBattleLog(`${traveler.name} turns hostile! ${traveler.getEncounterDescription()}`, 'enemy');
             this.callbacks.onStartBattle([traveler]);
             return;
         }
 
-        this.callbacks.onAddBattleLog(`${traveler.name} greets you and offers barter.`, 'system');
+        this.callbacks.onAddBattleLog(`${traveler.name} greets you and offers barter. ${traveler.getEncounterDescription()}`, 'system');
         const wantsAmbush = window.confirm('A peaceful wanderer appears. Attack first?');
         if (wantsAmbush) {
             this.callbacks.onAddBattleLog('You strike first!', 'player');
