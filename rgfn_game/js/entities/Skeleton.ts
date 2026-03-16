@@ -62,7 +62,8 @@ export default class Skeleton extends DamageableEntity {
         this.name = config.name;
         this.xpValue = config.xpValue;
         this.behavior = config.behavior ?? {};
-        this.initDamageable(config.hp);
+        const hpMultiplier = Math.max(0, balanceConfig.enemies.hpMultiplier ?? 1);
+        this.initDamageable(Math.round(config.hp * hpMultiplier));
     }
 
     public takeDamage(amount: number): boolean {

@@ -19,7 +19,8 @@ export const balanceConfig = {
         initialAgility: 0,
         initialConnection: 0,
         initialIntelligence: 0,
-        initialSkillPoints: 100,
+        initialSkillPoints: 0,
+        initialRandomAllocatedSkillPoints: 5,
 
         // Visual properties
         width: 32,
@@ -31,6 +32,7 @@ export const balanceConfig = {
 
     // ============ ENEMY STATS ============
     enemies: {
+        hpMultiplier: 2,
         skeleton: {
             hp: 3,
             damage: 1,
