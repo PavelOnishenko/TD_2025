@@ -159,10 +159,19 @@ export default class BattleUiController {
         }
 
         if (enemies.length === 1) {
-            return enemies[0].name;
+            return this.describeEnemy(enemies[0]);
         }
 
         return `${enemies.length} ${enemies[0].name}s`;
+    }
+
+    private describeEnemy(enemy: Skeleton): string {
+        const maybeDetailedEnemy = enemy as Skeleton & { getEncounterDescription?: () => string };
+        if (typeof maybeDetailedEnemy.getEncounterDescription !== 'function') {
+            return enemy.name;
+        }
+
+        return `${enemy.name}. ${maybeDetailedEnemy.getEncounterDescription()}`;
     }
 
     private getAdjacentEnemies(): Skeleton[] {
