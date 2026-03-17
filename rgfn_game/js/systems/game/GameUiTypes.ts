@@ -56,6 +56,7 @@ export type HudElements = {
     spellDetailsArcaneLance: HTMLElement;
     inventoryCount: HTMLElement;
     inventoryCapacity: HTMLElement;
+    inventoryCapacityHint: HTMLElement;
     inventoryGrid: HTMLElement;
     weaponSlotMain: HTMLButtonElement;
     weaponSlotOff: HTMLButtonElement;

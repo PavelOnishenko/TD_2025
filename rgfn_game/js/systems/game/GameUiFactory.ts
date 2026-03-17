@@ -71,6 +71,7 @@ export default class GameUiFactory {
             spellDetailsArcaneLance: document.getElementById('spell-details-arcane-lance')!,
             inventoryCount: document.getElementById('inventory-count')!,
             inventoryCapacity: document.getElementById('inventory-capacity')!,
+            inventoryCapacityHint: document.getElementById('inventory-capacity-hint')!,
             inventoryGrid: document.getElementById('inventory-grid')!,
             weaponSlotMain: document.getElementById('weapon-slot-main')! as HTMLButtonElement,
             weaponSlotOff: document.getElementById('weapon-slot-off')! as HTMLButtonElement,

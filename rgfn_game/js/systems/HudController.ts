@@ -63,6 +63,7 @@ type HudElements = {
     spellDetailsArcaneLance: HTMLElement;
     inventoryCount: HTMLElement;
     inventoryCapacity: HTMLElement;
+    inventoryCapacityHint: HTMLElement;
     inventoryGrid: HTMLElement;
     weaponSlotMain: HTMLButtonElement;
     weaponSlotOff: HTMLButtonElement;
@@ -153,9 +154,11 @@ export default class HudController {
         this.renderEquipmentSlots();
 
         const inventory = this.player.getInventory();
+        const inventoryCapacity = this.player.getInventoryCapacity();
         this.hudElements.inventoryCount.textContent = String(inventory.length);
-        this.hudElements.inventoryCapacity.textContent = String(balanceConfig.player.inventorySize);
-        this.renderInventory(inventory);
+        this.hudElements.inventoryCapacity.textContent = String(inventoryCapacity);
+        this.hudElements.inventoryCapacityHint.textContent = this.getInventoryCapacityHintText();
+        this.renderInventory(inventory, inventoryCapacity);
 
         const hasHpPotion = this.player.getHealingPotionCount() > 0;
         const hasManaPotion = this.player.getManaPotionCount() > 0;
@@ -261,10 +264,10 @@ export default class HudController {
         this.renderEquipmentSlotContent(this.hudElements.armorSlot, 'Armor', armor ? armor.name : 'Empty', armor?.spriteClass);
     }
 
-    private renderInventory(inventory: Item[]): void {
+    private renderInventory(inventory: Item[], inventoryCapacity: number): void {
         this.hudElements.inventoryGrid.innerHTML = '';
 
-        for (let index = 0; index < balanceConfig.player.inventorySize; index++) {
+        for (let index = 0; index < inventoryCapacity; index++) {
             const slot = document.createElement('button');
             slot.type = 'button';
             slot.className = 'inventory-slot';
@@ -306,6 +309,13 @@ export default class HudController {
 
             this.hudElements.inventoryGrid.appendChild(slot);
         }
+    }
+
+
+    private getInventoryCapacityHintText(): string {
+        const baseSlots = balanceConfig.player.baseInventorySlots;
+        const strengthStep = balanceConfig.player.strengthPerInventorySlot;
+        return `${baseSlots} base slots, +1 slot every ${strengthStep} STR`;
     }
 
     private renderEquipmentSlotContent(slot: HTMLButtonElement, label: string, value: string, spriteClass?: string): void {
