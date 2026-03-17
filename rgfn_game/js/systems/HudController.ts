@@ -287,6 +287,10 @@ export default class HudController {
                 });
                 slot.addEventListener('mouseenter', () => slot.classList.add('inventory-slot-hovered'));
                 slot.addEventListener('mouseleave', () => slot.classList.remove('inventory-slot-hovered'));
+                slot.addEventListener('contextmenu', (event) => {
+                    event.preventDefault();
+                    this.handleDropFromInventory(index);
+                });
 
                 const sprite = document.createElement('div');
                 sprite.className = `item-sprite ${item.spriteClass}`;
@@ -299,8 +303,6 @@ export default class HudController {
 
                 if (item.type === 'weapon' || item.type === 'armor') {
                     slot.addEventListener('click', () => this.handleEquipFromInventory(item, slot));
-                } else {
-                    slot.disabled = true;
                 }
             } else {
                 slot.classList.add('empty');
@@ -378,6 +380,16 @@ export default class HudController {
         this.updateHUD();
     }
 
+    private handleDropFromInventory(index: number): void {
+        const droppedItem = this.player.removeInventoryItemAt(index);
+        if (!droppedItem) {
+            return;
+        }
+
+        this.addLog(`You dropped ${droppedItem.name}. It cannot be recovered.`, 'system');
+        this.updateHUD();
+    }
+
     private triggerEquipRequirementsFeedback(item: Item, slotElement: HTMLButtonElement): void {
         slotElement.classList.remove('inventory-slot-failed');
         void slotElement.offsetWidth;
@@ -403,7 +415,10 @@ export default class HudController {
     }
 
     private buildInventoryTooltip(item: Item): string {
-        const lines = [`${item.name} — click to equip`];
+        const lines = [`${item.name} — right-click to drop`];
+        if (item.type === 'weapon' || item.type === 'armor') {
+            lines[0] = `${item.name} — click to equip • right-click to drop`;
+        }
         const requirements = this.getRequirementEntries(item);
 
         if (requirements.length > 0) {

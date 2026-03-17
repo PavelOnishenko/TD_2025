@@ -131,6 +131,20 @@ test('Player recalculates damage when weapon is equipped while preserving full m
   assert.equal(player.mana, player.maxMana);
 });
 
+
+
+test('Dropped inventory items are removed permanently', () => {
+  const player = new Player(0, 0);
+  const potion = new Item({ id: 'manaPotion', name: 'Mana Potion', description: 'Restore mana', type: 'consumable' });
+
+  player.addItemToInventory(potion);
+  assert.equal(player.getInventory().map((item) => item.id).includes('manaPotion'), true);
+
+  const removed = player.removeInventoryItemAt(0);
+
+  assert.equal(removed?.id, 'manaPotion');
+  assert.equal(player.getInventory().map((item) => item.id).includes('manaPotion'), false);
+});
 test('Equipped items are removed from inventory and return on unequip', () => {
   const player = new Player(0, 0);
   const sword = new Item({ id: 'shortSword_3', name: 'Short Sword +3', description: 'One-handed', type: 'weapon', handsRequired: 1, damageBonus: 3, requirements: { agility: 0, strength: 0 } });
