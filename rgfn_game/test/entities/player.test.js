@@ -119,7 +119,7 @@ test('Player inventory auto-equips discovered weapons and keeps non-weapons uneq
 
 test('Player recalculates damage when weapon is equipped while preserving full mana', () => {
   const player = new Player(0, 0);
-  player.strength = 4;
+  player.strength = balanceConfig.player.strengthPerInventorySlot;
   player.agility = 0;
   player.updateStats();
   player.mana = player.maxMana;
@@ -148,4 +148,37 @@ test('Equipped items are removed from inventory and return on unequip', () => {
   player.unequipArmor();
 
   assert.deepEqual(player.getInventory().map((item) => item.id).sort(), ['armor_t2', 'buckler_2', 'shortSword_3']);
+});
+
+
+test('Player inventory capacity scales with strength at 4 STR intervals', () => {
+  const player = new Player(0, 0);
+
+  const baseSlots = balanceConfig.player.baseInventorySlots;
+  const strengthStep = balanceConfig.player.strengthPerInventorySlot;
+
+  assert.equal(player.getInventoryCapacityForStrength(0), baseSlots);
+  assert.equal(player.getInventoryCapacityForStrength(strengthStep - 1), baseSlots);
+  assert.equal(player.getInventoryCapacityForStrength(strengthStep), baseSlots + 1);
+  assert.equal(player.getInventoryCapacityForStrength(strengthStep * 2), baseSlots + 2);
+});
+
+test('Player addItemToInventory uses dynamic strength-based capacity', () => {
+  const player = new Player(0, 0);
+  player.strength = 0;
+  player.updateStats();
+
+  for (let index = 0; index < balanceConfig.player.baseInventorySlots; index += 1) {
+    const added = player.addItemToInventory(new Item({ id: `potion-${index}`, name: 'Potion', description: 'Heal', type: 'consumable' }));
+    assert.equal(added, true);
+  }
+
+  const fifthAtZeroStrength = player.addItemToInventory(new Item({ id: 'potion-4', name: 'Potion', description: 'Heal', type: 'consumable' }));
+  assert.equal(fifthAtZeroStrength, false);
+
+  player.strength = balanceConfig.player.strengthPerInventorySlot;
+  player.updateStats();
+
+  const fifthAtFourStrength = player.addItemToInventory(new Item({ id: 'potion-5', name: 'Potion', description: 'Heal', type: 'consumable' }));
+  assert.equal(fifthAtFourStrength, true);
 });

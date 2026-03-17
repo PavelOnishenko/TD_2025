@@ -124,6 +124,7 @@ export default class Player extends DamageableEntity {
         this.allocateRandomStartingStats();
 
         this.inventorySystem = new PlayerInventory({
+            getInventoryCapacity: () => this.getInventoryCapacity(),
             onEquipmentChanged: () => this.updateStats(),
             onHealingPotionUsed: () => this.heal(5),
             onManaPotionUsed: () => this.restoreMana(balanceConfig.combat.manaPotionRestore),
@@ -355,6 +356,16 @@ export default class Player extends DamageableEntity {
 
     public getArmorReduction(): number {
         return this.armor;
+    }
+
+    public getInventoryCapacity(): number {
+        return this.getInventoryCapacityForStrength(this.strength);
+    }
+
+    public getInventoryCapacityForStrength(strength: number): number {
+        const safeStrength = Math.max(0, Math.floor(strength));
+        const strengthSlots = Math.floor(safeStrength / balanceConfig.player.strengthPerInventorySlot);
+        return balanceConfig.player.baseInventorySlots + strengthSlots;
     }
 
     public addItemToInventory(item: Item): boolean {

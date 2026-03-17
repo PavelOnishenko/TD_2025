@@ -26,8 +26,9 @@ export const balanceConfig = {
         width: 32,
         height: 32,
 
-        // Inventory slots available to hold discovered items
-        inventorySize: 6,
+        // Inventory slots: base + 1 additional slot per configured strength interval
+        baseInventorySlots: 4,
+        strengthPerInventorySlot: 4,
     },
 
     // ============ ENEMY STATS ============

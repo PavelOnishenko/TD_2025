@@ -1,4 +1,3 @@
-import { balanceConfig } from '../config/balanceConfig.js';
 import Item from './Item.js';
 
 type PlayerInventoryHooks = {
@@ -6,6 +5,7 @@ type PlayerInventoryHooks = {
     onHealingPotionUsed: () => void;
     onManaPotionUsed: () => void;
     canEquip: (item: Item) => boolean;
+    getInventoryCapacity: () => number;
 };
 
 export default class PlayerInventory {
@@ -20,7 +20,7 @@ export default class PlayerInventory {
     }
 
     public addItem(item: Item): boolean {
-        if (this.inventory.length >= balanceConfig.player.inventorySize) {
+        if (this.inventory.length >= this.hooks.getInventoryCapacity()) {
             return false;
         }
 
@@ -295,7 +295,7 @@ export default class PlayerInventory {
             return true;
         }
 
-        if (this.inventory.length >= balanceConfig.player.inventorySize) {
+        if (this.inventory.length >= this.hooks.getInventoryCapacity()) {
             return false;
         }
 
