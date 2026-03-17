@@ -27,11 +27,18 @@ export type HudElements = {
     statConnection: HTMLElement;
     statIntelligence: HTMLElement;
     addVitalityBtn: HTMLButtonElement;
+    subVitalityBtn: HTMLButtonElement;
     addToughnessBtn: HTMLButtonElement;
+    subToughnessBtn: HTMLButtonElement;
     addStrengthBtn: HTMLButtonElement;
+    subStrengthBtn: HTMLButtonElement;
     addAgilityBtn: HTMLButtonElement;
+    subAgilityBtn: HTMLButtonElement;
     addConnectionBtn: HTMLButtonElement;
+    subConnectionBtn: HTMLButtonElement;
     addIntelligenceBtn: HTMLButtonElement;
+    subIntelligenceBtn: HTMLButtonElement;
+    saveSkillsBtn: HTMLButtonElement;
     upgradeFireballBtn: HTMLButtonElement;
     upgradeCurseBtn: HTMLButtonElement;
     upgradeSlowBtn: HTMLButtonElement;

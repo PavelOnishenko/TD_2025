@@ -140,6 +140,17 @@ h1 {
 }
 .stat-row span span { color: var(--color-enemy); font-weight: 700; }
 
+
+.stat-controls {
+    display: flex;
+    gap: 6px;
+}
+
+#save-skills-btn {
+    margin-top: 8px;
+    width: 100%;
+}
+
 .spell-upgrade-row {
     width: 100%;
     border-bottom: 1px dotted var(--color-secondary-accent);
