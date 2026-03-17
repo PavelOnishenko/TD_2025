@@ -4,11 +4,14 @@ import HudController from '../../HudController.js';
 import Skeleton from '../../../entities/Skeleton.js';
 import MagicSystem, { BaseSpellId } from '../../magic/MagicSystem.js';
 
+type PlayerStat = 'vitality' | 'toughness' | 'strength' | 'agility' | 'connection' | 'intelligence';
+
 export default class GameHudCoordinator {
     private readonly player: Player;
     private readonly hudController: HudController;
     private readonly battleUiController: BattleUiController;
     private readonly magicSystem: MagicSystem;
+    private pendingSkillAllocations: Record<PlayerStat, number> = { vitality: 0, toughness: 0, strength: 0, agility: 0, connection: 0, intelligence: 0 };
 
     constructor(player: Player, hudController: HudController, battleUiController: BattleUiController, magicSystem: MagicSystem) {
         this.player = player;
@@ -18,6 +21,7 @@ export default class GameHudCoordinator {
     }
 
     public updateHUD(): void {
+        this.hudController.setPendingSkillAllocations(this.pendingSkillAllocations);
         this.hudController.updateHUD();
         this.battleUiController.refreshActionAvailability();
     }
@@ -43,12 +47,38 @@ export default class GameHudCoordinator {
         this.hudController.togglePanel(panel);
     }
 
-    public handleAddStat(stat: 'vitality' | 'toughness' | 'strength' | 'agility' | 'connection' | 'intelligence'): void {
-        if (!this.player.addStat(stat)) {
+    public handleAddStat(stat: PlayerStat): void {
+        const pendingTotal = Object.values(this.pendingSkillAllocations).reduce((total, value) => total + value, 0);
+        if (pendingTotal >= this.player.skillPoints) {
             return;
         }
+
+        this.pendingSkillAllocations[stat] += 1;
         this.updateHUD();
-        this.addBattleLog(`+1 ${stat.charAt(0).toUpperCase() + stat.slice(1)}!`, 'system');
+    }
+
+    public handleRemoveStat(stat: PlayerStat): void {
+        if (this.pendingSkillAllocations[stat] <= 0) {
+            return;
+        }
+
+        this.pendingSkillAllocations[stat] -= 1;
+        this.updateHUD();
+    }
+
+    public handleSaveSkillChanges(): void {
+        const changedStats = Object.entries(this.pendingSkillAllocations).filter(([, value]) => value > 0) as Array<[PlayerStat, number]>;
+        if (changedStats.length === 0) {
+            return;
+        }
+
+        for (const [stat, amount] of changedStats) {
+            this.player.addStat(stat, amount);
+            this.pendingSkillAllocations[stat] = 0;
+        }
+
+        this.updateHUD();
+        this.addBattleLog('Saved skill changes.', 'system');
     }
 
     public handleUpgradeSpell(spellId: BaseSpellId): void {

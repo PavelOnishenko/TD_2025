@@ -4,6 +4,9 @@ import { balanceConfig } from '../config/balanceConfig.js';
 import MagicSystem from './magic/MagicSystem.js';
 import { calculateBowDamageBonus, calculateMeleeDamageBonus } from '../config/levelConfig.js';
 
+type PlayerStat = 'vitality' | 'toughness' | 'strength' | 'agility' | 'connection' | 'intelligence';
+type PendingSkillAllocations = Record<PlayerStat, number>;
+
 type HudElements = {
     usePotionBtn: HTMLButtonElement;
     useManaPotionBtn: HTMLButtonElement;
@@ -31,11 +34,18 @@ type HudElements = {
     statConnection: HTMLElement;
     statIntelligence: HTMLElement;
     addVitalityBtn: HTMLButtonElement;
+    subVitalityBtn: HTMLButtonElement;
     addToughnessBtn: HTMLButtonElement;
+    subToughnessBtn: HTMLButtonElement;
     addStrengthBtn: HTMLButtonElement;
+    subStrengthBtn: HTMLButtonElement;
     addAgilityBtn: HTMLButtonElement;
+    subAgilityBtn: HTMLButtonElement;
     addConnectionBtn: HTMLButtonElement;
+    subConnectionBtn: HTMLButtonElement;
     addIntelligenceBtn: HTMLButtonElement;
+    subIntelligenceBtn: HTMLButtonElement;
+    saveSkillsBtn: HTMLButtonElement;
     upgradeFireballBtn: HTMLButtonElement;
     upgradeCurseBtn: HTMLButtonElement;
     upgradeSlowBtn: HTMLButtonElement;
@@ -87,6 +97,7 @@ export default class HudController {
     private battleUI: BattleUiHudElements;
     private magicSystem: MagicSystem;
     private gameLog: HTMLElement;
+    private pendingSkillAllocations: PendingSkillAllocations = { vitality: 0, toughness: 0, strength: 0, agility: 0, connection: 0, intelligence: 0 };
 
     constructor(player: Player, hudElements: HudElements, battleUI: BattleUiHudElements, magicSystem: MagicSystem, gameLog: HTMLElement) {
         this.player = player;
@@ -95,6 +106,10 @@ export default class HudController {
         this.magicSystem = magicSystem;
         this.gameLog = gameLog;
         this.bindEquipmentSlotEvents();
+    }
+
+    public setPendingSkillAllocations(pendingSkillAllocations: PendingSkillAllocations): void {
+        this.pendingSkillAllocations = pendingSkillAllocations;
     }
 
     public updateHUD(): void {
@@ -111,14 +126,17 @@ export default class HudController {
         this.hudElements.playerArmor.textContent = String(this.player.armor);
         this.hudElements.playerDodge.textContent = `${(this.player.avoidChance * 100).toFixed(1)}%`;
         this.hudElements.playerDodgeFormula.textContent = this.player.getAvoidFormulaText();
-        this.hudElements.skillPoints.textContent = String(this.player.skillPoints);
+        const pendingTotal = Object.values(this.pendingSkillAllocations).reduce((total, value) => total + value, 0);
+        const remainingSkillPoints = this.player.skillPoints - pendingTotal;
+
+        this.hudElements.skillPoints.textContent = String(remainingSkillPoints);
         this.hudElements.magicPoints.textContent = String(this.player.magicPoints);
-        this.hudElements.statVitality.textContent = String(this.player.vitality);
-        this.hudElements.statToughness.textContent = String(this.player.toughness);
-        this.hudElements.statStrength.textContent = String(this.player.strength);
-        this.hudElements.statAgility.textContent = String(this.player.agility);
-        this.hudElements.statConnection.textContent = String(this.player.connection);
-        this.hudElements.statIntelligence.textContent = String(this.player.intelligence);
+        this.hudElements.statVitality.textContent = String(this.player.vitality + this.pendingSkillAllocations.vitality);
+        this.hudElements.statToughness.textContent = String(this.player.toughness + this.pendingSkillAllocations.toughness);
+        this.hudElements.statStrength.textContent = String(this.player.strength + this.pendingSkillAllocations.strength);
+        this.hudElements.statAgility.textContent = String(this.player.agility + this.pendingSkillAllocations.agility);
+        this.hudElements.statConnection.textContent = String(this.player.connection + this.pendingSkillAllocations.connection);
+        this.hudElements.statIntelligence.textContent = String(this.player.intelligence + this.pendingSkillAllocations.intelligence);
 
         const spellLevels = this.magicSystem.getSpellLevels();
         this.hudElements.spellLevelFireball.textContent = String(spellLevels.fireball);
@@ -148,7 +166,7 @@ export default class HudController {
         const attackRange = this.player.getAttackRange();
         this.battleUI.attackRangeText.textContent = attackRange === 1 ? 'Attack when adjacent (1 tile)' : `Attack from ${attackRange} tiles away`;
 
-        this.updateStatButtons();
+        this.updateStatButtons(remainingSkillPoints);
         this.updateSpellButtons();
         this.updateToggleButtons();
     }
@@ -347,14 +365,24 @@ export default class HudController {
         this.hudElements.spellDetailsArcaneLance.textContent = `Mana ${arcaneLanceLevel === 1 ? 2 : 4} • Magic damage ${arcaneLanceDamage} (ignores armor)`;
     }
 
-    private updateStatButtons(): void {
-        const hasSkillPoints = this.player.skillPoints > 0;
-        this.hudElements.addVitalityBtn.disabled = !hasSkillPoints;
-        this.hudElements.addToughnessBtn.disabled = !hasSkillPoints;
-        this.hudElements.addStrengthBtn.disabled = !hasSkillPoints;
-        this.hudElements.addAgilityBtn.disabled = !hasSkillPoints;
-        this.hudElements.addConnectionBtn.disabled = !hasSkillPoints;
-        this.hudElements.addIntelligenceBtn.disabled = !hasSkillPoints;
+    private updateStatButtons(remainingSkillPoints: number): void {
+        const hasRemainingSkillPoints = remainingSkillPoints > 0;
+        this.hudElements.addVitalityBtn.disabled = !hasRemainingSkillPoints;
+        this.hudElements.addToughnessBtn.disabled = !hasRemainingSkillPoints;
+        this.hudElements.addStrengthBtn.disabled = !hasRemainingSkillPoints;
+        this.hudElements.addAgilityBtn.disabled = !hasRemainingSkillPoints;
+        this.hudElements.addConnectionBtn.disabled = !hasRemainingSkillPoints;
+        this.hudElements.addIntelligenceBtn.disabled = !hasRemainingSkillPoints;
+
+        this.hudElements.subVitalityBtn.disabled = this.pendingSkillAllocations.vitality <= 0;
+        this.hudElements.subToughnessBtn.disabled = this.pendingSkillAllocations.toughness <= 0;
+        this.hudElements.subStrengthBtn.disabled = this.pendingSkillAllocations.strength <= 0;
+        this.hudElements.subAgilityBtn.disabled = this.pendingSkillAllocations.agility <= 0;
+        this.hudElements.subConnectionBtn.disabled = this.pendingSkillAllocations.connection <= 0;
+        this.hudElements.subIntelligenceBtn.disabled = this.pendingSkillAllocations.intelligence <= 0;
+
+        const hasPendingChanges = Object.values(this.pendingSkillAllocations).some((value) => value > 0);
+        this.hudElements.saveSkillsBtn.disabled = !hasPendingChanges;
 
         const hasMagicPoints = this.player.magicPoints > 0;
         this.hudElements.upgradeFireballBtn.disabled = !hasMagicPoints;
