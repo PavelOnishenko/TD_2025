@@ -72,14 +72,17 @@ type HudElements = {
     skillsPanel: HTMLElement;
     inventoryPanel: HTMLElement;
     magicPanel: HTMLElement;
+    questsPanel: HTMLElement;
+    questsBody: HTMLElement;
     toggleStatsPanelBtn: HTMLButtonElement;
     toggleSkillsPanelBtn: HTMLButtonElement;
     toggleInventoryPanelBtn: HTMLButtonElement;
     toggleMagicPanelBtn: HTMLButtonElement;
+    toggleQuestsPanelBtn: HTMLButtonElement;
 };
 
 
-type HudPanel = 'stats' | 'skills' | 'inventory' | 'magic';
+type HudPanel = 'stats' | 'skills' | 'inventory' | 'magic' | 'quests';
 
 type BattleUiHudElements = {
     usePotionBtn: HTMLButtonElement;
@@ -181,6 +184,7 @@ export default class HudController {
             skills: this.hudElements.skillsPanel,
             inventory: this.hudElements.inventoryPanel,
             magic: this.hudElements.magicPanel,
+            quests: this.hudElements.questsPanel,
         };
 
         panelMap[panel].classList.toggle('hidden');
@@ -519,6 +523,7 @@ export default class HudController {
         this.hudElements.toggleSkillsPanelBtn.classList.toggle('active', !this.hudElements.skillsPanel.classList.contains('hidden'));
         this.hudElements.toggleInventoryPanelBtn.classList.toggle('active', !this.hudElements.inventoryPanel.classList.contains('hidden'));
         this.hudElements.toggleMagicPanelBtn.classList.toggle('active', !this.hudElements.magicPanel.classList.contains('hidden'));
+        this.hudElements.toggleQuestsPanelBtn.classList.toggle('active', !this.hudElements.questsPanel.classList.contains('hidden'));
     }
 
     private updateSpellButtons(): void {

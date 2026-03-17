@@ -32,6 +32,8 @@ import GameVillageCoordinator from './systems/game/runtime/GameVillageCoordinato
 import GameHudCoordinator from './systems/game/runtime/GameHudCoordinator.js';
 import GameBattleCoordinator from './systems/game/runtime/GameBattleCoordinator.js';
 import MagicSystem from './systems/magic/MagicSystem.js';
+import QuestGenerator from './systems/quest/QuestGenerator.js';
+import QuestUiController from './systems/quest/QuestUiController.js';
 
 type UIBundle = { hudElements: HudElements; battleUI: BattleUI; villageUI: VillageUI; gameLogUI: GameLogUI; developerUI: DeveloperUI };
 
@@ -79,6 +81,15 @@ export default class Game {
         const encounterSystem = new EncounterSystem();
         const villageLifeRenderer = new VillageLifeRenderer(new VillagePopulation());
         const ui = new GameUiFactory().create();
+        const questGenerator = new QuestGenerator();
+        const questUiController = new QuestUiController(
+            ui.hudElements.questsBody,
+            ui.hudElements.questIntroModal,
+            ui.hudElements.questIntroBody,
+            ui.hudElements.questIntroCloseBtn,
+        );
+        questUiController.renderQuest(questGenerator.generateMainQuest());
+        questUiController.showIntro();
         const magicSystem = new MagicSystem(player);
         const battleUiController = new BattleUiController(ui.battleUI, battleMap, turnManager, player, ui.gameLogUI.log, magicSystem);
         this.magicSystem = magicSystem;
