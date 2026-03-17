@@ -50,28 +50,47 @@
                         <div class="stat">Skill Points: <span id="skill-points">0</span></div>
                         <div class="stat-row">
                             <span>Vitality: <span id="stat-vitality">0</span></span>
-                            <button id="add-vitality-btn" class="stat-btn" title="Each point: +1 Max HP">+</button>
+                            <div class="stat-controls">
+                                <button id="sub-vitality-btn" class="stat-btn" title="Remove 1 pending point">-</button>
+                                <button id="add-vitality-btn" class="stat-btn" title="Each point: +1 Max HP">+</button>
+                            </div>
                         </div>
                         <div class="stat-row">
                             <span>Toughness: <span id="stat-toughness">0</span></span>
-                            <button id="add-toughness-btn" class="stat-btn" title="3 points: +1 Armor">+</button>
+                            <div class="stat-controls">
+                                <button id="sub-toughness-btn" class="stat-btn" title="Remove 1 pending point">-</button>
+                                <button id="add-toughness-btn" class="stat-btn" title="3 points: +1 Armor">+</button>
+                            </div>
                         </div>
                         <div class="stat-row">
                             <span>Strength: <span id="stat-strength">0</span></span>
-                            <button id="add-strength-btn" class="stat-btn" title="+Melee dmg (major), +Bow dmg (minor)">+</button>
+                            <div class="stat-controls">
+                                <button id="sub-strength-btn" class="stat-btn" title="Remove 1 pending point">-</button>
+                                <button id="add-strength-btn" class="stat-btn" title="+Melee dmg (major), +Bow dmg (minor)">+</button>
+                            </div>
                         </div>
                         <div class="stat-row">
                             <span>Agility: <span id="stat-agility">0</span></span>
-                            <button id="add-agility-btn" class="stat-btn" title="+Bow dmg (major), +Melee dmg (minor), +Evade chance">+</button>
+                            <div class="stat-controls">
+                                <button id="sub-agility-btn" class="stat-btn" title="Remove 1 pending point">-</button>
+                                <button id="add-agility-btn" class="stat-btn" title="+Bow dmg (major), +Melee dmg (minor), +Evade chance">+</button>
+                            </div>
                         </div>
                         <div class="stat-row">
                             <span>Connection: <span id="stat-connection">0</span></span>
-                            <button id="add-connection-btn" class="stat-btn" title="Each point: +1 mana">+</button>
+                            <div class="stat-controls">
+                                <button id="sub-connection-btn" class="stat-btn" title="Remove 1 pending point">-</button>
+                                <button id="add-connection-btn" class="stat-btn" title="Each point: +1 mana">+</button>
+                            </div>
                         </div>
                         <div class="stat-row">
                             <span>Intelligence: <span id="stat-intelligence">0</span></span>
-                            <button id="add-intelligence-btn" class="stat-btn" title="3 points: +1 magic point and +1 mana">+</button>
+                            <div class="stat-controls">
+                                <button id="sub-intelligence-btn" class="stat-btn" title="Remove 1 pending point">-</button>
+                                <button id="add-intelligence-btn" class="stat-btn" title="3 points: +1 magic point and +1 mana">+</button>
+                            </div>
                         </div>
+                        <button id="save-skills-btn" class="action-btn" type="button">Save</button>
                     </div>
                     <div id="inventory-panel" class="hud-section stats hidden">
                         <div class="stat">Gold: <span id="player-gold">20</span></div>
