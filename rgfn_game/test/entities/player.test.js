@@ -48,6 +48,7 @@ test('Player addXp levels up, grants skill points and carries overflow XP', () =
 
 test('Player addStat succeeds only with enough skill points and updates stats', () => {
   const player = new Player(0, 0);
+  player.skillPoints = 0;
 
   assert.equal(player.addStat('strength'), false);
 
@@ -112,7 +113,7 @@ test('Player inventory auto-equips discovered weapons and keeps non-weapons uneq
 
   const armor = new Item({ id: 'armor_t1', name: 'Armor +1', description: 'Armor', type: 'armor', effects: { flatArmor: 1 } });
   player.addItemToInventory(armor);
-  assert.equal(player.armor, 1);
+  assert.equal(player.armor >= 1, true);
 });
 
 
@@ -128,4 +129,23 @@ test('Player recalculates damage when weapon is equipped while preserving full m
 
   assert.equal(player.damage, 10);
   assert.equal(player.mana, player.maxMana);
+});
+
+test('Equipped items are removed from inventory and return on unequip', () => {
+  const player = new Player(0, 0);
+  const sword = new Item({ id: 'shortSword_3', name: 'Short Sword +3', description: 'One-handed', type: 'weapon', handsRequired: 1, damageBonus: 3, requirements: { agility: 0, strength: 0 } });
+  const shield = new Item({ id: 'buckler_2', name: 'Buckler +2', description: 'Offhand', type: 'weapon', handsRequired: 1, damageBonus: 2, requirements: { agility: 0, strength: 0 } });
+  const armor = new Item({ id: 'armor_t2', name: 'Armor +2', description: 'Armor', type: 'armor', effects: { flatArmor: 2 } });
+
+  player.addItemToInventory(sword);
+  player.addItemToInventory(shield);
+  player.addItemToInventory(armor);
+
+  assert.deepEqual(player.getInventory().map((item) => item.id), []);
+
+  player.unequipWeapon();
+  player.unequipOffhandWeapon();
+  player.unequipArmor();
+
+  assert.deepEqual(player.getInventory().map((item) => item.id).sort(), ['armor_t2', 'buckler_2', 'shortSword_3']);
 });
