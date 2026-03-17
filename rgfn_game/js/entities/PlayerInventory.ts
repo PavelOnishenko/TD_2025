@@ -100,6 +100,10 @@ export default class PlayerInventory {
 
     public unequipWeapon(): Item | null {
         const weapon = this.equippedMainWeapon;
+        if (!weapon || !this.moveItemToInventory(weapon)) {
+            return null;
+        }
+
         this.equippedMainWeapon = null;
         if (weapon?.handsRequired === 2) {
             this.equippedOffhandWeapon = null;
@@ -110,6 +114,10 @@ export default class PlayerInventory {
 
     public unequipOffhandWeapon(): Item | null {
         const weapon = this.equippedOffhandWeapon;
+        if (!weapon || !this.moveItemToInventory(weapon)) {
+            return null;
+        }
+
         this.equippedOffhandWeapon = null;
         this.hooks.onEquipmentChanged();
         return weapon;
@@ -117,6 +125,10 @@ export default class PlayerInventory {
 
     public unequipArmor(): Item | null {
         const armor = this.equippedArmor;
+        if (!armor || !this.moveItemToInventory(armor)) {
+            return null;
+        }
+
         this.equippedArmor = null;
         this.hooks.onEquipmentChanged();
         return armor;
@@ -147,6 +159,8 @@ export default class PlayerInventory {
     }
 
     public setEquippedWeapon(weapon: Item | null): void {
+        this.moveEquippedItemsToInventory([this.equippedMainWeapon, this.equippedOffhandWeapon], [weapon]);
+        this.removeItemFromInventory(weapon);
         this.equippedMainWeapon = weapon;
         if (weapon?.handsRequired === 2) {
             this.equippedOffhandWeapon = null;
@@ -155,14 +169,22 @@ export default class PlayerInventory {
     }
 
     public setEquippedOffhandWeapon(weapon: Item | null): void {
+        this.moveEquippedItemsToInventory([this.equippedOffhandWeapon], [this.equippedMainWeapon, weapon]);
+        this.removeItemFromInventory(weapon);
         this.equippedOffhandWeapon = weapon;
         this.hooks.onEquipmentChanged();
     }
 
     public equipWeaponToSlot(weapon: Item, slot: 'main' | 'offhand'): void {
+        const previousMainWeapon = this.equippedMainWeapon;
+        const previousOffhandWeapon = this.equippedOffhandWeapon;
+
+        this.removeItemFromInventory(weapon);
+
         if (weapon.handsRequired === 2) {
             this.equippedMainWeapon = weapon;
             this.equippedOffhandWeapon = null;
+            this.moveEquippedItemsToInventory([previousMainWeapon, previousOffhandWeapon], [this.equippedMainWeapon, this.equippedOffhandWeapon]);
             this.hooks.onEquipmentChanged();
             return;
         }
@@ -179,10 +201,13 @@ export default class PlayerInventory {
             }
         }
 
+        this.moveEquippedItemsToInventory([previousMainWeapon, previousOffhandWeapon], [this.equippedMainWeapon, this.equippedOffhandWeapon]);
         this.hooks.onEquipmentChanged();
     }
 
     public setEquippedArmor(armor: Item | null): void {
+        this.moveEquippedItemsToInventory([this.equippedArmor], [armor]);
+        this.removeItemFromInventory(armor);
         this.equippedArmor = armor;
         this.hooks.onEquipmentChanged();
     }
@@ -215,7 +240,11 @@ export default class PlayerInventory {
     }
 
     private equipItem(item: Item): void {
+        this.removeItemFromInventory(item);
+
         if (item.type === 'weapon') {
+            const previousMainWeapon = this.equippedMainWeapon;
+            const previousOffhandWeapon = this.equippedOffhandWeapon;
             if (item.handsRequired === 2) {
                 this.equippedMainWeapon = item;
                 this.equippedOffhandWeapon = null;
@@ -224,9 +253,12 @@ export default class PlayerInventory {
             } else {
                 this.equippedOffhandWeapon = item;
             }
+
+            this.moveEquippedItemsToInventory([previousMainWeapon, previousOffhandWeapon], [this.equippedMainWeapon, this.equippedOffhandWeapon]);
         }
 
         if (item.type === 'armor') {
+            this.moveEquippedItemsToInventory([this.equippedArmor], [item]);
             this.equippedArmor = item;
         }
 
@@ -245,5 +277,41 @@ export default class PlayerInventory {
 
     private findPotionIndex(id: 'healingPotion' | 'manaPotion'): number {
         return this.inventory.findIndex((item) => item.id === id);
+    }
+
+    private removeItemFromInventory(item: Item | null): void {
+        if (!item) {
+            return;
+        }
+
+        const index = this.inventory.indexOf(item);
+        if (index !== -1) {
+            this.inventory.splice(index, 1);
+        }
+    }
+
+    private moveItemToInventory(item: Item): boolean {
+        if (this.inventory.includes(item)) {
+            return true;
+        }
+
+        if (this.inventory.length >= balanceConfig.player.inventorySize) {
+            return false;
+        }
+
+        this.inventory.push(item);
+        return true;
+    }
+
+    private moveEquippedItemsToInventory(previousItems: Array<Item | null>, nextItems: Array<Item | null>): void {
+        const nextItemsSet = new Set(nextItems.filter((item): item is Item => item !== null));
+
+        for (const item of previousItems) {
+            if (!item || nextItemsSet.has(item)) {
+                continue;
+            }
+
+            this.moveItemToInventory(item);
+        }
     }
 }
