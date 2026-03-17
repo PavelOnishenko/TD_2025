@@ -164,6 +164,9 @@ export const balanceConfig = {
 
     // ============ ITEM BALANCE ============
     items: {
+        // Chance for non-human enemies to drop one random discoverable item on death
+        monsterDropChance: 0.35,
+
         // IDs map to Item entries in entities/Item.ts
         discoveryPool: [
             { id: 'healingPotion', weight: 4 },

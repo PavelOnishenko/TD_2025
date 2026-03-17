@@ -6,7 +6,8 @@ import Skeleton from '../../entities/Skeleton.js';
 import timingConfig from '../../config/timingConfig.js';
 import { balanceConfig } from '../../config/balanceConfig.js';
 import MagicSystem, { BaseSpellId } from '../magic/MagicSystem.js';
-import Item from '../../entities/Item.js';
+import Item, { DISCOVERABLE_ITEM_LIBRARY } from '../../entities/Item.js';
+import Wanderer from '../../entities/Wanderer.js';
 
 
 type BattleCommandCallbacks = {
@@ -233,8 +234,20 @@ export default class BattleCommandController {
     }
 
     private collectLoot(target: Skeleton): void {
+        const loot: Item[] = [];
+
         const lootable = target as Skeleton & { getLootItems?: () => Item[] };
-        const loot = lootable.getLootItems ? lootable.getLootItems() : [];
+        if (lootable.getLootItems) {
+            loot.push(...lootable.getLootItems());
+        }
+
+        if (!(target instanceof Wanderer)) {
+            const randomDrop = this.rollMonsterDrop();
+            if (randomDrop) {
+                loot.push(randomDrop);
+            }
+        }
+
         for (const item of loot) {
             if (this.player.addItemToInventory(item)) {
                 this.callbacks.onAddBattleLog(`Looted ${item.name}.`, 'system');
@@ -243,5 +256,28 @@ export default class BattleCommandController {
 
             this.callbacks.onAddBattleLog(`Could not loot ${item.name}: inventory full.`, 'system');
         }
+    }
+
+    private rollMonsterDrop(): Item | null {
+        if (Math.random() >= balanceConfig.items.monsterDropChance) {
+            return null;
+        }
+
+        const weightedPool = balanceConfig.items.discoveryPool;
+        const totalWeight = weightedPool.reduce((sum, entry) => sum + entry.weight, 0);
+        if (totalWeight <= 0) {
+            return null;
+        }
+
+        let roll = Math.random() * totalWeight;
+        for (const candidate of weightedPool) {
+            roll -= candidate.weight;
+            if (roll <= 0) {
+                const itemData = DISCOVERABLE_ITEM_LIBRARY.find((item) => item.id === candidate.id);
+                return itemData ? new Item(itemData) : null;
+            }
+        }
+
+        return null;
     }
 }
