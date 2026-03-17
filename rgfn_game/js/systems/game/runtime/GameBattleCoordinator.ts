@@ -74,6 +74,7 @@ export default class GameBattleCoordinator {
         this.hudElements.modeIndicator.textContent = 'Battle!';
         this.battleUI.sidebar.classList.remove('hidden');
         this.villageUI.sidebar.classList.add('hidden');
+        this.controllers.battleCommandController.clearPendingLoot();
         this.currentEnemies = enemies;
         this.controllers.battlePlayerActionController.setSelectedEnemy(null);
         this.battleSplash.showBattleStart(enemies.length, () => this.startBattle(enemies));
@@ -149,14 +150,17 @@ export default class GameBattleCoordinator {
 
     public endBattle(result: 'victory' | 'defeat' | 'fled'): void {
         if (result === 'fled') {
+            this.controllers.battleCommandController.clearPendingLoot();
             this.stateMachine.transition(MODES.WORLD_MAP);
             return;
         }
         if (result === 'defeat') {
+            this.controllers.battleCommandController.clearPendingLoot();
             this.callbacks.onAddBattleLog('Game Over!', 'system');
             this.battleSplash.showBattleEnd('defeat', () => this.callbacks.onGameOver());
             return;
         }
+        this.controllers.battleCommandController.resolvePendingLoot();
         this.callbacks.onAddBattleLog('Victory!', 'system');
         this.battleSplash.showBattleEnd('victory', () => this.stateMachine.transition(MODES.WORLD_MAP));
     }

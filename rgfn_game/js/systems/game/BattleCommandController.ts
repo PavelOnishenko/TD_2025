@@ -29,6 +29,7 @@ export default class BattleCommandController {
     private turnManager: TurnManager;
     private callbacks: BattleCommandCallbacks;
     private magicSystem: MagicSystem;
+    private pendingLoot: Item[] = [];
 
     constructor(stateMachine: StateMachine, player: Player, battleMap: BattleMap, turnManager: TurnManager, magicSystem: MagicSystem, callbacks: BattleCommandCallbacks) {
         this.stateMachine = stateMachine;
@@ -184,6 +185,28 @@ export default class BattleCommandController {
         setTimeout(() => this.callbacks.onProcessTurn(), timingConfig.battle.playerActionDelay);
     }
 
+    public resolvePendingLoot(): void {
+        if (this.pendingLoot.length === 0) {
+            return;
+        }
+
+        for (const item of this.pendingLoot) {
+            if (this.player.addItemToInventory(item)) {
+                this.callbacks.onAddBattleLog(`Looted ${item.name}.`, 'system');
+                continue;
+            }
+
+            this.callbacks.onAddBattleLog(`Could not loot ${item.name}: inventory full.`, 'system');
+        }
+
+        this.pendingLoot = [];
+        this.callbacks.onUpdateHUD();
+    }
+
+    public clearPendingLoot(): void {
+        this.pendingLoot = [];
+    }
+
     private canUseBattleTurnInput(): boolean { return this.turnManager.isPlayerTurn() && this.turnManager.waitingForPlayer; }
 
     private resolveAttackTarget(enemies: Skeleton[]): Skeleton | null {
@@ -249,12 +272,8 @@ export default class BattleCommandController {
         }
 
         for (const item of loot) {
-            if (this.player.addItemToInventory(item)) {
-                this.callbacks.onAddBattleLog(`Looted ${item.name}.`, 'system');
-                continue;
-            }
-
-            this.callbacks.onAddBattleLog(`Could not loot ${item.name}: inventory full.`, 'system');
+            this.pendingLoot.push(item);
+            this.callbacks.onAddBattleLog(`${item.name} dropped. It will be collected after battle.`, 'system');
         }
     }
 
