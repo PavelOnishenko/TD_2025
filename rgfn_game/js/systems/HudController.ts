@@ -240,16 +240,16 @@ export default class HudController {
         this.hudElements.weaponSlotOff.classList.remove('equipment-slot-main-equipped', 'equipment-slot-off-equipped');
 
         if (!mainWeapon && !offhandWeapon) {
-            this.hudElements.weaponSlotMain.textContent = 'Main Hand: Fist';
-            this.hudElements.weaponSlotOff.textContent = 'Off Hand: Fist';
+            this.renderEquipmentSlotContent(this.hudElements.weaponSlotMain, 'Main Hand', 'Fist');
+            this.renderEquipmentSlotContent(this.hudElements.weaponSlotOff, 'Off Hand', 'Fist');
         } else if (mainWeapon?.handsRequired === 2) {
-            this.hudElements.weaponSlotMain.textContent = `Main Hand: ${mainWeapon.name}`;
-            this.hudElements.weaponSlotOff.textContent = `Off Hand: ${mainWeapon.name}`;
+            this.renderEquipmentSlotContent(this.hudElements.weaponSlotMain, 'Main Hand', mainWeapon.name, mainWeapon.spriteClass);
+            this.renderEquipmentSlotContent(this.hudElements.weaponSlotOff, 'Off Hand', mainWeapon.name, mainWeapon.spriteClass);
             this.hudElements.weaponSlotMain.classList.add('equipment-slot-main-equipped');
             this.hudElements.weaponSlotOff.classList.add('equipment-slot-main-equipped');
         } else {
-            this.hudElements.weaponSlotMain.textContent = mainWeapon ? `Main Hand: ${mainWeapon.name}` : 'Main Hand: Fist';
-            this.hudElements.weaponSlotOff.textContent = offhandWeapon ? `Off Hand: ${offhandWeapon.name}` : 'Off Hand: Fist';
+            this.renderEquipmentSlotContent(this.hudElements.weaponSlotMain, 'Main Hand', mainWeapon ? mainWeapon.name : 'Fist', mainWeapon?.spriteClass);
+            this.renderEquipmentSlotContent(this.hudElements.weaponSlotOff, 'Off Hand', offhandWeapon ? offhandWeapon.name : 'Fist', offhandWeapon?.spriteClass);
             if (mainWeapon) {
                 this.hudElements.weaponSlotMain.classList.add('equipment-slot-main-equipped');
             }
@@ -258,9 +258,7 @@ export default class HudController {
             }
         }
 
-        this.hudElements.armorSlot.textContent = armor
-            ? `Armor: ${armor.name}`
-            : 'Armor: Empty';
+        this.renderEquipmentSlotContent(this.hudElements.armorSlot, 'Armor', armor ? armor.name : 'Empty', armor?.spriteClass);
     }
 
     private renderInventory(inventory: Item[]): void {
@@ -291,6 +289,11 @@ export default class HudController {
                 sprite.className = `item-sprite ${item.spriteClass}`;
                 slot.appendChild(sprite);
 
+                const name = document.createElement('span');
+                name.className = 'inventory-slot-name';
+                name.textContent = item.name;
+                slot.appendChild(name);
+
                 if (item.type === 'weapon' || item.type === 'armor') {
                     slot.addEventListener('click', () => this.handleEquipFromInventory(item, slot));
                 } else {
@@ -303,6 +306,21 @@ export default class HudController {
 
             this.hudElements.inventoryGrid.appendChild(slot);
         }
+    }
+
+    private renderEquipmentSlotContent(slot: HTMLButtonElement, label: string, value: string, spriteClass?: string): void {
+        slot.innerHTML = '';
+
+        if (spriteClass) {
+            const sprite = document.createElement('span');
+            sprite.className = `item-sprite equipment-item-sprite ${spriteClass}`;
+            slot.appendChild(sprite);
+        }
+
+        const text = document.createElement('span');
+        text.className = 'equipment-slot-label';
+        text.textContent = `${label}: ${value}`;
+        slot.appendChild(text);
     }
 
     private handleEquipFromInventory(item: Item, slotElement: HTMLButtonElement): void {

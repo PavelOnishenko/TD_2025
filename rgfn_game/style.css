@@ -466,6 +466,17 @@ h1 {
     padding: 5px 7px;
     cursor: pointer;
     font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.equipment-slot-label {
+    min-width: 0;
+}
+
+.equipment-item-sprite {
+    flex: 0 0 auto;
 }
 
 .equipment-slot.equipment-slot-main-equipped {
@@ -485,22 +496,29 @@ h1 {
 }
 .inventory-grid {
     display: grid;
-    grid-template-columns: repeat(6, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 6px;
     width: 100%;
 }
 
 .inventory-slot {
-    width: 34px;
-    height: 34px;
+    width: 100%;
+    min-height: 42px;
     border: 1px solid var(--color-secondary-accent);
     border-radius: 4px;
     background: rgba(242, 229, 201, 0.6);
     display: flex;
     align-items: center;
-    justify-content: center;
-    padding: 0;
+    gap: 6px;
+    padding: 4px 6px;
     cursor: pointer;
+}
+
+.inventory-slot-name {
+    font-size: 11px;
+    line-height: 1.2;
+    color: var(--color-text-primary);
+    text-align: left;
 }
 
 .inventory-slot:hover,
