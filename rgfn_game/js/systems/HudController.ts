@@ -87,6 +87,7 @@ export default class HudController {
     private battleUI: BattleUiHudElements;
     private magicSystem: MagicSystem;
     private gameLog: HTMLElement;
+    private draggedInventoryIndex: number | null = null;
 
     constructor(player: Player, hudElements: HudElements, battleUI: BattleUiHudElements, magicSystem: MagicSystem, gameLog: HTMLElement) {
         this.player = player;
@@ -173,11 +174,27 @@ export default class HudController {
             }
         });
 
+        this.hudElements.weaponSlotMain.addEventListener('dragover', (event) => {
+            event.preventDefault();
+        });
+        this.hudElements.weaponSlotMain.addEventListener('drop', (event) => {
+            event.preventDefault();
+            this.handleDropOnEquipmentSlot('main');
+        });
+
         this.hudElements.weaponSlotOff.addEventListener('click', () => {
-            if (this.player.equippedWeapon?.handsRequired === 1) {
-                this.player.unequipWeapon();
+            if (this.player.equippedOffhandWeapon) {
+                this.player.unequipOffhandWeapon();
                 this.updateHUD();
             }
+        });
+
+        this.hudElements.weaponSlotOff.addEventListener('dragover', (event) => {
+            event.preventDefault();
+        });
+        this.hudElements.weaponSlotOff.addEventListener('drop', (event) => {
+            event.preventDefault();
+            this.handleDropOnEquipmentSlot('offhand');
         });
 
         this.hudElements.armorSlot.addEventListener('click', () => {
@@ -186,21 +203,41 @@ export default class HudController {
                 this.updateHUD();
             }
         });
+
+        this.hudElements.armorSlot.addEventListener('dragover', (event) => {
+            event.preventDefault();
+        });
+        this.hudElements.armorSlot.addEventListener('drop', (event) => {
+            event.preventDefault();
+            this.handleDropOnEquipmentSlot('armor');
+        });
     }
 
     private renderEquipmentSlots(): void {
-        const weapon = this.player.equippedWeapon;
+        const mainWeapon = this.player.equippedMainWeapon;
+        const offhandWeapon = this.player.equippedOffhandWeapon;
         const armor = this.player.equippedArmor;
 
-        if (!weapon) {
+        this.hudElements.weaponSlotMain.classList.remove('equipment-slot-main-equipped', 'equipment-slot-off-equipped');
+        this.hudElements.weaponSlotOff.classList.remove('equipment-slot-main-equipped', 'equipment-slot-off-equipped');
+
+        if (!mainWeapon && !offhandWeapon) {
             this.hudElements.weaponSlotMain.textContent = 'Main Hand: Fist';
             this.hudElements.weaponSlotOff.textContent = 'Off Hand: Fist';
-        } else if (weapon.handsRequired === 2) {
-            this.hudElements.weaponSlotMain.textContent = `Main Hand: ${weapon.name}`;
-            this.hudElements.weaponSlotOff.textContent = `Off Hand: ${weapon.name}`;
+        } else if (mainWeapon?.handsRequired === 2) {
+            this.hudElements.weaponSlotMain.textContent = `Main Hand: ${mainWeapon.name}`;
+            this.hudElements.weaponSlotOff.textContent = `Off Hand: ${mainWeapon.name}`;
+            this.hudElements.weaponSlotMain.classList.add('equipment-slot-main-equipped');
+            this.hudElements.weaponSlotOff.classList.add('equipment-slot-main-equipped');
         } else {
-            this.hudElements.weaponSlotMain.textContent = `Main Hand: ${weapon.name}`;
-            this.hudElements.weaponSlotOff.textContent = 'Off Hand: Fist';
+            this.hudElements.weaponSlotMain.textContent = mainWeapon ? `Main Hand: ${mainWeapon.name}` : 'Main Hand: Fist';
+            this.hudElements.weaponSlotOff.textContent = offhandWeapon ? `Off Hand: ${offhandWeapon.name}` : 'Off Hand: Fist';
+            if (mainWeapon) {
+                this.hudElements.weaponSlotMain.classList.add('equipment-slot-main-equipped');
+            }
+            if (offhandWeapon) {
+                this.hudElements.weaponSlotOff.classList.add('equipment-slot-off-equipped');
+            }
         }
 
         this.hudElements.armorSlot.textContent = armor
@@ -215,10 +252,22 @@ export default class HudController {
             const slot = document.createElement('button');
             slot.type = 'button';
             slot.className = 'inventory-slot';
+            slot.setAttribute('draggable', 'false');
 
             const item = inventory[index];
             if (item) {
                 slot.title = this.buildInventoryTooltip(item);
+                slot.draggable = item.type === 'weapon' || item.type === 'armor';
+                slot.addEventListener('dragstart', () => {
+                    this.draggedInventoryIndex = index;
+                    slot.classList.add('inventory-slot-dragging');
+                });
+                slot.addEventListener('dragend', () => {
+                    this.draggedInventoryIndex = null;
+                    slot.classList.remove('inventory-slot-dragging');
+                });
+                slot.addEventListener('mouseenter', () => slot.classList.add('inventory-slot-hovered'));
+                slot.addEventListener('mouseleave', () => slot.classList.remove('inventory-slot-hovered'));
 
                 const sprite = document.createElement('div');
                 sprite.className = `item-sprite ${item.spriteClass}`;
@@ -250,6 +299,36 @@ export default class HudController {
             this.player.equippedArmor = item;
         }
 
+        this.updateHUD();
+    }
+
+    private handleDropOnEquipmentSlot(slot: 'main' | 'offhand' | 'armor'): void {
+        if (this.draggedInventoryIndex === null) {
+            return;
+        }
+
+        const inventory = this.player.getInventory();
+        const item = inventory[this.draggedInventoryIndex];
+        if (!item) {
+            this.draggedInventoryIndex = null;
+            return;
+        }
+
+        if (!this.player.canEquipItem(item)) {
+            this.addLog(`Cannot equip ${item.name}. Requirements are not met.`, 'system');
+            this.draggedInventoryIndex = null;
+            return;
+        }
+
+        if (slot === 'armor') {
+            if (item.type === 'armor') {
+                this.player.equippedArmor = item;
+            }
+        } else if (item.type === 'weapon') {
+            this.player.equipWeaponToSlot(item, slot);
+        }
+
+        this.draggedInventoryIndex = null;
         this.updateHUD();
     }
 

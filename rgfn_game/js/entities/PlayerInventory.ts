@@ -11,7 +11,8 @@ type PlayerInventoryHooks = {
 export default class PlayerInventory {
     private readonly hooks: PlayerInventoryHooks;
     private readonly inventory: Item[] = [];
-    private equippedWeapon: Item | null = null;
+    private equippedMainWeapon: Item | null = null;
+    private equippedOffhandWeapon: Item | null = null;
     private equippedArmor: Item | null = null;
 
     constructor(hooks: PlayerInventoryHooks) {
@@ -79,8 +80,13 @@ export default class PlayerInventory {
 
         const [removedItem] = this.inventory.splice(index, 1);
 
-        if (this.equippedWeapon === removedItem) {
-            this.equippedWeapon = null;
+        if (this.equippedMainWeapon === removedItem) {
+            this.equippedMainWeapon = null;
+            this.hooks.onEquipmentChanged();
+        }
+
+        if (this.equippedOffhandWeapon === removedItem) {
+            this.equippedOffhandWeapon = null;
             this.hooks.onEquipmentChanged();
         }
 
@@ -93,12 +99,21 @@ export default class PlayerInventory {
     }
 
     public unequipWeapon(): Item | null {
-        const weapon = this.equippedWeapon;
-        this.equippedWeapon = null;
+        const weapon = this.equippedMainWeapon;
+        this.equippedMainWeapon = null;
+        if (weapon?.handsRequired === 2) {
+            this.equippedOffhandWeapon = null;
+        }
         this.hooks.onEquipmentChanged();
         return weapon;
     }
 
+    public unequipOffhandWeapon(): Item | null {
+        const weapon = this.equippedOffhandWeapon;
+        this.equippedOffhandWeapon = null;
+        this.hooks.onEquipmentChanged();
+        return weapon;
+    }
 
     public unequipArmor(): Item | null {
         const armor = this.equippedArmor;
@@ -106,16 +121,25 @@ export default class PlayerInventory {
         this.hooks.onEquipmentChanged();
         return armor;
     }
+
     public getAttackRange(): number {
-        return this.equippedWeapon ? this.equippedWeapon.attackRange : 1;
+        return Math.max(this.equippedMainWeapon?.attackRange ?? 1, this.equippedOffhandWeapon?.attackRange ?? 1);
     }
 
     public hasWeapon(): boolean {
-        return this.equippedWeapon !== null;
+        return this.equippedMainWeapon !== null || this.equippedOffhandWeapon !== null;
     }
 
     public getEquippedWeapon(): Item | null {
-        return this.equippedWeapon;
+        return this.equippedMainWeapon;
+    }
+
+    public getEquippedMainWeapon(): Item | null {
+        return this.equippedMainWeapon;
+    }
+
+    public getEquippedOffhandWeapon(): Item | null {
+        return this.equippedOffhandWeapon;
     }
 
     public getEquippedArmor(): Item | null {
@@ -123,7 +147,38 @@ export default class PlayerInventory {
     }
 
     public setEquippedWeapon(weapon: Item | null): void {
-        this.equippedWeapon = weapon;
+        this.equippedMainWeapon = weapon;
+        if (weapon?.handsRequired === 2) {
+            this.equippedOffhandWeapon = null;
+        }
+        this.hooks.onEquipmentChanged();
+    }
+
+    public setEquippedOffhandWeapon(weapon: Item | null): void {
+        this.equippedOffhandWeapon = weapon;
+        this.hooks.onEquipmentChanged();
+    }
+
+    public equipWeaponToSlot(weapon: Item, slot: 'main' | 'offhand'): void {
+        if (weapon.handsRequired === 2) {
+            this.equippedMainWeapon = weapon;
+            this.equippedOffhandWeapon = null;
+            this.hooks.onEquipmentChanged();
+            return;
+        }
+
+        if (slot === 'main') {
+            this.equippedMainWeapon = weapon;
+            if (this.equippedOffhandWeapon === weapon) {
+                this.equippedOffhandWeapon = null;
+            }
+        } else {
+            this.equippedOffhandWeapon = weapon;
+            if (this.equippedMainWeapon?.handsRequired === 2 || this.equippedMainWeapon === weapon) {
+                this.equippedMainWeapon = null;
+            }
+        }
+
         this.hooks.onEquipmentChanged();
     }
 
@@ -132,7 +187,7 @@ export default class PlayerInventory {
         this.hooks.onEquipmentChanged();
     }
 
-    public restoreState(itemIds: string[], equippedWeaponId: string | null, equippedArmorId: string | null, itemFactory: (id: string) => Item | null): void {
+    public restoreState(itemIds: string[], equippedWeaponId: string | null, equippedArmorId: string | null, itemFactory: (id: string) => Item | null, equippedOffhandWeaponId?: string | null): void {
         this.inventory.length = 0;
         for (const itemId of itemIds) {
             const item = itemFactory(itemId);
@@ -141,22 +196,34 @@ export default class PlayerInventory {
             }
         }
 
-        this.equippedWeapon = equippedWeaponId ? itemFactory(equippedWeaponId) : null;
+        this.equippedMainWeapon = equippedWeaponId ? itemFactory(equippedWeaponId) : null;
+        this.equippedOffhandWeapon = equippedOffhandWeaponId ? itemFactory(equippedOffhandWeaponId) : null;
+        if (this.equippedMainWeapon?.handsRequired === 2) {
+            this.equippedOffhandWeapon = null;
+        }
         this.equippedArmor = equippedArmorId ? itemFactory(equippedArmorId) : null;
         this.hooks.onEquipmentChanged();
     }
 
-    public getState(): { inventoryItemIds: string[]; equippedWeaponId: string | null; equippedArmorId: string | null } {
+    public getState(): { inventoryItemIds: string[]; equippedWeaponId: string | null; equippedOffhandWeaponId: string | null; equippedArmorId: string | null } {
         return {
             inventoryItemIds: this.inventory.map((item) => item.id),
-            equippedWeaponId: this.equippedWeapon?.id ?? null,
+            equippedWeaponId: this.equippedMainWeapon?.id ?? null,
+            equippedOffhandWeaponId: this.equippedOffhandWeapon?.id ?? null,
             equippedArmorId: this.equippedArmor?.id ?? null,
         };
     }
 
     private equipItem(item: Item): void {
         if (item.type === 'weapon') {
-            this.equippedWeapon = item;
+            if (item.handsRequired === 2) {
+                this.equippedMainWeapon = item;
+                this.equippedOffhandWeapon = null;
+            } else if (!this.equippedMainWeapon || this.equippedMainWeapon.handsRequired === 2) {
+                this.equippedMainWeapon = item;
+            } else {
+                this.equippedOffhandWeapon = item;
+            }
         }
 
         if (item.type === 'armor') {

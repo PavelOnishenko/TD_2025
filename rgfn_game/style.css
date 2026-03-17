@@ -457,6 +457,16 @@ h1 {
     font-size: 12px;
 }
 
+.equipment-slot.equipment-slot-main-equipped {
+    border: 2px solid #00e5ff;
+    box-shadow: 0 0 8px rgba(0, 229, 255, 0.65);
+}
+
+.equipment-slot.equipment-slot-off-equipped {
+    border: 2px solid #ffcc00;
+    box-shadow: 0 0 8px rgba(255, 204, 0, 0.65);
+}
+
 .equipment-hint {
     margin-top: 6px;
     font-size: 11px;
@@ -480,6 +490,16 @@ h1 {
     justify-content: center;
     padding: 0;
     cursor: pointer;
+}
+
+.inventory-slot:hover,
+.inventory-slot.inventory-slot-hovered {
+    border-color: #ffffff;
+    box-shadow: 0 0 6px rgba(255, 255, 255, 0.8);
+}
+
+.inventory-slot.inventory-slot-dragging {
+    opacity: 0.45;
 }
 
 .inventory-slot.empty {

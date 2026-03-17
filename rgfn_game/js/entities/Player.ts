@@ -84,6 +84,14 @@ export default class Player extends DamageableEntity {
         return this.inventorySystem.getEquippedWeapon();
     }
 
+    public get equippedMainWeapon(): Item | null {
+        return this.inventorySystem.getEquippedMainWeapon();
+    }
+
+    public get equippedOffhandWeapon(): Item | null {
+        return this.inventorySystem.getEquippedOffhandWeapon();
+    }
+
 
     public get equippedArmor(): Item | null {
         return this.inventorySystem.getEquippedArmor();
@@ -94,6 +102,10 @@ export default class Player extends DamageableEntity {
     }
     public set equippedWeapon(weapon: Item | null) {
         this.inventorySystem.setEquippedWeapon(weapon);
+    }
+
+    public set equippedOffhandWeapon(weapon: Item | null) {
+        this.inventorySystem.setEquippedOffhandWeapon(weapon);
     }
 
     constructor(x: number, y: number) {
@@ -183,15 +195,23 @@ export default class Player extends DamageableEntity {
         const rangedStatBonus = calculateBowDamageBonus(this.strength, this.agility);
         const fistBaseDamage = balanceConfig.combat.fistDamagePerHand;
 
-        if (!this.equippedWeapon) {
+        const mainWeapon = this.equippedMainWeapon;
+        const offhandWeapon = this.equippedOffhandWeapon;
+
+        if (!mainWeapon && !offhandWeapon) {
             this.damage = fistBaseDamage * 2 + (meleeStatBonus * 2);
+        } else if (mainWeapon?.handsRequired === 2) {
+            const weaponDamage = mainWeapon.damageBonus;
+            const statBonus = mainWeapon.isRanged ? rangedStatBonus : meleeStatBonus;
+            this.damage = weaponDamage + statBonus;
         } else {
-            const offhandFist = this.equippedWeapon.handsRequired === 1 ? fistBaseDamage : 0;
-            const weaponDamage = this.equippedWeapon.damageBonus;
-            const statBonus = this.equippedWeapon.isRanged
-                ? rangedStatBonus
-                : (this.equippedWeapon.handsRequired === 1 ? meleeStatBonus * 2 : meleeStatBonus);
-            this.damage = weaponDamage + offhandFist + statBonus;
+            const mainHandDamage = mainWeapon
+                ? mainWeapon.damageBonus + (mainWeapon.isRanged ? rangedStatBonus : meleeStatBonus)
+                : fistBaseDamage + meleeStatBonus;
+            const offHandDamage = offhandWeapon
+                ? offhandWeapon.damageBonus + (offhandWeapon.isRanged ? rangedStatBonus : meleeStatBonus)
+                : fistBaseDamage + meleeStatBonus;
+            this.damage = mainHandDamage + offHandDamage;
         }
 
         if (previousMaxMana === 0 || hadFullMana) {
@@ -379,6 +399,14 @@ export default class Player extends DamageableEntity {
         return this.inventorySystem.unequipWeapon();
     }
 
+    public unequipOffhandWeapon(): Item | null {
+        return this.inventorySystem.unequipOffhandWeapon();
+    }
+
+    public equipWeaponToSlot(weapon: Item, slot: 'main' | 'offhand'): void {
+        this.inventorySystem.equipWeaponToSlot(weapon, slot);
+    }
+
     public unequipArmor(): Item | null {
         return this.inventorySystem.unequipArmor();
     }
@@ -408,22 +436,32 @@ export default class Player extends DamageableEntity {
 
     public getDamageFormulaText(): string {
         const fistBaseDamage = balanceConfig.combat.fistDamagePerHand;
-        const weapon = this.equippedWeapon;
+        const mainWeapon = this.equippedMainWeapon;
+        const offhandWeapon = this.equippedOffhandWeapon;
 
-        if (!weapon) {
+        if (!mainWeapon && !offhandWeapon) {
             const perHandStatBonus = calculateMeleeDamageBonus(this.strength, this.agility);
             return `Unarmed: (${fistBaseDamage} + ${perHandStatBonus}) + (${fistBaseDamage} + ${perHandStatBonus}) = ${this.damage}`;
         }
 
-        const statBonus = weapon.isRanged
-            ? calculateBowDamageBonus(this.strength, this.agility)
-            : (weapon.handsRequired === 1
-                ? calculateMeleeDamageBonus(this.strength, this.agility) * 2
-                : calculateMeleeDamageBonus(this.strength, this.agility));
-        const offhand = weapon.handsRequired === 1 ? fistBaseDamage : 0;
-        const style = weapon.isRanged ? 'Ranged' : 'Melee';
+        if (mainWeapon?.handsRequired === 2) {
+            const statBonus = mainWeapon.isRanged
+                ? calculateBowDamageBonus(this.strength, this.agility)
+                : calculateMeleeDamageBonus(this.strength, this.agility);
+            const style = mainWeapon.isRanged ? 'Ranged' : 'Melee';
+            return `${style} (2H): weapon ${mainWeapon.damageBonus} + stat bonus ${statBonus} = ${this.damage}`;
+        }
 
-        return `${style}: weapon ${weapon.damageBonus} + off-hand ${offhand} + stat bonus ${statBonus} = ${this.damage}`;
+        const meleeBonus = calculateMeleeDamageBonus(this.strength, this.agility);
+        const rangedBonus = calculateBowDamageBonus(this.strength, this.agility);
+        const mainHandText = mainWeapon
+            ? `${mainWeapon.name} (${mainWeapon.damageBonus} + ${mainWeapon.isRanged ? rangedBonus : meleeBonus})`
+            : `Fist (${fistBaseDamage} + ${meleeBonus})`;
+        const offHandText = offhandWeapon
+            ? `${offhandWeapon.name} (${offhandWeapon.damageBonus} + ${offhandWeapon.isRanged ? rangedBonus : meleeBonus})`
+            : `Fist (${fistBaseDamage} + ${meleeBonus})`;
+
+        return `Dual hand: main ${mainHandText} + off ${offHandText} = ${this.damage}`;
     }
 
     public canEquipItem(item: Item): boolean {
@@ -459,6 +497,7 @@ export default class Player extends DamageableEntity {
             rageMultiplier: this.rageMultiplier,
             inventoryItemIds: inventoryState.inventoryItemIds,
             equippedWeaponId: inventoryState.equippedWeaponId,
+            equippedOffhandWeaponId: inventoryState.equippedOffhandWeaponId,
             equippedArmorId: inventoryState.equippedArmorId,
         };
     }
@@ -485,8 +524,9 @@ export default class Player extends DamageableEntity {
 
         const inventoryItemIds = Array.isArray(state.inventoryItemIds) ? state.inventoryItemIds.filter((id): id is string => typeof id === 'string') : [];
         const equippedWeaponId = typeof state.equippedWeaponId === 'string' ? state.equippedWeaponId : null;
+        const equippedOffhandWeaponId = typeof state.equippedOffhandWeaponId === 'string' ? state.equippedOffhandWeaponId : null;
         const equippedArmorId = typeof state.equippedArmorId === 'string' ? state.equippedArmorId : null;
-        this.inventorySystem.restoreState(inventoryItemIds, equippedWeaponId, equippedArmorId, createItemById);
+        this.inventorySystem.restoreState(inventoryItemIds, equippedWeaponId, equippedArmorId, createItemById, equippedOffhandWeaponId);
 
         this.updateStats();
         this.hp = Math.max(0, Math.min(this.maxHp, toNumber(state.hp, this.hp)));
