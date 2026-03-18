@@ -40,7 +40,7 @@ export default class QuestPackService {
     private initialized = false;
 
     constructor(deps: QuestPackServiceDeps = {}) {
-        this.fetchImpl = deps.fetchImpl ?? (globalThis.fetch as FetchLike);
+        this.fetchImpl = deps.fetchImpl ?? ((input: string) => globalThis.fetch(input));
         this.random = deps.random ?? new DefaultQuestRandom();
         this.fileReader = deps.fileReader ?? ((path) => this.readTextAsset(path));
     }
