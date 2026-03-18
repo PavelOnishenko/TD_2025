@@ -9,6 +9,12 @@ const FOG_STATE = {
     HIDDEN: 'hidden' as FogState,
 };
 
+type NamedLocation = {
+    name: string;
+    position: GridPosition;
+    terrainType: TerrainType;
+};
+
 export default class WorldMap {
     private grid: GridMap;
     private playerGridPos: GridPosition;
@@ -16,7 +22,7 @@ export default class WorldMap {
     private terrainData: Map<string, TerrainData>;
     private villages: Set<string>;
     private renderer: WorldMapRenderer;
-    private namedLocations: Map<string, GridPosition>;
+    private namedLocations: Map<string, NamedLocation>;
     private focusedLocationName: string | null;
 
     constructor(columns: number, rows: number, cellSize: number) {
@@ -26,7 +32,7 @@ export default class WorldMap {
         this.terrainData = new Map();
         this.villages = new Set();
         this.renderer = new WorldMapRenderer();
-        this.namedLocations = new Map();
+        this.namedLocations = new Map<string, NamedLocation>();
         this.focusedLocationName = null;
         this.initializeFogOfWar();
         this.generateTerrain();
@@ -333,6 +339,7 @@ export default class WorldMap {
         });
         this.renderer.drawGrid(ctx, this.grid, dims.width, dims.height);
         this.drawVillages(ctx);
+        this.drawNamedLocations(ctx);
         this.drawNamedLocationFocus(ctx);
         const playerCell = this.grid.getCellAt(this.playerGridPos.col, this.playerGridPos.row);
         if (playerCell) {
@@ -348,13 +355,18 @@ export default class WorldMap {
 
         const position = this.findNamedLocationPosition();
         if (position) {
-            this.namedLocations.set(name, position);
+            const terrain = this.getTerrain(position.col, position.row);
+            this.namedLocations.set(name, {
+                name,
+                position,
+                terrainType: terrain?.type ?? 'grass',
+            });
         }
     }
 
     public revealNamedLocation(name: string): boolean {
-        const position = this.namedLocations.get(name);
-        if (!position || !this.isDiscovered(position.col, position.row)) {
+        const location = this.namedLocations.get(name);
+        if (!location || !this.isDiscovered(location.position.col, location.position.row)) {
             return false;
         }
 
@@ -364,6 +376,17 @@ export default class WorldMap {
 
     public clearFocusedLocation(): void {
         this.focusedLocationName = null;
+    }
+
+    public getCurrentNamedLocation(): string | null {
+        const currentKey = this.getCellKey(this.playerGridPos.col, this.playerGridPos.row);
+        for (const location of this.namedLocations.values()) {
+            if (this.getCellKey(location.position.col, location.position.row) === currentKey) {
+                return location.name;
+            }
+        }
+
+        return null;
     }
 
     private drawVillages(ctx: CanvasRenderingContext2D): void {
@@ -383,6 +406,28 @@ export default class WorldMap {
             const y = cell.y + cell.height / 2;
             const villageGlow = fogState === FOG_STATE.DISCOVERED ? 0.95 : 0.82;
             this.renderer.drawVillage(ctx, x, y, villageGlow);
+        });
+    }
+
+    private drawNamedLocations(ctx: CanvasRenderingContext2D): void {
+        this.namedLocations.forEach((location) => {
+            const { col, row } = location.position;
+            const fogState = this.getFogState(col, row);
+            if (fogState === FOG_STATE.UNKNOWN) {
+                return;
+            }
+
+            const cell = this.grid.getCellAt(col, row);
+            if (!cell) {
+                return;
+            }
+
+            const isFocused = location.name === this.focusedLocationName;
+            const isCurrent = this.playerGridPos.col === col && this.playerGridPos.row === row;
+            this.renderer.drawNamedLocation(ctx, cell, location.name, location.terrainType, {
+                emphasized: isFocused || isCurrent || fogState === FOG_STATE.DISCOVERED,
+                showLabel: isFocused || isCurrent,
+            });
         });
     }
 
@@ -424,7 +469,7 @@ export default class WorldMap {
             const terrain = this.getTerrain(col, row);
             const key = this.getCellKey(col, row);
 
-            if (!terrain || terrain.type === 'water' || this.namedLocationsHasCell(key)) {
+            if (!terrain || terrain.type === 'water' || terrain.type === 'mountain' || this.namedLocationsHasCell(key)) {
                 continue;
             }
 
@@ -435,7 +480,7 @@ export default class WorldMap {
     }
 
     private namedLocationsHasCell(key: string): boolean {
-        return Array.from(this.namedLocations.values()).some((position) => this.getCellKey(position.col, position.row) === key);
+        return Array.from(this.namedLocations.values()).some((location) => this.getCellKey(location.position.col, location.position.row) === key);
     }
 
     private isDiscovered(col: number, row: number): boolean {
@@ -447,16 +492,16 @@ export default class WorldMap {
             return;
         }
 
-        const position = this.namedLocations.get(this.focusedLocationName);
-        if (!position) {
+        const location = this.namedLocations.get(this.focusedLocationName);
+        if (!location) {
             return;
         }
 
-        const cell = this.grid.getCellAt(position.col, position.row);
+        const cell = this.grid.getCellAt(location.position.col, location.position.row);
         if (!cell) {
             return;
         }
 
-        this.renderer.drawNamedLocationFocus(ctx, cell, this.focusedLocationName);
+        this.renderer.drawNamedLocationFocus(ctx, cell, location.name);
     }
 }
