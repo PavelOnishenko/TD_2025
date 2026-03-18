@@ -26,6 +26,7 @@ export default class WorldMap {
         this.renderer = new WorldMapRenderer();
         this.initializeFogOfWar();
         this.generateTerrain();
+        this.ensureTraversablePlayerStart();
         this.generateVillages();
         this.discoverCell(this.playerGridPos.col, this.playerGridPos.row);
     }
@@ -39,6 +40,20 @@ export default class WorldMap {
     private generateTerrain(): void {
         this.grid.forEachCell((_cell: GridCell, col: number, row: number) => {
             this.terrainData.set(this.getCellKey(col, row), this.generateCellTerrain(col, row));
+        });
+    }
+
+    private ensureTraversablePlayerStart(): void {
+        const startTerrain = this.getTerrain(this.playerGridPos.col, this.playerGridPos.row);
+        if (startTerrain?.type !== 'water') {
+            return;
+        }
+
+        this.terrainData.set(this.getCellKey(this.playerGridPos.col, this.playerGridPos.row), {
+            ...startTerrain,
+            type: 'grass',
+            color: this.getTerrainColor('grass'),
+            pattern: this.generateTerrainPattern('grass', startTerrain.seed),
         });
     }
 
@@ -263,6 +278,11 @@ export default class WorldMap {
             newCol++;
         }
         if (this.grid.isValidPosition(newCol, newRow)) {
+            const destinationTerrain = this.getTerrain(newCol, newRow);
+            if (destinationTerrain?.type === 'water') {
+                return { moved: false, isPreviouslyDiscovered: false };
+            }
+
             const destinationFogState = this.getFogState(newCol, newRow);
             const isPreviouslyDiscovered = destinationFogState === FOG_STATE.HIDDEN || destinationFogState === FOG_STATE.DISCOVERED;
             this.playerGridPos = { col: newCol, row: newRow };

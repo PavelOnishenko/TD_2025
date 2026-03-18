@@ -98,6 +98,7 @@ export default class GameUiEventBinder {
         this.developerUI.addBtn.addEventListener('click', () => this.developerEventController.handleQueueAdd());
         this.developerUI.clearBtn.addEventListener('click', () => this.developerEventController.handleQueueClear());
         this.developerUI.closeBtn.addEventListener('click', () => this.developerEventController.toggleModal(false));
+        this.bindEncounterTypeToggleEvents();
         this.developerUI.nextRollOpenBtn.addEventListener('click', () => this.developerEventController.toggleNextCharacterRollModal(true));
         this.developerUI.nextRollCloseBtn.addEventListener('click', () => this.developerEventController.toggleNextCharacterRollModal(false));
         this.developerUI.nextRollSaveBtn.addEventListener('click', () => this.developerEventController.handleNextCharacterRollSave());
@@ -114,6 +115,14 @@ export default class GameUiEventBinder {
             if (event.target === this.developerUI.nextRollModal) {
                 this.developerEventController.toggleNextCharacterRollModal(false);
             }
+        });
+    }
+
+    private bindEncounterTypeToggleEvents(): void {
+        this.developerUI.enableAllEncountersBtn.addEventListener('click', () => this.developerEventController.handleEncounterTypesToggleAll(true));
+        this.developerUI.disableAllEncountersBtn.addEventListener('click', () => this.developerEventController.handleEncounterTypesToggleAll(false));
+        Object.entries(this.developerUI.encounterTypeToggles).forEach(([type, input]) => {
+            input.addEventListener('change', () => this.developerEventController.handleEncounterTypeToggle(type as 'monster' | 'item' | 'village' | 'traveler', input.checked));
         });
     }
 

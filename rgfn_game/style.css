@@ -664,6 +664,24 @@ h1 {
     font-size: 14px;
 }
 
+.dev-events-toggle-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px 12px;
+}
+
+.dev-events-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--color-text-primary);
+    font-size: 14px;
+}
+
+.dev-events-toggle input {
+    accent-color: var(--color-secondary-accent);
+}
+
 
 .dev-events-hint-tight {
     margin-top: 0;
@@ -707,7 +725,7 @@ h1 {
 }
 
 .dev-events-status-error {
-    color: #ffb3b3;
+    color: var(--color-warning);
 }
 
 .item-sprite.mana-potion-sprite {
