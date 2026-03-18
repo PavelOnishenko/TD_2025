@@ -17,6 +17,7 @@ import WorldModeController from './systems/WorldModeController.js';
 import Player from './entities/Player.js';
 import Skeleton from './entities/Skeleton.js';
 import { BattleSplash } from './ui/BattleSplash.js';
+import { balanceConfig } from './config/balanceConfig.js';
 import { ItemDiscoverySplash } from './ui/ItemDiscoverySplash.js';
 import { applyThemeToCSS } from './config/ThemeConfig.js';
 import GameUiFactory from './systems/game/GameUiFactory.js';
@@ -34,6 +35,7 @@ import GameBattleCoordinator from './systems/game/runtime/GameBattleCoordinator.
 import MagicSystem from './systems/magic/MagicSystem.js';
 import QuestGenerator from './systems/quest/QuestGenerator.js';
 import QuestUiController from './systems/quest/QuestUiController.js';
+import { consumeNextCharacterRollAllocation } from './utils/NextCharacterRollConfig.js';
 
 type UIBundle = { hudElements: HudElements; battleUI: BattleUI; villageUI: VillageUI; gameLogUI: GameLogUI; developerUI: DeveloperUI };
 
@@ -71,7 +73,11 @@ export default class Game {
         this.renderer = new Renderer(canvas);
         this.input = new InputManager();
         this.loop = new GameLoop((dt: number) => this.update(dt), () => this.render());
-        const player = new Player(0, 0);
+        const player = new Player(0, 0, {
+            startingSkillAllocation: window.localStorage.getItem(SAVE_KEY)
+                ? null
+                : consumeNextCharacterRollAllocation(balanceConfig.player.initialRandomAllocatedSkillPoints ?? 0),
+        });
         const worldMap = new WorldMap(WORLD_MAP_COLUMNS, WORLD_MAP_ROWS, WORLD_MAP_CELL_SIZE);
         const battleMap = new BattleMap();
         this.player = player;

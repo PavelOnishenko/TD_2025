@@ -98,9 +98,21 @@ export default class GameUiEventBinder {
         this.developerUI.addBtn.addEventListener('click', () => this.developerEventController.handleQueueAdd());
         this.developerUI.clearBtn.addEventListener('click', () => this.developerEventController.handleQueueClear());
         this.developerUI.closeBtn.addEventListener('click', () => this.developerEventController.toggleModal(false));
+        this.developerUI.nextRollOpenBtn.addEventListener('click', () => this.developerEventController.toggleNextCharacterRollModal(true));
+        this.developerUI.nextRollCloseBtn.addEventListener('click', () => this.developerEventController.toggleNextCharacterRollModal(false));
+        this.developerUI.nextRollSaveBtn.addEventListener('click', () => this.developerEventController.handleNextCharacterRollSave());
+        this.developerUI.nextRollClearBtn.addEventListener('click', () => this.developerEventController.handleNextCharacterRollClear());
+        Object.values(this.developerUI.nextRollInputs).forEach((input) => {
+            input.addEventListener('input', () => this.developerEventController.handleNextCharacterRollInputChanged());
+        });
         this.developerUI.modal.addEventListener('click', (event: MouseEvent) => {
             if (event.target === this.developerUI.modal) {
                 this.developerEventController.toggleModal(false);
+            }
+        });
+        this.developerUI.nextRollModal.addEventListener('click', (event: MouseEvent) => {
+            if (event.target === this.developerUI.nextRollModal) {
+                this.developerEventController.toggleNextCharacterRollModal(false);
             }
         });
     }

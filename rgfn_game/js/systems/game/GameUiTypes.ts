@@ -118,6 +118,15 @@ export type DeveloperUI = {
     queueList: HTMLElement;
     addBtn: HTMLButtonElement;
     clearBtn: HTMLButtonElement;
+    nextRollOpenBtn: HTMLButtonElement;
+    nextRollSummary: HTMLElement;
+    nextRollModal: HTMLElement;
+    nextRollCloseBtn: HTMLButtonElement;
+    nextRollTotal: HTMLElement;
+    nextRollStatus: HTMLElement;
+    nextRollSaveBtn: HTMLButtonElement;
+    nextRollClearBtn: HTMLButtonElement;
+    nextRollInputs: Record<'vitality' | 'toughness' | 'strength' | 'agility' | 'connection' | 'intelligence', HTMLInputElement>;
 };
 
 export type GameLogUI = {

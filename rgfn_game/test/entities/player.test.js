@@ -5,6 +5,7 @@ import Player from '../../dist/entities/Player.js';
 import Item from '../../dist/entities/Item.js';
 import { balanceConfig } from '../../dist/config/balanceConfig.js';
 import { levelConfig } from '../../dist/config/levelConfig.js';
+import { createEmptyNextCharacterRollAllocation } from '../../dist/utils/NextCharacterRollConfig.js';
 
 test('Player initializes with randomized starting allocation and name', () => {
   const player = new Player(0, 0);
@@ -88,6 +89,18 @@ test('Player keeps full mana state when max mana increases', () => {
 
   assert.equal(player.maxMana >= oldMaxMana + 1, true);
   assert.equal(player.mana <= player.maxMana, true);
+});
+
+test('Player can use a configured starting skill roll for the next new character', () => {
+  const configuredRoll = createEmptyNextCharacterRollAllocation();
+  configuredRoll.intelligence = 3;
+  configuredRoll.vitality = 2;
+
+  const player = new Player(0, 0, { startingSkillAllocation: configuredRoll });
+
+  assert.equal(player.intelligence, balanceConfig.player.initialIntelligence + 3);
+  assert.equal(player.vitality, balanceConfig.player.initialVitality + 2);
+  assert.equal(player.magicPoints, 1);
 });
 
 test('Player starts with magic points when initial intelligence is already high enough', () => {
