@@ -59,6 +59,19 @@ test('EncounterSystem item pool can include configured melee weapons', () => {
   assert.equal(result.item.type === 'weapon' || result.item.type === 'armor' || result.item.type === 'consumable', true);
 });
 
+
+test('EncounterSystem blocks item discoveries when discovery is disabled for known tiles', () => {
+  const encounters = new EncounterSystem(1);
+
+  const result = withPatchedProperty(encounters, 'itemDiscoveryChance', 1, () => {
+    setupEventType(encounters, 'item');
+    setupEncounterType(encounters, 'skeleton');
+    return encounters.generateEncounter(false);
+  });
+
+  assert.notEqual(result.type, 'item');
+});
+
 test('EncounterSystem handles dragon pass encounter branch', () => {
   const encounters = new EncounterSystem(1);
 
