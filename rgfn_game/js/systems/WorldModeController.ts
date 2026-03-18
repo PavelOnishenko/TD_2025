@@ -85,7 +85,7 @@ export default class WorldModeController {
             return;
         }
 
-        const encounter = this.encounterSystem.generateEncounter(!isPreviouslyDiscovered);
+        const encounter = this.encounterSystem.generateEncounter(!isPreviouslyDiscovered, !isPreviouslyDiscovered);
         if (encounter.type === 'battle') {
             this.callbacks.onStartBattle(encounter.enemies);
             return;

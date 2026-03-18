@@ -12,6 +12,11 @@ type EncounterRolls = {
     rollEncounterType: () => string;
 };
 
+type EncounterGenerationOptions = {
+    canDiscoverItems?: boolean;
+    canDiscoverVillages?: boolean;
+};
+
 export default class EncounterResolver {
     private forcedEncounters: ForcedEncounterType[];
 
@@ -19,7 +24,12 @@ export default class EncounterResolver {
         this.forcedEncounters = [];
     }
 
-    public generateEncounter(itemDiscoveryChance: number, rolls: EncounterRolls, canDiscoverItems: boolean = true): EncounterResult {
+    public generateEncounter(itemDiscoveryChance: number, rolls: EncounterRolls, options: EncounterGenerationOptions = {}): EncounterResult {
+        const {
+            canDiscoverItems = true,
+            canDiscoverVillages = true,
+        } = options;
+
         if (canDiscoverItems && Math.random() < itemDiscoveryChance) {
             return this.createRandomItemEncounter();
         }
@@ -33,7 +43,11 @@ export default class EncounterResolver {
 
         const eventType = rolls.rollEncounterEventType();
         if (eventType === 'village') {
-            return { type: 'village' };
+            if (canDiscoverVillages) {
+                return { type: 'village' };
+            }
+
+            return { type: 'battle', enemies: this.createEnemiesForEncounter(rolls.rollEncounterType()) };
         }
 
         if (eventType === 'item') {
