@@ -83,19 +83,25 @@ export default class Game {
         const ui = new GameUiFactory().create();
         const questGenerator = new QuestGenerator();
         const questUiController = new QuestUiController(
+            ui.hudElements.questsTitle,
             ui.hudElements.questsBody,
             ui.hudElements.questIntroModal,
             ui.hudElements.questIntroBody,
             ui.hudElements.questIntroCloseBtn,
         );
-        questUiController.renderQuest(questGenerator.generateMainQuest());
-        questUiController.showIntro();
+        this.initializeQuestUi(questGenerator, questUiController);
         const magicSystem = new MagicSystem(player);
         const battleUiController = new BattleUiController(ui.battleUI, battleMap, turnManager, player, ui.gameLogUI.log, magicSystem);
         this.magicSystem = magicSystem;
-        this.hudCoordinator = new GameHudCoordinator(player, new HudController(player, ui.hudElements, ui.battleUI, magicSystem, ui.gameLogUI.log), battleUiController, magicSystem);
+        this.hudCoordinator = new GameHudCoordinator(
+            player,
+            new HudController(player, ui.hudElements, ui.battleUI, magicSystem, ui.gameLogUI.log),
+            battleUiController,
+            magicSystem,
+        );
         const villageActionsController = new VillageActionsController(player, ui.villageUI, ui.gameLogUI.log, {
-            onUpdateHUD: () => this.hudCoordinator.updateHUD(), onLeaveVillage: () => this.stateMachine.transition(MODES.WORLD_MAP),
+            onUpdateHUD: () => this.hudCoordinator.updateHUD(),
+            onLeaveVillage: () => this.stateMachine.transition(MODES.WORLD_MAP),
         });
         this.villageCoordinator = new GameVillageCoordinator(ui.hudElements, ui.battleUI, ui.villageUI, villageLifeRenderer, villageActionsController);
         this.stateMachine = this.createStateMachine(ui);
@@ -154,6 +160,12 @@ export default class Game {
     }
 
     public start(): void { this.handleResize(); this.hudCoordinator.updateHUD(); this.loop.start(); }
+
+    private async initializeQuestUi(questGenerator: QuestGenerator, questUiController: QuestUiController): Promise<void> {
+        const quest = await questGenerator.generateMainQuest();
+        questUiController.renderQuest(quest);
+        questUiController.showIntro();
+    }
 
 
     private configureViewport(): void {

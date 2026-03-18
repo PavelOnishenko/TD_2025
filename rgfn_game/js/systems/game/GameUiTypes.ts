@@ -66,6 +66,7 @@ export type HudElements = {
     inventoryPanel: HTMLElement;
     magicPanel: HTMLElement;
     questsPanel: HTMLElement;
+    questsTitle: HTMLElement;
     questsBody: HTMLElement;
     toggleStatsPanelBtn: HTMLButtonElement;
     toggleSkillsPanelBtn: HTMLButtonElement;

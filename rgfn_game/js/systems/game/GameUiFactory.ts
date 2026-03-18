@@ -81,6 +81,7 @@ export default class GameUiFactory {
             inventoryPanel: document.getElementById('inventory-panel')!,
             magicPanel: document.getElementById('magic-panel')!,
             questsPanel: document.getElementById('quests-panel')!,
+            questsTitle: document.getElementById('quests-title')!,
             questsBody: document.getElementById('quests-body')!,
             toggleStatsPanelBtn: document.getElementById('toggle-stats-panel-btn')! as HTMLButtonElement,
             toggleSkillsPanelBtn: document.getElementById('toggle-skills-panel-btn')! as HTMLButtonElement,

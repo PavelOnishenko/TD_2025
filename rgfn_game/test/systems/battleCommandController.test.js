@@ -50,6 +50,7 @@ test('BattleCommandController gives random drop for monsters based on balance co
 
   const skeleton = new Skeleton(0, 0, balanceConfig.enemies.skeleton);
   controller.collectLoot(skeleton);
+  controller.resolvePendingLoot();
 
   Math.random = originalRandom;
   balanceConfig.items.monsterDropChance = originalChance;
@@ -74,6 +75,7 @@ test('BattleCommandController loots all human inventory without adding random mo
 
   const wanderer = new Wanderer(2, inventory);
   controller.collectLoot(wanderer);
+  controller.resolvePendingLoot();
 
   balanceConfig.items.monsterDropChance = originalChance;
 
