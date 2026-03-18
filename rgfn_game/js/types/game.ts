@@ -8,12 +8,27 @@ export type FogState = 'unknown' | 'discovered' | 'hidden';
 
 export type TerrainType = 'grass' | 'forest' | 'mountain' | 'water' | 'desert';
 
-export type TerrainPattern = 'dots' | 'lines' | 'cross' | 'plain';
+export type TerrainPattern = 'dots' | 'lines' | 'cross' | 'plain' | 'waves' | 'dunes' | 'groves' | 'ridges';
 
 export interface TerrainData {
     type: TerrainType;
     color: string;
     pattern: TerrainPattern;
+    elevation: number;
+    moisture: number;
+    heat: number;
+    seed: number;
+}
+
+export interface TerrainNeighbors {
+    north: boolean;
+    south: boolean;
+    east: boolean;
+    west: boolean;
+    northEast: boolean;
+    northWest: boolean;
+    southEast: boolean;
+    southWest: boolean;
 }
 
 export interface GridCell {

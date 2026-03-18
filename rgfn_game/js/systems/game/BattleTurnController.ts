@@ -78,7 +78,7 @@ export default class BattleTurnController {
                     return;
                 }
             } else {
-                this.battleMap.moveEntityToward(enemy, this.player);
+                this.battleMap.moveEntityToward(enemy, this.player, attackRange);
                 this.callbacks.onAddBattleLog(`${enemy.name} moves closer...`, 'enemy');
             }
 
