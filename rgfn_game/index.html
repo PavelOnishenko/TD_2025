@@ -21,6 +21,7 @@
                     <button id="toggle-magic-panel-btn" class="action-btn" type="button">Magic</button>
                     <button id="toggle-quests-panel-btn" class="action-btn" type="button">Quests</button>
                     <button id="toggle-lore-panel-btn" class="action-btn" type="button">Lore</button>
+                    <button id="toggle-selected-panel-btn" class="action-btn" type="button">Selected</button>
                 </div>
                 <button id="use-potion-btn" class="action-btn">Use HP Potion</button>
                 <button id="use-mana-potion-btn" class="action-btn">Use Mana Potion</button>
@@ -140,6 +141,17 @@
                     <div id="lore-panel" class="hud-section stats hidden">
                         <div class="stat">Lore Book</div>
                         <div id="lore-body" class="lore-body"></div>
+                    </div>
+                    <div id="selected-panel" class="hud-section stats hidden">
+                        <div class="stat">Selected Tile</div>
+                        <div id="selected-cell-empty" class="stat-detail">Move the mouse over the world map to inspect a cell.</div>
+                        <div id="selected-cell-details" class="hidden">
+                            <div class="stat">Coords: <span id="selected-cell-coords">-</span></div>
+                            <div class="stat">Terrain: <span id="selected-cell-terrain">-</span></div>
+                            <div class="stat">Visibility: <span id="selected-cell-visibility">-</span></div>
+                            <div class="stat">Travel: <span id="selected-cell-traversable">-</span></div>
+                            <div class="stat">Village: <span id="selected-cell-village">-</span></div>
+                        </div>
                     </div>
                 </div>
                 <div class="game-area-cell" id="r1c2">
@@ -261,6 +273,20 @@
                 <div class="dev-events-queue-wrap">
                     <h3>Queued events</h3>
                     <ol id="dev-events-queue" class="dev-events-queue"></ol>
+                </div>
+                <div class="dev-events-queue-wrap">
+                    <h3>Random encounter types</h3>
+                    <p id="dev-encounter-types-summary" class="dev-events-hint dev-events-hint-tight">Enabled random encounters: Monster, Item, Village, Traveler.</p>
+                    <div class="dev-events-toggle-grid">
+                        <label class="dev-events-toggle" for="dev-encounter-type-monster"><input id="dev-encounter-type-monster" type="checkbox" checked> Monster</label>
+                        <label class="dev-events-toggle" for="dev-encounter-type-item"><input id="dev-encounter-type-item" type="checkbox" checked> Item</label>
+                        <label class="dev-events-toggle" for="dev-encounter-type-village"><input id="dev-encounter-type-village" type="checkbox" checked> Village</label>
+                        <label class="dev-events-toggle" for="dev-encounter-type-traveler"><input id="dev-encounter-type-traveler" type="checkbox" checked> Traveler</label>
+                    </div>
+                    <div class="dev-roll-actions">
+                        <button id="dev-encounter-types-enable-all-btn" class="action-btn" type="button">Enable All</button>
+                        <button id="dev-encounter-types-disable-all-btn" class="action-btn secondary" type="button">Disable All</button>
+                    </div>
                 </div>
                 <div class="dev-events-queue-wrap">
                     <h3>Next new character roll</h3>

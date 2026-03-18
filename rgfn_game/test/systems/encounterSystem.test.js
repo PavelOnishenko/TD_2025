@@ -140,3 +140,43 @@ test('EncounterSystem can generate traveler encounter', () => {
   assert.equal(result.type, 'traveler');
   assert.equal(result.traveler.level >= 1, true);
 });
+
+test('EncounterSystem skips random encounters when all encounter types are disabled', () => {
+  const encounters = new EncounterSystem(1);
+
+  encounters.setAllEncounterTypesEnabled(false);
+
+  const result = encounters.generateEncounter();
+
+  assert.equal(result.type, 'none');
+});
+
+test('EncounterSystem can disable item encounters while keeping monster battles enabled', () => {
+  const encounters = new EncounterSystem(1);
+
+  encounters.setEncounterTypeEnabled('item', false);
+
+  const result = withPatchedProperty(encounters, 'itemDiscoveryChance', 1, () => {
+    setupEventType(encounters, 'monster');
+    setupEncounterType(encounters, 'skeleton');
+    return encounters.generateEncounter();
+  });
+
+  assert.equal(result.type, 'battle');
+});
+
+test('EncounterSystem exposes current encounter type toggle states', () => {
+  const encounters = new EncounterSystem(1);
+
+  encounters.setAllEncounterTypesEnabled(false);
+  encounters.setEncounterTypeEnabled('village', true);
+
+  const states = encounters.getEncounterTypeStates();
+
+  assert.deepEqual(states, {
+    monster: false,
+    item: false,
+    village: true,
+    traveler: false,
+  });
+});

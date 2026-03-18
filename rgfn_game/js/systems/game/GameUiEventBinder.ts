@@ -18,7 +18,9 @@ type GameUiEventCallbacks = {
     onCastSpell: (spellId: BaseSpellId) => void;
     onUpgradeSpell: (spellId: BaseSpellId) => void;
     onCanvasClick: (event: MouseEvent) => void;
-    onTogglePanel: (panel: 'stats' | 'skills' | 'inventory' | 'magic' | 'quests' | 'lore') => void;
+    onCanvasMove: (event: MouseEvent) => void;
+    onCanvasLeave: () => void;  
+    onTogglePanel: (panel: 'stats' | 'skills' | 'inventory' | 'magic' | 'quests' | 'lore' | 'selected') => void;
 };
 
 export default class GameUiEventBinder {
@@ -58,6 +60,8 @@ export default class GameUiEventBinder {
         this.bindStatEvents();
 
         this.canvas.addEventListener('click', (event: MouseEvent) => this.callbacks.onCanvasClick(event));
+        this.canvas.addEventListener('mousemove', (event: MouseEvent) => this.callbacks.onCanvasMove(event));
+        this.canvas.addEventListener('mouseleave', () => this.callbacks.onCanvasLeave());
     }
 
     private bindBattleEvents(): void {
@@ -80,6 +84,7 @@ export default class GameUiEventBinder {
         this.hudElements.toggleMagicPanelBtn.addEventListener('click', () => this.callbacks.onTogglePanel('magic'));
         this.hudElements.toggleQuestsPanelBtn.addEventListener('click', () => this.callbacks.onTogglePanel('quests'));
         this.hudElements.toggleLorePanelBtn.addEventListener('click', () => this.callbacks.onTogglePanel('lore'));
+        this.hudElements.toggleSelectedPanelBtn.addEventListener('click', () => this.callbacks.onTogglePanel('selected'));
     }
 
     private bindVillageEvents(villageNameProvider: () => string): void {
@@ -99,6 +104,7 @@ export default class GameUiEventBinder {
         this.developerUI.addBtn.addEventListener('click', () => this.developerEventController.handleQueueAdd());
         this.developerUI.clearBtn.addEventListener('click', () => this.developerEventController.handleQueueClear());
         this.developerUI.closeBtn.addEventListener('click', () => this.developerEventController.toggleModal(false));
+        this.bindEncounterTypeToggleEvents();
         this.developerUI.nextRollOpenBtn.addEventListener('click', () => this.developerEventController.toggleNextCharacterRollModal(true));
         this.developerUI.nextRollCloseBtn.addEventListener('click', () => this.developerEventController.toggleNextCharacterRollModal(false));
         this.developerUI.nextRollSaveBtn.addEventListener('click', () => this.developerEventController.handleNextCharacterRollSave());
@@ -115,6 +121,14 @@ export default class GameUiEventBinder {
             if (event.target === this.developerUI.nextRollModal) {
                 this.developerEventController.toggleNextCharacterRollModal(false);
             }
+        });
+    }
+
+    private bindEncounterTypeToggleEvents(): void {
+        this.developerUI.enableAllEncountersBtn.addEventListener('click', () => this.developerEventController.handleEncounterTypesToggleAll(true));
+        this.developerUI.disableAllEncountersBtn.addEventListener('click', () => this.developerEventController.handleEncounterTypesToggleAll(false));
+        Object.entries(this.developerUI.encounterTypeToggles).forEach(([type, input]) => {
+            input.addEventListener('change', () => this.developerEventController.handleEncounterTypeToggle(type as 'monster' | 'item' | 'village' | 'traveler', input.checked));
         });
     }
 

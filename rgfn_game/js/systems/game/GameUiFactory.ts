@@ -82,16 +82,25 @@ export default class GameUiFactory {
             inventoryPanel: document.getElementById('inventory-panel')!,
             magicPanel: document.getElementById('magic-panel')!,
             questsPanel: document.getElementById('quests-panel')!,
+            selectedPanel: document.getElementById('selected-panel')!,
             lorePanel: document.getElementById('lore-panel')!,
             questsTitle: document.getElementById('quests-title')!,
             questsBody: document.getElementById('quests-body')!,
             loreBody: document.getElementById('lore-body')!,
+            selectedCellEmpty: document.getElementById('selected-cell-empty')!,
+            selectedCellDetails: document.getElementById('selected-cell-details')!,
+            selectedCellCoords: document.getElementById('selected-cell-coords')!,
+            selectedCellTerrain: document.getElementById('selected-cell-terrain')!,
+            selectedCellVisibility: document.getElementById('selected-cell-visibility')!,
+            selectedCellTraversable: document.getElementById('selected-cell-traversable')!,
+            selectedCellVillage: document.getElementById('selected-cell-village')!,
             toggleStatsPanelBtn: document.getElementById('toggle-stats-panel-btn')! as HTMLButtonElement,
             toggleSkillsPanelBtn: document.getElementById('toggle-skills-panel-btn')! as HTMLButtonElement,
             toggleInventoryPanelBtn: document.getElementById('toggle-inventory-panel-btn')! as HTMLButtonElement,
             toggleMagicPanelBtn: document.getElementById('toggle-magic-panel-btn')! as HTMLButtonElement,
             toggleQuestsPanelBtn: document.getElementById('toggle-quests-panel-btn')! as HTMLButtonElement,
             toggleLorePanelBtn: document.getElementById('toggle-lore-panel-btn')! as HTMLButtonElement,
+            toggleSelectedPanelBtn: document.getElementById('toggle-selected-panel-btn')! as HTMLButtonElement,
             questIntroModal: document.getElementById('quest-intro-modal')!,
             questIntroBody: document.getElementById('quest-intro-body')!,
             questIntroCloseBtn: document.getElementById('quest-intro-close-btn')! as HTMLButtonElement,
@@ -140,10 +149,8 @@ export default class GameUiFactory {
         };
     }
 
-
     private createGameLogUi(): GameLogUI {
         const logElement = document.getElementById('game-log')!;
-
         this.setupAutoScrollingGameLog(logElement);
 
         return {
@@ -177,6 +184,15 @@ export default class GameUiFactory {
             queueList: document.getElementById('dev-events-queue')!,
             addBtn: document.getElementById('dev-event-add-btn')! as HTMLButtonElement,
             clearBtn: document.getElementById('dev-event-clear-btn')! as HTMLButtonElement,
+            encounterTypeSummary: document.getElementById('dev-encounter-types-summary')!,
+            enableAllEncountersBtn: document.getElementById('dev-encounter-types-enable-all-btn')! as HTMLButtonElement,
+            disableAllEncountersBtn: document.getElementById('dev-encounter-types-disable-all-btn')! as HTMLButtonElement,
+            encounterTypeToggles: {
+                monster: document.getElementById('dev-encounter-type-monster')! as HTMLInputElement,
+                item: document.getElementById('dev-encounter-type-item')! as HTMLInputElement,
+                village: document.getElementById('dev-encounter-type-village')! as HTMLInputElement,
+                traveler: document.getElementById('dev-encounter-type-traveler')! as HTMLInputElement,
+            },
             nextRollOpenBtn: document.getElementById('dev-next-roll-open-btn')! as HTMLButtonElement,
             nextRollSummary: document.getElementById('dev-next-roll-summary')!,
             nextRollModal: document.getElementById('dev-next-roll-modal')!,

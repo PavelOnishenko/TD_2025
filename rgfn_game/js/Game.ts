@@ -154,6 +154,7 @@ export default class Game {
             onAddBattleLog: (m: string, t: string = 'system') => this.hudCoordinator.addBattleLog(m, t),
             onUpdateHUD: () => this.hudCoordinator.updateHUD(),
             onRememberTraveler: (traveler, disposition) => loreBookController.rememberTraveler(traveler, disposition),
+            onUpdateHUD: () => this.refreshHud(),
         });
         this.renderRouter = new GameRenderRouter({
             canvas: this.canvas, renderer: this.renderer, worldMap, player, battleMap, turnManager,
@@ -170,7 +171,7 @@ export default class Game {
         this.saveGameIfChanged();
     }
 
-    public start(): void { this.handleResize(); this.hudCoordinator.updateHUD(); this.loop.start(); }
+    public start(): void { this.handleResize(); this.refreshHud(); this.loop.start(); }
 
     private async initializeQuestUi(questGenerator: QuestGenerator, questUiController: QuestUiController): Promise<void> {
         const quest = await questGenerator.generateMainQuest();
@@ -233,6 +234,8 @@ export default class Game {
             onCastSpell: (spellId) => this.battleCoordinator.handleCastSpell(spellId),
             onUpgradeSpell: (spellId) => this.hudCoordinator.handleUpgradeSpell(spellId),
             onCanvasClick: (event) => this.battleCoordinator.handleCanvasClick(event, this.canvas),
+            onCanvasMove: (event) => this.handleCanvasMove(event),
+            onCanvasLeave: () => this.handleCanvasLeave(),
             onTogglePanel: (panel) => this.hudCoordinator.togglePanel(panel),
         }).bind(() => this.villageCoordinator.getVillageName());
         this.devController = devController;
@@ -304,10 +307,38 @@ export default class Game {
             const [x, y] = this.worldMap.getPlayerPixelPosition();
             this.player.x = x;
             this.player.y = y;
-            this.hudCoordinator.updateHUD();
+            this.refreshHud();
         } catch {
             console.warn('Failed to parse save data, starting a new character.');
         }
+    }
+
+    private refreshHud(): void {
+        this.hudCoordinator.updateHUD();
+        this.hudCoordinator.updateSelectedWorldCell(this.worldMap.getSelectedCellInfo());
+    }
+
+    private handleCanvasMove(event: MouseEvent): void {
+        if (!this.stateMachine.isInState(MODES.WORLD_MAP)) {
+            return;
+        }
+
+        const rect = this.canvas.getBoundingClientRect();
+        const scaleX = this.canvas.width / rect.width;
+        const scaleY = this.canvas.height / rect.height;
+        const worldX = (event.clientX - rect.left) * scaleX;
+        const worldY = (event.clientY - rect.top) * scaleY;
+        this.worldMap.updateSelectedCellFromPixel(worldX, worldY);
+        this.hudCoordinator.updateSelectedWorldCell(this.worldMap.getSelectedCellInfo());
+    }
+
+    private handleCanvasLeave(): void {
+        if (!this.stateMachine.isInState(MODES.WORLD_MAP)) {
+            return;
+        }
+
+        this.worldMap.clearSelectedCell();
+        this.hudCoordinator.updateSelectedWorldCell(null);
     }
 
     private startNewCharacter(): void {
@@ -315,5 +346,4 @@ export default class Game {
         window.location.reload();
     }
 }
-
 

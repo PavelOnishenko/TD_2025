@@ -46,6 +46,16 @@ export interface GridPosition {
     row: number;
 }
 
+export interface SelectedWorldCellInfo {
+    col: number;
+    row: number;
+    terrainType: TerrainType;
+    fogState: FogState;
+    isVisible: boolean;
+    isVillage: boolean;
+    isTraversable: boolean;
+}
+
 export interface StateMachineCallbacks {
     enter?: (data?: any) => void;
     update?: (deltaTime: number, data?: any) => void;

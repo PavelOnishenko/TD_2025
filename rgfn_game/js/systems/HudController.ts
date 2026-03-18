@@ -4,6 +4,7 @@ import { balanceConfig } from '../config/balanceConfig.js';
 import MagicSystem from './magic/MagicSystem.js';
 import { calculateBowDamageBonus, calculateMeleeDamageBonus } from '../config/levelConfig.js';
 import LoreBookController from './lore/LoreBookController.js';
+import { SelectedWorldCellInfo } from '../types/game.js';
 
 type PlayerStat = 'vitality' | 'toughness' | 'strength' | 'agility' | 'connection' | 'intelligence';
 type PendingSkillAllocations = Record<PlayerStat, number>;
@@ -75,19 +76,28 @@ type HudElements = {
     inventoryPanel: HTMLElement;
     magicPanel: HTMLElement;
     questsPanel: HTMLElement;
+    selectedPanel: HTMLElement;
     lorePanel: HTMLElement;
     questsBody: HTMLElement;
     loreBody: HTMLElement;
+    selectedCellEmpty: HTMLElement;
+    selectedCellDetails: HTMLElement;
+    selectedCellCoords: HTMLElement;
+    selectedCellTerrain: HTMLElement;
+    selectedCellVisibility: HTMLElement;
+    selectedCellTraversable: HTMLElement;
+    selectedCellVillage: HTMLElement;
     toggleStatsPanelBtn: HTMLButtonElement;
     toggleSkillsPanelBtn: HTMLButtonElement;
     toggleInventoryPanelBtn: HTMLButtonElement;
     toggleMagicPanelBtn: HTMLButtonElement;
     toggleQuestsPanelBtn: HTMLButtonElement;
     toggleLorePanelBtn: HTMLButtonElement;
+    toggleSelectedPanelBtn: HTMLButtonElement;
 };
 
 
-type HudPanel = 'stats' | 'skills' | 'inventory' | 'magic' | 'quests' | 'lore';
+type HudPanel = 'stats' | 'skills' | 'inventory' | 'magic' | 'quests' | 'lore' | 'selected';
 
 type BattleUiHudElements = {
     usePotionBtn: HTMLButtonElement;
@@ -195,10 +205,28 @@ export default class HudController {
             magic: this.hudElements.magicPanel,
             quests: this.hudElements.questsPanel,
             lore: this.hudElements.lorePanel,
+            selected: this.hudElements.selectedPanel,
         };
 
         panelMap[panel].classList.toggle('hidden');
         this.updateToggleButtons();
+    }
+
+    public updateSelectedCellInfo(selectedCell: SelectedWorldCellInfo | null): void {
+        const hasSelectedCell = Boolean(selectedCell);
+        this.hudElements.selectedCellEmpty.classList.toggle('hidden', hasSelectedCell);
+        this.hudElements.selectedCellDetails.classList.toggle('hidden', !hasSelectedCell);
+
+        if (!selectedCell) {
+            return;
+        }
+
+        this.hudElements.selectedCellCoords.textContent = `${selectedCell.col}, ${selectedCell.row}`;
+        const terrainIsKnown = selectedCell.isVisible || selectedCell.fogState !== 'unknown';
+        this.hudElements.selectedCellTerrain.textContent = terrainIsKnown ? this.formatTerrainLabel(selectedCell.terrainType) : 'Unknown';
+        this.hudElements.selectedCellVisibility.textContent = this.formatVisibilityLabel(selectedCell);
+        this.hudElements.selectedCellTraversable.textContent = terrainIsKnown ? (selectedCell.isTraversable ? 'Walkable' : 'Blocked') : 'Unknown';
+        this.hudElements.selectedCellVillage.textContent = terrainIsKnown ? (selectedCell.isVillage ? 'Yes' : 'No') : 'Unknown';
     }
 
     private bindEquipmentSlotEvents(): void {
@@ -535,6 +563,7 @@ export default class HudController {
         this.hudElements.toggleMagicPanelBtn.classList.toggle('active', !this.hudElements.magicPanel.classList.contains('hidden'));
         this.hudElements.toggleQuestsPanelBtn.classList.toggle('active', !this.hudElements.questsPanel.classList.contains('hidden'));
         this.hudElements.toggleLorePanelBtn.classList.toggle('active', !this.hudElements.lorePanel.classList.contains('hidden'));
+        this.hudElements.toggleSelectedPanelBtn.classList.toggle('active', !this.hudElements.selectedPanel.classList.contains('hidden'));
     }
 
     private updateSpellButtons(): void {
@@ -545,5 +574,25 @@ export default class HudController {
         this.battleUI.spellSlowBtn.disabled = !this.player.canSpendMana(manaBySpell.get('slow') ?? 999);
         this.battleUI.spellRageBtn.disabled = !this.player.canSpendMana(manaBySpell.get('rage') ?? 999);
         this.battleUI.spellArcaneLanceBtn.disabled = !this.player.canSpendMana(manaBySpell.get('arcane-lance') ?? 999);
+    }
+
+    private formatTerrainLabel(terrainType: SelectedWorldCellInfo['terrainType']): string {
+        if (terrainType === 'mountain') {
+            return 'Hills';
+        }
+
+        return terrainType.charAt(0).toUpperCase() + terrainType.slice(1);
+    }
+
+    private formatVisibilityLabel(selectedCell: SelectedWorldCellInfo): string {
+        if (selectedCell.isVisible) {
+            return 'Visible now';
+        }
+
+        if (selectedCell.fogState === 'hidden') {
+            return 'Explored, not visible';
+        }
+
+        return 'Unexplored';
     }
 }
