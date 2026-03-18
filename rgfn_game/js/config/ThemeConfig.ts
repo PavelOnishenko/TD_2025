@@ -153,8 +153,8 @@ const GAME_THEME: Theme = {
       y: 0,
     },
     gridDimensions: {
-      columns: 24,
-      rows: 18,
+      columns: 12,
+      rows: 9,
     },
     cellTravelMinutes: 20,
     cellCornerRadius: 10,
@@ -172,8 +172,8 @@ const GAME_THEME: Theme = {
     obstacleEdge: '#2e2013',
     obstacleShadow: 'rgba(46, 32, 19, 0.22)',
     gridSize: {
-      columns: 20,
-      rows: 16,
+      columns: 10,
+      rows: 8,
     },
   },
 };
