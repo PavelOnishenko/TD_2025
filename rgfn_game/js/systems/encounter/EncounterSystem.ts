@@ -49,11 +49,11 @@ export default class EncounterSystem {
         return false;
     }
 
-    public generateEncounter(): EncounterResult {
+    public generateEncounter(canDiscoverItems: boolean = true): EncounterResult {
         return this.encounterResolver.generateEncounter(this.itemDiscoveryChance, {
             rollEncounterEventType: () => this.rollEncounterEventType(),
             rollEncounterType: () => this.rollEncounterType(),
-        });
+        }, canDiscoverItems);
     }
 
     public queueForcedEncounter(type: ForcedEncounterType): void {

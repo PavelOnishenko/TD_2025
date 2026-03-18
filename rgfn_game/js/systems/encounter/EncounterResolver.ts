@@ -19,8 +19,8 @@ export default class EncounterResolver {
         this.forcedEncounters = [];
     }
 
-    public generateEncounter(itemDiscoveryChance: number, rolls: EncounterRolls): EncounterResult {
-        if (Math.random() < itemDiscoveryChance) {
+    public generateEncounter(itemDiscoveryChance: number, rolls: EncounterRolls, canDiscoverItems: boolean = true): EncounterResult {
+        if (canDiscoverItems && Math.random() < itemDiscoveryChance) {
             return this.createRandomItemEncounter();
         }
 
@@ -37,7 +37,11 @@ export default class EncounterResolver {
         }
 
         if (eventType === 'item') {
-            return this.createRandomItemEncounter();
+            if (canDiscoverItems) {
+                return this.createRandomItemEncounter();
+            }
+
+            return { type: 'battle', enemies: this.createEnemiesForEncounter(rolls.rollEncounterType()) };
         }
 
         if (eventType === 'traveler') {
