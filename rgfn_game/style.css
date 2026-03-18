@@ -47,7 +47,7 @@ html { height: 100%; }
     overflow: hidden;
 }
 
-#magic-panel, #inventory-panel, #skills-panel, #quests-panel {
+#magic-panel, #inventory-panel, #skills-panel, #quests-panel, #lore-panel {
     position: relative;
 }
 
@@ -856,4 +856,78 @@ h1 {
 .quest-intro-hint {
     color: var(--color-text-muted);
     font-size: 13px;
+}
+
+.lore-body {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    max-height: 420px;
+    overflow: auto;
+    width: 100%;
+    padding-right: 4px;
+}
+
+.lore-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+}
+
+.lore-section h3 {
+    font-size: 16px;
+    color: var(--color-primary-accent);
+    border-bottom: 1px solid color-mix(in srgb, var(--color-secondary-accent) 65%, transparent);
+    padding-bottom: 4px;
+}
+
+.lore-entry {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 10px;
+    border: 1px solid color-mix(in srgb, var(--color-secondary-accent) 65%, transparent);
+    border-radius: 6px;
+    background: color-mix(in srgb, var(--color-panel-highlight) 78%, transparent);
+}
+
+.lore-entry h4 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    font-size: 15px;
+    color: var(--color-primary-accent);
+}
+
+.lore-entry p,
+.lore-entry li {
+    font-size: 13px;
+    line-height: 1.4;
+    color: var(--color-text-primary);
+}
+
+.lore-entry ul {
+    padding-left: 18px;
+}
+
+.lore-tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 7px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--color-enemy);
+    background: color-mix(in srgb, var(--color-secondary-bg) 82%, white);
+    border: 1px solid color-mix(in srgb, var(--color-secondary-accent) 72%, transparent);
+}
+
+.lore-empty {
+    font-size: 13px;
+    color: var(--color-text-muted);
 }

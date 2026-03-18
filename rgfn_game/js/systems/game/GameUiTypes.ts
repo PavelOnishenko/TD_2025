@@ -70,8 +70,10 @@ export type HudElements = {
     magicPanel: HTMLElement;
     questsPanel: HTMLElement;
     selectedPanel: HTMLElement;
+    lorePanel: HTMLElement;
     questsTitle: HTMLElement;
     questsBody: HTMLElement;
+    loreBody: HTMLElement;
     selectedCellEmpty: HTMLElement;
     selectedCellDetails: HTMLElement;
     selectedCellCoords: HTMLElement;
@@ -84,6 +86,7 @@ export type HudElements = {
     toggleInventoryPanelBtn: HTMLButtonElement;
     toggleMagicPanelBtn: HTMLButtonElement;
     toggleQuestsPanelBtn: HTMLButtonElement;
+    toggleLorePanelBtn: HTMLButtonElement;
     toggleSelectedPanelBtn: HTMLButtonElement;
     questIntroModal: HTMLElement;
     questIntroBody: HTMLElement;

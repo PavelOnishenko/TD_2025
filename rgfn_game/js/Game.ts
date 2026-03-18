@@ -38,6 +38,7 @@ import QuestGenerator from './systems/quest/QuestGenerator.js';
 import QuestUiController from './systems/quest/QuestUiController.js';
 import { TerrainType } from './types/game.js';
 import { consumeNextCharacterRollAllocation } from './utils/NextCharacterRollConfig.js';
+import LoreBookController from './systems/lore/LoreBookController.js';
 
 type UIBundle = { hudElements: HudElements; battleUI: BattleUI; villageUI: VillageUI; gameLogUI: GameLogUI; developerUI: DeveloperUI };
 
@@ -97,13 +98,14 @@ export default class Game {
             ui.hudElements.questIntroBody,
             ui.hudElements.questIntroCloseBtn,
         );
+        const loreBookController = new LoreBookController({ loreBody: ui.hudElements.loreBody }, player, worldMap);
         this.initializeQuestUi(questGenerator, questUiController);
         const magicSystem = new MagicSystem(player);
         const battleUiController = new BattleUiController(ui.battleUI, battleMap, turnManager, player, ui.gameLogUI.log, magicSystem);
         this.magicSystem = magicSystem;
         this.hudCoordinator = new GameHudCoordinator(
             player,
-            new HudController(player, ui.hudElements, ui.battleUI, magicSystem, ui.gameLogUI.log),
+            new HudController(player, ui.hudElements, ui.battleUI, magicSystem, ui.gameLogUI.log, loreBookController),
             battleUiController,
             magicSystem,
         );
@@ -150,6 +152,8 @@ export default class Game {
             onEnterVillage: () => this.stateMachine.transition(MODES.VILLAGE),
             onStartBattle: (enemies: Skeleton[], terrainType) => this.stateMachine.transition(MODES.BATTLE, { enemies, terrainType }),
             onAddBattleLog: (m: string, t: string = 'system') => this.hudCoordinator.addBattleLog(m, t),
+            onUpdateHUD: () => this.hudCoordinator.updateHUD(),
+            onRememberTraveler: (traveler, disposition) => loreBookController.rememberTraveler(traveler, disposition),
             onUpdateHUD: () => this.refreshHud(),
         });
         this.renderRouter = new GameRenderRouter({
@@ -207,7 +211,7 @@ export default class Game {
             onEnterBattle: (battleData: { enemies: Skeleton[]; terrainType: TerrainType }) => this.battleCoordinator.enterBattleMode(battleData.enemies, battleData.terrainType),
             onUpdateBattle: () => this.battleCoordinator.updateBattleMode(),
             onExitBattle: () => this.battleCoordinator.exitBattleMode(),
-            onEnterVillage: () => this.villageCoordinator.enterVillageMode(this.canvas.width, this.canvas.height),
+            onEnterVillage: () => this.villageCoordinator.enterVillageMode(this.canvas.width, this.canvas.height, this.worldMap.getVillageNameAtPlayerPosition()),
             onExitVillage: () => this.villageCoordinator.exitVillageMode(),
         }).create();
     }

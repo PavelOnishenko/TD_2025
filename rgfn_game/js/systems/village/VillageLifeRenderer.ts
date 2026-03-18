@@ -14,8 +14,8 @@ export default class VillageLifeRenderer {
         this.villagePopulation = villagePopulation;
     }
 
-    public initialize(width: number, height: number): void {
-        this.currentVillageName = this.generateVillageName();
+    public initialize(width: number, height: number, villageName?: string): void {
+        this.currentVillageName = villageName ?? this.generateVillageName();
         const roof = this.getRoofVariants();
         this.villageHouses = [
             this.createVillageHouse(width * 0.1, height * 0.61, 104, 68, roof[0]), this.createVillageHouse(width * 0.26, height * 0.58, 116, 74, roof[1]),

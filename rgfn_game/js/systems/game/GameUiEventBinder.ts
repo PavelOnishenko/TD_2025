@@ -19,8 +19,8 @@ type GameUiEventCallbacks = {
     onUpgradeSpell: (spellId: BaseSpellId) => void;
     onCanvasClick: (event: MouseEvent) => void;
     onCanvasMove: (event: MouseEvent) => void;
-    onCanvasLeave: () => void;
-    onTogglePanel: (panel: 'stats' | 'skills' | 'inventory' | 'magic' | 'quests' | 'selected') => void;
+    onCanvasLeave: () => void;  
+    onTogglePanel: (panel: 'stats' | 'skills' | 'inventory' | 'magic' | 'quests' | 'lore' | 'selected') => void;
 };
 
 export default class GameUiEventBinder {
@@ -83,6 +83,7 @@ export default class GameUiEventBinder {
         this.hudElements.toggleInventoryPanelBtn.addEventListener('click', () => this.callbacks.onTogglePanel('inventory'));
         this.hudElements.toggleMagicPanelBtn.addEventListener('click', () => this.callbacks.onTogglePanel('magic'));
         this.hudElements.toggleQuestsPanelBtn.addEventListener('click', () => this.callbacks.onTogglePanel('quests'));
+        this.hudElements.toggleLorePanelBtn.addEventListener('click', () => this.callbacks.onTogglePanel('lore'));
         this.hudElements.toggleSelectedPanelBtn.addEventListener('click', () => this.callbacks.onTogglePanel('selected'));
     }
 
