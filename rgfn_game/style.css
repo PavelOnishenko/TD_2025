@@ -664,6 +664,52 @@ h1 {
     font-size: 14px;
 }
 
+
+.dev-events-hint-tight {
+    margin-top: 0;
+    margin-bottom: 8px;
+}
+
+.dev-roll-panel {
+    width: min(480px, 100%);
+}
+
+.dev-roll-grid {
+    display: grid;
+    grid-template-columns: 1fr 120px;
+    gap: 10px 12px;
+    align-items: center;
+}
+
+.dev-roll-grid input {
+    width: 100%;
+    padding: 7px 10px;
+    border-radius: 4px;
+    border: 1px solid var(--color-secondary-accent);
+    background: var(--color-panel-highlight);
+    color: var(--color-text-primary);
+}
+
+.dev-roll-footer {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 10px;
+    border: 1px solid var(--color-secondary-accent);
+    border-radius: 6px;
+    background: color-mix(in srgb, var(--color-panel-highlight) 50%, transparent);
+}
+
+.dev-roll-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.dev-events-status-error {
+    color: #ffb3b3;
+}
+
 .item-sprite.mana-potion-sprite {
     background: linear-gradient(180deg, var(--color-primary-accent) 0 35%, var(--color-secondary-accent) 35% 100%);
     border: 2px solid var(--color-primary-accent);

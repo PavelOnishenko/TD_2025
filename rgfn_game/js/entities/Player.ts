@@ -17,10 +17,14 @@ import Item from './Item.js';
 import { createItemById } from './Item.js';
 import PlayerInventory from './PlayerInventory.js';
 import PlayerRenderer from './PlayerRenderer.js';
+import { NextCharacterRollAllocation } from '../utils/NextCharacterRollConfig.js';
 
 const DamageableEntity = withDamageable(Entity);
 
 type PlayerStat = 'vitality' | 'toughness' | 'strength' | 'agility' | 'connection' | 'intelligence';
+type PlayerCreationOptions = {
+    startingSkillAllocation?: Partial<Record<PlayerStat, number>> | null;
+};
 const RANDOM_NAME_POOL = [
     'Arin', 'Kael', 'Nyx', 'Sable', 'Thorne', 'Mira', 'Orin', 'Vex', 'Lyra', 'Dorian',
     'Selene', 'Riven', 'Kara', 'Juno', 'Bram', 'Talia', 'Ezra', 'Nora', 'Cassian', 'Iris'
@@ -108,7 +112,7 @@ export default class Player extends DamageableEntity {
         this.inventorySystem.setEquippedOffhandWeapon(weapon);
     }
 
-    constructor(x: number, y: number) {
+    constructor(x: number, y: number, options: PlayerCreationOptions = {}) {
         super(x, y);
         this.name = Player.generateRandomName();
         this.width = balanceConfig.player.width;
@@ -121,7 +125,8 @@ export default class Player extends DamageableEntity {
         this.connection = balanceConfig.player.initialConnection;
         this.intelligence = balanceConfig.player.initialIntelligence;
         this.skillPoints = balanceConfig.player.initialSkillPoints;
-        this.allocateRandomStartingStats();
+        this.allocateRandomStartingStats(options.startingSkillAllocation ?? null);
+        this.magicPoints = Math.floor(this.intelligence / 3);
 
         this.inventorySystem = new PlayerInventory({
             getInventoryCapacity: () => this.getInventoryCapacity(),
@@ -144,12 +149,41 @@ export default class Player extends DamageableEntity {
         return RANDOM_NAME_POOL[Math.floor(Math.random() * RANDOM_NAME_POOL.length)];
     }
 
-    private allocateRandomStartingStats(): void {
+    private allocateRandomStartingStats(startingSkillAllocation: Partial<Record<PlayerStat, number>> | null = null): void {
         const pointsToAllocate = Math.max(0, balanceConfig.player.initialRandomAllocatedSkillPoints ?? 0);
+        const plannedAllocation = this.normalizeStartingSkillAllocation(startingSkillAllocation);
+        const plannedPoints = RANDOM_STAT_POOL.reduce((total, stat) => total + plannedAllocation[stat], 0);
+
+        if (plannedPoints === pointsToAllocate) {
+            RANDOM_STAT_POOL.forEach((stat) => {
+                this[stat] += plannedAllocation[stat];
+            });
+            return;
+        }
+
         for (let i = 0; i < pointsToAllocate; i++) {
             const randomStat = RANDOM_STAT_POOL[Math.floor(Math.random() * RANDOM_STAT_POOL.length)];
             this[randomStat] += 1;
         }
+    }
+
+    private normalizeStartingSkillAllocation(startingSkillAllocation: Partial<Record<PlayerStat, number>> | null): NextCharacterRollAllocation {
+        const normalizedAllocation = {
+            vitality: 0,
+            toughness: 0,
+            strength: 0,
+            agility: 0,
+            connection: 0,
+            intelligence: 0,
+        };
+
+        RANDOM_STAT_POOL.forEach((stat) => {
+            const rawAmount = startingSkillAllocation?.[stat] ?? 0;
+            const parsedAmount = typeof rawAmount === 'number' ? rawAmount : Number.parseInt(String(rawAmount), 10);
+            normalizedAllocation[stat] = Number.isFinite(parsedAmount) ? Math.max(0, Math.floor(parsedAmount)) : 0;
+        });
+
+        return normalizedAllocation;
     }
 
     public takeDamage(amount: number): boolean {
