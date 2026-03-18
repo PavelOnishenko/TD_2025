@@ -6,20 +6,20 @@ export const MODES = {
     VILLAGE: 'VILLAGE',
 };
 
-type StateBindings<TEnemy> = {
+type StateBindings<TBattleData> = {
     onEnterWorld: () => void;
     onUpdateWorld: (dt: number) => void;
-    onEnterBattle: (enemies: TEnemy[]) => void;
+    onEnterBattle: (battleData: TBattleData) => void;
     onUpdateBattle: (dt: number) => void;
     onExitBattle: () => void;
     onEnterVillage: () => void;
     onExitVillage: () => void;
 };
 
-export default class GameModeStateMachine<TEnemy> {
-    private readonly bindings: StateBindings<TEnemy>;
+export default class GameModeStateMachine<TBattleData> {
+    private readonly bindings: StateBindings<TBattleData>;
 
-    constructor(bindings: StateBindings<TEnemy>) {
+    constructor(bindings: StateBindings<TBattleData>) {
         this.bindings = bindings;
     }
 
@@ -30,7 +30,7 @@ export default class GameModeStateMachine<TEnemy> {
             update: (dt: number) => this.bindings.onUpdateWorld(dt),
         });
         machine.addState(MODES.BATTLE, {
-            enter: (enemies: TEnemy[]) => this.bindings.onEnterBattle(enemies),
+            enter: (battleData: TBattleData) => this.bindings.onEnterBattle(battleData),
             update: (dt: number) => this.bindings.onUpdateBattle(dt),
             exit: () => this.bindings.onExitBattle(),
         });

@@ -66,6 +66,13 @@ export interface Theme {
       x: number;
       y: number;
     };
+    gridDimensions: {
+      columns: number;
+      rows: number;
+    };
+    cellTravelMinutes: number;
+    cellCornerRadius: number;
+    connectorRadius: number;
   };
 
   // Battle Map Colors
@@ -77,6 +84,13 @@ export interface Theme {
     currentEntityEnemy: string;
     selectedEnemy: string;
     gridBorders: string;
+    obstacleFill: string;
+    obstacleEdge: string;
+    obstacleShadow: string;
+    gridSize: {
+      columns: number;
+      rows: number;
+    };
   };
 }
 
@@ -124,7 +138,7 @@ const GAME_THEME: Theme = {
       desert: '#d4b17a',
     },
     unknown: '#a18a67',
-    gridLines: 'rgba(46, 32, 19, 0.15)',
+    gridLines: 'rgba(46, 32, 19, 0.12)',
     playerMarker: '#8f1f1f',
     iconScale: {
       character: 1,
@@ -138,6 +152,13 @@ const GAME_THEME: Theme = {
       x: 0,
       y: 0,
     },
+    gridDimensions: {
+      columns: 24,
+      rows: 18,
+    },
+    cellTravelMinutes: 20,
+    cellCornerRadius: 10,
+    connectorRadius: 16,
   },
   battleMap: {
     background: '#ceb287',
@@ -146,7 +167,14 @@ const GAME_THEME: Theme = {
     currentEntityPlayer: 'rgba(47, 94, 168, 0.3)',
     currentEntityEnemy: 'rgba(143, 31, 31, 0.28)',
     selectedEnemy: 'rgba(183, 90, 29, 0.23)',
-    gridBorders: 'rgba(95, 64, 35, 0.45)',
+    gridBorders: 'rgba(95, 64, 35, 0.3)',
+    obstacleFill: '#71553a',
+    obstacleEdge: '#2e2013',
+    obstacleShadow: 'rgba(46, 32, 19, 0.22)',
+    gridSize: {
+      columns: 20,
+      rows: 16,
+    },
   },
 };
 

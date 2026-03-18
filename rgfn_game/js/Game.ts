@@ -26,6 +26,7 @@ import BattleTurnController from './systems/game/BattleTurnController.js';
 import BattlePlayerActionController from './systems/game/BattlePlayerActionController.js';
 import BattleCommandController from './systems/game/BattleCommandController.js';
 import { BattleUI, DeveloperUI, GameLogUI, HudElements, VillageUI } from './systems/game/GameUiTypes.js';
+import { theme } from './config/ThemeConfig.js';
 import GameModeStateMachine, { MODES } from './systems/game/runtime/GameModeStateMachine.js';
 import GameRenderRouter from './systems/game/runtime/GameRenderRouter.js';
 import GameVillageCoordinator from './systems/game/runtime/GameVillageCoordinator.js';
@@ -34,6 +35,7 @@ import GameBattleCoordinator from './systems/game/runtime/GameBattleCoordinator.
 import MagicSystem from './systems/magic/MagicSystem.js';
 import QuestGenerator from './systems/quest/QuestGenerator.js';
 import QuestUiController from './systems/quest/QuestUiController.js';
+import { TerrainType } from './types/game.js';
 
 type UIBundle = { hudElements: HudElements; battleUI: BattleUI; villageUI: VillageUI; gameLogUI: GameLogUI; developerUI: DeveloperUI };
 
@@ -45,8 +47,8 @@ type GameSaveState = {
 };
 
 const SAVE_KEY = 'rgfn_game_save_v1';
-const WORLD_MAP_COLUMNS = 12;
-const WORLD_MAP_ROWS = 9;
+const WORLD_MAP_COLUMNS = theme.worldMap.gridDimensions.columns;
+const WORLD_MAP_ROWS = theme.worldMap.gridDimensions.rows;
 const WORLD_MAP_CELL_SIZE = 40;
 
 export default class Game {
@@ -134,7 +136,7 @@ export default class Game {
         });
         this.worldModeController = new WorldModeController(this.input, player, worldMap, encounterSystem, new ItemDiscoverySplash(), {
             onEnterVillage: () => this.stateMachine.transition(MODES.VILLAGE),
-            onStartBattle: (enemies: Skeleton[]) => this.stateMachine.transition(MODES.BATTLE, enemies),
+            onStartBattle: (enemies: Skeleton[], terrainType) => this.stateMachine.transition(MODES.BATTLE, { enemies, terrainType }),
             onAddBattleLog: (m: string, t: string = 'system') => this.hudCoordinator.addBattleLog(m, t),
             onUpdateHUD: () => this.hudCoordinator.updateHUD(),
         });
@@ -181,10 +183,10 @@ export default class Game {
     }
 
     private createStateMachine(ui: UIBundle): StateMachine {
-        return new GameModeStateMachine<Skeleton>({
+        return new GameModeStateMachine<{ enemies: Skeleton[]; terrainType: TerrainType }>({
             onEnterWorld: () => this.worldModeController.enterWorldMode(ui.hudElements.modeIndicator, ui.battleUI.sidebar, ui.villageUI.sidebar),
             onUpdateWorld: () => this.worldModeController.updateWorldMode(),
-            onEnterBattle: (enemies: Skeleton[]) => this.battleCoordinator.enterBattleMode(enemies),
+            onEnterBattle: (battleData: { enemies: Skeleton[]; terrainType: TerrainType }) => this.battleCoordinator.enterBattleMode(battleData.enemies, battleData.terrainType),
             onUpdateBattle: () => this.battleCoordinator.updateBattleMode(),
             onExitBattle: () => this.battleCoordinator.exitBattleMode(),
             onEnterVillage: () => this.villageCoordinator.enterVillageMode(this.canvas.width, this.canvas.height),

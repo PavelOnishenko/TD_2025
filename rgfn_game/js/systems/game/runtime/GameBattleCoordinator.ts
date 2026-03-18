@@ -1,6 +1,6 @@
 import InputManager from '../../../../../engine/systems/InputManager.js';
 import StateMachine from '../../../utils/StateMachine.js';
-import { Direction } from '../../../types/game.js';
+import { Direction, TerrainType } from '../../../types/game.js';
 import Skeleton from '../../../entities/Skeleton.js';
 import { BattleSplash } from '../../../ui/BattleSplash.js';
 import BattleMap from '../../combat/BattleMap.js';
@@ -41,6 +41,7 @@ export default class GameBattleCoordinator {
     private readonly controllers: Controllers;
     private turnTransitioning = false;
     private currentEnemies: Skeleton[] = [];
+    private currentTerrainType: TerrainType = 'grass';
 
     constructor(
         input: InputManager,
@@ -70,12 +71,13 @@ export default class GameBattleCoordinator {
         this.callbacks = callbacks;
     }
 
-    public enterBattleMode(enemies: Skeleton[]): void {
+    public enterBattleMode(enemies: Skeleton[], terrainType: TerrainType = 'grass'): void {
         this.hudElements.modeIndicator.textContent = 'Battle!';
         this.battleUI.sidebar.classList.remove('hidden');
         this.villageUI.sidebar.classList.add('hidden');
         this.controllers.battleCommandController.clearPendingLoot();
         this.currentEnemies = enemies;
+        this.currentTerrainType = terrainType;
         this.controllers.battlePlayerActionController.setSelectedEnemy(null);
         this.battleSplash.showBattleStart(enemies.length, () => this.startBattle(enemies));
     }
@@ -167,6 +169,7 @@ export default class GameBattleCoordinator {
 
     public exitBattleMode(): void {
         this.currentEnemies = [];
+        this.currentTerrainType = 'grass';
     }
 
     public getCurrentEnemies(): Skeleton[] {
@@ -178,7 +181,7 @@ export default class GameBattleCoordinator {
     }
 
     private startBattle(enemies: Skeleton[]): void {
-        this.battleMap.setup(this.player, this.currentEnemies);
+        this.battleMap.setup(this.player, this.currentEnemies, this.currentTerrainType);
         this.turnManager.initializeTurns([this.player, ...this.currentEnemies]);
         this.turnTransitioning = false;
         this.callbacks.onClearBattleLog();

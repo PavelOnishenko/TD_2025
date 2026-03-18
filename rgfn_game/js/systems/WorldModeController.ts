@@ -6,10 +6,11 @@ import Skeleton from '../entities/Skeleton.js';
 import Item from '../entities/Item.js';
 import Wanderer from '../entities/Wanderer.js';
 import { ItemDiscoverySplash } from '../ui/ItemDiscoverySplash.js';
+import { TerrainType } from '../types/game.js';
 
 type WorldModeCallbacks = {
     onEnterVillage: () => void;
-    onStartBattle: (enemies: Skeleton[]) => void;
+    onStartBattle: (enemies: Skeleton[], terrainType: TerrainType) => void;
     onAddBattleLog: (message: string, type?: string) => void;
     onUpdateHUD: () => void;
 };
@@ -87,7 +88,7 @@ export default class WorldModeController {
 
         const encounter = this.encounterSystem.generateEncounter(!isPreviouslyDiscovered);
         if (encounter.type === 'battle') {
-            this.callbacks.onStartBattle(encounter.enemies);
+            this.callbacks.onStartBattle(encounter.enemies, this.worldMap.getCurrentTerrain().type);
             return;
         }
 
@@ -117,7 +118,7 @@ export default class WorldModeController {
     private handleTravelerEncounter(traveler: Wanderer, isHostile: boolean): void {
         if (isHostile) {
             this.callbacks.onAddBattleLog(`${traveler.name} turns hostile! ${traveler.getEncounterDescription()}`, 'enemy');
-            this.callbacks.onStartBattle([traveler]);
+            this.callbacks.onStartBattle([traveler], this.worldMap.getCurrentTerrain().type);
             return;
         }
 
@@ -125,7 +126,7 @@ export default class WorldModeController {
         const wantsAmbush = window.confirm('A peaceful wanderer appears. Attack first?');
         if (wantsAmbush) {
             this.callbacks.onAddBattleLog('You strike first!', 'player');
-            this.callbacks.onStartBattle([traveler]);
+            this.callbacks.onStartBattle([traveler], this.worldMap.getCurrentTerrain().type);
             return;
         }
 
