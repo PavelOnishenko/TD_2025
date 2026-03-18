@@ -13,6 +13,8 @@ import {
     levelConfig
 } from '../config/levelConfig.js';
 import { balanceConfig } from '../config/balanceConfig.js';
+import { cloneBaseStats, normalizeCreatureSkills } from '../config/creatureStats.js';
+import { CreatureBaseStats, CreatureSkills } from '../config/creatureTypes.js';
 import Item from './Item.js';
 import { createItemById } from './Item.js';
 import PlayerInventory from './PlayerInventory.js';
@@ -219,11 +221,12 @@ export default class Player extends DamageableEntity {
         const previousMaxMana = this.maxMana;
         const previousMana = this.mana;
         const hadFullMana = previousMaxMana > 0 && previousMana === previousMaxMana;
-        this.maxMana = calculateMana(this.connection, this.intelligence);
         const equippedArmor = this.equippedArmor;
         const armorFlatBonus = equippedArmor?.effects.flatArmor ?? 0;
-        this.armor = calculateArmor(this.toughness) + armorFlatBonus;
-        this.maxHp = calculateMaxHp(this.vitality);
+        const baseStats = this.getBaseStatsRecord();
+        this.maxMana = calculateMana(this.connection, this.intelligence) - balanceConfig.player.baseMana + baseStats.mana;
+        this.armor = calculateArmor(this.toughness) + armorFlatBonus + baseStats.armor;
+        this.maxHp = calculateMaxHp(this.vitality) - balanceConfig.player.baseHp + baseStats.hp;
         this.avoidChance = calculateAvoidChance(this.agility);
 
         const meleeStatBonus = calculateMeleeDamageBonus(this.strength, this.agility);
@@ -517,6 +520,22 @@ export default class Player extends DamageableEntity {
 
     public draw(ctx: CanvasRenderingContext2D, viewport?: any): void {
         this.renderer.draw(ctx, this);
+    }
+
+
+    public getBaseStatsRecord(): CreatureBaseStats {
+        return cloneBaseStats(balanceConfig.creatureArchetypes.human.baseStats);
+    }
+
+    public getSkillRecord(): CreatureSkills {
+        return normalizeCreatureSkills({
+            vitality: this.vitality,
+            toughness: this.toughness,
+            strength: this.strength,
+            agility: this.agility,
+            connection: this.connection,
+            intelligence: this.intelligence,
+        });
     }
 
     public getState(): Record<string, unknown> {

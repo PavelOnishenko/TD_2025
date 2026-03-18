@@ -3,6 +3,7 @@ import Item from '../entities/Item.js';
 import { balanceConfig } from '../config/balanceConfig.js';
 import MagicSystem from './magic/MagicSystem.js';
 import { calculateBowDamageBonus, calculateMeleeDamageBonus } from '../config/levelConfig.js';
+import LoreBookController from './lore/LoreBookController.js';
 
 type PlayerStat = 'vitality' | 'toughness' | 'strength' | 'agility' | 'connection' | 'intelligence';
 type PendingSkillAllocations = Record<PlayerStat, number>;
@@ -74,16 +75,19 @@ type HudElements = {
     inventoryPanel: HTMLElement;
     magicPanel: HTMLElement;
     questsPanel: HTMLElement;
+    lorePanel: HTMLElement;
     questsBody: HTMLElement;
+    loreBody: HTMLElement;
     toggleStatsPanelBtn: HTMLButtonElement;
     toggleSkillsPanelBtn: HTMLButtonElement;
     toggleInventoryPanelBtn: HTMLButtonElement;
     toggleMagicPanelBtn: HTMLButtonElement;
     toggleQuestsPanelBtn: HTMLButtonElement;
+    toggleLorePanelBtn: HTMLButtonElement;
 };
 
 
-type HudPanel = 'stats' | 'skills' | 'inventory' | 'magic' | 'quests';
+type HudPanel = 'stats' | 'skills' | 'inventory' | 'magic' | 'quests' | 'lore';
 
 type BattleUiHudElements = {
     usePotionBtn: HTMLButtonElement;
@@ -102,15 +106,17 @@ export default class HudController {
     private battleUI: BattleUiHudElements;
     private magicSystem: MagicSystem;
     private gameLog: HTMLElement;
+    private loreBookController: LoreBookController;
     private draggedInventoryIndex: number | null = null;
     private pendingSkillAllocations: PendingSkillAllocations = { vitality: 0, toughness: 0, strength: 0, agility: 0, connection: 0, intelligence: 0 };
 
-    constructor(player: Player, hudElements: HudElements, battleUI: BattleUiHudElements, magicSystem: MagicSystem, gameLog: HTMLElement) {
+    constructor(player: Player, hudElements: HudElements, battleUI: BattleUiHudElements, magicSystem: MagicSystem, gameLog: HTMLElement, loreBookController: LoreBookController) {
         this.player = player;
         this.hudElements = hudElements;
         this.battleUI = battleUI;
         this.magicSystem = magicSystem;
         this.gameLog = gameLog;
+        this.loreBookController = loreBookController;
         this.bindEquipmentSlotEvents();
     }
 
@@ -175,6 +181,7 @@ export default class HudController {
         const attackRange = this.player.getAttackRange();
         this.battleUI.attackRangeText.textContent = attackRange === 1 ? 'Attack when adjacent (1 tile)' : `Attack from ${attackRange} tiles away`;
 
+        this.loreBookController.render();
         this.updateStatButtons(remainingSkillPoints);
         this.updateSpellButtons();
         this.updateToggleButtons();
@@ -187,6 +194,7 @@ export default class HudController {
             inventory: this.hudElements.inventoryPanel,
             magic: this.hudElements.magicPanel,
             quests: this.hudElements.questsPanel,
+            lore: this.hudElements.lorePanel,
         };
 
         panelMap[panel].classList.toggle('hidden');
@@ -526,6 +534,7 @@ export default class HudController {
         this.hudElements.toggleInventoryPanelBtn.classList.toggle('active', !this.hudElements.inventoryPanel.classList.contains('hidden'));
         this.hudElements.toggleMagicPanelBtn.classList.toggle('active', !this.hudElements.magicPanel.classList.contains('hidden'));
         this.hudElements.toggleQuestsPanelBtn.classList.toggle('active', !this.hudElements.questsPanel.classList.contains('hidden'));
+        this.hudElements.toggleLorePanelBtn.classList.toggle('active', !this.hudElements.lorePanel.classList.contains('hidden'));
     }
 
     private updateSpellButtons(): void {

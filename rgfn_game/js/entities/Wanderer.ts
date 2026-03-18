@@ -1,6 +1,8 @@
 import { randomInt } from '../../../engine/utils/MathUtils.js';
 import { balanceConfig } from '../config/balanceConfig.js';
-import { calculateArmor, calculateAvoidChance, calculateMana, calculateMeleeDamageBonus, calculateBowDamageBonus, calculateMaxHp } from '../config/levelConfig.js';
+import { deriveCreatureStats, formatCreatureSkills, normalizeCreatureSkills } from '../config/creatureStats.js';
+import { calculateBowDamageBonus, calculateMeleeDamageBonus } from '../config/levelConfig.js';
+import { CreatureSkill, CreatureSkills, CREATURE_SKILLS } from '../config/creatureTypes.js';
 import Item, { DISCOVERABLE_ITEM_LIBRARY } from './Item.js';
 import Skeleton from './Skeleton.js';
 
@@ -8,42 +10,35 @@ const ITEM_ROLLS_BY_LEVEL = [2, 2, 3, 3, 4, 4, 5, 5, 6, 6];
 
 export default class Wanderer extends Skeleton {
     public level: number;
-    public vitality: number;
-    public toughness: number;
-    public strength: number;
-    public agility: number;
-    public connection: number;
-    public intelligence: number;
-    public magicPoints: number;
-    public mana: number;
-    public avoidChance: number;
-    private armorValue: number;
     private armorAbsorbedHp: number;
     private inventory: Item[];
     private equippedWeapon: Item | null;
     private equippedArmor: Item | null;
 
     constructor(level: number, inventory: Item[]) {
-        super(0, 0, { hp: 1, damage: 1, xpValue: 3 * level, name: `Wanderer Lv.${level}`, width: 30, height: 30 });
+        super(0, 0, {
+            archetypeId: 'human',
+            xpValue: 3 * level,
+            name: `Wanderer Lv.${level}`,
+            width: 30,
+            height: 30,
+        });
         this.level = level;
-        this.vitality = 0;
-        this.toughness = 0;
-        this.strength = 0;
-        this.agility = 0;
-        this.connection = 0;
-        this.intelligence = 0;
-        this.magicPoints = 0;
-        this.mana = 0;
-        this.avoidChance = 0;
-        this.armorValue = 0;
         this.armorAbsorbedHp = 0;
         this.inventory = inventory;
         this.equippedWeapon = null;
         this.equippedArmor = null;
-        this.rollStats();
+        this.rollSkills();
         this.chooseBestEquipment();
         this.refreshDerivedStats();
     }
+
+    public get vitality(): number { return this.skills.vitality; }
+    public get toughness(): number { return this.skills.toughness; }
+    public get strength(): number { return this.skills.strength; }
+    public get agility(): number { return this.skills.agility; }
+    public get connection(): number { return this.skills.connection; }
+    public get intelligence(): number { return this.skills.intelligence; }
 
     public static createRandom(): Wanderer {
         const level = this.rollLevel();
@@ -55,7 +50,7 @@ export default class Wanderer extends Skeleton {
     }
 
     public getMagicDamage(): number {
-        return 2 + this.magicPoints + Math.floor(this.intelligence / 4);
+        return 2 + this.magicPoints + Math.floor(this.skills.intelligence / 4);
     }
 
     public spendMana(amount: number): void {
@@ -75,14 +70,14 @@ export default class Wanderer extends Skeleton {
     }
 
     public getEncounterDescription(): string {
-        const skills = this.getSkillSummary();
+        const skills = formatCreatureSkills(this.skills);
         const magic = this.magicPoints > 0
             ? `Magic ${this.magicPoints} (damage ${this.getMagicDamage()}, mana cost ${this.getMagicManaCost()})`
             : 'No magic';
         const equippedWeapon = this.equippedWeapon?.name ?? 'Bare hands';
         const equippedArmor = this.equippedArmor?.name ?? 'No armor';
 
-        return `Skills: ${skills}. ${magic}. Equipped: ${equippedWeapon}, ${equippedArmor}.`;
+        return `Base stats: HP ${this.baseStats.hp}, DMG ${this.baseStats.damage}, ARM ${this.baseStats.armor}, Mana ${this.baseStats.mana}. Skills: ${skills}. ${magic}. Equipped: ${equippedWeapon}, ${equippedArmor}.`;
     }
 
     public takeDamage(amount: number): boolean {
@@ -94,7 +89,7 @@ export default class Wanderer extends Skeleton {
         const reduced = Math.floor(amount * (1 - reduction));
         const cap = this.equippedArmor?.effects.maxAbsorbHp;
         const depleted = typeof cap === 'number' && this.armorAbsorbedHp >= cap;
-        const armor = depleted ? 0 : this.armorValue;
+        const armor = depleted ? 0 : this.armor;
         const finalDamage = Math.max(balanceConfig.combat.minDamageAfterArmor, reduced - armor);
         const absorbed = Math.max(0, reduced - finalDamage);
 
@@ -102,7 +97,11 @@ export default class Wanderer extends Skeleton {
             this.armorAbsorbedHp += absorbed;
         }
 
-        return super.takeDamage(finalDamage);
+        return super.takeMagicDamage(finalDamage);
+    }
+
+    public getSkillRecord(): CreatureSkills {
+        return normalizeCreatureSkills(this.skills);
     }
 
     private static rollLevel(): number {
@@ -123,19 +122,14 @@ export default class Wanderer extends Skeleton {
         return inventory;
     }
 
-    private rollStats(): void {
+    private rollSkills(): void {
         let points = this.level * 5;
-        const keys: Array<'vitality' | 'toughness' | 'strength' | 'agility' | 'connection' | 'intelligence'> = [
-            'vitality', 'toughness', 'strength', 'agility', 'connection', 'intelligence',
-        ];
 
         while (points > 0) {
-            const key = keys[randomInt(0, keys.length - 1)];
-            this[key] += 1;
+            const key = CREATURE_SKILLS[randomInt(0, CREATURE_SKILLS.length - 1)] as CreatureSkill;
+            this.skills[key] += 1;
             points -= 1;
         }
-
-        this.magicPoints = Math.floor(this.intelligence / 3);
     }
 
     private chooseBestEquipment(): void {
@@ -147,32 +141,24 @@ export default class Wanderer extends Skeleton {
     }
 
     private refreshDerivedStats(): void {
-        this.armorValue = calculateArmor(this.toughness) + (this.equippedArmor?.effects.flatArmor ?? 0);
-        this.avoidChance = calculateAvoidChance(this.agility);
-        this.maxHp = calculateMaxHp(this.vitality);
+        const derived = deriveCreatureStats(this.baseStats, this.skills);
+        this.maxHp = derived.maxHp;
         this.hp = this.maxHp;
-        this.mana = calculateMana(this.connection, this.intelligence);
+        this.armor = derived.armor + (this.equippedArmor?.effects.flatArmor ?? 0);
+        this.avoidChance = derived.avoidChance;
+        this.maxMana = derived.maxMana;
+        this.magicPoints = derived.magicPoints;
+        this.mana = this.maxMana;
         this.damage = this.computeDamage();
     }
 
     private canEquip(item: Item): boolean {
-        return this.agility >= (item.requirements.agility ?? 0) && this.strength >= (item.requirements.strength ?? 0);
-    }
-
-    private getSkillSummary(): string {
-        return [
-            `STR ${this.strength}`,
-            `AGI ${this.agility}`,
-            `VIT ${this.vitality}`,
-            `TGH ${this.toughness}`,
-            `CON ${this.connection}`,
-            `INT ${this.intelligence}`,
-        ].join(', ');
+        return this.skills.agility >= (item.requirements.agility ?? 0) && this.skills.strength >= (item.requirements.strength ?? 0);
     }
 
     private computeDamage(): number {
-        const meleeBonus = calculateMeleeDamageBonus(this.strength, this.agility);
-        const rangedBonus = calculateBowDamageBonus(this.strength, this.agility);
+        const meleeBonus = calculateMeleeDamageBonus(this.skills.strength, this.skills.agility);
+        const rangedBonus = calculateBowDamageBonus(this.skills.strength, this.skills.agility);
         const fistBase = balanceConfig.combat.fistDamagePerHand;
         if (!this.equippedWeapon) {
             return fistBase * 2 + meleeBonus;

@@ -24,10 +24,10 @@ export default class GameVillageCoordinator {
         this.villageActionsController = villageActionsController;
     }
 
-    public enterVillageMode(width: number, height: number): void {
+    public enterVillageMode(width: number, height: number, villageName: string): void {
         this.hudElements.modeIndicator.textContent = 'Village';
         this.battleUI.sidebar.classList.add('hidden');
-        this.villageLifeRenderer.initialize(width, height);
+        this.villageLifeRenderer.initialize(width, height, villageName);
         this.villageActionsController.enterVillage(this.villageLifeRenderer.getVillageName());
     }
 

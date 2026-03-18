@@ -3,14 +3,73 @@
  * Centralized location for all game balance parameters
  */
 
+import { CreatureArchetype } from './creatureTypes.js';
+
+const creatureArchetypes: Record<string, CreatureArchetype> = {
+    human: {
+        id: 'human',
+        name: 'Human',
+        category: 'character',
+        description: 'Baseline humans begin with balanced bodies and grow entirely through learned skills.',
+        baseStats: { hp: 5, damage: 2, armor: 0, mana: 3 },
+        skills: { vitality: 0, toughness: 0, strength: 0, agility: 0, connection: 0, intelligence: 0 },
+        loreTags: ['villagers', 'travelers', 'heroes'],
+        notes: ['Humans use the same six-skill system as the player character.'],
+    },
+    skeleton: {
+        id: 'skeleton',
+        name: 'Skeleton',
+        category: 'monster',
+        description: 'Animated bones with no magic reserves and only a hint of martial training.',
+        baseStats: { hp: 3, damage: 1, armor: 0, mana: 0 },
+        skills: { vitality: 0, toughness: 0, strength: 0, agility: 0, connection: 0, intelligence: 0 },
+        notes: ['No skill investment means the skeleton fights with its natural base profile only.'],
+    },
+    zombie: {
+        id: 'zombie',
+        name: 'Zombie',
+        category: 'monster',
+        description: 'Rotting corpses with extra staying power from raw vitality.',
+        baseStats: { hp: 5, damage: 1, armor: 0, mana: 0 },
+        skills: { vitality: 2, toughness: 0, strength: 0, agility: 0, connection: 0, intelligence: 0 },
+    },
+    ninja: {
+        id: 'ninja',
+        name: 'Ninja',
+        category: 'mutant',
+        description: 'Fast mutant assassins that convert agility and strength into higher burst damage.',
+        baseStats: { hp: 4, damage: 2, armor: 0, mana: 0 },
+        skills: { vitality: 1, toughness: 0, strength: 2, agility: 2, connection: 0, intelligence: 0 },
+        notes: ['Their encounter behavior still grants an additional separate dodge-like avoid-hit chance.'],
+    },
+    darkKnight: {
+        id: 'darkKnight',
+        name: 'Dark Knight',
+        category: 'mutant',
+        description: 'Heavily trained mutant champions with layered toughness and strength.',
+        baseStats: { hp: 10, damage: 3, armor: 0, mana: 0 },
+        skills: { vitality: 5, toughness: 6, strength: 4, agility: 0, connection: 0, intelligence: 0 },
+        notes: ['Their encounter behavior still allows occasional double-damage strikes.'],
+    },
+    dragon: {
+        id: 'dragon',
+        name: 'Dragon',
+        category: 'mutant',
+        description: 'Ancient mutant beasts with immense vitality, dense scales, and crushing strength.',
+        baseStats: { hp: 30, damage: 8, armor: 0, mana: 0 },
+        skills: { vitality: 20, toughness: 9, strength: 4, agility: 2, connection: 0, intelligence: 0 },
+        notes: ['Dragons sometimes ignore an encounter entirely before combat begins.'],
+    },
+};
+
 export const balanceConfig = {
     // ============ PLAYER STATS ============
     player: {
         // Base stats (without any stat points allocated)
-        baseHp: 5,
-        baseDamage: 2,
-        baseArmor: 0,
-        baseMana: 3,
+        baseHp: creatureArchetypes.human.baseStats.hp,
+        baseDamage: creatureArchetypes.human.baseStats.damage,
+        baseArmor: creatureArchetypes.human.baseStats.armor,
+        baseMana: creatureArchetypes.human.baseStats.mana,
 
         // Initial allocated stats at game start
         initialVitality: 0,
@@ -33,8 +92,9 @@ export const balanceConfig = {
 
     // ============ ENEMY STATS ============
     enemies: {
-        hpMultiplier: 2,
+        hpMultiplier: 1,
         skeleton: {
+            archetypeId: 'skeleton',
             hp: 3,
             damage: 1,
             xpValue: 3,
@@ -43,6 +103,7 @@ export const balanceConfig = {
             height: 30,
         },
         zombie: {
+            archetypeId: 'zombie',
             hp: 7,
             damage: 1,
             xpValue: 5,
@@ -51,6 +112,7 @@ export const balanceConfig = {
             height: 30,
         },
         ninja: {
+            archetypeId: 'ninja',
             hp: 5,
             damage: 3,
             xpValue: 7,
@@ -62,6 +124,7 @@ export const balanceConfig = {
             },
         },
         darkKnight: {
+            archetypeId: 'darkKnight',
             hp: 15,
             damage: 5,
             xpValue: 12,
@@ -73,6 +136,7 @@ export const balanceConfig = {
             },
         },
         dragon: {
+            archetypeId: 'dragon',
             hp: 50,
             damage: 10,
             xpValue: 25,
@@ -201,6 +265,8 @@ export const balanceConfig = {
             { id: 'armor_t4', weight: 1 },
         ],
     },
+
+    creatureArchetypes,
 
     // ============ ENCOUNTER SETTINGS ============
     encounters: {

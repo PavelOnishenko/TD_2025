@@ -3,6 +3,14 @@ import { FogState, TerrainData, GridPosition, Direction, GridCell, TerrainNeighb
 import { theme } from '../../config/ThemeConfig.js';
 import WorldMapRenderer from './WorldMapRenderer.js';
 
+export type KnownVillage = {
+    name: string;
+    col: number;
+    row: number;
+    terrain: TerrainType;
+    status: 'current' | 'mapped';
+};
+
 const FOG_STATE = {
     UNKNOWN: 'unknown' as FogState,
     DISCOVERED: 'discovered' as FogState,
@@ -298,6 +306,40 @@ export default class WorldMap {
             heat: 0.5,
             seed: 0,
         };
+    }
+
+    public getVillageNameAtPlayerPosition(): string {
+        return this.getVillageName(this.playerGridPos.col, this.playerGridPos.row);
+    }
+
+    public getKnownVillages(): KnownVillage[] {
+        return Array.from(this.villages.values())
+            .map((key) => {
+                const [colText, rowText] = key.split(',');
+                const col = Number(colText);
+                const row = Number(rowText);
+                if (this.getFogState(col, row) === FOG_STATE.UNKNOWN) {
+                    return null;
+                }
+                const terrain = this.getTerrain(col, row)?.type ?? 'grass';
+                const isCurrent = col === this.playerGridPos.col && row === this.playerGridPos.row;
+                return {
+                    name: this.getVillageName(col, row),
+                    col,
+                    row,
+                    terrain,
+                    status: isCurrent ? 'current' : 'mapped',
+                };
+            })
+            .filter((entry): entry is KnownVillage => entry !== null)
+            .sort((left, right) => left.name.localeCompare(right.name));
+    }
+
+    private getVillageName(col: number, row: number): string {
+        const first = ['Oak', 'River', 'Sun', 'Stone', 'Amber', 'Willow', 'Moss', 'Silver', 'Pine', 'Moon'];
+        const second = ['ford', 'field', 'brook', 'haven', 'hill', 'cross', 'watch', 'stead', 'rest', 'meadow'];
+        const seed = Math.abs(((col + 11) * 92837111) ^ ((row + 17) * 689287499));
+        return `${first[seed % first.length]}${second[Math.floor(seed / first.length) % second.length]}`;
     }
 
     public isPlayerOnVillage(): boolean {

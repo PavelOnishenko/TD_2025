@@ -43,7 +43,7 @@ export default class GameHudCoordinator {
     }
 
 
-    public togglePanel(panel: 'stats' | 'skills' | 'inventory' | 'magic' | 'quests'): void {
+    public togglePanel(panel: 'stats' | 'skills' | 'inventory' | 'magic' | 'quests' | 'lore'): void {
         this.hudController.togglePanel(panel);
     }
 
