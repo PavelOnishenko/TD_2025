@@ -20,6 +20,7 @@ export type HudElements = {
     playerGold: HTMLElement;
     skillPoints: HTMLElement;
     magicPoints: HTMLElement;
+    magicPanelPoints: HTMLElement;
     statVitality: HTMLElement;
     statToughness: HTMLElement;
     statStrength: HTMLElement;

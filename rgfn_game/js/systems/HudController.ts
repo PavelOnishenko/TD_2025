@@ -27,6 +27,7 @@ type HudElements = {
     playerGold: HTMLElement;
     skillPoints: HTMLElement;
     magicPoints: HTMLElement;
+    magicPanelPoints: HTMLElement;
     statVitality: HTMLElement;
     statToughness: HTMLElement;
     statStrength: HTMLElement;
@@ -136,6 +137,7 @@ export default class HudController {
 
         this.hudElements.skillPoints.textContent = String(remainingSkillPoints);
         this.hudElements.magicPoints.textContent = String(this.player.magicPoints);
+        this.hudElements.magicPanelPoints.textContent = String(this.player.magicPoints);
         this.hudElements.statVitality.textContent = String(this.player.vitality + this.pendingSkillAllocations.vitality);
         this.hudElements.statToughness.textContent = String(this.player.toughness + this.pendingSkillAllocations.toughness);
         this.hudElements.statStrength.textContent = String(this.player.strength + this.pendingSkillAllocations.strength);
