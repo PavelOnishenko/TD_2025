@@ -256,6 +256,45 @@
                     <h3>Queued events</h3>
                     <ol id="dev-events-queue" class="dev-events-queue"></ol>
                 </div>
+                <div class="dev-events-queue-wrap">
+                    <h3>Next new character roll</h3>
+                    <p id="dev-next-roll-summary" class="dev-events-hint dev-events-hint-tight">Next character roll: random.</p>
+                    <button id="dev-next-roll-open-btn" class="action-btn" type="button">Setup Next Roll</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="dev-next-roll-modal" class="dev-events-modal hidden" role="dialog" aria-modal="true" aria-labelledby="dev-next-roll-title">
+            <div class="dev-events-panel dev-roll-panel">
+                <div class="dev-events-header">
+                    <h2 id="dev-next-roll-title">Next Character Roll</h2>
+                    <button id="dev-next-roll-close-btn" class="action-btn" type="button">Close</button>
+                </div>
+                <p class="dev-events-hint">Set the exact skill roll for the next new character. This override is consumed once after you start a new character.</p>
+                <div class="dev-roll-grid">
+                    <label for="dev-next-roll-vitality">Vitality</label>
+                    <input id="dev-next-roll-vitality" type="number" min="0" step="1" value="0">
+                    <label for="dev-next-roll-toughness">Toughness</label>
+                    <input id="dev-next-roll-toughness" type="number" min="0" step="1" value="0">
+                    <label for="dev-next-roll-strength">Strength</label>
+                    <input id="dev-next-roll-strength" type="number" min="0" step="1" value="0">
+                    <label for="dev-next-roll-agility">Agility</label>
+                    <input id="dev-next-roll-agility" type="number" min="0" step="1" value="0">
+                    <label for="dev-next-roll-connection">Connection</label>
+                    <input id="dev-next-roll-connection" type="number" min="0" step="1" value="0">
+                    <label for="dev-next-roll-intelligence">Intelligence</label>
+                    <input id="dev-next-roll-intelligence" type="number" min="0" step="1" value="0">
+                </div>
+                <div class="dev-roll-footer">
+                    <div>
+                        <strong>Total points:</strong> <span id="dev-next-roll-total">0 / 0</span>
+                    </div>
+                    <div id="dev-next-roll-status" class="dev-events-hint">Allocate the required number of points to save.</div>
+                </div>
+                <div class="dev-roll-actions">
+                    <button id="dev-next-roll-save-btn" class="action-btn" type="button">Save Next Roll</button>
+                    <button id="dev-next-roll-clear-btn" class="action-btn secondary" type="button">Clear Override</button>
+                </div>
             </div>
         </div>
     </div>

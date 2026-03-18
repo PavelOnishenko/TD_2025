@@ -172,6 +172,22 @@ export default class GameUiFactory {
             queueList: document.getElementById('dev-events-queue')!,
             addBtn: document.getElementById('dev-event-add-btn')! as HTMLButtonElement,
             clearBtn: document.getElementById('dev-event-clear-btn')! as HTMLButtonElement,
+            nextRollOpenBtn: document.getElementById('dev-next-roll-open-btn')! as HTMLButtonElement,
+            nextRollSummary: document.getElementById('dev-next-roll-summary')!,
+            nextRollModal: document.getElementById('dev-next-roll-modal')!,
+            nextRollCloseBtn: document.getElementById('dev-next-roll-close-btn')! as HTMLButtonElement,
+            nextRollTotal: document.getElementById('dev-next-roll-total')!,
+            nextRollStatus: document.getElementById('dev-next-roll-status')!,
+            nextRollSaveBtn: document.getElementById('dev-next-roll-save-btn')! as HTMLButtonElement,
+            nextRollClearBtn: document.getElementById('dev-next-roll-clear-btn')! as HTMLButtonElement,
+            nextRollInputs: {
+                vitality: document.getElementById('dev-next-roll-vitality')! as HTMLInputElement,
+                toughness: document.getElementById('dev-next-roll-toughness')! as HTMLInputElement,
+                strength: document.getElementById('dev-next-roll-strength')! as HTMLInputElement,
+                agility: document.getElementById('dev-next-roll-agility')! as HTMLInputElement,
+                connection: document.getElementById('dev-next-roll-connection')! as HTMLInputElement,
+                intelligence: document.getElementById('dev-next-roll-intelligence')! as HTMLInputElement,
+            },
         };
     }
 }
