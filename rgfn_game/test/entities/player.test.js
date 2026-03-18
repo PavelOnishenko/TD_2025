@@ -48,6 +48,9 @@ test('Player addXp levels up, grants skill points and carries overflow XP', () =
 
 test('Player addStat succeeds only with enough skill points and updates stats', () => {
   const player = new Player(0, 0);
+  player.strength = 0;
+  player.agility = 0;
+  player.updateStats();
   player.skillPoints = 0;
 
   assert.equal(player.addStat('strength'), false);
@@ -56,7 +59,7 @@ test('Player addStat succeeds only with enough skill points and updates stats', 
   const success = player.addStat('strength', 2);
 
   assert.equal(success, true);
-  assert.equal(player.strength >= 2, true);
+  assert.equal(player.strength, 2);
   assert.equal(player.skillPoints, 0);
   assert.equal(player.damage, balanceConfig.combat.fistDamagePerHand * 2 + 2);
 });
@@ -85,6 +88,25 @@ test('Player keeps full mana state when max mana increases', () => {
 
   assert.equal(player.maxMana >= oldMaxMana + 1, true);
   assert.equal(player.mana <= player.maxMana, true);
+});
+
+test('Player starts with magic points when initial intelligence is already high enough', () => {
+  const originalInitialIntelligence = balanceConfig.player.initialIntelligence;
+  const originalInitialRandomAllocatedSkillPoints = balanceConfig.player.initialRandomAllocatedSkillPoints;
+
+  balanceConfig.player.initialIntelligence = 3;
+  balanceConfig.player.initialRandomAllocatedSkillPoints = 0;
+
+  try {
+    const player = new Player(0, 0);
+
+    assert.equal(player.intelligence, 3);
+    assert.equal(player.magicPoints, 1);
+    assert.equal(player.maxMana >= balanceConfig.player.baseMana + 1, true);
+  } finally {
+    balanceConfig.player.initialIntelligence = originalInitialIntelligence;
+    balanceConfig.player.initialRandomAllocatedSkillPoints = originalInitialRandomAllocatedSkillPoints;
+  }
 });
 
 test('Player intelligence grants mana fraction and magic points each 3 points', () => {

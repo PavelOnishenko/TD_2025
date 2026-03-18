@@ -122,6 +122,7 @@ export default class Player extends DamageableEntity {
         this.intelligence = balanceConfig.player.initialIntelligence;
         this.skillPoints = balanceConfig.player.initialSkillPoints;
         this.allocateRandomStartingStats();
+        this.magicPoints = Math.floor(this.intelligence / 3);
 
         this.inventorySystem = new PlayerInventory({
             getInventoryCapacity: () => this.getInventoryCapacity(),
