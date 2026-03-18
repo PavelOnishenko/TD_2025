@@ -4,6 +4,10 @@
  */
 
 export const balanceConfig = {
+    worldMap: {
+        visibilityRadius: 2,
+    },
+
     // ============ PLAYER STATS ============
     player: {
         // Base stats (without any stat points allocated)

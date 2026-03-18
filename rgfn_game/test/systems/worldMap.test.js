@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import WorldMap from '../../dist/systems/world/WorldMap.js';
+import { balanceConfig } from '../../dist/config/balanceConfig.js';
 import { theme } from '../../dist/config/ThemeConfig.js';
 import { createMockCanvasContext } from '../helpers/testUtils.js';
 
@@ -64,6 +65,68 @@ test('WorldMap marks revisited cells as previously discovered', () => {
   assert.equal(result.isPreviouslyDiscovered, true);
 });
 
+test('WorldMap applies terrain-based line of sight rules', () => {
+  const worldMap = new WorldMap(12, 9, 10);
+  const originalRadius = balanceConfig.worldMap.visibilityRadius;
+  balanceConfig.worldMap.visibilityRadius = 2;
+
+  try {
+    worldMap.terrainData.set('7,4', {
+      ...worldMap.terrainData.get('7,4'),
+      type: 'forest',
+      color: theme.worldMap.terrain.forest,
+      pattern: 'groves',
+    });
+    worldMap.terrainData.set('8,4', {
+      ...worldMap.terrainData.get('8,4'),
+      type: 'grass',
+      color: theme.worldMap.terrain.grass,
+      pattern: 'plain',
+    });
+    worldMap.terrainData.set('6,3', {
+      ...worldMap.terrainData.get('6,3'),
+      type: 'mountain',
+      color: theme.worldMap.terrain.mountain,
+      pattern: 'ridges',
+    });
+    worldMap.terrainData.set('6,2', {
+      ...worldMap.terrainData.get('6,2'),
+      type: 'grass',
+      color: theme.worldMap.terrain.grass,
+      pattern: 'plain',
+    });
+
+    worldMap.restoreState(worldMap.getState());
+
+    assert.equal(worldMap.isCellVisible(7, 4), false);
+    assert.equal(worldMap.isCellVisible(8, 4), false);
+    assert.equal(worldMap.isCellVisible(6, 3), true);
+    assert.equal(worldMap.isCellVisible(6, 2), false);
+    assert.equal(worldMap.isCellVisible(5, 4), true);
+  } finally {
+    balanceConfig.worldMap.visibilityRadius = originalRadius;
+  }
+});
+
+test('WorldMap exposes selected cell info from mouse position', () => {
+  const worldMap = new WorldMap(12, 9, 20);
+
+  worldMap.updateSelectedCellFromPixel(130, 90);
+
+  assert.deepEqual(worldMap.getSelectedCellInfo(), {
+    col: 6,
+    row: 4,
+    terrainType: worldMap.getCurrentTerrain().type,
+    fogState: 'discovered',
+    isVisible: true,
+    isVillage: false,
+    isTraversable: worldMap.getCurrentTerrain().type !== 'water',
+  });
+
+  worldMap.clearSelectedCell();
+  assert.equal(worldMap.getSelectedCellInfo(), null);
+});
+
 test('WorldMap draw renders terrain, fog and grid without throwing', () => {
   const worldMap = new WorldMap(12, 9, 16);
   const ctx = createMockCanvasContext();
@@ -94,5 +157,5 @@ test('WorldMap drawGrid aligns to grid offsets after canvas resize and theme off
   }
 
   const moveToCalls = ctx.calls.filter(c => c[0] === 'moveTo');
-  assert.ok(moveToCalls.some(c => c[1] === 3 && c[2] === 4));
+  assert.ok(moveToCalls.some(c => c[1] === 5 && c[2] === 18));
 });

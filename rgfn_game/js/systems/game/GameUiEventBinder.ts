@@ -18,7 +18,9 @@ type GameUiEventCallbacks = {
     onCastSpell: (spellId: BaseSpellId) => void;
     onUpgradeSpell: (spellId: BaseSpellId) => void;
     onCanvasClick: (event: MouseEvent) => void;
-    onTogglePanel: (panel: 'stats' | 'skills' | 'inventory' | 'magic' | 'quests') => void;
+    onCanvasMove: (event: MouseEvent) => void;
+    onCanvasLeave: () => void;
+    onTogglePanel: (panel: 'stats' | 'skills' | 'inventory' | 'magic' | 'quests' | 'selected') => void;
 };
 
 export default class GameUiEventBinder {
@@ -58,6 +60,8 @@ export default class GameUiEventBinder {
         this.bindStatEvents();
 
         this.canvas.addEventListener('click', (event: MouseEvent) => this.callbacks.onCanvasClick(event));
+        this.canvas.addEventListener('mousemove', (event: MouseEvent) => this.callbacks.onCanvasMove(event));
+        this.canvas.addEventListener('mouseleave', () => this.callbacks.onCanvasLeave());
     }
 
     private bindBattleEvents(): void {
@@ -79,6 +83,7 @@ export default class GameUiEventBinder {
         this.hudElements.toggleInventoryPanelBtn.addEventListener('click', () => this.callbacks.onTogglePanel('inventory'));
         this.hudElements.toggleMagicPanelBtn.addEventListener('click', () => this.callbacks.onTogglePanel('magic'));
         this.hudElements.toggleQuestsPanelBtn.addEventListener('click', () => this.callbacks.onTogglePanel('quests'));
+        this.hudElements.toggleSelectedPanelBtn.addEventListener('click', () => this.callbacks.onTogglePanel('selected'));
     }
 
     private bindVillageEvents(villageNameProvider: () => string): void {

@@ -1,7 +1,8 @@
 import GridMap from '../../utils/GridMap.js';
-import { FogState, TerrainData, GridPosition, Direction, GridCell, TerrainNeighbors, TerrainType } from '../../types/game.js';
+import { FogState, TerrainData, GridPosition, Direction, GridCell, TerrainNeighbors, TerrainType, SelectedWorldCellInfo } from '../../types/game.js';
 import { theme } from '../../config/ThemeConfig.js';
 import WorldMapRenderer from './WorldMapRenderer.js';
+import { balanceConfig } from '../../config/balanceConfig.js';
 
 const FOG_STATE = {
     UNKNOWN: 'unknown' as FogState,
@@ -15,6 +16,8 @@ export default class WorldMap {
     private fogStates: Map<string, FogState>;
     private terrainData: Map<string, TerrainData>;
     private villages: Set<string>;
+    private visitedCells: Set<string>;
+    private selectedGridPos: GridPosition | null;
     private renderer: WorldMapRenderer;
 
     constructor(columns: number, rows: number, cellSize: number) {
@@ -23,12 +26,15 @@ export default class WorldMap {
         this.fogStates = new Map();
         this.terrainData = new Map();
         this.villages = new Set();
+        this.visitedCells = new Set();
+        this.selectedGridPos = null;
         this.renderer = new WorldMapRenderer();
         this.initializeFogOfWar();
         this.generateTerrain();
         this.ensureTraversablePlayerStart();
         this.generateVillages();
-        this.discoverCell(this.playerGridPos.col, this.playerGridPos.row);
+        this.visitedCells.add(this.getCellKey(this.playerGridPos.col, this.playerGridPos.row));
+        this.refreshVisibility();
     }
 
     private initializeFogOfWar(): void {
@@ -219,14 +225,20 @@ export default class WorldMap {
         return `${col},${row}`;
     }
 
-    private discoverCell(col: number, row: number): void {
-        const key = this.getCellKey(col, row);
-        this.fogStates.set(key, FOG_STATE.DISCOVERED);
-        this.grid.forEachCell((_cell: GridCell, c: number, r: number) => {
-            const cellKey = this.getCellKey(c, r);
-            if (this.fogStates.get(cellKey) === FOG_STATE.DISCOVERED && cellKey !== key) {
-                this.fogStates.set(cellKey, FOG_STATE.HIDDEN);
+    private refreshVisibility(): void {
+        this.grid.forEachCell((_cell: GridCell, col: number, row: number) => {
+            const key = this.getCellKey(col, row);
+            if (this.fogStates.get(key) === FOG_STATE.DISCOVERED) {
+                this.fogStates.set(key, FOG_STATE.HIDDEN);
             }
+        });
+
+        this.grid.forEachCell((_cell: GridCell, col: number, row: number) => {
+            if (!this.isCellVisible(col, row)) {
+                return;
+            }
+
+            this.fogStates.set(this.getCellKey(col, row), FOG_STATE.DISCOVERED);
         });
     }
 
@@ -236,6 +248,43 @@ export default class WorldMap {
 
     private getTerrain(col: number, row: number): TerrainData | undefined {
         return this.terrainData.get(this.getCellKey(col, row));
+    }
+
+    public isCellVisible(col: number, row: number): boolean {
+        if (!this.grid.isValidPosition(col, row)) {
+            return false;
+        }
+
+        const dx = col - this.playerGridPos.col;
+        const dy = row - this.playerGridPos.row;
+        const visibilityRadius = balanceConfig.worldMap.visibilityRadius ?? 2;
+        if (Math.max(Math.abs(dx), Math.abs(dy)) > visibilityRadius) {
+            return false;
+        }
+
+        if (dx === 0 && dy === 0) {
+            return true;
+        }
+
+        const line = this.getLineBetween(this.playerGridPos.col, this.playerGridPos.row, col, row);
+        for (let index = 1; index < line.length; index += 1) {
+            const step = line[index];
+            const terrain = this.getTerrain(step.col, step.row);
+            if (!terrain) {
+                return false;
+            }
+
+            const isTarget = step.col === col && step.row === row;
+            if (terrain.type === 'forest') {
+                return false;
+            }
+
+            if (terrain.type === 'mountain') {
+                return isTarget;
+            }
+        }
+
+        return true;
     }
 
     private getTerrainNeighbors(col: number, row: number, terrainType: TerrainType): TerrainNeighbors {
@@ -261,6 +310,36 @@ export default class WorldMap {
         };
     }
 
+    private getLineBetween(startCol: number, startRow: number, endCol: number, endRow: number): GridPosition[] {
+        const points: GridPosition[] = [];
+        let currentCol = startCol;
+        let currentRow = startRow;
+        const deltaCol = Math.abs(endCol - startCol);
+        const deltaRow = Math.abs(endRow - startRow);
+        const stepCol = startCol < endCol ? 1 : -1;
+        const stepRow = startRow < endRow ? 1 : -1;
+        let error = deltaCol - deltaRow;
+
+        while (true) {
+            points.push({ col: currentCol, row: currentRow });
+            if (currentCol === endCol && currentRow === endRow) {
+                break;
+            }
+
+            const doubleError = error * 2;
+            if (doubleError > -deltaRow) {
+                error -= deltaRow;
+                currentCol += stepCol;
+            }
+            if (doubleError < deltaCol) {
+                error += deltaCol;
+                currentRow += stepRow;
+            }
+        }
+
+        return points;
+    }
+
     public movePlayer(direction: Direction): { moved: boolean; isPreviouslyDiscovered: boolean } {
         const { col, row } = this.playerGridPos;
         let newCol = col;
@@ -283,10 +362,11 @@ export default class WorldMap {
                 return { moved: false, isPreviouslyDiscovered: false };
             }
 
-            const destinationFogState = this.getFogState(newCol, newRow);
-            const isPreviouslyDiscovered = destinationFogState === FOG_STATE.HIDDEN || destinationFogState === FOG_STATE.DISCOVERED;
+            const destinationKey = this.getCellKey(newCol, newRow);
+            const isPreviouslyDiscovered = this.visitedCells.has(destinationKey);
             this.playerGridPos = { col: newCol, row: newRow };
-            this.discoverCell(newCol, newRow);
+            this.visitedCells.add(destinationKey);
+            this.refreshVisibility();
             return { moved: true, isPreviouslyDiscovered };
         }
         return { moved: false, isPreviouslyDiscovered: false };
@@ -353,6 +433,10 @@ export default class WorldMap {
         if (playerCell) {
             this.renderer.drawPlayerMarker(ctx, playerCell);
         }
+        const selectedCell = this.selectedGridPos ? this.grid.getCellAt(this.selectedGridPos.col, this.selectedGridPos.row) : null;
+        if (selectedCell) {
+            this.renderer.drawCursorMarker(ctx, selectedCell, this.isCellVisible(selectedCell.col, selectedCell.row));
+        }
         this.renderer.drawScaleLegend(ctx, this.grid, `${theme.worldMap.cellTravelMinutes} min walk / cell`);
     }
 
@@ -381,6 +465,7 @@ export default class WorldMap {
             playerGridPos: { ...this.playerGridPos },
             fogStates: Array.from(this.fogStates.entries()),
             villages: Array.from(this.villages.values()),
+            visitedCells: Array.from(this.visitedCells.values()),
         };
     }
 
@@ -402,5 +487,49 @@ export default class WorldMap {
         if (Array.isArray(state.villages)) {
             this.villages = new Set(state.villages.filter((entry): entry is string => typeof entry === 'string'));
         }
+
+        if (Array.isArray(state.visitedCells)) {
+            this.visitedCells = new Set(state.visitedCells.filter((entry): entry is string => typeof entry === 'string'));
+        } else {
+            this.visitedCells = new Set([this.getCellKey(this.playerGridPos.col, this.playerGridPos.row)]);
+        }
+
+        this.refreshVisibility();
+    }
+
+    public updateSelectedCellFromPixel(pixelX: number, pixelY: number): boolean {
+        const [col, row] = this.grid.pixelToGrid(pixelX, pixelY);
+        if (!this.grid.isValidPosition(col, row)) {
+            this.selectedGridPos = null;
+            return false;
+        }
+
+        this.selectedGridPos = { col, row };
+        return true;
+    }
+
+    public clearSelectedCell(): void {
+        this.selectedGridPos = null;
+    }
+
+    public getSelectedCellInfo(): SelectedWorldCellInfo | null {
+        if (!this.selectedGridPos) {
+            return null;
+        }
+
+        const terrain = this.getTerrain(this.selectedGridPos.col, this.selectedGridPos.row);
+        if (!terrain) {
+            return null;
+        }
+
+        return {
+            col: this.selectedGridPos.col,
+            row: this.selectedGridPos.row,
+            terrainType: terrain.type,
+            fogState: this.getFogState(this.selectedGridPos.col, this.selectedGridPos.row),
+            isVisible: this.isCellVisible(this.selectedGridPos.col, this.selectedGridPos.row),
+            isVillage: this.villages.has(this.getCellKey(this.selectedGridPos.col, this.selectedGridPos.row)),
+            isTraversable: terrain.type !== 'water',
+        };
     }
 }

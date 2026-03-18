@@ -57,7 +57,7 @@ export default class WorldMapRenderer {
         this.drawTerrain(ctx, cell, terrain, brightness, path);
         if (fogState === 'hidden') {
             ctx.save();
-            ctx.fillStyle = this.withAlpha(theme.ui.primaryAccent, 0.16);
+            ctx.fillStyle = this.withAlpha(theme.ui.primaryAccent, 0.3);
             ctx.fill(path);
             ctx.restore();
         }
@@ -107,6 +107,26 @@ export default class WorldMapRenderer {
         ctx.textAlign = 'left';
         ctx.textBaseline = 'middle';
         ctx.fillText(label, x + 10, y + legendHeight / 2);
+        ctx.restore();
+    }
+
+    public drawCursorMarker(ctx: CanvasRenderingContext2D, cell: GridCell, isVisible: boolean): void {
+        const inset = Math.max(2, cell.width * 0.08);
+        const path = this.createRoundedRectPath(
+            cell.x + inset,
+            cell.y + inset,
+            cell.width - (inset * 2),
+            cell.height - (inset * 2),
+            Math.max(5, cell.width * 0.18),
+        );
+
+        ctx.save();
+        ctx.strokeStyle = this.withAlpha(theme.ui.warningColor, isVisible ? 0.95 : 0.7);
+        ctx.lineWidth = Math.max(2, cell.width * 0.08);
+        ctx.setLineDash([6, 4]);
+        ctx.stroke(path);
+        ctx.fillStyle = this.withAlpha(theme.ui.warningColor, isVisible ? 0.16 : 0.08);
+        ctx.fill(path);
         ctx.restore();
     }
 

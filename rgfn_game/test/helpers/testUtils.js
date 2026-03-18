@@ -33,7 +33,29 @@ export function withPatchedMethod(target, key, implementation) {
 }
 
 export function createMockCanvasContext() {
+  if (typeof globalThis.Path2D === 'undefined') {
+    globalThis.Path2D = class Path2D {
+      moveTo() {}
+      lineTo() {}
+      quadraticCurveTo() {}
+      closePath() {}
+      rect() {}
+      addPath() {}
+    };
+  }
+
   const calls = [];
+  const createGradient = (...args) => {
+    const stops = [];
+    calls.push(['createLinearGradient', ...args]);
+    return {
+      addColorStop: (...stopArgs) => {
+        stops.push(stopArgs);
+        calls.push(['addColorStop', ...stopArgs]);
+      },
+      stops,
+    };
+  };
   const ctx = {
     calls,
     fillStyle: '',
@@ -42,17 +64,25 @@ export function createMockCanvasContext() {
     font: '',
     textAlign: 'left',
     textBaseline: 'alphabetic',
+    shadowColor: '',
+    shadowBlur: 0,
     beginPath: () => calls.push(['beginPath']),
     closePath: () => calls.push(['closePath']),
-    fill: () => calls.push(['fill']),
-    stroke: () => calls.push(['stroke']),
+    save: () => calls.push(['save']),
+    restore: () => calls.push(['restore']),
+    clip: (...args) => calls.push(['clip', ...args]),
+    fill: (...args) => calls.push(['fill', ...args]),
+    stroke: (...args) => calls.push(['stroke', ...args]),
     moveTo: (...args) => calls.push(['moveTo', ...args]),
     lineTo: (...args) => calls.push(['lineTo', ...args]),
+    quadraticCurveTo: (...args) => calls.push(['quadraticCurveTo', ...args]),
     arc: (...args) => calls.push(['arc', ...args]),
     ellipse: (...args) => calls.push(['ellipse', ...args]),
     fillRect: (...args) => calls.push(['fillRect', ...args]),
     strokeRect: (...args) => calls.push(['strokeRect', ...args]),
     fillText: (...args) => calls.push(['fillText', ...args]),
+    setLineDash: (...args) => calls.push(['setLineDash', ...args]),
+    createLinearGradient: createGradient,
   };
   return ctx;
 }
