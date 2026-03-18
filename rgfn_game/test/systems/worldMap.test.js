@@ -6,21 +6,48 @@ import { theme } from '../../dist/config/ThemeConfig.js';
 import { createMockCanvasContext } from '../helpers/testUtils.js';
 
 test('WorldMap starts player in center cell and exposes pixel position', () => {
-  const worldMap = new WorldMap(5, 5, 20);
+  const worldMap = new WorldMap(12, 9, 20);
 
   const [x, y] = worldMap.getPlayerPixelPosition();
-  assert.deepEqual([x, y], [50, 50]);
+  assert.deepEqual([x, y], [130, 90]);
 });
 
 test('WorldMap movePlayer handles blocked and valid moves', () => {
-  const worldMap = new WorldMap(3, 3, 10);
+  const worldMap = new WorldMap(12, 9, 10);
 
+  ['6,3', '6,2', '6,1', '6,0'].forEach((key) => {
+    const terrain = worldMap.terrainData.get(key);
+    worldMap.terrainData.set(key, {
+      ...terrain,
+      type: 'grass',
+      color: theme.worldMap.terrain.grass,
+      pattern: 'plain',
+    });
+  });
+
+  assert.deepEqual(worldMap.movePlayer('up'), { moved: true, isPreviouslyDiscovered: false });
+  assert.deepEqual(worldMap.movePlayer('up'), { moved: true, isPreviouslyDiscovered: false });
+  assert.deepEqual(worldMap.movePlayer('up'), { moved: true, isPreviouslyDiscovered: false });
   assert.deepEqual(worldMap.movePlayer('up'), { moved: true, isPreviouslyDiscovered: false });
   assert.deepEqual(worldMap.movePlayer('up'), { moved: false, isPreviouslyDiscovered: false });
 });
 
+test('WorldMap movePlayer blocks walking onto water tiles', () => {
+  const worldMap = new WorldMap(12, 9, 10);
+
+  worldMap.terrainData.set('6,3', {
+    ...worldMap.terrainData.get('6,3'),
+    type: 'water',
+    color: theme.worldMap.terrain.water,
+    pattern: 'waves',
+  });
+
+  assert.deepEqual(worldMap.movePlayer('up'), { moved: false, isPreviouslyDiscovered: false });
+  assert.deepEqual(worldMap.getPlayerPixelPosition(), [65, 45]);
+});
+
 test('WorldMap marks revisited cells as previously discovered', () => {
-  const worldMap = new WorldMap(5, 5, 10);
+  const worldMap = new WorldMap(12, 9, 10);
 
   worldMap.movePlayer('up');
   worldMap.movePlayer('down');
@@ -31,7 +58,7 @@ test('WorldMap marks revisited cells as previously discovered', () => {
 });
 
 test('WorldMap draw renders terrain, fog and grid without throwing', () => {
-  const worldMap = new WorldMap(4, 4, 16);
+  const worldMap = new WorldMap(12, 9, 16);
   const ctx = createMockCanvasContext();
 
   worldMap.draw(ctx, null);
@@ -43,7 +70,7 @@ test('WorldMap draw renders terrain, fog and grid without throwing', () => {
 
 
 test('WorldMap drawGrid aligns to grid offsets after canvas resize and theme offsets', () => {
-  const worldMap = new WorldMap(4, 4, 16);
+  const worldMap = new WorldMap(12, 9, 16);
   const ctx = createMockCanvasContext();
 
   const originalX = theme.worldMap.gridOffset.x;
