@@ -19,12 +19,19 @@ export type QuestNode = {
     description: string;
     conditionText: string;
     objectiveType: QuestObjectiveType;
+    entities: QuestTextEntity[];
     children: QuestNode[];
 };
 
 export type GeneratedName = {
     text: string;
+    domain: QuestNameDomain;
     sourceTypes: PackSourceType[];
+};
+
+export type QuestTextEntity = {
+    text: string;
+    type: 'location' | 'item' | 'person';
 };
 
 export type RareMonsterProfile = {

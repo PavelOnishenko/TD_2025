@@ -36,6 +36,7 @@ import GameBattleCoordinator from './systems/game/runtime/GameBattleCoordinator.
 import MagicSystem from './systems/magic/MagicSystem.js';
 import QuestGenerator from './systems/quest/QuestGenerator.js';
 import QuestUiController from './systems/quest/QuestUiController.js';
+import { QuestNode } from './systems/quest/QuestTypes.js';
 import { TerrainType } from './types/game.js';
 import { consumeNextCharacterRollAllocation } from './utils/NextCharacterRollConfig.js';
 
@@ -96,6 +97,15 @@ export default class Game {
             ui.hudElements.questIntroModal,
             ui.hudElements.questIntroBody,
             ui.hudElements.questIntroCloseBtn,
+            {
+                onLocationClick: (locationName: string) => {
+                    const shown = this.worldMap.revealNamedLocation(locationName);
+                    if (shown) {
+                        this.stateMachine.transition(MODES.WORLD_MAP);
+                    }
+                    return shown;
+                },
+            },
         );
         this.initializeQuestUi(questGenerator, questUiController);
         const magicSystem = new MagicSystem(player);
@@ -171,8 +181,21 @@ export default class Game {
 
     private async initializeQuestUi(questGenerator: QuestGenerator, questUiController: QuestUiController): Promise<void> {
         const quest = await questGenerator.generateMainQuest();
+        this.registerQuestLocations(quest);
         questUiController.renderQuest(quest);
         questUiController.showIntro();
+    }
+
+    private registerQuestLocations(quest: QuestNode): void {
+        for (const entity of quest.entities) {
+            if (entity.type === 'location') {
+                this.worldMap.registerNamedLocation(entity.text);
+            }
+        }
+
+        for (const child of quest.children) {
+            this.registerQuestLocations(child);
+        }
     }
 
 
@@ -312,5 +335,3 @@ export default class Game {
         window.location.reload();
     }
 }
-
-

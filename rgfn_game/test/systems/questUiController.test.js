@@ -26,19 +26,21 @@ test('QuestUiController hides the default boilerplate on the root quest but keep
   const modal = createElement();
   const intro = createElement();
   const closeBtn = createElement();
-  const controller = new QuestUiController(title, body, modal, intro, closeBtn);
+  const controller = new QuestUiController(title, body, modal, intro, closeBtn, { onLocationClick: () => false });
   const quest = {
     id: 'main',
     title: 'Signal Dawn',
     description: 'Complete every branch of this quest tree to prove your character can end the darkness over the region.',
     conditionText: 'All child objectives are completed.',
     objectiveType: 'scout',
+    entities: [],
     children: [{
       id: 'main.1',
       title: 'Escort Mira Vale',
       description: 'Guide Mira Vale through danger and reach Fog Chapel.',
       conditionText: 'Arrive at Fog Chapel with Mira Vale alive.',
       objectiveType: 'escort',
+      entities: [],
       children: [],
     }],
   };
@@ -53,7 +55,7 @@ test('QuestUiController hides the default boilerplate on the root quest but keep
 });
 
 test('QuestUiController opens and closes the intro modal through bound events', () => {
-  const controller = new QuestUiController(createElement(), createElement(), createElement(), createElement(), createElement());
+  const controller = new QuestUiController(createElement(), createElement(), createElement(), createElement(), createElement(), { onLocationClick: () => false });
   const modal = controller['introModal'];
   const closeBtn = controller['introCloseBtn'];
 
