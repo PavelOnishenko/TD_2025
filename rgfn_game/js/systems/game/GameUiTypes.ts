@@ -1,3 +1,5 @@
+import type { RandomEncounterType } from '../encounter/EncounterSystem.js';
+
 export type HudElements = {
     modeIndicator: HTMLElement;
     usePotionBtn: HTMLButtonElement;
@@ -118,6 +120,10 @@ export type DeveloperUI = {
     queueList: HTMLElement;
     addBtn: HTMLButtonElement;
     clearBtn: HTMLButtonElement;
+    encounterTypeSummary: HTMLElement;
+    enableAllEncountersBtn: HTMLButtonElement;
+    disableAllEncountersBtn: HTMLButtonElement;
+    encounterTypeToggles: Record<RandomEncounterType, HTMLInputElement>;
     nextRollOpenBtn: HTMLButtonElement;
     nextRollSummary: HTMLElement;
     nextRollModal: HTMLElement;

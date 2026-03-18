@@ -257,6 +257,20 @@
                     <ol id="dev-events-queue" class="dev-events-queue"></ol>
                 </div>
                 <div class="dev-events-queue-wrap">
+                    <h3>Random encounter types</h3>
+                    <p id="dev-encounter-types-summary" class="dev-events-hint dev-events-hint-tight">Enabled random encounters: Monster, Item, Village, Traveler.</p>
+                    <div class="dev-events-toggle-grid">
+                        <label class="dev-events-toggle" for="dev-encounter-type-monster"><input id="dev-encounter-type-monster" type="checkbox" checked> Monster</label>
+                        <label class="dev-events-toggle" for="dev-encounter-type-item"><input id="dev-encounter-type-item" type="checkbox" checked> Item</label>
+                        <label class="dev-events-toggle" for="dev-encounter-type-village"><input id="dev-encounter-type-village" type="checkbox" checked> Village</label>
+                        <label class="dev-events-toggle" for="dev-encounter-type-traveler"><input id="dev-encounter-type-traveler" type="checkbox" checked> Traveler</label>
+                    </div>
+                    <div class="dev-roll-actions">
+                        <button id="dev-encounter-types-enable-all-btn" class="action-btn" type="button">Enable All</button>
+                        <button id="dev-encounter-types-disable-all-btn" class="action-btn secondary" type="button">Disable All</button>
+                    </div>
+                </div>
+                <div class="dev-events-queue-wrap">
                     <h3>Next new character roll</h3>
                     <p id="dev-next-roll-summary" class="dev-events-hint dev-events-hint-tight">Next character roll: random.</p>
                     <button id="dev-next-roll-open-btn" class="action-btn" type="button">Setup Next Roll</button>

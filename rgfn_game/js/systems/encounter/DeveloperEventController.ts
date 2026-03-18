@@ -1,4 +1,4 @@
-import EncounterSystem, { ForcedEncounterType } from './EncounterSystem.js';
+import EncounterSystem, { ForcedEncounterType, RANDOM_ENCOUNTER_TYPES, RandomEncounterType } from './EncounterSystem.js';
 import { balanceConfig } from '../../config/balanceConfig.js';
 import {
     clearNextCharacterRollAllocation,
@@ -15,6 +15,8 @@ type DeveloperUI = {
     modal: HTMLElement;
     eventType: HTMLSelectElement;
     queueList: HTMLElement;
+    encounterTypeSummary: HTMLElement;
+    encounterTypeToggles: Record<RandomEncounterType, HTMLInputElement>;
     nextRollSummary: HTMLElement;
     nextRollModal: HTMLElement;
     nextRollTotal: HTMLElement;
@@ -27,6 +29,12 @@ type DeveloperCallbacks = {
     getEventLabel: (type: ForcedEncounterType) => string;
 };
 
+const ENCOUNTER_LABELS: Record<RandomEncounterType, string> = {
+    monster: 'Monster',
+    item: 'Item',
+    village: 'Village',
+    traveler: 'Traveler',
+};
 export default class DeveloperEventController {
     private developerUI: DeveloperUI;
     private encounterSystem: EncounterSystem;
@@ -37,7 +45,6 @@ export default class DeveloperEventController {
         this.encounterSystem = encounterSystem;
         this.callbacks = callbacks;
     }
-
     public toggleModal(forceVisible?: boolean): void {
         const shouldShow = typeof forceVisible === 'boolean'
             ? forceVisible
@@ -46,22 +53,30 @@ export default class DeveloperEventController {
         this.developerUI.modal.classList.toggle('hidden', !shouldShow);
         if (shouldShow) {
             this.renderQueue();
+            this.renderEncounterTypeControls();
             this.renderNextCharacterRollSummary();
         }
     }
-
     public handleQueueAdd(): void {
         const type = this.developerUI.eventType.value as ForcedEncounterType;
         this.encounterSystem.queueForcedEncounter(type);
         this.renderQueue();
         this.callbacks.addVillageLog(`[DEV] Queued event: ${this.callbacks.getEventLabel(type)}`, 'system');
     }
-
     public handleQueueClear(): void {
         this.encounterSystem.clearForcedEncounters();
         this.renderQueue();
     }
-
+    public handleEncounterTypeToggle(type: RandomEncounterType, enabled: boolean): void {
+        this.encounterSystem.setEncounterTypeEnabled(type, enabled);
+        this.renderEncounterTypeControls();
+        this.callbacks.addVillageLog(`[DEV] ${ENCOUNTER_LABELS[type]} encounters ${enabled ? 'enabled' : 'disabled'}.`, 'system');
+    }
+    public handleEncounterTypesToggleAll(enabled: boolean): void {
+        this.encounterSystem.setAllEncounterTypesEnabled(enabled);
+        this.renderEncounterTypeControls();
+        this.callbacks.addVillageLog(`[DEV] ${enabled ? 'Enabled' : 'Disabled'} all random encounter types.`, 'system');
+    }
     public toggleNextCharacterRollModal(forceVisible?: boolean): void {
         const shouldShow = typeof forceVisible === 'boolean'
             ? forceVisible
@@ -72,11 +87,9 @@ export default class DeveloperEventController {
             this.renderNextCharacterRollEditor();
         }
     }
-
     public handleNextCharacterRollInputChanged(): void {
         this.renderNextCharacterRollEditor(this.readNextCharacterRollInputs());
     }
-
     public handleNextCharacterRollSave(): void {
         const allocation = this.readNextCharacterRollInputs();
         const total = getNextCharacterRollAllocationTotal(allocation);
@@ -92,7 +105,6 @@ export default class DeveloperEventController {
         this.renderNextCharacterRollSummary();
         this.callbacks.addVillageLog(`[DEV] Next character roll saved: ${summarizeNextCharacterRollAllocation(allocation)}`, 'system');
     }
-
     public handleNextCharacterRollClear(): void {
         clearNextCharacterRollAllocation();
         const emptyAllocation = createEmptyNextCharacterRollAllocation();
@@ -100,6 +112,40 @@ export default class DeveloperEventController {
         this.renderNextCharacterRollEditor(emptyAllocation);
         this.renderNextCharacterRollSummary();
         this.callbacks.addVillageLog('[DEV] Cleared next character roll override.', 'system');
+    }
+    public renderQueue(): void {
+        const queue = this.encounterSystem.getForcedEncounterQueue();
+        this.developerUI.queueList.innerHTML = '';
+
+        if (queue.length === 0) {
+            const item = document.createElement('li');
+            item.textContent = 'No queued events.';
+            this.developerUI.queueList.appendChild(item);
+            return;
+        }
+
+        queue.forEach((entry, index) => {
+            const item = document.createElement('li');
+            item.textContent = `${index + 1}. ${this.callbacks.getEventLabel(entry)}`;
+            this.developerUI.queueList.appendChild(item);
+        });
+    }
+
+    private renderEncounterTypeControls(): void {
+        const states = this.encounterSystem.getEncounterTypeStates();
+        RANDOM_ENCOUNTER_TYPES.forEach((type) => {
+            this.developerUI.encounterTypeToggles[type].checked = states[type];
+        });
+        this.developerUI.encounterTypeSummary.textContent = this.createEncounterSummary(states);
+    }
+
+    private createEncounterSummary(states: Record<RandomEncounterType, boolean>): string {
+        const enabledLabels = RANDOM_ENCOUNTER_TYPES.filter((type) => states[type]).map((type) => ENCOUNTER_LABELS[type]);
+        if (enabledLabels.length === 0) {
+            return 'Random encounters disabled. Forced queue still works.';
+        }
+
+        return `Enabled random encounters: ${enabledLabels.join(', ')}.`;
     }
 
     private renderNextCharacterRollSummary(): void {
@@ -121,12 +167,15 @@ export default class DeveloperEventController {
 
         this.writeNextCharacterRollInputs(normalizedAllocation);
         this.developerUI.nextRollTotal.textContent = `${total} / ${expectedTotal}`;
-        this.setNextCharacterRollStatus(
-            total === expectedTotal
-                ? 'Saved setup will be consumed by the next new character only.'
-                : `Allocate exactly ${expectedTotal} points to save this roll.`,
-            total !== expectedTotal,
-        );
+        this.setNextCharacterRollStatus(this.getNextCharacterRollStatus(total, expectedTotal), total !== expectedTotal);
+    }
+
+    private getNextCharacterRollStatus(total: number, expectedTotal: number): string {
+        if (total === expectedTotal) {
+            return 'Saved setup will be consumed by the next new character only.';
+        }
+
+        return `Allocate exactly ${expectedTotal} points to save this roll.`;
     }
 
     private setNextCharacterRollStatus(message: string, isError: boolean): void {
@@ -136,35 +185,16 @@ export default class DeveloperEventController {
 
     private readNextCharacterRollInputs() {
         const allocation = createEmptyNextCharacterRollAllocation();
-
         getPlayerStats().forEach((stat) => {
-            allocation[stat] = Math.max(0, Math.floor(Number.parseInt(this.developerUI.nextRollInputs[stat].value || '0', 10) || 0));
+            const value = Number.parseInt(this.developerUI.nextRollInputs[stat].value || '0', 10) || 0;
+            allocation[stat] = Math.max(0, Math.floor(value));
         });
-
         return allocation;
     }
 
     private writeNextCharacterRollInputs(allocation: ReturnType<typeof createEmptyNextCharacterRollAllocation>): void {
         getPlayerStats().forEach((stat) => {
             this.developerUI.nextRollInputs[stat].value = String(allocation[stat]);
-        });
-    }
-
-    public renderQueue(): void {
-        const queue = this.encounterSystem.getForcedEncounterQueue();
-        this.developerUI.queueList.innerHTML = '';
-
-        if (queue.length === 0) {
-            const item = document.createElement('li');
-            item.textContent = 'No queued events.';
-            this.developerUI.queueList.appendChild(item);
-            return;
-        }
-
-        queue.forEach((entry, index) => {
-            const item = document.createElement('li');
-            item.textContent = `${index + 1}. ${this.callbacks.getEventLabel(entry)}`;
-            this.developerUI.queueList.appendChild(item);
         });
     }
 }

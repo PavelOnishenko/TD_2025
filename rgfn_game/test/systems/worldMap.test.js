@@ -41,9 +41,16 @@ test('WorldMap movePlayer blocks walking onto water tiles', () => {
     color: theme.worldMap.terrain.water,
     pattern: 'waves',
   });
+  worldMap.terrainData.set('7,4', {
+    ...worldMap.terrainData.get('7,4'),
+    type: 'grass',
+    color: theme.worldMap.terrain.grass,
+    pattern: 'plain',
+  });
 
   assert.deepEqual(worldMap.movePlayer('up'), { moved: false, isPreviouslyDiscovered: false });
   assert.deepEqual(worldMap.getPlayerPixelPosition(), [65, 45]);
+  assert.deepEqual(worldMap.movePlayer('right'), { moved: true, isPreviouslyDiscovered: false });
 });
 
 test('WorldMap marks revisited cells as previously discovered', () => {

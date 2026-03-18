@@ -135,10 +135,8 @@ export default class GameUiFactory {
         };
     }
 
-
     private createGameLogUi(): GameLogUI {
         const logElement = document.getElementById('game-log')!;
-
         this.setupAutoScrollingGameLog(logElement);
 
         return {
@@ -172,6 +170,15 @@ export default class GameUiFactory {
             queueList: document.getElementById('dev-events-queue')!,
             addBtn: document.getElementById('dev-event-add-btn')! as HTMLButtonElement,
             clearBtn: document.getElementById('dev-event-clear-btn')! as HTMLButtonElement,
+            encounterTypeSummary: document.getElementById('dev-encounter-types-summary')!,
+            enableAllEncountersBtn: document.getElementById('dev-encounter-types-enable-all-btn')! as HTMLButtonElement,
+            disableAllEncountersBtn: document.getElementById('dev-encounter-types-disable-all-btn')! as HTMLButtonElement,
+            encounterTypeToggles: {
+                monster: document.getElementById('dev-encounter-type-monster')! as HTMLInputElement,
+                item: document.getElementById('dev-encounter-type-item')! as HTMLInputElement,
+                village: document.getElementById('dev-encounter-type-village')! as HTMLInputElement,
+                traveler: document.getElementById('dev-encounter-type-traveler')! as HTMLInputElement,
+            },
             nextRollOpenBtn: document.getElementById('dev-next-roll-open-btn')! as HTMLButtonElement,
             nextRollSummary: document.getElementById('dev-next-roll-summary')!,
             nextRollModal: document.getElementById('dev-next-roll-modal')!,
