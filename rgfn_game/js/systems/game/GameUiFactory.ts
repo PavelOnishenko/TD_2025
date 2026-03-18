@@ -35,6 +35,7 @@ export default class GameUiFactory {
             playerGold: document.getElementById('player-gold')!,
             skillPoints: document.getElementById('skill-points')!,
             magicPoints: document.getElementById('magic-points')!,
+            magicPanelPoints: document.getElementById('magic-panel-points')!,
             statVitality: document.getElementById('stat-vitality')!,
             statToughness: document.getElementById('stat-toughness')!,
             statStrength: document.getElementById('stat-strength')!,
