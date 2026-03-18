@@ -154,7 +154,11 @@ export default class QuestPackService {
     }
 
     private titleCase(words: string[]): string {
-        return words.map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+        return words.map((word) => this.capitalizeWord(word)).join(' ');
+    }
+
+    private capitalizeWord(word: string): string {
+        return word.split('-').map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join('-');
     }
 
     private wordList(text: string): string[] {
