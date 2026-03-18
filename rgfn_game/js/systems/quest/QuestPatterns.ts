@@ -18,6 +18,8 @@ const LOCATION_PATTERNS: LocalPattern[] = [
     { domain: 'location', tokens: ['NOUN', 'WEAPON'] },
     { domain: 'location', tokens: ['ADJECTIVE', 'NOUN', 'NOUN'] },
     { domain: 'location', tokens: ['WEAPON'] },
+    { domain: 'location', tokens: ['ADJECTIVE', 'NOUN', 'PREPOSITION', 'NOUN'] },
+    { domain: 'location', tokens: ['WEAPON', 'NOUN', 'PREPOSITION', 'NOUN'] },
 ];
 
 const ARTIFACT_PATTERNS: LocalPattern[] = [

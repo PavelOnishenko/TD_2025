@@ -57,7 +57,7 @@ export default class QuestPackService {
 
     public async generateName(domain: QuestNameDomain, maxWords: number): Promise<GeneratedName> {
         await this.initialize();
-        const target = this.random.nextInt(1, maxWords);
+        const target = this.pickWordTarget(domain, maxWords);
         const words: string[] = [];
         const sourceTypes: PackSourceType[] = [];
         while (words.length < target) {
@@ -66,7 +66,32 @@ export default class QuestPackService {
             words.push(...(await source.generate(limit)).slice(0, limit));
             sourceTypes.push(source.type);
         }
-        return { text: this.titleCase(words), sourceTypes };
+        return { text: this.titleCase(words), domain, sourceTypes };
+    }
+
+    private pickWordTarget(domain: QuestNameDomain, maxWords: number): number {
+        const cap = Math.max(1, maxWords);
+        if (domain !== 'location') {
+            return this.random.nextInt(1, cap);
+        }
+
+        const weightedTargets = [
+            { words: 2, weight: 42 },
+            { words: 1, weight: 38 },
+            { words: 3, weight: 17 },
+            { words: 4, weight: 3 },
+        ].filter((entry) => entry.words <= cap);
+
+        const totalWeight = weightedTargets.reduce((sum, entry) => sum + entry.weight, 0);
+        let roll = this.random.nextInt(1, totalWeight);
+        for (const entry of weightedTargets) {
+            roll -= entry.weight;
+            if (roll <= 0) {
+                return entry.words;
+            }
+        }
+
+        return Math.min(2, cap);
     }
 
     private async loadAssets(): Promise<void> {

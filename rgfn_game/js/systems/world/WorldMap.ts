@@ -16,6 +16,8 @@ export default class WorldMap {
     private terrainData: Map<string, TerrainData>;
     private villages: Set<string>;
     private renderer: WorldMapRenderer;
+    private namedLocations: Map<string, GridPosition>;
+    private focusedLocationName: string | null;
 
     constructor(columns: number, rows: number, cellSize: number) {
         this.grid = new GridMap(columns, rows, cellSize);
@@ -24,6 +26,8 @@ export default class WorldMap {
         this.terrainData = new Map();
         this.villages = new Set();
         this.renderer = new WorldMapRenderer();
+        this.namedLocations = new Map();
+        this.focusedLocationName = null;
         this.initializeFogOfWar();
         this.generateTerrain();
         this.generateVillages();
@@ -329,11 +333,37 @@ export default class WorldMap {
         });
         this.renderer.drawGrid(ctx, this.grid, dims.width, dims.height);
         this.drawVillages(ctx);
+        this.drawNamedLocationFocus(ctx);
         const playerCell = this.grid.getCellAt(this.playerGridPos.col, this.playerGridPos.row);
         if (playerCell) {
             this.renderer.drawPlayerMarker(ctx, playerCell);
         }
         this.renderer.drawScaleLegend(ctx, this.grid, `${theme.worldMap.cellTravelMinutes} min walk / cell`);
+    }
+
+    public registerNamedLocation(name: string): void {
+        if (this.namedLocations.has(name)) {
+            return;
+        }
+
+        const position = this.findNamedLocationPosition();
+        if (position) {
+            this.namedLocations.set(name, position);
+        }
+    }
+
+    public revealNamedLocation(name: string): boolean {
+        const position = this.namedLocations.get(name);
+        if (!position || !this.isDiscovered(position.col, position.row)) {
+            return false;
+        }
+
+        this.focusedLocationName = name;
+        return true;
+    }
+
+    public clearFocusedLocation(): void {
+        this.focusedLocationName = null;
     }
 
     private drawVillages(ctx: CanvasRenderingContext2D): void {
@@ -382,5 +412,51 @@ export default class WorldMap {
         if (Array.isArray(state.villages)) {
             this.villages = new Set(state.villages.filter((entry): entry is string => typeof entry === 'string'));
         }
+    }
+
+    private findNamedLocationPosition(): GridPosition | null {
+        const dims = this.grid.getDimensions();
+        const attempts = dims.columns * dims.rows * 2;
+
+        for (let attempt = 0; attempt < attempts; attempt++) {
+            const col = Math.floor(Math.random() * dims.columns);
+            const row = Math.floor(Math.random() * dims.rows);
+            const terrain = this.getTerrain(col, row);
+            const key = this.getCellKey(col, row);
+
+            if (!terrain || terrain.type === 'water' || this.namedLocationsHasCell(key)) {
+                continue;
+            }
+
+            return { col, row };
+        }
+
+        return null;
+    }
+
+    private namedLocationsHasCell(key: string): boolean {
+        return Array.from(this.namedLocations.values()).some((position) => this.getCellKey(position.col, position.row) === key);
+    }
+
+    private isDiscovered(col: number, row: number): boolean {
+        return this.getFogState(col, row) !== FOG_STATE.UNKNOWN;
+    }
+
+    private drawNamedLocationFocus(ctx: CanvasRenderingContext2D): void {
+        if (!this.focusedLocationName) {
+            return;
+        }
+
+        const position = this.namedLocations.get(this.focusedLocationName);
+        if (!position) {
+            return;
+        }
+
+        const cell = this.grid.getCellAt(position.col, position.row);
+        if (!cell) {
+            return;
+        }
+
+        this.renderer.drawNamedLocationFocus(ctx, cell, this.focusedLocationName);
     }
 }

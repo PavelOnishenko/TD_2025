@@ -55,6 +55,6 @@ export default class QuestGenerator {
     }
 
     private node(id: string, title: string, description: string, conditionText: string, children: QuestNode[]): QuestNode {
-        return { id, title, description, conditionText, objectiveType: 'scout', children };
+        return { id, title, description, conditionText, objectiveType: 'scout', entities: [], children };
     }
 }

@@ -110,6 +110,43 @@ export default class WorldMapRenderer {
         ctx.restore();
     }
 
+    public drawNamedLocationFocus(ctx: CanvasRenderingContext2D, cell: GridCell, label: string): void {
+        const inset = Math.max(3, cell.width * 0.08);
+        const path = this.createRoundedRectPath(
+            cell.x + inset,
+            cell.y + inset,
+            cell.width - (inset * 2),
+            cell.height - (inset * 2),
+            Math.max(5, cell.width * 0.16),
+        );
+
+        ctx.save();
+        ctx.strokeStyle = this.withAlpha(theme.ui.locationNameColor, 0.95);
+        ctx.lineWidth = 3;
+        ctx.setLineDash([6, 4]);
+        ctx.stroke(path);
+        ctx.setLineDash([]);
+
+        const textWidth = Math.min(220, Math.max(70, (label.length * 7) + 22));
+        const textHeight = 24;
+        const textX = Math.max(8, Math.min(cell.x, (cell.x + cell.width) - textWidth + 12));
+        const textY = Math.max(8, cell.y - textHeight - 6);
+        const bubble = this.createRoundedRectPath(textX, textY, textWidth, textHeight, 8);
+
+        ctx.fillStyle = this.withAlpha(theme.ui.primaryBg, 0.95);
+        ctx.fill(bubble);
+        ctx.strokeStyle = this.withAlpha(theme.ui.locationNameColor, 0.75);
+        ctx.lineWidth = 1.5;
+        ctx.stroke(bubble);
+
+        ctx.fillStyle = theme.ui.locationNameColor;
+        ctx.font = 'bold 12px Georgia';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(label, textX + 10, textY + (textHeight / 2));
+        ctx.restore();
+    }
+
     private drawVillageGlow(ctx: CanvasRenderingContext2D, x: number, y: number, glow: number): void {
         ctx.save();
         ctx.shadowColor = this.withAlpha(this.mixColors(theme.ui.warningColor, theme.ui.panelHighlight, 0.55), 0.95);

@@ -21,6 +21,9 @@ export interface Theme {
     textMuted: string;
     panelShadow: string;
     panelHighlight: string;
+    locationNameColor: string;
+    itemNameColor: string;
+    personNameColor: string;
   };
 
   // Entity Colors
@@ -111,6 +114,9 @@ const GAME_THEME: Theme = {
     textMuted: '#5b4630',
     panelShadow: '#947145',
     panelHighlight: '#f2e5c9',
+    locationNameColor: '#355d8c',
+    itemNameColor: '#7b4a24',
+    personNameColor: '#6f2f75',
   },
   entities: {
     player: {
@@ -202,4 +208,7 @@ export function applyThemeToCSS(): void {
   root.style.setProperty('--color-text-muted', theme.ui.textMuted);
   root.style.setProperty('--color-panel-shadow', theme.ui.panelShadow);
   root.style.setProperty('--color-panel-highlight', theme.ui.panelHighlight);
+  root.style.setProperty('--color-location-name', theme.ui.locationNameColor);
+  root.style.setProperty('--color-item-name', theme.ui.itemNameColor);
+  root.style.setProperty('--color-person-name', theme.ui.personNameColor);
 }
