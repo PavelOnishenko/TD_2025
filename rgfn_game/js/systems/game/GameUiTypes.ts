@@ -65,10 +65,16 @@ export type HudElements = {
     skillsPanel: HTMLElement;
     inventoryPanel: HTMLElement;
     magicPanel: HTMLElement;
+    questsPanel: HTMLElement;
+    questsBody: HTMLElement;
     toggleStatsPanelBtn: HTMLButtonElement;
     toggleSkillsPanelBtn: HTMLButtonElement;
     toggleInventoryPanelBtn: HTMLButtonElement;
     toggleMagicPanelBtn: HTMLButtonElement;
+    toggleQuestsPanelBtn: HTMLButtonElement;
+    questIntroModal: HTMLElement;
+    questIntroBody: HTMLElement;
+    questIntroCloseBtn: HTMLButtonElement;
 };
 
 export type BattleUI = {

@@ -80,10 +80,16 @@ export default class GameUiFactory {
             skillsPanel: document.getElementById('skills-panel')!,
             inventoryPanel: document.getElementById('inventory-panel')!,
             magicPanel: document.getElementById('magic-panel')!,
+            questsPanel: document.getElementById('quests-panel')!,
+            questsBody: document.getElementById('quests-body')!,
             toggleStatsPanelBtn: document.getElementById('toggle-stats-panel-btn')! as HTMLButtonElement,
             toggleSkillsPanelBtn: document.getElementById('toggle-skills-panel-btn')! as HTMLButtonElement,
             toggleInventoryPanelBtn: document.getElementById('toggle-inventory-panel-btn')! as HTMLButtonElement,
             toggleMagicPanelBtn: document.getElementById('toggle-magic-panel-btn')! as HTMLButtonElement,
+            toggleQuestsPanelBtn: document.getElementById('toggle-quests-panel-btn')! as HTMLButtonElement,
+            questIntroModal: document.getElementById('quest-intro-modal')!,
+            questIntroBody: document.getElementById('quest-intro-body')!,
+            questIntroCloseBtn: document.getElementById('quest-intro-close-btn')! as HTMLButtonElement,
         };
     }
 

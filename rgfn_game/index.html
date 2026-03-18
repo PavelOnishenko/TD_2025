@@ -19,6 +19,7 @@
                     <button id="toggle-skills-panel-btn" class="action-btn" type="button">Skills</button>
                     <button id="toggle-inventory-panel-btn" class="action-btn" type="button">Inventory</button>
                     <button id="toggle-magic-panel-btn" class="action-btn" type="button">Magic</button>
+                    <button id="toggle-quests-panel-btn" class="action-btn" type="button">Quests</button>
                 </div>
                 <button id="use-potion-btn" class="action-btn">Use HP Potion</button>
                 <button id="use-mana-potion-btn" class="action-btn">Use Mana Potion</button>
@@ -129,6 +130,10 @@
                             <div class="stat-row"><span>Arcane Lance Lv <span id="spell-level-arcane-lance">0</span></span><button id="upgrade-arcane-lance-btn" class="stat-btn" title="Spend 1 magic point">+</button></div>
                             <div id="spell-details-arcane-lance" class="spell-details"></div>
                         </div>
+                    </div>
+                    <div id="quests-panel" class="hud-section stats hidden">
+                        <div class="stat">Main Quest: Path of the Returning Dawn</div>
+                        <div id="quests-body" class="quests-body"></div>
                     </div>
                 </div>
                 <div class="game-area-cell" id="r1c2">
@@ -254,6 +259,18 @@
             </div>
         </div>
     </div>
+
+
+        <div id="quest-intro-modal" class="quest-intro-modal" role="dialog" aria-modal="true" aria-labelledby="quest-intro-title">
+            <div class="quest-intro-panel">
+                <div class="quest-intro-header">
+                    <h2 id="quest-intro-title">Main Quest</h2>
+                    <button id="quest-intro-close-btn" class="action-btn" type="button">Close</button>
+                </div>
+                <p class="quest-intro-hint">This central quest determines whether your character has truly completed the game.</p>
+                <div id="quest-intro-body" class="quests-body"></div>
+            </div>
+        </div>
 
     <script type="module" src="dist/main.js"></script>
 </body>
