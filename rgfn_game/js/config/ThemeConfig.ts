@@ -73,6 +73,17 @@ export interface Theme {
       columns: number;
       rows: number;
     };
+    viewportSize: {
+      width: number;
+      height: number;
+    };
+    cellSize: {
+      default: number;
+      min: number;
+      max: number;
+      zoomStep: number;
+      panStepCells: number;
+    };
     cellTravelMinutes: number;
     cellCornerRadius: number;
     connectorRadius: number;
@@ -151,7 +162,7 @@ const GAME_THEME: Theme = {
       village: 0.5,
     },
     questionMarkOffset: {
-      x: 15,
+      x: 0,
       y: 0,
     },
     gridOffset: {
@@ -159,8 +170,19 @@ const GAME_THEME: Theme = {
       y: 0,
     },
     gridDimensions: {
-      columns: 12,
-      rows: 9,
+      columns: 100,
+      rows: 100,
+    },
+    viewportSize: {
+      width: 720,
+      height: 720,
+    },
+    cellSize: {
+      default: 28,
+      min: 8,
+      max: 64,
+      zoomStep: 4,
+      panStepCells: 4,
     },
     cellTravelMinutes: 20,
     cellCornerRadius: 10,
@@ -211,4 +233,6 @@ export function applyThemeToCSS(): void {
   root.style.setProperty('--color-location-name', theme.ui.locationNameColor);
   root.style.setProperty('--color-item-name', theme.ui.itemNameColor);
   root.style.setProperty('--color-person-name', theme.ui.personNameColor);
+  root.style.setProperty('--world-map-width', `${theme.worldMap.viewportSize.width}px`);
+  root.style.setProperty('--world-map-height', `${theme.worldMap.viewportSize.height}px`);
 }

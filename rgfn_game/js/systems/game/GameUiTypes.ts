@@ -5,6 +5,12 @@ export type HudElements = {
     usePotionBtn: HTMLButtonElement;
     useManaPotionBtn: HTMLButtonElement;
     newCharacterBtn: HTMLButtonElement;
+    worldMapZoomInBtn: HTMLButtonElement;
+    worldMapZoomOutBtn: HTMLButtonElement;
+    worldMapPanUpBtn: HTMLButtonElement;
+    worldMapPanDownBtn: HTMLButtonElement;
+    worldMapPanLeftBtn: HTMLButtonElement;
+    worldMapPanRightBtn: HTMLButtonElement;
     playerLevel: HTMLElement;
     playerName: HTMLElement;
     playerXp: HTMLElement;

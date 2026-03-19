@@ -15,5 +15,6 @@ window.addEventListener('load', (): void => {
 
     console.log('RGFN - Turn-Based RPG started!');
     console.log('Use Arrow Keys or WASD to move on the world map (hold two directions for diagonal travel)');
+    console.log('Use + / - to zoom the map, and I / J / K / L or the on-screen buttons to pan it.');
     console.log('Random encounters will trigger battles');
 });
