@@ -26,7 +26,6 @@ test('QuestPackService falls back to local and echo sources when remote APIs are
   const random = new ScriptedQuestRandom({ ints: [90], picks: ['local-pattern', ['ADJECTIVE', 'NOUN', 'PREPOSITION'], 'ashen', 'causeway', 'beyond'] });
   const fetchImpl = createFetchStub({
     'restcountries.com': new Error('offline'),
-    'random-word-api': new Error('offline'),
     'randomuser.me': new Error('offline'),
   });
   const service = new QuestPackService({ fetchImpl, random, fileReader: createFileReader() });
@@ -51,7 +50,6 @@ test('QuestPackService uses remote location packs only after successful availabi
   });
   const fetchImpl = createFetchStub({
     'restcountries.com': [{ name: { common: 'glass harbor' }, capital: ['mist bay'], region: 'north reach', subregion: 'inner rim' }],
-    'random-word-api': new Error('offline'),
     'randomuser.me': new Error('offline'),
   });
   const service = new QuestPackService({ fetchImpl, random, fileReader: createFileReader() });
@@ -66,7 +64,6 @@ test('QuestPackService can use the remote name source for character packs', asyn
   const random = new ScriptedQuestRandom({ ints: [2], picks: ['remote-name'] });
   const fetchImpl = createFetchStub({
     'restcountries.com': new Error('offline'),
-    'random-word-api': new Error('offline'),
     'randomuser.me': { results: [{ name: { first: 'Mira', last: 'Stone' } }] },
   });
   const service = new QuestPackService({ fetchImpl, random, fileReader: createFileReader() });
