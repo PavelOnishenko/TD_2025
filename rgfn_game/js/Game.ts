@@ -163,6 +163,7 @@ export default class Game {
             onStartBattle: (enemies: Skeleton[], terrainType) => this.stateMachine.transition(MODES.BATTLE, { enemies, terrainType }),
             onAddBattleLog: (m: string, t: string = 'system') => this.hudCoordinator.addBattleLog(m, t),
             onRememberTraveler: (traveler, disposition) => loreBookController.rememberTraveler(traveler, disposition),
+            onUpdateHUD: () => this.hudCoordinator.updateHUD()
         });
         this.renderRouter = new GameRenderRouter({
             canvas: this.canvas, renderer: this.renderer, worldMap, player, battleMap, turnManager,
