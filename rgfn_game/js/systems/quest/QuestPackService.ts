@@ -26,7 +26,6 @@ const ASSET_PATHS = {
 } as const;
 
 const PLACE_URL = 'https://restcountries.com/v3.1/all?fields=name,capital,region,subregion';
-const WORD_URL = 'https://random-word-api.vercel.app/api?words=';
 const NAME_URL = 'https://randomuser.me/api/?inc=name&noinfo&results=1';
 const ECHO_SYLLABLES = ['va', 'lor', 'quin', 'esh', 'dra', 'morn', 'lys', 'tor', 'zen', 'ka'];
 const DOMAINS: QuestNameDomain[] = ['location', 'artifact', 'character', 'monster', 'mainQuest'];
@@ -78,7 +77,6 @@ export default class QuestPackService {
     private createSources(): void {
         for (const domain of DOMAINS) {
             this.sources.push(this.localSource(domain));
-            this.sources.push(this.wordSource(domain));
             this.sources.push(this.echoSource(domain));
         }
         this.sources.push(this.locationSource());
@@ -123,15 +121,6 @@ export default class QuestPackService {
         const sample = this.random.pick(await response.json() as CountryRecord[]);
         const choices = [sample.name?.common, sample.capital?.[0], sample.subregion, sample.region].filter(Boolean) as string[];
         return this.wordList(this.random.pick(choices)).slice(0, 3);
-    }
-
-    private wordSource(domain: QuestNameDomain): PackSource {
-        return { type: 'remote-word', domain, available: false, generate: (limit) => this.fetchWords(limit) };
-    }
-
-    private async fetchWords(limit: number): Promise<string[]> {
-        const response = await this.fetchImpl(`${WORD_URL}${limit}`);
-        return (await response.json() as string[]).map((word) => word.toLowerCase()).slice(0, limit);
     }
 
     private nameSource(domain: QuestNameDomain): PackSource {
