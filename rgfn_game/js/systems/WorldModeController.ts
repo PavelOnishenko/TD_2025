@@ -13,6 +13,7 @@ type WorldModeCallbacks = {
     onStartBattle: (enemies: Skeleton[], terrainType: TerrainType) => void;
     onAddBattleLog: (message: string, type?: string) => void;
     onUpdateHUD: () => void;
+    onRememberTraveler: (traveler: Wanderer, disposition: 'hostile' | 'peaceful') => void;
 };
 
 export default class WorldModeController {
@@ -122,6 +123,7 @@ export default class WorldModeController {
 
 
     private handleTravelerEncounter(traveler: Wanderer, isHostile: boolean): void {
+        this.callbacks.onRememberTraveler(traveler, isHostile ? 'hostile' : 'peaceful');
         if (isHostile) {
             this.callbacks.onAddBattleLog(`${traveler.name} turns hostile! ${traveler.getEncounterDescription()}`, 'enemy');
             this.callbacks.onStartBattle([traveler], this.worldMap.getCurrentTerrain().type);

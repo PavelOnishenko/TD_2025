@@ -2,6 +2,8 @@ import Entity from '../../../engine/core/Entity.js';
 import { withDamageable } from '../../../engine/core/Damageable.js';
 import { balanceConfig } from '../config/balanceConfig.js';
 import { theme } from '../config/ThemeConfig.js';
+import { cloneBaseStats, deriveCreatureStats, normalizeCreatureSkills } from '../config/creatureStats.js';
+import { CreatureBaseStats, CreatureSkill, CreatureSkills } from '../config/creatureTypes.js';
 
 export interface EnemyBehavior {
     avoidHitChance?: number;
@@ -10,16 +12,16 @@ export interface EnemyBehavior {
 }
 
 export interface EnemyConfig {
-    hp: number;
-    damage: number;
+    archetypeId?: keyof typeof balanceConfig.creatureArchetypes;
     xpValue: number;
     name: string;
     width: number;
     height: number;
     behavior?: EnemyBehavior;
+    baseStats?: Partial<CreatureBaseStats>;
+    skills?: Partial<Record<CreatureSkill, number>>;
 }
 
-// Extend Entity with Damageable functionality
 const DamageableEntity = withDamageable(Entity);
 
 export default class Skeleton extends DamageableEntity {
@@ -48,6 +50,14 @@ export default class Skeleton extends DamageableEntity {
     public behavior: EnemyBehavior;
     public gridCol?: number;
     public gridRow?: number;
+    public readonly archetypeId: keyof typeof balanceConfig.creatureArchetypes;
+    public readonly baseStats: CreatureBaseStats;
+    public readonly skills: CreatureSkills;
+    public armor: number;
+    public avoidChance: number;
+    public maxMana: number;
+    public magicPoints: number;
+    public mana: number;
     private cursedArmorReduction: number = 0;
     private curseTurns: number = 0;
     private slowTurns: number = 0;
@@ -55,19 +65,38 @@ export default class Skeleton extends DamageableEntity {
     constructor(x: number, y: number, enemyConfig?: EnemyConfig) {
         super(x, y);
         const config: EnemyConfig = enemyConfig ?? balanceConfig.enemies.skeleton;
+        const archetypeId = config.archetypeId ?? 'skeleton';
+        const archetype = balanceConfig.creatureArchetypes[archetypeId] ?? balanceConfig.creatureArchetypes.skeleton;
+        const mergedBaseStats = {
+            ...cloneBaseStats(archetype.baseStats),
+            ...(config.baseStats ?? {}),
+        };
+        const mergedSkills = normalizeCreatureSkills({
+            ...archetype.skills,
+            ...(config.skills ?? {}),
+        });
+        const derivedStats = deriveCreatureStats(mergedBaseStats, mergedSkills);
 
         this.width = config.width;
         this.height = config.height;
-        this.damage = config.damage;
         this.name = config.name;
         this.xpValue = config.xpValue;
         this.behavior = config.behavior ?? {};
+        this.archetypeId = archetypeId;
+        this.baseStats = mergedBaseStats;
+        this.skills = mergedSkills;
+        this.damage = derivedStats.physicalDamage;
+        this.armor = derivedStats.armor;
+        this.avoidChance = derivedStats.avoidChance;
+        this.maxMana = derivedStats.maxMana;
+        this.magicPoints = derivedStats.magicPoints;
+        this.mana = derivedStats.maxMana;
         const hpMultiplier = Math.max(0, balanceConfig.enemies.hpMultiplier ?? 1);
-        this.initDamageable(Math.round(config.hp * hpMultiplier));
+        this.initDamageable(Math.round(derivedStats.maxHp * hpMultiplier));
     }
 
     public takeDamage(amount: number): boolean {
-        const effectiveArmor = Math.max(0, this.cursedArmorReduction);
+        const effectiveArmor = Math.max(0, this.armor - this.cursedArmorReduction);
         const damageAfterArmor = amount <= 0
             ? 0
             : Math.max(balanceConfig.combat.minDamageAfterArmor, amount - effectiveArmor);
@@ -116,6 +145,14 @@ export default class Skeleton extends DamageableEntity {
         }
 
         return events;
+    }
+
+    public getSkillRecord(): CreatureSkills {
+        return normalizeCreatureSkills(this.skills);
+    }
+
+    public getBaseStatsRecord(): CreatureBaseStats {
+        return cloneBaseStats(this.baseStats);
     }
 
     public draw(ctx: CanvasRenderingContext2D, viewport?: any): void {
@@ -202,8 +239,9 @@ export default class Skeleton extends DamageableEntity {
     }
 
     public shouldAvoidHit(): boolean {
-        const chance = this.behavior.avoidHitChance ?? 0;
-        return chance > 0 && Math.random() < chance;
+        const behaviorChance = this.behavior.avoidHitChance ?? 0;
+        const totalChance = Math.min(0.95, behaviorChance + this.avoidChance);
+        return totalChance > 0 && Math.random() < totalChance;
     }
 
     public getAttackDamage(): number {

@@ -2,7 +2,7 @@ import { randomInt } from '../../../../engine/utils/MathUtils.js';
 import Skeleton, { EnemyConfig } from '../../entities/Skeleton.js';
 import Item, { DISCOVERABLE_ITEM_LIBRARY, HEALING_POTION_ITEM, MANA_POTION_ITEM } from '../../entities/Item.js';
 import { balanceConfig } from '../../config/balanceConfig.js';
-import type { EncounterResult, ForcedEncounterType } from './EncounterSystem.js';
+import type { EncounterResult, ForcedEncounterType, RandomEncounterType } from './EncounterSystem.js';
 import Wanderer from '../../entities/Wanderer.js';
 
 type EncounterEventType = 'monster' | 'item' | 'village' | 'traveler';
@@ -15,6 +15,7 @@ type EncounterRolls = {
 type EncounterGenerationOptions = {
     canDiscoverItems?: boolean;
     canDiscoverVillages?: boolean;
+    enabledEventTypes?: RandomEncounterType[];
 };
 
 export default class EncounterResolver {
@@ -28,9 +29,14 @@ export default class EncounterResolver {
         const {
             canDiscoverItems = true,
             canDiscoverVillages = true,
+            enabledEventTypes = ['monster', 'item', 'village', 'traveler'],
         } = options;
 
-        if (canDiscoverItems && Math.random() < itemDiscoveryChance) {
+        if (enabledEventTypes.length === 0) {
+            return { type: 'none' };
+        }
+
+        if (canDiscoverItems && enabledEventTypes.includes('item') && Math.random() < itemDiscoveryChance) {
             return this.createRandomItemEncounter();
         }
 

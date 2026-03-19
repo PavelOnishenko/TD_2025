@@ -1,3 +1,5 @@
+import type { RandomEncounterType } from '../encounter/EncounterSystem.js';
+
 export type HudElements = {
     modeIndicator: HTMLElement;
     usePotionBtn: HTMLButtonElement;
@@ -67,13 +69,25 @@ export type HudElements = {
     inventoryPanel: HTMLElement;
     magicPanel: HTMLElement;
     questsPanel: HTMLElement;
+    selectedPanel: HTMLElement;
+    lorePanel: HTMLElement;
     questsTitle: HTMLElement;
     questsBody: HTMLElement;
+    loreBody: HTMLElement;
+    selectedCellEmpty: HTMLElement;
+    selectedCellDetails: HTMLElement;
+    selectedCellCoords: HTMLElement;
+    selectedCellTerrain: HTMLElement;
+    selectedCellVisibility: HTMLElement;
+    selectedCellTraversable: HTMLElement;
+    selectedCellVillage: HTMLElement;
     toggleStatsPanelBtn: HTMLButtonElement;
     toggleSkillsPanelBtn: HTMLButtonElement;
     toggleInventoryPanelBtn: HTMLButtonElement;
     toggleMagicPanelBtn: HTMLButtonElement;
     toggleQuestsPanelBtn: HTMLButtonElement;
+    toggleLorePanelBtn: HTMLButtonElement;
+    toggleSelectedPanelBtn: HTMLButtonElement;
     questIntroModal: HTMLElement;
     questIntroBody: HTMLElement;
     questIntroCloseBtn: HTMLButtonElement;
@@ -120,6 +134,10 @@ export type DeveloperUI = {
     queueList: HTMLElement;
     addBtn: HTMLButtonElement;
     clearBtn: HTMLButtonElement;
+    encounterTypeSummary: HTMLElement;
+    enableAllEncountersBtn: HTMLButtonElement;
+    disableAllEncountersBtn: HTMLButtonElement;
+    encounterTypeToggles: Record<RandomEncounterType, HTMLInputElement>;
     nextRollOpenBtn: HTMLButtonElement;
     nextRollSummary: HTMLElement;
     nextRollModal: HTMLElement;
