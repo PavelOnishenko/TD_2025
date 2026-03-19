@@ -5,12 +5,13 @@ import Skeleton from '../entities/Skeleton.js';
 import { Direction } from '../types/game.js';
 import MagicSystem from './magic/MagicSystem.js';
 import { balanceConfig } from '../config/balanceConfig.js';
+import { PLAYER_COMBAT_ACTIONS, CombatUiActionId } from '../types/combat.js';
 
 type BattleUI = {
     enemyName: HTMLElement;
     enemyHp: HTMLElement;
     enemyMaxHp: HTMLElement;
-    attackBtn: HTMLButtonElement;
+    actionButtons: Record<CombatUiActionId, HTMLButtonElement>;
     fleeBtn: HTMLButtonElement;
     waitBtn: HTMLButtonElement;
     usePotionBtn: HTMLButtonElement;
@@ -107,7 +108,9 @@ export default class BattleUiController {
 
     public setButtonsEnabled(enabled: boolean): void {
         this.refreshActionAvailability();
-        this.battleUI.attackBtn.disabled = !enabled;
+        Object.values(this.battleUI.actionButtons).forEach((button) => {
+            button.disabled = !enabled;
+        });
         this.battleUI.fleeBtn.disabled = !enabled || !this.battleMap.isEntityOnEdge(this.player);
         this.battleUI.waitBtn.disabled = !enabled;
         this.battleUI.usePotionBtn.disabled = !enabled;
@@ -128,8 +131,12 @@ export default class BattleUiController {
         const manaBySpell = new Map(availableSpells.map((spell) => [spell.id.split('-lvl-')[0], spell.manaCost]));
         const hasEnemySpellTarget = hasAttackTarget;
         const hasEnemySlowTarget = this.hasEnemyInSpellRange('slow');
+        const hasRangedWeapon = this.player.getAttackRange() > 1;
 
-        this.setActionVisible(this.battleUI.attackBtn, hasAttackTarget);
+        PLAYER_COMBAT_ACTIONS.forEach((action) => {
+            const canShow = hasAttackTarget && (!action.requiresRangedWeapon || hasRangedWeapon);
+            this.setActionVisible(this.battleUI.actionButtons[action.id], canShow);
+        });
         this.setActionVisible(this.battleUI.fleeBtn, canFlee);
         this.setActionVisible(this.battleUI.waitBtn, true);
         this.setActionVisible(this.battleUI.usePotionBtn, hasHealingPotion);

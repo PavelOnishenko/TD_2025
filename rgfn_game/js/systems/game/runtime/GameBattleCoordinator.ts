@@ -12,6 +12,7 @@ import BattleTurnController from '../BattleTurnController.js';
 import { BattleUI, HudElements, VillageUI } from '../GameUiTypes.js';
 import { MODES } from './GameModeStateMachine.js';
 import { BaseSpellId } from '../../magic/MagicSystem.js';
+import { CombatUiActionId } from '../../../types/combat.js';
 
 type Callbacks = {
     onClearBattleLog: () => void;
@@ -97,11 +98,11 @@ export default class GameBattleCoordinator {
         this.controllers.battleTurnController.processTurn();
     }
 
-    public handleAttack(): void {
+    public handleCombatAction(actionId: CombatUiActionId): void {
         if (this.turnTransitioning) {
             return;
         }
-        this.controllers.battleCommandController.handleAttack();
+        this.controllers.battleCommandController.handleCombatAction(actionId);
     }
 
 
@@ -183,6 +184,7 @@ export default class GameBattleCoordinator {
     private startBattle(enemies: Skeleton[]): void {
         this.battleMap.setup(this.player, this.currentEnemies, this.currentTerrainType);
         this.turnManager.initializeTurns([this.player, ...this.currentEnemies]);
+        this.controllers.battleCommandController.onBattleStarted(this.currentEnemies);
         this.turnTransitioning = false;
         this.callbacks.onClearBattleLog();
         this.callbacks.onAddBattleLog(`Encountered ${this.callbacks.onDescribeEncounter(enemies)}!`, 'system');

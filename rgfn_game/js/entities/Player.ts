@@ -20,6 +20,7 @@ import { createItemById } from './Item.js';
 import PlayerInventory from './PlayerInventory.js';
 import PlayerRenderer from './PlayerRenderer.js';
 import { NextCharacterRollAllocation } from '../utils/NextCharacterRollConfig.js';
+import { CombatantCombatState, createCombatState } from '../types/combat.js';
 
 const DamageableEntity = withDamageable(Entity);
 
@@ -78,6 +79,7 @@ export default class Player extends DamageableEntity {
     public mana: number = 0;
     public maxMana: number = 0;
     public gold: number = 0;
+    public combatState: CombatantCombatState;
 
     private rageTurns: number = 0;
     private rageMultiplier: number = 1;
@@ -138,6 +140,7 @@ export default class Player extends DamageableEntity {
             canEquip: (item) => this.canEquipItem(item),
         });
         this.renderer = new PlayerRenderer();
+        this.combatState = createCombatState();
 
         this.updateStats();
         this.mana = this.maxMana;

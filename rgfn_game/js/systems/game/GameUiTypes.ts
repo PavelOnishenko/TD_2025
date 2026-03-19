@@ -1,4 +1,5 @@
 import type { RandomEncounterType } from '../encounter/EncounterSystem.js';
+import type { CombatUiActionId } from '../../types/combat.js';
 
 export type HudElements = {
     modeIndicator: HTMLElement;
@@ -100,7 +101,7 @@ export type BattleUI = {
     enemyName: HTMLElement;
     enemyHp: HTMLElement;
     enemyMaxHp: HTMLElement;
-    attackBtn: HTMLButtonElement;
+    actionButtons: Record<CombatUiActionId, HTMLButtonElement>;
     fleeBtn: HTMLButtonElement;
     waitBtn: HTMLButtonElement;
     usePotionBtn: HTMLButtonElement;
