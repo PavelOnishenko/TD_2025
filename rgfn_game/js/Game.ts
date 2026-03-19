@@ -26,7 +26,7 @@ import GameUiEventBinder from './systems/game/GameUiEventBinder.js';
 import BattleTurnController from './systems/game/BattleTurnController.js';
 import BattlePlayerActionController from './systems/game/BattlePlayerActionController.js';
 import BattleCommandController from './systems/game/BattleCommandController.js';
-import { BattleUI, DeveloperUI, GameLogUI, HudElements, VillageUI } from './systems/game/GameUiTypes.js';
+import { BattleUI, DeveloperUI, GameLogUI, HudElements, VillageUI, WorldUI } from './systems/game/GameUiTypes.js';
 import { theme } from './config/ThemeConfig.js';
 import GameModeStateMachine, { MODES } from './systems/game/runtime/GameModeStateMachine.js';
 import GameRenderRouter from './systems/game/runtime/GameRenderRouter.js';
@@ -41,7 +41,7 @@ import { TerrainType } from './types/game.js';
 import { consumeNextCharacterRollAllocation } from './utils/NextCharacterRollConfig.js';
 import LoreBookController from './systems/lore/LoreBookController.js';
 
-type UIBundle = { hudElements: HudElements; battleUI: BattleUI; villageUI: VillageUI; gameLogUI: GameLogUI; developerUI: DeveloperUI };
+type UIBundle = { hudElements: HudElements; worldUI: WorldUI; battleUI: BattleUI; villageUI: VillageUI; gameLogUI: GameLogUI; developerUI: DeveloperUI };
 
 type GameSaveState = {
     version: 1;
@@ -77,8 +77,9 @@ export default class Game {
         this.renderer = new Renderer(canvas);
         this.input = new InputManager();
         this.loop = new GameLoop((dt: number) => this.update(dt), () => this.render());
+        const hasSavedGame = Boolean(window.localStorage.getItem(SAVE_KEY));
         const player = new Player(0, 0, {
-            startingSkillAllocation: window.localStorage.getItem(SAVE_KEY)
+            startingSkillAllocation: hasSavedGame
                 ? null
                 : consumeNextCharacterRollAllocation(balanceConfig.player.initialRandomAllocatedSkillPoints ?? 0),
         });
@@ -172,6 +173,9 @@ export default class Game {
         this.bindUi(ui, villageActionsController, encounterSystem);
         this.configureInput();
         this.configureViewport();
+        if (!hasSavedGame) {
+            this.worldMap.centerOnPlayer();
+        }
         applyThemeToCSS();
         const [x, y] = worldMap.getPlayerPixelPosition();
         player.x = x;
@@ -228,7 +232,7 @@ export default class Game {
 
     private createStateMachine(ui: UIBundle): StateMachine {
         return new GameModeStateMachine<{ enemies: Skeleton[]; terrainType: TerrainType }>({
-            onEnterWorld: () => this.worldModeController.enterWorldMode(ui.hudElements.modeIndicator, ui.battleUI.sidebar, ui.villageUI.sidebar),
+            onEnterWorld: () => this.worldModeController.enterWorldMode(ui.hudElements.modeIndicator, ui.worldUI.sidebar, ui.battleUI.sidebar, ui.villageUI.sidebar),
             onUpdateWorld: () => this.worldModeController.updateWorldMode(),
             onEnterBattle: (battleData: { enemies: Skeleton[]; terrainType: TerrainType }) => this.battleCoordinator.enterBattleMode(battleData.enemies, battleData.terrainType),
             onUpdateBattle: () => this.battleCoordinator.updateBattleMode(),
@@ -242,13 +246,16 @@ export default class Game {
         const devController = new DeveloperEventController(ui.developerUI, encounterSystem, {
             addVillageLog: (m: string, t: string = 'system') => villageActionsController.addLog(m, t),
             getEventLabel: (type: ForcedEncounterType) => this.villageCoordinator.getDeveloperEventLabel(type),
+            getMapDisplayConfig: () => this.worldMap.getMapDisplayConfig(),
+            setMapDisplayConfig: (config) => this.worldMap.setMapDisplayConfig(config),
         });
-        new GameUiEventBinder(this.canvas, ui.hudElements, ui.battleUI, ui.villageUI, ui.developerUI, villageActionsController, devController, {
+        new GameUiEventBinder(this.canvas, ui.hudElements, ui.worldUI, ui.battleUI, ui.villageUI, ui.developerUI, villageActionsController, devController, {
             onAttack: () => this.battleCoordinator.handleAttack(), onFlee: () => this.battleCoordinator.handleFlee(),
             onWait: () => this.battleCoordinator.handleWait(), onUsePotionFromBattle: () => this.battleCoordinator.handleUsePotion(true),
             onUseManaPotionFromBattle: () => this.battleCoordinator.handleUseManaPotion(true),
             onUsePotionFromHud: () => this.battleCoordinator.handleUsePotion(false),
             onUseManaPotionFromHud: () => this.battleCoordinator.handleUseManaPotion(false),
+            onUsePotionFromWorld: () => this.battleCoordinator.handleUsePotion(false),
             onNewCharacter: () => this.startNewCharacter(),
             onAddStat: (stat) => this.hudCoordinator.handleAddStat(stat),
             onRemoveStat: (stat) => this.hudCoordinator.handleRemoveStat(stat),
@@ -261,6 +268,7 @@ export default class Game {
             onWorldMapZoomIn: () => this.handleWorldMapZoom('in'),
             onWorldMapZoomOut: () => this.handleWorldMapZoom('out'),
             onWorldMapPan: (direction) => this.handleWorldMapPan(direction),
+            onCenterWorldMapOnPlayer: () => this.centerWorldMapOnPlayer(),
             onTogglePanel: (panel) => this.hudCoordinator.togglePanel(panel),
         }).bind(() => this.villageCoordinator.getVillageName());
         this.devController = devController;
@@ -387,6 +395,17 @@ export default class Game {
         }
 
         this.worldMap.pan(direction);
+        const [x, y] = this.worldMap.getPlayerPixelPosition();
+        this.player.x = x;
+        this.player.y = y;
+    }
+
+    private centerWorldMapOnPlayer(): void {
+        if (!this.stateMachine.isInState(MODES.WORLD_MAP)) {
+            return;
+        }
+
+        this.worldMap.centerOnPlayer();
         const [x, y] = this.worldMap.getPlayerPixelPosition();
         this.player.x = x;
         this.player.y = y;

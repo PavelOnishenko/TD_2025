@@ -54,13 +54,22 @@ function createDeveloperUi() {
       connection: createInput(),
       intelligence: createInput(),
     },
+    everythingDiscoveredToggle: { checked: false },
+    fogOfWarToggle: { checked: true },
   };
 }
 
 function createController(logs, encounterSystem, developerUI) {
+  const mapDisplayConfig = {
+    everythingDiscovered: false,
+    fogOfWar: true,
+  };
+
   return new DeveloperEventController(developerUI, encounterSystem, {
     addVillageLog: (message) => logs.push(message),
     getEventLabel: (type) => type,
+    getMapDisplayConfig: () => ({ ...mapDisplayConfig }),
+    setMapDisplayConfig: (config) => Object.assign(mapDisplayConfig, config),
   });
 }
 
@@ -94,4 +103,21 @@ test('DeveloperEventController can disable all random encounter types from the d
   });
   assert.equal(developerUI.encounterTypeSummary.textContent, 'Random encounters disabled. Forced queue still works.');
   assert.equal(logs[0], '[DEV] Disabled all random encounter types.');
+});
+
+test('DeveloperEventController syncs and updates map display toggles from the dev console', () => {
+  const logs = [];
+  const encounterSystem = new EncounterSystem(1);
+  const developerUI = createDeveloperUi();
+  const controller = createController(logs, encounterSystem, developerUI);
+
+  controller.handleMapDisplayToggle('everythingDiscovered', true);
+  controller.handleMapDisplayToggle('fogOfWar', false);
+
+  assert.equal(developerUI.everythingDiscoveredToggle.checked, true);
+  assert.equal(developerUI.fogOfWarToggle.checked, false);
+  assert.deepEqual(logs.slice(-2), [
+    '[DEV] Everything discovered enabled.',
+    '[DEV] Fog of war disabled.',
+  ]);
 });

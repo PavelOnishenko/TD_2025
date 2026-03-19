@@ -282,6 +282,7 @@ h1 {
 }
 
 
+#world-sidebar,
 #battle-sidebar,
 #village-sidebar {
     position: relative;
@@ -298,6 +299,7 @@ h1 {
     flex-direction: column;
     gap: 14px;
 }
+#world-sidebar.hidden,
 #battle-sidebar.hidden,
 #village-sidebar.hidden { display: none; }
 
@@ -359,6 +361,7 @@ h1 {
     box-shadow: inset 0 0 0 2px var(--color-secondary-accent);
 }
 
+#world-sidebar h2,
 #battle-sidebar h2,
 #village-sidebar h2 {
     color: var(--color-enemy);
@@ -374,6 +377,7 @@ h1 {
 
 #enemy-info,
 #battle-instructions,
+#world-actions,
 #village-prompt,
 #village-actions {
     overflow: auto;
@@ -391,9 +395,17 @@ h1 {
 #battle-instructions strong { color: var(--color-enemy); }
 
 #battle-actions,
+#world-action-buttons,
 #village-entry-actions,
 #village-action-buttons { display: flex; flex-direction: column; gap: 8px; }
 .action-btn { font-size: 15px; letter-spacing: 0.5px; }
+
+.world-actions-copy {
+    margin: 0 0 12px;
+    font-size: 13px;
+    line-height: 1.45;
+    color: var(--color-text-muted);
+}
 
 
 .village-section {
@@ -443,6 +455,7 @@ h1 {
         justify-items: center;
     }
     #world-map-shell,
+    #world-sidebar,
     #battle-sidebar,
     #village-sidebar,
     #game-log-container {
@@ -712,6 +725,10 @@ h1 {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px 12px;
+}
+
+.dev-events-toggle-grid-single {
+    grid-template-columns: 1fr;
 }
 
 .dev-events-toggle {

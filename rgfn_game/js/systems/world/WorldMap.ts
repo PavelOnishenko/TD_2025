@@ -1,5 +1,5 @@
 import GridMap from '../../utils/GridMap.js';
-import { FogState, TerrainData, GridPosition, Direction, GridCell, TerrainNeighbors, TerrainType, SelectedWorldCellInfo } from '../../types/game.js';
+import { FogState, MapDisplayConfig, TerrainData, GridPosition, Direction, GridCell, TerrainNeighbors, TerrainType, SelectedWorldCellInfo } from '../../types/game.js';
 import { theme } from '../../config/ThemeConfig.js';
 import WorldMapRenderer from './WorldMapRenderer.js';
 import { balanceConfig } from '../../config/balanceConfig.js';
@@ -16,6 +16,11 @@ const FOG_STATE = {
     UNKNOWN: 'unknown' as FogState,
     DISCOVERED: 'discovered' as FogState,
     HIDDEN: 'hidden' as FogState,
+};
+
+const DEFAULT_MAP_DISPLAY_CONFIG: MapDisplayConfig = {
+    everythingDiscovered: false,
+    fogOfWar: true,
 };
 
 type NamedLocation = {
@@ -51,6 +56,7 @@ export default class WorldMap {
     private worldSeed: number;
     private canvasWidth: number;
     private canvasHeight: number;
+    private mapDisplayConfig: MapDisplayConfig;
 
     constructor(columns: number, rows: number, cellSize: number) {
         this.grid = new GridMap(columns, rows, cellSize);
@@ -66,6 +72,7 @@ export default class WorldMap {
         this.worldSeed = this.createWorldSeed();
         this.canvasWidth = columns * cellSize;
         this.canvasHeight = rows * cellSize;
+        this.mapDisplayConfig = { ...DEFAULT_MAP_DISPLAY_CONFIG };
         this.initializeFogOfWar();
         this.generateWorld();
         this.visitedCells.add(this.getCellKey(this.playerGridPos.col, this.playerGridPos.row));
@@ -81,8 +88,8 @@ export default class WorldMap {
 
     private generateWorld(): void {
         this.generateTerrain();
-        this.pickRandomPlayerStart();
         this.generateVillages();
+        this.pickRandomPlayerStart();
     }
 
     private generateTerrain(): void {
@@ -354,7 +361,7 @@ export default class WorldMap {
         for (let row = 0; row < dims.rows; row += 1) {
             for (let col = 0; col < dims.columns; col += 1) {
                 const terrain = this.getTerrain(col, row);
-                if (terrain && terrain.type !== 'water' && terrain.type !== 'mountain') {
+                if (terrain && terrain.type !== 'water' && terrain.type !== 'mountain' && !this.villages.has(this.getCellKey(col, row))) {
                     candidates.push({ col, row });
                 }
             }
@@ -382,11 +389,6 @@ export default class WorldMap {
             if (!terrain || terrain.type === 'water' || terrain.type === 'mountain' || terrain.type === 'desert') {
                 continue;
             }
-
-            if (col === this.playerGridPos.col && row === this.playerGridPos.row) {
-                continue;
-            }
-
             const nearestVillageDistance = Array.from(this.villages).reduce((closest, key) => {
                 const [vColText, vRowText] = key.split(',');
                 const vCol = Number(vColText);
@@ -523,7 +525,17 @@ export default class WorldMap {
     }
 
     private getFogState(col: number, row: number): FogState {
-        return this.fogStates.get(this.getCellKey(col, row)) || FOG_STATE.UNKNOWN;
+        const storedFogState = this.fogStates.get(this.getCellKey(col, row)) || FOG_STATE.UNKNOWN;
+
+        if (this.mapDisplayConfig.everythingDiscovered) {
+            return FOG_STATE.DISCOVERED;
+        }
+
+        if (!this.mapDisplayConfig.fogOfWar && storedFogState === FOG_STATE.UNKNOWN) {
+            return FOG_STATE.HIDDEN;
+        }
+
+        return storedFogState;
     }
 
     private getTerrain(col: number, row: number): TerrainData | undefined {
@@ -661,6 +673,10 @@ export default class WorldMap {
         const nextCellSize = this.grid.cellSize > 0 ? this.grid.cellSize : configuredCellSize;
         this.grid.updateLayout(nextCellSize, this.grid.offsetX, this.grid.offsetY);
         this.clampViewport();
+    }
+
+    public centerOnPlayer(): void {
+        this.centerViewportOnCell(this.playerGridPos.col, this.playerGridPos.row);
     }
 
     public zoomIn(): boolean {
@@ -851,6 +867,7 @@ export default class WorldMap {
                     this.getFogState(col, row),
                     terrain,
                     terrain ? this.getTerrainNeighbors(col, row, terrain.type) : undefined,
+                    { showFogOverlay: this.mapDisplayConfig.fogOfWar },
                 );
             }
         }
@@ -1020,6 +1037,21 @@ export default class WorldMap {
         }
 
         this.refreshVisibility();
+    }
+
+    public getMapDisplayConfig(): MapDisplayConfig {
+        return { ...this.mapDisplayConfig };
+    }
+
+    public setMapDisplayConfig(config: Partial<MapDisplayConfig>): void {
+        this.mapDisplayConfig = {
+            everythingDiscovered: typeof config.everythingDiscovered === 'boolean'
+                ? config.everythingDiscovered
+                : this.mapDisplayConfig.everythingDiscovered,
+            fogOfWar: typeof config.fogOfWar === 'boolean'
+                ? config.fogOfWar
+                : this.mapDisplayConfig.fogOfWar,
+        };
     }
 
     public updateSelectedCellFromPixel(pixelX: number, pixelY: number): boolean {
