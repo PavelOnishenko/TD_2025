@@ -127,7 +127,7 @@ export const balanceConfig = {
 
     // ============ ENEMY STATS ============
     enemies: {
-        hpMultiplier: 1,
+        hpMultiplier: 2,
         skeleton: {
             archetypeId: 'skeleton',
             hp: 3,
