@@ -639,13 +639,20 @@ export default class WorldMap {
             return null;
         }
 
+        const isVillage = this.villages.has(this.getCellKey(this.selectedGridPos.col, this.selectedGridPos.row));
+        const isCurrentVillage = isVillage
+            && this.selectedGridPos.col === this.playerGridPos.col
+            && this.selectedGridPos.row === this.playerGridPos.row;
+
         return {
             col: this.selectedGridPos.col,
             row: this.selectedGridPos.row,
             terrainType: terrain.type,
             fogState: this.getFogState(this.selectedGridPos.col, this.selectedGridPos.row),
             isVisible: this.isCellVisible(this.selectedGridPos.col, this.selectedGridPos.row),
-            isVillage: this.villages.has(this.getCellKey(this.selectedGridPos.col, this.selectedGridPos.row)),
+            isVillage,
+            villageName: isVillage ? this.getVillageName(this.selectedGridPos.col, this.selectedGridPos.row) : null,
+            villageStatus: isVillage ? (isCurrentVillage ? 'current' : 'mapped') : null,
             isTraversable: terrain.type !== 'water',
         };
     }

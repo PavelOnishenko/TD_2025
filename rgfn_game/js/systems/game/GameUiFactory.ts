@@ -94,6 +94,8 @@ export default class GameUiFactory {
             selectedCellVisibility: document.getElementById('selected-cell-visibility')!,
             selectedCellTraversable: document.getElementById('selected-cell-traversable')!,
             selectedCellVillage: document.getElementById('selected-cell-village')!,
+            selectedCellVillageName: document.getElementById('selected-cell-village-name')!,
+            selectedCellVillageStatus: document.getElementById('selected-cell-village-status')!,
             toggleStatsPanelBtn: document.getElementById('toggle-stats-panel-btn')! as HTMLButtonElement,
             toggleSkillsPanelBtn: document.getElementById('toggle-skills-panel-btn')! as HTMLButtonElement,
             toggleInventoryPanelBtn: document.getElementById('toggle-inventory-panel-btn')! as HTMLButtonElement,

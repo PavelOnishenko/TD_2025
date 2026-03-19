@@ -81,6 +81,8 @@ export type HudElements = {
     selectedCellVisibility: HTMLElement;
     selectedCellTraversable: HTMLElement;
     selectedCellVillage: HTMLElement;
+    selectedCellVillageName: HTMLElement;
+    selectedCellVillageStatus: HTMLElement;
     toggleStatsPanelBtn: HTMLButtonElement;
     toggleSkillsPanelBtn: HTMLButtonElement;
     toggleInventoryPanelBtn: HTMLButtonElement;
