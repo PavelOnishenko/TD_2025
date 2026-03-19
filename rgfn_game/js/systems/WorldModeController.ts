@@ -77,6 +77,12 @@ export default class WorldModeController {
     private onPlayerMoved(isPreviouslyDiscovered: boolean): void {
         this.player.restoreMana(1);
         this.callbacks.onUpdateHUD();
+
+        const namedLocation = this.worldMap.getCurrentNamedLocation();
+        if (namedLocation) {
+            this.callbacks.onAddBattleLog(`You arrive at ${namedLocation}.`, 'system');
+        }
+
         if (this.worldMap.isPlayerOnVillage()) {
             this.callbacks.onEnterVillage();
             return;

@@ -36,6 +36,7 @@ import GameBattleCoordinator from './systems/game/runtime/GameBattleCoordinator.
 import MagicSystem from './systems/magic/MagicSystem.js';
 import QuestGenerator from './systems/quest/QuestGenerator.js';
 import QuestUiController from './systems/quest/QuestUiController.js';
+import { QuestNode } from './systems/quest/QuestTypes.js';
 import { TerrainType } from './types/game.js';
 import { consumeNextCharacterRollAllocation } from './utils/NextCharacterRollConfig.js';
 import LoreBookController from './systems/lore/LoreBookController.js';
@@ -97,6 +98,15 @@ export default class Game {
             ui.hudElements.questIntroModal,
             ui.hudElements.questIntroBody,
             ui.hudElements.questIntroCloseBtn,
+            {
+                onLocationClick: (locationName: string) => {
+                    const shown = this.worldMap.revealNamedLocation(locationName);
+                    if (shown) {
+                        this.stateMachine.transition(MODES.WORLD_MAP);
+                    }
+                    return shown;
+                },
+            },
         );
         const loreBookController = new LoreBookController({ loreBody: ui.hudElements.loreBody }, player, worldMap);
         this.initializeQuestUi(questGenerator, questUiController);
@@ -154,7 +164,6 @@ export default class Game {
             onAddBattleLog: (m: string, t: string = 'system') => this.hudCoordinator.addBattleLog(m, t),
             onUpdateHUD: () => this.hudCoordinator.updateHUD(),
             onRememberTraveler: (traveler, disposition) => loreBookController.rememberTraveler(traveler, disposition),
-            onUpdateHUD: () => this.refreshHud(),
         });
         this.renderRouter = new GameRenderRouter({
             canvas: this.canvas, renderer: this.renderer, worldMap, player, battleMap, turnManager,
@@ -175,8 +184,21 @@ export default class Game {
 
     private async initializeQuestUi(questGenerator: QuestGenerator, questUiController: QuestUiController): Promise<void> {
         const quest = await questGenerator.generateMainQuest();
+        this.registerQuestLocations(quest);
         questUiController.renderQuest(quest);
         questUiController.showIntro();
+    }
+
+    private registerQuestLocations(quest: QuestNode): void {
+        for (const entity of quest.entities) {
+            if (entity.type === 'location') {
+                this.worldMap.registerNamedLocation(entity.text);
+            }
+        }
+
+        for (const child of quest.children) {
+            this.registerQuestLocations(child);
+        }
     }
 
 

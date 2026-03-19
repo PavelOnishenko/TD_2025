@@ -1,6 +1,6 @@
 import QuestPackService from './QuestPackService.js';
 import { QuestRandom } from './QuestRandom.js';
-import { GeneratedName, QuestNode, QuestObjectiveType, RareMonsterProfile } from './QuestTypes.js';
+import { GeneratedName, QuestNode, QuestObjectiveType, QuestTextEntity, RareMonsterProfile } from './QuestTypes.js';
 
 const LEAF_TYPES: QuestObjectiveType[] = ['eliminate', 'deliver', 'travel', 'barter', 'scout', 'hunt', 'recover', 'escort', 'defend'];
 const MONSTER_STATS = ['feral strength', 'void armor', 'acid blood', 'blink speed', 'barbed hide', 'grave intellect'];
@@ -40,6 +40,7 @@ export default class QuestLeafFactory {
             this.removeText(amount, target, where),
             this.killText(amount, target, where),
             'eliminate',
+            this.entities(target, location),
         );
     }
 
@@ -52,12 +53,20 @@ export default class QuestLeafFactory {
             `Carry the ${this.label(artifact)} and bring it to ${destination.text}.`,
             `Reach ${destination.text} while carrying ${this.label(artifact)}.`,
             'deliver',
+            this.entities(artifact, destination),
         );
     }
 
     private async createTravelNode(id: string): Promise<QuestNode> {
         const destination = await this.packService.generateName('location', 4);
-        return this.node(id, `Scout ${destination.text}`, `Travel to ${destination.text} and secure the path.`, `Enter ${destination.text}.`, 'travel');
+        return this.node(
+            id,
+            `Scout ${destination.text}`,
+            `Travel to ${destination.text} and secure the path.`,
+            `Enter ${destination.text}.`,
+            'travel',
+            this.entities(destination),
+        );
     }
 
     private async createBarterNode(id: string): Promise<QuestNode> {
@@ -69,6 +78,7 @@ export default class QuestLeafFactory {
             `Negotiate with ${trader.text} and exchange for ${this.label(artifact)}.`,
             `Complete one barter deal and obtain ${this.label(artifact)}.`,
             'barter',
+            this.entities(trader, artifact),
         );
     }
 
@@ -80,6 +90,7 @@ export default class QuestLeafFactory {
             `Inspect tracks, ruins, and anomalies around ${destination.text}.`,
             `Finish one scouting investigation at ${destination.text}.`,
             'scout',
+            this.entities(destination),
         );
     }
 
@@ -93,6 +104,7 @@ export default class QuestLeafFactory {
             `Track ${profile.count} rare mutant target${profile.count > 1 ? 's' : ''} near ${location.text}. ${details}`,
             `Kill ${profile.count} ${this.pluralLabel(profile.name, profile.count)} near ${location.text}.`,
             'hunt',
+            this.entities(profile.name, location),
         );
     }
 
@@ -105,6 +117,7 @@ export default class QuestLeafFactory {
             `Retrieve the ${this.label(artifact)} from ${location.text} and extract intact.`,
             `Obtain ${this.label(artifact)} at ${location.text}.`,
             'recover',
+            this.entities(artifact, location),
         );
     }
 
@@ -117,6 +130,7 @@ export default class QuestLeafFactory {
             `Guide ${character.text} through danger and reach ${destination.text}.`,
             `Arrive at ${destination.text} with ${character.text} alive.`,
             'escort',
+            this.entities(character, destination),
         );
     }
 
@@ -129,6 +143,7 @@ export default class QuestLeafFactory {
             `Hold ${location.text} until the ${this.label(artifact)} is secured.`,
             `Prevent the fall of ${location.text} while securing ${this.label(artifact)}.`,
             'defend',
+            this.entities(location, artifact),
         );
     }
 
@@ -167,10 +182,43 @@ export default class QuestLeafFactory {
     }
 
     private label(name: GeneratedName): string {
-        return name.text.toLowerCase();
+        return name.text;
     }
 
-    private node(id: string, title: string, description: string, conditionText: string, objectiveType: QuestObjectiveType): QuestNode {
-        return { id, title, description, conditionText, objectiveType, children: [] };
+    private entities(...names: Array<GeneratedName | null>): QuestTextEntity[] {
+        const unique = new Map<string, QuestTextEntity>();
+
+        for (const name of names) {
+            if (!name) {
+                continue;
+            }
+
+            const type = name.domain === 'location'
+                ? 'location'
+                : name.domain === 'artifact'
+                    ? 'item'
+                    : name.domain === 'character'
+                        ? 'person'
+                        : null;
+
+            if (!type) {
+                continue;
+            }
+
+            unique.set(`${type}:${name.text}`, { text: name.text, type });
+        }
+
+        return Array.from(unique.values());
+    }
+
+    private node(
+        id: string,
+        title: string,
+        description: string,
+        conditionText: string,
+        objectiveType: QuestObjectiveType,
+        entities: QuestTextEntity[],
+    ): QuestNode {
+        return { id, title, description, conditionText, objectiveType, entities, children: [] };
     }
 }

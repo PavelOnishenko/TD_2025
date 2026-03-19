@@ -23,7 +23,7 @@ function createFileReader() {
 }
 
 test('QuestPackService falls back to local and echo sources when remote APIs are unavailable', async () => {
-  const random = new ScriptedQuestRandom({ ints: [3], picks: ['local-pattern', ['ADJECTIVE', 'NOUN', 'PREPOSITION'], 'ashen', 'causeway', 'beyond'] });
+  const random = new ScriptedQuestRandom({ ints: [90], picks: ['local-pattern', ['ADJECTIVE', 'NOUN', 'PREPOSITION'], 'ashen', 'causeway', 'beyond'] });
   const fetchImpl = createFetchStub({
     'restcountries.com': new Error('offline'),
     'random-word-api': new Error('offline'),
