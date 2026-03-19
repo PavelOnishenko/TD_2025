@@ -51,9 +51,9 @@ type GameSaveState = {
 };
 
 const SAVE_KEY = 'rgfn_game_save_v1';
-const WORLD_MAP_COLUMNS = theme.worldMap.gridDimensions.columns;
-const WORLD_MAP_ROWS = theme.worldMap.gridDimensions.rows;
-const WORLD_MAP_CELL_SIZE = 40;
+const WORLD_MAP_COLUMNS = balanceConfig.worldMap.dimensions.columns ?? theme.worldMap.gridDimensions.columns;
+const WORLD_MAP_ROWS = balanceConfig.worldMap.dimensions.rows ?? theme.worldMap.gridDimensions.rows;
+const WORLD_MAP_CELL_SIZE = theme.worldMap.cellSize.default;
 
 export default class Game {
     private readonly canvas: HTMLCanvasElement;
@@ -164,7 +164,6 @@ export default class Game {
             onAddBattleLog: (m: string, t: string = 'system') => this.hudCoordinator.addBattleLog(m, t),
             onUpdateHUD: () => this.hudCoordinator.updateHUD(),
             onRememberTraveler: (traveler, disposition) => loreBookController.rememberTraveler(traveler, disposition),
-            onUpdateHUD: () => this.hudCoordinator.updateHUD()
         });
         this.renderRouter = new GameRenderRouter({
             canvas: this.canvas, renderer: this.renderer, worldMap, player, battleMap, turnManager,
@@ -259,6 +258,9 @@ export default class Game {
             onCanvasClick: (event) => this.battleCoordinator.handleCanvasClick(event, this.canvas),
             onCanvasMove: (event) => this.handleCanvasMove(event),
             onCanvasLeave: () => this.handleCanvasLeave(),
+            onWorldMapZoomIn: () => this.handleWorldMapZoom('in'),
+            onWorldMapZoomOut: () => this.handleWorldMapZoom('out'),
+            onWorldMapPan: (direction) => this.handleWorldMapPan(direction),
             onTogglePanel: (panel) => this.hudCoordinator.togglePanel(panel),
         }).bind(() => this.villageCoordinator.getVillageName());
         this.devController = devController;
@@ -362,6 +364,32 @@ export default class Game {
 
         this.worldMap.clearSelectedCell();
         this.hudCoordinator.updateSelectedWorldCell(null);
+    }
+
+    private handleWorldMapZoom(direction: 'in' | 'out'): void {
+        if (!this.stateMachine.isInState(MODES.WORLD_MAP)) {
+            return;
+        }
+
+        const changed = direction === 'in' ? this.worldMap.zoomIn() : this.worldMap.zoomOut();
+        if (!changed) {
+            return;
+        }
+
+        const [x, y] = this.worldMap.getPlayerPixelPosition();
+        this.player.x = x;
+        this.player.y = y;
+    }
+
+    private handleWorldMapPan(direction: 'up' | 'down' | 'left' | 'right'): void {
+        if (!this.stateMachine.isInState(MODES.WORLD_MAP)) {
+            return;
+        }
+
+        this.worldMap.pan(direction);
+        const [x, y] = this.worldMap.getPlayerPixelPosition();
+        this.player.x = x;
+        this.player.y = y;
     }
 
     private startNewCharacter(): void {

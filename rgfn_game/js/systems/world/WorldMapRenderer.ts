@@ -50,19 +50,23 @@ export default class WorldMapRenderer {
         ctx.strokeStyle = theme.worldMap.gridLines;
         ctx.setLineDash([4, 8]);
         ctx.lineWidth = 1;
-        const startX = grid.offsetX;
-        const startY = grid.offsetY;
-        const endX = startX + width;
-        const endY = startY + height;
-        for (let col = 0; col <= grid.columns; col++) {
-            const x = startX + (col * grid.cellSize);
+        const startX = Math.max(0, grid.offsetX);
+        const startY = Math.max(0, grid.offsetY);
+        const endX = Math.min(width, grid.offsetX + (grid.columns * grid.cellSize));
+        const endY = Math.min(height, grid.offsetY + (grid.rows * grid.cellSize));
+        const startCol = Math.max(0, Math.floor((-grid.offsetX) / grid.cellSize));
+        const endCol = Math.min(grid.columns, Math.ceil((width - grid.offsetX) / grid.cellSize));
+        const startRow = Math.max(0, Math.floor((-grid.offsetY) / grid.cellSize));
+        const endRow = Math.min(grid.rows, Math.ceil((height - grid.offsetY) / grid.cellSize));
+        for (let col = startCol; col <= endCol; col++) {
+            const x = grid.offsetX + (col * grid.cellSize);
             ctx.beginPath();
             ctx.moveTo(x, startY);
             ctx.lineTo(x, endY);
             ctx.stroke();
         }
-        for (let row = 0; row <= grid.rows; row++) {
-            const y = startY + (row * grid.cellSize);
+        for (let row = startRow; row <= endRow; row++) {
+            const y = grid.offsetY + (row * grid.cellSize);
             ctx.beginPath();
             ctx.moveTo(startX, y);
             ctx.lineTo(endX, y);
@@ -123,11 +127,11 @@ export default class WorldMapRenderer {
         ctx.restore();
     }
 
-    public drawScaleLegend(ctx: CanvasRenderingContext2D, grid: GridMap, label: string): void {
+    public drawScaleLegend(ctx: CanvasRenderingContext2D, grid: GridMap, label: string, canvasWidth: number, canvasHeight: number): void {
         const legendWidth = Math.min(190, Math.max(110, grid.cellSize * 3.5));
         const legendHeight = 28;
-        const x = grid.offsetX + 10;
-        const y = Math.max(10, grid.offsetY - legendHeight - 8);
+        const x = Math.min(canvasWidth - legendWidth - 10, Math.max(10, grid.offsetX + 10));
+        const y = Math.min(canvasHeight - legendHeight - 10, Math.max(10, grid.offsetY + 10));
         const legendPath = this.createRoundedRectPath(x, y, legendWidth, legendHeight, 8);
 
         ctx.save();

@@ -64,7 +64,38 @@ const creatureArchetypes: Record<string, CreatureArchetype> = {
 
 export const balanceConfig = {
     worldMap: {
+        dimensions: {
+            columns: 100,
+            rows: 100,
+        },
         visibilityRadius: 2,
+        terrainWeights: {
+            grass: 0.32,
+            forest: 0.48,
+            mountain: 0.1,
+            water: 0.07,
+            desert: 0.03,
+        },
+        forestCoverage: {
+            min: 0.3,
+            max: 0.6,
+        },
+        mountainThreshold: 0.86,
+        inlandWaterThreshold: 0.79,
+        desertHeatThreshold: 0.68,
+        desertDrynessThreshold: 0.58,
+        lakes: {
+            count: 7,
+            minRadius: 2,
+            maxRadius: 5,
+            jitter: 0.38,
+        },
+        rivers: {
+            count: 5,
+            maxLengthFactor: 0.72,
+            turnRate: 0.34,
+            width: 1,
+        },
     },
 
     // ============ PLAYER STATS ============
