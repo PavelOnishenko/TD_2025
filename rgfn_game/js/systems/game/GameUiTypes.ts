@@ -6,6 +6,12 @@ export type HudElements = {
     usePotionBtn: HTMLButtonElement;
     useManaPotionBtn: HTMLButtonElement;
     newCharacterBtn: HTMLButtonElement;
+    worldMapZoomInBtn: HTMLButtonElement;
+    worldMapZoomOutBtn: HTMLButtonElement;
+    worldMapPanUpBtn: HTMLButtonElement;
+    worldMapPanDownBtn: HTMLButtonElement;
+    worldMapPanLeftBtn: HTMLButtonElement;
+    worldMapPanRightBtn: HTMLButtonElement;
     playerLevel: HTMLElement;
     playerName: HTMLElement;
     playerXp: HTMLElement;
@@ -114,6 +120,12 @@ export type BattleUI = {
     attackRangeText: HTMLElement;
 };
 
+export type WorldUI = {
+    sidebar: HTMLElement;
+    usePotionBtn: HTMLButtonElement;
+    centerOnCharacterBtn: HTMLButtonElement;
+};
+
 export type VillageUI = {
     sidebar: HTMLElement;
     prompt: HTMLElement;
@@ -150,6 +162,8 @@ export type DeveloperUI = {
     nextRollSaveBtn: HTMLButtonElement;
     nextRollClearBtn: HTMLButtonElement;
     nextRollInputs: Record<'vitality' | 'toughness' | 'strength' | 'agility' | 'connection' | 'intelligence', HTMLInputElement>;
+    everythingDiscoveredToggle: HTMLInputElement;
+    fogOfWarToggle: HTMLInputElement;
 };
 
 export type GameLogUI = {
@@ -158,6 +172,7 @@ export type GameLogUI = {
 
 export type GameUiBundle = {
     hudElements: HudElements;
+    worldUI: WorldUI;
     battleUI: BattleUI;
     villageUI: VillageUI;
     gameLogUI: GameLogUI;

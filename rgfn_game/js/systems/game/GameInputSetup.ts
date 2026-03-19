@@ -19,6 +19,12 @@ export default class GameInputSetup {
         this.input.mapAction('moveDown', ['ArrowDown', 'KeyS']);
         this.input.mapAction('moveLeft', ['ArrowLeft', 'KeyA']);
         this.input.mapAction('moveRight', ['ArrowRight', 'KeyD']);
+        this.input.mapAction('worldMapZoomIn', ['Equal', 'NumpadAdd']);
+        this.input.mapAction('worldMapZoomOut', ['Minus', 'NumpadSubtract']);
+        this.input.mapAction('worldMapPanUp', ['KeyI']);
+        this.input.mapAction('worldMapPanDown', ['KeyK']);
+        this.input.mapAction('worldMapPanLeft', ['KeyJ']);
+        this.input.mapAction('worldMapPanRight', ['KeyL']);
 
         document.addEventListener('keydown', (event: KeyboardEvent) => this.input.handleKeyDown(event));
         document.addEventListener('keyup', (event: KeyboardEvent) => this.input.handleKeyUp(event));

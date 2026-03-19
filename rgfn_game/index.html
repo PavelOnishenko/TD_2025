@@ -157,9 +157,35 @@
                     </div>
                 </div>
                 <div class="game-area-cell" id="r1c2">
-                    <canvas id="game-canvas" width="800" height="600"></canvas>
+                    <div id="world-map-shell">
+                        <canvas id="game-canvas" width="800" height="600"></canvas>
+                        <div id="world-map-controls" aria-label="World map controls">
+                            <div class="world-map-control-group">
+                                <button id="world-map-zoom-in-btn" class="action-btn world-map-control-btn" type="button">Zoom +</button>
+                                <button id="world-map-zoom-out-btn" class="action-btn world-map-control-btn" type="button">Zoom -</button>
+                            </div>
+                            <div class="world-map-control-pad">
+                                <button id="world-map-pan-up-btn" class="action-btn world-map-control-btn" type="button">↑</button>
+                                <div class="world-map-control-pad-row">
+                                    <button id="world-map-pan-left-btn" class="action-btn world-map-control-btn" type="button">←</button>
+                                    <button id="world-map-pan-right-btn" class="action-btn world-map-control-btn" type="button">→</button>
+                                </div>
+                                <button id="world-map-pan-down-btn" class="action-btn world-map-control-btn" type="button">↓</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div class="game-area-cell" id="r1c3">
+                    <div id="world-sidebar">
+                        <h2>World Map</h2>
+                        <div id="world-actions">
+                            <p class="world-actions-copy">Prepare for the journey and recenter the map whenever you lose track of your hero.</p>
+                            <div id="world-action-buttons">
+                                <button id="world-use-potion-btn" class="action-btn">Use HP Potion</button>
+                                <button id="world-center-on-character-btn" class="action-btn">Center on Character</button>
+                            </div>
+                        </div>
+                    </div>
                     <div id="battle-sidebar" class="hidden">
                         <h2>Combat</h2>
                         <div id="enemy-info">
@@ -308,6 +334,14 @@
                     <h3>Next new character roll</h3>
                     <p id="dev-next-roll-summary" class="dev-events-hint dev-events-hint-tight">Next character roll: random.</p>
                     <button id="dev-next-roll-open-btn" class="action-btn" type="button">Setup Next Roll</button>
+                </div>
+                <div class="dev-events-queue-wrap">
+                    <h3>Map display</h3>
+                    <p class="dev-events-hint dev-events-hint-tight">Current gameplay defaults are <strong>Everything discovered = false</strong> and <strong>Fog of war = true</strong>.</p>
+                    <div class="dev-events-toggle-grid dev-events-toggle-grid-single">
+                        <label class="dev-events-toggle" for="dev-map-display-everything-discovered"><input id="dev-map-display-everything-discovered" type="checkbox"> Everything discovered</label>
+                        <label class="dev-events-toggle" for="dev-map-display-fog-of-war"><input id="dev-map-display-fog-of-war" type="checkbox" checked> Fog of war</label>
+                    </div>
                 </div>
             </div>
         </div>

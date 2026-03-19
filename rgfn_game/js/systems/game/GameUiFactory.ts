@@ -1,4 +1,4 @@
-import { BattleUI, DeveloperUI, GameLogUI, GameUiBundle, HudElements, VillageUI } from './GameUiTypes.js';
+import { BattleUI, DeveloperUI, GameLogUI, GameUiBundle, HudElements, VillageUI, WorldUI } from './GameUiTypes.js';
 import { balanceConfig } from '../../config/balanceConfig.js';
 import { CombatUiActionId, PLAYER_COMBAT_ACTIONS } from '../../types/combat.js';
 
@@ -6,6 +6,7 @@ export default class GameUiFactory {
     public create(): GameUiBundle {
         return {
             hudElements: this.createHudElements(),
+            worldUI: this.createWorldUi(),
             battleUI: this.createBattleUi(),
             villageUI: this.createVillageUi(),
             gameLogUI: this.createGameLogUi(),
@@ -19,6 +20,12 @@ export default class GameUiFactory {
             usePotionBtn: document.getElementById('use-potion-btn')! as HTMLButtonElement,
             useManaPotionBtn: document.getElementById('use-mana-potion-btn')! as HTMLButtonElement,
             newCharacterBtn: document.getElementById('new-character-btn')! as HTMLButtonElement,
+            worldMapZoomInBtn: document.getElementById('world-map-zoom-in-btn')! as HTMLButtonElement,
+            worldMapZoomOutBtn: document.getElementById('world-map-zoom-out-btn')! as HTMLButtonElement,
+            worldMapPanUpBtn: document.getElementById('world-map-pan-up-btn')! as HTMLButtonElement,
+            worldMapPanDownBtn: document.getElementById('world-map-pan-down-btn')! as HTMLButtonElement,
+            worldMapPanLeftBtn: document.getElementById('world-map-pan-left-btn')! as HTMLButtonElement,
+            worldMapPanRightBtn: document.getElementById('world-map-pan-right-btn')! as HTMLButtonElement,
             playerLevel: document.getElementById('player-level')!,
             playerName: document.getElementById('player-name')!,
             playerXp: document.getElementById('player-xp')!,
@@ -138,6 +145,14 @@ export default class GameUiFactory {
         };
     }
 
+    private createWorldUi(): WorldUI {
+        return {
+            sidebar: document.getElementById('world-sidebar')!,
+            usePotionBtn: document.getElementById('world-use-potion-btn')! as HTMLButtonElement,
+            centerOnCharacterBtn: document.getElementById('world-center-on-character-btn')! as HTMLButtonElement,
+        };
+    }
+
     private createVillageUi(): VillageUI {
         return {
             sidebar: document.getElementById('village-sidebar')!,
@@ -216,6 +231,8 @@ export default class GameUiFactory {
                 connection: document.getElementById('dev-next-roll-connection')! as HTMLInputElement,
                 intelligence: document.getElementById('dev-next-roll-intelligence')! as HTMLInputElement,
             },
+            everythingDiscoveredToggle: document.getElementById('dev-map-display-everything-discovered')! as HTMLInputElement,
+            fogOfWarToggle: document.getElementById('dev-map-display-fog-of-war')! as HTMLInputElement,
         };
     }
 }

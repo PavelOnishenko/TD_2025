@@ -1,6 +1,6 @@
 import VillageActionsController from '../village/VillageActionsController.js';
 import DeveloperEventController from '../encounter/DeveloperEventController.js';
-import { BattleUI, DeveloperUI, HudElements, VillageUI } from './GameUiTypes.js';
+import { BattleUI, DeveloperUI, HudElements, VillageUI, WorldUI } from './GameUiTypes.js';
 import { BaseSpellId } from '../magic/MagicSystem.js';
 import { PLAYER_COMBAT_ACTIONS, CombatUiActionId } from '../../types/combat.js';
 
@@ -20,13 +20,19 @@ type GameUiEventCallbacks = {
     onUpgradeSpell: (spellId: BaseSpellId) => void;
     onCanvasClick: (event: MouseEvent) => void;
     onCanvasMove: (event: MouseEvent) => void;
-    onCanvasLeave: () => void;  
+    onCanvasLeave: () => void;
+    onWorldMapZoomIn: () => void;
+    onWorldMapZoomOut: () => void;
+    onWorldMapPan: (direction: 'up' | 'down' | 'left' | 'right') => void;
+    onCenterWorldMapOnPlayer: () => void;
+    onUsePotionFromWorld: () => void;
     onTogglePanel: (panel: 'stats' | 'skills' | 'inventory' | 'magic' | 'quests' | 'lore' | 'selected') => void;
 };
 
 export default class GameUiEventBinder {
     private canvas: HTMLCanvasElement;
     private hudElements: HudElements;
+    private worldUI: WorldUI;
     private battleUI: BattleUI;
     private villageUI: VillageUI;
     private developerUI: DeveloperUI;
@@ -37,6 +43,7 @@ export default class GameUiEventBinder {
     constructor(
         canvas: HTMLCanvasElement,
         hudElements: HudElements,
+        worldUI: WorldUI,
         battleUI: BattleUI,
         villageUI: VillageUI,
         developerUI: DeveloperUI,
@@ -46,6 +53,7 @@ export default class GameUiEventBinder {
     ) {
         this.canvas = canvas;
         this.hudElements = hudElements;
+        this.worldUI = worldUI;
         this.battleUI = battleUI;
         this.villageUI = villageUI;
         this.developerUI = developerUI;
@@ -81,6 +89,14 @@ export default class GameUiEventBinder {
         this.hudElements.usePotionBtn.addEventListener('click', () => this.callbacks.onUsePotionFromHud());
         this.hudElements.useManaPotionBtn.addEventListener('click', () => this.callbacks.onUseManaPotionFromHud());
         this.hudElements.newCharacterBtn.addEventListener('click', () => this.callbacks.onNewCharacter());
+        this.hudElements.worldMapZoomInBtn.addEventListener('click', () => this.callbacks.onWorldMapZoomIn());
+        this.hudElements.worldMapZoomOutBtn.addEventListener('click', () => this.callbacks.onWorldMapZoomOut());
+        this.hudElements.worldMapPanUpBtn.addEventListener('click', () => this.callbacks.onWorldMapPan('up'));
+        this.hudElements.worldMapPanDownBtn.addEventListener('click', () => this.callbacks.onWorldMapPan('down'));
+        this.hudElements.worldMapPanLeftBtn.addEventListener('click', () => this.callbacks.onWorldMapPan('left'));
+        this.hudElements.worldMapPanRightBtn.addEventListener('click', () => this.callbacks.onWorldMapPan('right'));
+        this.worldUI.usePotionBtn.addEventListener('click', () => this.callbacks.onUsePotionFromWorld());
+        this.worldUI.centerOnCharacterBtn.addEventListener('click', () => this.callbacks.onCenterWorldMapOnPlayer());
         this.hudElements.toggleStatsPanelBtn.addEventListener('click', () => this.callbacks.onTogglePanel('stats'));
         this.hudElements.toggleSkillsPanelBtn.addEventListener('click', () => this.callbacks.onTogglePanel('skills'));
         this.hudElements.toggleInventoryPanelBtn.addEventListener('click', () => this.callbacks.onTogglePanel('inventory'));
@@ -112,6 +128,8 @@ export default class GameUiEventBinder {
         this.developerUI.nextRollCloseBtn.addEventListener('click', () => this.developerEventController.toggleNextCharacterRollModal(false));
         this.developerUI.nextRollSaveBtn.addEventListener('click', () => this.developerEventController.handleNextCharacterRollSave());
         this.developerUI.nextRollClearBtn.addEventListener('click', () => this.developerEventController.handleNextCharacterRollClear());
+        this.developerUI.everythingDiscoveredToggle.addEventListener('change', () => this.developerEventController.handleMapDisplayToggle('everythingDiscovered', this.developerUI.everythingDiscoveredToggle.checked));
+        this.developerUI.fogOfWarToggle.addEventListener('change', () => this.developerEventController.handleMapDisplayToggle('fogOfWar', this.developerUI.fogOfWarToggle.checked));
         Object.values(this.developerUI.nextRollInputs).forEach((input) => {
             input.addEventListener('input', () => this.developerEventController.handleNextCharacterRollInputChanged());
         });

@@ -40,8 +40,9 @@ export default class WorldModeController {
         this.callbacks = callbacks;
     }
 
-    public enterWorldMode(hudModeIndicator: HTMLElement, battleSidebar: HTMLElement, villageSidebar: HTMLElement): void {
+    public enterWorldMode(hudModeIndicator: HTMLElement, worldSidebar: HTMLElement, battleSidebar: HTMLElement, villageSidebar: HTMLElement): void {
         hudModeIndicator.textContent = 'World Map';
+        worldSidebar.classList.remove('hidden');
         battleSidebar.classList.add('hidden');
         villageSidebar.classList.add('hidden');
 
@@ -53,6 +54,8 @@ export default class WorldModeController {
     }
 
     public updateWorldMode(): void {
+        this.handleMapViewportInput();
+
         const direction = this.getPendingMoveDirection();
         if (direction) {
             const moveResult = this.worldMap.movePlayer(direction);
@@ -64,6 +67,27 @@ export default class WorldModeController {
         const [px, py] = this.worldMap.getPlayerPixelPosition();
         this.player.x = px;
         this.player.y = py;
+    }
+
+    private handleMapViewportInput(): void {
+        if (this.input.wasActionPressed('worldMapZoomIn')) {
+            this.worldMap.zoomIn();
+        }
+        if (this.input.wasActionPressed('worldMapZoomOut')) {
+            this.worldMap.zoomOut();
+        }
+        if (this.input.wasActionPressed('worldMapPanUp')) {
+            this.worldMap.pan('up');
+        }
+        if (this.input.wasActionPressed('worldMapPanDown')) {
+            this.worldMap.pan('down');
+        }
+        if (this.input.wasActionPressed('worldMapPanLeft')) {
+            this.worldMap.pan('left');
+        }
+        if (this.input.wasActionPressed('worldMapPanRight')) {
+            this.worldMap.pan('right');
+        }
     }
 
     private getPendingMoveDirection(): Direction | null {
@@ -176,8 +200,6 @@ export default class WorldModeController {
         }
     }
 
-
-
     private handleTravelerEncounter(traveler: Wanderer, isHostile: boolean): void {
         this.callbacks.onRememberTraveler(traveler, isHostile ? 'hostile' : 'peaceful');
         if (isHostile) {
@@ -225,6 +247,7 @@ export default class WorldModeController {
         this.callbacks.onAddBattleLog(`You barter for ${offer.name}.`, 'system');
         this.callbacks.onUpdateHUD();
     }
+
     private handleItemDiscovery(item: Item): void {
         this.itemDiscoverySplash.showItemDiscovery(item, () => {
             const wasAdded = this.player.addItemToInventory(item);

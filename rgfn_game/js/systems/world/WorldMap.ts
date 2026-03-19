@@ -1,5 +1,5 @@
 import GridMap from '../../utils/GridMap.js';
-import { FogState, TerrainData, GridPosition, Direction, GridCell, TerrainNeighbors, TerrainType, SelectedWorldCellInfo } from '../../types/game.js';
+import { FogState, MapDisplayConfig, TerrainData, GridPosition, Direction, GridCell, TerrainNeighbors, TerrainType, SelectedWorldCellInfo } from '../../types/game.js';
 import { theme } from '../../config/ThemeConfig.js';
 import WorldMapRenderer from './WorldMapRenderer.js';
 import { balanceConfig } from '../../config/balanceConfig.js';
@@ -18,10 +18,28 @@ const FOG_STATE = {
     HIDDEN: 'hidden' as FogState,
 };
 
+const DEFAULT_MAP_DISPLAY_CONFIG: MapDisplayConfig = {
+    everythingDiscovered: false,
+    fogOfWar: true,
+};
+
 type NamedLocation = {
     name: string;
     position: GridPosition;
     terrainType: TerrainType;
+};
+
+type ClimateCell = {
+    col: number;
+    row: number;
+    seed: number;
+    elevation: number;
+    moisture: number;
+    heat: number;
+    forestSuitability: number;
+    grassSuitability: number;
+    desertSuitability: number;
+    inlandWaterSuitability: number;
 };
 
 export default class WorldMap {
@@ -36,10 +54,13 @@ export default class WorldMap {
     private namedLocations: Map<string, NamedLocation>;
     private focusedLocationName: string | null;
     private worldSeed: number;
+    private canvasWidth: number;
+    private canvasHeight: number;
+    private mapDisplayConfig: MapDisplayConfig;
 
     constructor(columns: number, rows: number, cellSize: number) {
         this.grid = new GridMap(columns, rows, cellSize);
-        this.playerGridPos = { col: Math.floor(columns / 2), row: Math.floor(rows / 2) };
+        this.playerGridPos = { col: 0, row: 0 };
         this.fogStates = new Map();
         this.terrainData = new Map();
         this.villages = new Set();
@@ -49,10 +70,14 @@ export default class WorldMap {
         this.namedLocations = new Map<string, NamedLocation>();
         this.focusedLocationName = null;
         this.worldSeed = this.createWorldSeed();
+        this.canvasWidth = columns * cellSize;
+        this.canvasHeight = rows * cellSize;
+        this.mapDisplayConfig = { ...DEFAULT_MAP_DISPLAY_CONFIG };
         this.initializeFogOfWar();
         this.generateWorld();
         this.visitedCells.add(this.getCellKey(this.playerGridPos.col, this.playerGridPos.row));
         this.refreshVisibility();
+        this.centerViewportOnCell(this.playerGridPos.col, this.playerGridPos.row);
     }
 
     private initializeFogOfWar(): void {
@@ -61,38 +86,299 @@ export default class WorldMap {
         });
     }
 
+    private generateWorld(): void {
+        this.generateTerrain();
+        this.generateVillages();
+        this.pickRandomPlayerStart();
+    }
+
     private generateTerrain(): void {
+        const dims = this.grid.getDimensions();
+        const climates: ClimateCell[] = [];
+
+        for (let row = 0; row < dims.rows; row += 1) {
+            for (let col = 0; col < dims.columns; col += 1) {
+                climates.push(this.createClimateCell(col, row, dims.columns, dims.rows));
+            }
+        }
+
+        const climateByKey = new Map(climates.map((climate) => [this.getCellKey(climate.col, climate.row), climate]));
+        const lakeCells = this.generateLakeCells(climateByKey, dims.columns, dims.rows);
+        const riverCells = this.generateRiverCells(climateByKey, dims.columns, dims.rows);
+        const forestTarget = this.getForestCoverageTarget();
+        const forestThreshold = this.getQuantileThreshold(
+            climates.filter((climate) => !lakeCells.has(this.getCellKey(climate.col, climate.row)) && !riverCells.has(this.getCellKey(climate.col, climate.row))),
+            (climate) => climate.forestSuitability,
+            forestTarget,
+        );
+
         this.terrainData.clear();
-        this.grid.forEachCell((_cell: GridCell, col: number, row: number) => {
-            this.terrainData.set(this.getCellKey(col, row), this.generateCellTerrain(col, row));
+        climates.forEach((climate) => {
+            const key = this.getCellKey(climate.col, climate.row);
+            const type = this.resolveTerrainType(climate, forestThreshold, lakeCells.has(key), riverCells.has(key));
+            this.terrainData.set(key, {
+                type,
+                color: this.getTerrainColor(type),
+                pattern: this.generateTerrainPattern(type, climate.seed),
+                elevation: climate.elevation,
+                moisture: climate.moisture,
+                heat: climate.heat,
+                seed: climate.seed,
+            });
         });
     }
 
-    private generateWorld(): void {
-        this.generateTerrain();
-        this.ensureTraversablePlayerStart();
-        this.generateVillages();
+    private createClimateCell(col: number, row: number, columns: number, rows: number): ClimateCell {
+        const nx = columns <= 1 ? 0 : col / (columns - 1);
+        const ny = rows <= 1 ? 0 : row / (rows - 1);
+        const seed = this.hashSeed((col + 1) * 92837111, (row + 1) * 689287499);
+        const weights = balanceConfig.worldMap.terrainWeights;
+
+        const elevationNoise = this.fractalNoise(nx * 1.4, ny * 1.4, 4, 0.52, 2.05);
+        const moistureNoise = this.fractalNoise((nx + 17.2) * 1.72, (ny - 5.4) * 1.72, 4, 0.56, 2.1);
+        const heatNoise = this.fractalNoise((nx - 8.1) * 1.28, (ny + 13.7) * 1.28, 3, 0.5, 2.15);
+        const forestNoise = this.fractalNoise((nx + 3.4) * 2.15, (ny + 7.9) * 2.15, 3, 0.58, 2.0);
+        const desertNoise = this.fractalNoise((nx - 9.3) * 1.95, (ny + 2.2) * 1.95, 3, 0.52, 2.2);
+        const waterNoise = this.fractalNoise((nx + 11.8) * 2.4, (ny - 6.6) * 2.4, 2, 0.6, 2.0);
+
+        const elevation = this.clamp01((elevationNoise * 0.85) + (forestNoise * 0.08));
+        const moisture = this.clamp01((moistureNoise * 0.76) + ((1 - elevation) * 0.16) + (waterNoise * 0.08));
+        const temperateBand = 1 - Math.min(1, Math.abs((ny - 0.5) * 1.15));
+        const heat = this.clamp01((heatNoise * 0.44) + (temperateBand * 0.28) + ((1 - moisture) * 0.28));
+        const dryness = this.clamp01(heat - (moisture * 0.72));
+        const waterLowlands = this.clamp01((1 - elevation) * 0.7 + (moisture * 0.3));
+
+        return {
+            col,
+            row,
+            seed,
+            elevation,
+            moisture,
+            heat,
+            forestSuitability: (weights.forest * 1.4) + (moisture * 0.9) + (forestNoise * 0.55) + (temperateBand * 0.22),
+            grassSuitability: (weights.grass * 1.2) + ((1 - Math.abs(moisture - 0.52)) * 0.58) + (temperateBand * 0.22) + ((1 - elevation) * 0.1),
+            desertSuitability: (weights.desert * 1.5) + (dryness * 1.2) + (desertNoise * 0.42),
+            inlandWaterSuitability: (weights.water * 1.35) + (waterLowlands * 1.1) + (waterNoise * 0.3),
+        };
     }
 
-    private ensureTraversablePlayerStart(): void {
-        const startTerrain = this.getTerrain(this.playerGridPos.col, this.playerGridPos.row);
-        if (startTerrain?.type !== 'water') {
+    private getForestCoverageTarget(): number {
+        const configuredRange = balanceConfig.worldMap.forestCoverage ?? { min: 0.3, max: 0.6 };
+        const min = this.clamp01(Math.min(configuredRange.min, configuredRange.max));
+        const max = this.clamp01(Math.max(configuredRange.min, configuredRange.max));
+        return min + ((max - min) * this.seededValue('forest-coverage', 0));
+    }
+
+    private resolveTerrainType(climate: ClimateCell, forestThreshold: number, isLake: boolean, isRiver: boolean): TerrainType {
+        const mountainThreshold = balanceConfig.worldMap.mountainThreshold ?? 0.86;
+        const inlandWaterThreshold = balanceConfig.worldMap.inlandWaterThreshold ?? 0.79;
+        const desertHeatThreshold = balanceConfig.worldMap.desertHeatThreshold ?? 0.68;
+        const desertDrynessThreshold = balanceConfig.worldMap.desertDrynessThreshold ?? 0.58;
+        const dryness = this.clamp01(climate.heat - (climate.moisture * 0.72));
+
+        if (isLake || isRiver) {
+            return 'water';
+        }
+        if (climate.elevation >= mountainThreshold) {
+            return 'mountain';
+        }
+        if (climate.heat >= desertHeatThreshold && dryness >= desertDrynessThreshold && climate.desertSuitability >= climate.grassSuitability + 0.18) {
+            return 'desert';
+        }
+        if (climate.forestSuitability >= forestThreshold) {
+            return 'forest';
+        }
+        if (climate.inlandWaterSuitability >= inlandWaterThreshold && climate.elevation < mountainThreshold - 0.08) {
+            return 'water';
+        }
+        return climate.grassSuitability >= climate.desertSuitability ? 'grass' : 'desert';
+    }
+
+    private generateLakeCells(climateByKey: Map<string, ClimateCell>, columns: number, rows: number): Set<string> {
+        const lakeConfig = balanceConfig.worldMap.lakes ?? { count: 7, minRadius: 2, maxRadius: 5, jitter: 0.38 };
+        const cells = new Set<string>();
+        const attempts = Math.max(lakeConfig.count * 10, 12);
+        let created = 0;
+
+        for (let attempt = 0; attempt < attempts && created < lakeConfig.count; attempt += 1) {
+            const col = 2 + this.seededInt(Math.max(1, columns - 4), this.seededValue('lake-col', attempt));
+            const row = 2 + this.seededInt(Math.max(1, rows - 4), this.seededValue('lake-row', attempt));
+            const climate = climateByKey.get(this.getCellKey(col, row));
+            if (!climate || climate.elevation > 0.62) {
+                continue;
+            }
+
+            const minRadius = Math.max(1, lakeConfig.minRadius ?? 2);
+            const maxRadius = Math.max(minRadius, lakeConfig.maxRadius ?? 5);
+            const radius = minRadius + Math.floor(this.seededValue('lake-radius', attempt) * ((maxRadius - minRadius) + 1));
+            const jitter = lakeConfig.jitter ?? 0.38;
+
+            for (let y = row - radius - 1; y <= row + radius + 1; y += 1) {
+                for (let x = col - radius - 1; x <= col + radius + 1; x += 1) {
+                    if (!this.grid.isValidPosition(x, y)) {
+                        continue;
+                    }
+
+                    const dx = x - col;
+                    const dy = y - row;
+                    const distance = Math.sqrt((dx * dx) + (dy * dy));
+                    const ripple = this.seededRandom(this.hashSeed(x * 101, y * 313, attempt * 997));
+                    const edge = radius + ((ripple - 0.5) * jitter * radius);
+                    if (distance <= edge) {
+                        cells.add(this.getCellKey(x, y));
+                    }
+                }
+            }
+
+            created += 1;
+        }
+
+        return cells;
+    }
+
+    private generateRiverCells(climateByKey: Map<string, ClimateCell>, columns: number, rows: number): Set<string> {
+        const riverConfig = balanceConfig.worldMap.rivers ?? { count: 5, maxLengthFactor: 0.72, turnRate: 0.34, width: 1 };
+        const riverCells = new Set<string>();
+        const sourceCandidates = Array.from(climateByKey.values())
+            .filter((climate) => climate.elevation >= 0.7)
+            .sort((left, right) => right.elevation - left.elevation);
+
+        const riverCount = Math.min(riverConfig.count ?? 0, sourceCandidates.length);
+        const maxLength = Math.max(columns, rows) * (riverConfig.maxLengthFactor ?? 0.72);
+        const turnRate = riverConfig.turnRate ?? 0.34;
+        const riverWidth = Math.max(1, Math.floor(riverConfig.width ?? 1));
+        const usedSources = new Set<string>();
+
+        for (let riverIndex = 0; riverIndex < riverCount; riverIndex += 1) {
+            const source = sourceCandidates.find((candidate) => !usedSources.has(this.getCellKey(candidate.col, candidate.row)));
+            if (!source) {
+                break;
+            }
+
+            usedSources.add(this.getCellKey(source.col, source.row));
+            let current = { col: source.col, row: source.row };
+
+            for (let step = 0; step < maxLength; step += 1) {
+                this.addWaterBrush(riverCells, current.col, current.row, riverWidth);
+
+                const next = this.pickNextRiverStep(current.col, current.row, climateByKey, turnRate, riverIndex, step);
+                if (!next) {
+                    break;
+                }
+
+                current = next;
+                const climate = climateByKey.get(this.getCellKey(current.col, current.row));
+                if (!climate) {
+                    break;
+                }
+
+                if (current.col <= 0 || current.row <= 0 || current.col >= columns - 1 || current.row >= rows - 1 || climate.elevation <= 0.34) {
+                    this.addWaterBrush(riverCells, current.col, current.row, riverWidth + 1);
+                    break;
+                }
+            }
+        }
+
+        return riverCells;
+    }
+
+    private pickNextRiverStep(
+        col: number,
+        row: number,
+        climateByKey: Map<string, ClimateCell>,
+        turnRate: number,
+        riverIndex: number,
+        step: number,
+    ): GridPosition | null {
+        const directions = [
+            { col: 0, row: 1 },
+            { col: -1, row: 1 },
+            { col: 1, row: 1 },
+            { col: -1, row: 0 },
+            { col: 1, row: 0 },
+            { col: 0, row: -1 },
+        ];
+
+        const ranked = directions
+            .map((direction, directionIndex) => {
+                const nextCol = col + direction.col;
+                const nextRow = row + direction.row;
+                if (!this.grid.isValidPosition(nextCol, nextRow)) {
+                    return null;
+                }
+
+                const climate = climateByKey.get(this.getCellKey(nextCol, nextRow));
+                if (!climate) {
+                    return null;
+                }
+
+                const randomTurn = this.seededValue(`river-turn-${riverIndex}`, (step * directions.length) + directionIndex);
+                const downhillBias = (1 - climate.elevation) * 1.4;
+                const moistureBias = climate.moisture * 0.32;
+                const eastWestBias = Math.abs(direction.col) > 0 ? randomTurn * turnRate : (1 - turnRate);
+                const score = downhillBias + moistureBias + eastWestBias;
+                return {
+                    position: { col: nextCol, row: nextRow },
+                    score,
+                };
+            })
+            .filter((entry): entry is { position: GridPosition; score: number } => entry !== null)
+            .sort((left, right) => right.score - left.score);
+
+        return ranked[0]?.position ?? null;
+    }
+
+    private addWaterBrush(cells: Set<string>, col: number, row: number, radius: number): void {
+        for (let y = row - radius; y <= row + radius; y += 1) {
+            for (let x = col - radius; x <= col + radius; x += 1) {
+                if (!this.grid.isValidPosition(x, y)) {
+                    continue;
+                }
+
+                const distance = Math.abs(x - col) + Math.abs(y - row);
+                if (distance <= radius) {
+                    cells.add(this.getCellKey(x, y));
+                }
+            }
+        }
+    }
+
+    private getQuantileThreshold<T>(items: T[], selector: (item: T) => number, share: number): number {
+        if (items.length === 0) {
+            return Number.POSITIVE_INFINITY;
+        }
+
+        const sorted = items.map(selector).sort((left, right) => right - left);
+        const clampedShare = this.clamp01(share);
+        const targetIndex = Math.min(sorted.length - 1, Math.max(0, Math.floor(sorted.length * clampedShare) - 1));
+        return sorted[targetIndex] ?? Number.POSITIVE_INFINITY;
+    }
+
+    private pickRandomPlayerStart(): void {
+        const dims = this.grid.getDimensions();
+        const candidates: GridPosition[] = [];
+
+        for (let row = 0; row < dims.rows; row += 1) {
+            for (let col = 0; col < dims.columns; col += 1) {
+                const terrain = this.getTerrain(col, row);
+                if (terrain && terrain.type !== 'water' && terrain.type !== 'mountain' && !this.villages.has(this.getCellKey(col, row))) {
+                    candidates.push({ col, row });
+                }
+            }
+        }
+
+        if (candidates.length === 0) {
+            this.playerGridPos = { col: Math.floor(dims.columns / 2), row: Math.floor(dims.rows / 2) };
             return;
         }
 
-        this.terrainData.set(this.getCellKey(this.playerGridPos.col, this.playerGridPos.row), {
-            ...startTerrain,
-            type: 'grass',
-            color: this.getTerrainColor('grass'),
-            pattern: this.generateTerrainPattern('grass', startTerrain.seed),
-        });
+        const candidateIndex = this.seededInt(candidates.length, this.seededValue('player-start', 0));
+        this.playerGridPos = candidates[candidateIndex] ?? candidates[0];
     }
 
     private generateVillages(): void {
         const dims = this.grid.getDimensions();
-        const villageCount = Math.max(4, Math.floor((dims.columns * dims.rows) * 0.024));
-        const centerCol = Math.floor(dims.columns / 2);
-        const centerRow = Math.floor(dims.rows / 2);
+        const villageCount = Math.max(6, Math.floor((dims.columns * dims.rows) * 0.012));
         this.villages.clear();
 
         for (let attempt = 0; this.villages.size < villageCount && attempt < dims.columns * dims.rows * 8; attempt += 1) {
@@ -100,14 +386,9 @@ export default class WorldMap {
             const row = this.seededInt(dims.rows, this.seededValue('village-row', attempt));
             const terrain = this.getTerrain(col, row);
 
-            if (!terrain || terrain.type === 'water' || terrain.type === 'mountain') {
+            if (!terrain || terrain.type === 'water' || terrain.type === 'mountain' || terrain.type === 'desert') {
                 continue;
             }
-
-            if (col === centerCol && row === centerRow) {
-                continue;
-            }
-
             const nearestVillageDistance = Array.from(this.villages).reduce((closest, key) => {
                 const [vColText, vRowText] = key.split(',');
                 const vCol = Number(vColText);
@@ -115,55 +396,12 @@ export default class WorldMap {
                 return Math.min(closest, Math.abs(vCol - col) + Math.abs(vRow - row));
             }, Number.POSITIVE_INFINITY);
 
-            if (nearestVillageDistance < 4) {
+            if (nearestVillageDistance < 6) {
                 continue;
             }
 
             this.villages.add(this.getCellKey(col, row));
         }
-    }
-
-    private generateCellTerrain(col: number, row: number): TerrainData {
-        const dims = this.grid.getDimensions();
-        const nx = dims.columns <= 1 ? 0 : col / (dims.columns - 1);
-        const ny = dims.rows <= 1 ? 0 : row / (dims.rows - 1);
-        const baseSeed = this.hashSeed((col + 1) * 92837111, (row + 1) * 689287499);
-
-        const elevationNoise = this.fractalNoise(nx * 1.15, ny * 1.15, 4, 0.55, 1.95);
-        const moistureNoise = this.fractalNoise((nx + 12.4) * 1.55, (ny - 3.1) * 1.55, 3, 0.58, 2.1);
-        const heatNoise = this.fractalNoise((nx - 7.2) * 1.2, (ny + 18.7) * 1.2, 3, 0.48, 2.2);
-        const riverNoise = this.fractalNoise((nx + 4.2) * 2.8, (ny + 9.6) * 2.8, 2, 0.5, 2.0);
-        const edgeFalloff = this.distanceToNearestEdge(nx, ny);
-
-        const elevation = this.clamp01((elevationNoise * 0.78) + (edgeFalloff * 0.34));
-        const moisture = this.clamp01((moistureNoise * 0.82) + ((1 - elevation) * 0.18));
-        const latitudeHeat = 1 - Math.min(1, Math.abs((ny - 0.5) * 1.6));
-        const heat = this.clamp01((heatNoise * 0.45) + (latitudeHeat * 0.45) + ((1 - moisture) * 0.1));
-
-        const riverBand = Math.abs(riverNoise - 0.5);
-        const edgeWater = edgeFalloff < 0.18 && elevation < 0.58;
-        const river = riverBand < 0.045 && elevation > 0.24 && elevation < 0.63;
-
-        let type: TerrainType = 'grass';
-        if (elevation < 0.24 || edgeWater || river) {
-            type = 'water';
-        } else if (elevation > 0.73) {
-            type = 'mountain';
-        } else if (heat > 0.66 && moisture < 0.34) {
-            type = 'desert';
-        } else if (moisture > 0.58) {
-            type = 'forest';
-        }
-
-        return {
-            type,
-            color: this.getTerrainColor(type),
-            pattern: this.generateTerrainPattern(type, baseSeed),
-            elevation,
-            moisture,
-            heat,
-            seed: baseSeed,
-        };
     }
 
     private getTerrainColor(type: TerrainType): string {
@@ -222,7 +460,7 @@ export default class WorldMap {
     }
 
     private hash2D(x: number, y: number): number {
-        const seed = Math.sin((x * 127.1) + (y * 311.7)) * 43758.5453123;
+        const seed = Math.sin((x * 127.1) + (y * 311.7) + this.worldSeed) * 43758.5453123;
         return seed - Math.floor(seed);
     }
 
@@ -232,10 +470,6 @@ export default class WorldMap {
 
     private lerp(a: number, b: number, t: number): number {
         return a + ((b - a) * t);
-    }
-
-    private distanceToNearestEdge(nx: number, ny: number): number {
-        return Math.min(nx, ny, 1 - nx, 1 - ny);
     }
 
     private clamp01(value: number): number {
@@ -291,7 +525,17 @@ export default class WorldMap {
     }
 
     private getFogState(col: number, row: number): FogState {
-        return this.fogStates.get(this.getCellKey(col, row)) || FOG_STATE.UNKNOWN;
+        const storedFogState = this.fogStates.get(this.getCellKey(col, row)) || FOG_STATE.UNKNOWN;
+
+        if (this.mapDisplayConfig.everythingDiscovered) {
+            return FOG_STATE.DISCOVERED;
+        }
+
+        if (!this.mapDisplayConfig.fogOfWar && storedFogState === FOG_STATE.UNKNOWN) {
+            return FOG_STATE.HIDDEN;
+        }
+
+        return storedFogState;
     }
 
     private getTerrain(col: number, row: number): TerrainData | undefined {
@@ -415,21 +659,130 @@ export default class WorldMap {
             this.playerGridPos = { col: newCol, row: newRow };
             this.visitedCells.add(destinationKey);
             this.refreshVisibility();
+            this.ensureCellIsVisible(newCol, newRow);
             return { moved: true, isPreviouslyDiscovered };
         }
         return { moved: false, isPreviouslyDiscovered: false };
     }
 
     public resizeToCanvas(canvasWidth: number, canvasHeight: number): void {
-        const { columns, rows } = this.grid.getDimensions();
-        const nextCellSize = Math.max(1, Math.floor(Math.min(canvasWidth / columns, canvasHeight / rows)));
-        const mapWidth = columns * nextCellSize;
-        const mapHeight = rows * nextCellSize;
-        const baseOffsetX = Math.floor((canvasWidth - mapWidth) / 2);
-        const baseOffsetY = Math.floor((canvasHeight - mapHeight) / 2);
-        const offsetX = baseOffsetX + theme.worldMap.gridOffset.x;
-        const offsetY = baseOffsetY + theme.worldMap.gridOffset.y;
-        this.grid.updateLayout(nextCellSize, offsetX, offsetY);
+        this.canvasWidth = Math.max(1, Math.floor(canvasWidth));
+        this.canvasHeight = Math.max(1, Math.floor(canvasHeight));
+
+        const configuredCellSize = theme.worldMap.cellSize.default;
+        const nextCellSize = this.grid.cellSize > 0 ? this.grid.cellSize : configuredCellSize;
+        this.grid.updateLayout(nextCellSize, this.grid.offsetX, this.grid.offsetY);
+        this.clampViewport();
+    }
+
+    public centerOnPlayer(): void {
+        this.centerViewportOnCell(this.playerGridPos.col, this.playerGridPos.row);
+    }
+
+    public zoomIn(): boolean {
+        return this.zoomBy(theme.worldMap.cellSize.zoomStep);
+    }
+
+    public zoomOut(): boolean {
+        return this.zoomBy(-theme.worldMap.cellSize.zoomStep);
+    }
+
+    private zoomBy(delta: number): boolean {
+        const minCellSize = theme.worldMap.cellSize.min;
+        const maxCellSize = theme.worldMap.cellSize.max;
+        const nextCellSize = Math.max(minCellSize, Math.min(maxCellSize, this.grid.cellSize + delta));
+        if (nextCellSize === this.grid.cellSize) {
+            return false;
+        }
+
+        const centerCol = (this.canvasWidth / 2 - this.grid.offsetX) / this.grid.cellSize;
+        const centerRow = (this.canvasHeight / 2 - this.grid.offsetY) / this.grid.cellSize;
+        const nextOffsetX = Math.round((this.canvasWidth / 2) - (centerCol * nextCellSize));
+        const nextOffsetY = Math.round((this.canvasHeight / 2) - (centerRow * nextCellSize));
+        this.grid.updateLayout(nextCellSize, nextOffsetX, nextOffsetY);
+        this.clampViewport();
+        return true;
+    }
+
+    public pan(direction: 'up' | 'down' | 'left' | 'right'): boolean {
+        const stepCells = Math.max(1, theme.worldMap.cellSize.panStepCells);
+        const step = stepCells * this.grid.cellSize;
+        const offsets = {
+            up: { x: 0, y: step },
+            down: { x: 0, y: -step },
+            left: { x: step, y: 0 },
+            right: { x: -step, y: 0 },
+        }[direction];
+        const beforeX = this.grid.offsetX;
+        const beforeY = this.grid.offsetY;
+        this.grid.updateLayout(this.grid.cellSize, beforeX + offsets.x, beforeY + offsets.y);
+        this.clampViewport();
+        return beforeX !== this.grid.offsetX || beforeY !== this.grid.offsetY;
+    }
+
+    private centerViewportOnCell(col: number, row: number): void {
+        const offsetX = Math.round((this.canvasWidth / 2) - ((col + 0.5) * this.grid.cellSize) + theme.worldMap.gridOffset.x);
+        const offsetY = Math.round((this.canvasHeight / 2) - ((row + 0.5) * this.grid.cellSize) + theme.worldMap.gridOffset.y);
+        this.grid.updateLayout(this.grid.cellSize, offsetX, offsetY);
+        this.clampViewport();
+    }
+
+    private ensureCellIsVisible(col: number, row: number): void {
+        const left = this.grid.offsetX + (col * this.grid.cellSize);
+        const right = left + this.grid.cellSize;
+        const top = this.grid.offsetY + (row * this.grid.cellSize);
+        const bottom = top + this.grid.cellSize;
+        let offsetX = this.grid.offsetX;
+        let offsetY = this.grid.offsetY;
+
+        if (left < 0) {
+            offsetX += -left + theme.worldMap.gridOffset.x;
+        } else if (right > this.canvasWidth) {
+            offsetX -= right - this.canvasWidth;
+        }
+
+        if (top < 0) {
+            offsetY += -top + theme.worldMap.gridOffset.y;
+        } else if (bottom > this.canvasHeight) {
+            offsetY -= bottom - this.canvasHeight;
+        }
+
+        this.grid.updateLayout(this.grid.cellSize, offsetX, offsetY);
+        this.clampViewport();
+    }
+
+    private clampViewport(): void {
+        const mapWidth = this.grid.columns * this.grid.cellSize;
+        const mapHeight = this.grid.rows * this.grid.cellSize;
+        const maxOffsetX = theme.worldMap.gridOffset.x;
+        const maxOffsetY = theme.worldMap.gridOffset.y;
+        const minOffsetX = this.canvasWidth - mapWidth + theme.worldMap.gridOffset.x;
+        const minOffsetY = this.canvasHeight - mapHeight + theme.worldMap.gridOffset.y;
+
+        let offsetX = this.grid.offsetX;
+        let offsetY = this.grid.offsetY;
+
+        if (mapWidth <= this.canvasWidth) {
+            offsetX = Math.round((this.canvasWidth - mapWidth) / 2) + theme.worldMap.gridOffset.x;
+        } else {
+            offsetX = Math.max(minOffsetX, Math.min(maxOffsetX, offsetX));
+        }
+
+        if (mapHeight <= this.canvasHeight) {
+            offsetY = Math.round((this.canvasHeight - mapHeight) / 2) + theme.worldMap.gridOffset.y;
+        } else {
+            offsetY = Math.max(minOffsetY, Math.min(maxOffsetY, offsetY));
+        }
+
+        this.grid.updateLayout(this.grid.cellSize, offsetX, offsetY);
+    }
+
+    private getVisibleBounds(): { startCol: number; endCol: number; startRow: number; endRow: number } {
+        const startCol = Math.max(0, Math.floor((-this.grid.offsetX) / this.grid.cellSize) - 1);
+        const endCol = Math.min(this.grid.columns - 1, Math.ceil((this.canvasWidth - this.grid.offsetX) / this.grid.cellSize) + 1);
+        const startRow = Math.max(0, Math.floor((-this.grid.offsetY) / this.grid.cellSize) - 1);
+        const endRow = Math.min(this.grid.rows - 1, Math.ceil((this.canvasHeight - this.grid.offsetY) / this.grid.cellSize) + 1);
+        return { startCol, endCol, startRow, endRow };
     }
 
     public getPlayerPixelPosition(): [number, number] {
@@ -497,21 +850,31 @@ export default class WorldMap {
     }
 
     public draw(ctx: CanvasRenderingContext2D, _renderer: any): void {
-        const dims = this.grid.getDimensions();
-        this.renderer.drawBackground(ctx, dims.width, dims.height);
-        this.grid.forEachCell((cell: GridCell, col: number, row: number) => {
-            const terrain = this.getTerrain(col, row);
-            this.renderer.drawCell(
-                ctx,
-                cell,
-                this.getFogState(col, row),
-                terrain,
-                terrain ? this.getTerrainNeighbors(col, row, terrain.type) : undefined,
-            );
-        });
-        this.renderer.drawGrid(ctx, this.grid, dims.width, dims.height);
-        this.drawVillages(ctx);
-        this.drawNamedLocations(ctx);
+        this.renderer.drawBackground(ctx, this.canvasWidth, this.canvasHeight);
+        const bounds = this.getVisibleBounds();
+
+        for (let row = bounds.startRow; row <= bounds.endRow; row += 1) {
+            for (let col = bounds.startCol; col <= bounds.endCol; col += 1) {
+                const cell = this.grid.getCellAt(col, row);
+                const terrain = this.getTerrain(col, row);
+                if (!cell) {
+                    continue;
+                }
+
+                this.renderer.drawCell(
+                    ctx,
+                    cell,
+                    this.getFogState(col, row),
+                    terrain,
+                    terrain ? this.getTerrainNeighbors(col, row, terrain.type) : undefined,
+                    { showFogOverlay: this.mapDisplayConfig.fogOfWar },
+                );
+            }
+        }
+
+        this.renderer.drawGrid(ctx, this.grid, this.canvasWidth, this.canvasHeight);
+        this.drawVillages(ctx, bounds);
+        this.drawNamedLocations(ctx, bounds);
         this.drawNamedLocationFocus(ctx);
         const playerCell = this.grid.getCellAt(this.playerGridPos.col, this.playerGridPos.row);
         if (playerCell) {
@@ -521,7 +884,7 @@ export default class WorldMap {
         if (selectedCell) {
             this.renderer.drawCursorMarker(ctx, selectedCell, this.isCellVisible(selectedCell.col, selectedCell.row));
         }
-        this.renderer.drawScaleLegend(ctx, this.grid, `${theme.worldMap.cellTravelMinutes} min walk / cell`);
+        this.renderer.drawScaleLegend(ctx, this.grid, `${theme.worldMap.cellTravelMinutes} min walk / cell`, this.canvasWidth, this.canvasHeight);
     }
 
     public registerNamedLocation(name: string): void {
@@ -547,6 +910,7 @@ export default class WorldMap {
         }
 
         this.focusedLocationName = name;
+        this.centerViewportOnCell(location.position.col, location.position.row);
         return true;
     }
 
@@ -565,11 +929,15 @@ export default class WorldMap {
         return null;
     }
 
-    private drawVillages(ctx: CanvasRenderingContext2D): void {
+    private drawVillages(ctx: CanvasRenderingContext2D, bounds: { startCol: number; endCol: number; startRow: number; endRow: number }): void {
         this.villages.forEach((key) => {
             const [colText, rowText] = key.split(',');
             const col = Number(colText);
             const row = Number(rowText);
+            if (col < bounds.startCol || col > bounds.endCol || row < bounds.startRow || row > bounds.endRow) {
+                return;
+            }
+
             const fogState = this.getFogState(col, row);
             if (fogState === FOG_STATE.UNKNOWN) {
                 return;
@@ -585,9 +953,13 @@ export default class WorldMap {
         });
     }
 
-    private drawNamedLocations(ctx: CanvasRenderingContext2D): void {
+    private drawNamedLocations(ctx: CanvasRenderingContext2D, bounds: { startCol: number; endCol: number; startRow: number; endRow: number }): void {
         this.namedLocations.forEach((location) => {
             const { col, row } = location.position;
+            if (col < bounds.startCol || col > bounds.endCol || row < bounds.startRow || row > bounds.endRow) {
+                return;
+            }
+
             const fogState = this.getFogState(col, row);
             if (fogState === FOG_STATE.UNKNOWN) {
                 return;
@@ -614,6 +986,11 @@ export default class WorldMap {
             fogStates: Array.from(this.fogStates.entries()),
             villages: Array.from(this.villages.values()),
             visitedCells: Array.from(this.visitedCells.values()),
+            viewport: {
+                cellSize: this.grid.cellSize,
+                offsetX: this.grid.offsetX,
+                offsetY: this.grid.offsetY,
+            },
         };
     }
 
@@ -650,7 +1027,31 @@ export default class WorldMap {
             this.visitedCells = new Set([this.getCellKey(this.playerGridPos.col, this.playerGridPos.row)]);
         }
 
+        const viewport = state.viewport as { cellSize?: unknown; offsetX?: unknown; offsetY?: unknown } | undefined;
+        if (viewport && typeof viewport.cellSize === 'number' && typeof viewport.offsetX === 'number' && typeof viewport.offsetY === 'number') {
+            const clampedCellSize = Math.max(theme.worldMap.cellSize.min, Math.min(theme.worldMap.cellSize.max, viewport.cellSize));
+            this.grid.updateLayout(clampedCellSize, viewport.offsetX, viewport.offsetY);
+            this.clampViewport();
+        } else {
+            this.centerViewportOnCell(this.playerGridPos.col, this.playerGridPos.row);
+        }
+
         this.refreshVisibility();
+    }
+
+    public getMapDisplayConfig(): MapDisplayConfig {
+        return { ...this.mapDisplayConfig };
+    }
+
+    public setMapDisplayConfig(config: Partial<MapDisplayConfig>): void {
+        this.mapDisplayConfig = {
+            everythingDiscovered: typeof config.everythingDiscovered === 'boolean'
+                ? config.everythingDiscovered
+                : this.mapDisplayConfig.everythingDiscovered,
+            fogOfWar: typeof config.fogOfWar === 'boolean'
+                ? config.fogOfWar
+                : this.mapDisplayConfig.fogOfWar,
+        };
     }
 
     public updateSelectedCellFromPixel(pixelX: number, pixelY: number): boolean {
@@ -700,7 +1101,7 @@ export default class WorldMap {
         const dims = this.grid.getDimensions();
         const attempts = dims.columns * dims.rows * 2;
 
-        for (let attempt = 0; attempt < attempts; attempt++) {
+        for (let attempt = 0; attempt < attempts; attempt += 1) {
             const col = this.seededInt(dims.columns, this.seededValue('named-location-col', attempt));
             const row = this.seededInt(dims.rows, this.seededValue('named-location-row', attempt));
             const terrain = this.getTerrain(col, row);

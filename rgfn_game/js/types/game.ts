@@ -6,6 +6,11 @@ export type Direction = 'up' | 'down' | 'left' | 'right' | 'upLeft' | 'upRight' 
 
 export type FogState = 'unknown' | 'discovered' | 'hidden';
 
+export type MapDisplayConfig = {
+    everythingDiscovered: boolean;
+    fogOfWar: boolean;
+};
+
 export type TerrainType = 'grass' | 'forest' | 'mountain' | 'water' | 'desert';
 
 export type TerrainPattern = 'dots' | 'lines' | 'cross' | 'plain' | 'waves' | 'dunes' | 'groves' | 'ridges';
