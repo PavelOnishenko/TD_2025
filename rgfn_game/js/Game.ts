@@ -248,7 +248,7 @@ export default class Game {
             getMapDisplayConfig: () => this.worldMap.getMapDisplayConfig(),
             setMapDisplayConfig: (config) => this.worldMap.setMapDisplayConfig(config),
         });
-        new GameUiEventBinder(this.canvas, ui.hudElements, ui.battleUI, ui.villageUI, ui.developerUI, villageActionsController, devController, {
+        new GameUiEventBinder(this.canvas, ui.hudElements, ui.worldUI, ui.battleUI, ui.villageUI, ui.developerUI, villageActionsController, devController, {
             onCombatAction: (actionId) => this.battleCoordinator.handleCombatAction(actionId), onFlee: () => this.battleCoordinator.handleFlee(),
             onWait: () => this.battleCoordinator.handleWait(), onUsePotionFromBattle: () => this.battleCoordinator.handleUsePotion(true),
             onUseManaPotionFromBattle: () => this.battleCoordinator.handleUseManaPotion(true),
