@@ -2,7 +2,7 @@
 
 export type GameMode = 'WORLD_MAP' | 'BATTLE';
 
-export type Direction = 'up' | 'down' | 'left' | 'right';
+export type Direction = 'up' | 'down' | 'left' | 'right' | 'upLeft' | 'upRight' | 'downLeft' | 'downRight';
 
 export type FogState = 'unknown' | 'discovered' | 'hidden';
 

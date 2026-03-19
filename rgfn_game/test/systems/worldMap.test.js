@@ -54,6 +54,33 @@ test('WorldMap movePlayer blocks walking onto water tiles', () => {
   assert.deepEqual(worldMap.movePlayer('right'), { moved: true, isPreviouslyDiscovered: false });
 });
 
+test('WorldMap movePlayer allows diagonal travel across corner-only connections', () => {
+  const worldMap = new WorldMap(12, 9, 10);
+
+  worldMap.terrainData.set('6,3', {
+    ...worldMap.terrainData.get('6,3'),
+    type: 'water',
+    color: theme.worldMap.terrain.water,
+    pattern: 'waves',
+  });
+  worldMap.terrainData.set('5,4', {
+    ...worldMap.terrainData.get('5,4'),
+    type: 'water',
+    color: theme.worldMap.terrain.water,
+    pattern: 'waves',
+  });
+  worldMap.terrainData.set('5,3', {
+    ...worldMap.terrainData.get('5,3'),
+    type: 'grass',
+    color: theme.worldMap.terrain.grass,
+    pattern: 'plain',
+  });
+
+  assert.deepEqual(worldMap.movePlayer('upLeft'), { moved: true, isPreviouslyDiscovered: false });
+  assert.deepEqual(worldMap.getPlayerPixelPosition(), [55, 35]);
+});
+
+
 test('WorldMap marks revisited cells as previously discovered', () => {
   const worldMap = new WorldMap(12, 9, 10);
 
@@ -158,4 +185,57 @@ test('WorldMap drawGrid aligns to grid offsets after canvas resize and theme off
 
   const moveToCalls = ctx.calls.filter(c => c[0] === 'moveTo');
   assert.ok(moveToCalls.some(c => c[1] === 5 && c[2] === 18));
+});
+
+test('WorldMap draw adds diagonal terrain ribbons for corner-only neighbors', () => {
+  const OriginalPath2D = globalThis.Path2D;
+  let addPathCalls = 0;
+
+  globalThis.Path2D = class Path2D {
+    moveTo() {}
+    lineTo() {}
+    quadraticCurveTo() {}
+    closePath() {}
+    rect() {}
+    addPath() {
+      addPathCalls += 1;
+    }
+  };
+
+  try {
+    const worldMap = new WorldMap(12, 9, 16);
+    const ctx = createMockCanvasContext();
+
+    worldMap.terrainData.set('6,4', {
+      ...worldMap.terrainData.get('6,4'),
+      type: 'grass',
+      color: theme.worldMap.terrain.grass,
+      pattern: 'plain',
+    });
+    worldMap.terrainData.set('7,5', {
+      ...worldMap.terrainData.get('7,5'),
+      type: 'grass',
+      color: theme.worldMap.terrain.grass,
+      pattern: 'plain',
+    });
+    worldMap.terrainData.set('7,4', {
+      ...worldMap.terrainData.get('7,4'),
+      type: 'water',
+      color: theme.worldMap.terrain.water,
+      pattern: 'waves',
+    });
+    worldMap.terrainData.set('6,5', {
+      ...worldMap.terrainData.get('6,5'),
+      type: 'water',
+      color: theme.worldMap.terrain.water,
+      pattern: 'waves',
+    });
+
+    worldMap.restoreState(worldMap.getState());
+    worldMap.draw(ctx, null);
+
+    assert.ok(addPathCalls > 0);
+  } finally {
+    globalThis.Path2D = OriginalPath2D;
+  }
 });

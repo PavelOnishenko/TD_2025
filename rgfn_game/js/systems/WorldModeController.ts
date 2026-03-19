@@ -6,7 +6,7 @@ import Skeleton from '../entities/Skeleton.js';
 import Item from '../entities/Item.js';
 import Wanderer from '../entities/Wanderer.js';
 import { ItemDiscoverySplash } from '../ui/ItemDiscoverySplash.js';
-import { TerrainType } from '../types/game.js';
+import { Direction, TerrainType } from '../types/game.js';
 
 type WorldModeCallbacks = {
     onEnterVillage: () => void;
@@ -52,25 +52,81 @@ export default class WorldModeController {
     }
 
     public updateWorldMode(): void {
-        this.handleMoveAction('moveUp', 'up');
-        this.handleMoveAction('moveDown', 'down');
-        this.handleMoveAction('moveLeft', 'left');
-        this.handleMoveAction('moveRight', 'right');
+        const direction = this.getPendingMoveDirection();
+        if (direction) {
+            const moveResult = this.worldMap.movePlayer(direction);
+            if (moveResult.moved) {
+                this.onPlayerMoved(moveResult.isPreviouslyDiscovered);
+            }
+        }
 
         const [px, py] = this.worldMap.getPlayerPixelPosition();
         this.player.x = px;
         this.player.y = py;
     }
 
-    private handleMoveAction(action: string, direction: 'up' | 'down' | 'left' | 'right'): void {
-        if (!this.input.wasActionPressed(action)) {
-            return;
+    private getPendingMoveDirection(): Direction | null {
+        const upPressed = this.wasMoveTriggered('moveUp');
+        const downPressed = this.wasMoveTriggered('moveDown');
+        const leftPressed = this.wasMoveTriggered('moveLeft');
+        const rightPressed = this.wasMoveTriggered('moveRight');
+
+        if (upPressed && leftPressed) {
+            return 'upLeft';
+        }
+        if (upPressed && rightPressed) {
+            return 'upRight';
+        }
+        if (downPressed && leftPressed) {
+            return 'downLeft';
+        }
+        if (downPressed && rightPressed) {
+            return 'downRight';
         }
 
-        const moveResult = this.worldMap.movePlayer(direction);
-        if (moveResult.moved) {
-            this.onPlayerMoved(moveResult.isPreviouslyDiscovered);
+        if (upPressed && this.input.isActionActive('moveLeft')) {
+            return 'upLeft';
         }
+        if (upPressed && this.input.isActionActive('moveRight')) {
+            return 'upRight';
+        }
+        if (downPressed && this.input.isActionActive('moveLeft')) {
+            return 'downLeft';
+        }
+        if (downPressed && this.input.isActionActive('moveRight')) {
+            return 'downRight';
+        }
+        if (leftPressed && this.input.isActionActive('moveUp')) {
+            return 'upLeft';
+        }
+        if (leftPressed && this.input.isActionActive('moveDown')) {
+            return 'downLeft';
+        }
+        if (rightPressed && this.input.isActionActive('moveUp')) {
+            return 'upRight';
+        }
+        if (rightPressed && this.input.isActionActive('moveDown')) {
+            return 'downRight';
+        }
+
+        if (upPressed) {
+            return 'up';
+        }
+        if (downPressed) {
+            return 'down';
+        }
+        if (leftPressed) {
+            return 'left';
+        }
+        if (rightPressed) {
+            return 'right';
+        }
+
+        return null;
+    }
+
+    private wasMoveTriggered(action: string): boolean {
+        return this.input.wasActionPressed(action);
     }
 
     private onPlayerMoved(isPreviouslyDiscovered: boolean): void {
