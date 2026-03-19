@@ -360,20 +360,20 @@ export default class WorldMap {
 
     public movePlayer(direction: Direction): { moved: boolean; isPreviouslyDiscovered: boolean } {
         const { col, row } = this.playerGridPos;
-        let newCol = col;
-        let newRow = row;
-        if (direction === 'up') {
-            newRow--;
-        }
-        if (direction === 'down') {
-            newRow++;
-        }
-        if (direction === 'left') {
-            newCol--;
-        }
-        if (direction === 'right') {
-            newCol++;
-        }
+        const directionOffsets: Record<Direction, GridPosition> = {
+            up: { col: 0, row: -1 },
+            down: { col: 0, row: 1 },
+            left: { col: -1, row: 0 },
+            right: { col: 1, row: 0 },
+            upLeft: { col: -1, row: -1 },
+            upRight: { col: 1, row: -1 },
+            downLeft: { col: -1, row: 1 },
+            downRight: { col: 1, row: 1 },
+        };
+        const offset = directionOffsets[direction];
+        const newCol = col + offset.col;
+        const newRow = row + offset.row;
+
         if (this.grid.isValidPosition(newCol, newRow)) {
             const destinationTerrain = this.getTerrain(newCol, newRow);
             if (destinationTerrain?.type === 'water') {
