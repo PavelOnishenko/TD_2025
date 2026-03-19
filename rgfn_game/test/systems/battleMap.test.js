@@ -26,7 +26,7 @@ test('BattleMap range checks use Manhattan distance', () => {
   assert.equal(map.isInAttackRange(a, createCombatEntity('Skeleton', 2, 5, false), 2), false);
 });
 
-test('BattleMap movement fails when blocked and succeeds when free', () => {
+test('BattleMap movement fails when blocked and succeeds when an adjacent open tile is available', () => {
   const map = new BattleMap();
   const player = createCombatEntity('Player', 0, 0, false);
   const blocker = createCombatEntity('Skeleton', 0, 0, false);
@@ -38,7 +38,16 @@ test('BattleMap movement fails when blocked and succeeds when free', () => {
   blocker.gridRow = 4;
 
   assert.equal(map.moveEntity(player, 'right'), false);
-  assert.equal(map.moveEntity(player, 'left'), true);
+
+  const openDirection = [
+    ['left', [3, 4]],
+    ['up', [4, 3]],
+    ['down', [4, 5]],
+  ].find(([, [col, row]]) => !map.isObstacle(col, row));
+
+  assert.ok(openDirection);
+  assert.equal(map.moveEntity(player, openDirection[0]), true);
+  assert.deepEqual([player.gridCol, player.gridRow], openDirection[1]);
 });
 
 test('BattleMap movement allows stepping onto dead entities but not living ones', () => {
@@ -79,7 +88,7 @@ test('BattleMap moveEntityToward prefers primary axis and falls back to alternat
   assert.deepEqual([mover.gridCol, mover.gridRow], [4, 5]);
 });
 
-test('BattleMap moveEntityToward returns false when both primary and alternate moves are blocked', () => {
+test('BattleMap moveEntityToward can path around blockers when another route is open', () => {
   const map = new BattleMap();
   const mover = createCombatEntity('Skeleton', 0, 0, false);
   const target = createCombatEntity('Player', 0, 0, false);
@@ -96,11 +105,11 @@ test('BattleMap moveEntityToward returns false when both primary and alternate m
   blockAlternate.gridCol = 4;
   blockAlternate.gridRow = 5;
 
-  assert.equal(map.moveEntityToward(mover, target), false);
-  assert.deepEqual([mover.gridCol, mover.gridRow], [4, 4]);
+  assert.equal(map.moveEntityToward(mover, target), true);
+  assert.deepEqual([mover.gridCol, mover.gridRow], [4, 3]);
 });
 
-test('BattleMap moveEntityToward can move when entities have no preset grid coordinates', () => {
+test('BattleMap moveEntityToward falls back to default origin coordinates when grid positions are missing', () => {
   const map = new BattleMap();
   const mover = createCombatEntity('Skeleton', 0, 0, false);
   const target = createCombatEntity('Player', 96, 96, false);
@@ -113,7 +122,7 @@ test('BattleMap moveEntityToward can move when entities have no preset grid coor
   delete target.gridRow;
 
   assert.equal(map.moveEntityToward(mover, target), true);
-  assert.deepEqual([mover.gridCol, mover.gridRow], [0, 0]);
+  assert.deepEqual([mover.gridCol, mover.gridRow], [1, 0]);
 });
 
 test('BattleMap moveEntity prevents moving out of map bounds', () => {
@@ -156,7 +165,7 @@ test('BattleMap isEntityOnEdge returns true only on battle map borders', () => {
   assert.equal(map.isEntityOnEdge(player), false);
 });
 
-test('BattleMap draw paints grid and highlights selected enemy', () => {
+test('BattleMap draw paints the arena with filled tiles and stroked highlights', () => {
   const map = new BattleMap();
   const ctx = createMockCanvasContext();
   const player = createCombatEntity('Player', 5, 6, false);
@@ -165,6 +174,7 @@ test('BattleMap draw paints grid and highlights selected enemy', () => {
   map.setup(player, [enemy]);
   map.draw(ctx, null, player, enemy);
 
-  assert.ok(ctx.calls.some(c => c[0] === 'strokeRect'));
   assert.ok(ctx.calls.some(c => c[0] === 'fillRect'));
+  assert.ok(ctx.calls.some(c => c[0] === 'fill'));
+  assert.ok(ctx.calls.some(c => c[0] === 'stroke'));
 });
