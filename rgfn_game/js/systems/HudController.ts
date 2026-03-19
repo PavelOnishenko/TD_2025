@@ -87,6 +87,8 @@ type HudElements = {
     selectedCellVisibility: HTMLElement;
     selectedCellTraversable: HTMLElement;
     selectedCellVillage: HTMLElement;
+    selectedCellVillageName: HTMLElement;
+    selectedCellVillageStatus: HTMLElement;
     toggleStatsPanelBtn: HTMLButtonElement;
     toggleSkillsPanelBtn: HTMLButtonElement;
     toggleInventoryPanelBtn: HTMLButtonElement;
@@ -223,10 +225,18 @@ export default class HudController {
 
         this.hudElements.selectedCellCoords.textContent = `${selectedCell.col}, ${selectedCell.row}`;
         const terrainIsKnown = selectedCell.isVisible || selectedCell.fogState !== 'unknown';
+        const villageDetailsKnown = terrainIsKnown && selectedCell.isVillage;
+
         this.hudElements.selectedCellTerrain.textContent = terrainIsKnown ? this.formatTerrainLabel(selectedCell.terrainType) : 'Unknown';
         this.hudElements.selectedCellVisibility.textContent = this.formatVisibilityLabel(selectedCell);
         this.hudElements.selectedCellTraversable.textContent = terrainIsKnown ? (selectedCell.isTraversable ? 'Walkable' : 'Blocked') : 'Unknown';
         this.hudElements.selectedCellVillage.textContent = terrainIsKnown ? (selectedCell.isVillage ? 'Yes' : 'No') : 'Unknown';
+        this.hudElements.selectedCellVillageName.textContent = terrainIsKnown
+            ? (selectedCell.villageName ?? '—')
+            : 'Unknown';
+        this.hudElements.selectedCellVillageStatus.textContent = villageDetailsKnown
+            ? this.formatVillageStatusLabel(selectedCell.villageStatus)
+            : (terrainIsKnown ? '—' : 'Unknown');
     }
 
     private bindEquipmentSlotEvents(): void {
@@ -574,6 +584,18 @@ export default class HudController {
         this.battleUI.spellSlowBtn.disabled = !this.player.canSpendMana(manaBySpell.get('slow') ?? 999);
         this.battleUI.spellRageBtn.disabled = !this.player.canSpendMana(manaBySpell.get('rage') ?? 999);
         this.battleUI.spellArcaneLanceBtn.disabled = !this.player.canSpendMana(manaBySpell.get('arcane-lance') ?? 999);
+    }
+
+    private formatVillageStatusLabel(status: SelectedWorldCellInfo['villageStatus']): string {
+        if (status === 'current') {
+            return 'Current location';
+        }
+
+        if (status === 'mapped') {
+            return 'Mapped village';
+        }
+
+        return '—';
     }
 
     private formatTerrainLabel(terrainType: SelectedWorldCellInfo['terrainType']): string {

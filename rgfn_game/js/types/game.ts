@@ -53,6 +53,8 @@ export interface SelectedWorldCellInfo {
     fogState: FogState;
     isVisible: boolean;
     isVillage: boolean;
+    villageName: string | null;
+    villageStatus: 'current' | 'mapped' | null;
     isTraversable: boolean;
 }
 

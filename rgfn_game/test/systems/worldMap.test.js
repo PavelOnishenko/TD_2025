@@ -120,11 +120,36 @@ test('WorldMap exposes selected cell info from mouse position', () => {
     fogState: 'discovered',
     isVisible: true,
     isVillage: false,
+    villageName: null,
+    villageStatus: null,
     isTraversable: worldMap.getCurrentTerrain().type !== 'water',
   });
 
   worldMap.clearSelectedCell();
   assert.equal(worldMap.getSelectedCellInfo(), null);
+});
+
+
+
+test('WorldMap exposes hovered village name and status in selected cell info', () => {
+  const worldMap = new WorldMap(12, 9, 20);
+  const currentPosition = worldMap.getState().playerGridPos;
+  const villageKey = `${currentPosition.col},${currentPosition.row}`;
+
+  worldMap.villages.add(villageKey);
+  worldMap.updateSelectedCellFromPixel(130, 90);
+
+  assert.deepEqual(worldMap.getSelectedCellInfo(), {
+    col: currentPosition.col,
+    row: currentPosition.row,
+    terrainType: worldMap.getCurrentTerrain().type,
+    fogState: 'discovered',
+    isVisible: true,
+    isVillage: true,
+    villageName: worldMap.getVillageNameAtPlayerPosition(),
+    villageStatus: 'current',
+    isTraversable: worldMap.getCurrentTerrain().type !== 'water',
+  });
 });
 
 test('WorldMap draw renders terrain, fog and grid without throwing', () => {
