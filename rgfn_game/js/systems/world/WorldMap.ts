@@ -35,6 +35,7 @@ export default class WorldMap {
     private renderer: WorldMapRenderer;
     private namedLocations: Map<string, NamedLocation>;
     private focusedLocationName: string | null;
+    private worldSeed: number;
 
     constructor(columns: number, rows: number, cellSize: number) {
         this.grid = new GridMap(columns, rows, cellSize);
@@ -47,10 +48,9 @@ export default class WorldMap {
         this.renderer = new WorldMapRenderer();
         this.namedLocations = new Map<string, NamedLocation>();
         this.focusedLocationName = null;
+        this.worldSeed = this.createWorldSeed();
         this.initializeFogOfWar();
-        this.generateTerrain();
-        this.ensureTraversablePlayerStart();
-        this.generateVillages();
+        this.generateWorld();
         this.visitedCells.add(this.getCellKey(this.playerGridPos.col, this.playerGridPos.row));
         this.refreshVisibility();
     }
@@ -62,9 +62,16 @@ export default class WorldMap {
     }
 
     private generateTerrain(): void {
+        this.terrainData.clear();
         this.grid.forEachCell((_cell: GridCell, col: number, row: number) => {
             this.terrainData.set(this.getCellKey(col, row), this.generateCellTerrain(col, row));
         });
+    }
+
+    private generateWorld(): void {
+        this.generateTerrain();
+        this.ensureTraversablePlayerStart();
+        this.generateVillages();
     }
 
     private ensureTraversablePlayerStart(): void {
@@ -86,10 +93,11 @@ export default class WorldMap {
         const villageCount = Math.max(4, Math.floor((dims.columns * dims.rows) * 0.024));
         const centerCol = Math.floor(dims.columns / 2);
         const centerRow = Math.floor(dims.rows / 2);
+        this.villages.clear();
 
-        while (this.villages.size < villageCount) {
-            const col = Math.floor(Math.random() * dims.columns);
-            const row = Math.floor(Math.random() * dims.rows);
+        for (let attempt = 0; this.villages.size < villageCount && attempt < dims.columns * dims.rows * 8; attempt += 1) {
+            const col = this.seededInt(dims.columns, this.seededValue('village-col', attempt));
+            const row = this.seededInt(dims.rows, this.seededValue('village-row', attempt));
             const terrain = this.getTerrain(col, row);
 
             if (!terrain || terrain.type === 'water' || terrain.type === 'mountain') {
@@ -119,7 +127,7 @@ export default class WorldMap {
         const dims = this.grid.getDimensions();
         const nx = dims.columns <= 1 ? 0 : col / (dims.columns - 1);
         const ny = dims.rows <= 1 ? 0 : row / (dims.rows - 1);
-        const baseSeed = ((col + 1) * 92837111) ^ ((row + 1) * 689287499);
+        const baseSeed = this.hashSeed((col + 1) * 92837111, (row + 1) * 689287499);
 
         const elevationNoise = this.fractalNoise(nx * 1.15, ny * 1.15, 4, 0.55, 1.95);
         const moistureNoise = this.fractalNoise((nx + 12.4) * 1.55, (ny - 3.1) * 1.55, 3, 0.58, 2.1);
@@ -237,6 +245,28 @@ export default class WorldMap {
     private seededRandom(seed: number): number {
         const x = Math.sin(seed) * 10000;
         return x - Math.floor(x);
+    }
+
+    private createWorldSeed(): number {
+        return Math.floor(Math.random() * 0x7fffffff);
+    }
+
+    private hashSeed(...parts: number[]): number {
+        let value = this.worldSeed || 1;
+        for (const part of parts) {
+            value = Math.imul(value ^ Math.floor(part), 1664525) + 1013904223;
+            value >>>= 0;
+        }
+        return value;
+    }
+
+    private seededValue(label: string, index: number): number {
+        const labelHash = Array.from(label).reduce((total, char, charIndex) => total + (char.charCodeAt(0) * (charIndex + 1)), 0);
+        return this.seededRandom(this.hashSeed(labelHash, index + 1));
+    }
+
+    private seededInt(maxExclusive: number, randomValue: number): number {
+        return Math.floor(randomValue * maxExclusive);
     }
 
     private getCellKey(col: number, row: number): string {
@@ -448,7 +478,7 @@ export default class WorldMap {
     private getVillageName(col: number, row: number): string {
         const first = ['Oak', 'River', 'Sun', 'Stone', 'Amber', 'Willow', 'Moss', 'Silver', 'Pine', 'Moon'];
         const second = ['ford', 'field', 'brook', 'haven', 'hill', 'cross', 'watch', 'stead', 'rest', 'meadow'];
-        const seed = Math.abs(((col + 11) * 92837111) ^ ((row + 17) * 689287499));
+        const seed = this.hashSeed((col + 11) * 92837111, (row + 17) * 689287499);
         return `${first[seed % first.length]}${second[Math.floor(seed / first.length) % second.length]}`;
     }
 
@@ -579,6 +609,7 @@ export default class WorldMap {
 
     public getState(): Record<string, unknown> {
         return {
+            worldSeed: this.worldSeed,
             playerGridPos: { ...this.playerGridPos },
             fogStates: Array.from(this.fogStates.entries()),
             villages: Array.from(this.villages.values()),
@@ -587,6 +618,14 @@ export default class WorldMap {
     }
 
     public restoreState(state: Record<string, unknown>): void {
+        if (typeof state.worldSeed === 'number' && Number.isFinite(state.worldSeed)) {
+            const nextWorldSeed = Math.floor(Math.abs(state.worldSeed));
+            if (nextWorldSeed !== this.worldSeed) {
+                this.worldSeed = nextWorldSeed;
+                this.generateWorld();
+            }
+        }
+
         const playerGridPos = state.playerGridPos as { col?: unknown; row?: unknown } | undefined;
         if (playerGridPos && typeof playerGridPos.col === 'number' && typeof playerGridPos.row === 'number' && this.grid.isValidPosition(playerGridPos.col, playerGridPos.row)) {
             this.playerGridPos = { col: playerGridPos.col, row: playerGridPos.row };
@@ -662,8 +701,8 @@ export default class WorldMap {
         const attempts = dims.columns * dims.rows * 2;
 
         for (let attempt = 0; attempt < attempts; attempt++) {
-            const col = Math.floor(Math.random() * dims.columns);
-            const row = Math.floor(Math.random() * dims.rows);
+            const col = this.seededInt(dims.columns, this.seededValue('named-location-col', attempt));
+            const row = this.seededInt(dims.rows, this.seededValue('named-location-row', attempt));
             const terrain = this.getTerrain(col, row);
             const key = this.getCellKey(col, row);
 

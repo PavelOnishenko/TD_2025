@@ -162,6 +162,7 @@ export default class Game {
             onEnterVillage: () => this.stateMachine.transition(MODES.VILLAGE),
             onStartBattle: (enemies: Skeleton[], terrainType) => this.stateMachine.transition(MODES.BATTLE, { enemies, terrainType }),
             onAddBattleLog: (m: string, t: string = 'system') => this.hudCoordinator.addBattleLog(m, t),
+            onUpdateHUD: () => this.hudCoordinator.updateHUD(),
             onRememberTraveler: (traveler, disposition) => loreBookController.rememberTraveler(traveler, disposition),
         });
         this.renderRouter = new GameRenderRouter({
@@ -367,4 +368,3 @@ export default class Game {
         window.location.reload();
     }
 }
-

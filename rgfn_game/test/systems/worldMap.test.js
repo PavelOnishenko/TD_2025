@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import WorldMap from '../../dist/systems/world/WorldMap.js';
 import { balanceConfig } from '../../dist/config/balanceConfig.js';
 import { theme } from '../../dist/config/ThemeConfig.js';
-import { createMockCanvasContext } from '../helpers/testUtils.js';
+import { createMockCanvasContext, withMockedRandom } from '../helpers/testUtils.js';
 
 test('WorldMap starts player in center cell and exposes pixel position', () => {
   const worldMap = new WorldMap(12, 9, 20);
@@ -12,6 +12,26 @@ test('WorldMap starts player in center cell and exposes pixel position', () => {
   const [x, y] = worldMap.getPlayerPixelPosition();
   assert.deepEqual([x, y], [130, 90]);
 });
+
+test('WorldMap uses a different persistent seed for each new world generation', () => withMockedRandom([0.11, 0.25], () => {
+  const firstWorld = new WorldMap(12, 9, 20);
+  const secondWorld = new WorldMap(12, 9, 20);
+
+  assert.notEqual(firstWorld.getState().worldSeed, secondWorld.getState().worldSeed);
+  assert.notDeepEqual(firstWorld.terrainData.get('0,0'), secondWorld.terrainData.get('0,0'));
+}));
+
+test('WorldMap restoreState regenerates terrain from the saved world seed', () => withMockedRandom([0.15, 0.82], () => {
+  const originalWorld = new WorldMap(12, 9, 20);
+  const savedState = originalWorld.getState();
+
+  const restoredWorld = new WorldMap(12, 9, 20);
+  restoredWorld.restoreState(savedState);
+
+  assert.deepEqual(restoredWorld.getState().worldSeed, savedState.worldSeed);
+  assert.deepEqual(restoredWorld.terrainData.get('1,1'), originalWorld.terrainData.get('1,1'));
+  assert.deepEqual(restoredWorld.terrainData.get('8,6'), originalWorld.terrainData.get('8,6'));
+}));
 
 test('WorldMap movePlayer handles blocked and valid moves', () => {
   const worldMap = new WorldMap(12, 9, 10);
