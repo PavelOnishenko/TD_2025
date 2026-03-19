@@ -29,6 +29,13 @@ test('WorldMap starts the player in a random traversable cell and exposes pixel 
   assert.notDeepEqual(state.playerGridPos, { col: 50, row: 50 });
 }));
 
+test('WorldMap generates villages before placing the player into the world', () => withMockedRandom([0.11], () => {
+  const worldMap = new WorldMap(40, 30, 20);
+  const state = worldMap.getState();
+
+  assert.equal(state.villages.includes(`${state.playerGridPos.col},${state.playerGridPos.row}`), false);
+}));
+
 test('WorldMap uses a different persistent seed for each new world generation', () => withMockedRandom([0.11, 0.25], () => {
   const firstWorld = new WorldMap(24, 18, 20);
   const secondWorld = new WorldMap(24, 18, 20);
@@ -190,6 +197,33 @@ test('WorldMap supports zooming and scrolling for large maps', () => {
 
   assert.ok(viewportAfter.cellSize > viewportBefore.cellSize);
   assert.notEqual(afterX, beforeX);
+});
+
+test('WorldMap can center the viewport back on the player after panning', () => {
+  const worldMap = new WorldMap(100, 100, theme.worldMap.cellSize.default);
+  worldMap.resizeToCanvas(720, 720);
+  worldMap.centerOnPlayer();
+
+  const centeredViewport = worldMap.getState().viewport;
+  worldMap.pan('right');
+  worldMap.centerOnPlayer();
+  const reCenteredViewport = worldMap.getState().viewport;
+
+  assert.deepEqual(reCenteredViewport, centeredViewport);
+});
+
+test('WorldMap supports developer map display combinations for full reveal and fog-free exploration', () => {
+  const worldMap = new WorldMap(12, 9, 20);
+  placePlayerAt(worldMap, 6, 4);
+  worldMap.selectedGridPos = { col: 0, row: 0 };
+
+  assert.equal(worldMap.getSelectedCellInfo()?.fogState, 'unknown');
+
+  worldMap.setMapDisplayConfig({ fogOfWar: false });
+  assert.equal(worldMap.getSelectedCellInfo()?.fogState, 'hidden');
+
+  worldMap.setMapDisplayConfig({ everythingDiscovered: true });
+  assert.equal(worldMap.getSelectedCellInfo()?.fogState, 'discovered');
 });
 
 test('WorldMap exposes selected cell info from mouse position after viewport transforms', () => {

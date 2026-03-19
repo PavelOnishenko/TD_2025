@@ -40,8 +40,9 @@ export default class WorldModeController {
         this.callbacks = callbacks;
     }
 
-    public enterWorldMode(hudModeIndicator: HTMLElement, battleSidebar: HTMLElement, villageSidebar: HTMLElement): void {
+    public enterWorldMode(hudModeIndicator: HTMLElement, worldSidebar: HTMLElement, battleSidebar: HTMLElement, villageSidebar: HTMLElement): void {
         hudModeIndicator.textContent = 'World Map';
+        worldSidebar.classList.remove('hidden');
         battleSidebar.classList.add('hidden');
         villageSidebar.classList.add('hidden');
 

@@ -1,10 +1,11 @@
-import { BattleUI, DeveloperUI, GameLogUI, GameUiBundle, HudElements, VillageUI } from './GameUiTypes.js';
+import { BattleUI, DeveloperUI, GameLogUI, GameUiBundle, HudElements, VillageUI, WorldUI } from './GameUiTypes.js';
 import { balanceConfig } from '../../config/balanceConfig.js';
 
 export default class GameUiFactory {
     public create(): GameUiBundle {
         return {
             hudElements: this.createHudElements(),
+            worldUI: this.createWorldUi(),
             battleUI: this.createBattleUi(),
             villageUI: this.createVillageUi(),
             gameLogUI: this.createGameLogUi(),
@@ -139,6 +140,14 @@ export default class GameUiFactory {
         };
     }
 
+    private createWorldUi(): WorldUI {
+        return {
+            sidebar: document.getElementById('world-sidebar')!,
+            usePotionBtn: document.getElementById('world-use-potion-btn')! as HTMLButtonElement,
+            centerOnCharacterBtn: document.getElementById('world-center-on-character-btn')! as HTMLButtonElement,
+        };
+    }
+
     private createVillageUi(): VillageUI {
         return {
             sidebar: document.getElementById('village-sidebar')!,
@@ -217,6 +226,8 @@ export default class GameUiFactory {
                 connection: document.getElementById('dev-next-roll-connection')! as HTMLInputElement,
                 intelligence: document.getElementById('dev-next-roll-intelligence')! as HTMLInputElement,
             },
+            everythingDiscoveredToggle: document.getElementById('dev-map-display-everything-discovered')! as HTMLInputElement,
+            fogOfWarToggle: document.getElementById('dev-map-display-fog-of-war')! as HTMLInputElement,
         };
     }
 }

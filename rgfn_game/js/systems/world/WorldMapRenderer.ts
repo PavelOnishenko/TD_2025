@@ -81,6 +81,7 @@ export default class WorldMapRenderer {
         fogState: FogState,
         terrain: TerrainData | undefined,
         neighbors?: TerrainNeighbors,
+        options: { showFogOverlay?: boolean } = {},
     ): void {
         if (fogState === 'unknown') {
             this.drawUnknownCell(ctx, cell);
@@ -97,7 +98,7 @@ export default class WorldMapRenderer {
                 : 0.72;
         const path = this.createTerrainPath(cell, neighbors);
         this.drawTerrain(ctx, cell, terrain, brightness, path);
-        if (fogState === 'hidden') {
+        if (fogState === 'hidden' && options.showFogOverlay !== false) {
             this.drawHiddenOverlay(ctx, path, terrain.type);
         }
     }

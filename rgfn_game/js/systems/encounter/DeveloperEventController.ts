@@ -1,5 +1,6 @@
 import EncounterSystem, { ForcedEncounterType, RANDOM_ENCOUNTER_TYPES, RandomEncounterType } from './EncounterSystem.js';
 import { balanceConfig } from '../../config/balanceConfig.js';
+import { MapDisplayConfig } from '../../types/game.js';
 import {
     clearNextCharacterRollAllocation,
     createEmptyNextCharacterRollAllocation,
@@ -22,11 +23,15 @@ type DeveloperUI = {
     nextRollTotal: HTMLElement;
     nextRollStatus: HTMLElement;
     nextRollInputs: Record<'vitality' | 'toughness' | 'strength' | 'agility' | 'connection' | 'intelligence', HTMLInputElement>;
+    everythingDiscoveredToggle: HTMLInputElement;
+    fogOfWarToggle: HTMLInputElement;
 };
 
 type DeveloperCallbacks = {
     addVillageLog: (message: string, type?: string) => void;
     getEventLabel: (type: ForcedEncounterType) => string;
+    getMapDisplayConfig: () => MapDisplayConfig;
+    setMapDisplayConfig: (config: Partial<MapDisplayConfig>) => void;
 };
 
 const ENCOUNTER_LABELS: Record<RandomEncounterType, string> = {
@@ -55,6 +60,7 @@ export default class DeveloperEventController {
             this.renderQueue();
             this.renderEncounterTypeControls();
             this.renderNextCharacterRollSummary();
+            this.renderMapDisplayControls();
         }
     }
     public handleQueueAdd(): void {
@@ -113,6 +119,13 @@ export default class DeveloperEventController {
         this.renderNextCharacterRollSummary();
         this.callbacks.addVillageLog('[DEV] Cleared next character roll override.', 'system');
     }
+    public handleMapDisplayToggle(setting: keyof MapDisplayConfig, enabled: boolean): void {
+        this.callbacks.setMapDisplayConfig({ [setting]: enabled });
+        this.renderMapDisplayControls();
+
+        const label = setting === 'everythingDiscovered' ? 'Everything discovered' : 'Fog of war';
+        this.callbacks.addVillageLog(`[DEV] ${label} ${enabled ? 'enabled' : 'disabled'}.`, 'system');
+    }
     public renderQueue(): void {
         const queue = this.encounterSystem.getForcedEncounterQueue();
         this.developerUI.queueList.innerHTML = '';
@@ -168,6 +181,12 @@ export default class DeveloperEventController {
         this.writeNextCharacterRollInputs(normalizedAllocation);
         this.developerUI.nextRollTotal.textContent = `${total} / ${expectedTotal}`;
         this.setNextCharacterRollStatus(this.getNextCharacterRollStatus(total, expectedTotal), total !== expectedTotal);
+    }
+
+    private renderMapDisplayControls(): void {
+        const config = this.callbacks.getMapDisplayConfig();
+        this.developerUI.everythingDiscoveredToggle.checked = config.everythingDiscovered;
+        this.developerUI.fogOfWarToggle.checked = config.fogOfWar;
     }
 
     private getNextCharacterRollStatus(total: number, expectedTotal: number): string {
