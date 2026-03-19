@@ -86,14 +86,15 @@ export default class WorldMapRenderer {
             return;
         }
 
-        const brightness = fogState === 'discovered' ? 1 : 0.72;
+        const brightness = fogState === 'discovered'
+            ? 1
+            : terrain.type === 'water'
+                ? 0.84
+                : 0.72;
         const path = this.createTerrainPath(cell, neighbors);
         this.drawTerrain(ctx, cell, terrain, brightness, path);
         if (fogState === 'hidden') {
-            ctx.save();
-            ctx.fillStyle = this.withAlpha(theme.ui.primaryAccent, 0.3);
-            ctx.fill(path);
-            ctx.restore();
+            this.drawHiddenOverlay(ctx, path, terrain.type);
         }
     }
 
@@ -315,6 +316,17 @@ export default class WorldMapRenderer {
         ctx.clip(path);
         this.drawTerrainTexture(ctx, cell, terrain, brightness);
         this.drawTerrainIcon(ctx, cell, terrain.type, brightness);
+        ctx.restore();
+    }
+
+    private drawHiddenOverlay(ctx: CanvasRenderingContext2D, path: Path2D, terrainType: TerrainType): void {
+        const overlayColor = terrainType === 'water'
+            ? this.withAlpha(this.mixColors(theme.worldMap.terrain.water, theme.ui.panelHighlight, 0.18), 0.1)
+            : this.withAlpha(theme.ui.primaryAccent, 0.3);
+
+        ctx.save();
+        ctx.fillStyle = overlayColor;
+        ctx.fill(path);
         ctx.restore();
     }
 
