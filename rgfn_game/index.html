@@ -157,7 +157,23 @@
                     </div>
                 </div>
                 <div class="game-area-cell" id="r1c2">
-                    <canvas id="game-canvas" width="800" height="600"></canvas>
+                    <div id="world-map-shell">
+                        <canvas id="game-canvas" width="800" height="600"></canvas>
+                        <div id="world-map-controls" aria-label="World map controls">
+                            <div class="world-map-control-group">
+                                <button id="world-map-zoom-in-btn" class="action-btn world-map-control-btn" type="button">Zoom +</button>
+                                <button id="world-map-zoom-out-btn" class="action-btn world-map-control-btn" type="button">Zoom -</button>
+                            </div>
+                            <div class="world-map-control-pad">
+                                <button id="world-map-pan-up-btn" class="action-btn world-map-control-btn" type="button">↑</button>
+                                <div class="world-map-control-pad-row">
+                                    <button id="world-map-pan-left-btn" class="action-btn world-map-control-btn" type="button">←</button>
+                                    <button id="world-map-pan-right-btn" class="action-btn world-map-control-btn" type="button">→</button>
+                                </div>
+                                <button id="world-map-pan-down-btn" class="action-btn world-map-control-btn" type="button">↓</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div class="game-area-cell" id="r1c3">
                     <div id="battle-sidebar" class="hidden">

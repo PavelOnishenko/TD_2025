@@ -20,7 +20,10 @@ type GameUiEventCallbacks = {
     onUpgradeSpell: (spellId: BaseSpellId) => void;
     onCanvasClick: (event: MouseEvent) => void;
     onCanvasMove: (event: MouseEvent) => void;
-    onCanvasLeave: () => void;  
+    onCanvasLeave: () => void;
+    onWorldMapZoomIn: () => void;
+    onWorldMapZoomOut: () => void;
+    onWorldMapPan: (direction: 'up' | 'down' | 'left' | 'right') => void;
     onTogglePanel: (panel: 'stats' | 'skills' | 'inventory' | 'magic' | 'quests' | 'lore' | 'selected') => void;
 };
 
@@ -81,6 +84,12 @@ export default class GameUiEventBinder {
         this.hudElements.usePotionBtn.addEventListener('click', () => this.callbacks.onUsePotionFromHud());
         this.hudElements.useManaPotionBtn.addEventListener('click', () => this.callbacks.onUseManaPotionFromHud());
         this.hudElements.newCharacterBtn.addEventListener('click', () => this.callbacks.onNewCharacter());
+        this.hudElements.worldMapZoomInBtn.addEventListener('click', () => this.callbacks.onWorldMapZoomIn());
+        this.hudElements.worldMapZoomOutBtn.addEventListener('click', () => this.callbacks.onWorldMapZoomOut());
+        this.hudElements.worldMapPanUpBtn.addEventListener('click', () => this.callbacks.onWorldMapPan('up'));
+        this.hudElements.worldMapPanDownBtn.addEventListener('click', () => this.callbacks.onWorldMapPan('down'));
+        this.hudElements.worldMapPanLeftBtn.addEventListener('click', () => this.callbacks.onWorldMapPan('left'));
+        this.hudElements.worldMapPanRightBtn.addEventListener('click', () => this.callbacks.onWorldMapPan('right'));
         this.hudElements.toggleStatsPanelBtn.addEventListener('click', () => this.callbacks.onTogglePanel('stats'));
         this.hudElements.toggleSkillsPanelBtn.addEventListener('click', () => this.callbacks.onTogglePanel('skills'));
         this.hudElements.toggleInventoryPanelBtn.addEventListener('click', () => this.callbacks.onTogglePanel('inventory'));
