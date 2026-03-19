@@ -217,6 +217,16 @@ export const balanceConfig = {
         manaPotionRestore: 4,
         // Armor can never fully negate a positive hit
         minDamageAfterArmor: 1,
+        fastAttackDamageMultiplier: 0.5,
+        fastAttackDodgeReduction: 0.25,
+        counterPreventChance: {
+            attack: 0.9,
+            fast: 0.45,
+            heavyRelease: 0,
+        },
+        counterDamageBonus: 2,
+        heavyDamageMultiplier: 1.8,
+        heavyDamageBonus: 1,
 
         // Flee success chance
         fleeChance: 0.3,

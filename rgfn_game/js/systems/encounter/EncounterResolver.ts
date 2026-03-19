@@ -4,6 +4,7 @@ import Item, { DISCOVERABLE_ITEM_LIBRARY, HEALING_POTION_ITEM, MANA_POTION_ITEM 
 import { balanceConfig } from '../../config/balanceConfig.js';
 import type { EncounterResult, ForcedEncounterType, RandomEncounterType } from './EncounterSystem.js';
 import Wanderer from '../../entities/Wanderer.js';
+import CombatBehaviorFactory from '../combat/CombatBehaviorFactory.js';
 
 type EncounterEventType = 'monster' | 'item' | 'village' | 'traveler';
 
@@ -20,9 +21,11 @@ type EncounterGenerationOptions = {
 
 export default class EncounterResolver {
     private forcedEncounters: ForcedEncounterType[];
+    private readonly behaviorFactory: CombatBehaviorFactory;
 
     constructor() {
         this.forcedEncounters = [];
+        this.behaviorFactory = new CombatBehaviorFactory();
     }
 
     public generateEncounter(itemDiscoveryChance: number, rolls: EncounterRolls, options: EncounterGenerationOptions = {}): EncounterResult {
@@ -113,6 +116,7 @@ export default class EncounterResolver {
 
     private createDragonEncounter(): EncounterResult {
         const dragon = new Skeleton(0, 0, balanceConfig.enemies.dragon);
+        dragon.setCombatBehaviorProfile(this.behaviorFactory.getProfile(dragon.archetypeId));
         if (dragon.shouldPassEncounter()) {
             return { type: 'none' };
         }
@@ -138,7 +142,9 @@ export default class EncounterResolver {
         }
 
         if (type === 'dragon') {
-            return { type: 'battle', enemies: [new Skeleton(0, 0, balanceConfig.enemies.dragon)] };
+            const dragon = new Skeleton(0, 0, balanceConfig.enemies.dragon);
+            dragon.setCombatBehaviorProfile(this.behaviorFactory.getProfile(dragon.archetypeId));
+            return { type: 'battle', enemies: [dragon] };
         }
 
         return { type: 'battle', enemies: this.createEnemiesForEncounter(type) };
@@ -147,6 +153,7 @@ export default class EncounterResolver {
 
     private createTravelerEncounter(): EncounterResult {
         const traveler = Wanderer.createRandom();
+        traveler.setCombatBehaviorProfile(this.behaviorFactory.getProfile(traveler.archetypeId));
         const isHostile = Math.random() < 0.5;
         return { type: 'traveler', traveler, isHostile };
     }
@@ -173,7 +180,9 @@ export default class EncounterResolver {
         };
 
         const config = configMap[encounterType] ?? balanceConfig.enemies.skeleton;
-        return [new Skeleton(0, 0, config)];
+        const enemy = new Skeleton(0, 0, config);
+        enemy.setCombatBehaviorProfile(this.behaviorFactory.getProfile(enemy.archetypeId));
+        return [enemy];
     }
 
     private createEnemyGroup(config: EnemyConfig, min: number, max: number): Skeleton[] {
@@ -181,7 +190,9 @@ export default class EncounterResolver {
         const enemies: Skeleton[] = [];
 
         for (let i = 0; i < count; i++) {
-            enemies.push(new Skeleton(0, 0, config));
+            const enemy = new Skeleton(0, 0, config);
+            enemy.setCombatBehaviorProfile(this.behaviorFactory.getProfile(enemy.archetypeId));
+            enemies.push(enemy);
         }
 
         return enemies;

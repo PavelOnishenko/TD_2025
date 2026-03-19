@@ -142,9 +142,8 @@ export default class Game {
             getSelectedEnemy: () => battlePlayerActionController.getSelectedEnemy(),
             setSelectedEnemy: (enemy: Skeleton | null) => battlePlayerActionController.setSelectedEnemy(enemy),
         });
-        const battleTurnController = new BattleTurnController(battleMap, turnManager, player, {
+        const battleTurnController = new BattleTurnController(turnManager, player, battleCommandController, {
             onAddBattleLog: (m: string, t: string = 'system') => this.hudCoordinator.addBattleLog(m, t),
-            onUpdateHUD: () => this.hudCoordinator.updateHUD(),
             onEnableBattleButtons: (enabled: boolean) => this.hudCoordinator.enableBattleButtons(enabled),
             onBattleEnd: (result: 'victory' | 'defeat') => this.battleCoordinator.endBattle(result),
             onPlayerTurnReady: () => this.battleCoordinator.onPlayerTurnReady(),
@@ -164,7 +163,6 @@ export default class Game {
             onAddBattleLog: (m: string, t: string = 'system') => this.hudCoordinator.addBattleLog(m, t),
             onUpdateHUD: () => this.hudCoordinator.updateHUD(),
             onRememberTraveler: (traveler, disposition) => loreBookController.rememberTraveler(traveler, disposition),
-            onUpdateHUD: () => this.hudCoordinator.updateHUD()
         });
         this.renderRouter = new GameRenderRouter({
             canvas: this.canvas, renderer: this.renderer, worldMap, player, battleMap, turnManager,
@@ -245,7 +243,7 @@ export default class Game {
             getEventLabel: (type: ForcedEncounterType) => this.villageCoordinator.getDeveloperEventLabel(type),
         });
         new GameUiEventBinder(this.canvas, ui.hudElements, ui.battleUI, ui.villageUI, ui.developerUI, villageActionsController, devController, {
-            onAttack: () => this.battleCoordinator.handleAttack(), onFlee: () => this.battleCoordinator.handleFlee(),
+            onCombatAction: (actionId) => this.battleCoordinator.handleCombatAction(actionId), onFlee: () => this.battleCoordinator.handleFlee(),
             onWait: () => this.battleCoordinator.handleWait(), onUsePotionFromBattle: () => this.battleCoordinator.handleUsePotion(true),
             onUseManaPotionFromBattle: () => this.battleCoordinator.handleUseManaPotion(true),
             onUsePotionFromHud: () => this.battleCoordinator.handleUsePotion(false),

@@ -4,6 +4,7 @@ import { balanceConfig } from '../config/balanceConfig.js';
 import { theme } from '../config/ThemeConfig.js';
 import { cloneBaseStats, deriveCreatureStats, normalizeCreatureSkills } from '../config/creatureStats.js';
 import { CreatureBaseStats, CreatureSkill, CreatureSkills } from '../config/creatureTypes.js';
+import { CombatBehaviorProfile, CombatantCombatState, createCombatState } from '../types/combat.js';
 
 export interface EnemyBehavior {
     avoidHitChance?: number;
@@ -18,6 +19,7 @@ export interface EnemyConfig {
     width: number;
     height: number;
     behavior?: EnemyBehavior;
+    combatBehaviorProfile?: CombatBehaviorProfile;
     baseStats?: Partial<CreatureBaseStats>;
     skills?: Partial<Record<CreatureSkill, number>>;
 }
@@ -58,6 +60,8 @@ export default class Skeleton extends DamageableEntity {
     public maxMana: number;
     public magicPoints: number;
     public mana: number;
+    public combatState: CombatantCombatState;
+    public combatBehaviorProfile: CombatBehaviorProfile | null;
     private cursedArmorReduction: number = 0;
     private curseTurns: number = 0;
     private slowTurns: number = 0;
@@ -91,8 +95,35 @@ export default class Skeleton extends DamageableEntity {
         this.maxMana = derivedStats.maxMana;
         this.magicPoints = derivedStats.magicPoints;
         this.mana = derivedStats.maxMana;
+        this.combatState = createCombatState();
+        this.combatBehaviorProfile = config.combatBehaviorProfile ?? null;
         const hpMultiplier = Math.max(0, balanceConfig.enemies.hpMultiplier ?? 1);
         this.initDamageable(Math.round(derivedStats.maxHp * hpMultiplier));
+    }
+
+    public setCombatBehaviorProfile(profile: CombatBehaviorProfile): void {
+        this.combatBehaviorProfile = {
+            ...profile,
+            directionWeights: { ...profile.directionWeights },
+        };
+    }
+
+    public getCombatBehaviorProfile(): CombatBehaviorProfile {
+        return this.combatBehaviorProfile ?? {
+            archetypeId: this.archetypeId,
+            preferredDirection: 'center',
+            directionWeights: { left: 1, center: 1, right: 1 },
+            normalAttackWeight: 1,
+            fastAttackWeight: 1,
+            heavyAttackWeight: 1,
+            counterWeight: 1,
+            dodgeWeight: 1,
+            rangedWeight: 0,
+            aggressiveness: 1,
+            caution: 1,
+            punishHeavyWeight: 1,
+            dodgeResponseWeight: 1,
+        };
     }
 
     public takeDamage(amount: number): boolean {
