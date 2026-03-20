@@ -37,3 +37,27 @@ test('GridMap clears cell data for all cells', () => {
   assert.deepEqual(grid.getCellAt(0, 0).data, {});
   assert.deepEqual(grid.getCellAt(1, 0).data, {});
 });
+
+
+test('GridMap updateLayout reuses cell objects while updating offsets and scale', () => {
+  const grid = new GridMap(2, 2, 10, 0, 0);
+  const originalCell = grid.getCellAt(1, 1);
+
+  grid.updateLayout(10, 5, 7);
+  assert.equal(grid.getCellAt(1, 1), originalCell);
+  assert.deepEqual({ x: originalCell.x, y: originalCell.y, width: originalCell.width, height: originalCell.height }, {
+    x: 15,
+    y: 17,
+    width: 10,
+    height: 10,
+  });
+
+  grid.updateLayout(20, 3, 4);
+  assert.equal(grid.getCellAt(1, 1), originalCell);
+  assert.deepEqual({ x: originalCell.x, y: originalCell.y, width: originalCell.width, height: originalCell.height }, {
+    x: 23,
+    y: 24,
+    width: 20,
+    height: 20,
+  });
+});
