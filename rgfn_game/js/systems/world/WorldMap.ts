@@ -849,9 +849,27 @@ export default class WorldMap {
         return col === 0 || row === 0 || col === columns - 1 || row === rows - 1;
     }
 
+    private getRenderDetailLevel(bounds: { startCol: number; endCol: number; startRow: number; endRow: number }): 'full' | 'medium' | 'low' {
+        const visibleColumns = Math.max(0, bounds.endCol - bounds.startCol + 1);
+        const visibleRows = Math.max(0, bounds.endRow - bounds.startRow + 1);
+        const visibleCellCount = visibleColumns * visibleRows;
+
+        if (this.grid.cellSize <= 10 || (!this.mapDisplayConfig.fogOfWar && visibleCellCount >= 2500)) {
+            return 'low';
+        }
+
+        if (this.grid.cellSize <= 14 || visibleCellCount >= 1400) {
+            return 'medium';
+        }
+
+        return 'full';
+    }
+
     public draw(ctx: CanvasRenderingContext2D, _renderer: any): void {
         this.renderer.drawBackground(ctx, this.canvasWidth, this.canvasHeight);
         const bounds = this.getVisibleBounds();
+        const detailLevel = this.getRenderDetailLevel(bounds);
+        const drawGrid = detailLevel !== 'low' && this.grid.cellSize >= 12;
 
         for (let row = bounds.startRow; row <= bounds.endRow; row += 1) {
             for (let col = bounds.startCol; col <= bounds.endCol; col += 1) {
@@ -866,13 +884,18 @@ export default class WorldMap {
                     cell,
                     this.getFogState(col, row),
                     terrain,
-                    terrain ? this.getTerrainNeighbors(col, row, terrain.type) : undefined,
-                    { showFogOverlay: this.mapDisplayConfig.fogOfWar },
+                    detailLevel === 'full' && terrain ? this.getTerrainNeighbors(col, row, terrain.type) : undefined,
+                    {
+                        showFogOverlay: this.mapDisplayConfig.fogOfWar,
+                        detailLevel,
+                    },
                 );
             }
         }
 
-        this.renderer.drawGrid(ctx, this.grid, this.canvasWidth, this.canvasHeight);
+        if (drawGrid) {
+            this.renderer.drawGrid(ctx, this.grid, this.canvasWidth, this.canvasHeight);
+        }
         this.drawVillages(ctx, bounds);
         this.drawNamedLocations(ctx, bounds);
         this.drawNamedLocationFocus(ctx);

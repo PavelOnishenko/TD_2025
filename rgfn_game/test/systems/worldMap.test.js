@@ -259,3 +259,30 @@ test('WorldMap draw renders visible terrain, fog and grid without throwing on a 
   assert.ok(ctx.calls.some(c => c[0] === 'fillText'));
   assert.ok(ctx.calls.some(c => c[0] === 'stroke'));
 });
+
+
+test('WorldMap draw switches to low-detail rendering when zoomed out with fog disabled', () => {
+  const worldMap = new WorldMap(100, 100, theme.worldMap.cellSize.min);
+  worldMap.resizeToCanvas(720, 720);
+  worldMap.setMapDisplayConfig({ fogOfWar: false });
+  const ctx = createMockCanvasContext();
+  const detailLevels = new Set();
+  let drawGridCalled = false;
+  const originalDrawCell = worldMap.renderer.drawCell.bind(worldMap.renderer);
+  const originalDrawGrid = worldMap.renderer.drawGrid.bind(worldMap.renderer);
+
+  worldMap.renderer.drawCell = (drawCtx, cell, fogState, terrain, neighbors, options) => {
+    detailLevels.add(options?.detailLevel);
+    return originalDrawCell(drawCtx, cell, fogState, terrain, neighbors, options);
+  };
+  worldMap.renderer.drawGrid = (...args) => {
+    drawGridCalled = true;
+    return originalDrawGrid(...args);
+  };
+
+  worldMap.draw(ctx, null);
+
+  assert.deepEqual([...detailLevels], ['low']);
+  assert.equal(drawGridCalled, false);
+  assert.ok(ctx.calls.some((call) => call[0] === 'fillRect'));
+});

@@ -81,10 +81,11 @@ export default class WorldMapRenderer {
         fogState: FogState,
         terrain: TerrainData | undefined,
         neighbors?: TerrainNeighbors,
-        options: { showFogOverlay?: boolean } = {},
+        options: { showFogOverlay?: boolean; detailLevel?: 'full' | 'medium' | 'low' } = {},
     ): void {
+        const detailLevel = options.detailLevel ?? 'full';
         if (fogState === 'unknown') {
-            this.drawUnknownCell(ctx, cell);
+            this.drawUnknownCell(ctx, cell, detailLevel);
             return;
         }
         if (!terrain) {
@@ -96,8 +97,14 @@ export default class WorldMapRenderer {
             : terrain.type === 'water'
                 ? 0.84
                 : 0.72;
+
+        if (detailLevel === 'low') {
+            this.drawLowDetailCell(ctx, cell, terrain, brightness, fogState === 'hidden' && options.showFogOverlay !== false);
+            return;
+        }
+
         const path = this.createTerrainPath(cell, neighbors);
-        this.drawTerrain(ctx, cell, terrain, brightness, path);
+        this.drawTerrain(ctx, cell, terrain, brightness, path, detailLevel);
         if (fogState === 'hidden' && options.showFogOverlay !== false) {
             this.drawHiddenOverlay(ctx, path, terrain.type);
         }
@@ -294,10 +301,17 @@ export default class WorldMapRenderer {
         ctx.fillRect(x - (3 * villageScale), y + (3 * villageScale), 6 * villageScale, 8 * villageScale);
     }
 
-    private drawUnknownCell(ctx: CanvasRenderingContext2D, cell: GridCell): void {
-        const path = this.createRoundedRectPath(cell.x + 1, cell.y + 1, cell.width - 2, cell.height - 2, Math.max(4, cell.width * 0.18));
+    private drawUnknownCell(ctx: CanvasRenderingContext2D, cell: GridCell, detailLevel: 'full' | 'medium' | 'low'): void {
         ctx.save();
         ctx.fillStyle = theme.worldMap.unknown;
+
+        if (detailLevel === 'low' || cell.width <= 12) {
+            ctx.fillRect(cell.x, cell.y, cell.width, cell.height);
+            ctx.restore();
+            return;
+        }
+
+        const path = this.createRoundedRectPath(cell.x + 1, cell.y + 1, cell.width - 2, cell.height - 2, Math.max(4, cell.width * 0.18));
         ctx.fill(path);
         ctx.fillStyle = this.withAlpha(theme.ui.primaryAccent, 0.35);
         ctx.font = `${Math.max(12, Math.floor(cell.width * 0.45))}px Georgia`;
@@ -314,13 +328,36 @@ export default class WorldMapRenderer {
         terrain: TerrainData,
         brightness: number,
         path: Path2D,
+        detailLevel: 'full' | 'medium',
     ): void {
         ctx.save();
         ctx.fillStyle = this.adjustColorBrightness(terrain.color, brightness);
         ctx.fill(path);
+
+        if (detailLevel === 'medium') {
+            ctx.restore();
+            return;
+        }
+
         ctx.clip(path);
         this.drawTerrainTexture(ctx, cell, terrain, brightness);
         this.drawTerrainIcon(ctx, cell, terrain.type, brightness);
+        ctx.restore();
+    }
+
+
+    private drawLowDetailCell(ctx: CanvasRenderingContext2D, cell: GridCell, terrain: TerrainData, brightness: number, showHiddenOverlay: boolean): void {
+        ctx.save();
+        ctx.fillStyle = this.adjustColorBrightness(terrain.color, brightness);
+        ctx.fillRect(cell.x, cell.y, cell.width, cell.height);
+
+        if (showHiddenOverlay) {
+            ctx.fillStyle = terrain.type === 'water'
+                ? this.withAlpha(this.mixColors(theme.worldMap.terrain.water, theme.ui.panelHighlight, 0.18), 0.1)
+                : this.withAlpha(theme.ui.primaryAccent, 0.22);
+            ctx.fillRect(cell.x, cell.y, cell.width, cell.height);
+        }
+
         ctx.restore();
     }
 
