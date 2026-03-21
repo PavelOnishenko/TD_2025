@@ -35,6 +35,7 @@ import GameHudCoordinator from './systems/game/runtime/GameHudCoordinator.js';
 import GameBattleCoordinator from './systems/game/runtime/GameBattleCoordinator.js';
 import MagicSystem from './systems/magic/MagicSystem.js';
 import QuestGenerator from './systems/quest/QuestGenerator.js';
+import QuestPackService from './systems/quest/QuestPackService.js';
 import QuestUiController from './systems/quest/QuestUiController.js';
 import { QuestNode } from './systems/quest/QuestTypes.js';
 import { TerrainType } from './types/game.js';
@@ -93,7 +94,11 @@ export default class Game {
         const encounterSystem = new EncounterSystem();
         const villageLifeRenderer = new VillageLifeRenderer(new VillagePopulation());
         const ui = new GameUiFactory().create();
-        const questGenerator = new QuestGenerator();
+        const questGenerator = new QuestGenerator({
+            packService: new QuestPackService({
+                locationNamesProvider: () => worldMap.getAllVillageNames(),
+            }),
+        });
         const questUiController = new QuestUiController(
             ui.hudElements.questsTitle,
             ui.hudElements.questsBody,

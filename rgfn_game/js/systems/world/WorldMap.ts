@@ -828,6 +828,15 @@ export default class WorldMap {
             .sort((left, right) => left.name.localeCompare(right.name));
     }
 
+    public getAllVillageNames(): string[] {
+        return Array.from(this.villages.values())
+            .map((key) => {
+                const [colText, rowText] = key.split(',');
+                return this.getVillageName(Number(colText), Number(rowText));
+            })
+            .sort((left, right) => left.localeCompare(right));
+    }
+
     private getVillageName(col: number, row: number): string {
         const first = ['Oak', 'River', 'Sun', 'Stone', 'Amber', 'Willow', 'Moss', 'Silver', 'Pine', 'Moon'];
         const second = ['ford', 'field', 'brook', 'haven', 'hill', 'cross', 'watch', 'stead', 'rest', 'meadow'];
@@ -915,7 +924,8 @@ export default class WorldMap {
             return;
         }
 
-        const position = this.findNamedLocationPosition();
+        const villagePosition = this.findVillagePositionByName(name);
+        const position = villagePosition ?? this.findNamedLocationPosition();
         if (position) {
             const terrain = this.getTerrain(position.col, position.row);
             this.namedLocations.set(name, {
@@ -1118,6 +1128,19 @@ export default class WorldMap {
             villageStatus: isVillage ? (isCurrentVillage ? 'current' : 'mapped') : null,
             isTraversable: terrain.type !== 'water',
         };
+    }
+
+    private findVillagePositionByName(name: string): GridPosition | null {
+        for (const key of this.villages.values()) {
+            const [colText, rowText] = key.split(',');
+            const col = Number(colText);
+            const row = Number(rowText);
+            if (this.getVillageName(col, row) === name) {
+                return { col, row };
+            }
+        }
+
+        return null;
     }
 
     private findNamedLocationPosition(): GridPosition | null {

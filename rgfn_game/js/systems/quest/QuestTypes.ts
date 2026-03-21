@@ -11,7 +11,7 @@ export type QuestObjectiveType =
 
 export type QuestNameDomain = 'location' | 'artifact' | 'character' | 'monster' | 'mainQuest';
 
-export type PackSourceType = 'local-pattern' | 'remote-location' | 'remote-name' | 'echo';
+export type PackSourceType = 'local-pattern' | 'map-village' | 'remote-location' | 'remote-name' | 'echo';
 
 export type QuestNode = {
     id: string;

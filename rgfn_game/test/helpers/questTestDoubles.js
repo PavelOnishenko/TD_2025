@@ -48,7 +48,7 @@ export class FakeQuestPackService {
     const values = this.names[domain];
     const next = values.shift() ?? `${domain}-fallback`;
     this.calls.push(domain);
-    return { text: next, sourceTypes: ['local-pattern'] };
+    return { text: next, domain, sourceTypes: ['local-pattern'] };
   }
 }
 

@@ -73,3 +73,22 @@ test('QuestPackService can use the remote name source for character packs', asyn
   assert.equal(result.text, 'Mira Stone');
   assert.deepEqual(result.sourceTypes, ['remote-name']);
 });
+
+test('QuestPackService prefers real world-map village names for quest locations when provided', async () => {
+  const random = new ScriptedQuestRandom({ ints: [1], picks: ['map-village', 'Oakford'] });
+  const fetchImpl = createFetchStub({
+    'restcountries.com': new Error('offline'),
+    'randomuser.me': new Error('offline'),
+  });
+  const service = new QuestPackService({
+    fetchImpl,
+    random,
+    fileReader: createFileReader(),
+    locationNamesProvider: () => ['Oakford', 'Silverbrook'],
+  });
+
+  const result = await service.generateName('location', 4);
+
+  assert.equal(result.text, 'Oakford');
+  assert.deepEqual(result.sourceTypes, ['map-village']);
+});
