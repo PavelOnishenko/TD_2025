@@ -2,738 +2,425 @@ import GameLoop from '../../engine/core/GameLoop.js';
 import Renderer from '../../engine/core/Renderer.js';
 import InputManager from '../../engine/systems/InputManager.js';
 import StateMachine from './utils/StateMachine.js';
-import WorldMap from './systems/WorldMap.js';
-import BattleMap from './systems/BattleMap.js';
-import TurnManager from './systems/TurnManager.js';
-import EncounterSystem from './systems/EncounterSystem.js';
+import WorldMap from './systems/world/WorldMap.js';
+import BattleMap from './systems/combat/BattleMap.js';
+import TurnManager from './systems/combat/TurnManager.js';
+import EncounterSystem, { ForcedEncounterType } from './systems/encounter/EncounterSystem.js';
+import VillagePopulation from './systems/village/VillagePopulation.js';
+import VillageActionsController from './systems/village/VillageActionsController.js';
+import DeveloperEventController from './systems/encounter/DeveloperEventController.js';
+import VillageEnvironmentRenderer from './systems/village/VillageEnvironmentRenderer.js';
+import VillageLifeRenderer from './systems/village/VillageLifeRenderer.js';
+import HudController from './systems/HudController.js';
+import BattleUiController from './systems/BattleUiController.js';
+import WorldModeController from './systems/WorldModeController.js';
 import Player from './entities/Player.js';
 import Skeleton from './entities/Skeleton.js';
-import Item from './entities/Item.js';
-import timingConfig from './config/timingConfig.js';
-import { balanceConfig } from './config/balanceConfig.js';
-import { Direction } from './types/game.js';
 import { BattleSplash } from './ui/BattleSplash.js';
+import { balanceConfig } from './config/balanceConfig.js';
 import { ItemDiscoverySplash } from './ui/ItemDiscoverySplash.js';
 import { applyThemeToCSS } from './config/ThemeConfig.js';
+import GameUiFactory from './systems/game/GameUiFactory.js';
+import GameInputSetup from './systems/game/GameInputSetup.js';
+import GameUiEventBinder from './systems/game/GameUiEventBinder.js';
+import BattleTurnController from './systems/game/BattleTurnController.js';
+import BattlePlayerActionController from './systems/game/BattlePlayerActionController.js';
+import BattleCommandController from './systems/game/BattleCommandController.js';
+import { BattleUI, DeveloperUI, GameLogUI, HudElements, VillageUI, WorldUI } from './systems/game/GameUiTypes.js';
+import { theme } from './config/ThemeConfig.js';
+import GameModeStateMachine, { MODES } from './systems/game/runtime/GameModeStateMachine.js';
+import GameRenderRouter from './systems/game/runtime/GameRenderRouter.js';
+import GameVillageCoordinator from './systems/game/runtime/GameVillageCoordinator.js';
+import GameHudCoordinator from './systems/game/runtime/GameHudCoordinator.js';
+import GameBattleCoordinator from './systems/game/runtime/GameBattleCoordinator.js';
+import MagicSystem from './systems/magic/MagicSystem.js';
+import QuestGenerator from './systems/quest/QuestGenerator.js';
+import QuestPackService from './systems/quest/QuestPackService.js';
+import QuestUiController from './systems/quest/QuestUiController.js';
+import { QuestNode } from './systems/quest/QuestTypes.js';
+import { TerrainType } from './types/game.js';
+import { consumeNextCharacterRollAllocation } from './utils/NextCharacterRollConfig.js';
+import LoreBookController from './systems/lore/LoreBookController.js';
+import { CombatMove } from './systems/combat/DirectionalCombat.js';
 
-const MODES = {
-    WORLD_MAP: 'WORLD_MAP',
-    BATTLE: 'BATTLE',
+type UIBundle = { hudElements: HudElements; worldUI: WorldUI; battleUI: BattleUI; villageUI: VillageUI; gameLogUI: GameLogUI; developerUI: DeveloperUI };
+
+type GameSaveState = {
+    version: 1;
+    worldMap: Record<string, unknown>;
+    player: Record<string, unknown>;
+    spellLevels: Record<string, number>;
 };
 
+const SAVE_KEY = 'rgfn_game_save_v1';
+const WORLD_MAP_COLUMNS = balanceConfig.worldMap.dimensions.columns ?? theme.worldMap.gridDimensions.columns;
+const WORLD_MAP_ROWS = balanceConfig.worldMap.dimensions.rows ?? theme.worldMap.gridDimensions.rows;
+const WORLD_MAP_CELL_SIZE = theme.worldMap.cellSize.default;
+
 export default class Game {
-    private canvas: HTMLCanvasElement;
-    private renderer: Renderer;
-    private input: InputManager;
-    private loop: GameLoop;
-    private player: Player;
-    private worldMap: WorldMap;
-    private battleMap: BattleMap;
-    private turnManager: TurnManager;
-    private encounterSystem: EncounterSystem;
-    private currentEnemies: Skeleton[];
-    private turnTransitioning: boolean;
-    private stateMachine: StateMachine;
-    private hudElements;
-    private battleUI;
-    private selectedEnemy: Skeleton | null;
-    private battleSplash: BattleSplash;
-    private itemDiscoverySplash: ItemDiscoverySplash;
+    private readonly canvas: HTMLCanvasElement;
+    private readonly renderer: Renderer;
+    private readonly input: InputManager;
+    private readonly loop: GameLoop;
+    private readonly stateMachine: StateMachine;
+    private readonly renderRouter: GameRenderRouter;
+    private readonly villageCoordinator: GameVillageCoordinator;
+    private readonly hudCoordinator: GameHudCoordinator;
+    private readonly battleCoordinator: GameBattleCoordinator;
+    private readonly worldModeController: WorldModeController;
+    private readonly worldMap: WorldMap;
+    private readonly battleMap: BattleMap;
+    private readonly player: Player;
+    private readonly magicSystem: MagicSystem;
+    private lastSavedSnapshot: string = '';
 
     constructor(canvas: HTMLCanvasElement) {
         this.canvas = canvas;
         this.renderer = new Renderer(canvas);
         this.input = new InputManager();
-        this.loop = new GameLoop(
-            (dt: number) => this.update(dt),
-            (dt: number) => this.render(dt)
+        this.loop = new GameLoop((dt: number) => this.update(dt), () => this.render());
+        const hasSavedGame = Boolean(window.localStorage.getItem(SAVE_KEY));
+        const player = new Player(0, 0, {
+            startingSkillAllocation: hasSavedGame
+                ? null
+                : consumeNextCharacterRollAllocation(balanceConfig.player.initialRandomAllocatedSkillPoints ?? 0),
+        });
+        const worldMap = new WorldMap(WORLD_MAP_COLUMNS, WORLD_MAP_ROWS, WORLD_MAP_CELL_SIZE);
+        const battleMap = new BattleMap();
+        this.player = player;
+        this.worldMap = worldMap;
+        this.battleMap = battleMap;
+        const turnManager = new TurnManager();
+        const encounterSystem = new EncounterSystem();
+        const villageLifeRenderer = new VillageLifeRenderer(new VillagePopulation());
+        const ui = new GameUiFactory().create();
+        const questGenerator = new QuestGenerator({
+            packService: new QuestPackService({
+                locationNamesProvider: () => worldMap.getAllVillageNames(),
+            }),
+        });
+        const questUiController = new QuestUiController(
+            ui.hudElements.questsTitle,
+            ui.hudElements.questsBody,
+            ui.hudElements.questIntroModal,
+            ui.hudElements.questIntroBody,
+            ui.hudElements.questIntroCloseBtn,
+            {
+                onLocationClick: (locationName: string) => {
+                    const shown = this.worldMap.revealNamedLocation(locationName);
+                    if (shown) {
+                        this.stateMachine.transition(MODES.WORLD_MAP);
+                    }
+                    return shown;
+                },
+            },
         );
-
-        // Game state
-        this.player = new Player(0, 0);
-        this.worldMap = new WorldMap(20, 15, 40);
-        this.battleMap = new BattleMap();
-        this.turnManager = new TurnManager();
-        this.encounterSystem = new EncounterSystem();
-        this.currentEnemies = [];
-        this.turnTransitioning = false;
-        this.selectedEnemy = null;
-
-        // State machine for game modes
-        this.stateMachine = new StateMachine(MODES.WORLD_MAP);
-        this.stateMachine
-            .addState(MODES.WORLD_MAP, {
-                enter: () => this.enterWorldMode(),
-                update: (dt: number) => this.updateWorldMode(dt),
-            })
-            .addState(MODES.BATTLE, {
-                enter: (enemies: Skeleton[]) => this.enterBattleMode(enemies),
-                update: (dt: number) => this.updateBattleMode(dt),
-                exit: () => this.exitBattleMode(),
-            });
-
-        // UI elements
-        this.hudElements = {};
-        this.battleUI = {};
-        this.setupUI();
-
-        // Initialize systems
-        this.battleSplash = new BattleSplash();
-        this.itemDiscoverySplash = new ItemDiscoverySplash();
+        const loreBookController = new LoreBookController({ loreBody: ui.hudElements.loreBody }, player, worldMap);
+        this.initializeQuestUi(questGenerator, questUiController);
+        const magicSystem = new MagicSystem(player);
+        const battleUiController = new BattleUiController(ui.battleUI, battleMap, turnManager, player, ui.gameLogUI.log, magicSystem);
+        this.magicSystem = magicSystem;
+        this.hudCoordinator = new GameHudCoordinator(
+            player,
+            new HudController(player, ui.hudElements, ui.battleUI, magicSystem, ui.gameLogUI.log, loreBookController),
+            battleUiController,
+            magicSystem,
+        );
+        const villageActionsController = new VillageActionsController(player, ui.villageUI, ui.gameLogUI.log, {
+            onUpdateHUD: () => this.hudCoordinator.updateHUD(),
+            onLeaveVillage: () => this.stateMachine.transition(MODES.WORLD_MAP),
+        });
+        this.villageCoordinator = new GameVillageCoordinator(ui.hudElements, ui.battleUI, ui.villageUI, villageLifeRenderer, villageActionsController);
+        this.stateMachine = this.createStateMachine(ui);
+        const battlePlayerActionController = new BattlePlayerActionController(turnManager, battleUiController, player, {
+            onAddBattleLog: (m: string, t: string = 'system') => this.hudCoordinator.addBattleLog(m, t),
+            onEnableBattleButtons: (enabled: boolean) => this.hudCoordinator.enableBattleButtons(enabled),
+            onProcessTurn: () => this.battleCoordinator.processTurn(),
+            onPlayerTurnTransitionStart: () => this.battleCoordinator.onPlayerTurnTransitionStart(),
+        });
+        const battleCommandController = new BattleCommandController(this.stateMachine, player, battleMap, turnManager, magicSystem, {
+            onUpdateHUD: () => this.hudCoordinator.updateHUD(),
+            onAddBattleLog: (m: string, t: string = 'system') => this.hudCoordinator.addBattleLog(m, t),
+            onEnableBattleButtons: (enabled: boolean) => this.hudCoordinator.enableBattleButtons(enabled),
+            onProcessTurn: () => this.battleCoordinator.processTurn(),
+            onEndBattle: (result: 'victory' | 'fled') => this.battleCoordinator.endBattle(result),
+            onPlayerTurnTransitionStart: () => this.battleCoordinator.onPlayerTurnTransitionStart(),
+            onPlayerTurnReady: () => this.battleCoordinator.onPlayerTurnReady(),
+            getSelectedEnemy: () => battlePlayerActionController.getSelectedEnemy(),
+            setSelectedEnemy: (enemy: Skeleton | null) => battlePlayerActionController.setSelectedEnemy(enemy),
+        });
+        const battleTurnController = new BattleTurnController(battleMap, turnManager, player, {
+            onAddBattleLog: (m: string, t: string = 'system') => this.hudCoordinator.addBattleLog(m, t),
+            onUpdateHUD: () => this.hudCoordinator.updateHUD(),
+            onEnableBattleButtons: (enabled: boolean) => this.hudCoordinator.enableBattleButtons(enabled),
+            onBattleEnd: (result: 'victory' | 'defeat') => this.battleCoordinator.endBattle(result),
+            onPlayerTurnReady: () => this.battleCoordinator.onPlayerTurnReady(),
+        });
+        this.battleCoordinator = new GameBattleCoordinator(this.input, this.stateMachine, {
+            player, battleMap, turnManager, battleSplash: new BattleSplash(), hudElements: ui.hudElements, battleUI: ui.battleUI, villageUI: ui.villageUI,
+        }, { battlePlayerActionController, battleCommandController, battleTurnController }, {
+            onClearBattleLog: () => this.hudCoordinator.clearBattleLog(),
+            onAddBattleLog: (m: string, t: string = 'system') => this.hudCoordinator.addBattleLog(m, t),
+            onUpdateHUD: () => this.hudCoordinator.updateHUD(),
+            onDescribeEncounter: (enemies: Skeleton[]) => this.hudCoordinator.describeEncounter(enemies),
+            onGameOver: () => this.gameOver(),
+        });
+        this.worldModeController = new WorldModeController(this.input, player, worldMap, encounterSystem, new ItemDiscoverySplash(), {
+            onEnterVillage: () => this.stateMachine.transition(MODES.VILLAGE),
+            onStartBattle: (enemies: Skeleton[], terrainType) => this.stateMachine.transition(MODES.BATTLE, { enemies, terrainType }),
+            onAddBattleLog: (m: string, t: string = 'system') => this.hudCoordinator.addBattleLog(m, t),
+            onUpdateHUD: () => this.hudCoordinator.updateHUD(),
+            onRememberTraveler: (traveler, disposition) => loreBookController.rememberTraveler(traveler, disposition),
+        });
+        this.renderRouter = new GameRenderRouter({
+            canvas: this.canvas, renderer: this.renderer, worldMap, player, battleMap, turnManager,
+            villageEnvironmentRenderer: new VillageEnvironmentRenderer(), villageLifeRenderer,
+        });
+        this.bindUi(ui, villageActionsController, encounterSystem);
+        this.configureInput();
+        this.configureViewport();
+        if (!hasSavedGame) {
+            this.worldMap.centerOnPlayer();
+        }
         applyThemeToCSS();
-
-        // Input mapping
-        this.setupInput();
-
-        // Initialize player position
-        const [px, py] = this.worldMap.getPlayerPixelPosition();
-        this.player.x = px;
-        this.player.y = py;
+        const [x, y] = worldMap.getPlayerPixelPosition();
+        player.x = x;
+        player.y = y;
+        this.loadGame();
+        this.saveGameIfChanged();
     }
 
-    private setupUI(): void {
-        this.hudElements = {
-            modeIndicator: document.getElementById('mode-indicator')!,
-            playerLevel: document.getElementById('player-level')!,
-            playerXp: document.getElementById('player-xp')!,
-            playerXpNext: document.getElementById('player-xp-next')!,
-            playerHp: document.getElementById('player-hp')!,
-            playerMaxHp: document.getElementById('player-max-hp')!,
-            playerDmg: document.getElementById('player-dmg')!,
-            playerArmor: document.getElementById('player-armor')!,
-            playerWeapon: document.getElementById('player-weapon')!,
-            skillPoints: document.getElementById('skill-points')!,
-            statVitality: document.getElementById('stat-vitality')!,
-            statToughness: document.getElementById('stat-toughness')!,
-            statStrength: document.getElementById('stat-strength')!,
-            addVitalityBtn: document.getElementById('add-vitality-btn')! as HTMLButtonElement,
-            addToughnessBtn: document.getElementById('add-toughness-btn')! as HTMLButtonElement,
-            addStrengthBtn: document.getElementById('add-strength-btn')! as HTMLButtonElement,
-        };
+    public start(): void { this.handleResize(); this.refreshHud(); this.loop.start(); }
 
-        this.battleUI = {
-            sidebar: document.getElementById('battle-sidebar')!,
-            enemyName: document.getElementById('enemy-name')!,
-            enemyHp: document.getElementById('enemy-hp')!,
-            enemyMaxHp: document.getElementById('enemy-max-hp')!,
-            attackBtn: document.getElementById('attack-btn')! as HTMLButtonElement,
-            fleeBtn: document.getElementById('flee-btn')! as HTMLButtonElement,
-            waitBtn: document.getElementById('wait-btn')! as HTMLButtonElement,
-            log: document.getElementById('battle-log')!,
-            attackRangeText: document.getElementById('attack-range-text')!,
-        };
-
-        // Battle button events
-        this.battleUI.attackBtn.addEventListener('click', () => this.handleAttack());
-        this.battleUI.fleeBtn.addEventListener('click', () => this.handleFlee());
-        this.battleUI.waitBtn.addEventListener('click', () => this.handleWait());
-
-        // Stat allocation button events
-        this.hudElements.addVitalityBtn.addEventListener('click', () => this.handleAddStat('vitality'));
-        this.hudElements.addToughnessBtn.addEventListener('click', () => this.handleAddStat('toughness'));
-        this.hudElements.addStrengthBtn.addEventListener('click', () => this.handleAddStat('strength'));
-
-        // Canvas click for enemy selection
-        this.canvas.addEventListener('click', (e: MouseEvent) => this.handleCanvasClick(e));
+    private async initializeQuestUi(questGenerator: QuestGenerator, questUiController: QuestUiController): Promise<void> {
+        const quest = await questGenerator.generateMainQuest();
+        this.registerQuestLocations(quest);
+        questUiController.renderQuest(quest);
+        questUiController.showIntro();
     }
 
-    private setupInput(): void {
-        this.input.mapAction('moveUp', ['ArrowUp', 'KeyW']);
-        this.input.mapAction('moveDown', ['ArrowDown', 'KeyS']);
-        this.input.mapAction('moveLeft', ['ArrowLeft', 'KeyA']);
-        this.input.mapAction('moveRight', ['ArrowRight', 'KeyD']);
+    private registerQuestLocations(quest: QuestNode): void {
+        for (const entity of quest.entities) {
+            if (entity.type === 'location') {
+                this.worldMap.registerNamedLocation(entity.text);
+            }
+        }
 
-        document.addEventListener('keydown', (e: KeyboardEvent) => this.input.handleKeyDown(e));
-        document.addEventListener('keyup', (e: KeyboardEvent) => this.input.handleKeyUp(e));
+        for (const child of quest.children) {
+            this.registerQuestLocations(child);
+        }
     }
 
-    public start(): void {
-        this.updateHUD();
-        this.loop.start();
+
+    private configureViewport(): void {
+        const onResize = (): void => this.handleResize();
+        window.addEventListener('resize', onResize);
+        onResize();
+    }
+
+    private handleResize(): void {
+        const rect = this.canvas.getBoundingClientRect();
+        const nextWidth = Math.max(160, Math.floor(rect.width));
+        const nextHeight = Math.max(160, Math.floor(rect.height));
+
+        if (nextWidth !== this.canvas.width || nextHeight !== this.canvas.height) {
+            this.canvas.width = nextWidth;
+            this.canvas.height = nextHeight;
+        }
+
+        this.worldMap.resizeToCanvas(this.canvas.width, this.canvas.height);
+        this.battleMap.resizeToCanvas(this.canvas.width, this.canvas.height);
+
+        const [x, y] = this.worldMap.getPlayerPixelPosition();
+        this.player.x = x;
+        this.player.y = y;
+    }
+
+    private createStateMachine(ui: UIBundle): StateMachine {
+        return new GameModeStateMachine<{ enemies: Skeleton[]; terrainType: TerrainType }>({
+            onEnterWorld: () => this.worldModeController.enterWorldMode(ui.hudElements.modeIndicator, ui.worldUI.sidebar, ui.battleUI.sidebar, ui.villageUI.sidebar),
+            onUpdateWorld: () => this.worldModeController.updateWorldMode(),
+            onEnterBattle: (battleData: { enemies: Skeleton[]; terrainType: TerrainType }) => this.battleCoordinator.enterBattleMode(battleData.enemies, battleData.terrainType),
+            onUpdateBattle: () => this.battleCoordinator.updateBattleMode(),
+            onExitBattle: () => this.battleCoordinator.exitBattleMode(),
+            onEnterVillage: () => this.villageCoordinator.enterVillageMode(this.canvas.width, this.canvas.height, this.worldMap.getVillageNameAtPlayerPosition()),
+            onExitVillage: () => this.villageCoordinator.exitVillageMode(),
+        }).create();
+    }
+
+    private bindUi(ui: UIBundle, villageActionsController: VillageActionsController, encounterSystem: EncounterSystem): void {
+        const devController = new DeveloperEventController(ui.developerUI, encounterSystem, {
+            addVillageLog: (m: string, t: string = 'system') => villageActionsController.addLog(m, t),
+            getEventLabel: (type: ForcedEncounterType) => this.villageCoordinator.getDeveloperEventLabel(type),
+            getMapDisplayConfig: () => this.worldMap.getMapDisplayConfig(),
+            setMapDisplayConfig: (config) => this.worldMap.setMapDisplayConfig(config),
+        });
+        new GameUiEventBinder(this.canvas, ui.hudElements, ui.worldUI, ui.battleUI, ui.villageUI, ui.developerUI, villageActionsController, devController, {
+            onAttack: () => this.battleCoordinator.handleAttack(),
+            onDirectionalCombatMove: (move: CombatMove) => this.battleCoordinator.handleDirectionalCombatMove(move),
+            onFlee: () => this.battleCoordinator.handleFlee(),
+            onWait: () => this.battleCoordinator.handleWait(), onUsePotionFromBattle: () => this.battleCoordinator.handleUsePotion(true),
+            onUseManaPotionFromBattle: () => this.battleCoordinator.handleUseManaPotion(true),
+            onUsePotionFromHud: () => this.battleCoordinator.handleUsePotion(false),
+            onUseManaPotionFromHud: () => this.battleCoordinator.handleUseManaPotion(false),
+            onUsePotionFromWorld: () => this.battleCoordinator.handleUsePotion(false),
+            onNewCharacter: () => this.startNewCharacter(),
+            onAddStat: (stat) => this.hudCoordinator.handleAddStat(stat),
+            onRemoveStat: (stat) => this.hudCoordinator.handleRemoveStat(stat),
+            onSaveSkillChanges: () => this.hudCoordinator.handleSaveSkillChanges(),
+            onCastSpell: (spellId) => this.battleCoordinator.handleCastSpell(spellId),
+            onUpgradeSpell: (spellId) => this.hudCoordinator.handleUpgradeSpell(spellId),
+            onCanvasClick: (event) => this.battleCoordinator.handleCanvasClick(event, this.canvas),
+            onCanvasMove: (event) => this.handleCanvasMove(event),
+            onCanvasLeave: () => this.handleCanvasLeave(),
+            onWorldMapZoomIn: () => this.handleWorldMapZoom('in'),
+            onWorldMapZoomOut: () => this.handleWorldMapZoom('out'),
+            onWorldMapPan: (direction) => this.handleWorldMapPan(direction),
+            onCenterWorldMapOnPlayer: () => this.centerWorldMapOnPlayer(),
+            onTogglePanel: (panel) => this.hudCoordinator.togglePanel(panel),
+        }).bind(() => this.villageCoordinator.getVillageName());
+        this.devController = devController;
+    }
+
+    private devController: DeveloperEventController | null = null;
+
+    private configureInput(): void {
+        new GameInputSetup(this.input, { onToggleDeveloperModal: () => this.devController!.toggleModal() }).configure();
     }
 
     private update(deltaTime: number): void {
         this.stateMachine.update(deltaTime);
         this.input.update();
+        this.saveGameIfChanged();
     }
 
-    private render(deltaTime: number): void {
+    private render(): void {
         this.renderer.beginFrame();
-
-        if (this.stateMachine.isInState(MODES.WORLD_MAP)) {
-            this.renderWorldMode();
-        } else if (this.stateMachine.isInState(MODES.BATTLE)) {
-            this.renderBattleMode();
+        if (this.stateMachine.isInState(MODES.WORLD_MAP)) this.renderRouter.renderWorldMode();
+        if (this.stateMachine.isInState(MODES.VILLAGE)) this.renderRouter.renderVillageMode();
+        if (this.stateMachine.isInState(MODES.BATTLE)) {
+            this.renderRouter.renderBattleMode(this.battleCoordinator.getCurrentEnemies(), this.battleCoordinator.getSelectedEnemy());
         }
-
         this.renderer.endFrame();
     }
 
-    // ============ WORLD MAP MODE ============
-
-    private enterWorldMode(): void {
-        this.hudElements.modeIndicator.textContent = 'World Map';
-        this.battleUI.sidebar.classList.add('hidden');
-
-        // Reset player position on world map
-        const [px, py] = this.worldMap.getPlayerPixelPosition();
-        this.player.x = px;
-        this.player.y = py;
-
-        // Update HUD to reflect any changes from battle (XP, level, etc.)
-        this.updateHUD();
+    private gameOver(): void {
+        this.loop.stop();
+        alert('Game Over! A new character will be created.');
+        this.startNewCharacter();
     }
 
-    private updateWorldMode(deltaTime: number): void {
-        // Handle movement
-        if (this.input.wasActionPressed('moveUp')) {
-            if (this.worldMap.movePlayer('up')) {
-                this.onPlayerMoved();
-            }
-        }
-        if (this.input.wasActionPressed('moveDown')) {
-            if (this.worldMap.movePlayer('down')) {
-                this.onPlayerMoved();
-            }
-        }
-        if (this.input.wasActionPressed('moveLeft')) {
-            if (this.worldMap.movePlayer('left')) {
-                this.onPlayerMoved();
-            }
-        }
-        if (this.input.wasActionPressed('moveRight')) {
-            if (this.worldMap.movePlayer('right')) {
-                this.onPlayerMoved();
-            }
+    private buildSaveState(): GameSaveState {
+        return {
+            version: 1,
+            worldMap: this.worldMap.getState(),
+            player: this.player.getState(),
+            spellLevels: this.magicSystem.getSpellLevels(),
+        };
+    }
+
+    private saveGameIfChanged(): void {
+        const snapshot = JSON.stringify(this.buildSaveState());
+        if (snapshot === this.lastSavedSnapshot) {
+            return;
         }
 
-        // Update player position
-        const [px, py] = this.worldMap.getPlayerPixelPosition();
-        this.player.x = px;
-        this.player.y = py;
+        this.lastSavedSnapshot = snapshot;
+        window.localStorage.setItem(SAVE_KEY, snapshot);
     }
 
-    private onPlayerMoved(): void {
-        this.encounterSystem.onPlayerMove();
-
-        if (this.encounterSystem.checkEncounter()) {
-            const encounter = this.encounterSystem.generateEncounter();
-
-            if (encounter.type === 'battle') {
-                this.stateMachine.transition(MODES.BATTLE, encounter.enemies);
-            } else if (encounter.type === 'none') {
-                this.addBattleLog('A dragon flies past without noticing you.', 'system');
-            } else if (encounter.type === 'item') {
-                this.handleItemDiscovery(encounter.item);
-            }
+    private loadGame(): void {
+        const raw = window.localStorage.getItem(SAVE_KEY);
+        if (!raw) {
+            return;
         }
-    }
 
-    private handleItemDiscovery(item: Item): void {
-        // Show item discovery splash screen
-        this.itemDiscoverySplash.showItemDiscovery(item, () => {
-            // After splash, equip the item
-            this.player.equipItem(item);
-
-            // Update HUD to show the equipped item
-            this.updateHUD();
-        });
-    }
-
-    private renderWorldMode(): void {
-        this.worldMap.draw(this.renderer.ctx, this.renderer);
-        this.player.draw(this.renderer.ctx);
-    }
-
-    // ============ BATTLE MODE ============
-
-    private enterBattleMode(enemies: Skeleton[]): void {
-        this.hudElements.modeIndicator.textContent = 'Battle!';
-        this.battleUI.sidebar.classList.remove('hidden');
-
-        this.currentEnemies = enemies;
-        this.selectedEnemy = null; // Reset selection
-
-        // Show battle start splash screen, then continue with battle setup
-        this.battleSplash.showBattleStart(enemies.length, () => {
-            this.battleMap.setup(this.player, this.currentEnemies);
-            this.turnManager.initializeTurns([this.player, ...this.currentEnemies]);
-            this.turnTransitioning = false;
-
-            this.clearBattleLog();
-            this.addBattleLog(`Encountered ${this.describeEncounter(enemies)}!`, 'system');
-     
-            // Update HUD to show current player stats
-            this.updateHUD();
-            this.processTurn();
-        });
-      
-    }
-
-    private updateBattleMode(deltaTime: number): void {
-        // Allow player movement during their turn (only when not transitioning)
-        if (this.turnManager.isPlayerTurn() &&
-            this.turnManager.waitingForPlayer &&
-            !this.turnTransitioning) {
-
-            let moved = false;
-
-            if (this.input.wasActionPressed('moveUp')) {
-                moved = this.handleMovementOrSelection('up');
-            } else if (this.input.wasActionPressed('moveDown')) {
-                moved = this.handleMovementOrSelection('down');
-            } else if (this.input.wasActionPressed('moveLeft')) {
-                moved = this.handleMovementOrSelection('left');
-            } else if (this.input.wasActionPressed('moveRight')) {
-                moved = this.handleMovementOrSelection('right');
+        try {
+            const parsed = JSON.parse(raw) as Partial<GameSaveState>;
+            if (parsed.version !== 1 || !parsed.player || !parsed.worldMap || !parsed.spellLevels) {
+                return;
             }
 
-            if (moved) {
-                this.addBattleLog('You moved.', 'player');
-                // End player turn after moving
-                this.turnTransitioning = true;
-                this.turnManager.waitingForPlayer = false;
-                this.turnManager.nextTurn();
-                setTimeout(() => {
-                    this.processTurn();
-                }, timingConfig.battle.playerActionDelay);
-            }
+            this.worldMap.restoreState(parsed.worldMap);
+            this.player.restoreState(parsed.player);
+            this.magicSystem.restoreSpellLevels(parsed.spellLevels);
+
+            const [x, y] = this.worldMap.getPlayerPixelPosition();
+            this.player.x = x;
+            this.player.y = y;
+            this.refreshHud();
+        } catch {
+            console.warn('Failed to parse save data, starting a new character.');
         }
     }
 
-    private handleMovementOrSelection(direction: Direction): boolean {
-        // Check if there's an enemy adjacent in the pressed direction
-        const enemyInDirection = this.getEnemyInDirection(direction);
-
-        if (enemyInDirection) {
-            // Select the enemy instead of moving
-            this.selectedEnemy = enemyInDirection;
-            this.updateBattleUI();
-            this.addBattleLog(`Selected ${enemyInDirection.name}`, 'system');
-            return false; // Didn't move, just selected
-        }
-
-        // No enemy in that direction, try to move
-        return this.battleMap.moveEntity(this.player, direction);
+    private refreshHud(): void {
+        this.hudCoordinator.updateHUD();
+        this.hudCoordinator.updateSelectedWorldCell(this.worldMap.getSelectedCellInfo());
     }
 
-    private getAdjacentEnemies(): Skeleton[] {
-        const enemies = this.turnManager.getActiveEnemies() as Skeleton[];
-        return enemies.filter(enemy => this.battleMap.isInMeleeRange(this.player, enemy));
-    }
-
-    private getEnemyInDirection(direction: Direction): Skeleton | null {
-        const playerCol = this.player.gridCol ?? 0;
-        const playerRow = this.player.gridRow ?? 0;
-
-        let targetCol = playerCol;
-        let targetRow = playerRow;
-
-        switch (direction) {
-            case 'up':
-                targetRow = playerRow - 1;
-                break;
-            case 'down':
-                targetRow = playerRow + 1;
-                break;
-            case 'left':
-                targetCol = playerCol - 1;
-                break;
-            case 'right':
-                targetCol = playerCol + 1;
-                break;
-        }
-
-        const enemies = this.turnManager.getActiveEnemies() as Skeleton[];
-        return enemies.find(enemy =>
-            enemy.gridCol === targetCol && enemy.gridRow === targetRow
-        ) || null;
-    }
-
-    private handleCanvasClick(event: MouseEvent): void {
-        // Only handle clicks during battle mode and player's turn
-        if (!this.stateMachine.isInState(MODES.BATTLE) ||
-            !this.turnManager.isPlayerTurn() ||
-            !this.turnManager.waitingForPlayer ||
-            this.turnTransitioning) {
+    private handleCanvasMove(event: MouseEvent): void {
+        if (!this.stateMachine.isInState(MODES.WORLD_MAP)) {
             return;
         }
 
         const rect = this.canvas.getBoundingClientRect();
-        const clickX = event.clientX - rect.left;
-        const clickY = event.clientY - rect.top;
-
-        // Find which enemy was clicked (if any)
-        const enemies = this.turnManager.getActiveEnemies() as Skeleton[];
-        for (const enemy of enemies) {
-            const enemyX = enemy.x;
-            const enemyY = enemy.y;
-            const radius = 20; // Approximate click radius
-
-            const distance = Math.sqrt(
-                Math.pow(clickX - enemyX, 2) + Math.pow(clickY - enemyY, 2)
-            );
-
-            if (distance <= radius) {
-                this.selectedEnemy = enemy;
-                this.updateBattleUI();
-                this.addBattleLog(`Selected ${enemy.name}`, 'system');
-                return;
-            }
-        }
+        const scaleX = this.canvas.width / rect.width;
+        const scaleY = this.canvas.height / rect.height;
+        const worldX = (event.clientX - rect.left) * scaleX;
+        const worldY = (event.clientY - rect.top) * scaleY;
+        this.worldMap.updateSelectedCellFromPixel(worldX, worldY);
+        this.hudCoordinator.updateSelectedWorldCell(this.worldMap.getSelectedCellInfo());
     }
 
-    private processTurn(): void {
-        const current = this.turnManager.getCurrentEntity();
-
-        if (!current) {
-            this.endBattle('victory');
+    private handleCanvasLeave(): void {
+        if (!this.stateMachine.isInState(MODES.WORLD_MAP)) {
             return;
         }
 
-        // Check if battle should end
-        if (!this.turnManager.hasActiveCombatants()) {
-            if (this.player.isDead()) {
-                this.endBattle('defeat');
-            } else {
-                this.endBattle('victory');
-            }
+        this.worldMap.clearSelectedCell();
+        this.hudCoordinator.updateSelectedWorldCell(null);
+    }
+
+    private handleWorldMapZoom(direction: 'in' | 'out'): void {
+        if (!this.stateMachine.isInState(MODES.WORLD_MAP)) {
             return;
         }
 
-        if (this.turnManager.isPlayerTurn()) {
-            // Small delay before accepting player input to clear any lingering key presses
-            setTimeout(() => {
-                this.turnTransitioning = false;
-                this.turnManager.waitingForPlayer = true;
-                this.updateBattleUI();
-                this.enableBattleButtons(true);
-            }, timingConfig.battle.turnStartInputDelay);
-        } else {
-            this.enableBattleButtons(false);
-            this.executeEnemyTurn(current as Skeleton);
-        }
-    }
-
-    private executeEnemyTurn(enemy: Skeleton): void {
-        this.turnTransitioning = true;
-
-        setTimeout(() => {
-            // Enemy AI: move toward player, attack if in range
-            const inRange = this.battleMap.isInMeleeRange(enemy, this.player);
-
-            if (inRange) {
-                this.addBattleLog(`${enemy.name} attacks!`, 'enemy');
-                const damageBeforeArmor = enemy.getAttackDamage();
-                const damageAfterArmor = damageBeforeArmor <= 0
-                    ? 0
-                    : Math.max(
-                        balanceConfig.combat.minDamageAfterArmor,
-                        damageBeforeArmor - this.player.armor
-                    );
-                this.player.takeDamage(damageBeforeArmor);
-
-                if (damageBeforeArmor > enemy.damage) {
-                    this.addBattleLog(`${enemy.name} lands a devastating strike!`, 'enemy');
-                }
-
-                if (this.player.armor > 0 && damageAfterArmor < damageBeforeArmor) {
-                    this.addBattleLog(`Player takes ${damageAfterArmor} damage (${damageBeforeArmor - damageAfterArmor} blocked by armor)!`, 'damage');
-                } else {
-                    this.addBattleLog(`Player takes ${damageAfterArmor} damage!`, 'damage');
-                }
-
-                this.updateHUD();
-
-                if (this.player.isDead()) {
-                    this.addBattleLog('You have been defeated!', 'system');
-                    setTimeout(() => this.endBattle('defeat'), timingConfig.battle.defeatEndDelay);
-                    return;
-                }
-            } else {
-                this.battleMap.moveEntityToward(enemy, this.player);
-                this.addBattleLog(`${enemy.name} moves closer...`, 'enemy');
-            }
-
-            this.turnManager.nextTurn();
-            setTimeout(() => this.processTurn(), timingConfig.battle.enemyTurnDelay);
-        }, timingConfig.battle.enemyActionStartDelay);
-    }
-
-    private handleAttack(): void {
-        if (!this.turnManager.isPlayerTurn() ||
-            !this.turnManager.waitingForPlayer ||
-            this.turnTransitioning) {
+        const changed = direction === 'in' ? this.worldMap.zoomIn() : this.worldMap.zoomOut();
+        if (!changed) {
             return;
         }
 
-        this.enableBattleButtons(false);
-        this.turnTransitioning = true;
-        this.turnManager.waitingForPlayer = false;
+        const [x, y] = this.worldMap.getPlayerPixelPosition();
+        this.player.x = x;
+        this.player.y = y;
+    }
 
-        const enemies = this.turnManager.getActiveEnemies();
-        if (enemies.length === 0) {
-            this.endBattle('victory');
+    private handleWorldMapPan(direction: 'up' | 'down' | 'left' | 'right'): void {
+        if (!this.stateMachine.isInState(MODES.WORLD_MAP)) {
             return;
         }
 
-        // Use selected enemy if valid and in range, otherwise find first enemy in range
-        let target: Skeleton | null = null;
-        const attackRange = this.player.getAttackRange();
-
-        if (this.selectedEnemy && !this.selectedEnemy.isDead() &&
-            this.battleMap.isInAttackRange(this.player, this.selectedEnemy, attackRange)) {
-            target = this.selectedEnemy;
-        } else {
-            // Find first enemy in attack range
-            for (const enemy of enemies) {
-                if (this.battleMap.isInAttackRange(this.player, enemy, attackRange)) {
-                    target = enemy as Skeleton;
-                    break;
-                }
-            }
-        }
-
-        if (target) {
-            if (target.shouldAvoidHit()) {
-                this.addBattleLog('You attack!', 'player');
-                this.addBattleLog(`${target.name} dodges the hit!`, 'enemy');
-                this.turnManager.nextTurn();
-                setTimeout(() => this.processTurn(), timingConfig.battle.playerActionDelay);
-                return;
-            }
-
-            this.addBattleLog('You attack!', 'player');
-            target.takeDamage(this.player.damage);
-            this.addBattleLog(`${target.name} takes ${this.player.damage} damage!`, 'damage');
-
-            if (target.isDead()) {
-                this.addBattleLog(`${target.name} defeated!`, 'system');
-
-                // Award XP - target is Skeleton type, so xpValue should exist
-                const skeleton = target as Skeleton;
-                console.log('Skeleton defeated:', skeleton.name, 'XP Value:', skeleton.xpValue);
-
-                if (skeleton.xpValue && skeleton.xpValue > 0) {
-                    const xpBefore = this.player.xp;
-                    const levelBefore = this.player.level;
-
-                    const leveledUp = this.player.addXp(skeleton.xpValue);
-
-                    console.log(`XP: ${xpBefore} -> ${this.player.xp}, Level: ${levelBefore} -> ${this.player.level}`);
-                    this.addBattleLog(`Gained ${skeleton.xpValue} XP!`, 'system');
-
-                    if (leveledUp) {
-                        this.addBattleLog(`LEVEL UP! Now level ${this.player.level}!`, 'system');
-                        this.addBattleLog(`Gained ${balanceConfig.leveling.skillPointsPerLevel} skill points! HP fully restored!`, 'system');
-                    }
-                } else {
-                    console.warn('No XP value found on skeleton:', skeleton);
-                }
-
-                this.updateHUD();
-
-                // Clear selection if selected enemy died
-                if (this.selectedEnemy === target) {
-                    this.selectedEnemy = null;
-                }
-            }
-
-            this.updateHUD(); // Always update HUD after damage
-            this.turnManager.nextTurn();
-            setTimeout(() => this.processTurn(), timingConfig.battle.playerActionDelay);
-        } else {
-            this.addBattleLog('No enemy in range! Move closer first.', 'system');
-            this.turnTransitioning = false;
-            this.turnManager.waitingForPlayer = true;
-            this.enableBattleButtons(true);
-        }
+        this.worldMap.pan(direction);
+        const [x, y] = this.worldMap.getPlayerPixelPosition();
+        this.player.x = x;
+        this.player.y = y;
     }
 
-    private handleFlee(): void {
-        if (!this.turnManager.isPlayerTurn() ||
-            !this.turnManager.waitingForPlayer ||
-            this.turnTransitioning) {
+    private centerWorldMapOnPlayer(): void {
+        if (!this.stateMachine.isInState(MODES.WORLD_MAP)) {
             return;
         }
 
-        this.enableBattleButtons(false);
-        this.turnTransitioning = true;
-        this.turnManager.waitingForPlayer = false;
-
-        const success = Math.random() < balanceConfig.combat.fleeChance;
-        if (success) {
-            this.addBattleLog('You fled from battle!', 'system');
-            setTimeout(() => this.endBattle('fled'), timingConfig.battle.fleeSuccessDelay);
-        } else {
-            this.addBattleLog('Failed to flee!', 'system');
-            this.turnManager.nextTurn();
-            setTimeout(() => this.processTurn(), timingConfig.battle.fleeFailedDelay);
-        }
+        this.worldMap.centerOnPlayer();
+        const [x, y] = this.worldMap.getPlayerPixelPosition();
+        this.player.x = x;
+        this.player.y = y;
     }
 
-    private handleWait(): void {
-        if (!this.turnManager.isPlayerTurn() ||
-            !this.turnManager.waitingForPlayer ||
-            this.turnTransitioning) {
-            return;
-        }
-
-        this.enableBattleButtons(false);
-        this.turnTransitioning = true;
-        this.turnManager.waitingForPlayer = false;
-
-        this.addBattleLog('You waited.', 'player');
-        this.turnManager.nextTurn();
-        setTimeout(() => this.processTurn(), 600);
-    }
-
-    private endBattle(result: 'victory' | 'defeat' | 'fled'): void {
-        if (result === 'victory') {
-            this.addBattleLog('Victory!', 'system');
-            // Show victory splash screen
-            this.battleSplash.showBattleEnd('victory', () => {
-                this.stateMachine.transition(MODES.WORLD_MAP);
-            });
-        } else if (result === 'defeat') {
-            this.addBattleLog('Game Over!', 'system');
-            // Show defeat splash screen
-            this.battleSplash.showBattleEnd('defeat', () => {
-                this.gameOver();
-            });
-        } else if (result === 'fled') {
-            this.stateMachine.transition(MODES.WORLD_MAP);
-        }
-    }
-
-    private exitBattleMode(): void {
-        this.currentEnemies = [];
-    }
-
-    private renderBattleMode(): void {
-        const currentEntity = this.turnManager.getCurrentEntity();
-        this.battleMap.draw(this.renderer.ctx, this.renderer, currentEntity, this.selectedEnemy);
-
-        // Draw all entities
-        const entities = [this.player, ...this.currentEnemies.filter(e => e.active)];
-        this.renderer.drawEntities(entities);
-    }
-
-    // ============ BATTLE UI ============
-
-    private updateBattleUI(): void {
-        const enemies = this.turnManager.getActiveEnemies();
-        let displayEnemy: Skeleton | null = null;
-
-        // If we have a selected enemy that's still alive, show it
-        if (this.selectedEnemy && !this.selectedEnemy.isDead()) {
-            displayEnemy = this.selectedEnemy;
-        } else {
-            // Auto-select first adjacent enemy, or just first enemy if none adjacent
-            const adjacentEnemies = this.getAdjacentEnemies();
-            if (adjacentEnemies.length > 0) {
-                displayEnemy = adjacentEnemies[0];
-                this.selectedEnemy = displayEnemy; // Auto-select
-            } else if (enemies.length > 0) {
-                displayEnemy = enemies[0] as Skeleton;
-            }
-        }
-
-        if (displayEnemy) {
-            const isSelected = displayEnemy === this.selectedEnemy;
-            this.battleUI.enemyName.textContent = displayEnemy.name + (isSelected ? ' [SELECTED]' : '');
-            this.battleUI.enemyHp.textContent = String(displayEnemy.hp);
-            this.battleUI.enemyMaxHp.textContent = String(displayEnemy.maxHp);
-        } else {
-            this.battleUI.enemyName.textContent = '-';
-            this.battleUI.enemyHp.textContent = '-';
-            this.battleUI.enemyMaxHp.textContent = '-';
-        }
-    }
-
-    private enableBattleButtons(enabled: boolean): void {
-        this.battleUI.attackBtn.disabled = !enabled;
-        this.battleUI.fleeBtn.disabled = !enabled;
-        this.battleUI.waitBtn.disabled = !enabled;
-    }
-
-    private addBattleLog(message: string, type: string = 'system'): void {
-        const div = document.createElement('div');
-        div.textContent = message;
-        div.classList.add(type + '-action');
-        this.battleUI.log.appendChild(div);
-        this.battleUI.log.scrollTop = this.battleUI.log.scrollHeight;
-    }
-
-    private clearBattleLog(): void {
-        this.battleUI.log.innerHTML = '';
-    }
-
-    private describeEncounter(enemies: Skeleton[]): string {
-        if (enemies.length === 0) {
-            return 'nothing';
-        }
-
-        const enemyName = enemies[0].name;
-        if (enemies.length === 1) {
-            return enemyName;
-        }
-
-        return `${enemies.length} ${enemyName}s`;
-    }
-
-    // ============ HUD ============
-
-    private updateHUD(): void {
-        this.hudElements.playerLevel.textContent = String(this.player.level);
-        this.hudElements.playerXp.textContent = String(this.player.xp);
-        this.hudElements.playerXpNext.textContent = String(this.player.xpToNextLevel);
-        this.hudElements.playerHp.textContent = String(this.player.hp);
-        this.hudElements.playerMaxHp.textContent = String(this.player.maxHp);
-        this.hudElements.playerDmg.textContent = String(this.player.damage);
-        this.hudElements.playerArmor.textContent = String(this.player.armor);
-        this.hudElements.skillPoints.textContent = String(this.player.skillPoints);
-        this.hudElements.statVitality.textContent = String(this.player.vitality);
-        this.hudElements.statToughness.textContent = String(this.player.toughness);
-        this.hudElements.statStrength.textContent = String(this.player.strength);
-
-        // Update weapon display
-        if (this.player.equippedWeapon) {
-            this.hudElements.playerWeapon.textContent = this.player.equippedWeapon.name;
-        } else {
-            this.hudElements.playerWeapon.textContent = 'None';
-        }
-
-        // Update attack range text in battle UI
-        const attackRange = this.player.getAttackRange();
-        if (attackRange === 1) {
-            this.battleUI.attackRangeText.textContent = 'Attack when adjacent (1 tile)';
-        } else {
-            this.battleUI.attackRangeText.textContent = `Attack from ${attackRange} tiles away`;
-        }
-
-        // Update stat button states
-        this.updateStatButtons();
-    }
-
-    private updateStatButtons(): void {
-        const hasSkillPoints = this.player.skillPoints > 0;
-        this.hudElements.addVitalityBtn.disabled = !hasSkillPoints;
-        this.hudElements.addToughnessBtn.disabled = !hasSkillPoints;
-        this.hudElements.addStrengthBtn.disabled = !hasSkillPoints;
-    }
-
-    private handleAddStat(stat: 'vitality' | 'toughness' | 'strength'): void {
-        if (this.player.addStat(stat)) {
-            this.updateHUD();
-            this.addBattleLog(`+1 ${stat.charAt(0).toUpperCase() + stat.slice(1)}!`, 'system');
-        }
-    }
-
-    // ============ GAME OVER ============
-
-    private gameOver(): void {
-        this.loop.stop();
-        alert('Game Over! Refresh to restart.');
+    private startNewCharacter(): void {
+        window.localStorage.removeItem(SAVE_KEY);
+        window.location.reload();
     }
 }

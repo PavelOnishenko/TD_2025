@@ -4,5 +4,5 @@ export const featureFlags = {
         storageKey: 'td_simple_save_v1',
     },
 };
-
 export default featureFlags;
+//# sourceMappingURL=featureFlags.js.map

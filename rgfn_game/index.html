@@ -14,63 +14,376 @@
             <div class="hud-section">
                 <h1>RGFN</h1>
                 <div id="mode-indicator">World Map</div>
-            </div>
-            <div class="hud-section stats">
-                <div class="stat">Level: <span id="player-level">1</span></div>
-                <div class="stat">XP: <span id="player-xp">0</span>/<span id="player-xp-next">5</span></div>
-                <div class="stat">HP: <span id="player-hp">5</span>/<span id="player-max-hp">5</span></div>
-                <div class="stat">DMG: <span id="player-dmg">2</span></div>
-                <div class="stat">Armor: <span id="player-armor">0</span></div>
-                <div class="stat">Weapon: <span id="player-weapon">None</span></div>
-            </div>
-            <div class="hud-section stats">
-                <div class="stat">Skill Points: <span id="skill-points">0</span></div>
-                <div class="stat-row">
-                    <span>Vitality: <span id="stat-vitality">0</span></span>
-                    <button id="add-vitality-btn" class="stat-btn" title="Each point: +1 Max HP">+</button>
+                <div id="hud-panel-toggles" class="hud-panel-toggles">
+                    <button id="toggle-stats-panel-btn" class="action-btn" type="button">Stats</button>
+                    <button id="toggle-skills-panel-btn" class="action-btn" type="button">Skills</button>
+                    <button id="toggle-inventory-panel-btn" class="action-btn" type="button">Inventory</button>
+                    <button id="toggle-magic-panel-btn" class="action-btn" type="button">Magic</button>
+                    <button id="toggle-quests-panel-btn" class="action-btn" type="button">Quests</button>
+                    <button id="toggle-lore-panel-btn" class="action-btn" type="button">Lore</button>
+                    <button id="toggle-selected-panel-btn" class="action-btn" type="button">Selected</button>
                 </div>
-                <div class="stat-row">
-                    <span>Toughness: <span id="stat-toughness">0</span></span>
-                    <button id="add-toughness-btn" class="stat-btn" title="3 points: +1 Armor">+</button>
-                </div>
-                <div class="stat-row">
-                    <span>Strength: <span id="stat-strength">0</span></span>
-                    <button id="add-strength-btn" class="stat-btn" title="2 points: +1 Damage">+</button>
-                </div>
+                <button id="use-potion-btn" class="action-btn">Use HP Potion</button>
+                <button id="use-mana-potion-btn" class="action-btn">Use Mana Potion</button>
+                <button id="new-character-btn" class="action-btn">New Character</button>
             </div>
         </div>
-
         <div id="game-area">
-            <canvas id="game-canvas" width="800" height="600"></canvas>
+            <div class="game-area-row" id="r1">
+                <div class="game-area-cell" id="r1c1">
+                    <div id="stats-panel" class="hud-section stats hidden">
+                        <div class="stat">Name: <span id="player-name">-</span></div>
+                        <div class="stat">Level: <span id="player-level">1</span></div>
+                        <div class="stat">XP: <span id="player-xp">0</span>/<span id="player-xp-next">5</span></div>
+                        <div class="stat">HP: <span id="player-hp">5</span>/<span id="player-max-hp">5</span></div>
+                        <div class="stat">Mana: <span id="player-mana">0</span>/<span id="player-max-mana">0</span></div>
+                        <div class="stat">Magic Points: <span id="magic-points">0</span></div>
+                        <div class="stat">
+                            DMG: <span id="player-dmg">2</span>
+                            <div id="player-dmg-formula" class="stat-detail">Base 2 + STR + AGI = 2 (Melee)</div>
+                        </div>
+                        <div class="stat">Armor: <span id="player-armor">0</span></div>
+                        <div class="stat">
+                            Dodge: <span id="player-dodge">0%</span>
+                            <div id="player-dodge-formula" class="stat-detail">1 - 1/(1 + AGI×0.045), cap 45% = 0%</div>
+                        </div>
+                        <div class="stat">Weapon: <span id="player-weapon">None</span></div>
+                    </div>
+                    <div id="skills-panel" class="hud-section stats hidden">
+                        <div class="stat">Skill Points: <span id="skill-points">0</span></div>
+                        <div class="stat-row">
+                            <span>Vitality: <span id="stat-vitality">0</span></span>
+                            <div class="stat-controls">
+                                <button id="sub-vitality-btn" class="stat-btn" title="Remove 1 pending point">-</button>
+                                <button id="add-vitality-btn" class="stat-btn" title="Each point: +1 Max HP">+</button>
+                            </div>
+                        </div>
+                        <div class="stat-row">
+                            <span>Toughness: <span id="stat-toughness">0</span></span>
+                            <div class="stat-controls">
+                                <button id="sub-toughness-btn" class="stat-btn" title="Remove 1 pending point">-</button>
+                                <button id="add-toughness-btn" class="stat-btn" title="3 points: +1 Armor">+</button>
+                            </div>
+                        </div>
+                        <div class="stat-row">
+                            <span>Strength: <span id="stat-strength">0</span></span>
+                            <div class="stat-controls">
+                                <button id="sub-strength-btn" class="stat-btn" title="Remove 1 pending point">-</button>
+                                <button id="add-strength-btn" class="stat-btn" title="+Melee dmg (major), +Bow dmg (minor)">+</button>
+                            </div>
+                        </div>
+                        <div class="stat-row">
+                            <span>Agility: <span id="stat-agility">0</span></span>
+                            <div class="stat-controls">
+                                <button id="sub-agility-btn" class="stat-btn" title="Remove 1 pending point">-</button>
+                                <button id="add-agility-btn" class="stat-btn" title="+Bow dmg (major), +Melee dmg (minor), +Evade chance">+</button>
+                            </div>
+                        </div>
+                        <div class="stat-row">
+                            <span>Connection: <span id="stat-connection">0</span></span>
+                            <div class="stat-controls">
+                                <button id="sub-connection-btn" class="stat-btn" title="Remove 1 pending point">-</button>
+                                <button id="add-connection-btn" class="stat-btn" title="Each point: +1 mana">+</button>
+                            </div>
+                        </div>
+                        <div class="stat-row">
+                            <span>Intelligence: <span id="stat-intelligence">0</span></span>
+                            <div class="stat-controls">
+                                <button id="sub-intelligence-btn" class="stat-btn" title="Remove 1 pending point">-</button>
+                                <button id="add-intelligence-btn" class="stat-btn" title="3 points: +1 magic point and +1 mana">+</button>
+                            </div>
+                        </div>
+                        <button id="save-skills-btn" class="action-btn" type="button">Save</button>
+                    </div>
+                    <div id="inventory-panel" class="hud-section stats hidden">
+                        <div class="stat">Gold: <span id="player-gold">20</span></div>
+                        <div class="stat">Inventory (<span id="inventory-count">0</span>/<span id="inventory-capacity">4</span>)</div>
+                        <div id="inventory-capacity-hint" class="stat-detail">4 base slots, +1 slot every 4 STR</div>
+                        <div id="inventory-grid" class="inventory-grid"></div>
+                        <div class="equipment-panel">
+                            <div class="equipment-title">Equipment</div>
+                            <div class="equipment-grid">
+                                <button id="weapon-slot-main" class="equipment-slot" title="Main hand">Main Hand: Empty</button>
+                                <button id="weapon-slot-off" class="equipment-slot" title="Off hand">Off Hand: Empty</button>
+                                <button id="armor-slot" class="equipment-slot" title="Armor">Armor: Empty</button>
+                            </div>
+                            <div class="equipment-hint">Click inventory gear to equip. Click equipped slots to unequip. Right-click any inventory item to drop it permanently.</div>
+                        </div>
+                    </div>
+                    <div id="magic-panel" class="hud-section stats hidden">
+                        <div class="stat">Magic Points: <span id="magic-panel-points">0</span></div>
+                        <div class="stat">Spell Levels</div>
+                        <div class="spell-upgrade-row">
+                            <div class="stat-row"><span>Fire Ball Lv <span id="spell-level-fireball">0</span></span><button id="upgrade-fireball-btn" class="stat-btn" title="Spend 1 magic point">+</button></div>
+                            <div id="spell-details-fireball" class="spell-details"></div>
+                        </div>
+                        <div class="spell-upgrade-row">
+                            <div class="stat-row"><span>Curse Lv <span id="spell-level-curse">0</span></span><button id="upgrade-curse-btn" class="stat-btn" title="Spend 1 magic point">+</button></div>
+                            <div id="spell-details-curse" class="spell-details"></div>
+                        </div>
+                        <div class="spell-upgrade-row">
+                            <div class="stat-row"><span>Slow Lv <span id="spell-level-slow">0</span></span><button id="upgrade-slow-btn" class="stat-btn" title="Spend 1 magic point">+</button></div>
+                            <div id="spell-details-slow" class="spell-details"></div>
+                        </div>
+                        <div class="spell-upgrade-row">
+                            <div class="stat-row"><span>Rage Lv <span id="spell-level-rage">0</span></span><button id="upgrade-rage-btn" class="stat-btn" title="Spend 1 magic point">+</button></div>
+                            <div id="spell-details-rage" class="spell-details"></div>
+                        </div>
+                        <div class="spell-upgrade-row">
+                            <div class="stat-row"><span>Arcane Lance Lv <span id="spell-level-arcane-lance">0</span></span><button id="upgrade-arcane-lance-btn" class="stat-btn" title="Spend 1 magic point">+</button></div>
+                            <div id="spell-details-arcane-lance" class="spell-details"></div>
+                        </div>
+                    </div>
+                    <div id="quests-panel" class="hud-section stats hidden">
+                        <div id="quests-title" class="stat">Main Quest</div>
+                        <div id="quests-body" class="quests-body"></div>
+                    </div>
+                    <div id="lore-panel" class="hud-section stats hidden">
+                        <div class="stat">Lore Book</div>
+                        <div id="lore-body" class="lore-body"></div>
+                    </div>
+                    <div id="selected-panel" class="hud-section stats hidden">
+                        <div class="stat">Selected Tile</div>
+                        <div id="selected-cell-empty" class="stat-detail">Move the mouse over the world map to inspect a cell.</div>
+                        <div id="selected-cell-details" class="hidden">
+                            <div class="stat">Coords: <span id="selected-cell-coords">-</span></div>
+                            <div class="stat">Terrain: <span id="selected-cell-terrain">-</span></div>
+                            <div class="stat">Visibility: <span id="selected-cell-visibility">-</span></div>
+                            <div class="stat">Travel: <span id="selected-cell-traversable">-</span></div>
+                            <div class="stat">Village: <span id="selected-cell-village">-</span></div>
+                            <div class="stat">Village Name: <span id="selected-cell-village-name">-</span></div>
+                            <div class="stat">Village Status: <span id="selected-cell-village-status">-</span></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="game-area-cell" id="r1c2">
+                    <div id="world-map-shell">
+                        <canvas id="game-canvas" width="800" height="600"></canvas>
+                        <div id="world-map-controls" aria-label="World map controls">
+                            <div class="world-map-control-group">
+                                <button id="world-map-zoom-in-btn" class="action-btn world-map-control-btn" type="button">Zoom +</button>
+                                <button id="world-map-zoom-out-btn" class="action-btn world-map-control-btn" type="button">Zoom -</button>
+                            </div>
+                            <div class="world-map-control-pad">
+                                <button id="world-map-pan-up-btn" class="action-btn world-map-control-btn" type="button">↑</button>
+                                <div class="world-map-control-pad-row">
+                                    <button id="world-map-pan-left-btn" class="action-btn world-map-control-btn" type="button">←</button>
+                                    <button id="world-map-pan-right-btn" class="action-btn world-map-control-btn" type="button">→</button>
+                                </div>
+                                <button id="world-map-pan-down-btn" class="action-btn world-map-control-btn" type="button">↓</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="game-area-cell" id="r1c3">
+                    <div id="world-sidebar">
+                        <h2>World Map</h2>
+                        <div id="world-actions">
+                            <p class="world-actions-copy">Prepare for the journey and recenter the map whenever you lose track of your hero.</p>
+                            <div id="world-action-buttons">
+                                <button id="world-use-potion-btn" class="action-btn">Use HP Potion</button>
+                                <button id="world-center-on-character-btn" class="action-btn">Center on Character</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="battle-sidebar" class="hidden">
+                        <h2>Combat</h2>
+                        <div id="enemy-info">
+                            <div class="enemy-stat">Enemy: <span id="enemy-name">-</span></div>
+                            <div class="enemy-stat">HP: <span id="enemy-hp">-</span>/<span id="enemy-max-hp">-</span></div>
+                        </div>
+                        
+                        <p id="attack-range-text">Attack when adjacent (1 tile)</p>
+                        <div id="battle-actions">
+                            <button id="attack-btn" class="action-btn">Attack</button>
+                            <button id="attack-left-btn" class="action-btn hidden">Attack Left</button>
+                            <button id="attack-center-btn" class="action-btn hidden">Attack Center</button>
+                            <button id="attack-right-btn" class="action-btn hidden">Attack Right</button>
+                            <button id="block-btn" class="action-btn hidden">Block</button>
+                            <button id="dodge-left-btn" class="action-btn hidden">Dodge Left</button>
+                            <button id="dodge-right-btn" class="action-btn hidden">Dodge Right</button>
+                            <button id="flee-btn" class="action-btn">Flee</button>
+                            <button id="wait-btn" class="action-btn">Wait</button>
+                            <button id="battle-use-potion-btn" class="action-btn">Drink HP Potion</button>
+                            <button id="battle-use-mana-potion-btn" class="action-btn">Drink Mana Potion</button>
+                            <button id="spell-fireball-btn" class="action-btn">Fire Ball</button>
+                            <button id="spell-curse-btn" class="action-btn">Curse</button>
+                            <button id="spell-slow-btn" class="action-btn">Slow</button>
+                            <button id="spell-rage-btn" class="action-btn">Rage</button>
+                            <button id="spell-arcane-lance-btn" class="action-btn">Arcane Lance</button>
+                        </div>
+                    </div>
+                    <div id="village-sidebar" class="hidden">
+                        <h2>Village</h2>
+                        <div id="village-prompt">
+                            <p>You found a village. Enter?</p>
+                            <div id="village-entry-actions">
+                                <button id="village-enter-btn" class="action-btn">Enter</button>
+                                <button id="village-skip-btn" class="action-btn">Continue</button>
+                            </div>
+                        </div>
+                        <div id="village-actions" class="hidden">
+                            <p><strong>Village Actions:</strong></p>
+                            <div id="village-action-buttons">
+                                <button id="village-wait-btn" class="action-btn">Wait</button>
+                                <div class="village-section">
+                                    <p class="village-section-title">Village stock (random quality)</p>
+                                    <div id="village-stock-buttons">
+                                        <button id="village-buy-offer-1-btn" class="action-btn">Offer 1</button>
+                                        <button id="village-buy-offer-2-btn" class="action-btn">Offer 2</button>
+                                        <button id="village-buy-offer-3-btn" class="action-btn">Offer 3</button>
+                                        <button id="village-buy-offer-4-btn" class="action-btn">Offer 4</button>
+                                    </div>
+                                </div>
+                                <div class="village-section">
+                                    <p class="village-section-title">Sell inventory item</p>
+                                    <select id="village-sell-select" class="village-sell-select"></select>
+                                    <button id="village-sell-selected-btn" class="action-btn">Sell selected</button>
+                                </div>
+                                <button id="village-leave-btn" class="action-btn">Leave</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="game-area-cell" id="r1c4">
+                    <div id="game-log-container">
+                            <h3>Log</h3>
+                            <div id="game-log"></div>
+                        </div>
+                </div>
+            </div>
+            <div class="game-area-row" id="r2">
+                <div class="game-area-cell" id="r2c1">
+                </div>
+                <div class="game-area-cell" id="r2c2">
+                </div>
+                <div class="game-area-cell" id="r2c3">
+                </div>
+                <div class="game-area-cell" id="r2c4">
+                </div>
+            </div>
+            <div class="game-area-row" id="r3">
+                <div class="game-area-cell" id="r3c1">
+                    
+                </div>
+                <div class="game-area-cell" id="r3c2">
+                    
+                </div>
+                <div class="game-area-cell" id="r3c3">
+                </div>
+                <div class="game-area-cell" id="r3c4">
+                </div>
+            </div>
 
-            <div id="battle-sidebar" class="hidden">
-                <h2>Combat</h2>
-                <div id="enemy-info">
-                    <div class="enemy-stat">Enemy: <span id="enemy-name">-</span></div>
-                    <div class="enemy-stat">HP: <span id="enemy-hp">-</span>/<span id="enemy-max-hp">-</span></div>
+            
+
+            
+        </div>
+
+
+        <div id="dev-events-modal" class="dev-events-modal hidden" role="dialog" aria-modal="true" aria-labelledby="dev-events-title">
+            <div class="dev-events-panel">
+                <div class="dev-events-header">
+                    <h2 id="dev-events-title">Developer Event Queue</h2>
+                    <button id="dev-events-close-btn" class="action-btn" type="button">Close</button>
                 </div>
-                <div id="battle-instructions">
-                    <p><strong>Your Turn:</strong></p>
-                    <p>Move with Arrow Keys/WASD</p>
-                    <p id="attack-range-text">Attack when adjacent (1 tile)</p>
+                <p class="dev-events-hint">Press <strong>~</strong> to toggle this panel. Queued events are consumed on upcoming encounters.</p>
+                <div class="dev-events-controls">
+                    <label for="dev-event-type">Next event:</label>
+                    <select id="dev-event-type">
+                        <option value="skeleton">Skeleton battle</option>
+                        <option value="zombie">Zombie battle</option>
+                        <option value="ninja">Ninja battle</option>
+                        <option value="darkKnight">Dark Knight battle</option>
+                        <option value="dragon">Dragon battle</option>
+                        <option value="item">Item discovery</option>
+                        <option value="none">No encounter</option>
+                        <option value="village">Village</option>
+                        <option value="traveler">Wanderer encounter</option>
+                    </select>
+                    <button id="dev-event-add-btn" class="action-btn" type="button">Queue Event</button>
+                    <button id="dev-event-clear-btn" class="action-btn" type="button">Clear Queue</button>
                 </div>
-                <div id="battle-actions">
-                    <button id="attack-btn" class="action-btn">Attack</button>
-                    <button id="flee-btn" class="action-btn">Flee (50%)</button>
-                    <button id="wait-btn" class="action-btn">Wait</button>
+                <div class="dev-events-queue-wrap">
+                    <h3>Queued events</h3>
+                    <ol id="dev-events-queue" class="dev-events-queue"></ol>
                 </div>
-                <div id="battle-log-container">
-                    <h3>Battle Log</h3>
-                    <div id="battle-log"></div>
+                <div class="dev-events-queue-wrap">
+                    <h3>Random encounter types</h3>
+                    <p id="dev-encounter-types-summary" class="dev-events-hint dev-events-hint-tight">Enabled random encounters: Monster, Item, Village, Traveler.</p>
+                    <div class="dev-events-toggle-grid">
+                        <label class="dev-events-toggle" for="dev-encounter-type-monster"><input id="dev-encounter-type-monster" type="checkbox" checked> Monster</label>
+                        <label class="dev-events-toggle" for="dev-encounter-type-item"><input id="dev-encounter-type-item" type="checkbox" checked> Item</label>
+                        <label class="dev-events-toggle" for="dev-encounter-type-village"><input id="dev-encounter-type-village" type="checkbox" checked> Village</label>
+                        <label class="dev-events-toggle" for="dev-encounter-type-traveler"><input id="dev-encounter-type-traveler" type="checkbox" checked> Traveler</label>
+                    </div>
+                    <div class="dev-roll-actions">
+                        <button id="dev-encounter-types-enable-all-btn" class="action-btn" type="button">Enable All</button>
+                        <button id="dev-encounter-types-disable-all-btn" class="action-btn secondary" type="button">Disable All</button>
+                    </div>
+                </div>
+                <div class="dev-events-queue-wrap">
+                    <h3>Next new character roll</h3>
+                    <p id="dev-next-roll-summary" class="dev-events-hint dev-events-hint-tight">Next character roll: random.</p>
+                    <button id="dev-next-roll-open-btn" class="action-btn" type="button">Setup Next Roll</button>
+                </div>
+                <div class="dev-events-queue-wrap">
+                    <h3>Map display</h3>
+                    <p class="dev-events-hint dev-events-hint-tight">Current gameplay defaults are <strong>Everything discovered = false</strong> and <strong>Fog of war = true</strong>.</p>
+                    <div class="dev-events-toggle-grid dev-events-toggle-grid-single">
+                        <label class="dev-events-toggle" for="dev-map-display-everything-discovered"><input id="dev-map-display-everything-discovered" type="checkbox"> Everything discovered</label>
+                        <label class="dev-events-toggle" for="dev-map-display-fog-of-war"><input id="dev-map-display-fog-of-war" type="checkbox" checked> Fog of war</label>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div id="controls">
-            <p>Arrow Keys / WASD: Move</p>
-            <p>Battle: Move each turn OR click Attack/Flee</p>
+        <div id="dev-next-roll-modal" class="dev-events-modal hidden" role="dialog" aria-modal="true" aria-labelledby="dev-next-roll-title">
+            <div class="dev-events-panel dev-roll-panel">
+                <div class="dev-events-header">
+                    <h2 id="dev-next-roll-title">Next Character Roll</h2>
+                    <button id="dev-next-roll-close-btn" class="action-btn" type="button">Close</button>
+                </div>
+                <p class="dev-events-hint">Set the exact skill roll for the next new character. This override is consumed once after you start a new character.</p>
+                <div class="dev-roll-grid">
+                    <label for="dev-next-roll-vitality">Vitality</label>
+                    <input id="dev-next-roll-vitality" type="number" min="0" step="1" value="0">
+                    <label for="dev-next-roll-toughness">Toughness</label>
+                    <input id="dev-next-roll-toughness" type="number" min="0" step="1" value="0">
+                    <label for="dev-next-roll-strength">Strength</label>
+                    <input id="dev-next-roll-strength" type="number" min="0" step="1" value="0">
+                    <label for="dev-next-roll-agility">Agility</label>
+                    <input id="dev-next-roll-agility" type="number" min="0" step="1" value="0">
+                    <label for="dev-next-roll-connection">Connection</label>
+                    <input id="dev-next-roll-connection" type="number" min="0" step="1" value="0">
+                    <label for="dev-next-roll-intelligence">Intelligence</label>
+                    <input id="dev-next-roll-intelligence" type="number" min="0" step="1" value="0">
+                </div>
+                <div class="dev-roll-footer">
+                    <div>
+                        <strong>Total points:</strong> <span id="dev-next-roll-total">0 / 0</span>
+                    </div>
+                    <div id="dev-next-roll-status" class="dev-events-hint">Allocate the required number of points to save.</div>
+                </div>
+                <div class="dev-roll-actions">
+                    <button id="dev-next-roll-save-btn" class="action-btn" type="button">Save Next Roll</button>
+                    <button id="dev-next-roll-clear-btn" class="action-btn secondary" type="button">Clear Override</button>
+                </div>
+            </div>
         </div>
     </div>
+
+
+        <div id="quest-intro-modal" class="quest-intro-modal" role="dialog" aria-modal="true" aria-labelledby="quest-intro-title">
+            <div class="quest-intro-panel">
+                <div class="quest-intro-header">
+                    <h2 id="quest-intro-title">Main Quest</h2>
+                    <button id="quest-intro-close-btn" class="action-btn" type="button">Close</button>
+                </div>
+                <p class="quest-intro-hint">This central quest determines whether your character has truly completed the game.</p>
+                <div id="quest-intro-body" class="quests-body"></div>
+            </div>
+        </div>
 
     <script type="module" src="dist/main.js"></script>
 </body>

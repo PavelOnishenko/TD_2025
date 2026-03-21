@@ -1,5 +1,4 @@
 import { balanceConfig } from './balanceConfig.js';
-
 const hasAcknowledged = (context, id) => Boolean(context?.acknowledgedSteps?.has?.(id));
 const hasMerges = (context) => Number(context?.merges ?? 0) > 0;
 const hasRemovals = (context) => Number(context?.removals ?? 0) > 0;
@@ -18,30 +17,24 @@ const hasMergeableTowers = (game) => {
     if (!game?.grid) {
         return false;
     }
-
     const rows = [game.grid.topCells, game.grid.bottomCells];
-
     for (const row of rows) {
-        if (!Array.isArray(row)) continue;
-
+        if (!Array.isArray(row))
+            continue;
         for (let i = 0; i < row.length - 1; i++) {
             const cellA = row[i];
             const cellB = row[i + 1];
-
-            if (!cellA?.occupied || !cellB?.occupied) continue;
-
+            if (!cellA?.occupied || !cellB?.occupied)
+                continue;
             const towerA = game.getTowerAt?.(cellA);
             const towerB = game.getTowerAt?.(cellB);
-
             if (game.canMergeTowers?.(towerA, towerB)) {
                 return true;
             }
         }
     }
-
     return false;
 };
-
 const nonBalanceConfig = {
     world: {
         logicalSize: { width: 540, height: 960 },
@@ -405,7 +398,6 @@ const nonBalanceConfig = {
         },
     },
 };
-
 export const gameConfig = {
     ...nonBalanceConfig,
     ...balanceConfig,
@@ -422,5 +414,5 @@ export const gameConfig = {
         ...balanceConfig.enemies,
     },
 };
-
 export default gameConfig;
+//# sourceMappingURL=gameConfig.js.map

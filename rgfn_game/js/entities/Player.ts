@@ -3,19 +3,38 @@ import { withDamageable } from '../../../engine/core/Damageable.js';
 import {
     getXpForLevel,
     calculateMaxHp,
-    calculateTotalDamage,
+    calculateMeleeDamageBonus,
+    calculateBowDamageBonus,
+    calculateTotalMeleeDamage,
+    calculateTotalBowDamage,
+    calculateAvoidChance,
     calculateArmor,
+    calculateMana,
     levelConfig
 } from '../config/levelConfig.js';
 import { balanceConfig } from '../config/balanceConfig.js';
-import { theme } from '../config/ThemeConfig.js';
+import { cloneBaseStats, normalizeCreatureSkills } from '../config/creatureStats.js';
+import { CreatureBaseStats, CreatureSkills } from '../config/creatureTypes.js';
 import Item from './Item.js';
+import { createItemById } from './Item.js';
+import PlayerInventory from './PlayerInventory.js';
+import PlayerRenderer from './PlayerRenderer.js';
+import { NextCharacterRollAllocation } from '../utils/NextCharacterRollConfig.js';
+import { CombatBuffSnapshot, CombatStatusState } from '../systems/combat/DirectionalCombat.js';
 
-// Extend Entity with Damageable functionality
 const DamageableEntity = withDamageable(Entity);
 
+type PlayerStat = 'vitality' | 'toughness' | 'strength' | 'agility' | 'connection' | 'intelligence';
+type PlayerCreationOptions = {
+    startingSkillAllocation?: Partial<Record<PlayerStat, number>> | null;
+};
+const RANDOM_NAME_POOL = [
+    'Arin', 'Kael', 'Nyx', 'Sable', 'Thorne', 'Mira', 'Orin', 'Vex', 'Lyra', 'Dorian',
+    'Selene', 'Riven', 'Kara', 'Juno', 'Bram', 'Talia', 'Ezra', 'Nora', 'Cassian', 'Iris'
+];
+const RANDOM_STAT_POOL: PlayerStat[] = ['vitality', 'toughness', 'strength', 'agility', 'connection', 'intelligence'];
+
 export default class Player extends DamageableEntity {
-    // Explicitly declare inherited properties from Entity
     declare x: number;
     declare y: number;
     declare width: number;
@@ -25,91 +44,224 @@ export default class Player extends DamageableEntity {
     declare active: boolean;
     declare id: number;
 
-    // Explicitly declare inherited methods from Entity
     declare move: (deltaTime: number) => void;
     declare getBounds: () => { left: number; right: number; top: number; bottom: number };
     declare checkCollision: (other: any) => boolean;
 
-    // Explicitly declare inherited properties from Damageable
     declare hp: number;
     declare maxHp: number;
 
-    // Explicitly declare inherited methods from Damageable
     declare initDamageable: (maxHp: number) => void;
     declare heal: (amount: number) => void;
     declare isDead: () => boolean;
     declare getHealthPercent: () => number;
     declare healToFull: () => void;
 
-    // Player-specific properties
     public damage: number;
+    public name: string;
     public armor: number = 0;
+    public avoidChance: number = 0;
     public gridCol?: number;
     public gridRow?: number;
 
-    // Level system
     public level: number = 1;
     public xp: number = 0;
     public xpToNextLevel: number;
 
-    // Stats
     public vitality: number = 0;
     public toughness: number = 0;
     public strength: number = 0;
+    public agility: number = 0;
+    public connection: number = 0;
+    public intelligence: number = 0;
     public skillPoints: number = 0;
+    public magicPoints: number = 0;
+    public mana: number = 0;
+    public maxMana: number = 0;
+    public gold: number = 0;
 
-    // Equipment
-    public equippedWeapon: Item | null = null;
+    private rageTurns: number = 0;
+    private rageMultiplier: number = 1;
+    private blockAdvantage: boolean = false;
+    private successfulDodgeMultiplier: number | null = null;
 
-    constructor(x: number, y: number) {
+    private readonly inventorySystem: PlayerInventory;
+    private readonly renderer: PlayerRenderer;
+    private armorAbsorbedHp: number = 0;
+
+    public get equippedWeapon(): Item | null {
+        return this.inventorySystem.getEquippedWeapon();
+    }
+
+    public get equippedMainWeapon(): Item | null {
+        return this.inventorySystem.getEquippedMainWeapon();
+    }
+
+    public get equippedOffhandWeapon(): Item | null {
+        return this.inventorySystem.getEquippedOffhandWeapon();
+    }
+
+
+    public get equippedArmor(): Item | null {
+        return this.inventorySystem.getEquippedArmor();
+    }
+
+    public set equippedArmor(armor: Item | null) {
+        this.inventorySystem.setEquippedArmor(armor);
+    }
+    public set equippedWeapon(weapon: Item | null) {
+        this.inventorySystem.setEquippedWeapon(weapon);
+    }
+
+    public set equippedOffhandWeapon(weapon: Item | null) {
+        this.inventorySystem.setEquippedOffhandWeapon(weapon);
+    }
+
+    constructor(x: number, y: number, options: PlayerCreationOptions = {}) {
         super(x, y);
+        this.name = Player.generateRandomName();
         this.width = balanceConfig.player.width;
         this.height = balanceConfig.player.height;
 
-        // Initialize stats from balance config
         this.vitality = balanceConfig.player.initialVitality;
         this.toughness = balanceConfig.player.initialToughness;
         this.strength = balanceConfig.player.initialStrength;
-        this.skillPoints = 0;
+        this.agility = balanceConfig.player.initialAgility;
+        this.connection = balanceConfig.player.initialConnection;
+        this.intelligence = balanceConfig.player.initialIntelligence;
+        this.skillPoints = balanceConfig.player.initialSkillPoints;
+        this.allocateRandomStartingStats(options.startingSkillAllocation ?? null);
+        this.magicPoints = Math.floor(this.intelligence / 3);
 
-        // Calculate initial stats
+        this.inventorySystem = new PlayerInventory({
+            getInventoryCapacity: () => this.getInventoryCapacity(),
+            onEquipmentChanged: () => this.updateStats(),
+            onHealingPotionUsed: () => this.heal(5),
+            onManaPotionUsed: () => this.restoreMana(balanceConfig.combat.manaPotionRestore),
+            canEquip: (item) => this.canEquipItem(item),
+        });
+        this.renderer = new PlayerRenderer();
+
         this.updateStats();
+        this.mana = this.maxMana;
+        this.gold = Math.floor(Math.random() * 6);
         this.xpToNextLevel = getXpForLevel(2);
 
-        // Initialize Damageable functionality with calculated maxHp
         this.initDamageable(this.maxHp);
     }
 
-    /**
-     * Override takeDamage to apply armor reduction before damage.
-     * Armor can never completely negate a positive incoming hit.
-     */
+    private static generateRandomName(): string {
+        return RANDOM_NAME_POOL[Math.floor(Math.random() * RANDOM_NAME_POOL.length)];
+    }
+
+    private allocateRandomStartingStats(startingSkillAllocation: Partial<Record<PlayerStat, number>> | null = null): void {
+        const pointsToAllocate = Math.max(0, balanceConfig.player.initialRandomAllocatedSkillPoints ?? 0);
+        const plannedAllocation = this.normalizeStartingSkillAllocation(startingSkillAllocation);
+        const plannedPoints = RANDOM_STAT_POOL.reduce((total, stat) => total + plannedAllocation[stat], 0);
+
+        if (plannedPoints === pointsToAllocate) {
+            RANDOM_STAT_POOL.forEach((stat) => {
+                this[stat] += plannedAllocation[stat];
+            });
+            return;
+        }
+
+        for (let i = 0; i < pointsToAllocate; i++) {
+            const randomStat = RANDOM_STAT_POOL[Math.floor(Math.random() * RANDOM_STAT_POOL.length)];
+            this[randomStat] += 1;
+        }
+    }
+
+    private normalizeStartingSkillAllocation(startingSkillAllocation: Partial<Record<PlayerStat, number>> | null): NextCharacterRollAllocation {
+        const normalizedAllocation = {
+            vitality: 0,
+            toughness: 0,
+            strength: 0,
+            agility: 0,
+            connection: 0,
+            intelligence: 0,
+        };
+
+        RANDOM_STAT_POOL.forEach((stat) => {
+            const rawAmount = startingSkillAllocation?.[stat] ?? 0;
+            const parsedAmount = typeof rawAmount === 'number' ? rawAmount : Number.parseInt(String(rawAmount), 10);
+            normalizedAllocation[stat] = Number.isFinite(parsedAmount) ? Math.max(0, Math.floor(parsedAmount)) : 0;
+        });
+
+        return normalizedAllocation;
+    }
+
     public takeDamage(amount: number): boolean {
         if (amount <= 0) {
             return super.takeDamage(0);
         }
 
+        const equippedArmor = this.equippedArmor;
+        const armorReductionPercent = equippedArmor?.effects.damageReductionPercent ?? 0;
+        const reducedByPercent = Math.floor(amount * (1 - armorReductionPercent));
+        const armorCap = equippedArmor?.effects.maxAbsorbHp;
+        const armorDepleted = typeof armorCap === 'number' && this.armorAbsorbedHp >= armorCap;
+
+        const effectiveArmor = armorDepleted ? 0 : this.armor;
         const damageAfterArmor = Math.max(
             balanceConfig.combat.minDamageAfterArmor,
-            amount - this.armor
+            reducedByPercent - effectiveArmor
         );
+
+        if (effectiveArmor > 0 && typeof armorCap === 'number') {
+            const absorbed = Math.max(0, reducedByPercent - damageAfterArmor);
+            this.armorAbsorbedHp += absorbed;
+        }
 
         return super.takeDamage(damageAfterArmor);
     }
 
-    /**
-     * Update derived stats based on allocated stat points
-     */
-    public updateStats(): void {
-        this.maxHp = calculateMaxHp(this.vitality);
-        this.damage = calculateTotalDamage(this.strength);
-        this.armor = calculateArmor(this.toughness);
+    public takeMagicDamage(amount: number): boolean {
+        return super.takeDamage(Math.max(0, amount));
     }
 
-    /**
-     * Add experience points and handle level ups
-     * @returns true if player leveled up
-     */
+    public updateStats(): void {
+        const previousMaxMana = this.maxMana;
+        const previousMana = this.mana;
+        const hadFullMana = previousMaxMana > 0 && previousMana === previousMaxMana;
+        const equippedArmor = this.equippedArmor;
+        const armorFlatBonus = equippedArmor?.effects.flatArmor ?? 0;
+        const baseStats = this.getBaseStatsRecord();
+        this.maxMana = calculateMana(this.connection, this.intelligence) - balanceConfig.player.baseMana + baseStats.mana;
+        this.armor = calculateArmor(this.toughness) + armorFlatBonus + baseStats.armor;
+        this.maxHp = calculateMaxHp(this.vitality) - balanceConfig.player.baseHp + baseStats.hp;
+        this.avoidChance = calculateAvoidChance(this.agility);
+
+        const meleeStatBonus = calculateMeleeDamageBonus(this.strength, this.agility);
+        const rangedStatBonus = calculateBowDamageBonus(this.strength, this.agility);
+        const fistBaseDamage = balanceConfig.combat.fistDamagePerHand;
+
+        const mainWeapon = this.equippedMainWeapon;
+        const offhandWeapon = this.equippedOffhandWeapon;
+
+        if (!mainWeapon && !offhandWeapon) {
+            this.damage = fistBaseDamage * 2 + (meleeStatBonus * 2);
+        } else if (mainWeapon?.handsRequired === 2) {
+            const weaponDamage = mainWeapon.damageBonus;
+            const statBonus = mainWeapon.isRanged ? rangedStatBonus : meleeStatBonus;
+            this.damage = weaponDamage + statBonus;
+        } else {
+            const mainHandDamage = mainWeapon
+                ? mainWeapon.damageBonus + (mainWeapon.isRanged ? rangedStatBonus : meleeStatBonus)
+                : fistBaseDamage + meleeStatBonus;
+            const offHandDamage = offhandWeapon
+                ? offhandWeapon.damageBonus + (offhandWeapon.isRanged ? rangedStatBonus : meleeStatBonus)
+                : fistBaseDamage + meleeStatBonus;
+            this.damage = mainHandDamage + offHandDamage;
+        }
+
+        if (previousMaxMana === 0 || hadFullMana) {
+            this.mana = this.maxMana;
+        } else {
+            this.mana = Math.min(this.maxMana, previousMana);
+        }
+    }
+
     public addXp(amount: number): boolean {
         if (this.level >= levelConfig.maxLevel) {
             return false;
@@ -117,7 +269,6 @@ export default class Player extends DamageableEntity {
 
         this.xp += amount;
 
-        // Check for level up
         if (this.xp >= this.xpToNextLevel) {
             this.levelUp();
             return true;
@@ -126,9 +277,6 @@ export default class Player extends DamageableEntity {
         return false;
     }
 
-    /**
-     * Level up the player
-     */
     private levelUp(): void {
         if (this.level >= levelConfig.maxLevel) {
             return;
@@ -136,29 +284,22 @@ export default class Player extends DamageableEntity {
 
         this.level++;
         this.xp -= this.xpToNextLevel;
-
-        // Grant skill points
         this.skillPoints += levelConfig.skillPointsPerLevel;
-
-        // Update XP requirement for next level
         this.xpToNextLevel = getXpForLevel(this.level + 1);
 
         // Update stats (this recalculates maxHp)
-        const oldMaxHp = this.maxHp;
         this.updateStats();
 
-        // Heal to full HP (use Damageable method)
         this.healToFull();
+        this.mana = this.maxMana;
     }
 
-    /**
-     * Allocate a skill point to a stat
-     * @returns true if allocation was successful
-     */
-    public addStat(stat: 'vitality' | 'toughness' | 'strength', amount: number = 1): boolean {
+    public addStat(stat: PlayerStat, amount: number = 1): boolean {
         if (this.skillPoints < amount) {
             return false;
         }
+
+        const previousIntelligence = this.intelligence;
 
         switch (stat) {
             case 'vitality':
@@ -170,6 +311,15 @@ export default class Player extends DamageableEntity {
             case 'strength':
                 this.strength += amount;
                 break;
+            case 'agility':
+                this.agility += amount;
+                break;
+            case 'connection':
+                this.connection += amount;
+                break;
+            case 'intelligence':
+                this.intelligence += amount;
+                break;
             default:
                 return false;
         }
@@ -177,31 +327,195 @@ export default class Player extends DamageableEntity {
         this.skillPoints -= amount;
 
         // Store current HP percentage
-        const hpPercent = this.hp / this.maxHp;
-
         // Update derived stats
         this.updateStats();
-
-        // Restore HP percentage (so increasing vitality doesn't heal you mid-battle)
         this.hp = Math.min(this.hp, this.maxHp);
+
+        if (stat === 'intelligence') {
+            const gainedMagicPoints = Math.floor(this.intelligence / 3) - Math.floor(previousIntelligence / 3);
+            if (gainedMagicPoints > 0) {
+                this.magicPoints += gainedMagicPoints;
+            }
+        }
 
         return true;
     }
 
-    /**
-     * Get the actual damage reduction from armor
-     */
+
+    public restoreMana(amount: number): void {
+        if (amount <= 0) {
+            return;
+        }
+
+        this.mana = Math.min(this.maxMana, this.mana + amount);
+    }
+
+    public spendMana(amount: number): boolean {
+        if (amount <= 0) {
+            return true;
+        }
+
+        if (this.mana < amount) {
+            return false;
+        }
+
+        this.mana -= amount;
+        return true;
+    }
+
+    public canSpendMana(amount: number): boolean {
+        return this.mana >= amount;
+    }
+
+    public getPhysicalDamageWithBuff(): number {
+        return Math.round(this.damage * this.rageMultiplier);
+    }
+
+    public getDirectionalCombatBuffSnapshot(): CombatBuffSnapshot {
+        return {
+            hasBlockAdvantage: this.blockAdvantage,
+            hasSuccessfulDodgeMultiplier: this.successfulDodgeMultiplier !== null,
+            successfulDodgeMultiplier: this.successfulDodgeMultiplier ?? 1,
+        };
+    }
+
+    public applyDirectionalCombatRewards(rewards: CombatStatusState): string[] {
+        const events: string[] = [];
+
+        if (rewards.blockAdvantage) {
+            this.blockAdvantage = true;
+            events.push(`${this.name} gains Block Advantage for the next turn. If the next turn is not an attack, it expires.`);
+        }
+
+        if (rewards.successfulDodgeMultiplier !== null) {
+            this.successfulDodgeMultiplier = rewards.successfulDodgeMultiplier;
+            events.push(`${this.name} gains a successful dodge damage multiplier for the next attack (x${rewards.successfulDodgeMultiplier.toFixed(2)}).`);
+        }
+
+        return events;
+    }
+
+    public consumeDirectionalAttackBonuses(): string[] {
+        const events: string[] = [];
+
+        if (this.blockAdvantage) {
+            this.blockAdvantage = false;
+            events.push(`${this.name}'s Block Advantage is consumed by this attack.`);
+        }
+
+        if (this.successfulDodgeMultiplier !== null) {
+            this.successfulDodgeMultiplier = null;
+            events.push(`${this.name}'s successful dodge damage multiplier is consumed by this attack.`);
+        }
+
+        return events;
+    }
+
+    public expireDirectionalBonusesWithoutAttack(): string[] {
+        const events: string[] = [];
+
+        if (this.blockAdvantage) {
+            this.blockAdvantage = false;
+            events.push(`${this.name}'s Block Advantage expires because no attack was used this turn.`);
+        }
+
+        if (this.successfulDodgeMultiplier !== null) {
+            this.successfulDodgeMultiplier = null;
+            events.push(`${this.name}'s successful dodge damage multiplier expires because no attack was used this turn.`);
+        }
+
+        return events;
+    }
+
+    public getMagicPowerMultiplier(): number {
+        return this.rageMultiplier;
+    }
+
+    public applyRage(turns: number, multiplier: number): void {
+        this.rageTurns = Math.max(this.rageTurns, turns);
+        this.rageMultiplier = Math.max(this.rageMultiplier, multiplier);
+    }
+
+    public consumePlayerTurnEffects(): string[] {
+        const events: string[] = [];
+
+        if (this.rageTurns > 0) {
+            this.rageTurns -= 1;
+            if (this.rageTurns === 0) {
+                this.rageMultiplier = 1;
+                events.push('Rage fades.');
+            }
+        }
+
+        return events;
+    }
+
     public getArmorReduction(): number {
         return this.armor;
     }
 
-    /**
-     * Equip an item (automatically equipped when obtained)
-     */
-    public equipItem(item: Item): void {
-        if (item.type === 'weapon') {
-            this.equippedWeapon = item;
-        }
+    public getInventoryCapacity(): number {
+        return this.getInventoryCapacityForStrength(this.strength);
+    }
+
+    public getInventoryCapacityForStrength(strength: number): number {
+        const safeStrength = Math.max(0, Math.floor(strength));
+        const strengthSlots = Math.floor(safeStrength / balanceConfig.player.strengthPerInventorySlot);
+        return balanceConfig.player.baseInventorySlots + strengthSlots;
+    }
+
+    public addItemToInventory(item: Item): boolean {
+        return this.inventorySystem.addItem(item);
+    }
+
+    public useHealingPotion(): boolean {
+        return this.inventorySystem.useHealingPotion();
+    }
+
+    public getInventory(): Item[] {
+        return this.inventorySystem.getItems();
+    }
+
+    public getHealingPotionCount(): number {
+        return this.inventorySystem.getHealingPotionCount();
+    }
+
+    public getManaPotionCount(): number {
+        return this.inventorySystem.getManaPotionCount();
+    }
+
+    public useManaPotion(): boolean {
+        return this.inventorySystem.useManaPotion();
+    }
+
+    public removeHealingPotionFromInventory(): boolean {
+        return this.inventorySystem.removeHealingPotion();
+    }
+
+    public removeManaPotionFromInventory(): boolean {
+        return this.inventorySystem.removeManaPotion();
+    }
+
+
+    public removeInventoryItemAt(index: number): Item | null {
+        return this.inventorySystem.removeItemAt(index);
+    }
+
+
+    public unequipWeapon(): Item | null {
+        return this.inventorySystem.unequipWeapon();
+    }
+
+    public unequipOffhandWeapon(): Item | null {
+        return this.inventorySystem.unequipOffhandWeapon();
+    }
+
+    public equipWeaponToSlot(weapon: Item, slot: 'main' | 'offhand'): void {
+        this.inventorySystem.equipWeaponToSlot(weapon, slot);
+    }
+
+    public unequipArmor(): Item | null {
+        return this.inventorySystem.unequipArmor();
     }
 
     /**
@@ -209,60 +523,140 @@ export default class Player extends DamageableEntity {
      * @returns number of cells the player can attack from
      */
     public getAttackRange(): number {
-        if (this.equippedWeapon) {
-            return this.equippedWeapon.attackRange;
-        }
-        return 1; // Default melee range
+        return this.inventorySystem.getAttackRange();
     }
 
-    /**
-     * Check if the player has a specific item equipped
-     */
     public hasWeapon(): boolean {
-        return this.equippedWeapon !== null;
+        return this.inventorySystem.hasWeapon();
+    }
+
+    public getAvoidFormulaText(): string {
+        const scale = balanceConfig.stats.avoidChanceScale;
+        const capPercent = Math.round(balanceConfig.stats.avoidChanceCap * 100);
+        const scaledAgility = this.agility * scale;
+        const rawChance = 1 - (1 / (1 + scaledAgility));
+        const finalChance = Math.min(balanceConfig.stats.avoidChanceCap, rawChance);
+        const finalPercent = (finalChance * 100).toFixed(1);
+
+        return `min(${capPercent}%, (1 - 1/(1 + AGI×${scale.toFixed(3)}))×100) = ${finalPercent}%`;
+    }
+
+    public getDamageFormulaText(): string {
+        const fistBaseDamage = balanceConfig.combat.fistDamagePerHand;
+        const mainWeapon = this.equippedMainWeapon;
+        const offhandWeapon = this.equippedOffhandWeapon;
+
+        if (!mainWeapon && !offhandWeapon) {
+            const perHandStatBonus = calculateMeleeDamageBonus(this.strength, this.agility);
+            return `Unarmed: (${fistBaseDamage} + ${perHandStatBonus}) + (${fistBaseDamage} + ${perHandStatBonus}) = ${this.damage}`;
+        }
+
+        if (mainWeapon?.handsRequired === 2) {
+            const statBonus = mainWeapon.isRanged
+                ? calculateBowDamageBonus(this.strength, this.agility)
+                : calculateMeleeDamageBonus(this.strength, this.agility);
+            const style = mainWeapon.isRanged ? 'Ranged' : 'Melee';
+            return `${style} (2H): weapon ${mainWeapon.damageBonus} + stat bonus ${statBonus} = ${this.damage}`;
+        }
+
+        const meleeBonus = calculateMeleeDamageBonus(this.strength, this.agility);
+        const rangedBonus = calculateBowDamageBonus(this.strength, this.agility);
+        const mainHandText = mainWeapon
+            ? `${mainWeapon.name} (${mainWeapon.damageBonus} + ${mainWeapon.isRanged ? rangedBonus : meleeBonus})`
+            : `Fist (${fistBaseDamage} + ${meleeBonus})`;
+        const offHandText = offhandWeapon
+            ? `${offhandWeapon.name} (${offhandWeapon.damageBonus} + ${offhandWeapon.isRanged ? rangedBonus : meleeBonus})`
+            : `Fist (${fistBaseDamage} + ${meleeBonus})`;
+
+        return `Dual hand: main ${mainHandText} + off ${offHandText} = ${this.damage}`;
+    }
+
+    public canEquipItem(item: Item): boolean {
+        const requiredAgility = item.requirements.agility ?? 0;
+        const requiredStrength = item.requirements.strength ?? 0;
+        return this.agility >= requiredAgility && this.strength >= requiredStrength;
     }
 
     public draw(ctx: CanvasRenderingContext2D, viewport?: any): void {
-        const screenX = this.x;
-        const screenY = this.y;
-
-        // Player body
-        ctx.fillStyle = theme.entities.player.body;
-        ctx.fillRect(
-            screenX - this.width / 2,
-            screenY - this.height / 2,
-            this.width,
-            this.height
-        );
-
-        // Player face
-        ctx.fillStyle = theme.entities.player.face;
-        const faceX = screenX - 6;
-        const faceY = screenY - 8;
-        ctx.fillRect(faceX, faceY, 4, 4); // eye
-        ctx.fillRect(faceX + 8, faceY, 4, 4); // eye
-        ctx.fillRect(faceX + 2, faceY + 8, 8, 2); // mouth
-
-        // Health bar
-        this.drawHealthBar(ctx, screenX, screenY);
+        this.renderer.draw(ctx, this);
     }
 
-    private drawHealthBar(ctx: CanvasRenderingContext2D, screenX: number, screenY: number): void {
-        const barWidth = this.width;
-        const barHeight = 4;
-        const barY = screenY - this.height / 2 - 8;
 
-        // Background
-        ctx.fillStyle = theme.entities.player.healthBg;
-        ctx.fillRect(screenX - barWidth / 2, barY, barWidth, barHeight);
+    public getBaseStatsRecord(): CreatureBaseStats {
+        return cloneBaseStats(balanceConfig.creatureArchetypes.human.baseStats);
+    }
 
-        // Health
-        const healthPercent = this.hp / this.maxHp;
-        const healthBarWidth = barWidth * healthPercent;
-        const color = healthPercent > 0.6 ? theme.entities.player.healthHigh :
-                      healthPercent > 0.3 ? theme.entities.player.healthMid :
-                      theme.entities.player.healthLow;
-        ctx.fillStyle = color;
-        ctx.fillRect(screenX - barWidth / 2, barY, healthBarWidth, barHeight);
+    public getSkillRecord(): CreatureSkills {
+        return normalizeCreatureSkills({
+            vitality: this.vitality,
+            toughness: this.toughness,
+            strength: this.strength,
+            agility: this.agility,
+            connection: this.connection,
+            intelligence: this.intelligence,
+        });
+    }
+
+    public getState(): Record<string, unknown> {
+        const inventoryState = this.inventorySystem.getState();
+        return {
+            level: this.level,
+            name: this.name,
+            xp: this.xp,
+            xpToNextLevel: this.xpToNextLevel,
+            vitality: this.vitality,
+            toughness: this.toughness,
+            strength: this.strength,
+            agility: this.agility,
+            connection: this.connection,
+            intelligence: this.intelligence,
+            skillPoints: this.skillPoints,
+            magicPoints: this.magicPoints,
+            hp: this.hp,
+            mana: this.mana,
+            gold: this.gold,
+            armorAbsorbedHp: this.armorAbsorbedHp,
+            rageTurns: this.rageTurns,
+            rageMultiplier: this.rageMultiplier,
+            blockAdvantage: this.blockAdvantage,
+            successfulDodgeMultiplier: this.successfulDodgeMultiplier,
+            inventoryItemIds: inventoryState.inventoryItemIds,
+            equippedWeaponId: inventoryState.equippedWeaponId,
+            equippedOffhandWeaponId: inventoryState.equippedOffhandWeaponId,
+            equippedArmorId: inventoryState.equippedArmorId,
+        };
+    }
+
+    public restoreState(state: Record<string, unknown>): void {
+        const toNumber = (value: unknown, fallback: number): number => typeof value === 'number' && Number.isFinite(value) ? value : fallback;
+
+        this.level = toNumber(state.level, this.level);
+        this.name = typeof state.name === 'string' && state.name.trim().length > 0 ? state.name : this.name;
+        this.xp = toNumber(state.xp, this.xp);
+        this.xpToNextLevel = toNumber(state.xpToNextLevel, this.xpToNextLevel);
+        this.vitality = toNumber(state.vitality, this.vitality);
+        this.toughness = toNumber(state.toughness, this.toughness);
+        this.strength = toNumber(state.strength, this.strength);
+        this.agility = toNumber(state.agility, this.agility);
+        this.connection = toNumber(state.connection, this.connection);
+        this.intelligence = toNumber(state.intelligence, this.intelligence);
+        this.skillPoints = toNumber(state.skillPoints, this.skillPoints);
+        this.magicPoints = toNumber(state.magicPoints, this.magicPoints);
+        this.gold = toNumber(state.gold, this.gold);
+        this.armorAbsorbedHp = toNumber(state.armorAbsorbedHp, 0);
+        this.rageTurns = toNumber(state.rageTurns, 0);
+        this.rageMultiplier = toNumber(state.rageMultiplier, 1);
+        this.blockAdvantage = Boolean(state.blockAdvantage);
+        this.successfulDodgeMultiplier = typeof state.successfulDodgeMultiplier === 'number' ? state.successfulDodgeMultiplier : null;
+
+        const inventoryItemIds = Array.isArray(state.inventoryItemIds) ? state.inventoryItemIds.filter((id): id is string => typeof id === 'string') : [];
+        const equippedWeaponId = typeof state.equippedWeaponId === 'string' ? state.equippedWeaponId : null;
+        const equippedOffhandWeaponId = typeof state.equippedOffhandWeaponId === 'string' ? state.equippedOffhandWeaponId : null;
+        const equippedArmorId = typeof state.equippedArmorId === 'string' ? state.equippedArmorId : null;
+        this.inventorySystem.restoreState(inventoryItemIds, equippedWeaponId, equippedArmorId, createItemById, equippedOffhandWeaponId);
+
+        this.updateStats();
+        this.hp = Math.max(0, Math.min(this.maxHp, toNumber(state.hp, this.hp)));
+        this.mana = Math.max(0, Math.min(this.maxMana, toNumber(state.mana, this.mana)));
     }
 }

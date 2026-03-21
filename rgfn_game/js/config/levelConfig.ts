@@ -37,10 +37,30 @@ export function calculateArmor(toughness: number): number {
 }
 
 /**
- * Calculate damage bonus from strength stat
+ * Calculate melee damage bonus from strength and agility stats
  */
-export function calculateDamageBonus(strength: number): number {
-  return Math.floor(strength / balanceConfig.stats.strengthToDamage);
+export function calculateMeleeDamageBonus(strength: number, agility: number): number {
+  const strengthBonus = Math.floor(strength / balanceConfig.stats.strengthToMeleeDamage);
+  const agilityBonus = Math.floor(agility / balanceConfig.stats.agilityToMeleeDamage);
+  return strengthBonus + agilityBonus;
+}
+
+/**
+ * Calculate bow damage bonus from strength and agility stats
+ */
+export function calculateBowDamageBonus(strength: number, agility: number): number {
+  const strengthBonus = Math.floor(strength / balanceConfig.stats.strengthToBowDamage);
+  const agilityBonus = Math.floor(agility / balanceConfig.stats.agilityToBowDamage);
+  return strengthBonus + agilityBonus;
+}
+
+/**
+ * Calculate agility-based avoid chance with diminishing returns
+ */
+export function calculateAvoidChance(agility: number): number {
+  const scaledAgility = agility * balanceConfig.stats.avoidChanceScale;
+  const avoidChance = 1 - (1 / (1 + scaledAgility));
+  return Math.min(balanceConfig.stats.avoidChanceCap, avoidChance);
 }
 
 /**
@@ -51,8 +71,26 @@ export function calculateMaxHp(vitality: number): number {
 }
 
 /**
- * Calculate total damage from strength stat
+ * Calculate max mana from connection and intelligence stats.
+ * Connection gives 1 mana each.
+ * Intelligence gives 1/3 mana each.
  */
-export function calculateTotalDamage(strength: number): number {
-  return balanceConfig.player.baseDamage + calculateDamageBonus(strength);
+export function calculateMana(connection: number, intelligence: number): number {
+  const connectionMana = connection * balanceConfig.stats.connectionToMana;
+  const intelligenceMana = intelligence / balanceConfig.stats.intelligenceToManaDivisor;
+  return balanceConfig.player.baseMana + Math.floor(connectionMana + intelligenceMana);
+}
+
+/**
+ * Calculate total melee damage from strength/agility stats
+ */
+export function calculateTotalMeleeDamage(strength: number, agility: number): number {
+  return balanceConfig.player.baseDamage + calculateMeleeDamageBonus(strength, agility);
+}
+
+/**
+ * Calculate total bow damage from strength/agility stats
+ */
+export function calculateTotalBowDamage(strength: number, agility: number): number {
+  return balanceConfig.player.baseDamage + calculateBowDamageBonus(strength, agility);
 }

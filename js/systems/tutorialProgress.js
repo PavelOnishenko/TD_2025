@@ -1,10 +1,8 @@
 const STORAGE_KEY = 'towerDefenseTutorialComplete';
-
 function getDataClient() {
     const root = typeof globalThis !== 'undefined' ? globalThis : undefined;
     return root?.CrazyGames?.SDK?.data ?? null;
 }
-
 const memoryStore = (() => {
     let store = Object.create(null);
     return {
@@ -19,11 +17,14 @@ const memoryStore = (() => {
         },
     };
 })();
-
 function getStorage() {
     const client = getDataClient();
     if (client && typeof client.getItem === 'function' && typeof client.setItem === 'function') {
-        return client;
+        return {
+            getItem: (key) => client.getItem(key),
+            setItem: (key, value) => client.setItem(key, value),
+            removeItem: (key) => client.removeItem?.(key),
+        };
     }
     const root = typeof globalThis !== 'undefined' ? globalThis : undefined;
     try {
@@ -31,40 +32,42 @@ function getStorage() {
         if (storage && typeof storage.getItem === 'function' && typeof storage.setItem === 'function') {
             return storage;
         }
-    } catch (error) {
+    }
+    catch (error) {
         console.warn('Tutorial progress storage unavailable, falling back to memory store.', error);
     }
     return memoryStore;
 }
-
 export function isTutorialMarkedComplete() {
     try {
         const storage = getStorage();
         return storage.getItem(STORAGE_KEY) === '1';
-    } catch (error) {
+    }
+    catch (error) {
         console.warn('Failed to read tutorial progress.', error);
         return false;
     }
 }
-
 export function markTutorialComplete() {
     try {
         const storage = getStorage();
         storage.setItem(STORAGE_KEY, '1');
         return true;
-    } catch (error) {
+    }
+    catch (error) {
         console.warn('Failed to persist tutorial progress.', error);
         return false;
     }
 }
-
 export function clearTutorialProgress() {
     try {
         const storage = getStorage();
         storage.removeItem(STORAGE_KEY);
         return true;
-    } catch (error) {
+    }
+    catch (error) {
         console.warn('Failed to clear tutorial progress.', error);
         return false;
     }
 }
+//# sourceMappingURL=tutorialProgress.js.map

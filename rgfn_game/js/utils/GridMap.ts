@@ -43,6 +43,39 @@ export default class GridMap {
         };
     }
 
+
+    public updateLayout(cellSize: number, offsetX: number = this.offsetX, offsetY: number = this.offsetY): void {
+        const previousCellSize = this.cellSize;
+        const previousOffsetX = this.offsetX;
+        const previousOffsetY = this.offsetY;
+        this.cellSize = cellSize;
+        this.offsetX = offsetX;
+        this.offsetY = offsetY;
+
+        const expectedCells = this.columns * this.rows;
+        if (this.cells.length !== expectedCells) {
+            this.cells = [];
+            this.initializeCells();
+            return;
+        }
+
+        const sameScale = previousCellSize === cellSize;
+        const deltaX = offsetX - previousOffsetX;
+        const deltaY = offsetY - previousOffsetY;
+
+        for (const cell of this.cells) {
+            if (sameScale) {
+                cell.x += deltaX;
+                cell.y += deltaY;
+            } else {
+                cell.x = offsetX + (cell.col * cellSize);
+                cell.y = offsetY + (cell.row * cellSize);
+                cell.width = cellSize;
+                cell.height = cellSize;
+            }
+        }
+    }
+
     getCellAt(col: number, row: number): GridCell | null {
         if (!this.isValidPosition(col, row)) {
             return null;

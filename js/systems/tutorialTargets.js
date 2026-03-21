@@ -1,13 +1,14 @@
 const registry = new Map();
-
 function normalizeId(id) {
     return typeof id === 'string' ? id.trim() : '';
 }
-
+function isIterableObject(value) {
+    return typeof value === 'object' && value !== null && typeof value[Symbol.iterator] === 'function';
+}
 function addResolver(id, resolver) {
     const key = normalizeId(id);
     if (!key || typeof resolver !== 'function') {
-        return () => {};
+        return () => { };
     }
     let entry = registry.get(key);
     if (!entry) {
@@ -22,18 +23,16 @@ function addResolver(id, resolver) {
         }
     };
 }
-
 export function registerTutorialTarget(id, resolver) {
     return addResolver(id, resolver);
 }
-
 export function resolveTutorialTargets(ids) {
     if (!Array.isArray(ids) || ids.length === 0) {
         return [];
     }
     const uniqueElements = new Set();
     const resolved = [];
-    ids.forEach(id => {
+    ids.forEach((id) => {
         const key = normalizeId(id);
         if (!key) {
             return;
@@ -42,7 +41,7 @@ export function resolveTutorialTargets(ids) {
         if (!entry) {
             return;
         }
-        entry.forEach(resolver => {
+        entry.forEach((resolver) => {
             if (typeof resolver !== 'function') {
                 return;
             }
@@ -52,7 +51,7 @@ export function resolveTutorialTargets(ids) {
                     return;
                 }
                 if (Array.isArray(value)) {
-                    value.forEach(item => {
+                    value.forEach((item) => {
                         if (item && !uniqueElements.has(item)) {
                             uniqueElements.add(item);
                             resolved.push(item);
@@ -60,7 +59,7 @@ export function resolveTutorialTargets(ids) {
                     });
                     return;
                 }
-                if (typeof value === 'object' && value && typeof value[Symbol.iterator] === 'function' && typeof value !== 'string') {
+                if (isIterableObject(value) && typeof value !== 'string') {
                     for (const item of value) {
                         if (item && !uniqueElements.has(item)) {
                             uniqueElements.add(item);
@@ -73,20 +72,20 @@ export function resolveTutorialTargets(ids) {
                     uniqueElements.add(value);
                     resolved.push(value);
                 }
-            } catch (error) {
+            }
+            catch (error) {
                 console.warn('Failed to resolve tutorial target', error);
             }
         });
     });
     return resolved;
 }
-
 export function clearTutorialTargets() {
     registry.clear();
 }
-
 export default {
     register: registerTutorialTarget,
     resolve: resolveTutorialTargets,
     clear: clearTutorialTargets,
 };
+//# sourceMappingURL=tutorialTargets.js.map
