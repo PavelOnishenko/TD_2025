@@ -286,3 +286,19 @@ test('WorldMap draw switches to low-detail rendering when zoomed out with fog di
   assert.equal(drawGridCalled, false);
   assert.ok(ctx.calls.some((call) => call[0] === 'fillRect'));
 });
+
+test('WorldMap exposes village names and anchors matching quest locations to village tiles', () => withMockedRandom([0.11], () => {
+  const worldMap = new WorldMap(40, 30, 20);
+  const state = worldMap.getState();
+  const [villageCol, villageRow] = state.villages[0].split(',').map(Number);
+  const villageName = worldMap.getAllVillageNames().find((name) => worldMap['findVillagePositionByName'](name)?.col === villageCol && worldMap['findVillagePositionByName'](name)?.row === villageRow);
+
+  assert.ok(villageName);
+
+  worldMap.registerNamedLocation(villageName);
+  worldMap.setMapDisplayConfig({ everythingDiscovered: true });
+  worldMap.restoreState({ ...state, playerGridPos: { col: villageCol, row: villageRow }, visitedCells: [`${villageCol},${villageRow}`] });
+
+  assert.equal(worldMap.getCurrentNamedLocation(), villageName);
+  assert.equal(worldMap.revealNamedLocation(villageName), true);
+}));
