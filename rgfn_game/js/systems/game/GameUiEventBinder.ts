@@ -2,9 +2,11 @@ import VillageActionsController from '../village/VillageActionsController.js';
 import DeveloperEventController from '../encounter/DeveloperEventController.js';
 import { BattleUI, DeveloperUI, HudElements, VillageUI, WorldUI } from './GameUiTypes.js';
 import { BaseSpellId } from '../magic/MagicSystem.js';
+import { CombatMove } from '../combat/DirectionalCombat.js';
 
 type GameUiEventCallbacks = {
     onAttack: () => void;
+    onDirectionalCombatMove: (move: CombatMove) => void;
     onFlee: () => void;
     onWait: () => void;
     onUsePotionFromBattle: () => void;
@@ -74,6 +76,9 @@ export default class GameUiEventBinder {
 
     private bindBattleEvents(): void {
         this.battleUI.attackBtn.addEventListener('click', () => this.callbacks.onAttack());
+        Object.entries(this.battleUI.directionalButtons).forEach(([move, button]) => {
+            button.addEventListener('click', () => this.callbacks.onDirectionalCombatMove(move as CombatMove));
+        });
         this.battleUI.fleeBtn.addEventListener('click', () => this.callbacks.onFlee());
         this.battleUI.waitBtn.addEventListener('click', () => this.callbacks.onWait());
         this.battleUI.usePotionBtn.addEventListener('click', () => this.callbacks.onUsePotionFromBattle());

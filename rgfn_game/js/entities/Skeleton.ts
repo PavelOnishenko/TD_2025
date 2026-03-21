@@ -4,6 +4,7 @@ import { balanceConfig } from '../config/balanceConfig.js';
 import { theme } from '../config/ThemeConfig.js';
 import { cloneBaseStats, deriveCreatureStats, normalizeCreatureSkills } from '../config/creatureStats.js';
 import { CreatureBaseStats, CreatureSkill, CreatureSkills } from '../config/creatureTypes.js';
+import { CombatBuffSnapshot, CombatStatusState } from '../systems/combat/DirectionalCombat.js';
 
 export interface EnemyBehavior {
     avoidHitChance?: number;
@@ -61,6 +62,8 @@ export default class Skeleton extends DamageableEntity {
     private cursedArmorReduction: number = 0;
     private curseTurns: number = 0;
     private slowTurns: number = 0;
+    private blockAdvantage: boolean = false;
+    private successfulDodgeMultiplier: number | null = null;
 
     constructor(x: number, y: number, enemyConfig?: EnemyConfig) {
         super(x, y);
@@ -126,6 +129,62 @@ export default class Skeleton extends DamageableEntity {
 
     public shouldSkipTurnFromSlow(): boolean {
         return this.slowTurns > 0;
+    }
+
+    public getDirectionalCombatBuffSnapshot(): CombatBuffSnapshot {
+        return {
+            hasBlockAdvantage: this.blockAdvantage,
+            hasSuccessfulDodgeMultiplier: this.successfulDodgeMultiplier !== null,
+            successfulDodgeMultiplier: this.successfulDodgeMultiplier ?? 1,
+        };
+    }
+
+    public applyDirectionalCombatRewards(rewards: CombatStatusState): string[] {
+        const events: string[] = [];
+
+        if (rewards.blockAdvantage) {
+            this.blockAdvantage = true;
+            events.push(`${this.name} gains Block Advantage for the next turn. If the next turn is not an attack, it expires.`);
+        }
+
+        if (rewards.successfulDodgeMultiplier !== null) {
+            this.successfulDodgeMultiplier = rewards.successfulDodgeMultiplier;
+            events.push(`${this.name} gains a successful dodge damage multiplier for the next attack (x${rewards.successfulDodgeMultiplier.toFixed(2)}).`);
+        }
+
+        return events;
+    }
+
+    public consumeDirectionalAttackBonuses(): string[] {
+        const events: string[] = [];
+
+        if (this.blockAdvantage) {
+            this.blockAdvantage = false;
+            events.push(`${this.name}'s Block Advantage is consumed by this attack.`);
+        }
+
+        if (this.successfulDodgeMultiplier !== null) {
+            this.successfulDodgeMultiplier = null;
+            events.push(`${this.name}'s successful dodge damage multiplier is consumed by this attack.`);
+        }
+
+        return events;
+    }
+
+    public expireDirectionalBonusesWithoutAttack(): string[] {
+        const events: string[] = [];
+
+        if (this.blockAdvantage) {
+            this.blockAdvantage = false;
+            events.push(`${this.name}'s Block Advantage expires because no attack was used this turn.`);
+        }
+
+        if (this.successfulDodgeMultiplier !== null) {
+            this.successfulDodgeMultiplier = null;
+            events.push(`${this.name}'s successful dodge damage multiplier expires because no attack was used this turn.`);
+        }
+
+        return events;
     }
 
     public consumeTurnEffects(): string[] {

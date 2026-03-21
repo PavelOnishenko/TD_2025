@@ -1,5 +1,6 @@
 import { BattleUI, DeveloperUI, GameLogUI, GameUiBundle, HudElements, VillageUI, WorldUI } from './GameUiTypes.js';
 import { balanceConfig } from '../../config/balanceConfig.js';
+import { CombatMove } from '../combat/DirectionalCombat.js';
 
 export default class GameUiFactory {
     public create(): GameUiBundle {
@@ -120,6 +121,14 @@ export default class GameUiFactory {
         const fleeBtn = document.getElementById('flee-btn')! as HTMLButtonElement;
         const fleePercent = Math.round(balanceConfig.combat.fleeChance * 100);
         fleeBtn.textContent = `Flee (${fleePercent}%)`;
+        const directionalButtons = {
+            AttackLeft: document.getElementById('attack-left-btn')! as HTMLButtonElement,
+            AttackCenter: document.getElementById('attack-center-btn')! as HTMLButtonElement,
+            AttackRight: document.getElementById('attack-right-btn')! as HTMLButtonElement,
+            Block: document.getElementById('block-btn')! as HTMLButtonElement,
+            DodgeLeft: document.getElementById('dodge-left-btn')! as HTMLButtonElement,
+            DodgeRight: document.getElementById('dodge-right-btn')! as HTMLButtonElement,
+        } satisfies Record<CombatMove, HTMLButtonElement>;
 
         return {
             sidebar: document.getElementById('battle-sidebar')!,
@@ -127,6 +136,7 @@ export default class GameUiFactory {
             enemyHp: document.getElementById('enemy-hp')!,
             enemyMaxHp: document.getElementById('enemy-max-hp')!,
             attackBtn: document.getElementById('attack-btn')! as HTMLButtonElement,
+            directionalButtons,
             fleeBtn,
             waitBtn: document.getElementById('wait-btn')! as HTMLButtonElement,
             usePotionBtn: document.getElementById('battle-use-potion-btn')! as HTMLButtonElement,

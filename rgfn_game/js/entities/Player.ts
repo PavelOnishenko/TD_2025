@@ -20,6 +20,7 @@ import { createItemById } from './Item.js';
 import PlayerInventory from './PlayerInventory.js';
 import PlayerRenderer from './PlayerRenderer.js';
 import { NextCharacterRollAllocation } from '../utils/NextCharacterRollConfig.js';
+import { CombatBuffSnapshot, CombatStatusState } from '../systems/combat/DirectionalCombat.js';
 
 const DamageableEntity = withDamageable(Entity);
 
@@ -81,6 +82,8 @@ export default class Player extends DamageableEntity {
 
     private rageTurns: number = 0;
     private rageMultiplier: number = 1;
+    private blockAdvantage: boolean = false;
+    private successfulDodgeMultiplier: number | null = null;
 
     private readonly inventorySystem: PlayerInventory;
     private readonly renderer: PlayerRenderer;
@@ -368,6 +371,62 @@ export default class Player extends DamageableEntity {
         return Math.round(this.damage * this.rageMultiplier);
     }
 
+    public getDirectionalCombatBuffSnapshot(): CombatBuffSnapshot {
+        return {
+            hasBlockAdvantage: this.blockAdvantage,
+            hasSuccessfulDodgeMultiplier: this.successfulDodgeMultiplier !== null,
+            successfulDodgeMultiplier: this.successfulDodgeMultiplier ?? 1,
+        };
+    }
+
+    public applyDirectionalCombatRewards(rewards: CombatStatusState): string[] {
+        const events: string[] = [];
+
+        if (rewards.blockAdvantage) {
+            this.blockAdvantage = true;
+            events.push(`${this.name} gains Block Advantage for the next turn. If the next turn is not an attack, it expires.`);
+        }
+
+        if (rewards.successfulDodgeMultiplier !== null) {
+            this.successfulDodgeMultiplier = rewards.successfulDodgeMultiplier;
+            events.push(`${this.name} gains a successful dodge damage multiplier for the next attack (x${rewards.successfulDodgeMultiplier.toFixed(2)}).`);
+        }
+
+        return events;
+    }
+
+    public consumeDirectionalAttackBonuses(): string[] {
+        const events: string[] = [];
+
+        if (this.blockAdvantage) {
+            this.blockAdvantage = false;
+            events.push(`${this.name}'s Block Advantage is consumed by this attack.`);
+        }
+
+        if (this.successfulDodgeMultiplier !== null) {
+            this.successfulDodgeMultiplier = null;
+            events.push(`${this.name}'s successful dodge damage multiplier is consumed by this attack.`);
+        }
+
+        return events;
+    }
+
+    public expireDirectionalBonusesWithoutAttack(): string[] {
+        const events: string[] = [];
+
+        if (this.blockAdvantage) {
+            this.blockAdvantage = false;
+            events.push(`${this.name}'s Block Advantage expires because no attack was used this turn.`);
+        }
+
+        if (this.successfulDodgeMultiplier !== null) {
+            this.successfulDodgeMultiplier = null;
+            events.push(`${this.name}'s successful dodge damage multiplier expires because no attack was used this turn.`);
+        }
+
+        return events;
+    }
+
     public getMagicPowerMultiplier(): number {
         return this.rageMultiplier;
     }
@@ -559,6 +618,8 @@ export default class Player extends DamageableEntity {
             armorAbsorbedHp: this.armorAbsorbedHp,
             rageTurns: this.rageTurns,
             rageMultiplier: this.rageMultiplier,
+            blockAdvantage: this.blockAdvantage,
+            successfulDodgeMultiplier: this.successfulDodgeMultiplier,
             inventoryItemIds: inventoryState.inventoryItemIds,
             equippedWeaponId: inventoryState.equippedWeaponId,
             equippedOffhandWeaponId: inventoryState.equippedOffhandWeaponId,
@@ -585,6 +646,8 @@ export default class Player extends DamageableEntity {
         this.armorAbsorbedHp = toNumber(state.armorAbsorbedHp, 0);
         this.rageTurns = toNumber(state.rageTurns, 0);
         this.rageMultiplier = toNumber(state.rageMultiplier, 1);
+        this.blockAdvantage = Boolean(state.blockAdvantage);
+        this.successfulDodgeMultiplier = typeof state.successfulDodgeMultiplier === 'number' ? state.successfulDodgeMultiplier : null;
 
         const inventoryItemIds = Array.isArray(state.inventoryItemIds) ? state.inventoryItemIds.filter((id): id is string => typeof id === 'string') : [];
         const equippedWeaponId = typeof state.equippedWeaponId === 'string' ? state.equippedWeaponId : null;
