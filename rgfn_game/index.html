@@ -29,9 +29,26 @@
             </div>
         </div>
         <div id="game-area">
-            <div class="game-area-row" id="r1">
-                <div class="game-area-cell" id="r1c1">
-                    <div id="stats-panel" class="hud-section stats hidden">
+            <div id="main-view-stage">
+                <div id="world-map-shell">
+                    <canvas id="game-canvas" width="800" height="600"></canvas>
+                    <div id="world-map-controls" aria-label="World map controls">
+                        <div class="world-map-control-group">
+                            <button id="world-map-zoom-in-btn" class="action-btn world-map-control-btn" type="button">Zoom +</button>
+                            <button id="world-map-zoom-out-btn" class="action-btn world-map-control-btn" type="button">Zoom -</button>
+                        </div>
+                        <div class="world-map-control-pad">
+                            <button id="world-map-pan-up-btn" class="action-btn world-map-control-btn" type="button">↑</button>
+                            <div class="world-map-control-pad-row">
+                                <button id="world-map-pan-left-btn" class="action-btn world-map-control-btn" type="button">←</button>
+                                <button id="world-map-pan-right-btn" class="action-btn world-map-control-btn" type="button">→</button>
+                            </div>
+                            <button id="world-map-pan-down-btn" class="action-btn world-map-control-btn" type="button">↓</button>
+                        </div>
+                    </div>
+                </div>
+                <div id="left-overlay-stack" class="overlay-stack">
+                    <div id="stats-panel" class="hud-section stats overlay-panel hidden">
                         <div class="stat">Name: <span id="player-name">-</span></div>
                         <div class="stat">Level: <span id="player-level">1</span></div>
                         <div class="stat">XP: <span id="player-xp">0</span>/<span id="player-xp-next">5</span></div>
@@ -49,7 +66,7 @@
                         </div>
                         <div class="stat">Weapon: <span id="player-weapon">None</span></div>
                     </div>
-                    <div id="skills-panel" class="hud-section stats hidden">
+                    <div id="skills-panel" class="hud-section stats overlay-panel hidden">
                         <div class="stat">Skill Points: <span id="skill-points">0</span></div>
                         <div class="stat-row">
                             <span>Vitality: <span id="stat-vitality">0</span></span>
@@ -95,7 +112,7 @@
                         </div>
                         <button id="save-skills-btn" class="action-btn" type="button">Save</button>
                     </div>
-                    <div id="inventory-panel" class="hud-section stats hidden">
+                    <div id="inventory-panel" class="hud-section stats overlay-panel hidden">
                         <div class="stat">Gold: <span id="player-gold">20</span></div>
                         <div class="stat">Inventory (<span id="inventory-count">0</span>/<span id="inventory-capacity">4</span>)</div>
                         <div id="inventory-capacity-hint" class="stat-detail">4 base slots, +1 slot every 4 STR</div>
@@ -110,7 +127,7 @@
                             <div class="equipment-hint">Click inventory gear to equip. Click equipped slots to unequip. Right-click any inventory item to drop it permanently.</div>
                         </div>
                     </div>
-                    <div id="magic-panel" class="hud-section stats hidden">
+                    <div id="magic-panel" class="hud-section stats overlay-panel hidden">
                         <div class="stat">Magic Points: <span id="magic-panel-points">0</span></div>
                         <div class="stat">Spell Levels</div>
                         <div class="spell-upgrade-row">
@@ -134,15 +151,15 @@
                             <div id="spell-details-arcane-lance" class="spell-details"></div>
                         </div>
                     </div>
-                    <div id="quests-panel" class="hud-section stats hidden">
+                    <div id="quests-panel" class="hud-section stats overlay-panel hidden">
                         <div id="quests-title" class="stat">Main Quest</div>
                         <div id="quests-body" class="quests-body"></div>
                     </div>
-                    <div id="lore-panel" class="hud-section stats hidden">
+                    <div id="lore-panel" class="hud-section stats overlay-panel hidden">
                         <div class="stat">Lore Book</div>
                         <div id="lore-body" class="lore-body"></div>
                     </div>
-                    <div id="selected-panel" class="hud-section stats hidden">
+                    <div id="selected-panel" class="hud-section stats overlay-panel hidden">
                         <div class="stat">Selected Tile</div>
                         <div id="selected-cell-empty" class="stat-detail">Move the mouse over the world map to inspect a cell.</div>
                         <div id="selected-cell-details" class="hidden">
@@ -156,27 +173,8 @@
                         </div>
                     </div>
                 </div>
-                <div class="game-area-cell" id="r1c2">
-                    <div id="world-map-shell">
-                        <canvas id="game-canvas" width="800" height="600"></canvas>
-                        <div id="world-map-controls" aria-label="World map controls">
-                            <div class="world-map-control-group">
-                                <button id="world-map-zoom-in-btn" class="action-btn world-map-control-btn" type="button">Zoom +</button>
-                                <button id="world-map-zoom-out-btn" class="action-btn world-map-control-btn" type="button">Zoom -</button>
-                            </div>
-                            <div class="world-map-control-pad">
-                                <button id="world-map-pan-up-btn" class="action-btn world-map-control-btn" type="button">↑</button>
-                                <div class="world-map-control-pad-row">
-                                    <button id="world-map-pan-left-btn" class="action-btn world-map-control-btn" type="button">←</button>
-                                    <button id="world-map-pan-right-btn" class="action-btn world-map-control-btn" type="button">→</button>
-                                </div>
-                                <button id="world-map-pan-down-btn" class="action-btn world-map-control-btn" type="button">↓</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="game-area-cell" id="r1c3">
-                    <div id="world-sidebar">
+                <div id="right-overlay-stack" class="overlay-stack">
+                    <div id="world-sidebar" class="overlay-panel">
                         <h2>World Map</h2>
                         <div id="world-actions">
                             <p class="world-actions-copy">Prepare for the journey and recenter the map whenever you lose track of your hero.</p>
@@ -186,13 +184,12 @@
                             </div>
                         </div>
                     </div>
-                    <div id="battle-sidebar" class="hidden">
+                    <div id="battle-sidebar" class="overlay-panel hidden">
                         <h2>Combat</h2>
                         <div id="enemy-info">
                             <div class="enemy-stat">Enemy: <span id="enemy-name">-</span></div>
                             <div class="enemy-stat">HP: <span id="enemy-hp">-</span>/<span id="enemy-max-hp">-</span></div>
                         </div>
-                        
                         <p id="attack-range-text">Attack when adjacent (1 tile)</p>
                         <div id="battle-actions">
                             <button id="attack-btn" class="action-btn">Attack</button>
@@ -213,7 +210,7 @@
                             <button id="spell-arcane-lance-btn" class="action-btn">Arcane Lance</button>
                         </div>
                     </div>
-                    <div id="village-sidebar" class="hidden">
+                    <div id="village-sidebar" class="overlay-panel hidden">
                         <h2>Village</h2>
                         <div id="village-prompt">
                             <p>You found a village. Enter?</p>
@@ -244,42 +241,13 @@
                             </div>
                         </div>
                     </div>
-                </div>
-                <div class="game-area-cell" id="r1c4">
-                    <div id="game-log-container">
-                            <h3>Log</h3>
-                            <div id="game-log"></div>
-                        </div>
+                    <div id="game-log-container" class="overlay-panel">
+                        <h3>Log</h3>
+                        <div id="game-log"></div>
+                    </div>
                 </div>
             </div>
-            <div class="game-area-row" id="r2">
-                <div class="game-area-cell" id="r2c1">
-                </div>
-                <div class="game-area-cell" id="r2c2">
-                </div>
-                <div class="game-area-cell" id="r2c3">
-                </div>
-                <div class="game-area-cell" id="r2c4">
-                </div>
-            </div>
-            <div class="game-area-row" id="r3">
-                <div class="game-area-cell" id="r3c1">
-                    
-                </div>
-                <div class="game-area-cell" id="r3c2">
-                    
-                </div>
-                <div class="game-area-cell" id="r3c3">
-                </div>
-                <div class="game-area-cell" id="r3c4">
-                </div>
-            </div>
-
-            
-
-            
         </div>
-
 
         <div id="dev-events-modal" class="dev-events-modal hidden" role="dialog" aria-modal="true" aria-labelledby="dev-events-title">
             <div class="dev-events-panel">
