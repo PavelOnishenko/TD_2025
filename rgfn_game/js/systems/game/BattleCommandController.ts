@@ -8,6 +8,7 @@ import { balanceConfig } from '../../config/balanceConfig.js';
 import MagicSystem, { BaseSpellId } from '../magic/MagicSystem.js';
 import Item, { DISCOVERABLE_ITEM_LIBRARY } from '../../entities/Item.js';
 import Wanderer from '../../entities/Wanderer.js';
+import { CombatMove, getMoveLabel, isAttackMove, resolveDirectionalCombatExchange } from '../combat/DirectionalCombat.js';
 
 
 type BattleCommandCallbacks = {
@@ -70,6 +71,28 @@ export default class BattleCommandController {
         setTimeout(() => this.callbacks.onProcessTurn(), timingConfig.battle.playerActionDelay);
     }
 
+    public handleDirectionalCombatMove(move: CombatMove): void {
+        if (!this.canUseBattleTurnInput()) {
+            return;
+        }
+
+        const enemies = this.turnManager.getActiveEnemies() as Skeleton[];
+        const target = this.resolveDirectionalTarget(enemies);
+        if (!target) {
+            this.callbacks.onAddBattleLog(`You tried to use ${getMoveLabel(move)}, but no adjacent enemy is available for directional melee combat.`, 'system');
+            return;
+        }
+
+        this.callbacks.onEnableBattleButtons(false);
+        this.callbacks.onPlayerTurnTransitionStart();
+        this.turnManager.waitingForPlayer = false;
+
+        this.performDirectionalCombatExchange(move, target);
+        this.callbacks.onUpdateHUD();
+        this.turnManager.nextTurn();
+        setTimeout(() => this.callbacks.onProcessTurn(), timingConfig.battle.playerActionDelay);
+    }
+
     public handleCastSpell(spellId: BaseSpellId): void {
         if (!this.canUseBattleTurnInput()) {
             return;
@@ -92,6 +115,7 @@ export default class BattleCommandController {
         this.callbacks.onEnableBattleButtons(false);
         this.callbacks.onPlayerTurnTransitionStart();
         this.turnManager.waitingForPlayer = false;
+        this.player.expireDirectionalBonusesWithoutAttack().forEach((message) => this.callbacks.onAddBattleLog(message, 'system'));
         this.callbacks.onAddBattleLog(result.message, 'player');
 
         if (target instanceof Skeleton && target.isDead()) {
@@ -116,6 +140,7 @@ export default class BattleCommandController {
         this.callbacks.onEnableBattleButtons(false);
         this.callbacks.onPlayerTurnTransitionStart();
         this.turnManager.waitingForPlayer = false;
+        this.player.expireDirectionalBonusesWithoutAttack().forEach((message) => this.callbacks.onAddBattleLog(message, 'system'));
 
         if (Math.random() < balanceConfig.combat.fleeChance) {
             this.callbacks.onAddBattleLog('You fled from battle!', 'system');
@@ -133,6 +158,7 @@ export default class BattleCommandController {
         this.callbacks.onEnableBattleButtons(false);
         this.callbacks.onPlayerTurnTransitionStart();
         this.turnManager.waitingForPlayer = false;
+        this.player.expireDirectionalBonusesWithoutAttack().forEach((message) => this.callbacks.onAddBattleLog(message, 'system'));
         this.callbacks.onAddBattleLog('You waited.', 'player');
         this.turnManager.nextTurn();
         setTimeout(() => this.callbacks.onProcessTurn(), timingConfig.battle.waitActionDelay);
@@ -155,6 +181,7 @@ export default class BattleCommandController {
 
         if (!inBattle) return;
 
+        this.player.expireDirectionalBonusesWithoutAttack().forEach((message) => this.callbacks.onAddBattleLog(message, 'system'));
         this.callbacks.onEnableBattleButtons(false);
         this.callbacks.onPlayerTurnTransitionStart();
         this.turnManager.waitingForPlayer = false;
@@ -178,6 +205,7 @@ export default class BattleCommandController {
 
         if (!inBattle) return;
 
+        this.player.expireDirectionalBonusesWithoutAttack().forEach((message) => this.callbacks.onAddBattleLog(message, 'system'));
         this.callbacks.onEnableBattleButtons(false);
         this.callbacks.onPlayerTurnTransitionStart();
         this.turnManager.waitingForPlayer = false;
@@ -223,8 +251,16 @@ export default class BattleCommandController {
         return enemies.find((enemy) => this.battleMap.isInAttackRange(this.player, enemy, spellRange)) ?? null;
     }
 
+    private resolveDirectionalTarget(enemies: Skeleton[]): Skeleton | null {
+        const selectedEnemy = this.callbacks.getSelectedEnemy();
+        if (selectedEnemy && !selectedEnemy.isDead() && this.battleMap.isInMeleeRange(this.player, selectedEnemy)) return selectedEnemy;
+        return enemies.find((enemy) => this.battleMap.isInMeleeRange(this.player, enemy)) ?? null;
+    }
+
     private performAttack(target: Skeleton): void {
+        const attackBonusMessages = this.player.consumeDirectionalAttackBonuses();
         this.callbacks.onAddBattleLog('You attack!', 'player');
+        attackBonusMessages.forEach((message) => this.callbacks.onAddBattleLog(message, 'system'));
         if (target.shouldAvoidHit()) {
             this.callbacks.onAddBattleLog(`${target.name} dodges the hit!`, 'enemy');
             return;
@@ -237,6 +273,78 @@ export default class BattleCommandController {
         if (target.isDead()) {
             this.performKillRewards(target);
         }
+    }
+
+    private performDirectionalCombatExchange(playerMove: CombatMove, target: Skeleton): void {
+        const enemyMove = this.rollEnemyDirectionalMove();
+        const exchange = resolveDirectionalCombatExchange({
+            actorName: 'Player',
+            opponentName: target.name,
+            actorMove: playerMove,
+            opponentMove: enemyMove,
+            actorBaseDamage: this.player.getPhysicalDamageWithBuff(),
+            opponentBaseDamage: target.getAttackDamage(),
+            actorBuffs: this.player.getDirectionalCombatBuffSnapshot(),
+            opponentBuffs: target.getDirectionalCombatBuffSnapshot(),
+        });
+
+        this.callbacks.onAddBattleLog(`You commit to ${getMoveLabel(playerMove)}. ${target.name} answers with ${getMoveLabel(enemyMove)}.`, 'player');
+        exchange.summaryLogs.forEach((message) => this.callbacks.onAddBattleLog(message, 'system'));
+        exchange.actor.logs.forEach((message) => this.callbacks.onAddBattleLog(`Player: ${message}`, 'system'));
+        exchange.opponent.logs.forEach((message) => this.callbacks.onAddBattleLog(`${target.name}: ${message}`, 'system'));
+
+        if (exchange.actor.isAttack) {
+            this.player.consumeDirectionalAttackBonuses().forEach((message) => this.callbacks.onAddBattleLog(message, 'system'));
+        } else {
+            this.player.expireDirectionalBonusesWithoutAttack().forEach((message) => this.callbacks.onAddBattleLog(message, 'system'));
+        }
+
+        if (exchange.opponent.isAttack) {
+            target.consumeDirectionalAttackBonuses().forEach((message) => this.callbacks.onAddBattleLog(message, 'system'));
+        } else {
+            target.expireDirectionalBonusesWithoutAttack().forEach((message) => this.callbacks.onAddBattleLog(message, 'system'));
+        }
+
+        this.player.applyDirectionalCombatRewards(exchange.actorRewards).forEach((message) => this.callbacks.onAddBattleLog(message, 'system'));
+        target.applyDirectionalCombatRewards(exchange.opponentRewards).forEach((message) => this.callbacks.onAddBattleLog(message, 'system'));
+
+        if (exchange.actor.damageDealt > 0) {
+            target.takeDamage(exchange.actor.damageDealt);
+            this.callbacks.onAddBattleLog(`${target.name} takes ${exchange.actor.damageDealt} damage from ${getMoveLabel(playerMove)}.`, 'damage');
+        } else if (isAttackMove(playerMove)) {
+            this.callbacks.onAddBattleLog(`Your ${getMoveLabel(playerMove)} deals no damage this turn.`, 'system');
+        }
+
+        if (exchange.opponent.damageDealt > 0) {
+            this.player.takeDamage(exchange.opponent.damageDealt);
+            this.callbacks.onAddBattleLog(`Player takes ${exchange.opponent.damageDealt} damage from ${target.name}'s ${getMoveLabel(enemyMove)}.`, 'damage');
+        } else if (isAttackMove(enemyMove)) {
+            this.callbacks.onAddBattleLog(`${target.name}'s ${getMoveLabel(enemyMove)} fails to deal damage.`, 'system');
+        }
+
+        if (target.isDead()) {
+            this.performKillRewards(target);
+        }
+    }
+
+    private rollEnemyDirectionalMove(): CombatMove {
+        const weightedPool = balanceConfig.combat.enemyDirectionalActionWeights;
+        const entries = Object.entries(weightedPool) as [CombatMove, number][];
+        const totalWeight = entries.reduce((sum, [, weight]) => sum + Math.max(0, weight), 0);
+
+        if (totalWeight <= 0) {
+            return 'AttackCenter';
+        }
+
+        let roll = Math.random() * totalWeight;
+        for (const [move, weight] of entries) {
+            roll -= Math.max(0, weight);
+            if (roll <= 0) {
+                return move;
+            }
+        }
+
+        return 'AttackCenter';
     }
 
     private performKillRewards(target: Skeleton): void {

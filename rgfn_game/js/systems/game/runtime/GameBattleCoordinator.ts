@@ -12,6 +12,7 @@ import BattleTurnController from '../BattleTurnController.js';
 import { BattleUI, HudElements, VillageUI } from '../GameUiTypes.js';
 import { MODES } from './GameModeStateMachine.js';
 import { BaseSpellId } from '../../magic/MagicSystem.js';
+import { CombatMove } from '../../combat/DirectionalCombat.js';
 
 type Callbacks = {
     onClearBattleLog: () => void;
@@ -102,6 +103,13 @@ export default class GameBattleCoordinator {
             return;
         }
         this.controllers.battleCommandController.handleAttack();
+    }
+
+    public handleDirectionalCombatMove(move: CombatMove): void {
+        if (this.turnTransitioning) {
+            return;
+        }
+        this.controllers.battleCommandController.handleDirectionalCombatMove(move);
     }
 
 

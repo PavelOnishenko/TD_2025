@@ -40,6 +40,7 @@ import { QuestNode } from './systems/quest/QuestTypes.js';
 import { TerrainType } from './types/game.js';
 import { consumeNextCharacterRollAllocation } from './utils/NextCharacterRollConfig.js';
 import LoreBookController from './systems/lore/LoreBookController.js';
+import { CombatMove } from './systems/combat/DirectionalCombat.js';
 
 type UIBundle = { hudElements: HudElements; worldUI: WorldUI; battleUI: BattleUI; villageUI: VillageUI; gameLogUI: GameLogUI; developerUI: DeveloperUI };
 
@@ -126,7 +127,7 @@ export default class Game {
         });
         this.villageCoordinator = new GameVillageCoordinator(ui.hudElements, ui.battleUI, ui.villageUI, villageLifeRenderer, villageActionsController);
         this.stateMachine = this.createStateMachine(ui);
-        const battlePlayerActionController = new BattlePlayerActionController(turnManager, battleUiController, {
+        const battlePlayerActionController = new BattlePlayerActionController(turnManager, battleUiController, player, {
             onAddBattleLog: (m: string, t: string = 'system') => this.hudCoordinator.addBattleLog(m, t),
             onEnableBattleButtons: (enabled: boolean) => this.hudCoordinator.enableBattleButtons(enabled),
             onProcessTurn: () => this.battleCoordinator.processTurn(),
@@ -250,7 +251,9 @@ export default class Game {
             setMapDisplayConfig: (config) => this.worldMap.setMapDisplayConfig(config),
         });
         new GameUiEventBinder(this.canvas, ui.hudElements, ui.worldUI, ui.battleUI, ui.villageUI, ui.developerUI, villageActionsController, devController, {
-            onAttack: () => this.battleCoordinator.handleAttack(), onFlee: () => this.battleCoordinator.handleFlee(),
+            onAttack: () => this.battleCoordinator.handleAttack(),
+            onDirectionalCombatMove: (move: CombatMove) => this.battleCoordinator.handleDirectionalCombatMove(move),
+            onFlee: () => this.battleCoordinator.handleFlee(),
             onWait: () => this.battleCoordinator.handleWait(), onUsePotionFromBattle: () => this.battleCoordinator.handleUsePotion(true),
             onUseManaPotionFromBattle: () => this.battleCoordinator.handleUseManaPotion(true),
             onUsePotionFromHud: () => this.battleCoordinator.handleUsePotion(false),

@@ -3,6 +3,7 @@ import BattleUiController from '../BattleUiController.js';
 import Skeleton from '../../entities/Skeleton.js';
 import timingConfig from '../../config/timingConfig.js';
 import { Direction } from '../../types/game.js';
+import Player from '../../entities/Player.js';
 
 type BattlePlayerActionCallbacks = {
     onAddBattleLog: (message: string, type?: string) => void;
@@ -14,12 +15,14 @@ type BattlePlayerActionCallbacks = {
 export default class BattlePlayerActionController {
     private turnManager: TurnManager;
     private battleUiController: BattleUiController;
+    private player: Player;
     private callbacks: BattlePlayerActionCallbacks;
     private selectedEnemy: Skeleton | null;
 
-    constructor(turnManager: TurnManager, battleUiController: BattleUiController, callbacks: BattlePlayerActionCallbacks) {
+    constructor(turnManager: TurnManager, battleUiController: BattleUiController, player: Player, callbacks: BattlePlayerActionCallbacks) {
         this.turnManager = turnManager;
         this.battleUiController = battleUiController;
+        this.player = player;
         this.callbacks = callbacks;
         this.selectedEnemy = null;
     }
@@ -54,6 +57,7 @@ export default class BattlePlayerActionController {
         }
 
         this.callbacks.onAddBattleLog('You moved.', 'player');
+        this.player.expireDirectionalBonusesWithoutAttack().forEach((message) => this.callbacks.onAddBattleLog(message, 'system'));
         this.callbacks.onPlayerTurnTransitionStart();
         this.turnManager.waitingForPlayer = false;
         this.turnManager.nextTurn();

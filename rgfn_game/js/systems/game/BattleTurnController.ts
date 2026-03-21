@@ -96,6 +96,7 @@ export default class BattleTurnController {
     private performEnemyAttack(enemy: Skeleton): void {
         const caster = enemy as Skeleton & { canUseMagic?: () => boolean; getMagicManaCost?: () => number; getMagicDamage?: () => number; spendMana?: (amount: number) => void };
         if (caster.canUseMagic && caster.canUseMagic() && Math.random() < 0.35) {
+            enemy.expireDirectionalBonusesWithoutAttack().forEach((message) => this.callbacks.onAddBattleLog(message, 'system'));
             const magicDamage = caster.getMagicDamage ? caster.getMagicDamage() : enemy.damage;
             const manaCost = caster.getMagicManaCost ? caster.getMagicManaCost() : 0;
             if (caster.spendMana) {
@@ -108,6 +109,7 @@ export default class BattleTurnController {
         }
 
         this.callbacks.onAddBattleLog(`${enemy.name} attacks!`, 'enemy');
+        enemy.consumeDirectionalAttackBonuses().forEach((message) => this.callbacks.onAddBattleLog(message, 'system'));
         if (Math.random() < this.player.avoidChance) {
             this.callbacks.onAddBattleLog('You swiftly evade the hit!', 'system');
             return;

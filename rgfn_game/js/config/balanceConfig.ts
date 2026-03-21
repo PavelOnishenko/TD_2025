@@ -255,6 +255,19 @@ export const balanceConfig = {
         // Unarmed combat defaults
         fistDamagePerHand: 1,
 
+        // Directional melee combat
+        adjacentAttackDamagePenalty: 0.6,
+        blockDamageReduction: 0.5,
+        successfulDodgeDamageMultiplier: 1.5,
+        enemyDirectionalActionWeights: {
+            AttackLeft: 2,
+            AttackCenter: 3,
+            AttackRight: 2,
+            Block: 2,
+            DodgeLeft: 1,
+            DodgeRight: 1,
+        },
+
         // Spell targeting ranges (in battle map tiles)
         spellRanges: {
             slow: 4,

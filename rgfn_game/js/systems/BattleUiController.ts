@@ -5,12 +5,14 @@ import Skeleton from '../entities/Skeleton.js';
 import { Direction } from '../types/game.js';
 import MagicSystem from './magic/MagicSystem.js';
 import { balanceConfig } from '../config/balanceConfig.js';
+import { CombatMove } from './combat/DirectionalCombat.js';
 
 type BattleUI = {
     enemyName: HTMLElement;
     enemyHp: HTMLElement;
     enemyMaxHp: HTMLElement;
     attackBtn: HTMLButtonElement;
+    directionalButtons: Record<CombatMove, HTMLButtonElement>;
     fleeBtn: HTMLButtonElement;
     waitBtn: HTMLButtonElement;
     usePotionBtn: HTMLButtonElement;
@@ -108,6 +110,9 @@ export default class BattleUiController {
     public setButtonsEnabled(enabled: boolean): void {
         this.refreshActionAvailability();
         this.battleUI.attackBtn.disabled = !enabled;
+        Object.values(this.battleUI.directionalButtons).forEach((button) => {
+            button.disabled = !enabled;
+        });
         this.battleUI.fleeBtn.disabled = !enabled || !this.battleMap.isEntityOnEdge(this.player);
         this.battleUI.waitBtn.disabled = !enabled;
         this.battleUI.usePotionBtn.disabled = !enabled;
@@ -121,6 +126,8 @@ export default class BattleUiController {
 
     public refreshActionAvailability(): void {
         const hasAttackTarget = this.hasEnemyInAttackRange();
+        const hasDirectionalTarget = this.hasEnemyInDirectionalRange();
+        const directionalVisible = hasDirectionalTarget && this.player.getAttackRange() === 1;
         const canFlee = this.battleMap.isEntityOnEdge(this.player);
         const hasHealingPotion = this.player.getHealingPotionCount() > 0;
         const hasManaPotion = this.player.getManaPotionCount() > 0;
@@ -129,7 +136,8 @@ export default class BattleUiController {
         const hasEnemySpellTarget = hasAttackTarget;
         const hasEnemySlowTarget = this.hasEnemyInSpellRange('slow');
 
-        this.setActionVisible(this.battleUI.attackBtn, hasAttackTarget);
+        this.setActionVisible(this.battleUI.attackBtn, hasAttackTarget && !directionalVisible);
+        Object.values(this.battleUI.directionalButtons).forEach((button) => this.setActionVisible(button, directionalVisible));
         this.setActionVisible(this.battleUI.fleeBtn, canFlee);
         this.setActionVisible(this.battleUI.waitBtn, true);
         this.setActionVisible(this.battleUI.usePotionBtn, hasHealingPotion);
@@ -183,6 +191,11 @@ export default class BattleUiController {
         const attackRange = this.player.getAttackRange();
         const enemies = this.turnManager.getActiveEnemies() as Skeleton[];
         return enemies.some((enemy) => this.battleMap.isInAttackRange(this.player, enemy, attackRange));
+    }
+
+    private hasEnemyInDirectionalRange(): boolean {
+        const enemies = this.turnManager.getActiveEnemies() as Skeleton[];
+        return enemies.some((enemy) => this.battleMap.isInMeleeRange(this.player, enemy));
     }
 
     private hasEnemyInSpellRange(spellId: 'fireball' | 'curse' | 'slow' | 'arcane-lance'): boolean {
