@@ -89,6 +89,7 @@ export default class BattleCommandController {
 
         this.performDirectionalCombatExchange(move, target);
         this.callbacks.onUpdateHUD();
+        this.turnManager.consumeUpcomingTurn(target);
         this.turnManager.nextTurn();
         setTimeout(() => this.callbacks.onProcessTurn(), timingConfig.battle.playerActionDelay);
     }

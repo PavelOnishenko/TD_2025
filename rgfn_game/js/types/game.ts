@@ -88,6 +88,7 @@ export interface TimingConfig {
 }
 
 export interface CombatEntity {
+    id: number;
     x: number;
     y: number;
     hp: number;

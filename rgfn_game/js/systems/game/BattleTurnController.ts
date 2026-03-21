@@ -38,6 +38,13 @@ export default class BattleTurnController {
             return;
         }
 
+        if (this.turnManager.shouldSkipCurrentTurn()) {
+            this.turnManager.clearCurrentTurnConsumption();
+            this.turnManager.nextTurn();
+            setTimeout(() => this.processTurn(), timingConfig.battle.enemyTurnDelay);
+            return;
+        }
+
         if (this.turnManager.isPlayerTurn()) {
             const playerEffectMessages = this.player.consumePlayerTurnEffects();
             playerEffectMessages.forEach((message) => this.callbacks.onAddBattleLog(message, 'system'));
