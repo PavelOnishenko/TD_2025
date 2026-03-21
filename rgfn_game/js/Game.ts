@@ -130,7 +130,7 @@ export default class Game {
             onUpdateHUD: () => this.hudCoordinator.updateHUD(),
             onLeaveVillage: () => this.stateMachine.transition(MODES.WORLD_MAP),
         });
-        this.villageCoordinator = new GameVillageCoordinator(ui.hudElements, ui.battleUI, ui.villageUI, villageLifeRenderer, villageActionsController);
+        this.villageCoordinator = new GameVillageCoordinator(ui.hudElements, ui.battleUI, ui.villageUI, ui.worldUI, villageLifeRenderer, villageActionsController);
         this.stateMachine = this.createStateMachine(ui);
         const battlePlayerActionController = new BattlePlayerActionController(turnManager, battleUiController, player, {
             onAddBattleLog: (m: string, t: string = 'system') => this.hudCoordinator.addBattleLog(m, t),
@@ -157,7 +157,7 @@ export default class Game {
             onPlayerTurnReady: () => this.battleCoordinator.onPlayerTurnReady(),
         });
         this.battleCoordinator = new GameBattleCoordinator(this.input, this.stateMachine, {
-            player, battleMap, turnManager, battleSplash: new BattleSplash(), hudElements: ui.hudElements, battleUI: ui.battleUI, villageUI: ui.villageUI,
+            player, battleMap, turnManager, battleSplash: new BattleSplash(), hudElements: ui.hudElements, battleUI: ui.battleUI, villageUI: ui.villageUI, worldUI: ui.worldUI,
         }, { battlePlayerActionController, battleCommandController, battleTurnController }, {
             onClearBattleLog: () => this.hudCoordinator.clearBattleLog(),
             onAddBattleLog: (m: string, t: string = 'system') => this.hudCoordinator.addBattleLog(m, t),

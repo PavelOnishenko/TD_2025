@@ -9,7 +9,7 @@ import Player from '../../../entities/Player.js';
 import BattlePlayerActionController from '../BattlePlayerActionController.js';
 import BattleCommandController from '../BattleCommandController.js';
 import BattleTurnController from '../BattleTurnController.js';
-import { BattleUI, HudElements, VillageUI } from '../GameUiTypes.js';
+import { BattleUI, HudElements, VillageUI, WorldUI } from '../GameUiTypes.js';
 import { MODES } from './GameModeStateMachine.js';
 import { BaseSpellId } from '../../magic/MagicSystem.js';
 import { CombatMove } from '../../combat/DirectionalCombat.js';
@@ -38,6 +38,7 @@ export default class GameBattleCoordinator {
     private readonly hudElements: HudElements;
     private readonly battleUI: BattleUI;
     private readonly villageUI: VillageUI;
+    private readonly worldUI: WorldUI;
     private readonly callbacks: Callbacks;
     private readonly controllers: Controllers;
     private turnTransitioning = false;
@@ -55,6 +56,7 @@ export default class GameBattleCoordinator {
             hudElements: HudElements;
             battleUI: BattleUI;
             villageUI: VillageUI;
+            worldUI: WorldUI;
         },
         controllers: Controllers,
         callbacks: Callbacks,
@@ -68,12 +70,14 @@ export default class GameBattleCoordinator {
         this.hudElements = deps.hudElements;
         this.battleUI = deps.battleUI;
         this.villageUI = deps.villageUI;
+        this.worldUI = deps.worldUI;
         this.controllers = controllers;
         this.callbacks = callbacks;
     }
 
     public enterBattleMode(enemies: Skeleton[], terrainType: TerrainType = 'grass'): void {
         this.hudElements.modeIndicator.textContent = 'Battle!';
+        this.worldUI.sidebar.classList.add('hidden');
         this.battleUI.sidebar.classList.remove('hidden');
         this.villageUI.sidebar.classList.add('hidden');
         this.controllers.battleCommandController.clearPendingLoot();
