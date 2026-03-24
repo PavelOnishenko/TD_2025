@@ -1,4 +1,5 @@
 import Game from './Game.js';
+import { initializeGameRandomProvider } from './utils/RandomProvider.js';
 
 window.addEventListener('load', (): void => {
     const canvas = document.getElementById('game-canvas') as HTMLCanvasElement;
@@ -8,6 +9,8 @@ window.addEventListener('load', (): void => {
         return;
     }
 
+
+    initializeGameRandomProvider();
 
     // Create and start game
     const game = new Game(canvas);

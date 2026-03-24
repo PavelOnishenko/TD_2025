@@ -54,6 +54,11 @@ function createDeveloperUi() {
       connection: createInput(),
       intelligence: createInput(),
     },
+    randomModeSelect: { value: 'true' },
+    randomSeedInput: { value: 'rgfn-default-seed', disabled: false },
+    randomSummary: { textContent: '' },
+    randomStatus: { textContent: '', classList: createClassList() },
+    randomApplyBtn: {},
     everythingDiscoveredToggle: { checked: false },
     fogOfWarToggle: { checked: true },
   };
@@ -120,4 +125,22 @@ test('DeveloperEventController syncs and updates map display toggles from the de
     '[DEV] Everything discovered enabled.',
     '[DEV] Fog of war disabled.',
   ]);
+});
+
+
+test('DeveloperEventController applies pseudo-random settings from the dev console', () => {
+  const logs = [];
+  const encounterSystem = new EncounterSystem(1);
+  const developerUI = createDeveloperUi();
+  const controller = createController(logs, encounterSystem, developerUI);
+
+  developerUI.randomModeSelect.value = 'pseudo';
+  developerUI.randomSeedInput.value = 'repeatable-run';
+  controller.handleRandomSettingsApply();
+
+  assert.equal(developerUI.randomSeedInput.disabled, false);
+  assert.match(developerUI.randomSummary.textContent, /pseudo random/i);
+  assert.match(developerUI.randomSummary.textContent, /repeatable-run/);
+  assert.match(developerUI.randomStatus.textContent, /Use New Character to replay/i);
+  assert.equal(logs.at(-1), '[DEV] Random provider set to pseudo random (seed: repeatable-run).');
 });

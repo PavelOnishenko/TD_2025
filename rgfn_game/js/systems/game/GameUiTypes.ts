@@ -163,6 +163,11 @@ export type DeveloperUI = {
     nextRollSaveBtn: HTMLButtonElement;
     nextRollClearBtn: HTMLButtonElement;
     nextRollInputs: Record<'vitality' | 'toughness' | 'strength' | 'agility' | 'connection' | 'intelligence', HTMLInputElement>;
+    randomModeSelect: HTMLSelectElement;
+    randomSeedInput: HTMLInputElement;
+    randomSummary: HTMLElement;
+    randomStatus: HTMLElement;
+    randomApplyBtn: HTMLButtonElement;
     everythingDiscoveredToggle: HTMLInputElement;
     fogOfWarToggle: HTMLInputElement;
 };
