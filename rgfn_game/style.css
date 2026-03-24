@@ -761,7 +761,8 @@ h1 {
     margin: 0;
 }
 
-#dev-event-type {
+#dev-event-type,
+#dev-random-mode {
     padding: 7px 10px;
     border-radius: 4px;
     border: 1px solid var(--color-secondary-accent);
@@ -830,6 +831,15 @@ h1 {
     border: 1px solid var(--color-secondary-accent);
     background: var(--color-panel-highlight);
     color: var(--color-text-primary);
+}
+
+.dev-random-grid {
+    grid-template-columns: 1fr minmax(0, 180px);
+}
+
+.dev-random-grid input:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
 }
 
 .dev-roll-footer {

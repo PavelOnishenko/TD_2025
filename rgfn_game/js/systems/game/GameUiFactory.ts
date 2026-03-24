@@ -236,6 +236,11 @@ export default class GameUiFactory {
                 connection: document.getElementById('dev-next-roll-connection')! as HTMLInputElement,
                 intelligence: document.getElementById('dev-next-roll-intelligence')! as HTMLInputElement,
             },
+            randomModeSelect: document.getElementById('dev-random-mode')! as HTMLSelectElement,
+            randomSeedInput: document.getElementById('dev-random-seed')! as HTMLInputElement,
+            randomSummary: document.getElementById('dev-random-summary')!,
+            randomStatus: document.getElementById('dev-random-status')!,
+            randomApplyBtn: document.getElementById('dev-random-apply-btn')! as HTMLButtonElement,
             everythingDiscoveredToggle: document.getElementById('dev-map-display-everything-discovered')! as HTMLInputElement,
             fogOfWarToggle: document.getElementById('dev-map-display-fog-of-war')! as HTMLInputElement,
         };

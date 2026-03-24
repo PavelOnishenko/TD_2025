@@ -130,6 +130,9 @@ export default class GameUiEventBinder {
         this.developerUI.nextRollCloseBtn.addEventListener('click', () => this.developerEventController.toggleNextCharacterRollModal(false));
         this.developerUI.nextRollSaveBtn.addEventListener('click', () => this.developerEventController.handleNextCharacterRollSave());
         this.developerUI.nextRollClearBtn.addEventListener('click', () => this.developerEventController.handleNextCharacterRollClear());
+        this.developerUI.randomModeSelect.addEventListener('change', () => this.developerEventController.handleRandomSettingsInputChanged());
+        this.developerUI.randomSeedInput.addEventListener('input', () => this.developerEventController.handleRandomSettingsInputChanged());
+        this.developerUI.randomApplyBtn.addEventListener('click', () => this.developerEventController.handleRandomSettingsApply());
         this.developerUI.everythingDiscoveredToggle.addEventListener('change', () => this.developerEventController.handleMapDisplayToggle('everythingDiscovered', this.developerUI.everythingDiscoveredToggle.checked));
         this.developerUI.fogOfWarToggle.addEventListener('change', () => this.developerEventController.handleMapDisplayToggle('fogOfWar', this.developerUI.fogOfWarToggle.checked));
         Object.values(this.developerUI.nextRollInputs).forEach((input) => {

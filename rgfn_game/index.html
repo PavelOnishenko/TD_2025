@@ -296,6 +296,25 @@
                     <button id="dev-next-roll-open-btn" class="action-btn" type="button">Setup Next Roll</button>
                 </div>
                 <div class="dev-events-queue-wrap">
+                    <h3>Random provider</h3>
+                    <p id="dev-random-summary" class="dev-events-hint dev-events-hint-tight">Random provider: true random.</p>
+                    <div class="dev-roll-grid dev-random-grid">
+                        <label for="dev-random-mode">Mode</label>
+                        <select id="dev-random-mode">
+                            <option value="true">True random</option>
+                            <option value="pseudo">Pseudo random</option>
+                        </select>
+                        <label for="dev-random-seed">Pseudo seed</label>
+                        <input id="dev-random-seed" type="text" value="rgfn-default-seed" placeholder="Enter deterministic seed">
+                    </div>
+                    <div class="dev-roll-footer">
+                        <div id="dev-random-status" class="dev-events-hint">Choose true random for a fresh runtime seed, or pseudo random to replay identical rolls from the same seed.</div>
+                    </div>
+                    <div class="dev-roll-actions">
+                        <button id="dev-random-apply-btn" class="action-btn" type="button">Apply Random Settings</button>
+                    </div>
+                </div>
+                <div class="dev-events-queue-wrap">
                     <h3>Map display</h3>
                     <p class="dev-events-hint dev-events-hint-tight">Current gameplay defaults are <strong>Everything discovered = false</strong> and <strong>Fog of war = true</strong>.</p>
                     <div class="dev-events-toggle-grid dev-events-toggle-grid-single">
