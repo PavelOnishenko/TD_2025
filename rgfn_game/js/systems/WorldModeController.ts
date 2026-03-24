@@ -42,7 +42,7 @@ export default class WorldModeController {
 
     public enterWorldMode(hudModeIndicator: HTMLElement, worldSidebar: HTMLElement, battleSidebar: HTMLElement, villageSidebar: HTMLElement): void {
         hudModeIndicator.textContent = 'World Map';
-        worldSidebar.classList.remove('hidden');
+        worldSidebar.classList.add('hidden');
         battleSidebar.classList.add('hidden');
         villageSidebar.classList.add('hidden');
 

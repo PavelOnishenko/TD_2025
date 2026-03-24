@@ -78,6 +78,8 @@ export type HudElements = {
     questsPanel: HTMLElement;
     selectedPanel: HTMLElement;
     lorePanel: HTMLElement;
+    worldMapPanel: HTMLElement;
+    logPanel: HTMLElement;
     questsTitle: HTMLElement;
     questsBody: HTMLElement;
     loreBody: HTMLElement;
@@ -97,6 +99,8 @@ export type HudElements = {
     toggleQuestsPanelBtn: HTMLButtonElement;
     toggleLorePanelBtn: HTMLButtonElement;
     toggleSelectedPanelBtn: HTMLButtonElement;
+    toggleWorldMapPanelBtn: HTMLButtonElement;
+    toggleLogPanelBtn: HTMLButtonElement;
     questIntroModal: HTMLElement;
     questIntroBody: HTMLElement;
     questIntroCloseBtn: HTMLButtonElement;
