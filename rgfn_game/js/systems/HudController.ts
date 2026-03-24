@@ -78,6 +78,8 @@ type HudElements = {
     questsPanel: HTMLElement;
     selectedPanel: HTMLElement;
     lorePanel: HTMLElement;
+    worldMapPanel: HTMLElement;
+    logPanel: HTMLElement;
     questsBody: HTMLElement;
     loreBody: HTMLElement;
     selectedCellEmpty: HTMLElement;
@@ -96,10 +98,12 @@ type HudElements = {
     toggleQuestsPanelBtn: HTMLButtonElement;
     toggleLorePanelBtn: HTMLButtonElement;
     toggleSelectedPanelBtn: HTMLButtonElement;
+    toggleWorldMapPanelBtn: HTMLButtonElement;
+    toggleLogPanelBtn: HTMLButtonElement;
 };
 
 
-type HudPanel = 'stats' | 'skills' | 'inventory' | 'magic' | 'quests' | 'lore' | 'selected';
+type HudPanel = 'stats' | 'skills' | 'inventory' | 'magic' | 'quests' | 'lore' | 'selected' | 'worldMap' | 'log';
 
 type BattleUiHudElements = {
     usePotionBtn: HTMLButtonElement;
@@ -208,6 +212,8 @@ export default class HudController {
             quests: this.hudElements.questsPanel,
             lore: this.hudElements.lorePanel,
             selected: this.hudElements.selectedPanel,
+            worldMap: this.hudElements.worldMapPanel,
+            log: this.hudElements.logPanel,
         };
 
         panelMap[panel].classList.toggle('hidden');
@@ -574,6 +580,8 @@ export default class HudController {
         this.hudElements.toggleQuestsPanelBtn.classList.toggle('active', !this.hudElements.questsPanel.classList.contains('hidden'));
         this.hudElements.toggleLorePanelBtn.classList.toggle('active', !this.hudElements.lorePanel.classList.contains('hidden'));
         this.hudElements.toggleSelectedPanelBtn.classList.toggle('active', !this.hudElements.selectedPanel.classList.contains('hidden'));
+        this.hudElements.toggleWorldMapPanelBtn.classList.toggle('active', !this.hudElements.worldMapPanel.classList.contains('hidden'));
+        this.hudElements.toggleLogPanelBtn.classList.toggle('active', !this.hudElements.logPanel.classList.contains('hidden'));
     }
 
     private updateSpellButtons(): void {

@@ -22,6 +22,8 @@
                     <button id="toggle-quests-panel-btn" class="action-btn" type="button">Quests</button>
                     <button id="toggle-lore-panel-btn" class="action-btn" type="button">Lore</button>
                     <button id="toggle-selected-panel-btn" class="action-btn" type="button">Selected</button>
+                    <button id="toggle-world-map-panel-btn" class="action-btn" type="button">World Map</button>
+                    <button id="toggle-log-panel-btn" class="action-btn" type="button">Log</button>
                 </div>
                 <button id="use-potion-btn" class="action-btn">Use HP Potion</button>
                 <button id="use-mana-potion-btn" class="action-btn">Use Mana Potion</button>
@@ -172,9 +174,7 @@
                             <div class="stat">Village Status: <span id="selected-cell-village-status">-</span></div>
                         </div>
                     </div>
-                </div>
-                <div id="right-overlay-stack" class="overlay-stack">
-                    <div id="world-sidebar" class="overlay-panel">
+                    <div id="world-sidebar" class="overlay-panel hidden">
                         <h2>World Map</h2>
                         <div id="world-actions">
                             <p class="world-actions-copy">Prepare for the journey and recenter the map whenever you lose track of your hero.</p>
@@ -184,6 +184,12 @@
                             </div>
                         </div>
                     </div>
+                    <div id="game-log-container" class="overlay-panel hidden">
+                        <h3>Log</h3>
+                        <div id="game-log"></div>
+                    </div>
+                </div>
+                <div id="right-overlay-stack" class="overlay-stack">
                     <div id="battle-sidebar" class="overlay-panel hidden">
                         <h2>Combat</h2>
                         <div id="enemy-info">
@@ -240,10 +246,6 @@
                                 <button id="village-leave-btn" class="action-btn">Leave</button>
                             </div>
                         </div>
-                    </div>
-                    <div id="game-log-container" class="overlay-panel">
-                        <h3>Log</h3>
-                        <div id="game-log"></div>
                     </div>
                 </div>
             </div>

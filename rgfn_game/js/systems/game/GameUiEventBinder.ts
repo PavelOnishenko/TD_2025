@@ -27,7 +27,7 @@ type GameUiEventCallbacks = {
     onWorldMapPan: (direction: 'up' | 'down' | 'left' | 'right') => void;
     onCenterWorldMapOnPlayer: () => void;
     onUsePotionFromWorld: () => void;
-    onTogglePanel: (panel: 'stats' | 'skills' | 'inventory' | 'magic' | 'quests' | 'lore' | 'selected') => void;
+    onTogglePanel: (panel: 'stats' | 'skills' | 'inventory' | 'magic' | 'quests' | 'lore' | 'selected' | 'worldMap' | 'log') => void;
 };
 
 export default class GameUiEventBinder {
@@ -106,6 +106,8 @@ export default class GameUiEventBinder {
         this.hudElements.toggleQuestsPanelBtn.addEventListener('click', () => this.callbacks.onTogglePanel('quests'));
         this.hudElements.toggleLorePanelBtn.addEventListener('click', () => this.callbacks.onTogglePanel('lore'));
         this.hudElements.toggleSelectedPanelBtn.addEventListener('click', () => this.callbacks.onTogglePanel('selected'));
+        this.hudElements.toggleWorldMapPanelBtn.addEventListener('click', () => this.callbacks.onTogglePanel('worldMap'));
+        this.hudElements.toggleLogPanelBtn.addEventListener('click', () => this.callbacks.onTogglePanel('log'));
     }
 
     private bindVillageEvents(villageNameProvider: () => string): void {
