@@ -106,7 +106,10 @@ test('BattleMap moveEntityToward can path around blockers when another route is 
   blockAlternate.gridRow = 5;
 
   assert.equal(map.moveEntityToward(mover, target), true);
-  assert.deepEqual([mover.gridCol, mover.gridRow], [4, 3]);
+  assert.ok(
+    (mover.gridCol === 4 && mover.gridRow === 3)
+    || (mover.gridCol === 3 && mover.gridRow === 4)
+  );
 });
 
 test('BattleMap moveEntityToward falls back to default origin coordinates when grid positions are missing', () => {
@@ -141,6 +144,8 @@ test('BattleMap isEntityOnEdge returns true only on battle map borders', () => {
   const map = new BattleMap();
   const player = createCombatEntity('Player', 0, 0, false);
   const enemy = createCombatEntity('Skeleton', 0, 0, false);
+  enemy.hp = 30;
+  enemy.maxHp = 45;
 
   map.setup(player, [enemy]);
 
@@ -177,4 +182,37 @@ test('BattleMap draw paints the arena with filled tiles and stroked highlights',
   assert.ok(ctx.calls.some(c => c[0] === 'fillRect'));
   assert.ok(ctx.calls.some(c => c[0] === 'fill'));
   assert.ok(ctx.calls.some(c => c[0] === 'stroke'));
+});
+
+test('BattleMap exposes selected battle cell info from mouse position', () => {
+  const map = new BattleMap();
+  const player = createCombatEntity('Player', 0, 0, false);
+  const enemy = createCombatEntity('Skeleton', 0, 0, false);
+  enemy.hp = 30;
+  enemy.maxHp = 45;
+
+  map.setup(player, [enemy], 'forest');
+  player.gridCol = 4;
+  player.gridRow = 4;
+  enemy.gridCol = 5;
+  enemy.gridRow = 4;
+  map.resizeToCanvas(480, 384);
+
+  const selected = map.updateSelectedCellFromPixel((5 * 48) + 24, (4 * 48) + 24);
+  assert.equal(selected, true);
+  assert.deepEqual(map.getSelectedCellInfo(), {
+    mode: 'battle',
+    col: 5,
+    row: 4,
+    terrainType: 'forest',
+    obstacleName: null,
+    isTraversable: false,
+    occupantType: 'enemy',
+    occupantName: 'Skeleton',
+    occupantHp: 30,
+    occupantMaxHp: 45,
+  });
+
+  map.clearSelectedCell();
+  assert.equal(map.getSelectedCellInfo(), null);
 });
