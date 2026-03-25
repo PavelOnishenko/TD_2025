@@ -1,5 +1,21 @@
 # Verification and Testing Discussion
 
+## March 2026: Battle view player visibility fix
+
+### Change summary
+- The player battle rendering now draws a visible mini-avatar (shadow/body/head/shoulders) in addition to the HP bar.
+- Previously, players could appear as "only a highlighted cell + tiny HP bar", especially when turn highlights moved to enemies.
+
+### Fast regression checklist for this specific area
+1. Start a battle and confirm the player pawn is clearly visible in their tile even when it is **not** the player's turn.
+2. Confirm enemy sprites still draw correctly and are not occluded by player rendering.
+3. Verify HP bars still render above entities and update after damage.
+4. Enter/exit battle mode and ensure no rendering artifacts remain on world map.
+5. Resize browser window during battle and confirm avatar scales/positions correctly with battle grid resize.
+
+### Programmatic verification commands
+- `npm run build:rgfn`
+- `node --test rgfn_game/test/**/*.test.js`
 ## March 24, 2026 – Inventory Equip Regression Note
 
 ### Problem statement
