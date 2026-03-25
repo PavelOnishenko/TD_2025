@@ -209,6 +209,16 @@ Note: Semi-transparent overlays can use fixed colors, but all UI elements must u
 
 ## Common Patterns
 
+### Pattern 0: Selected Tile Labels Must Use Entity Display Names
+
+When filling "Selected Tile" details in battle mode, do **not** rely on `constructor.name` for enemy labels.
+
+- Use `entity.name` as the primary display source for enemies.
+- Keep `constructor.name` only as a fallback when no display name exists.
+- Continue to use `"Hero"` for the player-facing label.
+
+Why: several enemy archetypes reuse shared classes (for example Ninja can be implemented via the `Skeleton` class), so constructor-based UI labels can be wrong even when combat data is correct.
+
 ### Pattern 1: Canvas Drawing
 
 ```typescript
