@@ -16,6 +16,8 @@ export default class GameUiFactory {
 
     private createHudElements(): HudElements {
         return {
+            hudMenuToggleBtn: document.getElementById('hud-menu-toggle-btn')! as HTMLButtonElement,
+            hudMenuPanel: document.getElementById('hud-menu-panel')!,
             modeIndicator: document.getElementById('mode-indicator')!,
             usePotionBtn: document.getElementById('use-potion-btn')! as HTMLButtonElement,
             useManaPotionBtn: document.getElementById('use-mana-potion-btn')! as HTMLButtonElement,
