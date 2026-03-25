@@ -3,20 +3,20 @@ import { CombatEntity } from '../../types/game.js';
 export default class TurnManager {
     private entities: CombatEntity[];
     private currentTurnIndex: number;
-    private consumedTurnEntityIds: Set<number>;
+    private consumedTurnCountsByEntityId: Map<number, number>;
     public waitingForPlayer: boolean;
 
     constructor() {
         this.entities = [];
         this.currentTurnIndex = 0;
-        this.consumedTurnEntityIds = new Set();
+        this.consumedTurnCountsByEntityId = new Map();
         this.waitingForPlayer = false;
     }
 
     public initializeTurns(entities: CombatEntity[]): void {
         this.entities = entities.filter(e => e.active && !e.isDead());
         this.currentTurnIndex = 0;
-        this.consumedTurnEntityIds.clear();
+        this.consumedTurnCountsByEntityId.clear();
         this.waitingForPlayer = false;
     }
 
@@ -35,10 +35,9 @@ export default class TurnManager {
     public nextTurn(): CombatEntity | null {
         // Remove dead entities
         this.entities = this.entities.filter(e => e.active && !e.isDead());
-        this.consumedTurnEntityIds = new Set(
-            this.entities
-                .filter((entity) => this.consumedTurnEntityIds.has(entity.id))
-                .map((entity) => entity.id)
+        this.consumedTurnCountsByEntityId = new Map(
+            [...this.consumedTurnCountsByEntityId.entries()]
+                .filter(([entityId]) => this.entities.some((entity) => entity.id === entityId))
         );
 
         if (this.entities.length === 0) {
@@ -52,16 +51,26 @@ export default class TurnManager {
     }
 
     public consumeUpcomingTurn(entity: CombatEntity): void {
+        this.consumeUpcomingTurns(entity, 1);
+    }
+
+    public consumeUpcomingTurns(entity: CombatEntity, turns: number): void {
         if (!entity.active || entity.isDead()) {
             return;
         }
 
-        this.consumedTurnEntityIds.add(entity.id);
+        const turnsToConsume = Number.isFinite(turns) ? Math.max(0, Math.floor(turns)) : 0;
+        if (turnsToConsume <= 0) {
+            return;
+        }
+
+        const alreadyConsumed = this.consumedTurnCountsByEntityId.get(entity.id) ?? 0;
+        this.consumedTurnCountsByEntityId.set(entity.id, alreadyConsumed + turnsToConsume);
     }
 
     public shouldSkipCurrentTurn(): boolean {
         const current = this.getCurrentEntity();
-        return current !== null && this.consumedTurnEntityIds.has(current.id);
+        return current !== null && (this.consumedTurnCountsByEntityId.get(current.id) ?? 0) > 0;
     }
 
     public clearCurrentTurnConsumption(): void {
@@ -70,7 +79,13 @@ export default class TurnManager {
             return;
         }
 
-        this.consumedTurnEntityIds.delete(current.id);
+        const remaining = (this.consumedTurnCountsByEntityId.get(current.id) ?? 0) - 1;
+        if (remaining > 0) {
+            this.consumedTurnCountsByEntityId.set(current.id, remaining);
+            return;
+        }
+
+        this.consumedTurnCountsByEntityId.delete(current.id);
     }
 
     public hasActiveCombatants(): boolean {

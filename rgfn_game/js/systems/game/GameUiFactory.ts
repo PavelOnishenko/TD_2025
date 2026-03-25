@@ -16,6 +16,8 @@ export default class GameUiFactory {
 
     private createHudElements(): HudElements {
         return {
+            hudMenuToggleBtn: document.getElementById('hud-menu-toggle-btn')! as HTMLButtonElement,
+            hudMenuPanel: document.getElementById('hud-menu-panel')!,
             modeIndicator: document.getElementById('mode-indicator')!,
             usePotionBtn: document.getElementById('use-potion-btn')! as HTMLButtonElement,
             useManaPotionBtn: document.getElementById('use-mana-potion-btn')! as HTMLButtonElement,
@@ -81,6 +83,7 @@ export default class GameUiFactory {
             inventoryCount: document.getElementById('inventory-count')!,
             inventoryCapacity: document.getElementById('inventory-capacity')!,
             inventoryCapacityHint: document.getElementById('inventory-capacity-hint')!,
+            undoLastDropBtn: document.getElementById('undo-last-drop-btn')! as HTMLButtonElement,
             inventoryGrid: document.getElementById('inventory-grid')!,
             weaponSlotMain: document.getElementById('weapon-slot-main')! as HTMLButtonElement,
             weaponSlotOff: document.getElementById('weapon-slot-off')! as HTMLButtonElement,
@@ -158,6 +161,7 @@ export default class GameUiFactory {
         return {
             sidebar: document.getElementById('world-sidebar')!,
             usePotionBtn: document.getElementById('world-use-potion-btn')! as HTMLButtonElement,
+            enterVillageBtn: document.getElementById('world-enter-village-btn')! as HTMLButtonElement,
             centerOnCharacterBtn: document.getElementById('world-center-on-character-btn')! as HTMLButtonElement,
         };
     }
@@ -176,6 +180,10 @@ export default class GameUiFactory {
             buyOffer4Btn: document.getElementById('village-buy-offer-4-btn')! as HTMLButtonElement,
             sellSelect: document.getElementById('village-sell-select')! as HTMLSelectElement,
             sellSelectedBtn: document.getElementById('village-sell-selected-btn')! as HTMLButtonElement,
+            npcList: document.getElementById('village-npc-list')!,
+            npcTitle: document.getElementById('village-npc-title')!,
+            askVillageInput: document.getElementById('village-ask-settlement-input')! as HTMLInputElement,
+            askVillageBtn: document.getElementById('village-ask-settlement-btn')! as HTMLButtonElement,
             leaveBtn: document.getElementById('village-leave-btn')! as HTMLButtonElement,
         };
     }

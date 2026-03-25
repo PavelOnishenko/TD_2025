@@ -13,13 +13,21 @@ export default class PlayerRenderer {
     public draw(ctx: CanvasRenderingContext2D, player: PlayerRenderState): void {
         const screenX = player.x;
         const screenY = player.y;
-        // const left = screenX - player.width / 2;
-        // const top = screenY - player.height / 2;
+        const left = screenX - player.width / 2;
+        const top = screenY - player.height / 2;
 
-        // this.drawBody(ctx, screenX, top, left, player.width, player.height);
-        // this.drawHead(ctx, screenX, top);
-        // this.drawShoulders(ctx, left, top, player.width);
+        this.drawShadow(ctx, screenX, screenY, player.width, player.height);
+        this.drawBody(ctx, screenX, top, left, player.width, player.height);
+        this.drawHead(ctx, screenX, top, player.width, player.height);
+        this.drawShoulders(ctx, left, top, player.width);
         this.drawHealthBar(ctx, player, screenX, screenY);
+    }
+
+    private drawShadow(ctx: CanvasRenderingContext2D, centerX: number, centerY: number, width: number, height: number): void {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
+        ctx.beginPath();
+        ctx.ellipse(centerX, centerY + (height * 0.33), width * 0.42, height * 0.16, 0, 0, Math.PI * 2);
+        ctx.fill();
     }
 
     private drawBody(
@@ -42,21 +50,23 @@ export default class PlayerRenderer {
         ctx.fillRect(screenX - 4, top + 10, 8, 10);
     }
 
-    private drawHead(ctx: CanvasRenderingContext2D, screenX: number, top: number): void {
+    private drawHead(ctx: CanvasRenderingContext2D, screenX: number, top: number, width: number, height: number): void {
+        const radius = Math.max(5, Math.min(8, width * 0.3));
+        const headY = top + Math.max(7, height * 0.34);
         ctx.fillStyle = theme.entities.player.face;
         ctx.beginPath();
-        ctx.arc(screenX, top + 8, 6, 0, Math.PI * 2);
+        ctx.arc(screenX, headY, radius, 0, Math.PI * 2);
         ctx.fill();
 
         ctx.fillStyle = theme.ui.primaryAccent;
         ctx.beginPath();
-        ctx.arc(screenX, top + 8, 7, Math.PI, Math.PI * 2);
+        ctx.arc(screenX, headY, radius + 1, Math.PI, Math.PI * 2);
         ctx.fill();
 
         ctx.fillStyle = theme.ui.primaryAccent;
-        ctx.fillRect(screenX - 3, top + 7, 2, 2);
-        ctx.fillRect(screenX + 1, top + 7, 2, 2);
-        ctx.fillRect(screenX - 2, top + 11, 4, 1);
+        ctx.fillRect(screenX - 3, headY - 1, 2, 2);
+        ctx.fillRect(screenX + 1, headY - 1, 2, 2);
+        ctx.fillRect(screenX - 2, headY + 3, 4, 1);
     }
 
     private drawShoulders(ctx: CanvasRenderingContext2D, left: number, top: number, width: number): void {

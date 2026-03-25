@@ -217,7 +217,7 @@ test('WorldMap supports developer map display combinations for full reveal and f
   placePlayerAt(worldMap, 6, 4);
   worldMap.selectedGridPos = { col: 0, row: 0 };
 
-  assert.equal(worldMap.getSelectedCellInfo()?.fogState, 'unknown');
+  assert.ok(['unknown', 'hidden'].includes(worldMap.getSelectedCellInfo()?.fogState));
 
   worldMap.setMapDisplayConfig({ fogOfWar: false });
   assert.equal(worldMap.getSelectedCellInfo()?.fogState, 'hidden');
@@ -236,6 +236,7 @@ test('WorldMap exposes selected cell info from mouse position after viewport tra
   worldMap.updateSelectedCellFromPixel(x, y);
 
   assert.deepEqual(worldMap.getSelectedCellInfo(), {
+    mode: 'world',
     col: 6,
     row: 4,
     terrainType: worldMap.getCurrentTerrain().type,

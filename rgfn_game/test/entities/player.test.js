@@ -91,6 +91,19 @@ test('Player keeps full mana state when max mana increases', () => {
   assert.equal(player.mana <= player.maxMana, true);
 });
 
+test('Player keeps full HP state when max HP increases from vitality', () => {
+  const player = new Player(0, 0);
+  player.skillPoints = 2;
+  player.hp = player.maxHp;
+
+  const oldMaxHp = player.maxHp;
+
+  player.addStat('vitality', 2);
+
+  assert.equal(player.maxHp >= oldMaxHp + 2, true);
+  assert.equal(player.hp, player.maxHp);
+});
+
 test('Player can use a configured starting skill roll for the next new character', () => {
   const configuredRoll = createEmptyNextCharacterRollAllocation();
   configuredRoll.intelligence = 3;
@@ -133,7 +146,7 @@ test('Player intelligence grants mana fraction and magic points each 3 points', 
   assert.equal(player.maxMana >= balanceConfig.player.baseMana + 1, true);
 });
 
-test('Player inventory auto-equips discovered weapons and keeps non-weapons unequipped', () => {
+test('Player inventory keeps discovered equipment in inventory until explicitly equipped', () => {
   const player = new Player(0, 0);
   const potion = new Item({ id: 'healingPotion', name: 'Potion', description: 'Heal', type: 'consumable' });
   const bow = new Item({ id: 'bow', name: 'Bow', description: 'Ranged', type: 'weapon', attackRange: 3, handsRequired: 2, damageBonus: 2, requirements: { agility: 0, strength: 0 }, isRanged: true });
@@ -143,12 +156,14 @@ test('Player inventory auto-equips discovered weapons and keeps non-weapons uneq
   assert.equal(player.getAttackRange(), 1);
 
   player.addItemToInventory(bow);
-  assert.equal(player.hasWeapon(), true);
-  assert.equal(player.getAttackRange(), 3);
+  assert.equal(player.hasWeapon(), false);
+  assert.equal(player.getAttackRange(), 1);
+  assert.deepEqual(player.getInventory().map((item) => item.id).sort(), ['bow', 'healingPotion']);
 
   const armor = new Item({ id: 'armor_t1', name: 'Armor +1', description: 'Armor', type: 'armor', effects: { flatArmor: 1 } });
   player.addItemToInventory(armor);
-  assert.equal(player.armor >= 1, true);
+  assert.equal(player.equippedArmor, null);
+  assert.deepEqual(player.getInventory().map((item) => item.id).sort(), ['armor_t1', 'bow', 'healingPotion']);
 });
 
 
@@ -189,6 +204,12 @@ test('Equipped items are removed from inventory and return on unequip', () => {
   player.addItemToInventory(sword);
   player.addItemToInventory(shield);
   player.addItemToInventory(armor);
+
+  assert.deepEqual(player.getInventory().map((item) => item.id).sort(), ['armor_t2', 'buckler_2', 'shortSword_3']);
+
+  player.equipWeaponToSlot(sword, 'main');
+  player.equipWeaponToSlot(shield, 'offhand');
+  player.equippedArmor = armor;
 
   assert.deepEqual(player.getInventory().map((item) => item.id), []);
 

@@ -4,7 +4,7 @@ import { balanceConfig } from '../config/balanceConfig.js';
 import MagicSystem from './magic/MagicSystem.js';
 import { calculateBowDamageBonus, calculateMeleeDamageBonus } from '../config/levelConfig.js';
 import LoreBookController from './lore/LoreBookController.js';
-import { SelectedWorldCellInfo } from '../types/game.js';
+import { SelectedCellInfo, SelectedWorldCellInfo } from '../types/game.js';
 
 type PlayerStat = 'vitality' | 'toughness' | 'strength' | 'agility' | 'connection' | 'intelligence';
 type PendingSkillAllocations = Record<PlayerStat, number>;
@@ -67,6 +67,7 @@ type HudElements = {
     inventoryCount: HTMLElement;
     inventoryCapacity: HTMLElement;
     inventoryCapacityHint: HTMLElement;
+    undoLastDropBtn: HTMLButtonElement;
     inventoryGrid: HTMLElement;
     weaponSlotMain: HTMLButtonElement;
     weaponSlotOff: HTMLButtonElement;
@@ -116,6 +117,8 @@ type BattleUiHudElements = {
     spellArcaneLanceBtn: HTMLButtonElement;
 };
 
+type BattleEquipmentActionHandler = (actionDescription: string) => boolean;
+
 export default class HudController {
     private player: Player;
     private hudElements: HudElements;
@@ -124,16 +127,20 @@ export default class HudController {
     private gameLog: HTMLElement;
     private loreBookController: LoreBookController;
     private draggedInventoryIndex: number | null = null;
+    private lastDroppedItem: Item | null = null;
     private pendingSkillAllocations: PendingSkillAllocations = { vitality: 0, toughness: 0, strength: 0, agility: 0, connection: 0, intelligence: 0 };
+    private onBattleEquipmentAction: BattleEquipmentActionHandler | null;
 
-    constructor(player: Player, hudElements: HudElements, battleUI: BattleUiHudElements, magicSystem: MagicSystem, gameLog: HTMLElement, loreBookController: LoreBookController) {
+    constructor(player: Player, hudElements: HudElements, battleUI: BattleUiHudElements, magicSystem: MagicSystem, gameLog: HTMLElement, loreBookController: LoreBookController, onBattleEquipmentAction?: BattleEquipmentActionHandler) {
         this.player = player;
         this.hudElements = hudElements;
         this.battleUI = battleUI;
         this.magicSystem = magicSystem;
         this.gameLog = gameLog;
         this.loreBookController = loreBookController;
+        this.onBattleEquipmentAction = onBattleEquipmentAction ?? null;
         this.bindEquipmentSlotEvents();
+        this.bindInventoryRecoveryEvents();
     }
 
     public setPendingSkillAllocations(pendingSkillAllocations: PendingSkillAllocations): void {
@@ -185,6 +192,7 @@ export default class HudController {
         this.hudElements.inventoryCount.textContent = String(inventory.length);
         this.hudElements.inventoryCapacity.textContent = String(inventoryCapacity);
         this.hudElements.inventoryCapacityHint.textContent = this.getInventoryCapacityHintText();
+        this.hudElements.undoLastDropBtn.disabled = this.lastDroppedItem === null;
         this.renderInventory(inventory, inventoryCapacity);
 
         const hasHpPotion = this.player.getHealingPotionCount() > 0;
@@ -220,7 +228,7 @@ export default class HudController {
         this.updateToggleButtons();
     }
 
-    public updateSelectedCellInfo(selectedCell: SelectedWorldCellInfo | null): void {
+    public updateSelectedCellInfo(selectedCell: SelectedCellInfo | null): void {
         const hasSelectedCell = Boolean(selectedCell);
         this.hudElements.selectedCellEmpty.classList.toggle('hidden', hasSelectedCell);
         this.hudElements.selectedCellDetails.classList.toggle('hidden', !hasSelectedCell);
@@ -230,24 +238,41 @@ export default class HudController {
         }
 
         this.hudElements.selectedCellCoords.textContent = `${selectedCell.col}, ${selectedCell.row}`;
+
+        if (selectedCell.mode === 'battle') {
+            const occupantLabel = selectedCell.occupantType
+                ? `${selectedCell.occupantType === 'player' ? 'Player' : 'Enemy'}`
+                : 'None';
+            const hpLabel = selectedCell.occupantHp !== null && selectedCell.occupantMaxHp !== null
+                ? `${selectedCell.occupantHp}/${selectedCell.occupantMaxHp}`
+                : '—';
+            this.hudElements.selectedCellTerrain.textContent = selectedCell.obstacleName
+                ? `${this.formatTerrainLabel(selectedCell.terrainType)} (${selectedCell.obstacleName})`
+                : this.formatTerrainLabel(selectedCell.terrainType);
+            this.hudElements.selectedCellVisibility.textContent = 'Battle map';
+            this.hudElements.selectedCellTraversable.textContent = selectedCell.isTraversable ? 'Walkable' : 'Blocked';
+            this.hudElements.selectedCellVillage.textContent = occupantLabel;
+            this.hudElements.selectedCellVillageName.textContent = selectedCell.occupantName ?? '—';
+            this.hudElements.selectedCellVillageStatus.textContent = `HP ${hpLabel}`;
+            return;
+        }
+
         const terrainIsKnown = selectedCell.isVisible || selectedCell.fogState !== 'unknown';
         const villageDetailsKnown = terrainIsKnown && selectedCell.isVillage;
-
         this.hudElements.selectedCellTerrain.textContent = terrainIsKnown ? this.formatTerrainLabel(selectedCell.terrainType) : 'Unknown';
         this.hudElements.selectedCellVisibility.textContent = this.formatVisibilityLabel(selectedCell);
         this.hudElements.selectedCellTraversable.textContent = terrainIsKnown ? (selectedCell.isTraversable ? 'Walkable' : 'Blocked') : 'Unknown';
         this.hudElements.selectedCellVillage.textContent = terrainIsKnown ? (selectedCell.isVillage ? 'Yes' : 'No') : 'Unknown';
-        this.hudElements.selectedCellVillageName.textContent = terrainIsKnown
-            ? (selectedCell.villageName ?? '—')
-            : 'Unknown';
-        this.hudElements.selectedCellVillageStatus.textContent = villageDetailsKnown
-            ? this.formatVillageStatusLabel(selectedCell.villageStatus)
-            : (terrainIsKnown ? '—' : 'Unknown');
+        this.hudElements.selectedCellVillageName.textContent = terrainIsKnown ? (selectedCell.villageName ?? '—') : 'Unknown';
+        this.hudElements.selectedCellVillageStatus.textContent = villageDetailsKnown ? this.formatVillageStatusLabel(selectedCell.villageStatus) : (terrainIsKnown ? '—' : 'Unknown');
     }
 
     private bindEquipmentSlotEvents(): void {
         this.hudElements.weaponSlotMain.addEventListener('click', () => {
             if (this.player.equippedWeapon) {
+                if (!this.requestBattleEquipmentAction(`You start unequipping ${this.player.equippedWeapon.name}.`)) {
+                    return;
+                }
                 this.player.unequipWeapon();
                 this.updateHUD();
             }
@@ -263,6 +288,9 @@ export default class HudController {
 
         this.hudElements.weaponSlotOff.addEventListener('click', () => {
             if (this.player.equippedOffhandWeapon) {
+                if (!this.requestBattleEquipmentAction(`You start unequipping ${this.player.equippedOffhandWeapon.name}.`)) {
+                    return;
+                }
                 this.player.unequipOffhandWeapon();
                 this.updateHUD();
             }
@@ -278,6 +306,9 @@ export default class HudController {
 
         this.hudElements.armorSlot.addEventListener('click', () => {
             if (this.player.equippedArmor) {
+                if (!this.requestBattleEquipmentAction(`You start removing ${this.player.equippedArmor.name}.`)) {
+                    return;
+                }
                 this.player.unequipArmor();
                 this.updateHUD();
             }
@@ -399,6 +430,10 @@ export default class HudController {
             return;
         }
 
+        if (!this.requestBattleEquipmentAction(`You begin equipping ${item.name}.`)) {
+            return;
+        }
+
         if (item.type === 'weapon') {
             this.player.equippedWeapon = item;
         } else if (item.type === 'armor') {
@@ -426,6 +461,11 @@ export default class HudController {
             return;
         }
 
+        if (!this.requestBattleEquipmentAction(`You begin equipping ${item.name}.`)) {
+            this.draggedInventoryIndex = null;
+            return;
+        }
+
         if (slot === 'armor') {
             if (item.type === 'armor') {
                 this.player.equippedArmor = item;
@@ -438,14 +478,43 @@ export default class HudController {
         this.updateHUD();
     }
 
+    private requestBattleEquipmentAction(actionDescription: string): boolean {
+        if (!this.onBattleEquipmentAction) {
+            return true;
+        }
+
+        return this.onBattleEquipmentAction(actionDescription);
+    }
+
     private handleDropFromInventory(index: number): void {
         const droppedItem = this.player.removeInventoryItemAt(index);
         if (!droppedItem) {
             return;
         }
 
-        this.addLog(`You dropped ${droppedItem.name}. It cannot be recovered.`, 'system');
+        this.lastDroppedItem = droppedItem;
+        this.addLog(`You dropped ${droppedItem.name}. Click Recover Last Dropped Item to undo.`, 'system');
         this.updateHUD();
+    }
+
+    private bindInventoryRecoveryEvents(): void {
+        this.hudElements.undoLastDropBtn.addEventListener('click', () => {
+            if (!this.lastDroppedItem) {
+                return;
+            }
+
+            const itemToRecover = this.lastDroppedItem;
+            const recovered = this.player.addItemToInventory(itemToRecover);
+            if (!recovered) {
+                this.addLog(`Cannot recover ${itemToRecover.name}: inventory is full.`, 'system');
+                this.updateHUD();
+                return;
+            }
+
+            this.lastDroppedItem = null;
+            this.addLog(`Recovered ${itemToRecover.name}.`, 'system');
+            this.updateHUD();
+        });
     }
 
     private triggerEquipRequirementsFeedback(item: Item, slotElement: HTMLButtonElement): void {

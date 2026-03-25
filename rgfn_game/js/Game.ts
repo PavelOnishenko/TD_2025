@@ -119,16 +119,26 @@ export default class Game {
         this.initializeQuestUi(questGenerator, questUiController);
         const magicSystem = new MagicSystem(player);
         const battleUiController = new BattleUiController(ui.battleUI, battleMap, turnManager, player, ui.gameLogUI.log, magicSystem);
+        let battleCommandControllerRef: BattleCommandController | null = null;
         this.magicSystem = magicSystem;
         this.hudCoordinator = new GameHudCoordinator(
             player,
-            new HudController(player, ui.hudElements, ui.battleUI, magicSystem, ui.gameLogUI.log, loreBookController),
+            new HudController(
+                player,
+                ui.hudElements,
+                ui.battleUI,
+                magicSystem,
+                ui.gameLogUI.log,
+                loreBookController,
+                (actionDescription: string) => battleCommandControllerRef?.handleEquipmentAction(actionDescription) ?? true,
+            ),
             battleUiController,
             magicSystem,
         );
         const villageActionsController = new VillageActionsController(player, ui.villageUI, ui.gameLogUI.log, {
             onUpdateHUD: () => this.hudCoordinator.updateHUD(),
             onLeaveVillage: () => this.stateMachine.transition(MODES.WORLD_MAP),
+            getVillageDirectionHint: (settlementName: string) => this.worldMap.getVillageDirectionHintFromPlayer(settlementName),
         });
         this.villageCoordinator = new GameVillageCoordinator(ui.hudElements, ui.battleUI, ui.villageUI, ui.worldUI, villageLifeRenderer, villageActionsController);
         this.stateMachine = this.createStateMachine(ui);
@@ -149,6 +159,7 @@ export default class Game {
             getSelectedEnemy: () => battlePlayerActionController.getSelectedEnemy(),
             setSelectedEnemy: (enemy: Skeleton | null) => battlePlayerActionController.setSelectedEnemy(enemy),
         });
+        battleCommandControllerRef = battleCommandController;
         const battleTurnController = new BattleTurnController(battleMap, turnManager, player, {
             onAddBattleLog: (m: string, t: string = 'system') => this.hudCoordinator.addBattleLog(m, t),
             onUpdateHUD: () => this.hudCoordinator.updateHUD(),
@@ -264,6 +275,7 @@ export default class Game {
             onUsePotionFromHud: () => this.battleCoordinator.handleUsePotion(false),
             onUseManaPotionFromHud: () => this.battleCoordinator.handleUseManaPotion(false),
             onUsePotionFromWorld: () => this.battleCoordinator.handleUsePotion(false),
+            onEnterVillageFromWorld: () => this.tryEnterVillageFromWorldMap(),
             onNewCharacter: () => this.startNewCharacter(),
             onAddStat: (stat) => this.hudCoordinator.handleAddStat(stat),
             onRemoveStat: (stat) => this.hudCoordinator.handleRemoveStat(stat),
@@ -356,30 +368,39 @@ export default class Game {
 
     private refreshHud(): void {
         this.hudCoordinator.updateHUD();
-        this.hudCoordinator.updateSelectedWorldCell(this.worldMap.getSelectedCellInfo());
+        this.hudCoordinator.updateSelectedCell(this.worldMap.getSelectedCellInfo());
     }
 
     private handleCanvasMove(event: MouseEvent): void {
-        if (!this.stateMachine.isInState(MODES.WORLD_MAP)) {
-            return;
-        }
-
         const rect = this.canvas.getBoundingClientRect();
         const scaleX = this.canvas.width / rect.width;
         const scaleY = this.canvas.height / rect.height;
         const worldX = (event.clientX - rect.left) * scaleX;
         const worldY = (event.clientY - rect.top) * scaleY;
-        this.worldMap.updateSelectedCellFromPixel(worldX, worldY);
-        this.hudCoordinator.updateSelectedWorldCell(this.worldMap.getSelectedCellInfo());
-    }
 
-    private handleCanvasLeave(): void {
-        if (!this.stateMachine.isInState(MODES.WORLD_MAP)) {
+        if (this.stateMachine.isInState(MODES.WORLD_MAP)) {
+            this.worldMap.updateSelectedCellFromPixel(worldX, worldY);
+            this.hudCoordinator.updateSelectedCell(this.worldMap.getSelectedCellInfo());
             return;
         }
 
-        this.worldMap.clearSelectedCell();
-        this.hudCoordinator.updateSelectedWorldCell(null);
+        if (this.stateMachine.isInState(MODES.BATTLE)) {
+            this.battleMap.updateSelectedCellFromPixel(worldX, worldY);
+            this.hudCoordinator.updateSelectedCell(this.battleMap.getSelectedCellInfo());
+        }
+    }
+
+    private handleCanvasLeave(): void {
+        if (this.stateMachine.isInState(MODES.WORLD_MAP)) {
+            this.worldMap.clearSelectedCell();
+            this.hudCoordinator.updateSelectedCell(null);
+            return;
+        }
+
+        if (this.stateMachine.isInState(MODES.BATTLE)) {
+            this.battleMap.clearSelectedCell();
+            this.hudCoordinator.updateSelectedCell(null);
+        }
     }
 
     private handleWorldMapZoom(direction: 'in' | 'out'): void {
@@ -417,6 +438,19 @@ export default class Game {
         const [x, y] = this.worldMap.getPlayerPixelPosition();
         this.player.x = x;
         this.player.y = y;
+    }
+
+    private tryEnterVillageFromWorldMap(): void {
+        if (!this.stateMachine.isInState(MODES.WORLD_MAP)) {
+            return;
+        }
+
+        const enteredVillage = this.worldModeController.tryEnterVillageAtCurrentPosition();
+        if (enteredVillage) {
+            return;
+        }
+
+        this.hudCoordinator.addBattleLog('Stand on a village tile to enter it.', 'system');
     }
 
     private startNewCharacter(): void {

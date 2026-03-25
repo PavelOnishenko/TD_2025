@@ -27,6 +27,7 @@ type GameUiEventCallbacks = {
     onWorldMapPan: (direction: 'up' | 'down' | 'left' | 'right') => void;
     onCenterWorldMapOnPlayer: () => void;
     onUsePotionFromWorld: () => void;
+    onEnterVillageFromWorld: () => void;
     onTogglePanel: (panel: 'stats' | 'skills' | 'inventory' | 'magic' | 'quests' | 'lore' | 'selected' | 'worldMap' | 'log') => void;
 };
 
@@ -68,6 +69,7 @@ export default class GameUiEventBinder {
         this.bindVillageEvents(villageNameProvider);
         this.bindDeveloperEvents();
         this.bindStatEvents();
+        this.bindHudMenuEvents();
 
         this.canvas.addEventListener('click', (event: MouseEvent) => this.callbacks.onCanvasClick(event));
         this.canvas.addEventListener('mousemove', (event: MouseEvent) => this.callbacks.onCanvasMove(event));
@@ -98,16 +100,34 @@ export default class GameUiEventBinder {
         this.hudElements.worldMapPanLeftBtn.addEventListener('click', () => this.callbacks.onWorldMapPan('left'));
         this.hudElements.worldMapPanRightBtn.addEventListener('click', () => this.callbacks.onWorldMapPan('right'));
         this.worldUI.usePotionBtn.addEventListener('click', () => this.callbacks.onUsePotionFromWorld());
+        this.worldUI.enterVillageBtn.addEventListener('click', () => this.callbacks.onEnterVillageFromWorld());
         this.worldUI.centerOnCharacterBtn.addEventListener('click', () => this.callbacks.onCenterWorldMapOnPlayer());
-        this.hudElements.toggleStatsPanelBtn.addEventListener('click', () => this.callbacks.onTogglePanel('stats'));
-        this.hudElements.toggleSkillsPanelBtn.addEventListener('click', () => this.callbacks.onTogglePanel('skills'));
-        this.hudElements.toggleInventoryPanelBtn.addEventListener('click', () => this.callbacks.onTogglePanel('inventory'));
-        this.hudElements.toggleMagicPanelBtn.addEventListener('click', () => this.callbacks.onTogglePanel('magic'));
-        this.hudElements.toggleQuestsPanelBtn.addEventListener('click', () => this.callbacks.onTogglePanel('quests'));
-        this.hudElements.toggleLorePanelBtn.addEventListener('click', () => this.callbacks.onTogglePanel('lore'));
-        this.hudElements.toggleSelectedPanelBtn.addEventListener('click', () => this.callbacks.onTogglePanel('selected'));
-        this.hudElements.toggleWorldMapPanelBtn.addEventListener('click', () => this.callbacks.onTogglePanel('worldMap'));
-        this.hudElements.toggleLogPanelBtn.addEventListener('click', () => this.callbacks.onTogglePanel('log'));
+        this.hudElements.toggleStatsPanelBtn.addEventListener('click', () => this.handlePanelToggle('stats'));
+        this.hudElements.toggleSkillsPanelBtn.addEventListener('click', () => this.handlePanelToggle('skills'));
+        this.hudElements.toggleInventoryPanelBtn.addEventListener('click', () => this.handlePanelToggle('inventory'));
+        this.hudElements.toggleMagicPanelBtn.addEventListener('click', () => this.handlePanelToggle('magic'));
+        this.hudElements.toggleQuestsPanelBtn.addEventListener('click', () => this.handlePanelToggle('quests'));
+        this.hudElements.toggleLorePanelBtn.addEventListener('click', () => this.handlePanelToggle('lore'));
+        this.hudElements.toggleSelectedPanelBtn.addEventListener('click', () => this.handlePanelToggle('selected'));
+        this.hudElements.toggleWorldMapPanelBtn.addEventListener('click', () => this.handlePanelToggle('worldMap'));
+        this.hudElements.toggleLogPanelBtn.addEventListener('click', () => this.handlePanelToggle('log'));
+    }
+
+    private bindHudMenuEvents(): void {
+        this.hudElements.hudMenuToggleBtn.addEventListener('click', () => {
+            const menuIsClosed = this.hudElements.hudMenuPanel.classList.contains('hidden');
+            this.setHudMenuOpen(menuIsClosed);
+        });
+    }
+
+    private handlePanelToggle(panel: 'stats' | 'skills' | 'inventory' | 'magic' | 'quests' | 'lore' | 'selected' | 'worldMap' | 'log'): void {
+        this.callbacks.onTogglePanel(panel);
+        this.setHudMenuOpen(false);
+    }
+
+    private setHudMenuOpen(isOpen: boolean): void {
+        this.hudElements.hudMenuPanel.classList.toggle('hidden', !isOpen);
+        this.hudElements.hudMenuToggleBtn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
     }
 
     private bindVillageEvents(villageNameProvider: () => string): void {
@@ -118,8 +138,12 @@ export default class GameUiEventBinder {
         this.villageUI.buyOffer2Btn.addEventListener('click', () => this.villageActionsController.handleBuyOffer(1));
         this.villageUI.buyOffer3Btn.addEventListener('click', () => this.villageActionsController.handleBuyOffer(2));
         this.villageUI.buyOffer4Btn.addEventListener('click', () => this.villageActionsController.handleBuyOffer(3));
+        this.villageUI.sellSelect.addEventListener('focus', () => this.villageActionsController.updateButtons());
+        this.villageUI.sellSelect.addEventListener('pointerdown', () => this.villageActionsController.updateButtons());
         this.villageUI.sellSelect.addEventListener('change', () => this.villageActionsController.updateButtons());
         this.villageUI.sellSelectedBtn.addEventListener('click', () => this.villageActionsController.handleSellSelected());
+        this.villageUI.askVillageInput.addEventListener('input', () => this.villageActionsController.updateButtons());
+        this.villageUI.askVillageBtn.addEventListener('click', () => this.villageActionsController.handleAskAboutSettlement());
         this.villageUI.leaveBtn.addEventListener('click', () => this.villageActionsController.handleLeave());
     }
 

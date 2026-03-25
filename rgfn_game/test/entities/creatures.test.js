@@ -4,18 +4,29 @@ import assert from 'node:assert/strict';
 import Skeleton from '../../dist/entities/Skeleton.js';
 import Wanderer from '../../dist/entities/Wanderer.js';
 import { balanceConfig } from '../../dist/config/balanceConfig.js';
+import { deriveCreatureStats } from '../../dist/config/creatureStats.js';
 
 test('Enemy archetypes derive resulting stats from base stats plus shared skills', () => {
   const zombie = new Skeleton(0, 0, balanceConfig.enemies.zombie);
   const ninja = new Skeleton(0, 0, balanceConfig.enemies.ninja);
+  const hpMultiplier = Math.max(0, balanceConfig.enemies.hpMultiplier ?? 1);
+
+  const zombieDerived = deriveCreatureStats(
+    balanceConfig.creatureArchetypes.zombie.baseStats,
+    balanceConfig.creatureArchetypes.zombie.skills,
+  );
+  const ninjaDerived = deriveCreatureStats(
+    balanceConfig.creatureArchetypes.ninja.baseStats,
+    balanceConfig.creatureArchetypes.ninja.skills,
+  );
 
   assert.equal(zombie.baseStats.hp, balanceConfig.creatureArchetypes.zombie.baseStats.hp);
   assert.equal(zombie.skills.vitality, balanceConfig.creatureArchetypes.zombie.skills.vitality);
-  assert.equal(zombie.maxHp, 7);
-  assert.equal(zombie.damage, 1);
+  assert.equal(zombie.maxHp, Math.round(zombieDerived.maxHp * hpMultiplier));
+  assert.equal(zombie.damage, zombieDerived.physicalDamage);
 
-  assert.equal(ninja.maxHp, 5);
-  assert.equal(ninja.damage, 3);
+  assert.equal(ninja.maxHp, Math.round(ninjaDerived.maxHp * hpMultiplier));
+  assert.equal(ninja.damage, ninjaDerived.physicalDamage);
   assert.equal(ninja.avoidChance > 0, true);
 });
 

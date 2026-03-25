@@ -1,5 +1,129 @@
 # Verification and Testing Discussion
 
+## March 25, 2026 update: vitality save should keep full HP at full-health breakpoint
+
+### Bug report context
+- Repro from gameplay UI:
+  1. Character HP is currently full (`hp === maxHp`), e.g. `7/7`.
+  2. Player allocates points into **vitality** and clicks **Save**.
+  3. Before fix, `maxHp` increased but `hp` stayed unchanged (e.g. `7/9`).
+- Expected behavior: when character was already at full HP before the vitality save, current HP should track new max (e.g. `9/9`).
+
+### Root cause
+- `Player.addStat(...)` recalculated derived stats via `updateStats()`, then clamped HP using `Math.min(this.hp, this.maxHp)`.
+- That clamp preserved the old numeric HP value, but it did not preserve the "was full" state.
+
+### Resolution
+- Added a full-HP guard in `Player.addStat(...)`:
+  - capture `hadFullHp` before recalculation,
+  - if true after stat application, set `hp = maxHp`,
+  - otherwise preserve prior value with standard clamp (`Math.min(previousHp, maxHp)`).
+- This keeps non-full HP behavior stable while fixing the full-HP vitality-save flow.
+
+### Regression test added
+- New entity test: `Player keeps full HP state when max HP increases from vitality`.
+- The test verifies:
+  - max HP increases after vitality allocation,
+  - HP remains exactly equal to max HP when player started at full HP.
+
+### Suggested manual smoke checks
+1. Open character with full HP (e.g. `7/7`), allocate vitality, press Save → confirm `9/9` style result.
+2. Repeat when not full HP (e.g. `4/7`), allocate vitality, press Save → confirm current HP does **not** jump to full.
+3. Confirm intelligence/connection upgrades still preserve existing mana behavior.
+## March 25, 2026 update: village sell-list synchronization hardening
+
+### Problem observed
+- In village mode, the **Sell inventory item** dropdown could occasionally show a stale snapshot of inventory contents after buy-driven inventory changes.
+- Result: players could see incomplete sell choices until another village UI refresh happened.
+
+### Changes made
+- Added proactive sell-list refresh hooks on the sell dropdown itself:
+  - refresh on `focus`
+  - refresh on `pointerdown` (right before opening)
+- This keeps sell options synchronized with the most current inventory right as the player opens/uses the control.
+- Also fixed sell button enablement logic to follow the select's disabled state directly, preventing action enablement drift when placeholder text is shown.
+
+### Regression checks
+1. Enter village and buy items multiple times in a row.
+2. Open the sell dropdown immediately after each buy and confirm every current inventory item is listed.
+3. Sell until inventory is empty and confirm:
+   - dropdown shows placeholder text,
+   - **Sell selected** button is disabled.
+4. Obtain a new item, reopen sell dropdown, confirm button re-enables and item appears.
+
+### Commands run for this change
+- `npm run build:rgfn`
+- `node --test rgfn_game/test/**/*.test.js`
+
+## March 2026 update: village re-entry controls on world map
+
+### Feature summary
+- Added a world-map action button: **Enter Village (Space)**.
+- Added keyboard shortcut: **Space**.
+- Both controls re-enter village mode when the player is standing on a village tile (including immediately after leaving a village).
+- If used away from a village tile, game stays in world mode and writes a guidance log message.
+
+### Why this was needed
+- Previously, entering villages was mostly movement-driven encounter flow.
+- After leaving a village while still standing on that same tile, there was no direct "re-enter now" action.
+- New behavior mimics old Fallout-style interaction: stand on location and press action key/button.
+
+### Regression checks to keep
+1. Enter a village by moving onto a village tile still works.
+2. Leave village, press **Space**, and confirm village prompt opens again.
+3. Leave village, open World Map panel, click **Enter Village (Space)**, and confirm village prompt opens again.
+4. Press **Space** while not on a village tile and confirm no state transition occurs.
+5. Confirm existing world controls still work: movement, zoom, pan, centering.
+
+---
+
+## March 2026: Battle view player visibility fix
+
+### Change summary
+- The player battle rendering now draws a visible mini-avatar (shadow/body/head/shoulders) in addition to the HP bar.
+- Previously, players could appear as "only a highlighted cell + tiny HP bar", especially when turn highlights moved to enemies.
+
+### Fast regression checklist for this specific area
+1. Start a battle and confirm the player pawn is clearly visible in their tile even when it is **not** the player's turn.
+2. Confirm enemy sprites still draw correctly and are not occluded by player rendering.
+3. Verify HP bars still render above entities and update after damage.
+4. Enter/exit battle mode and ensure no rendering artifacts remain on world map.
+5. Resize browser window during battle and confirm avatar scales/positions correctly with battle grid resize.
+
+### Programmatic verification commands
+- `npm run build:rgfn`
+- `node --test rgfn_game/test/**/*.test.js`
+
+---
+
+## March 24, 2026 – Inventory Equip Regression Note
+
+### Problem statement
+- Reported UX bug: picking up a weapon could immediately equip it, even when the player intended to keep current loadout.
+- This behavior came from `PlayerInventory.addItem(...)`, which auto-equipped any weapon/armor that passed `canEquip`.
+
+### Resolution summary
+- Updated inventory behavior so pickup only adds items to bag storage.
+- Equipment changes are now explicit-only via:
+  - inventory click/drag equip actions,
+  - direct slot interactions,
+  - explicit equip APIs.
+
+### Regression coverage added/updated
+- `Player inventory keeps discovered equipment in inventory until explicitly equipped`
+  - verifies that newly found weapons/armor stay in inventory and do not alter equipped state.
+- `Equipped items are removed from inventory and return on unequip`
+  - now performs explicit equip actions first, then validates round-trip equip/unequip behavior.
+
+### Commands run for this change
+- `npm run build:rgfn`
+- `node --test rgfn_game/test/**/*.test.js`
+- `node --test rgfn_game/test/entities/player.test.js`
+
+### Current suite status snapshot
+- The focused player tests pass after this fix.
+- The full `rgfn_game` suite still contains at least one unrelated pre-existing failure in `creatures.test.js` (`Enemy archetypes derive resulting stats from base stats plus shared skills`), which is outside the inventory workflow touched here.
+
 ## How I Verified the XP Fix
 
 ### The Honest Truth
@@ -168,3 +292,53 @@ For tests: **RGFN would benefit from tests like Neon Void**, especially for leve
 ---
 
 *Written by Claude - January 2026*
+
+## 2026-03 Regression Notes (Current Test Workflow)
+
+### Reliable local command sequence
+1. Build RGFN TypeScript output first:
+   - `npm run build:rgfn`
+2. Run the RGFN test suite against compiled `dist/` modules:
+   - `node --test $(find rgfn_game/test -name '*.test.js' -print)`
+
+### Why the build step matters
+RGFN tests import from `rgfn_game/dist/**`. If `dist` is missing/stale, many suites fail with `ERR_MODULE_NOT_FOUND` before running assertions.
+
+### Enemy stat expectation gotcha
+Enemy HP in runtime is not raw archetype HP. `Skeleton` applies `balanceConfig.enemies.hpMultiplier` to derived HP:
+- `finalMaxHp = Math.round(derivedMaxHp * hpMultiplier)`
+
+So tests asserting fixed literal HP values (for example zombie `7`) will fail when multiplier is `2` (actual becomes `14`). The stable assertion pattern is:
+- derive with `deriveCreatureStats(...)`
+- then apply `hpMultiplier` for expected HP
+
+### Practical guidance for future test additions
+- Prefer formula-based expectations tied to `balanceConfig` over hardcoded literals when behavior is config-driven.
+- Keep one regression note per behavior change here to avoid rediscovering the same pitfalls.
+
+## 2026-03 Equipment Change Turns in Battle (RGFN)
+
+### Behavior change
+- Equipping or unequipping **weapons/armor during battle** now costs **3 total turns**:
+  - current player turn is spent immediately,
+  - plus 2 additional upcoming player turns are consumed automatically.
+- Out of battle, equipment still changes instantly (no turn cost).
+- In battle, equipment changes are only accepted on the player's own active turn.
+
+### Technical notes
+- `TurnManager` now tracks consumed turns as a per-entity counter map instead of a boolean-style set, so multiple queued skipped turns are supported for one combatant.
+- `BattleCommandController` now exposes `handleEquipmentAction(...)` and applies the 3-turn flow for battle-only equipment interactions.
+- `HudController` routes inventory/equipment slot changes through the battle action handler before applying actual equip/unequip mutations.
+
+### Regression tests added
+- `test/systems/turnManager.test.js`
+  - verifies multi-turn consumption on a single entity.
+- `test/systems/battleCommandController.test.js`
+  - verifies equipment action in battle queues 2 additional consumed turns and advances battle flow.
+- `test/helpers/testUtils.js`
+  - combat entity test helper now assigns stable synthetic `id` values, which is required for turn-consumption tracking keyed by entity id.
+
+## Village dialogue verification
+- Build RGFN bundle: `npm run build:rgfn`.
+- Run RGFN tests: `node --test rgfn_game/test/**/*.test.js`.
+- New coverage includes `villageDialogueEngine.test.js` for truthful/lying/refusal behavior.
