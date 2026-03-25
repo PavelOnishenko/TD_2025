@@ -52,6 +52,20 @@ All panel buttons use the existing active-button behavior (`.action-btn.active`)
 
 If the menu ever appears but is not clickable, check pointer-event inheritance first.
 
+## Battle readability note: player avatar marker (March 2026)
+
+To improve battle readability, the player now renders as a full mini-avatar (shadow + body + head + shoulders) instead of only relying on the highlighted battle cell.
+
+- Rendering lives in `js/entities/PlayerRenderer.ts`.
+- The avatar is intentionally simple vector art so it scales with battle cell size and does not need sprite assets.
+- The HP bar remains above the avatar and still uses existing theme colors/thresholds.
+
+### Why this matters
+
+- The active-turn cell highlight can shift between combatants, so the player can otherwise feel "missing" at a glance.
+- A persistent avatar significantly improves target acquisition in crowded battles and obstacle-heavy terrain.
+- This makes player/enemy visual language more consistent (enemies already render with visible sprites).
+
 ## Suggested manual QA checklist
 
 1. Start RGFN and verify the map view fills the window and hamburger is visible at top-left.
