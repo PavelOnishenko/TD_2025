@@ -19,6 +19,7 @@ This satisfies the intended UX: the map always dominates the screen, and UI pane
 
 - `World Map` button → toggles `#world-sidebar` panel.
 - `Log` button → toggles `#game-log-container` panel.
+- Village sidebar heading now includes current settlement name via `#village-title` (format: `Village: <name>`), so players always see which village they are interacting with.
 - Inside the `World Map` panel:
   - `Use HP Potion` uses a potion without leaving the panel.
   - `Enter Village (Space)` re-enters a village if the hero is currently standing on a village tile.
@@ -47,6 +48,11 @@ All panel buttons use the existing active-button behavior (`.action-btn.active`)
   1. `index.html` button + panel DOM
   2. `GameUiTypes` + `GameUiFactory`
   3. `GameUiEventBinder` + `HudController` panel maps
+- Village title binding follows the same pattern:
+  1. Add ID in DOM (`#village-title`),
+  2. expose it in `VillageUI`,
+  3. bind in `GameUiFactory`,
+  4. update text in village runtime controller (`VillageActionsController.enterVillage`).
 
 ## CSS notes that are easy to forget
 

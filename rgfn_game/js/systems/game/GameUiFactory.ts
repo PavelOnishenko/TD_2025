@@ -169,6 +169,7 @@ export default class GameUiFactory {
     private createVillageUi(): VillageUI {
         return {
             sidebar: document.getElementById('village-sidebar')!,
+            title: document.getElementById('village-title')!,
             prompt: document.getElementById('village-prompt')!,
             actions: document.getElementById('village-actions')!,
             enterBtn: document.getElementById('village-enter-btn')! as HTMLButtonElement,
