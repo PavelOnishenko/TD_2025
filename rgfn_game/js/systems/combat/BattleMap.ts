@@ -130,6 +130,7 @@ export default class BattleMap {
         const obstacle = this.obstacles.get(this.getCellKey(this.selectedGridPos.col, this.selectedGridPos.row));
         const occupant = this.entities.find((entity) => entity.gridCol === this.selectedGridPos?.col && entity.gridRow === this.selectedGridPos?.row && !entity.isDead()) ?? null;
         const occupantType = occupant ? (occupant.constructor.name === 'Player' ? 'player' : 'enemy') : null;
+        const occupantName = this.getOccupantDisplayName(occupant);
 
         return {
             mode: 'battle',
@@ -139,10 +140,27 @@ export default class BattleMap {
             obstacleName: obstacle ? this.formatObstacleName(obstacle.kind) : null,
             isTraversable: !obstacle && occupant === null,
             occupantType,
-            occupantName: occupant?.constructor.name === 'Player' ? 'Hero' : (occupant?.constructor?.name ?? null),
+            occupantName,
             occupantHp: occupant?.hp ?? null,
             occupantMaxHp: occupant?.maxHp ?? null,
         };
+    }
+
+    private getOccupantDisplayName(occupant: CombatEntity | null): string | null {
+        if (!occupant) {
+            return null;
+        }
+
+        if (occupant.constructor.name === 'Player') {
+            return 'Hero';
+        }
+
+        const maybeNamedOccupant = occupant as CombatEntity & { name?: unknown };
+        if (typeof maybeNamedOccupant.name === 'string' && maybeNamedOccupant.name.trim().length > 0) {
+            return maybeNamedOccupant.name;
+        }
+
+        return occupant.constructor?.name ?? null;
     }
 
     public isEntityOnEdge(entity: CombatEntity): boolean {

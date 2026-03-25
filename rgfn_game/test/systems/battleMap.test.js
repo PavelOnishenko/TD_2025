@@ -216,3 +216,24 @@ test('BattleMap exposes selected battle cell info from mouse position', () => {
   map.clearSelectedCell();
   assert.equal(map.getSelectedCellInfo(), null);
 });
+
+test('BattleMap selected cell info prefers enemy display name over constructor name', () => {
+  const map = new BattleMap();
+  const player = createCombatEntity('Player', 0, 0, false);
+  const enemy = createCombatEntity('Skeleton', 0, 0, false);
+  enemy.name = 'Ninja';
+  enemy.hp = 10;
+  enemy.maxHp = 10;
+
+  map.setup(player, [enemy], 'grass');
+  enemy.gridCol = 5;
+  enemy.gridRow = 4;
+  map.resizeToCanvas(480, 384);
+
+  const selected = map.updateSelectedCellFromPixel((5 * 48) + 24, (4 * 48) + 24);
+  assert.equal(selected, true);
+
+  const info = map.getSelectedCellInfo();
+  assert.equal(info?.occupantType, 'enemy');
+  assert.equal(info?.occupantName, 'Ninja');
+});
