@@ -84,6 +84,7 @@ export default class GameBattleCoordinator {
         this.currentEnemies = enemies;
         this.currentTerrainType = terrainType;
         this.controllers.battlePlayerActionController.setSelectedEnemy(null);
+        this.battleMap.clearSelectedCell();
         this.battleSplash.showBattleStart(enemies.length, () => this.startBattle(enemies));
     }
 
@@ -182,6 +183,7 @@ export default class GameBattleCoordinator {
     public exitBattleMode(): void {
         this.currentEnemies = [];
         this.currentTerrainType = 'grass';
+        this.battleMap.clearSelectedCell();
     }
 
     public getCurrentEnemies(): Skeleton[] {

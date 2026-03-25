@@ -52,6 +52,7 @@ export interface GridPosition {
 }
 
 export interface SelectedWorldCellInfo {
+    mode: 'world';
     col: number;
     row: number;
     terrainType: TerrainType;
@@ -62,6 +63,21 @@ export interface SelectedWorldCellInfo {
     villageStatus: 'current' | 'mapped' | null;
     isTraversable: boolean;
 }
+
+export interface SelectedBattleCellInfo {
+    mode: 'battle';
+    col: number;
+    row: number;
+    terrainType: TerrainType;
+    obstacleName: string | null;
+    isTraversable: boolean;
+    occupantType: 'player' | 'enemy' | null;
+    occupantName: string | null;
+    occupantHp: number | null;
+    occupantMaxHp: number | null;
+}
+
+export type SelectedCellInfo = SelectedWorldCellInfo | SelectedBattleCellInfo;
 
 export interface StateMachineCallbacks {
     enter?: (data?: any) => void;

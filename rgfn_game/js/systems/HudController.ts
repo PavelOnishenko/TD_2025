@@ -4,7 +4,7 @@ import { balanceConfig } from '../config/balanceConfig.js';
 import MagicSystem from './magic/MagicSystem.js';
 import { calculateBowDamageBonus, calculateMeleeDamageBonus } from '../config/levelConfig.js';
 import LoreBookController from './lore/LoreBookController.js';
-import { SelectedWorldCellInfo } from '../types/game.js';
+import { SelectedCellInfo, SelectedWorldCellInfo } from '../types/game.js';
 
 type PlayerStat = 'vitality' | 'toughness' | 'strength' | 'agility' | 'connection' | 'intelligence';
 type PendingSkillAllocations = Record<PlayerStat, number>;
@@ -228,7 +228,7 @@ export default class HudController {
         this.updateToggleButtons();
     }
 
-    public updateSelectedCellInfo(selectedCell: SelectedWorldCellInfo | null): void {
+    public updateSelectedCellInfo(selectedCell: SelectedCellInfo | null): void {
         const hasSelectedCell = Boolean(selectedCell);
         this.hudElements.selectedCellEmpty.classList.toggle('hidden', hasSelectedCell);
         this.hudElements.selectedCellDetails.classList.toggle('hidden', !hasSelectedCell);
@@ -238,19 +238,33 @@ export default class HudController {
         }
 
         this.hudElements.selectedCellCoords.textContent = `${selectedCell.col}, ${selectedCell.row}`;
+
+        if (selectedCell.mode === 'battle') {
+            const occupantLabel = selectedCell.occupantType
+                ? `${selectedCell.occupantType === 'player' ? 'Player' : 'Enemy'}`
+                : 'None';
+            const hpLabel = selectedCell.occupantHp !== null && selectedCell.occupantMaxHp !== null
+                ? `${selectedCell.occupantHp}/${selectedCell.occupantMaxHp}`
+                : '—';
+            this.hudElements.selectedCellTerrain.textContent = selectedCell.obstacleName
+                ? `${this.formatTerrainLabel(selectedCell.terrainType)} (${selectedCell.obstacleName})`
+                : this.formatTerrainLabel(selectedCell.terrainType);
+            this.hudElements.selectedCellVisibility.textContent = 'Battle map';
+            this.hudElements.selectedCellTraversable.textContent = selectedCell.isTraversable ? 'Walkable' : 'Blocked';
+            this.hudElements.selectedCellVillage.textContent = occupantLabel;
+            this.hudElements.selectedCellVillageName.textContent = selectedCell.occupantName ?? '—';
+            this.hudElements.selectedCellVillageStatus.textContent = `HP ${hpLabel}`;
+            return;
+        }
+
         const terrainIsKnown = selectedCell.isVisible || selectedCell.fogState !== 'unknown';
         const villageDetailsKnown = terrainIsKnown && selectedCell.isVillage;
-
         this.hudElements.selectedCellTerrain.textContent = terrainIsKnown ? this.formatTerrainLabel(selectedCell.terrainType) : 'Unknown';
         this.hudElements.selectedCellVisibility.textContent = this.formatVisibilityLabel(selectedCell);
         this.hudElements.selectedCellTraversable.textContent = terrainIsKnown ? (selectedCell.isTraversable ? 'Walkable' : 'Blocked') : 'Unknown';
         this.hudElements.selectedCellVillage.textContent = terrainIsKnown ? (selectedCell.isVillage ? 'Yes' : 'No') : 'Unknown';
-        this.hudElements.selectedCellVillageName.textContent = terrainIsKnown
-            ? (selectedCell.villageName ?? '—')
-            : 'Unknown';
-        this.hudElements.selectedCellVillageStatus.textContent = villageDetailsKnown
-            ? this.formatVillageStatusLabel(selectedCell.villageStatus)
-            : (terrainIsKnown ? '—' : 'Unknown');
+        this.hudElements.selectedCellVillageName.textContent = terrainIsKnown ? (selectedCell.villageName ?? '—') : 'Unknown';
+        this.hudElements.selectedCellVillageStatus.textContent = villageDetailsKnown ? this.formatVillageStatusLabel(selectedCell.villageStatus) : (terrainIsKnown ? '—' : 'Unknown');
     }
 
     private bindEquipmentSlotEvents(): void {

@@ -1,5 +1,60 @@
 # Verification and Testing Discussion
 
+## March 25, 2026 update: vitality save should keep full HP at full-health breakpoint
+
+### Bug report context
+- Repro from gameplay UI:
+  1. Character HP is currently full (`hp === maxHp`), e.g. `7/7`.
+  2. Player allocates points into **vitality** and clicks **Save**.
+  3. Before fix, `maxHp` increased but `hp` stayed unchanged (e.g. `7/9`).
+- Expected behavior: when character was already at full HP before the vitality save, current HP should track new max (e.g. `9/9`).
+
+### Root cause
+- `Player.addStat(...)` recalculated derived stats via `updateStats()`, then clamped HP using `Math.min(this.hp, this.maxHp)`.
+- That clamp preserved the old numeric HP value, but it did not preserve the "was full" state.
+
+### Resolution
+- Added a full-HP guard in `Player.addStat(...)`:
+  - capture `hadFullHp` before recalculation,
+  - if true after stat application, set `hp = maxHp`,
+  - otherwise preserve prior value with standard clamp (`Math.min(previousHp, maxHp)`).
+- This keeps non-full HP behavior stable while fixing the full-HP vitality-save flow.
+
+### Regression test added
+- New entity test: `Player keeps full HP state when max HP increases from vitality`.
+- The test verifies:
+  - max HP increases after vitality allocation,
+  - HP remains exactly equal to max HP when player started at full HP.
+
+### Suggested manual smoke checks
+1. Open character with full HP (e.g. `7/7`), allocate vitality, press Save → confirm `9/9` style result.
+2. Repeat when not full HP (e.g. `4/7`), allocate vitality, press Save → confirm current HP does **not** jump to full.
+3. Confirm intelligence/connection upgrades still preserve existing mana behavior.
+## March 25, 2026 update: village sell-list synchronization hardening
+
+### Problem observed
+- In village mode, the **Sell inventory item** dropdown could occasionally show a stale snapshot of inventory contents after buy-driven inventory changes.
+- Result: players could see incomplete sell choices until another village UI refresh happened.
+
+### Changes made
+- Added proactive sell-list refresh hooks on the sell dropdown itself:
+  - refresh on `focus`
+  - refresh on `pointerdown` (right before opening)
+- This keeps sell options synchronized with the most current inventory right as the player opens/uses the control.
+- Also fixed sell button enablement logic to follow the select's disabled state directly, preventing action enablement drift when placeholder text is shown.
+
+### Regression checks
+1. Enter village and buy items multiple times in a row.
+2. Open the sell dropdown immediately after each buy and confirm every current inventory item is listed.
+3. Sell until inventory is empty and confirm:
+   - dropdown shows placeholder text,
+   - **Sell selected** button is disabled.
+4. Obtain a new item, reopen sell dropdown, confirm button re-enables and item appears.
+
+### Commands run for this change
+- `npm run build:rgfn`
+- `node --test rgfn_game/test/**/*.test.js`
+
 ## March 2026 update: village re-entry controls on world map
 
 ### Feature summary
@@ -282,3 +337,8 @@ So tests asserting fixed literal HP values (for example zombie `7`) will fail wh
   - verifies equipment action in battle queues 2 additional consumed turns and advances battle flow.
 - `test/helpers/testUtils.js`
   - combat entity test helper now assigns stable synthetic `id` values, which is required for turn-consumption tracking keyed by entity id.
+
+## Village dialogue verification
+- Build RGFN bundle: `npm run build:rgfn`.
+- Run RGFN tests: `node --test rgfn_game/test/**/*.test.js`.
+- New coverage includes `villageDialogueEngine.test.js` for truthful/lying/refusal behavior.

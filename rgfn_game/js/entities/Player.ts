@@ -300,6 +300,8 @@ export default class Player extends DamageableEntity {
         }
 
         const previousIntelligence = this.intelligence;
+        const previousHp = this.hp;
+        const hadFullHp = this.hp >= this.maxHp;
 
         switch (stat) {
             case 'vitality':
@@ -326,10 +328,9 @@ export default class Player extends DamageableEntity {
 
         this.skillPoints -= amount;
 
-        // Store current HP percentage
         // Update derived stats
         this.updateStats();
-        this.hp = Math.min(this.hp, this.maxHp);
+        this.hp = hadFullHp ? this.maxHp : Math.min(previousHp, this.maxHp);
 
         if (stat === 'intelligence') {
             const gainedMagicPoints = Math.floor(this.intelligence / 3) - Math.floor(previousIntelligence / 3);

@@ -1,5 +1,5 @@
 import GridMap from '../../utils/GridMap.js';
-import { CombatEntity, Direction, GridPosition, TerrainType } from '../../types/game.js';
+import { CombatEntity, Direction, GridPosition, SelectedBattleCellInfo, TerrainType } from '../../types/game.js';
 import { theme } from '../../config/ThemeConfig.js';
 import BattleMapView, { BattleObstacle, BattleObstacleKind } from './BattleMapView.js';
 
@@ -27,11 +27,13 @@ export default class BattleMap {
     private entities: CombatEntity[];
     private terrainType: TerrainType;
     private obstacles: Map<string, BattleObstacle>;
+    private selectedGridPos: GridPosition | null;
 
     constructor() {
         this.grid = new GridMap(theme.battleMap.gridSize.columns, theme.battleMap.gridSize.rows, 48);
         this.terrainType = 'grass';
         this.obstacles = new Map();
+        this.selectedGridPos = null;
         this.view = new BattleMapView(this.grid, () => this.terrainType, () => this.getObstacles());
         this.entities = [];
     }
@@ -102,7 +104,45 @@ export default class BattleMap {
         currentEntity: CombatEntity | null = null,
         selectedEnemy: CombatEntity | null = null,
     ): void {
-        this.view.draw(ctx, currentEntity, selectedEnemy);
+        this.view.draw(ctx, currentEntity, selectedEnemy, this.selectedGridPos);
+    }
+
+    public updateSelectedCellFromPixel(pixelX: number, pixelY: number): boolean {
+        const [col, row] = this.grid.pixelToGrid(pixelX, pixelY);
+        if (!this.grid.isValidPosition(col, row)) {
+            this.selectedGridPos = null;
+            return false;
+        }
+
+        this.selectedGridPos = { col, row };
+        return true;
+    }
+
+    public clearSelectedCell(): void {
+        this.selectedGridPos = null;
+    }
+
+    public getSelectedCellInfo(): SelectedBattleCellInfo | null {
+        if (!this.selectedGridPos) {
+            return null;
+        }
+
+        const obstacle = this.obstacles.get(this.getCellKey(this.selectedGridPos.col, this.selectedGridPos.row));
+        const occupant = this.entities.find((entity) => entity.gridCol === this.selectedGridPos?.col && entity.gridRow === this.selectedGridPos?.row && !entity.isDead()) ?? null;
+        const occupantType = occupant ? (occupant.constructor.name === 'Player' ? 'player' : 'enemy') : null;
+
+        return {
+            mode: 'battle',
+            col: this.selectedGridPos.col,
+            row: this.selectedGridPos.row,
+            terrainType: this.terrainType,
+            obstacleName: obstacle ? this.formatObstacleName(obstacle.kind) : null,
+            isTraversable: !obstacle && occupant === null,
+            occupantType,
+            occupantName: occupant?.constructor.name === 'Player' ? 'Hero' : (occupant?.constructor?.name ?? null),
+            occupantHp: occupant?.hp ?? null,
+            occupantMaxHp: occupant?.maxHp ?? null,
+        };
     }
 
     public isEntityOnEdge(entity: CombatEntity): boolean {
@@ -467,5 +507,9 @@ export default class BattleMap {
 
     private randomInt(min: number, max: number): number {
         return Math.floor(Math.random() * ((max - min) + 1)) + min;
+    }
+
+    private formatObstacleName(kind: BattleObstacleKind): string {
+        return kind.charAt(0).toUpperCase() + kind.slice(1);
     }
 }

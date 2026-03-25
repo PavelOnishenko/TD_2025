@@ -3,7 +3,7 @@ import BattleUiController from '../../BattleUiController.js';
 import HudController from '../../HudController.js';
 import Skeleton from '../../../entities/Skeleton.js';
 import MagicSystem, { BaseSpellId } from '../../magic/MagicSystem.js';
-import { SelectedWorldCellInfo } from '../../../types/game.js';
+import { SelectedCellInfo } from '../../../types/game.js';
 
 type PlayerStat = 'vitality' | 'toughness' | 'strength' | 'agility' | 'connection' | 'intelligence';
 
@@ -48,7 +48,7 @@ export default class GameHudCoordinator {
         this.hudController.togglePanel(panel);
     }
 
-    public updateSelectedWorldCell(selectedCell: SelectedWorldCellInfo | null): void {
+    public updateSelectedCell(selectedCell: SelectedCellInfo | null): void {
         this.hudController.updateSelectedCellInfo(selectedCell);
     }
 

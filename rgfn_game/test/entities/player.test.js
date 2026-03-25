@@ -91,6 +91,19 @@ test('Player keeps full mana state when max mana increases', () => {
   assert.equal(player.mana <= player.maxMana, true);
 });
 
+test('Player keeps full HP state when max HP increases from vitality', () => {
+  const player = new Player(0, 0);
+  player.skillPoints = 2;
+  player.hp = player.maxHp;
+
+  const oldMaxHp = player.maxHp;
+
+  player.addStat('vitality', 2);
+
+  assert.equal(player.maxHp >= oldMaxHp + 2, true);
+  assert.equal(player.hp, player.maxHp);
+});
+
 test('Player can use a configured starting skill roll for the next new character', () => {
   const configuredRoll = createEmptyNextCharacterRollAllocation();
   configuredRoll.intelligence = 3;

@@ -148,6 +148,10 @@ export type VillageUI = {
     buyOffer4Btn: HTMLButtonElement;
     sellSelect: HTMLSelectElement;
     sellSelectedBtn: HTMLButtonElement;
+    npcList: HTMLElement;
+    npcTitle: HTMLElement;
+    askVillageInput: HTMLInputElement;
+    askVillageBtn: HTMLButtonElement;
     leaveBtn: HTMLButtonElement;
 };
 
