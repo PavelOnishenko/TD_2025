@@ -168,3 +168,26 @@ For tests: **RGFN would benefit from tests like Neon Void**, especially for leve
 ---
 
 *Written by Claude - January 2026*
+
+## 2026-03 Regression Notes (Current Test Workflow)
+
+### Reliable local command sequence
+1. Build RGFN TypeScript output first:
+   - `npm run build:rgfn`
+2. Run the RGFN test suite against compiled `dist/` modules:
+   - `node --test $(find rgfn_game/test -name '*.test.js' -print)`
+
+### Why the build step matters
+RGFN tests import from `rgfn_game/dist/**`. If `dist` is missing/stale, many suites fail with `ERR_MODULE_NOT_FOUND` before running assertions.
+
+### Enemy stat expectation gotcha
+Enemy HP in runtime is not raw archetype HP. `Skeleton` applies `balanceConfig.enemies.hpMultiplier` to derived HP:
+- `finalMaxHp = Math.round(derivedMaxHp * hpMultiplier)`
+
+So tests asserting fixed literal HP values (for example zombie `7`) will fail when multiplier is `2` (actual becomes `14`). The stable assertion pattern is:
+- derive with `deriveCreatureStats(...)`
+- then apply `hpMultiplier` for expected HP
+
+### Practical guidance for future test additions
+- Prefer formula-based expectations tied to `balanceConfig` over hardcoded literals when behavior is config-driven.
+- Keep one regression note per behavior change here to avoid rediscovering the same pitfalls.
