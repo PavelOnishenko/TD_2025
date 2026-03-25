@@ -129,6 +129,7 @@ export default class Game {
         const villageActionsController = new VillageActionsController(player, ui.villageUI, ui.gameLogUI.log, {
             onUpdateHUD: () => this.hudCoordinator.updateHUD(),
             onLeaveVillage: () => this.stateMachine.transition(MODES.WORLD_MAP),
+            getVillageDirectionHint: (settlementName: string) => this.worldMap.getVillageDirectionHintFromPlayer(settlementName),
         });
         this.villageCoordinator = new GameVillageCoordinator(ui.hudElements, ui.battleUI, ui.villageUI, ui.worldUI, villageLifeRenderer, villageActionsController);
         this.stateMachine = this.createStateMachine(ui);
