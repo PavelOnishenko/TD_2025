@@ -53,6 +53,11 @@ All panel buttons use the existing active-button behavior (`.action-btn.active`)
 - `#hud` uses `pointer-events: none`; interactive children (`.hud-menu-toggle`, `.hud-menu-panel`) re-enable pointer events.
 - `#hud` has a high z-index so the hamburger is always clickable above map overlays.
 - `#game-container` and `#main-view-stage` intentionally have no border/padding/radius in fullscreen mode.
+- Village mode now uses a **split actions layout**:
+  - Main action stack (`Wait`, stock, sell, leave) remains in the right village sidebar.
+  - `Village rumors` is rendered as a floating block that is horizontally offset into the center gameplay space (`.village-floating-rumors`).
+  - On narrow screens (`max-width: 920px`) the rumors block automatically falls back to normal in-flow layout to avoid overlap.
+- `#village-actions` must stay `position: relative` + `overflow: visible`; removing either clips or detaches the floating rumors block.
 
 If the menu ever appears but is not clickable, check pointer-event inheritance first.
 
@@ -104,6 +109,11 @@ To improve battle readability, the player now renders as a full mini-avatar (sha
    - Move to a non-village tile and test `Space` / `Enter Village (Space)`:
      - Game stays in world mode.
      - A guidance log line is shown instead.
+   - In village mode on desktop width:
+     - `Village rumors` appears left of the right sidebar (closer to map center), not below stock/sell.
+     - Right sidebar still keeps `Village Actions` content on the right edge.
+   - On narrow viewports/mobile width:
+     - `Village rumors` returns beneath the rest of village actions (single-column fallback).
 
 ## Inventory drop recovery addendum
 
