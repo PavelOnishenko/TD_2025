@@ -76,6 +76,7 @@ export default class GameBattleCoordinator {
     }
 
     public enterBattleMode(enemies: Skeleton[], terrainType: TerrainType = 'grass'): void {
+        this.turnTransitioning = true;
         this.hudElements.modeIndicator.textContent = 'Battle!';
         this.worldUI.sidebar.classList.add('hidden');
         this.battleUI.sidebar.classList.remove('hidden');
@@ -89,6 +90,9 @@ export default class GameBattleCoordinator {
     }
 
     public updateBattleMode(): void {
+        if (this.turnTransitioning) {
+            return;
+        }
         this.controllers.battlePlayerActionController.updateBattleMode(() => this.getPressedDirection());
     }
 
@@ -164,6 +168,7 @@ export default class GameBattleCoordinator {
     }
 
     public endBattle(result: 'victory' | 'defeat' | 'fled'): void {
+        this.turnTransitioning = true;
         if (result === 'fled') {
             this.controllers.battleCommandController.clearPendingLoot();
             this.stateMachine.transition(MODES.WORLD_MAP);
@@ -181,6 +186,7 @@ export default class GameBattleCoordinator {
     }
 
     public exitBattleMode(): void {
+        this.turnTransitioning = false;
         this.currentEnemies = [];
         this.currentTerrainType = 'grass';
         this.battleMap.clearSelectedCell();

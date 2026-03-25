@@ -342,3 +342,32 @@ So tests asserting fixed literal HP values (for example zombie `7`) will fail wh
 - Build RGFN bundle: `npm run build:rgfn`.
 - Run RGFN tests: `node --test rgfn_game/test/**/*.test.js`.
 - New coverage includes `villageDialogueEngine.test.js` for truthful/lying/refusal behavior.
+
+## 2026-03 Victory Popup Movement Input Guard (RGFN)
+
+### Symptom
+- During the **victory splash popup** shown at battle end, pressing a movement key (`WASD` or arrow keys) could leak a queued player movement action into battle mode.
+- On a subsequent encounter, this stale battle input path could trigger an immediate battle-end flow, causing players to see a victory popup right away and effectively skip intended combat.
+
+### Root cause
+- `GameBattleCoordinator.updateBattleMode()` still forwarded movement polling while splash transitions were active.
+- The existing transition flag (`turnTransitioning`) already blocked click/button actions but did not block the movement polling path.
+
+### Fix
+- `GameBattleCoordinator` now:
+  - sets `turnTransitioning = true` as soon as battle entry begins (before the battle-start splash dismisses),
+  - early-returns from `updateBattleMode()` while transitioning,
+  - sets `turnTransitioning = true` at battle end (victory/defeat/flee transition window),
+  - resets `turnTransitioning = false` on battle exit cleanup.
+
+### Verification checklist
+1. Win a battle and keep pressing movement during the victory splash.
+2. Allow return to world map, continue moving, and trigger another encounter.
+3. Confirm battle-start splash appears normally and combat proceeds (no immediate victory splash).
+4. Confirm normal in-battle movement still works once player turn becomes ready.
+
+### Automated regression coverage
+- Added `test/systems/gameBattleCoordinator.test.js` with guards for:
+  - no movement updates during battle-start splash transition,
+  - no movement updates during battle-end splash transition,
+  - movement updates resuming after `onPlayerTurnReady()`.
