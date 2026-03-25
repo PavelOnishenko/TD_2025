@@ -4,6 +4,7 @@ import VillageDialogueEngine, { CompassDirection, VillageDialogueOutcome, Villag
 
 type VillageUI = {
     sidebar: HTMLElement;
+    title: HTMLElement;
     prompt: HTMLElement;
     actions: HTMLElement;
     buyOffer1Btn: HTMLButtonElement;
@@ -72,6 +73,7 @@ export default class VillageActionsController {
 
     public enterVillage(villageName: string): void {
         this.currentVillageName = villageName;
+        this.villageUI.title.textContent = `Village: ${villageName}`;
         this.refreshVillageStock();
         this.npcRoster = this.dialogueEngine.createNpcRoster(villageName);
         this.selectedNpcId = null;

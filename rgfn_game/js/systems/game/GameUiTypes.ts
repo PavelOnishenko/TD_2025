@@ -137,6 +137,7 @@ export type WorldUI = {
 
 export type VillageUI = {
     sidebar: HTMLElement;
+    title: HTMLElement;
     prompt: HTMLElement;
     actions: HTMLElement;
     enterBtn: HTMLButtonElement;

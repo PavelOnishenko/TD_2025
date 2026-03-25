@@ -1,5 +1,30 @@
 # Verification and Testing Discussion
 
+## March 25, 2026 update: village sidebar now shows current village name
+
+### Problem observed
+- Village UI heading was static (`Village`) and did not show the current settlement name.
+- This caused avoidable orientation friction when moving between multiple villages or quickly re-entering from world mode.
+
+### Changes made
+- Added a dedicated village title element ID in the village sidebar (`#village-title`).
+- Extended `VillageUI` typing + UI factory wiring so runtime code can update this header directly.
+- Updated village entry flow so `VillageActionsController.enterVillage(...)` sets heading text to `Village: <currentVillageName>`.
+
+### Why this implementation
+- The game already passes canonical village names through `WorldMap -> GameVillageCoordinator -> VillageActionsController`.
+- Reusing that flow avoids duplicate state and keeps title updates deterministic across both first entry and re-entry.
+
+### Regression checks
+1. Discover/enter a village and verify heading shows its real name.
+2. Leave and re-enter the same tile (Space or world panel button) and confirm heading still matches that village.
+3. Travel to a different village and confirm heading updates to the new name.
+4. Confirm village prompt/actions still open/close as before.
+
+### Commands run for this change
+- `npm run build:rgfn`
+- `node --test rgfn_game/test/**/*.test.js`
+
 ## March 25, 2026 update: vitality save should keep full HP at full-health breakpoint
 
 ### Bug report context
