@@ -138,6 +138,8 @@ export default class GameUiEventBinder {
         this.villageUI.buyOffer2Btn.addEventListener('click', () => this.villageActionsController.handleBuyOffer(1));
         this.villageUI.buyOffer3Btn.addEventListener('click', () => this.villageActionsController.handleBuyOffer(2));
         this.villageUI.buyOffer4Btn.addEventListener('click', () => this.villageActionsController.handleBuyOffer(3));
+        this.villageUI.sellSelect.addEventListener('focus', () => this.villageActionsController.updateButtons());
+        this.villageUI.sellSelect.addEventListener('pointerdown', () => this.villageActionsController.updateButtons());
         this.villageUI.sellSelect.addEventListener('change', () => this.villageActionsController.updateButtons());
         this.villageUI.sellSelectedBtn.addEventListener('click', () => this.villageActionsController.handleSellSelected());
         this.villageUI.leaveBtn.addEventListener('click', () => this.villageActionsController.handleLeave());

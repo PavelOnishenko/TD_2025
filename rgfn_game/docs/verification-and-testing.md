@@ -1,5 +1,30 @@
 # Verification and Testing Discussion
 
+## March 25, 2026 update: village sell-list synchronization hardening
+
+### Problem observed
+- In village mode, the **Sell inventory item** dropdown could occasionally show a stale snapshot of inventory contents after buy-driven inventory changes.
+- Result: players could see incomplete sell choices until another village UI refresh happened.
+
+### Changes made
+- Added proactive sell-list refresh hooks on the sell dropdown itself:
+  - refresh on `focus`
+  - refresh on `pointerdown` (right before opening)
+- This keeps sell options synchronized with the most current inventory right as the player opens/uses the control.
+- Also fixed sell button enablement logic to follow the select's disabled state directly, preventing action enablement drift when placeholder text is shown.
+
+### Regression checks
+1. Enter village and buy items multiple times in a row.
+2. Open the sell dropdown immediately after each buy and confirm every current inventory item is listed.
+3. Sell until inventory is empty and confirm:
+   - dropdown shows placeholder text,
+   - **Sell selected** button is disabled.
+4. Obtain a new item, reopen sell dropdown, confirm button re-enables and item appears.
+
+### Commands run for this change
+- `npm run build:rgfn`
+- `node --test rgfn_game/test/**/*.test.js`
+
 ## March 2026 update: village re-entry controls on world map
 
 ### Feature summary
