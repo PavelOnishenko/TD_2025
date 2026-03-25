@@ -16,6 +16,8 @@ export default class GameUiFactory {
 
     private createHudElements(): HudElements {
         return {
+            hudMenuToggleBtn: document.getElementById('hud-menu-toggle-btn')! as HTMLButtonElement,
+            hudMenuPanel: document.getElementById('hud-menu-panel')!,
             modeIndicator: document.getElementById('mode-indicator')!,
             usePotionBtn: document.getElementById('use-potion-btn')! as HTMLButtonElement,
             useManaPotionBtn: document.getElementById('use-mana-potion-btn')! as HTMLButtonElement,
@@ -81,6 +83,7 @@ export default class GameUiFactory {
             inventoryCount: document.getElementById('inventory-count')!,
             inventoryCapacity: document.getElementById('inventory-capacity')!,
             inventoryCapacityHint: document.getElementById('inventory-capacity-hint')!,
+            undoLastDropBtn: document.getElementById('undo-last-drop-btn')! as HTMLButtonElement,
             inventoryGrid: document.getElementById('inventory-grid')!,
             weaponSlotMain: document.getElementById('weapon-slot-main')! as HTMLButtonElement,
             weaponSlotOff: document.getElementById('weapon-slot-off')! as HTMLButtonElement,

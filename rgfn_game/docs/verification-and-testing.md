@@ -20,6 +20,55 @@
 4. Press **Space** while not on a village tile and confirm no state transition occurs.
 5. Confirm existing world controls still work: movement, zoom, pan, centering.
 
+---
+
+## March 2026: Battle view player visibility fix
+
+### Change summary
+- The player battle rendering now draws a visible mini-avatar (shadow/body/head/shoulders) in addition to the HP bar.
+- Previously, players could appear as "only a highlighted cell + tiny HP bar", especially when turn highlights moved to enemies.
+
+### Fast regression checklist for this specific area
+1. Start a battle and confirm the player pawn is clearly visible in their tile even when it is **not** the player's turn.
+2. Confirm enemy sprites still draw correctly and are not occluded by player rendering.
+3. Verify HP bars still render above entities and update after damage.
+4. Enter/exit battle mode and ensure no rendering artifacts remain on world map.
+5. Resize browser window during battle and confirm avatar scales/positions correctly with battle grid resize.
+
+### Programmatic verification commands
+- `npm run build:rgfn`
+- `node --test rgfn_game/test/**/*.test.js`
+
+---
+
+## March 24, 2026 – Inventory Equip Regression Note
+
+### Problem statement
+- Reported UX bug: picking up a weapon could immediately equip it, even when the player intended to keep current loadout.
+- This behavior came from `PlayerInventory.addItem(...)`, which auto-equipped any weapon/armor that passed `canEquip`.
+
+### Resolution summary
+- Updated inventory behavior so pickup only adds items to bag storage.
+- Equipment changes are now explicit-only via:
+  - inventory click/drag equip actions,
+  - direct slot interactions,
+  - explicit equip APIs.
+
+### Regression coverage added/updated
+- `Player inventory keeps discovered equipment in inventory until explicitly equipped`
+  - verifies that newly found weapons/armor stay in inventory and do not alter equipped state.
+- `Equipped items are removed from inventory and return on unequip`
+  - now performs explicit equip actions first, then validates round-trip equip/unequip behavior.
+
+### Commands run for this change
+- `npm run build:rgfn`
+- `node --test rgfn_game/test/**/*.test.js`
+- `node --test rgfn_game/test/entities/player.test.js`
+
+### Current suite status snapshot
+- The focused player tests pass after this fix.
+- The full `rgfn_game` suite still contains at least one unrelated pre-existing failure in `creatures.test.js` (`Enemy archetypes derive resulting stats from base stats plus shared skills`), which is outside the inventory workflow touched here.
+
 ## How I Verified the XP Fix
 
 ### The Honest Truth
@@ -188,3 +237,26 @@ For tests: **RGFN would benefit from tests like Neon Void**, especially for leve
 ---
 
 *Written by Claude - January 2026*
+
+## 2026-03 Regression Notes (Current Test Workflow)
+
+### Reliable local command sequence
+1. Build RGFN TypeScript output first:
+   - `npm run build:rgfn`
+2. Run the RGFN test suite against compiled `dist/` modules:
+   - `node --test $(find rgfn_game/test -name '*.test.js' -print)`
+
+### Why the build step matters
+RGFN tests import from `rgfn_game/dist/**`. If `dist` is missing/stale, many suites fail with `ERR_MODULE_NOT_FOUND` before running assertions.
+
+### Enemy stat expectation gotcha
+Enemy HP in runtime is not raw archetype HP. `Skeleton` applies `balanceConfig.enemies.hpMultiplier` to derived HP:
+- `finalMaxHp = Math.round(derivedMaxHp * hpMultiplier)`
+
+So tests asserting fixed literal HP values (for example zombie `7`) will fail when multiplier is `2` (actual becomes `14`). The stable assertion pattern is:
+- derive with `deriveCreatureStats(...)`
+- then apply `hpMultiplier` for expected HP
+
+### Practical guidance for future test additions
+- Prefer formula-based expectations tied to `balanceConfig` over hardcoded literals when behavior is config-driven.
+- Keep one regression note per behavior change here to avoid rediscovering the same pitfalls.

@@ -2,6 +2,8 @@ import type { RandomEncounterType } from '../encounter/EncounterSystem.js';
 import type { CombatMove } from '../combat/DirectionalCombat.js';
 
 export type HudElements = {
+    hudMenuToggleBtn: HTMLButtonElement;
+    hudMenuPanel: HTMLElement;
     modeIndicator: HTMLElement;
     usePotionBtn: HTMLButtonElement;
     useManaPotionBtn: HTMLButtonElement;
@@ -67,6 +69,7 @@ export type HudElements = {
     inventoryCount: HTMLElement;
     inventoryCapacity: HTMLElement;
     inventoryCapacityHint: HTMLElement;
+    undoLastDropBtn: HTMLButtonElement;
     inventoryGrid: HTMLElement;
     weaponSlotMain: HTMLButtonElement;
     weaponSlotOff: HTMLButtonElement;
