@@ -131,6 +131,7 @@ export type BattleUI = {
 export type WorldUI = {
     sidebar: HTMLElement;
     usePotionBtn: HTMLButtonElement;
+    enterVillageBtn: HTMLButtonElement;
     centerOnCharacterBtn: HTMLButtonElement;
 };
 

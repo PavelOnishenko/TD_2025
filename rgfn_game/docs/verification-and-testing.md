@@ -1,5 +1,27 @@
 # Verification and Testing Discussion
 
+## March 2026 update: village re-entry controls on world map
+
+### Feature summary
+- Added a world-map action button: **Enter Village (Space)**.
+- Added keyboard shortcut: **Space**.
+- Both controls re-enter village mode when the player is standing on a village tile (including immediately after leaving a village).
+- If used away from a village tile, game stays in world mode and writes a guidance log message.
+
+### Why this was needed
+- Previously, entering villages was mostly movement-driven encounter flow.
+- After leaving a village while still standing on that same tile, there was no direct "re-enter now" action.
+- New behavior mimics old Fallout-style interaction: stand on location and press action key/button.
+
+### Regression checks to keep
+1. Enter a village by moving onto a village tile still works.
+2. Leave village, press **Space**, and confirm village prompt opens again.
+3. Leave village, open World Map panel, click **Enter Village (Space)**, and confirm village prompt opens again.
+4. Press **Space** while not on a village tile and confirm no state transition occurs.
+5. Confirm existing world controls still work: movement, zoom, pan, centering.
+
+---
+
 ## March 2026: Battle view player visibility fix
 
 ### Change summary
@@ -16,6 +38,9 @@
 ### Programmatic verification commands
 - `npm run build:rgfn`
 - `node --test rgfn_game/test/**/*.test.js`
+
+---
+
 ## March 24, 2026 – Inventory Equip Regression Note
 
 ### Problem statement
@@ -28,7 +53,6 @@
   - inventory click/drag equip actions,
   - direct slot interactions,
   - explicit equip APIs.
-- This keeps pickup deterministic and prevents accidental weapon swaps.
 
 ### Regression coverage added/updated
 - `Player inventory keeps discovered equipment in inventory until explicitly equipped`

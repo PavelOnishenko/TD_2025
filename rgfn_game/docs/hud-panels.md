@@ -19,6 +19,10 @@ This satisfies the intended UX: the map always dominates the screen, and UI pane
 
 - `World Map` button → toggles `#world-sidebar` panel.
 - `Log` button → toggles `#game-log-container` panel.
+- Inside the `World Map` panel:
+  - `Use HP Potion` uses a potion without leaving the panel.
+  - `Enter Village (Space)` re-enters a village if the hero is currently standing on a village tile.
+  - `Center on Character` recenters the map viewport on the hero.
 
 All panel buttons use the existing active-button behavior (`.action-btn.active`) so players can see which panel is currently visible.
 
@@ -69,19 +73,37 @@ To improve battle readability, the player now renders as a full mini-avatar (sha
 ## Suggested manual QA checklist
 
 1. Start RGFN and verify the map view fills the window and hamburger is visible at top-left.
+
 2. Click hamburger:
    - Vertical panel-button list appears along the left edge.
    - Utility action buttons are visible below panel toggles.
-3. Click `World Map` and `Log`:
-   - Their overlays toggle as expected.
-   - Corresponding buttons receive active state.
-   - Menu closes after each selection.
-4. Re-open menu and click other panels (`Stats`, `Skills`, `Inventory`, etc.):
+
+3. Click `World Map`:
+   - Panel opens on the left.
+   - Button gets active state.
+   - Menu closes after selection.
+
+4. Click `Log`:
+   - Log opens on the left.
+   - New log entries still append and auto-scroll.
+   - Menu closes after selection.
+
+5. Re-open menu and click other panels (`Stats`, `Skills`, `Inventory`, etc.):
    - Correct panel opens in overlay stack.
    - Active states remain accurate.
-5. Enter battle/village and return to world:
+
+6. Enter battle/village and return to world:
    - Hamburger remains accessible.
-   - Previously opened panels preserve expected state behavior.
+   - Panels preserve expected state behavior.
+   - World panel should remain closed unless reopened explicitly.
+
+7. Village interaction checks:
+   - Stand on a village tile, leave the village, then re-enter:
+     - Press `Space` on the world map → village entry prompt opens.
+     - Click `Enter Village (Space)` in the world panel → same behavior.
+   - Move to a non-village tile and test `Space` / `Enter Village (Space)`:
+     - Game stays in world mode.
+     - A guidance log line is shown instead.
 
 ## Inventory drop recovery addendum
 

@@ -25,6 +25,7 @@ export default class GameInputSetup {
         this.input.mapAction('worldMapPanDown', ['KeyK']);
         this.input.mapAction('worldMapPanLeft', ['KeyJ']);
         this.input.mapAction('worldMapPanRight', ['KeyL']);
+        this.input.mapAction('enterVillage', ['Space']);
 
         document.addEventListener('keydown', (event: KeyboardEvent) => this.input.handleKeyDown(event));
         document.addEventListener('keyup', (event: KeyboardEvent) => this.input.handleKeyUp(event));
