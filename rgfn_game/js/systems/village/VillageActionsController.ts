@@ -235,7 +235,7 @@ export default class VillageActionsController {
         });
 
         this.refreshSellOptions();
-        this.villageUI.sellSelectedBtn.disabled = this.villageUI.sellSelect.options.length === 0;
+        this.villageUI.sellSelectedBtn.disabled = this.villageUI.sellSelect.disabled;
         this.villageUI.askVillageBtn.disabled = !this.getSelectedNpc() || !this.villageUI.askVillageInput.value.trim();
     }
 
