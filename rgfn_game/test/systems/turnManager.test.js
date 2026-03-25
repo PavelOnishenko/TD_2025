@@ -41,3 +41,25 @@ test('TurnManager reports active combatants and enemies', () => {
   assert.equal(tm.hasActiveCombatants(), true);
   assert.equal(tm.getActiveEnemies().length, 1);
 });
+
+test('TurnManager can consume multiple upcoming turns for one entity', () => {
+  const tm = new TurnManager();
+  const player = createCombatEntity('Player', 1, 1, false);
+  const enemy = createCombatEntity('Skeleton', 2, 1, false);
+
+  tm.initializeTurns([player, enemy]);
+  tm.consumeUpcomingTurns(player, 2);
+
+  tm.nextTurn();
+  assert.equal(tm.getCurrentEntity(), enemy);
+  assert.equal(tm.shouldSkipCurrentTurn(), false);
+
+  tm.nextTurn();
+  assert.equal(tm.getCurrentEntity(), player);
+  assert.equal(tm.shouldSkipCurrentTurn(), true);
+  tm.clearCurrentTurnConsumption();
+  assert.equal(tm.shouldSkipCurrentTurn(), true);
+
+  tm.clearCurrentTurnConsumption();
+  assert.equal(tm.shouldSkipCurrentTurn(), false);
+});

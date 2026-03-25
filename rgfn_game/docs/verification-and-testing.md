@@ -260,3 +260,25 @@ So tests asserting fixed literal HP values (for example zombie `7`) will fail wh
 ### Practical guidance for future test additions
 - Prefer formula-based expectations tied to `balanceConfig` over hardcoded literals when behavior is config-driven.
 - Keep one regression note per behavior change here to avoid rediscovering the same pitfalls.
+
+## 2026-03 Equipment Change Turns in Battle (RGFN)
+
+### Behavior change
+- Equipping or unequipping **weapons/armor during battle** now costs **3 total turns**:
+  - current player turn is spent immediately,
+  - plus 2 additional upcoming player turns are consumed automatically.
+- Out of battle, equipment still changes instantly (no turn cost).
+- In battle, equipment changes are only accepted on the player's own active turn.
+
+### Technical notes
+- `TurnManager` now tracks consumed turns as a per-entity counter map instead of a boolean-style set, so multiple queued skipped turns are supported for one combatant.
+- `BattleCommandController` now exposes `handleEquipmentAction(...)` and applies the 3-turn flow for battle-only equipment interactions.
+- `HudController` routes inventory/equipment slot changes through the battle action handler before applying actual equip/unequip mutations.
+
+### Regression tests added
+- `test/systems/turnManager.test.js`
+  - verifies multi-turn consumption on a single entity.
+- `test/systems/battleCommandController.test.js`
+  - verifies equipment action in battle queues 2 additional consumed turns and advances battle flow.
+- `test/helpers/testUtils.js`
+  - combat entity test helper now assigns stable synthetic `id` values, which is required for turn-consumption tracking keyed by entity id.

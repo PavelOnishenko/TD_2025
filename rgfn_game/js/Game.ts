@@ -119,10 +119,19 @@ export default class Game {
         this.initializeQuestUi(questGenerator, questUiController);
         const magicSystem = new MagicSystem(player);
         const battleUiController = new BattleUiController(ui.battleUI, battleMap, turnManager, player, ui.gameLogUI.log, magicSystem);
+        let battleCommandControllerRef: BattleCommandController | null = null;
         this.magicSystem = magicSystem;
         this.hudCoordinator = new GameHudCoordinator(
             player,
-            new HudController(player, ui.hudElements, ui.battleUI, magicSystem, ui.gameLogUI.log, loreBookController),
+            new HudController(
+                player,
+                ui.hudElements,
+                ui.battleUI,
+                magicSystem,
+                ui.gameLogUI.log,
+                loreBookController,
+                (actionDescription: string) => battleCommandControllerRef?.handleEquipmentAction(actionDescription) ?? true,
+            ),
             battleUiController,
             magicSystem,
         );
@@ -149,6 +158,7 @@ export default class Game {
             getSelectedEnemy: () => battlePlayerActionController.getSelectedEnemy(),
             setSelectedEnemy: (enemy: Skeleton | null) => battlePlayerActionController.setSelectedEnemy(enemy),
         });
+        battleCommandControllerRef = battleCommandController;
         const battleTurnController = new BattleTurnController(battleMap, turnManager, player, {
             onAddBattleLog: (m: string, t: string = 'system') => this.hudCoordinator.addBattleLog(m, t),
             onUpdateHUD: () => this.hudCoordinator.updateHUD(),
