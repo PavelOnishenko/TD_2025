@@ -59,7 +59,8 @@ export default class QuestUiController {
         const childMarkup = quest.children.map((child) => this.buildQuestTreeMarkup(child, depth + 1)).join('');
         const listClass = depth === 0 ? 'quest-tree-root' : 'quest-tree-children';
         const childList = quest.children.length > 0 ? `<ul class="${listClass}">${childMarkup}</ul>` : '';
-        const selfNode = `<li class="quest-node" data-depth="${depth}">${this.nodeMarkup(quest)}${childList}</li>`;
+        const completionClass = quest.isCompleted ? ' is-completed' : '';
+        const selfNode = `<li class="quest-node${completionClass}" data-depth="${depth}">${this.nodeMarkup(quest)}${childList}</li>`;
         return depth === 0 ? `<ul class="quest-tree-root">${selfNode}</ul>` : selfNode;
     }
 
@@ -68,7 +69,8 @@ export default class QuestUiController {
     }
 
     private titleMarkup(quest: QuestNode): string {
-        return `<div class="quest-node-title">${this.formatText(quest.title, quest)}</div>`;
+        const completionPrefix = quest.isCompleted ? '<span class="quest-node-check" aria-hidden="true">✓ </span>' : '';
+        return `<div class="quest-node-title">${completionPrefix}${this.formatText(quest.title, quest)}</div>`;
     }
 
     private descriptionMarkup(quest: QuestNode): string {

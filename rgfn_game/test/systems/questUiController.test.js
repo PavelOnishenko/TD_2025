@@ -66,3 +66,23 @@ test('QuestUiController opens and closes the intro modal through bound events', 
   assert.deepEqual(modal.classList.removed, ['hidden']);
   assert.deepEqual(modal.classList.added, ['hidden', 'hidden']);
 });
+
+test('QuestUiController renders completion styling and checkmark for completed quest nodes', () => {
+  const controller = new QuestUiController(createElement(), createElement(), createElement(), createElement(), createElement(), { onLocationClick: () => false });
+  const quest = {
+    id: 'main',
+    title: 'Signal Dawn',
+    description: '',
+    conditionText: '',
+    objectiveType: 'scout',
+    entities: [],
+    isCompleted: true,
+    children: [],
+  };
+
+  controller.renderQuest(quest);
+
+  const bodyHtml = controller['questBody'].innerHTML;
+  assert.equal(bodyHtml.includes('quest-node is-completed'), true);
+  assert.equal(bodyHtml.includes('quest-node-check'), true);
+});

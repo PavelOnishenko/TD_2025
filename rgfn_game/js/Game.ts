@@ -37,6 +37,7 @@ import MagicSystem from './systems/magic/MagicSystem.js';
 import QuestGenerator from './systems/quest/QuestGenerator.js';
 import QuestPackService from './systems/quest/QuestPackService.js';
 import QuestUiController from './systems/quest/QuestUiController.js';
+import QuestProgressTracker from './systems/quest/QuestProgressTracker.js';
 import { QuestNode } from './systems/quest/QuestTypes.js';
 import { TerrainType } from './types/game.js';
 import { consumeNextCharacterRollAllocation } from './utils/NextCharacterRollConfig.js';
@@ -72,6 +73,9 @@ export default class Game {
     private readonly battleMap: BattleMap;
     private readonly player: Player;
     private readonly magicSystem: MagicSystem;
+    private activeQuest: QuestNode | null = null;
+    private questUiController: QuestUiController | null = null;
+    private questProgressTracker: QuestProgressTracker | null = null;
     private lastSavedSnapshot: string = '';
 
     constructor(canvas: HTMLCanvasElement) {
@@ -205,9 +209,24 @@ export default class Game {
 
     private async initializeQuestUi(questGenerator: QuestGenerator, questUiController: QuestUiController): Promise<void> {
         const quest = await questGenerator.generateMainQuest();
+        this.activeQuest = quest;
+        this.questUiController = questUiController;
+        this.questProgressTracker = new QuestProgressTracker(quest);
         this.registerQuestLocations(quest);
         questUiController.renderQuest(quest);
         questUiController.showIntro();
+    }
+
+    private recordLocationEntry(locationName: string): void {
+        if (!this.activeQuest || !this.questUiController || !this.questProgressTracker) {
+            return;
+        }
+
+        if (!this.questProgressTracker.recordLocationEntry(locationName)) {
+            return;
+        }
+
+        this.questUiController.renderQuest(this.activeQuest);
     }
 
     private registerQuestLocations(quest: QuestNode): void {
@@ -254,7 +273,11 @@ export default class Game {
             onEnterBattle: (battleData: { enemies: Skeleton[]; terrainType: TerrainType }) => this.battleCoordinator.enterBattleMode(battleData.enemies, battleData.terrainType),
             onUpdateBattle: () => this.battleCoordinator.updateBattleMode(),
             onExitBattle: () => this.battleCoordinator.exitBattleMode(),
-            onEnterVillage: () => this.villageCoordinator.enterVillageMode(this.canvas.width, this.canvas.height, this.worldMap.getVillageNameAtPlayerPosition()),
+            onEnterVillage: () => {
+                const villageName = this.worldMap.getVillageNameAtPlayerPosition();
+                this.recordLocationEntry(villageName);
+                this.villageCoordinator.enterVillageMode(this.canvas.width, this.canvas.height, villageName);
+            },
             onExitVillage: () => this.villageCoordinator.exitVillageMode(),
         }).create();
     }
