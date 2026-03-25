@@ -285,3 +285,9 @@ So tests asserting fixed literal HP values (for example zombie `7`) will fail wh
 ### Practical guidance for future test additions
 - Prefer formula-based expectations tied to `balanceConfig` over hardcoded literals when behavior is config-driven.
 - Keep one regression note per behavior change here to avoid rediscovering the same pitfalls.
+
+## Village dialogue verification
+- Build RGFN bundle: `npm run build:rgfn`.
+- Run RGFN tests: `node --test rgfn_game/test/**/*.test.js`.
+- New coverage includes `villageDialogueEngine.test.js` for truthful/lying/refusal behavior.
+

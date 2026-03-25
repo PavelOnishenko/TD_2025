@@ -12,6 +12,13 @@ export type KnownVillage = {
     status: 'current' | 'mapped';
 };
 
+export type WorldVillageDirectionHint = {
+    settlementName: string;
+    exists: boolean;
+    direction?: 'north' | 'north-east' | 'east' | 'south-east' | 'south' | 'south-west' | 'west' | 'north-west';
+    distanceCells?: number;
+};
+
 const FOG_STATE = {
     UNKNOWN: 'unknown' as FogState,
     DISCOVERED: 'discovered' as FogState,
@@ -828,6 +835,27 @@ export default class WorldMap {
             .sort((left, right) => left.name.localeCompare(right.name));
     }
 
+
+    public getVillageDirectionHintFromPlayer(rawSettlementName: string): WorldVillageDirectionHint {
+        const settlementName = rawSettlementName.trim();
+        const position = this.findVillagePositionByNameInsensitive(settlementName);
+        if (!position) {
+            return {
+                settlementName,
+                exists: false,
+            };
+        }
+
+        const dx = position.col - this.playerGridPos.col;
+        const dy = position.row - this.playerGridPos.row;
+        return {
+            settlementName,
+            exists: true,
+            direction: this.resolveDirection(dx, dy),
+            distanceCells: Math.round(Math.sqrt((dx * dx) + (dy * dy))),
+        };
+    }
+
     public getAllVillageNames(): string[] {
         return Array.from(this.villages.values())
             .map((key) => {
@@ -1128,6 +1156,37 @@ export default class WorldMap {
             villageStatus: isVillage ? (isCurrentVillage ? 'current' : 'mapped') : null,
             isTraversable: terrain.type !== 'water',
         };
+    }
+
+
+    private findVillagePositionByNameInsensitive(name: string): GridPosition | null {
+        const normalized = name.trim().toLowerCase();
+        for (const key of this.villages.values()) {
+            const [colText, rowText] = key.split(',');
+            const col = Number(colText);
+            const row = Number(rowText);
+            if (this.getVillageName(col, row).toLowerCase() === normalized) {
+                return { col, row };
+            }
+        }
+
+        return null;
+    }
+
+    private resolveDirection(dx: number, dy: number): 'north' | 'north-east' | 'east' | 'south-east' | 'south' | 'south-west' | 'west' | 'north-west' {
+        const angle = Math.atan2(dy, dx);
+        const slice = Math.round(angle / (Math.PI / 4));
+        const dirs: Array<'east' | 'south-east' | 'south' | 'south-west' | 'west' | 'north-west' | 'north' | 'north-east'> = [
+            'east',
+            'south-east',
+            'south',
+            'south-west',
+            'west',
+            'north-west',
+            'north',
+            'north-east',
+        ];
+        return dirs[(slice + 8) % 8];
     }
 
     private findVillagePositionByName(name: string): GridPosition | null {

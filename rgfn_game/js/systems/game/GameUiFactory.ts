@@ -180,6 +180,10 @@ export default class GameUiFactory {
             buyOffer4Btn: document.getElementById('village-buy-offer-4-btn')! as HTMLButtonElement,
             sellSelect: document.getElementById('village-sell-select')! as HTMLSelectElement,
             sellSelectedBtn: document.getElementById('village-sell-selected-btn')! as HTMLButtonElement,
+            npcList: document.getElementById('village-npc-list')!,
+            npcTitle: document.getElementById('village-npc-title')!,
+            askVillageInput: document.getElementById('village-ask-settlement-input')! as HTMLInputElement,
+            askVillageBtn: document.getElementById('village-ask-settlement-btn')! as HTMLButtonElement,
             leaveBtn: document.getElementById('village-leave-btn')! as HTMLButtonElement,
         };
     }

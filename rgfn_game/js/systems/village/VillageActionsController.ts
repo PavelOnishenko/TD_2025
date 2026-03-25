@@ -1,5 +1,6 @@
 import Player from '../../entities/Player.js';
 import Item, { createItemById } from '../../entities/Item.js';
+import VillageDialogueEngine, { CompassDirection, VillageDialogueOutcome, VillageDirectionHint, VillageNpcProfile } from './VillageDialogueEngine.js';
 
 type VillageUI = {
     sidebar: HTMLElement;
@@ -11,11 +12,16 @@ type VillageUI = {
     buyOffer4Btn: HTMLButtonElement;
     sellSelect: HTMLSelectElement;
     sellSelectedBtn: HTMLButtonElement;
+    npcList: HTMLElement;
+    npcTitle: HTMLElement;
+    askVillageInput: HTMLInputElement;
+    askVillageBtn: HTMLButtonElement;
 };
 
 type VillageActionsCallbacks = {
     onUpdateHUD: () => void;
     onLeaveVillage: () => void;
+    getVillageDirectionHint: (settlementName: string) => VillageDirectionHint;
 };
 
 type VillageOffer = {
@@ -51,16 +57,24 @@ export default class VillageActionsController {
     private callbacks: VillageActionsCallbacks;
     private gameLog: HTMLElement;
     private currentOffers: VillageOffer[] = [];
+    private readonly dialogueEngine: VillageDialogueEngine;
+    private currentVillageName = '';
+    private npcRoster: VillageNpcProfile[] = [];
+    private selectedNpcId: string | null = null;
 
     constructor(player: Player, villageUI: VillageUI, gameLog: HTMLElement, callbacks: VillageActionsCallbacks) {
         this.player = player;
         this.villageUI = villageUI;
         this.gameLog = gameLog;
         this.callbacks = callbacks;
+        this.dialogueEngine = new VillageDialogueEngine();
     }
 
     public enterVillage(villageName: string): void {
+        this.currentVillageName = villageName;
         this.refreshVillageStock();
+        this.npcRoster = this.dialogueEngine.createNpcRoster(villageName);
+        this.selectedNpcId = null;
         this.villageUI.sidebar.classList.remove('hidden');
         this.villageUI.prompt.classList.remove('hidden');
         this.villageUI.actions.classList.add('hidden');
@@ -78,6 +92,9 @@ export default class VillageActionsController {
         this.villageUI.actions.classList.remove('hidden');
         this.addLog(`You enter ${villageName} market square.`, 'system');
         this.addLog('This village offers one potion type and three random item kinds.', 'system');
+        this.addLog(`You notice ${this.npcRoster.length} locals open for conversation.`, 'system');
+        this.renderNpcButtons();
+        this.updateNpcPanel();
         this.updateButtons();
     }
 
@@ -145,6 +162,44 @@ export default class VillageActionsController {
         this.updateButtons();
     }
 
+    public handleSelectNpc(index: number): void {
+        const npc = this.npcRoster[index];
+        if (!npc) {
+            this.addLog('No one with that description is nearby.', 'system');
+            return;
+        }
+
+        this.selectedNpcId = npc.id;
+        this.updateNpcPanel();
+        this.renderNpcButtons();
+        this.addLog(`You approach ${npc.name} the ${npc.role}.`, 'player');
+        this.addLog(`${npc.name} looks ${npc.look} and speaks in a ${npc.speechStyle} manner.`, 'system-message');
+    }
+
+    public handleAskAboutSettlement(): void {
+        const selectedNpc = this.getSelectedNpc();
+        if (!selectedNpc) {
+            this.addLog('Choose an NPC first before asking for directions.', 'system');
+            return;
+        }
+
+        const targetSettlement = this.villageUI.askVillageInput.value.trim();
+        if (!targetSettlement) {
+            this.addLog('Type the settlement name you want to find.', 'system');
+            return;
+        }
+
+        const hint = this.callbacks.getVillageDirectionHint(targetSettlement);
+        const answer = this.dialogueEngine.buildLocationAnswer(selectedNpc, hint);
+
+        this.addLog(`You ask ${selectedNpc.name}: "Where is ${targetSettlement}?"`, 'player');
+        this.addLog(`${selectedNpc.name} (${selectedNpc.role}, ${answer.truthfulness}): ${answer.speech}`, 'system');
+        this.addLog(answer.tone, 'system-message');
+        if (hint.exists && answer.truthfulness === 'truth') {
+            this.addLog(`Your map notes: ${targetSettlement} lies ${hint.direction} (${this.describeDistance(hint.distanceCells ?? 0)}).`, 'system-message');
+        }
+    }
+
     public handleLeave(): void {
         this.addLog('You leave the village.', 'system');
         this.callbacks.onLeaveVillage();
@@ -181,6 +236,7 @@ export default class VillageActionsController {
 
         this.refreshSellOptions();
         this.villageUI.sellSelectedBtn.disabled = this.villageUI.sellSelect.disabled;
+        this.villageUI.askVillageBtn.disabled = !this.getSelectedNpc() || !this.villageUI.askVillageInput.value.trim();
     }
 
     private refreshVillageStock(): void {
@@ -220,33 +276,66 @@ export default class VillageActionsController {
         this.villageUI.sellSelect.value = hasPreviousSelection ? selectedValue : this.villageUI.sellSelect.options[0].value;
     }
 
+    private renderNpcButtons(): void {
+        this.villageUI.npcList.innerHTML = '';
+        this.npcRoster.forEach((npc, index) => {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'action-btn village-npc-btn';
+            button.textContent = `${npc.name} (${npc.role})`;
+            if (this.selectedNpcId === npc.id) {
+                button.classList.add('active');
+            }
+            button.addEventListener('click', () => this.handleSelectNpc(index));
+            this.villageUI.npcList.appendChild(button);
+        });
+    }
+
+    private updateNpcPanel(): void {
+        const npc = this.getSelectedNpc();
+        if (!npc) {
+            this.villageUI.npcTitle.textContent = 'Choose someone to talk to';
+            return;
+        }
+
+        this.villageUI.npcTitle.textContent = `${npc.name}, ${npc.role} — ${npc.speechStyle}`;
+    }
+
+    private getSelectedNpc(): VillageNpcProfile | null {
+        if (!this.selectedNpcId) {
+            return null;
+        }
+
+        return this.npcRoster.find((npc) => npc.id === this.selectedNpcId) ?? null;
+    }
+
+    private describeDistance(distanceCells: number): string {
+        if (distanceCells <= 4) {
+            return 'close by';
+        }
+        if (distanceCells <= 12) {
+            return 'medium range';
+        }
+        if (distanceCells <= 24) {
+            return 'far';
+        }
+        return 'very far';
+    }
+
     private getSellPrice(item: Item): number {
-        if (item.id === 'healingPotion') {
-            return 2;
-        }
-
-        if (item.id === 'manaPotion') {
-            return 3;
-        }
-
-        const baseValue = item.goldValue || 1;
-        return Math.max(1, Math.floor(baseValue * 0.6));
+        return Math.max(1, Math.ceil(item.goldValue * 0.5));
     }
 
-    private pickOne<T>(items: T[]): T {
-        return items[Math.floor(Math.random() * items.length)];
+    private pickOne<T>(array: T[]): T {
+        return array[Math.floor(Math.random() * array.length)];
     }
 
-    private pickMany<T>(items: T[], count: number): T[] {
-        const pool = [...items];
-        const picked: T[] = [];
-
-        while (picked.length < count && pool.length > 0) {
-            const index = Math.floor(Math.random() * pool.length);
-            picked.push(pool[index]);
-            pool.splice(index, 1);
+    private pickMany<T>(array: T[], count: number): T[] {
+        const copy = [...array];
+        for (let i = copy.length - 1; i > 0; i -= 1) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [copy[i], copy[j]] = [copy[j], copy[i]];
         }
-
-        return picked;
+        return copy.slice(0, Math.min(count, copy.length));
     }
 }
