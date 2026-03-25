@@ -129,6 +129,7 @@ export default class Game {
         const villageActionsController = new VillageActionsController(player, ui.villageUI, ui.gameLogUI.log, {
             onUpdateHUD: () => this.hudCoordinator.updateHUD(),
             onLeaveVillage: () => this.stateMachine.transition(MODES.WORLD_MAP),
+            getVillageDirectionHint: (settlementName: string) => this.worldMap.getVillageDirectionHintFromPlayer(settlementName),
         });
         this.villageCoordinator = new GameVillageCoordinator(ui.hudElements, ui.battleUI, ui.villageUI, ui.worldUI, villageLifeRenderer, villageActionsController);
         this.stateMachine = this.createStateMachine(ui);
@@ -357,30 +358,39 @@ export default class Game {
 
     private refreshHud(): void {
         this.hudCoordinator.updateHUD();
-        this.hudCoordinator.updateSelectedWorldCell(this.worldMap.getSelectedCellInfo());
+        this.hudCoordinator.updateSelectedCell(this.worldMap.getSelectedCellInfo());
     }
 
     private handleCanvasMove(event: MouseEvent): void {
-        if (!this.stateMachine.isInState(MODES.WORLD_MAP)) {
-            return;
-        }
-
         const rect = this.canvas.getBoundingClientRect();
         const scaleX = this.canvas.width / rect.width;
         const scaleY = this.canvas.height / rect.height;
         const worldX = (event.clientX - rect.left) * scaleX;
         const worldY = (event.clientY - rect.top) * scaleY;
-        this.worldMap.updateSelectedCellFromPixel(worldX, worldY);
-        this.hudCoordinator.updateSelectedWorldCell(this.worldMap.getSelectedCellInfo());
-    }
 
-    private handleCanvasLeave(): void {
-        if (!this.stateMachine.isInState(MODES.WORLD_MAP)) {
+        if (this.stateMachine.isInState(MODES.WORLD_MAP)) {
+            this.worldMap.updateSelectedCellFromPixel(worldX, worldY);
+            this.hudCoordinator.updateSelectedCell(this.worldMap.getSelectedCellInfo());
             return;
         }
 
-        this.worldMap.clearSelectedCell();
-        this.hudCoordinator.updateSelectedWorldCell(null);
+        if (this.stateMachine.isInState(MODES.BATTLE)) {
+            this.battleMap.updateSelectedCellFromPixel(worldX, worldY);
+            this.hudCoordinator.updateSelectedCell(this.battleMap.getSelectedCellInfo());
+        }
+    }
+
+    private handleCanvasLeave(): void {
+        if (this.stateMachine.isInState(MODES.WORLD_MAP)) {
+            this.worldMap.clearSelectedCell();
+            this.hudCoordinator.updateSelectedCell(null);
+            return;
+        }
+
+        if (this.stateMachine.isInState(MODES.BATTLE)) {
+            this.battleMap.clearSelectedCell();
+            this.hudCoordinator.updateSelectedCell(null);
+        }
     }
 
     private handleWorldMapZoom(direction: 'in' | 'out'): void {

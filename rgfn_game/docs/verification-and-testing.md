@@ -30,6 +30,30 @@
 1. Open character with full HP (e.g. `7/7`), allocate vitality, press Save → confirm `9/9` style result.
 2. Repeat when not full HP (e.g. `4/7`), allocate vitality, press Save → confirm current HP does **not** jump to full.
 3. Confirm intelligence/connection upgrades still preserve existing mana behavior.
+## March 25, 2026 update: village sell-list synchronization hardening
+
+### Problem observed
+- In village mode, the **Sell inventory item** dropdown could occasionally show a stale snapshot of inventory contents after buy-driven inventory changes.
+- Result: players could see incomplete sell choices until another village UI refresh happened.
+
+### Changes made
+- Added proactive sell-list refresh hooks on the sell dropdown itself:
+  - refresh on `focus`
+  - refresh on `pointerdown` (right before opening)
+- This keeps sell options synchronized with the most current inventory right as the player opens/uses the control.
+- Also fixed sell button enablement logic to follow the select's disabled state directly, preventing action enablement drift when placeholder text is shown.
+
+### Regression checks
+1. Enter village and buy items multiple times in a row.
+2. Open the sell dropdown immediately after each buy and confirm every current inventory item is listed.
+3. Sell until inventory is empty and confirm:
+   - dropdown shows placeholder text,
+   - **Sell selected** button is disabled.
+4. Obtain a new item, reopen sell dropdown, confirm button re-enables and item appears.
+
+### Commands run for this change
+- `npm run build:rgfn`
+- `node --test rgfn_game/test/**/*.test.js`
 
 ## March 2026 update: village re-entry controls on world map
 
@@ -291,3 +315,9 @@ So tests asserting fixed literal HP values (for example zombie `7`) will fail wh
 ### Practical guidance for future test additions
 - Prefer formula-based expectations tied to `balanceConfig` over hardcoded literals when behavior is config-driven.
 - Keep one regression note per behavior change here to avoid rediscovering the same pitfalls.
+
+## Village dialogue verification
+- Build RGFN bundle: `npm run build:rgfn`.
+- Run RGFN tests: `node --test rgfn_game/test/**/*.test.js`.
+- New coverage includes `villageDialogueEngine.test.js` for truthful/lying/refusal behavior.
+
