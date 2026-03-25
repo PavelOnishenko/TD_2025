@@ -163,6 +163,25 @@ Open your browser and navigate to `http://localhost:8000`
 
 ---
 
+### 6. Evidence Capture for PRs
+
+When preparing deployment/testing PR notes, always include:
+
+- Exact commands executed.
+- Pass/fail outcome per command.
+- If UI screenshots are missing, state why and what was verified instead.
+
+Recommended fallback note when screenshots are impossible in the current runtime:
+
+```
+⚠️ Screenshot not attached: browser/screenshot tool is unavailable in this environment.
+Validated via build + automated tests + manual checklist status.
+```
+
+This avoids ambiguous status updates and keeps release confidence auditable.
+
+---
+
 ## Post-Deployment Testing (GitHub Pages)
 
 ### 1. Trigger Deployment
