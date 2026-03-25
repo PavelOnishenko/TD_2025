@@ -418,6 +418,11 @@ h1 {
     border-radius: 6px;
 }
 
+#village-actions {
+    position: relative;
+    overflow: visible;
+}
+
 .enemy-stat { margin: 5px 0; font-size: 14px; color: var(--color-text-primary); }
 .enemy-stat span { color: var(--color-enemy); font-weight: 700; }
 
@@ -442,6 +447,16 @@ h1 {
     border-radius: 6px;
     padding: 8px;
     background-color: color-mix(in srgb, var(--color-panel-highlight) 58%, transparent);
+}
+
+.village-floating-rumors {
+    position: absolute;
+    top: 0;
+    right: calc(100% + 16px);
+    width: min(320px, 34vw);
+    max-height: min(58vh, 520px);
+    overflow-y: auto;
+    box-shadow: 0 10px 24px color-mix(in srgb, var(--color-panel-shadow) 32%, transparent);
 }
 
 .village-section-title {
@@ -527,6 +542,14 @@ h1 {
     #game-log-container {
         margin-top: 0;
         max-height: 260px;
+    }
+
+    .village-floating-rumors {
+        position: static;
+        width: auto;
+        max-height: none;
+        overflow: visible;
+        box-shadow: none;
     }
 }
 
