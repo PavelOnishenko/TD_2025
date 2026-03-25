@@ -68,3 +68,10 @@ If the menu ever appears but is not clickable, check pointer-event inheritance f
 5. Enter battle/village and return to world:
    - Hamburger remains accessible.
    - Previously opened panels preserve expected state behavior.
+
+## Inventory drop recovery addendum
+
+- Inventory now has a dedicated `Recover Last Dropped Item` button (`#undo-last-drop-btn`).
+- Right-click drop is no longer strictly final: only the most recently dropped item is recoverable.
+- Recovery uses normal inventory insertion rules, so it fails when inventory is full.
+- The recover button remains disabled whenever there is no pending dropped item to restore.

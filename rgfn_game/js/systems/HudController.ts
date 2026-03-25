@@ -67,6 +67,7 @@ type HudElements = {
     inventoryCount: HTMLElement;
     inventoryCapacity: HTMLElement;
     inventoryCapacityHint: HTMLElement;
+    undoLastDropBtn: HTMLButtonElement;
     inventoryGrid: HTMLElement;
     weaponSlotMain: HTMLButtonElement;
     weaponSlotOff: HTMLButtonElement;
@@ -124,6 +125,7 @@ export default class HudController {
     private gameLog: HTMLElement;
     private loreBookController: LoreBookController;
     private draggedInventoryIndex: number | null = null;
+    private lastDroppedItem: Item | null = null;
     private pendingSkillAllocations: PendingSkillAllocations = { vitality: 0, toughness: 0, strength: 0, agility: 0, connection: 0, intelligence: 0 };
 
     constructor(player: Player, hudElements: HudElements, battleUI: BattleUiHudElements, magicSystem: MagicSystem, gameLog: HTMLElement, loreBookController: LoreBookController) {
@@ -134,6 +136,7 @@ export default class HudController {
         this.gameLog = gameLog;
         this.loreBookController = loreBookController;
         this.bindEquipmentSlotEvents();
+        this.bindInventoryRecoveryEvents();
     }
 
     public setPendingSkillAllocations(pendingSkillAllocations: PendingSkillAllocations): void {
@@ -185,6 +188,7 @@ export default class HudController {
         this.hudElements.inventoryCount.textContent = String(inventory.length);
         this.hudElements.inventoryCapacity.textContent = String(inventoryCapacity);
         this.hudElements.inventoryCapacityHint.textContent = this.getInventoryCapacityHintText();
+        this.hudElements.undoLastDropBtn.disabled = this.lastDroppedItem === null;
         this.renderInventory(inventory, inventoryCapacity);
 
         const hasHpPotion = this.player.getHealingPotionCount() > 0;
@@ -444,8 +448,29 @@ export default class HudController {
             return;
         }
 
-        this.addLog(`You dropped ${droppedItem.name}. It cannot be recovered.`, 'system');
+        this.lastDroppedItem = droppedItem;
+        this.addLog(`You dropped ${droppedItem.name}. Click Recover Last Dropped Item to undo.`, 'system');
         this.updateHUD();
+    }
+
+    private bindInventoryRecoveryEvents(): void {
+        this.hudElements.undoLastDropBtn.addEventListener('click', () => {
+            if (!this.lastDroppedItem) {
+                return;
+            }
+
+            const itemToRecover = this.lastDroppedItem;
+            const recovered = this.player.addItemToInventory(itemToRecover);
+            if (!recovered) {
+                this.addLog(`Cannot recover ${itemToRecover.name}: inventory is full.`, 'system');
+                this.updateHUD();
+                return;
+            }
+
+            this.lastDroppedItem = null;
+            this.addLog(`Recovered ${itemToRecover.name}.`, 'system');
+            this.updateHUD();
+        });
     }
 
     private triggerEquipRequirementsFeedback(item: Item, slotElement: HTMLButtonElement): void {
