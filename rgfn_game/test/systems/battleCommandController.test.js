@@ -82,3 +82,48 @@ test('BattleCommandController loots all human inventory without adding random mo
   assert.equal(looted.length, inventory.length);
   assert.deepEqual(looted, inventory.map((item) => item.name));
 });
+
+test('BattleCommandController equipment action in battle consumes extra turns', () => {
+  const logs = [];
+  let consumedTurns = 0;
+  let nextTurnCalls = 0;
+  let processTurnCalls = 0;
+  const originalSetTimeout = globalThis.setTimeout;
+  globalThis.setTimeout = (fn) => {
+    fn();
+    return 0;
+  };
+
+  const controller = new BattleCommandController(
+    { isInState: () => true },
+    { expireDirectionalBonusesWithoutAttack: () => [] },
+    {},
+    {
+      isPlayerTurn: () => true,
+      waitingForPlayer: true,
+      consumeUpcomingTurns: (_entity, turns) => { consumedTurns = turns; },
+      nextTurn: () => { nextTurnCalls += 1; },
+    },
+    {},
+    {
+      onUpdateHUD: () => {},
+      onAddBattleLog: (message) => logs.push(message),
+      onEnableBattleButtons: () => {},
+      onProcessTurn: () => { processTurnCalls += 1; },
+      onEndBattle: () => {},
+      onPlayerTurnTransitionStart: () => {},
+      onPlayerTurnReady: () => {},
+      getSelectedEnemy: () => null,
+      setSelectedEnemy: () => {},
+    }
+  );
+
+  const result = controller.handleEquipmentAction('You begin equipping Spear +2.');
+  globalThis.setTimeout = originalSetTimeout;
+
+  assert.equal(result, true);
+  assert.equal(consumedTurns, 2);
+  assert.equal(nextTurnCalls, 1);
+  assert.equal(processTurnCalls, 1);
+  assert.equal(logs.some((entry) => entry.includes('takes 3 turns')), true);
+});

@@ -41,6 +41,28 @@ export default class BattleCommandController {
         this.callbacks = callbacks;
     }
 
+    public handleEquipmentAction(actionDescription: string): boolean {
+        const inBattle = this.stateMachine.isInState('BATTLE');
+        if (!inBattle) {
+            return true;
+        }
+
+        if (!this.canUseBattleTurnInput()) {
+            this.callbacks.onAddBattleLog('You can only change equipment on your own turn.', 'system');
+            return false;
+        }
+
+        this.callbacks.onEnableBattleButtons(false);
+        this.callbacks.onPlayerTurnTransitionStart();
+        this.turnManager.waitingForPlayer = false;
+        this.player.expireDirectionalBonusesWithoutAttack().forEach((message) => this.callbacks.onAddBattleLog(message, 'system'));
+        this.callbacks.onAddBattleLog(`${actionDescription} It takes 3 turns to complete.`, 'player');
+        this.turnManager.consumeUpcomingTurns(this.player, 2);
+        this.turnManager.nextTurn();
+        setTimeout(() => this.callbacks.onProcessTurn(), timingConfig.battle.playerActionDelay);
+        return true;
+    }
+
     public handleAttack(): void {
         if (!this.canUseBattleTurnInput()) {
             return;

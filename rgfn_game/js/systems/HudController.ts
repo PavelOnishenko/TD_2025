@@ -117,6 +117,8 @@ type BattleUiHudElements = {
     spellArcaneLanceBtn: HTMLButtonElement;
 };
 
+type BattleEquipmentActionHandler = (actionDescription: string) => boolean;
+
 export default class HudController {
     private player: Player;
     private hudElements: HudElements;
@@ -127,14 +129,16 @@ export default class HudController {
     private draggedInventoryIndex: number | null = null;
     private lastDroppedItem: Item | null = null;
     private pendingSkillAllocations: PendingSkillAllocations = { vitality: 0, toughness: 0, strength: 0, agility: 0, connection: 0, intelligence: 0 };
+    private onBattleEquipmentAction: BattleEquipmentActionHandler | null;
 
-    constructor(player: Player, hudElements: HudElements, battleUI: BattleUiHudElements, magicSystem: MagicSystem, gameLog: HTMLElement, loreBookController: LoreBookController) {
+    constructor(player: Player, hudElements: HudElements, battleUI: BattleUiHudElements, magicSystem: MagicSystem, gameLog: HTMLElement, loreBookController: LoreBookController, onBattleEquipmentAction?: BattleEquipmentActionHandler) {
         this.player = player;
         this.hudElements = hudElements;
         this.battleUI = battleUI;
         this.magicSystem = magicSystem;
         this.gameLog = gameLog;
         this.loreBookController = loreBookController;
+        this.onBattleEquipmentAction = onBattleEquipmentAction ?? null;
         this.bindEquipmentSlotEvents();
         this.bindInventoryRecoveryEvents();
     }
@@ -266,6 +270,9 @@ export default class HudController {
     private bindEquipmentSlotEvents(): void {
         this.hudElements.weaponSlotMain.addEventListener('click', () => {
             if (this.player.equippedWeapon) {
+                if (!this.requestBattleEquipmentAction(`You start unequipping ${this.player.equippedWeapon.name}.`)) {
+                    return;
+                }
                 this.player.unequipWeapon();
                 this.updateHUD();
             }
@@ -281,6 +288,9 @@ export default class HudController {
 
         this.hudElements.weaponSlotOff.addEventListener('click', () => {
             if (this.player.equippedOffhandWeapon) {
+                if (!this.requestBattleEquipmentAction(`You start unequipping ${this.player.equippedOffhandWeapon.name}.`)) {
+                    return;
+                }
                 this.player.unequipOffhandWeapon();
                 this.updateHUD();
             }
@@ -296,6 +306,9 @@ export default class HudController {
 
         this.hudElements.armorSlot.addEventListener('click', () => {
             if (this.player.equippedArmor) {
+                if (!this.requestBattleEquipmentAction(`You start removing ${this.player.equippedArmor.name}.`)) {
+                    return;
+                }
                 this.player.unequipArmor();
                 this.updateHUD();
             }
@@ -417,6 +430,10 @@ export default class HudController {
             return;
         }
 
+        if (!this.requestBattleEquipmentAction(`You begin equipping ${item.name}.`)) {
+            return;
+        }
+
         if (item.type === 'weapon') {
             this.player.equippedWeapon = item;
         } else if (item.type === 'armor') {
@@ -444,6 +461,11 @@ export default class HudController {
             return;
         }
 
+        if (!this.requestBattleEquipmentAction(`You begin equipping ${item.name}.`)) {
+            this.draggedInventoryIndex = null;
+            return;
+        }
+
         if (slot === 'armor') {
             if (item.type === 'armor') {
                 this.player.equippedArmor = item;
@@ -454,6 +476,14 @@ export default class HudController {
 
         this.draggedInventoryIndex = null;
         this.updateHUD();
+    }
+
+    private requestBattleEquipmentAction(actionDescription: string): boolean {
+        if (!this.onBattleEquipmentAction) {
+            return true;
+        }
+
+        return this.onBattleEquipmentAction(actionDescription);
     }
 
     private handleDropFromInventory(index: number): void {
