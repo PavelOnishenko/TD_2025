@@ -56,6 +56,10 @@ export default class WorldModeController {
     public updateWorldMode(): void {
         this.handleMapViewportInput();
 
+        if (this.input.wasActionPressed('enterVillage') && this.tryEnterVillageAtCurrentPosition()) {
+            return;
+        }
+
         const direction = this.getPendingMoveDirection();
         if (direction) {
             const moveResult = this.worldMap.movePlayer(direction);
@@ -67,6 +71,15 @@ export default class WorldModeController {
         const [px, py] = this.worldMap.getPlayerPixelPosition();
         this.player.x = px;
         this.player.y = py;
+    }
+
+    public tryEnterVillageAtCurrentPosition(): boolean {
+        if (!this.worldMap.isPlayerOnVillage()) {
+            return false;
+        }
+
+        this.callbacks.onEnterVillage();
+        return true;
     }
 
     private handleMapViewportInput(): void {

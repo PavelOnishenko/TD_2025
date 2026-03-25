@@ -13,6 +13,10 @@ The **World Map** utility card and **Log** panel now behave like regular HUD pan
 
 - `World Map` button → toggles `#world-sidebar` panel.
 - `Log` button → toggles `#game-log-container` panel.
+- Inside the `World Map` panel:
+  - `Use HP Potion` uses a potion without leaving the panel.
+  - `Enter Village (Space)` re-enters a village if the hero is currently standing on a village tile.
+  - `Center on Character` recenters the map viewport on the hero.
 
 Both buttons use the existing active-button behavior (`.action-btn.active`) so players can see which panel is currently visible.
 
@@ -48,3 +52,8 @@ Both buttons use the existing active-button behavior (`.action-btn.active`) so p
 4. Enter battle/village and return to world:
    - World panel should remain closed unless reopened by button.
    - Log toggle continues to work.
+5. Stand on a village tile, leave the village, then re-enter:
+   - Press `Space` on the world map → village entry prompt opens.
+   - Click `Enter Village (Space)` in the world panel → village entry prompt opens.
+6. Move to a non-village tile and test `Space` / `Enter Village (Space)`:
+   - The game should keep you in world mode and show a guidance log line instead of opening village mode.

@@ -264,6 +264,7 @@ export default class Game {
             onUsePotionFromHud: () => this.battleCoordinator.handleUsePotion(false),
             onUseManaPotionFromHud: () => this.battleCoordinator.handleUseManaPotion(false),
             onUsePotionFromWorld: () => this.battleCoordinator.handleUsePotion(false),
+            onEnterVillageFromWorld: () => this.tryEnterVillageFromWorldMap(),
             onNewCharacter: () => this.startNewCharacter(),
             onAddStat: (stat) => this.hudCoordinator.handleAddStat(stat),
             onRemoveStat: (stat) => this.hudCoordinator.handleRemoveStat(stat),
@@ -417,6 +418,19 @@ export default class Game {
         const [x, y] = this.worldMap.getPlayerPixelPosition();
         this.player.x = x;
         this.player.y = y;
+    }
+
+    private tryEnterVillageFromWorldMap(): void {
+        if (!this.stateMachine.isInState(MODES.WORLD_MAP)) {
+            return;
+        }
+
+        const enteredVillage = this.worldModeController.tryEnterVillageAtCurrentPosition();
+        if (enteredVillage) {
+            return;
+        }
+
+        this.hudCoordinator.addBattleLog('Stand on a village tile to enter it.', 'system');
     }
 
     private startNewCharacter(): void {

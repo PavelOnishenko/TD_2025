@@ -158,6 +158,7 @@ export default class GameUiFactory {
         return {
             sidebar: document.getElementById('world-sidebar')!,
             usePotionBtn: document.getElementById('world-use-potion-btn')! as HTMLButtonElement,
+            enterVillageBtn: document.getElementById('world-enter-village-btn')! as HTMLButtonElement,
             centerOnCharacterBtn: document.getElementById('world-center-on-character-btn')! as HTMLButtonElement,
         };
     }
