@@ -1,5 +1,34 @@
 # Verification and Testing Discussion
 
+## March 24, 2026 – Inventory Equip Regression Note
+
+### Problem statement
+- Reported UX bug: picking up a weapon could immediately equip it, even when the player intended to keep current loadout.
+- This behavior came from `PlayerInventory.addItem(...)`, which auto-equipped any weapon/armor that passed `canEquip`.
+
+### Resolution summary
+- Updated inventory behavior so pickup only adds items to bag storage.
+- Equipment changes are now explicit-only via:
+  - inventory click/drag equip actions,
+  - direct slot interactions,
+  - explicit equip APIs.
+- This keeps pickup deterministic and prevents accidental weapon swaps.
+
+### Regression coverage added/updated
+- `Player inventory keeps discovered equipment in inventory until explicitly equipped`
+  - verifies that newly found weapons/armor stay in inventory and do not alter equipped state.
+- `Equipped items are removed from inventory and return on unequip`
+  - now performs explicit equip actions first, then validates round-trip equip/unequip behavior.
+
+### Commands run for this change
+- `npm run build:rgfn`
+- `node --test rgfn_game/test/**/*.test.js`
+- `node --test rgfn_game/test/entities/player.test.js`
+
+### Current suite status snapshot
+- The focused player tests pass after this fix.
+- The full `rgfn_game` suite still contains at least one unrelated pre-existing failure in `creatures.test.js` (`Enemy archetypes derive resulting stats from base stats plus shared skills`), which is outside the inventory workflow touched here.
+
 ## How I Verified the XP Fix
 
 ### The Honest Truth
