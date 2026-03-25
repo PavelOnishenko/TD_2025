@@ -1118,6 +1118,7 @@ export default class WorldMap {
             && this.selectedGridPos.row === this.playerGridPos.row;
 
         return {
+            mode: 'world',
             col: this.selectedGridPos.col,
             row: this.selectedGridPos.row,
             terrainType: terrain.type,
