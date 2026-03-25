@@ -51,3 +51,29 @@ Context: when the world map is zoomed far out (small cell size, broad visible bo
 - Maintain fog only as an indexed array internally and generate serialized map form lazily only in `getState()`.
 - Batch terrain rendering into chunked offscreen canvases and blit chunks at low detail.
 - Introduce adaptive draw skipping for subpixel terrain textures when `cellSize <= 8`.
+
+## March 2026 optimization pass #2 (actual frame-time impact)
+
+The first pass reduced lookup overhead but still rendered every visible low-detail tile every frame.
+
+### Additional change
+
+- Added a **low-detail layer cache** for world-map rendering in `WorldMap`:
+  - when detail level is `low`, we render the tile layer to an offscreen canvas once,
+  - on following frames, we blit only the visible region via `drawImage`.
+
+### Cache invalidation strategy
+
+The low-detail cache is rebuilt when any of these change:
+- `cellSize` (zoom changes),
+- fog display config (`fogOfWar`, `everythingDiscovered`),
+- `fogRevision` (visibility/discovery updates),
+- `terrainRevision` (world/terrain regeneration).
+
+### Why this matters
+
+At low zoom, this removes thousands of per-frame canvas calls and style/state transitions from the main frame loop. Panning becomes primarily a cheap image blit + overlay draw instead of full per-cell repaint.
+
+### Safety fallback
+
+In non-browser/test contexts (no `document` or no `drawImage`), rendering falls back to the existing per-cell path to keep tests deterministic and environment-agnostic.
