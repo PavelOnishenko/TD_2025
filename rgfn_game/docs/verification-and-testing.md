@@ -1,5 +1,36 @@
 # Verification and Testing Discussion
 
+## March 25, 2026 update: vitality save should keep full HP at full-health breakpoint
+
+### Bug report context
+- Repro from gameplay UI:
+  1. Character HP is currently full (`hp === maxHp`), e.g. `7/7`.
+  2. Player allocates points into **vitality** and clicks **Save**.
+  3. Before fix, `maxHp` increased but `hp` stayed unchanged (e.g. `7/9`).
+- Expected behavior: when character was already at full HP before the vitality save, current HP should track new max (e.g. `9/9`).
+
+### Root cause
+- `Player.addStat(...)` recalculated derived stats via `updateStats()`, then clamped HP using `Math.min(this.hp, this.maxHp)`.
+- That clamp preserved the old numeric HP value, but it did not preserve the "was full" state.
+
+### Resolution
+- Added a full-HP guard in `Player.addStat(...)`:
+  - capture `hadFullHp` before recalculation,
+  - if true after stat application, set `hp = maxHp`,
+  - otherwise preserve prior value with standard clamp (`Math.min(previousHp, maxHp)`).
+- This keeps non-full HP behavior stable while fixing the full-HP vitality-save flow.
+
+### Regression test added
+- New entity test: `Player keeps full HP state when max HP increases from vitality`.
+- The test verifies:
+  - max HP increases after vitality allocation,
+  - HP remains exactly equal to max HP when player started at full HP.
+
+### Suggested manual smoke checks
+1. Open character with full HP (e.g. `7/7`), allocate vitality, press Save → confirm `9/9` style result.
+2. Repeat when not full HP (e.g. `4/7`), allocate vitality, press Save → confirm current HP does **not** jump to full.
+3. Confirm intelligence/connection upgrades still preserve existing mana behavior.
+
 ## March 2026 update: village re-entry controls on world map
 
 ### Feature summary
