@@ -77,7 +77,7 @@ export default class Wanderer extends Skeleton {
         const equippedWeapon = this.equippedWeapon?.name ?? 'Bare hands';
         const equippedArmor = this.equippedArmor?.name ?? 'No armor';
 
-        return `Base stats: HP ${this.baseStats.hp}, DMG ${this.baseStats.damage}, ARM ${this.baseStats.armor}, Mana ${this.baseStats.mana}. Skills: ${skills}. ${magic}. Equipped: ${equippedWeapon}, ${equippedArmor}.`;
+        return `Base profile: HP ${this.baseStats.hp}, DMG ${this.baseStats.damage}, ARM ${this.baseStats.armor}, Mana ${this.baseStats.mana}. Resulting stats: HP ${this.maxHp}, DMG ${this.damage}, ARM ${this.armor}, Mana ${this.maxMana}. Skills: ${skills}. ${magic}. Equipped: ${equippedWeapon}, ${equippedArmor}.`;
     }
 
     public takeDamage(amount: number): boolean {
@@ -160,13 +160,19 @@ export default class Wanderer extends Skeleton {
         const meleeBonus = calculateMeleeDamageBonus(this.skills.strength, this.skills.agility);
         const rangedBonus = calculateBowDamageBonus(this.skills.strength, this.skills.agility);
         const fistBase = balanceConfig.combat.fistDamagePerHand;
+
         if (!this.equippedWeapon) {
-            return fistBase * 2 + meleeBonus;
+            return (fistBase + meleeBonus) * 2;
         }
 
-        const offhand = this.equippedWeapon.handsRequired === 1 ? fistBase : 0;
-        const statBonus = this.equippedWeapon.isRanged ? rangedBonus : meleeBonus;
-        return this.equippedWeapon.damageBonus + offhand + statBonus;
+        const weaponStatBonus = this.equippedWeapon.isRanged ? rangedBonus : meleeBonus;
+
+        if (this.equippedWeapon.handsRequired === 2) {
+            return this.equippedWeapon.damageBonus + weaponStatBonus;
+        }
+
+        const offhandDamage = fistBase + meleeBonus;
+        return this.equippedWeapon.damageBonus + weaponStatBonus + offhandDamage;
     }
 
     private pickBestWeapon(items: Item[]): Item | null {
