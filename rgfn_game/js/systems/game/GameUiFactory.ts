@@ -83,6 +83,7 @@ export default class GameUiFactory {
             inventoryCount: document.getElementById('inventory-count')!,
             inventoryCapacity: document.getElementById('inventory-capacity')!,
             inventoryCapacityHint: document.getElementById('inventory-capacity-hint')!,
+            undoLastDropBtn: document.getElementById('undo-last-drop-btn')! as HTMLButtonElement,
             inventoryGrid: document.getElementById('inventory-grid')!,
             weaponSlotMain: document.getElementById('weapon-slot-main')! as HTMLButtonElement,
             weaponSlotOff: document.getElementById('weapon-slot-off')! as HTMLButtonElement,
