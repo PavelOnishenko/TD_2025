@@ -11,9 +11,12 @@
 <body>
     <div id="game-container">
         <div id="hud">
-            <div class="hud-section">
-                <h1>RGFN</h1>
-                <div id="mode-indicator">World Map</div>
+            <button id="hud-menu-toggle-btn" class="action-btn hud-menu-toggle" type="button" aria-expanded="false" aria-controls="hud-menu-panel" aria-label="Toggle HUD menu">☰</button>
+            <div id="hud-menu-panel" class="hud-menu-panel hidden">
+                <div class="hud-menu-brand-row">
+                    <h1>RGFN</h1>
+                    <div id="mode-indicator">World Map</div>
+                </div>
                 <div id="hud-panel-toggles" class="hud-panel-toggles">
                     <button id="toggle-stats-panel-btn" class="action-btn" type="button">Stats</button>
                     <button id="toggle-skills-panel-btn" class="action-btn" type="button">Skills</button>
@@ -25,9 +28,11 @@
                     <button id="toggle-world-map-panel-btn" class="action-btn" type="button">World Map</button>
                     <button id="toggle-log-panel-btn" class="action-btn" type="button">Log</button>
                 </div>
-                <button id="use-potion-btn" class="action-btn">Use HP Potion</button>
-                <button id="use-mana-potion-btn" class="action-btn">Use Mana Potion</button>
-                <button id="new-character-btn" class="action-btn">New Character</button>
+                <div class="hud-menu-actions">
+                    <button id="use-potion-btn" class="action-btn">Use HP Potion</button>
+                    <button id="use-mana-potion-btn" class="action-btn">Use Mana Potion</button>
+                    <button id="new-character-btn" class="action-btn">New Character</button>
+                </div>
             </div>
         </div>
         <div id="game-area">
