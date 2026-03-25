@@ -319,10 +319,10 @@ export const balanceConfig = {
     // ============ ENCOUNTER SETTINGS ============
     encounters: {
         // Encounter chance per step
-        encounterRate: 0.2,
+        encounterRate: 0.1,
 
         // Encounter chance per step on already discovered (hidden) tiles
-        discoveredEncounterRate: 0.1,
+        discoveredEncounterRate: 0.05,
 
         // Enemy count range per encounter
         minEnemies: 1,
@@ -337,10 +337,10 @@ export const balanceConfig = {
         },
 
         eventTypeWeights: [
-            { type: 'monster', weight: 8 },
-            { type: 'item', weight: 2 },
-            { type: 'village', weight: 1 },
-            { type: 'traveler', weight: 2 },
+            { type: 'monster', weight: 40 },
+            { type: 'item', weight: 10 },
+            { type: 'village', weight: 5 },
+            { type: 'traveler', weight: 10 },
         ],
 
         zombieMinGroup: 1,
