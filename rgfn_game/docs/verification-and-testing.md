@@ -54,6 +54,37 @@
 
 # Verification and Testing Discussion
 
+## March 26, 2026 update: quest intro modal only opens for brand-new characters
+
+### Reported issue
+- The quest intro modal ("initial quests info") opened on every page refresh/reopen.
+- Desired behavior: show it only when a **new character** is created (the same moment the main quest is first rolled), not when loading an existing save.
+
+### Root cause
+- `initializeQuestUi(...)` always called `questUiController.showIntro()` after rendering quest content.
+- That happened for both code paths:
+  - saved quest restored from localStorage,
+  - newly generated quest for fresh runs.
+
+### Fix implemented
+- Added a `shouldShowIntro` guard in quest bootstrap:
+  - `true` only when no saved quest exists and a fresh main quest is generated,
+  - `false` when loading an existing save with an already-created main quest.
+- Result:
+  - **New Character** (or first-ever run): intro modal opens.
+  - **Refresh/reopen with save present**: intro modal stays closed; quests remain accessible via quest panel.
+
+### Manual QA checklist
+1. Start from a fresh state (no `rgfn_game_save_v1` key) and load game.
+2. Confirm quest intro modal opens once after initial character/main-quest creation.
+3. Close modal, refresh page.
+4. Confirm modal does **not** auto-open after refresh.
+5. Click **New Character** and confirm modal opens again for the newly rolled character.
+
+### Commands run for this change
+- `npm run build:rgfn`
+- `node --test rgfn_game/test/**/*.test.js`
+
 ## March 26, 2026 update: quest completion now persists across refresh
 
 ### Problem observed

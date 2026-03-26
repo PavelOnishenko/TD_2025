@@ -211,12 +211,15 @@ export default class Game {
     private async initializeQuestUi(questGenerator: QuestGenerator, questUiController: QuestUiController): Promise<void> {
         const savedQuest = this.getParsedSaveState()?.quest;
         const quest = savedQuest ?? await questGenerator.generateMainQuest();
+        const shouldShowIntro = !savedQuest;
         this.activeQuest = quest;
         this.questUiController = questUiController;
         this.questProgressTracker = new QuestProgressTracker(quest);
         this.registerQuestLocations(quest);
         questUiController.renderQuest(quest);
-        questUiController.showIntro();
+        if (shouldShowIntro) {
+            questUiController.showIntro();
+        }
     }
 
     private recordLocationEntry(locationName: string): void {
