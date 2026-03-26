@@ -46,6 +46,7 @@ This split is designed so future features can be added without rewriting village
 
 ## Suggested next steps
 
+- Rumor/dialogue NPC roster is now cached per village in `VillageActionsController`, so talkable villagers remain stable between re-entries.
 - ✅ Village population persistence is now implemented per village name (villager roster remains stable across re-visits).
 - Add confidence score to each answer and expose it in UI.
 - Add optional follow-up line choices for persuasion, intimidation, bribery, and lore questions.
