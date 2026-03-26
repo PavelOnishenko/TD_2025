@@ -61,6 +61,14 @@ Village rumors now support asking about **people**, not only settlements.
 2. Type a person name from quest text (example: `Olive` or any generated trader name) in the person input.
 3. Click **Ask about person**.
 
+### Button availability rule (RGFN UX)
+- The following three dialogue/barter buttons are now always enabled in the village UI:
+  - **Ask about person**
+  - **Ask about barter**
+  - **I have what you need, let's do our barter**
+- Validation remains in action handlers, so if no NPC is selected or required input is missing, the game log explains what to do next.
+- This preserves guidance via feedback while removing click-lock friction.
+
 ### Reliability model (intentionally lower than village directions)
 - Person rumors have an explicit low knowledge chance (`26%`) before truthful/imprecise branches can trigger.
 - This keeps person tracking useful over many conversations, but unreliable in one-off interactions.

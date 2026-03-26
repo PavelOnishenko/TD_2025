@@ -387,9 +387,9 @@ export default class VillageActionsController {
         this.refreshSellOptions();
         this.villageUI.sellSelectedBtn.disabled = this.villageUI.sellSelect.disabled;
         this.villageUI.askVillageBtn.disabled = !this.getSelectedNpc() || !this.villageUI.askVillageInput.value.trim();
-        this.villageUI.askPersonBtn.disabled = !this.getSelectedNpc() || !this.villageUI.askPersonInput.value.trim();
-        this.villageUI.askBarterBtn.disabled = !this.getSelectedNpc();
-        this.villageUI.barterNowBtn.disabled = !this.getSelectedNpc();
+        this.villageUI.askPersonBtn.disabled = false;
+        this.villageUI.askBarterBtn.disabled = false;
+        this.villageUI.barterNowBtn.disabled = false;
     }
 
     private getOrCreateVillageNpcRoster(villageName: string): VillageNpcProfile[] {
