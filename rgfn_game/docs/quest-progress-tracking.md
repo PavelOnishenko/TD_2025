@@ -74,3 +74,10 @@
   - `person` = trader
   - `item` = reward artifact
   is automatically supported end-to-end with the same flow.
+
+### Runtime safety note (constructor ordering)
+- `Game.initializeQuestUi(...)` now runs **after** `VillageActionsController` is constructed and assigned.
+- Reason: `initializeQuestUi` configures quest barter contracts through `villageActionsController.configureQuestBarterContracts(...)`.
+- Calling it earlier can throw:
+  - `TypeError: Cannot read properties of undefined (reading 'configureQuestBarterContracts')`.
+- This ordering requirement is now part of the expected initialization contract.

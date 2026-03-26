@@ -122,7 +122,6 @@ export default class Game {
             },
         );
         const loreBookController = new LoreBookController({ loreBody: ui.hudElements.loreBody }, player, worldMap);
-        this.initializeQuestUi(questGenerator, questUiController);
         const magicSystem = new MagicSystem(player);
         const battleUiController = new BattleUiController(ui.battleUI, battleMap, turnManager, player, ui.gameLogUI.log, magicSystem);
         let battleCommandControllerRef: BattleCommandController | null = null;
@@ -148,6 +147,7 @@ export default class Game {
             onVillageBarterCompleted: (traderName: string, itemName: string) => this.recordBarterCompletion(traderName, itemName),
         });
         this.villageActionsController = villageActionsController;
+        this.initializeQuestUi(questGenerator, questUiController);
         this.villageCoordinator = new GameVillageCoordinator(ui.hudElements, ui.battleUI, ui.villageUI, ui.worldUI, villageLifeRenderer, villageActionsController);
         this.stateMachine = this.createStateMachine(ui);
         const battlePlayerActionController = new BattlePlayerActionController(turnManager, battleUiController, player, {
