@@ -2,6 +2,10 @@ import { QuestNode } from './QuestTypes.js';
 
 const DEFAULT_DESCRIPTION = 'Complete every branch of this quest tree to prove your character can end the darkness over the region.';
 const DEFAULT_CONDITION = 'All child objectives are completed.';
+const DEFAULT_BRANCH_DESCRIPTION = 'A composite objective. All listed subtasks must be completed.';
+const DEFAULT_BRANCH_CONDITION = 'Each subtask in this branch is completed.';
+const DEFAULT_DESCRIPTIONS = new Set([DEFAULT_DESCRIPTION, DEFAULT_BRANCH_DESCRIPTION]);
+const DEFAULT_CONDITIONS = new Set([DEFAULT_CONDITION, DEFAULT_BRANCH_CONDITION]);
 type QuestUiCallbacks = {
     onLocationClick: (locationName: string) => boolean;
 };
@@ -82,11 +86,11 @@ export default class QuestUiController {
     }
 
     private shouldRenderDescription(quest: QuestNode): boolean {
-        return quest.description.trim().length > 0 && quest.description !== DEFAULT_DESCRIPTION;
+        return quest.description.trim().length > 0 && !DEFAULT_DESCRIPTIONS.has(quest.description);
     }
 
     private shouldRenderCondition(quest: QuestNode): boolean {
-        return quest.conditionText.trim().length > 0 && quest.conditionText !== DEFAULT_CONDITION;
+        return quest.conditionText.trim().length > 0 && !DEFAULT_CONDITIONS.has(quest.conditionText);
     }
 
     private formatText(text: string, quest: QuestNode): string {

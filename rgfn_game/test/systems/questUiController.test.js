@@ -37,11 +37,19 @@ test('QuestUiController hides the default boilerplate on the root quest but keep
     children: [{
       id: 'main.1',
       title: 'Escort Mira Vale',
-      description: 'Guide Mira Vale through danger and reach Fog Chapel.',
-      conditionText: 'Arrive at Fog Chapel with Mira Vale alive.',
-      objectiveType: 'escort',
+      description: 'A composite objective. All listed subtasks must be completed.',
+      conditionText: 'Each subtask in this branch is completed.',
+      objectiveType: 'scout',
       entities: [],
-      children: [],
+      children: [{
+        id: 'main.1.1',
+        title: 'Escort Mira Vale',
+        description: 'Guide Mira Vale through danger and reach Fog Chapel.',
+        conditionText: 'Arrive at Fog Chapel with Mira Vale alive.',
+        objectiveType: 'escort',
+        entities: [],
+        children: [],
+      }],
     }],
   };
 
@@ -50,6 +58,8 @@ test('QuestUiController hides the default boilerplate on the root quest but keep
   assert.equal(title.textContent, 'Main Quest: Signal Dawn');
   assert.equal(body.innerHTML.includes('Complete every branch'), false);
   assert.equal(body.innerHTML.includes('Condition: All child objectives are completed.'), false);
+  assert.equal(body.innerHTML.includes('A composite objective. All listed subtasks must be completed.'), false);
+  assert.equal(body.innerHTML.includes('Condition: Each subtask in this branch is completed.'), false);
   assert.equal(body.innerHTML.includes('Escort Mira Vale'), true);
   assert.equal(body.innerHTML.includes('Arrive at Fog Chapel with Mira Vale alive.'), true);
 });
