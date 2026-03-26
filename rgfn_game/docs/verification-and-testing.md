@@ -1,5 +1,36 @@
 # Verification and Testing Discussion
 
+## March 26, 2026 update: quest completion now persists across refresh
+
+### Problem observed
+- Quest nodes correctly flipped to completed during runtime (checkmark + strikethrough style), but after a browser refresh the same objective appeared incomplete again.
+- Repro path from report:
+  1. Enter a village tied to a location objective (for example, `Scout Oakcross` / `Enter Oakcross.`).
+  2. Confirm the quest node is marked complete.
+  3. Refresh page.
+  4. Observe completion state reset.
+
+### Root cause
+- Save payload (`rgfn_game_save_v1`) did not include quest tree state.
+- On boot, quest UI always generated a new random main quest in `initializeQuestUi(...)`, regardless of existing save payload.
+
+### Changes made
+- Added `quest: QuestNode | null` to the game save state contract.
+- Save snapshots now serialize the active quest tree including node-level `isCompleted` values.
+- Quest initialization now:
+  - attempts to read saved save-state first,
+  - reuses saved quest when present,
+  - falls back to random quest generation only when save has no quest.
+- Consolidated save parsing through a shared helper (`getParsedSaveState`) used by both load and quest bootstrap paths.
+
+### Compatibility notes
+- Older saves without `quest` field still load world/player/spell data.
+- After first save on new code, quest state is included and future refreshes keep completion progress.
+
+### Commands run for this change
+- `npm run build:rgfn`
+- `node --test rgfn_game/test/**/*.test.js`
+
 ## March 25, 2026 update: village sidebar now shows current village name
 
 ### Problem observed

@@ -29,8 +29,15 @@
 - `QuestProgressTracker` owns runtime completion evaluation.
 - `Game` records location entry when entering village mode and forwards this to the tracker.
 - `QuestUiController` renders completion state using `QuestNode.isCompleted`.
+- `Game` now persists the full active quest tree (`title`, structure, entities, and `isCompleted` flags) inside `rgfn_game_save_v1`, then restores it on refresh so completed nodes remain completed.
+
+## Persistence behavior
+- Save payload now includes `quest: QuestNode | null`.
+- Quest bootstrap now prefers the saved quest from localStorage and only generates a fresh quest when no saved quest exists.
+- Existing saves from before this change remain compatible:
+  - world/player/spell state still restores.
+  - if the old save has no `quest`, the game generates a new quest once and future saves include quest state.
 
 ## Follow-up opportunities
-- Persist quest completion in save data.
 - Expand tracker events for non-location objective types (`deliver`, `barter`, `escort`, etc.).
 - Show quest completion notifications in battle log / village log.
