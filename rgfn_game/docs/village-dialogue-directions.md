@@ -51,3 +51,32 @@ This split is designed so future features can be added without rewriting village
 - Add confidence score to each answer and expose it in UI.
 - Add optional follow-up line choices for persuasion, intimidation, bribery, and lore questions.
 - Bind outcomes to quest journal entries (accepted hint, contradiction discovered, rumor confirmed).
+
+## New: person-location rumors and reliability tuning
+
+Village rumors now support asking about **people**, not only settlements.
+
+### UX flow
+1. Select an NPC in the rumor panel.
+2. Type a person name (example: `Olive`) in the person input.
+3. Click **Ask about person**.
+
+### Reliability model (intentionally lower than village directions)
+- Person rumors have an explicit low knowledge chance (`26%`) before truthful/imprecise branches can trigger.
+- This keeps person tracking useful over many conversations, but unreliable in one-off interactions.
+- Result: players often receive:
+  - refusal/no clue,
+  - imprecise route,
+  - occasional lie or malicious misdirection.
+
+### Current data source behavior
+- `Olive` is guaranteed as a persistent NPC in the first village the player enters.
+- Person-direction hints for Olive are resolved against Olive’s bound village.
+- Unknown names return `exists: false`, then dialogue personality decides whether NPC admits ignorance or fabricates.
+
+### Logging
+- Person queries log:
+  - exact player question text,
+  - NPC answer with truthfulness label,
+  - tonal line,
+  - journal note when a truthful direction is received.

@@ -41,3 +41,28 @@
 ## Follow-up opportunities
 - Expand tracker events for non-location objective types (`deliver`, `barter`, `escort`, etc.).
 - Show quest completion notifications in battle log / village log.
+
+## Update: barter objective tracking is now live
+
+### What is now supported
+- `QuestProgressTracker` now supports direct completion updates for **barter** leaves through:
+  - `recordBarterCompletion(traderName, itemName)`.
+- Matching is case-insensitive and requires both:
+  - `person` quest entity == barter partner name
+  - `item` quest entity == received item name
+- Once matched, the barter leaf is marked complete and parent branches are recomputed immediately.
+
+### Runtime integration
+- `VillageActionsController` emits barter-complete callback after payment is consumed and reward item is granted.
+- `Game` forwards this event to `QuestProgressTracker` and re-renders the quest UI instantly.
+- If no node matches, a verbose system message explains that barter was registered but not tied to an active objective.
+
+### Practical example now solvable
+- Quest text:
+  - Title: `Barter with Olive`
+  - Description: `Negotiate with Olive and exchange for Kator Kaesh.`
+  - Condition: `Complete one barter deal and obtain Kator Kaesh.`
+- Runtime:
+  - Find Olive in her persistent home village.
+  - Complete her barter transaction.
+  - Quest node updates to completed immediately after the trade.

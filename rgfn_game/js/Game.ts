@@ -144,6 +144,7 @@ export default class Game {
             onUpdateHUD: () => this.hudCoordinator.updateHUD(),
             onLeaveVillage: () => this.stateMachine.transition(MODES.WORLD_MAP),
             getVillageDirectionHint: (settlementName: string) => this.worldMap.getVillageDirectionHintFromPlayer(settlementName),
+            onVillageBarterCompleted: (traderName: string, itemName: string) => this.recordBarterCompletion(traderName, itemName),
         });
         this.villageCoordinator = new GameVillageCoordinator(ui.hudElements, ui.battleUI, ui.villageUI, ui.worldUI, villageLifeRenderer, villageActionsController);
         this.stateMachine = this.createStateMachine(ui);
@@ -230,6 +231,21 @@ export default class Game {
 
         this.questUiController.renderQuest(this.activeQuest);
     }
+
+    private recordBarterCompletion(traderName: string, itemName: string): void {
+        if (!this.activeQuest || !this.questUiController || !this.questProgressTracker) {
+            return;
+        }
+
+        if (!this.questProgressTracker.recordBarterCompletion(traderName, itemName)) {
+            this.hudCoordinator.addBattleLog(`Quest tracker: barter registered (${traderName} -> ${itemName}), but no active objective matched.`, 'system-message');
+            return;
+        }
+
+        this.hudCoordinator.addBattleLog(`Quest tracker: barter objective completed (${traderName} -> ${itemName}).`, 'system');
+        this.questUiController.renderQuest(this.activeQuest);
+    }
+
 
     private registerQuestLocations(quest: QuestNode): void {
         for (const entity of quest.entities) {
