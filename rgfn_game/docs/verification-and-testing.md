@@ -567,3 +567,27 @@ So tests asserting fixed literal HP values (for example zombie `7`) will fail wh
 4. Verify each skill increased by exactly 20.
 5. Refresh the page and confirm boosted values persist from save data.
 6. Confirm battle log contains: `[DEV] GOD boost applied: +20 to all skills.`
+## March 26, 2026 update: purge packs are now completable with anchored village hunting zones
+
+### Summary
+
+- `eliminate` and `hunt` objectives now carry explicit monster objective metadata (name, required kills, village anchor, mutation details).
+- Kill events are now fed into `QuestProgressTracker` for objective completion.
+- World mode now injects quest-target monster encounters when traveling near the target village.
+- Mutation traits listed in generator output now execute gameplay behavior in combat.
+
+### Manual verification flow
+
+1. Start a fresh run and inspect generated quest leaves for `Purge` / `Hunt`.
+2. Confirm objective text includes `near <VillageName>` and mutation intel in description.
+3. Travel toward that village (can use lore/world map hints).
+4. Roam nearby cells and verify quest encounter hint appears in log.
+5. Enter battle against target monsters and defeat required count.
+6. Confirm quest node completion updates immediately after kill.
+7. Check retaliation log lines for `acid blood` / `barbed hide` when applicable.
+
+### Regression focus
+
+- Existing location objective completion remains functional.
+- Existing barter objective completion remains functional.
+- Non-quest random encounters still function when no objective encounter is injected.

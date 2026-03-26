@@ -42,6 +42,48 @@ function createQuest() {
         children: [],
         isCompleted: false,
       },
+      {
+        id: 'main.4',
+        title: 'Courier: Lorlys Eshva Zendra',
+        description: 'Acquire Lorlys Eshva Zendra from Olive in Oakcross, then carry it to Stonemeadow.',
+        conditionText: 'Reach Stonemeadow while carrying Lorlys Eshva Zendra obtained from Olive in Oakcross.',
+        objectiveType: 'deliver',
+        entities: [
+          { text: 'Olive', type: 'person' },
+          { text: 'Lorlys Eshva Zendra', type: 'item' },
+          { text: 'Oakcross', type: 'location' },
+          { text: 'Stonemeadow', type: 'location' },
+        ],
+        objectiveData: {
+          deliver: {
+            sourceVillage: 'Oakcross',
+            sourceTrader: 'Olive',
+            destinationVillage: 'Stonemeadow',
+            itemName: 'Lorlys Eshva Zendra',
+          },
+        },
+        children: [],
+        isCompleted: false,
+      },
+      {
+        id: 'main.5',
+        title: 'Purge Torka Kaquin Pack',
+        description: 'Remove 2 Torka Kaquins near Oakcross.',
+        conditionText: 'Kill 2 Torka Kaquins near Oakcross.',
+        objectiveType: 'eliminate',
+        entities: [{ text: 'Torka Kaquin', type: 'monster' }, { text: 'Oakcross', type: 'location' }],
+        objectiveData: {
+          monster: {
+            targetName: 'Torka Kaquin',
+            requiredKills: 2,
+            currentKills: 0,
+            villageName: 'Oakcross',
+            mutations: ['acid blood', 'grave intellect'],
+          },
+        },
+        children: [],
+        isCompleted: false,
+      },
     ],
     isCompleted: false,
   };
@@ -57,6 +99,8 @@ test('QuestProgressTracker marks location-based travel objectives as complete wh
   assert.equal(quest.children[0].isCompleted, true);
   assert.equal(quest.children[1].isCompleted, false);
   assert.equal(quest.children[2].isCompleted, false);
+  assert.equal(quest.children[3].isCompleted, false);
+  assert.equal(quest.children[4].isCompleted, false);
   assert.equal(quest.isCompleted, false);
 });
 
@@ -75,12 +119,45 @@ test('QuestProgressTracker marks barter objectives complete only when trader and
   const quest = createQuest();
   const tracker = new QuestProgressTracker(quest);
 
-  const wrongItem = tracker.recordBarterCompletion('Olive', 'Other Artifact');
-  const correctDeal = tracker.recordBarterCompletion('Olive', 'Kator Kaesh');
-  const duplicate = tracker.recordBarterCompletion('Olive', 'Kator Kaesh');
+  const wrongItem = tracker.recordBarterCompletion('Olive', 'Other Artifact', 'Oakcross');
+  const correctDeal = tracker.recordBarterCompletion('Olive', 'Kator Kaesh', 'Oakcross');
+  const duplicate = tracker.recordBarterCompletion('Olive', 'Kator Kaesh', 'Oakcross');
 
   assert.equal(wrongItem, false);
   assert.equal(correctDeal, true);
   assert.equal(duplicate, false);
   assert.equal(quest.children[2].isCompleted, true);
+});
+
+test('QuestProgressTracker completes courier objectives only after pickup from the specified trader and village, then destination arrival with item', () => {
+  const quest = createQuest();
+  const tracker = new QuestProgressTracker(quest);
+
+  const wrongVillagePickup = tracker.recordBarterCompletion('Olive', 'Lorlys Eshva Zendra', 'Fog Chapel');
+  const rightPickup = tracker.recordBarterCompletion('Olive', 'Lorlys Eshva Zendra', 'Oakcross');
+  const arrivalWithoutItem = tracker.recordLocationEntryWithInventory('Stonemeadow', []);
+  const arrivalWithItem = tracker.recordLocationEntryWithInventory('Stonemeadow', ['Lorlys Eshva Zendra']);
+
+  assert.equal(wrongVillagePickup, false);
+  assert.equal(rightPickup, true);
+  assert.equal(arrivalWithoutItem, false);
+  assert.equal(arrivalWithItem, true);
+  assert.equal(quest.children[3].isCompleted, true);
+});
+
+test('QuestProgressTracker tracks monster kill counts and active purge objective progress', () => {
+  const quest = createQuest();
+  const tracker = new QuestProgressTracker(quest);
+
+  const firstKill = tracker.recordMonsterKill('torka kaquin');
+  const active = tracker.getActiveMonsterObjectives();
+  const secondKill = tracker.recordMonsterKill('Torka Kaquin');
+
+  assert.equal(firstKill, true);
+  assert.equal(active.length, 1);
+  assert.equal(active[0].targetName, 'Torka Kaquin');
+  assert.equal(active[0].remainingKills, 1);
+  assert.deepEqual(active[0].mutations, ['acid blood', 'grave intellect']);
+  assert.equal(secondKill, true);
+  assert.equal(quest.children[4].isCompleted, true);
 });

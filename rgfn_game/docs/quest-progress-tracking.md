@@ -81,3 +81,35 @@
 - Calling it earlier can throw:
   - `TypeError: Cannot read properties of undefined (reading 'configureQuestBarterContracts')`.
 - This ordering requirement is now part of the expected initialization contract.
+
+## March 26, 2026 update: courier objectives are now fully completable with explicit pickup source
+
+### Problem
+- Courier leaves only described destination + item carry condition.
+- There was no explicit, enforced pickup source in objective state.
+- Result: players lacked clear guidance on where to obtain courier items, and objective completion could be unclear.
+
+### Fix
+- Courier leaf generation now embeds complete pickup/delivery data in `objectiveData.deliver`:
+  - source village
+  - source trader
+  - destination village
+  - item name
+  - pickup progress flag
+- Courier description + condition now explicitly state:
+  - who provides the item,
+  - where pickup happens,
+  - where delivery completes.
+- Village barter contracts now include courier entries and preserve source village assignment.
+- Village rumor logs now print courier-specific hints for villages that host pickup traders.
+- Progress tracker now completes courier objectives only when:
+  1. pickup happened via matching trader+item at matching source village,
+  2. destination village is reached,
+  3. required item is still in inventory.
+
+### Verification checklist
+1. Start a new run and locate a courier objective in the quest tree.
+2. Confirm quest text includes source trader and source village.
+3. Reach source village and barter with named trader for required item.
+4. Travel to destination while carrying item.
+5. Confirm courier leaf is marked complete in quest UI.
