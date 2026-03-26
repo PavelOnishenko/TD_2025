@@ -20,7 +20,6 @@ export type QuestNode = {
     conditionText: string;
     objectiveType: QuestObjectiveType;
     entities: QuestTextEntity[];
-    objectiveData?: QuestObjectiveData;
     children: QuestNode[];
     objectiveData?: QuestObjectiveData;
     isCompleted?: boolean;
@@ -33,19 +32,6 @@ export type DeliverObjectiveData = {
     itemName: string;
     isPickedUp?: boolean;
 };
-
-export type QuestObjectiveData = {
-    deliver?: DeliverObjectiveData;
-};
-
-export type DeliverObjectiveData = {
-    sourceVillage: string;
-    sourceTrader: string;
-    destinationVillage: string;
-    itemName: string;
-    isPickedUp?: boolean;
-};
-
 
 export type GeneratedName = {
     text: string;
@@ -80,17 +66,4 @@ export type QuestObjectiveData = {
     deliver?: DeliverObjectiveData;
     monster?: MonsterObjectiveData;
     mutatedFrom: string;
-};
-
-export type MonsterObjectiveData = {
-    targetName: string;
-    requiredKills: number;
-    currentKills?: number;
-    villageName?: string;
-    mutations?: string[];
-    mutatedFrom?: string;
-};
-
-export type QuestObjectiveData = {
-    monster?: MonsterObjectiveData;
 };
