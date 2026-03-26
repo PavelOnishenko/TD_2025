@@ -42,6 +42,25 @@ function createQuest() {
         children: [],
         isCompleted: false,
       },
+      {
+        id: 'main.4',
+        title: 'Purge Torka Kaquin Pack',
+        description: 'Remove 2 Torka Kaquins near Oakcross.',
+        conditionText: 'Kill 2 Torka Kaquins near Oakcross.',
+        objectiveType: 'eliminate',
+        entities: [{ text: 'Torka Kaquin', type: 'monster' }, { text: 'Oakcross', type: 'location' }],
+        objectiveData: {
+          monster: {
+            targetName: 'Torka Kaquin',
+            requiredKills: 2,
+            currentKills: 0,
+            villageName: 'Oakcross',
+            mutations: ['acid blood', 'grave intellect'],
+          },
+        },
+        children: [],
+        isCompleted: false,
+      },
     ],
     isCompleted: false,
   };
@@ -83,4 +102,21 @@ test('QuestProgressTracker marks barter objectives complete only when trader and
   assert.equal(correctDeal, true);
   assert.equal(duplicate, false);
   assert.equal(quest.children[2].isCompleted, true);
+});
+
+test('QuestProgressTracker tracks monster kill counts and active purge objective progress', () => {
+  const quest = createQuest();
+  const tracker = new QuestProgressTracker(quest);
+
+  const firstKill = tracker.recordMonsterKill('torka kaquin');
+  const active = tracker.getActiveMonsterObjectives();
+  const secondKill = tracker.recordMonsterKill('Torka Kaquin');
+
+  assert.equal(firstKill, true);
+  assert.equal(active.length, 1);
+  assert.equal(active[0].targetName, 'Torka Kaquin');
+  assert.equal(active[0].remainingKills, 1);
+  assert.deepEqual(active[0].mutations, ['acid blood', 'grave intellect']);
+  assert.equal(secondKill, true);
+  assert.equal(quest.children[3].isCompleted, true);
 });
