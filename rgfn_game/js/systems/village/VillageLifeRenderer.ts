@@ -28,7 +28,7 @@ export default class VillageLifeRenderer {
             { x: width * 0.79, y: height * 0.81, houseIndex: 3 }, { x: width * 0.57, y: height * 0.7 }, { x: width * 0.78, y: height * 0.7, houseIndex: 4 },
             { x: width * 0.31, y: height * 0.7 },
         ];
-        this.villagePopulation.initialize(this.villageSpots, performance.now() * 0.001);
+        this.villagePopulation.initialize(this.villageSpots, performance.now() * 0.001, this.currentVillageName);
     }
 
     public update(now: number): void {

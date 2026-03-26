@@ -61,6 +61,7 @@ export default class VillageActionsController {
     private readonly dialogueEngine: VillageDialogueEngine;
     private currentVillageName = '';
     private npcRoster: VillageNpcProfile[] = [];
+    private villageNpcRosters: Map<string, VillageNpcProfile[]> = new Map();
     private selectedNpcId: string | null = null;
 
     constructor(player: Player, villageUI: VillageUI, gameLog: HTMLElement, callbacks: VillageActionsCallbacks) {
@@ -75,7 +76,7 @@ export default class VillageActionsController {
         this.currentVillageName = villageName;
         this.villageUI.title.textContent = `Village: ${villageName}`;
         this.refreshVillageStock();
-        this.npcRoster = this.dialogueEngine.createNpcRoster(villageName);
+        this.npcRoster = this.getOrCreateVillageNpcRoster(villageName);
         this.selectedNpcId = null;
         this.villageUI.sidebar.classList.remove('hidden');
         this.villageUI.prompt.classList.remove('hidden');
@@ -239,6 +240,17 @@ export default class VillageActionsController {
         this.refreshSellOptions();
         this.villageUI.sellSelectedBtn.disabled = this.villageUI.sellSelect.disabled;
         this.villageUI.askVillageBtn.disabled = !this.getSelectedNpc() || !this.villageUI.askVillageInput.value.trim();
+    }
+
+    private getOrCreateVillageNpcRoster(villageName: string): VillageNpcProfile[] {
+        const cachedRoster = this.villageNpcRosters.get(villageName);
+        if (cachedRoster) {
+            return cachedRoster;
+        }
+
+        const roster = this.dialogueEngine.createNpcRoster(villageName);
+        this.villageNpcRosters.set(villageName, roster);
+        return roster;
     }
 
     private refreshVillageStock(): void {

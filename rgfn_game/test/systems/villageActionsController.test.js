@@ -1,0 +1,146 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+
+import VillageActionsController from '../../dist/systems/village/VillageActionsController.js';
+
+function createClassList() {
+  return {
+    added: [],
+    removed: [],
+    add(name) { this.added.push(name); },
+    remove(name) { this.removed.push(name); },
+  };
+}
+
+function createElement(tag = 'div') {
+  return {
+    tag,
+    type: '',
+    value: '',
+    textContent: '',
+    innerHTML: '',
+    disabled: false,
+    options: [],
+    listeners: {},
+    classList: createClassList(),
+    children: [],
+    scrollTop: 0,
+    scrollHeight: 0,
+    appendChild(child) {
+      this.children.push(child);
+      if (this.tag === 'select') {
+        this.options.push(child);
+      }
+      this.scrollHeight += 1;
+      return child;
+    },
+    addEventListener(type, handler) {
+      this.listeners[type] = handler;
+    },
+  };
+}
+
+function createVillageUi() {
+  return {
+    sidebar: createElement(),
+    title: createElement(),
+    prompt: createElement(),
+    actions: createElement(),
+    buyOffer1Btn: createElement('button'),
+    buyOffer2Btn: createElement('button'),
+    buyOffer3Btn: createElement('button'),
+    buyOffer4Btn: createElement('button'),
+    sellSelect: createElement('select'),
+    sellSelectedBtn: createElement('button'),
+    npcList: createElement(),
+    npcTitle: createElement(),
+    askVillageInput: createElement('input'),
+    askVillageBtn: createElement('button'),
+  };
+}
+
+function createPlayerStub() {
+  return {
+    gold: 50,
+    getInventory: () => [],
+    heal: () => {},
+    restoreMana: () => {},
+  };
+}
+
+function withDocumentStub(fn) {
+  const original = globalThis.document;
+  globalThis.document = {
+    createElement: (tag) => createElement(tag),
+  };
+
+  try {
+    fn();
+  } finally {
+    globalThis.document = original;
+  }
+}
+
+test('VillageActionsController keeps village rumor NPC roster stable across re-entry to same village', () => withDocumentStub(() => {
+  const villageUI = createVillageUi();
+  const gameLog = createElement();
+  const controller = new VillageActionsController(createPlayerStub(), villageUI, gameLog, {
+    onUpdateHUD: () => {},
+    onLeaveVillage: () => {},
+    getVillageDirectionHint: (settlementName) => ({ settlementName, exists: false }),
+  });
+
+  let createNpcRosterCalls = 0;
+  controller['dialogueEngine'] = {
+    createNpcRoster: (villageName) => {
+      createNpcRosterCalls += 1;
+      if (villageName === 'Mossbrook') {
+        return [
+          { id: 'mossbrook-0', name: 'Mara', role: 'Trader', look: 'patched vest', speechStyle: 'calm', disposition: 'truthful' },
+          { id: 'mossbrook-1', name: 'Tor', role: 'Hunter', look: 'old armor', speechStyle: 'cold', disposition: 'liar' },
+        ];
+      }
+
+      return [{ id: 'other-0', name: 'Iven', role: 'Miller', look: 'cloak', speechStyle: 'warm', disposition: 'imprecise' }];
+    },
+    buildLocationAnswer: () => ({ speech: '', tone: '', truthfulness: 'truth' }),
+  };
+
+  controller.enterVillage('Mossbrook');
+  const firstRoster = controller['npcRoster'].map((npc) => `${npc.name}:${npc.role}`);
+
+  controller.enterVillage('Mossbrook');
+  const secondRoster = controller['npcRoster'].map((npc) => `${npc.name}:${npc.role}`);
+
+  assert.deepEqual(secondRoster, firstRoster);
+  assert.equal(createNpcRosterCalls, 1);
+}));
+
+test('VillageActionsController stores separate rumor rosters for different villages', () => withDocumentStub(() => {
+  const villageUI = createVillageUi();
+  const gameLog = createElement();
+  const controller = new VillageActionsController(createPlayerStub(), villageUI, gameLog, {
+    onUpdateHUD: () => {},
+    onLeaveVillage: () => {},
+    getVillageDirectionHint: (settlementName) => ({ settlementName, exists: false }),
+  });
+
+  controller['dialogueEngine'] = {
+    createNpcRoster: (villageName) => villageName === 'Mossbrook'
+      ? [{ id: 'moss-0', name: 'Mara', role: 'Trader', look: 'satchel', speechStyle: 'calm', disposition: 'truthful' }]
+      : [{ id: 'oak-0', name: 'Garr', role: 'Carpenter', look: 'boots', speechStyle: 'formal', disposition: 'silent' }],
+    buildLocationAnswer: () => ({ speech: '', tone: '', truthfulness: 'truth' }),
+  };
+
+  controller.enterVillage('Mossbrook');
+  const mossbrookRoster = controller['npcRoster'].map((npc) => `${npc.name}:${npc.role}`);
+
+  controller.enterVillage('Oakhaven');
+  const oakhavenRoster = controller['npcRoster'].map((npc) => `${npc.name}:${npc.role}`);
+
+  controller.enterVillage('Mossbrook');
+  const mossbrookAgain = controller['npcRoster'].map((npc) => `${npc.name}:${npc.role}`);
+
+  assert.notDeepEqual(oakhavenRoster, mossbrookRoster);
+  assert.deepEqual(mossbrookAgain, mossbrookRoster);
+}));

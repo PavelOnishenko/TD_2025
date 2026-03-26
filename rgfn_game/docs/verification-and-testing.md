@@ -1,3 +1,57 @@
+## March 26, 2026 update: village rumors NPC roster persistence fix (actual root cause)
+
+### Symptom seen in UI
+- Entering the same village repeatedly still produced different **Village rumors** NPC buttons (different names/roles each visit).
+- This was visible even when staying on the same village tile and re-entering immediately.
+
+### Root cause (important)
+- Previous fix addressed animated background villagers (`VillagePopulation`) only.
+- Rumor/chat NPCs are created in `VillageActionsController.enterVillage(...)` via `VillageDialogueEngine.createNpcRoster(...)`.
+- Because that call ran on every entry, rumor roster was re-randomized each visit.
+
+### Final fix
+- Added per-village roster cache in `VillageActionsController`:
+  - `villageNpcRosters: Map<string, VillageNpcProfile[]>`
+  - `getOrCreateVillageNpcRoster(villageName)`
+- `enterVillage(...)` now reuses cached roster for previously visited villages.
+- Different villages still keep different rumor rosters.
+
+### Regression tests added
+- `test/systems/villageActionsController.test.js`
+  - verifies same village re-entry keeps identical rumor roster,
+  - verifies separate villages keep separate rosters and returning to the first village restores it.
+
+### Manual QA checklist
+1. Enter village A and record rumor NPC names/roles.
+2. Leave + re-enter village A several times.
+3. Confirm roster in village A stays unchanged.
+4. Travel to village B and confirm roster differs from village A.
+5. Return to village A and confirm original roster is restored.
+
+## March 25, 2026 update: village populations are now persistent per settlement
+
+### What changed
+- Villagers are now generated once per village name and cached in `VillagePopulation`.
+- Re-entering the same village no longer re-rolls NPC roster size, colors, animations, or base routing indices.
+- Different villages still receive different villager rosters.
+- On re-entry, villagers are re-aligned to current village layout coordinates (important when canvas size changes) before rendering resumes.
+
+### Why this matters
+- Fixes immersion break where villagers changed every time the player left and re-entered the same village tile.
+- Keeps village social context stable over time while preserving per-village uniqueness.
+
+### Files involved
+- `js/systems/village/VillagePopulation.ts`
+- `js/systems/village/VillageLifeRenderer.ts`
+- `test/systems/villagePopulation.test.js`
+
+### Verification checklist
+1. Enter village A, note visible villagers (count/look).
+2. Leave and re-enter village A multiple times.
+3. Confirm same villagers remain present.
+4. Travel to village B and confirm villagers differ from village A.
+5. Return to village A and confirm original villagers are restored.
+
 # Verification and Testing Discussion
 
 ## March 25, 2026 update: village sidebar now shows current village name
