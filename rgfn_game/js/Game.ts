@@ -51,6 +51,7 @@ type GameSaveState = {
     worldMap: Record<string, unknown>;
     player: Record<string, unknown>;
     spellLevels: Record<string, number>;
+    quest: QuestNode | null;
 };
 
 const SAVE_KEY = 'rgfn_game_save_v1';
@@ -208,7 +209,8 @@ export default class Game {
     public start(): void { this.handleResize(); this.refreshHud(); this.loop.start(); }
 
     private async initializeQuestUi(questGenerator: QuestGenerator, questUiController: QuestUiController): Promise<void> {
-        const quest = await questGenerator.generateMainQuest();
+        const savedQuest = this.getParsedSaveState()?.quest;
+        const quest = savedQuest ?? await questGenerator.generateMainQuest();
         this.activeQuest = quest;
         this.questUiController = questUiController;
         this.questProgressTracker = new QuestProgressTracker(quest);
@@ -351,6 +353,7 @@ export default class Game {
             worldMap: this.worldMap.getState(),
             player: this.player.getState(),
             spellLevels: this.magicSystem.getSpellLevels(),
+            quest: this.activeQuest,
         };
     }
 
@@ -365,27 +368,33 @@ export default class Game {
     }
 
     private loadGame(): void {
+        const parsed = this.getParsedSaveState();
+        if (!parsed || !parsed.player || !parsed.worldMap || !parsed.spellLevels) {
+            return;
+        }
+
+        this.worldMap.restoreState(parsed.worldMap);
+        this.player.restoreState(parsed.player);
+        this.magicSystem.restoreSpellLevels(parsed.spellLevels);
+
+        const [x, y] = this.worldMap.getPlayerPixelPosition();
+        this.player.x = x;
+        this.player.y = y;
+        this.refreshHud();
+    }
+
+    private getParsedSaveState(): Partial<GameSaveState> | null {
         const raw = window.localStorage.getItem(SAVE_KEY);
         if (!raw) {
-            return;
+            return null;
         }
 
         try {
             const parsed = JSON.parse(raw) as Partial<GameSaveState>;
-            if (parsed.version !== 1 || !parsed.player || !parsed.worldMap || !parsed.spellLevels) {
-                return;
-            }
-
-            this.worldMap.restoreState(parsed.worldMap);
-            this.player.restoreState(parsed.player);
-            this.magicSystem.restoreSpellLevels(parsed.spellLevels);
-
-            const [x, y] = this.worldMap.getPlayerPixelPosition();
-            this.player.x = x;
-            this.player.y = y;
-            this.refreshHud();
+            return parsed.version === 1 ? parsed : null;
         } catch {
             console.warn('Failed to parse save data, starting a new character.');
+            return null;
         }
     }
 
