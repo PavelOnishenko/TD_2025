@@ -127,3 +127,18 @@ To improve battle readability, the player now renders as a full mini-avatar (sha
 - Right-click drop is no longer strictly final: only the most recently dropped item is recoverable.
 - Recovery uses normal inventory insertion rules, so it fails when inventory is full.
 - The recover button remains disabled whenever there is no pending dropped item to restore.
+
+## Skills panel dev shortcut: GOD +20 ALL (March 2026)
+
+- A temporary dev-only button now exists in the Skills panel: `#god-skills-btn` (`GOD +20 ALL`).
+- Behavior when clicked:
+  - Adds **+20** to each player skill (`vitality`, `toughness`, `strength`, `agility`, `connection`, `intelligence`).
+  - Clears pending skill allocations so the panel does not show stale unsaved deltas.
+  - Adds a battle/system log line: `[DEV] GOD boost applied: +20 to all skills.`
+  - Triggers an immediate save call from `Game.bindUi(...)` so localStorage reflects the boosted stats right away.
+- Implementation path:
+  1. DOM button in `index.html`,
+  2. wired in `GameUiTypes` + `GameUiFactory`,
+  3. click handler in `GameUiEventBinder`,
+  4. stat application in `GameHudCoordinator.handleGodSkillsBoost`,
+  5. immediate save via `Game.saveGameIfChanged()`.

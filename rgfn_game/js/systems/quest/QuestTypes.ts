@@ -21,7 +21,6 @@ export type QuestNode = {
     objectiveType: QuestObjectiveType;
     entities: QuestTextEntity[];
     children: QuestNode[];
-    objectiveData?: QuestObjectiveData;
     isCompleted?: boolean;
 };
 

@@ -124,9 +124,15 @@ h1 {
     gap: 6px;
 }
 
-#save-skills-btn {
+#save-skills-btn,
+#god-skills-btn {
     margin-top: 8px;
     width: 100%;
+}
+
+#god-skills-btn {
+    border-color: #8a1a1a;
+    color: #ffd7d7;
 }
 
 .spell-upgrade-row {

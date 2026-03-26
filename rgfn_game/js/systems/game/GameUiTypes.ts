@@ -51,6 +51,7 @@ export type HudElements = {
     addIntelligenceBtn: HTMLButtonElement;
     subIntelligenceBtn: HTMLButtonElement;
     saveSkillsBtn: HTMLButtonElement;
+    godSkillsBtn: HTMLButtonElement;
     upgradeFireballBtn: HTMLButtonElement;
     upgradeCurseBtn: HTMLButtonElement;
     upgradeSlowBtn: HTMLButtonElement;

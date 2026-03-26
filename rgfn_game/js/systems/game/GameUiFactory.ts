@@ -65,6 +65,7 @@ export default class GameUiFactory {
             addIntelligenceBtn: document.getElementById('add-intelligence-btn')! as HTMLButtonElement,
             subIntelligenceBtn: document.getElementById('sub-intelligence-btn')! as HTMLButtonElement,
             saveSkillsBtn: document.getElementById('save-skills-btn')! as HTMLButtonElement,
+            godSkillsBtn: document.getElementById('god-skills-btn')! as HTMLButtonElement,
             upgradeFireballBtn: document.getElementById('upgrade-fireball-btn')! as HTMLButtonElement,
             upgradeCurseBtn: document.getElementById('upgrade-curse-btn')! as HTMLButtonElement,
             upgradeSlowBtn: document.getElementById('upgrade-slow-btn')! as HTMLButtonElement,
