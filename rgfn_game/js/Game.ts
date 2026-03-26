@@ -15,7 +15,7 @@ import HudController from './systems/HudController.js';
 import BattleUiController from './systems/BattleUiController.js';
 import WorldModeController from './systems/WorldModeController.js';
 import Player from './entities/Player.js';
-import Skeleton from './entities/Skeleton.js';
+import Skeleton, { MonsterMutationTrait } from './entities/Skeleton.js';
 import { BattleSplash } from './ui/BattleSplash.js';
 import { balanceConfig } from './config/balanceConfig.js';
 import { ItemDiscoverySplash } from './ui/ItemDiscoverySplash.js';
@@ -166,6 +166,7 @@ export default class Game {
             onPlayerTurnReady: () => this.battleCoordinator.onPlayerTurnReady(),
             getSelectedEnemy: () => battlePlayerActionController.getSelectedEnemy(),
             setSelectedEnemy: (enemy: Skeleton | null) => battlePlayerActionController.setSelectedEnemy(enemy),
+            onEnemyDefeated: (enemy: Skeleton) => this.recordMonsterKill(enemy.name),
         });
         battleCommandControllerRef = battleCommandController;
         const battleTurnController = new BattleTurnController(battleMap, turnManager, player, {
@@ -190,6 +191,7 @@ export default class Game {
             onAddBattleLog: (m: string, t: string = 'system') => this.hudCoordinator.addBattleLog(m, t),
             onUpdateHUD: () => this.hudCoordinator.updateHUD(),
             onRememberTraveler: (traveler, disposition) => loreBookController.rememberTraveler(traveler, disposition),
+            getQuestBattleEncounter: () => this.tryCreateQuestMonsterEncounter(),
         });
         this.renderRouter = new GameRenderRouter({
             canvas: this.canvas, renderer: this.renderer, worldMap, player, battleMap, turnManager,
@@ -251,6 +253,62 @@ export default class Game {
 
         this.hudCoordinator.addBattleLog(`Quest tracker: barter objective completed (${traderName} -> ${itemName}).`, 'system');
         this.questUiController.renderQuest(this.activeQuest);
+    }
+
+    private recordMonsterKill(monsterName: string): void {
+        if (!this.activeQuest || !this.questUiController || !this.questProgressTracker) {
+            return;
+        }
+
+        if (!this.questProgressTracker.recordMonsterKill(monsterName)) {
+            return;
+        }
+
+        this.hudCoordinator.addBattleLog(`Quest tracker: eliminated ${monsterName}.`, 'system');
+        this.questUiController.renderQuest(this.activeQuest);
+    }
+
+    private tryCreateQuestMonsterEncounter(): { enemies: Skeleton[]; hint?: string } | null {
+        if (!this.questProgressTracker) {
+            return null;
+        }
+
+        const activeMonsterObjectives = this.questProgressTracker.getActiveMonsterObjectives();
+        if (activeMonsterObjectives.length === 0) {
+            return null;
+        }
+
+        for (const objective of activeMonsterObjectives) {
+            if (!objective.villageName) {
+                continue;
+            }
+
+            const hint = this.worldMap.getVillageDirectionHintFromPlayer(objective.villageName);
+            if (!hint.exists || typeof hint.distanceCells !== 'number' || hint.distanceCells > 7) {
+                continue;
+            }
+
+            const encounterChance = hint.distanceCells <= 2 ? 0.42 : 0.2;
+            if (Math.random() >= encounterChance) {
+                continue;
+            }
+
+            const spawnCount = Math.max(1, Math.min(3, objective.remainingKills));
+            const mutations = objective.mutations.filter(this.isSupportedMutationTrait);
+            const enemies = Array.from({ length: spawnCount }, () => new Skeleton(0, 0, {
+                ...balanceConfig.enemies.skeleton,
+                name: objective.targetName,
+                mutations,
+            }));
+            const message = `Scouts report ${objective.targetName} tracks near ${objective.villageName} (${hint.direction ?? 'nearby'}).`;
+            return { enemies, hint: message };
+        }
+
+        return null;
+    }
+
+    private isSupportedMutationTrait(value: string): value is MonsterMutationTrait {
+        return ['feral strength', 'void armor', 'acid blood', 'blink speed', 'barbed hide', 'grave intellect'].includes(value);
     }
 
 

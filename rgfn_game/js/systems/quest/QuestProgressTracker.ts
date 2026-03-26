@@ -16,7 +16,9 @@ export default class QuestProgressTracker {
             return false;
         }
 
-        const changed = this.markLocationObjectives(this.root, normalizedLocation) || this.markDeliverObjectives(this.root, normalizedLocation, new Set());
+        const changed = this.markLocationObjectives(this.root, normalizedLocation)
+            || this.markDeliverObjectives(this.root, normalizedLocation, new Set());
+
         if (!changed) {
             return false;
         }
@@ -31,8 +33,15 @@ export default class QuestProgressTracker {
             return false;
         }
 
-        const carried = new Set(carriedItems.map((item) => item.trim().toLocaleLowerCase()).filter(Boolean));
-        const changed = this.markLocationObjectives(this.root, normalizedLocation) || this.markDeliverObjectives(this.root, normalizedLocation, carried);
+        const carried = new Set(
+            carriedItems
+                .map((item) => item.trim().toLocaleLowerCase())
+                .filter(Boolean),
+        );
+
+        const changed = this.markLocationObjectives(this.root, normalizedLocation)
+            || this.markDeliverObjectives(this.root, normalizedLocation, carried);
+
         if (!changed) {
             return false;
         }
@@ -51,12 +60,34 @@ export default class QuestProgressTracker {
 
         const changed = this.markBarterObjectives(this.root, normalizedTrader, normalizedItem)
             || this.markDeliverPickupObjectives(this.root, normalizedTrader, normalizedItem, normalizedVillage);
+
         if (!changed) {
             return false;
         }
 
         this.recomputeCompletion(this.root);
         return true;
+    }
+
+    public recordMonsterKill(monsterName: string): boolean {
+        const normalizedMonsterName = monsterName.trim().toLocaleLowerCase();
+        if (!normalizedMonsterName) {
+            return false;
+        }
+
+        const changed = this.markMonsterKillObjectives(this.root, normalizedMonsterName);
+        if (!changed) {
+            return false;
+        }
+
+        this.recomputeCompletion(this.root);
+        return true;
+    }
+
+    public getActiveMonsterObjectives(): Array<{ targetName: string; villageName?: string; remainingKills: number; mutations: string[] }> {
+        const objectives: Array<{ targetName: string; villageName?: string; remainingKills: number; mutations: string[] }> = [];
+        this.collectActiveMonsterObjectives(this.root, objectives);
+        return objectives;
     }
 
     private markDeliverObjectives(node: QuestNode, normalizedLocation: string, carriedItems: Set<string>): boolean {
@@ -85,7 +116,12 @@ export default class QuestProgressTracker {
         return true;
     }
 
-    private markDeliverPickupObjectives(node: QuestNode, normalizedTrader: string, normalizedItem: string, normalizedVillage: string): boolean {
+    private markDeliverPickupObjectives(
+        node: QuestNode,
+        normalizedTrader: string,
+        normalizedItem: string,
+        normalizedVillage: string,
+    ): boolean {
         let changed = false;
 
         for (const child of node.children) {
@@ -169,6 +205,76 @@ export default class QuestProgressTracker {
 
         node.isCompleted = true;
         return true;
+    }
+
+    private markMonsterKillObjectives(node: QuestNode, normalizedMonsterName: string): boolean {
+        let changed = false;
+
+        for (const child of node.children) {
+            changed = this.markMonsterKillObjectives(child, normalizedMonsterName) || changed;
+        }
+
+        if ((node.objectiveType !== 'eliminate' && node.objectiveType !== 'hunt') || node.children.length > 0 || node.isCompleted) {
+            return changed;
+        }
+
+        const objectiveMonster = node.objectiveData?.monster?.targetName
+            ?? node.entities.find((entity) => entity.type === 'monster')?.text;
+
+        if (!objectiveMonster || objectiveMonster.trim().toLocaleLowerCase() !== normalizedMonsterName) {
+            return changed;
+        }
+
+        const objectiveData = node.objectiveData ?? {};
+        const monsterData = objectiveData.monster ?? {
+            targetName: objectiveMonster,
+            requiredKills: 1,
+        };
+
+        const currentKills = Math.max(0, (monsterData as { currentKills?: number }).currentKills ?? 0);
+        const requiredKills = Math.max(1, monsterData.requiredKills ?? 1);
+        const nextKills = Math.min(requiredKills, currentKills + 1);
+        const nextMonsterData = { ...monsterData, currentKills: nextKills };
+
+        node.objectiveData = { ...objectiveData, monster: nextMonsterData };
+
+        if (nextKills >= requiredKills) {
+            node.isCompleted = true;
+        }
+
+        return true;
+    }
+
+    private collectActiveMonsterObjectives(
+        node: QuestNode,
+        objectives: Array<{ targetName: string; villageName?: string; remainingKills: number; mutations: string[] }>,
+    ): void {
+        node.children.forEach((child) => this.collectActiveMonsterObjectives(child, objectives));
+
+        if ((node.objectiveType !== 'eliminate' && node.objectiveType !== 'hunt') || node.children.length > 0 || node.isCompleted) {
+            return;
+        }
+
+        const targetName = node.objectiveData?.monster?.targetName
+            ?? node.entities.find((entity) => entity.type === 'monster')?.text;
+
+        if (!targetName) {
+            return;
+        }
+
+        const requiredKills = Math.max(1, node.objectiveData?.monster?.requiredKills ?? 1);
+        const currentKills = Math.max(0, (node.objectiveData?.monster as { currentKills?: number } | undefined)?.currentKills ?? 0);
+        const remainingKills = requiredKills - currentKills;
+        if (remainingKills <= 0) {
+            return;
+        }
+
+        objectives.push({
+            targetName,
+            villageName: node.objectiveData?.monster?.villageName,
+            remainingKills,
+            mutations: node.objectiveData?.monster?.mutations ?? [],
+        });
     }
 
     private recomputeCompletion(node: QuestNode): boolean {

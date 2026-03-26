@@ -21,6 +21,7 @@ type BattleCommandCallbacks = {
     onPlayerTurnReady: () => void;
     getSelectedEnemy: () => Skeleton | null;
     setSelectedEnemy: (enemy: Skeleton | null) => void;
+    onEnemyDefeated?: (enemy: Skeleton) => void;
 };
 
 export default class BattleCommandController {
@@ -292,6 +293,7 @@ export default class BattleCommandController {
         const damage = this.player.getPhysicalDamageWithBuff();
         target.takeDamage(damage);
         this.callbacks.onAddBattleLog(`${target.name} takes ${damage} damage!`, 'damage');
+        this.applyRetaliationEffects(target, true);
 
         if (target.isDead()) {
             this.performKillRewards(target);
@@ -334,6 +336,7 @@ export default class BattleCommandController {
         if (exchange.actor.damageDealt > 0) {
             target.takeDamage(exchange.actor.damageDealt);
             this.callbacks.onAddBattleLog(`${target.name} takes ${exchange.actor.damageDealt} damage from ${getMoveLabel(playerMove)}.`, 'damage');
+            this.applyRetaliationEffects(target, true);
         } else if (isAttackMove(playerMove)) {
             this.callbacks.onAddBattleLog(`Your ${getMoveLabel(playerMove)} deals no damage this turn.`, 'system');
         }
@@ -372,6 +375,7 @@ export default class BattleCommandController {
 
     private performKillRewards(target: Skeleton): void {
         this.callbacks.onAddBattleLog(`${target.name} defeated!`, 'system');
+        this.callbacks.onEnemyDefeated?.(target);
         if (target.xpValue && target.xpValue > 0) {
             const leveledUp = this.player.addXp(target.xpValue);
             this.callbacks.onAddBattleLog(`Gained ${target.xpValue} XP!`, 'system');
@@ -385,6 +389,18 @@ export default class BattleCommandController {
         if (this.callbacks.getSelectedEnemy() === target) {
             this.callbacks.setSelectedEnemy(null);
         }
+    }
+
+    private applyRetaliationEffects(target: Skeleton, isMelee: boolean): void {
+        const retaliation = target.onDamagedByPlayer(isMelee);
+        retaliation.logs.forEach((message) => this.callbacks.onAddBattleLog(message, 'enemy'));
+        if (retaliation.retaliationDamage <= 0) {
+            return;
+        }
+
+        this.player.takeDamage(retaliation.retaliationDamage);
+        this.callbacks.onAddBattleLog(`Player takes ${retaliation.retaliationDamage} retaliation damage.`, 'damage');
+        this.callbacks.onUpdateHUD();
     }
 
     private collectLoot(target: Skeleton): void {
