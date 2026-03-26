@@ -22,7 +22,6 @@ export type QuestNode = {
     entities: QuestTextEntity[];
     objectiveData?: QuestObjectiveData;
     children: QuestNode[];
-    objectiveData?: QuestObjectiveData;
     isCompleted?: boolean;
 };
 
@@ -32,10 +31,6 @@ export type DeliverObjectiveData = {
     destinationVillage: string;
     itemName: string;
     isPickedUp?: boolean;
-};
-
-export type QuestObjectiveData = {
-    deliver?: DeliverObjectiveData;
 };
 
 export type GeneratedName = {
@@ -68,5 +63,6 @@ export type MonsterObjectiveData = {
 };
 
 export type QuestObjectiveData = {
+    deliver?: DeliverObjectiveData;
     monster?: MonsterObjectiveData;
 };
