@@ -39,3 +39,22 @@ test('Wanderers use the human base profile and gain derived stats from their ski
   assert.equal(wanderer.maxHp >= wanderer.baseStats.hp, true);
   assert.equal(wanderer.maxMana >= wanderer.baseStats.mana, true);
 });
+
+test('Mutant traits alter combat profile and trigger retaliation hooks', () => {
+  const baseline = new Skeleton(0, 0, balanceConfig.enemies.skeleton);
+  const mutant = new Skeleton(0, 0, {
+    ...balanceConfig.enemies.skeleton,
+    name: 'Torka Kaquin',
+    mutations: ['feral strength', 'void armor', 'acid blood', 'barbed hide', 'blink speed', 'grave intellect'],
+  });
+
+  assert.equal(mutant.mutations.includes('acid blood'), true);
+  assert.equal(mutant.damage >= baseline.damage, true);
+  assert.equal(mutant.armor > baseline.armor, true);
+  assert.equal(mutant.avoidChance > baseline.avoidChance, true);
+  assert.equal(mutant.magicPoints >= baseline.magicPoints, true);
+
+  const retaliation = mutant.onDamagedByPlayer(true);
+  assert.equal(retaliation.retaliationDamage >= 2, true);
+  assert.equal(retaliation.logs.length >= 2, true);
+});

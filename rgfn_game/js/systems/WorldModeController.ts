@@ -14,6 +14,7 @@ type WorldModeCallbacks = {
     onAddBattleLog: (message: string, type?: string) => void;
     onUpdateHUD: () => void;
     onRememberTraveler: (traveler: Wanderer, disposition: 'hostile' | 'peaceful') => void;
+    getQuestBattleEncounter: () => { enemies: Skeleton[]; hint?: string } | null;
 };
 
 export default class WorldModeController {
@@ -182,6 +183,15 @@ export default class WorldModeController {
         }
 
         this.encounterSystem.onPlayerMove();
+        const questEncounter = this.callbacks.getQuestBattleEncounter();
+        if (questEncounter) {
+            if (questEncounter.hint) {
+                this.callbacks.onAddBattleLog(questEncounter.hint, 'system-message');
+            }
+            this.callbacks.onStartBattle(questEncounter.enemies, this.worldMap.getCurrentTerrain().type);
+            return;
+        }
+
         if (!this.encounterSystem.checkEncounter(isPreviouslyDiscovered)) {
             return;
         }

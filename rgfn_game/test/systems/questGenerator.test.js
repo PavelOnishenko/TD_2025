@@ -66,3 +66,22 @@ test('QuestLeafFactory supports the four added leaf quest types', async () => {
   assert.match(defend.conditionText, /Prevent the fall/);
   assert.equal(travel.objectiveType, 'travel');
 });
+
+test('QuestLeafFactory purge objectives include anchored village intel and monster profile data', async () => {
+  const packService = new FakeQuestPackService(createNames());
+  const random = new ScriptedQuestRandom({
+    ints: [2],
+    bools: [true],
+    picks: ['eliminate', 'wolf', 'acid blood', 'grave intellect'],
+  });
+  const factory = new QuestLeafFactory(packService, random);
+
+  const node = await factory.create('main.9');
+
+  assert.equal(node.objectiveType, 'eliminate');
+  assert.match(node.description, /mutated from wolf/i);
+  assert.match(node.description, /acid blood/i);
+  assert.match(node.conditionText, /near Old Well/);
+  assert.equal(node.entities.some((entity) => entity.type === 'monster' && entity.text === 'Rift Wyrm'), true);
+  assert.equal(node.objectiveData?.monster?.villageName, 'Old Well');
+});
