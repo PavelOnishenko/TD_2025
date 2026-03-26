@@ -56,13 +56,20 @@ function createVillageUi() {
     npcTitle: createElement(),
     askVillageInput: createElement('input'),
     askVillageBtn: createElement('button'),
+    askPersonInput: createElement('input'),
+    askPersonBtn: createElement('button'),
+    askBarterBtn: createElement('button'),
+    barterNowBtn: createElement('button'),
   };
 }
 
 function createPlayerStub() {
+  const inventory = [];
   return {
     gold: 50,
-    getInventory: () => [],
+    addItemToInventory: (item) => { inventory.push(item); return true; },
+    removeInventoryItemAt: (index) => inventory.splice(index, 1)[0] ?? null,
+    getInventory: () => [...inventory],
     heal: () => {},
     restoreMana: () => {},
   };
@@ -88,6 +95,7 @@ test('VillageActionsController keeps village rumor NPC roster stable across re-e
     onUpdateHUD: () => {},
     onLeaveVillage: () => {},
     getVillageDirectionHint: (settlementName) => ({ settlementName, exists: false }),
+    onVillageBarterCompleted: () => {},
   });
 
   let createNpcRosterCalls = 0;
@@ -123,6 +131,7 @@ test('VillageActionsController stores separate rumor rosters for different villa
     onUpdateHUD: () => {},
     onLeaveVillage: () => {},
     getVillageDirectionHint: (settlementName) => ({ settlementName, exists: false }),
+    onVillageBarterCompleted: () => {},
   });
 
   controller['dialogueEngine'] = {
@@ -143,4 +152,55 @@ test('VillageActionsController stores separate rumor rosters for different villa
 
   assert.notDeepEqual(oakhavenRoster, mossbrookRoster);
   assert.deepEqual(mossbrookAgain, mossbrookRoster);
+}));
+
+test('VillageActionsController injects Olive into first visited village and keeps roster stable', () => withDocumentStub(() => {
+  const villageUI = createVillageUi();
+  const gameLog = createElement();
+  const controller = new VillageActionsController(createPlayerStub(), villageUI, gameLog, {
+    onUpdateHUD: () => {},
+    onLeaveVillage: () => {},
+    getVillageDirectionHint: (settlementName) => ({ settlementName, exists: false }),
+    onVillageBarterCompleted: () => {},
+  });
+  controller.configureQuestBarterContracts([{ traderName: 'Olive', itemName: 'Kator Kaesh' }]);
+
+  controller['dialogueEngine'] = {
+    createNpcRoster: () => [{ id: 'other-0', name: 'Mara', role: 'Trader', look: 'cloak', speechStyle: 'calm', disposition: 'truthful' }],
+    buildLocationAnswer: () => ({ speech: '', tone: '', truthfulness: 'truth' }),
+    buildPersonLocationAnswer: () => ({ speech: '', tone: '', truthfulness: 'truth' }),
+  };
+
+  controller.enterVillage('Mossbrook');
+  const names = controller['npcRoster'].map((npc) => npc.name);
+  assert.equal(names.includes('Olive'), true);
+
+  controller.enterVillage('Mossbrook');
+  const secondNames = controller['npcRoster'].map((npc) => npc.name);
+  assert.deepEqual(secondNames, names);
+}));
+
+test('VillageActionsController binds dynamically generated barter trader names without hardcoded NPC names', () => withDocumentStub(() => {
+  const villageUI = createVillageUi();
+  const gameLog = createElement();
+  const controller = new VillageActionsController(createPlayerStub(), villageUI, gameLog, {
+    onUpdateHUD: () => {},
+    onLeaveVillage: () => {},
+    getVillageDirectionHint: (settlementName) => ({ settlementName, exists: true, direction: 'north', distanceCells: 5 }),
+    onVillageBarterCompleted: () => {},
+  });
+
+  controller.configureQuestBarterContracts([{ traderName: 'Veyra', itemName: 'Night Sigil' }]);
+  controller['dialogueEngine'] = {
+    createNpcRoster: () => [{ id: 'moss-0', name: 'Mara', role: 'Trader', look: 'cloak', speechStyle: 'calm', disposition: 'truthful' }],
+    buildLocationAnswer: () => ({ speech: '', tone: '', truthfulness: 'truth' }),
+    buildPersonLocationAnswer: () => ({ speech: '', tone: '', truthfulness: 'truth' }),
+  };
+
+  controller.enterVillage('Mossbrook');
+  const names = controller['npcRoster'].map((npc) => npc.name);
+  assert.equal(names.includes('Veyra'), true);
+  const hint = controller['getPersonDirectionHint']('Veyra');
+  assert.equal(hint.exists, true);
+  assert.equal(hint.villageName, 'Mossbrook');
 }));

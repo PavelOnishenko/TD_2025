@@ -153,6 +153,10 @@ export type VillageUI = {
     npcTitle: HTMLElement;
     askVillageInput: HTMLInputElement;
     askVillageBtn: HTMLButtonElement;
+    askPersonInput: HTMLInputElement;
+    askPersonBtn: HTMLButtonElement;
+    askBarterBtn: HTMLButtonElement;
+    barterNowBtn: HTMLButtonElement;
     leaveBtn: HTMLButtonElement;
 };
 

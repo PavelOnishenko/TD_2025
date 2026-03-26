@@ -41,3 +41,43 @@
 ## Follow-up opportunities
 - Expand tracker events for non-location objective types (`deliver`, `barter`, `escort`, etc.).
 - Show quest completion notifications in battle log / village log.
+
+## Update: barter objective tracking is now live
+
+### What is now supported
+- `QuestProgressTracker` now supports direct completion updates for **barter** leaves through:
+  - `recordBarterCompletion(traderName, itemName)`.
+- Matching is case-insensitive and requires both:
+  - `person` quest entity == barter partner name
+  - `item` quest entity == received item name
+- Once matched, the barter leaf is marked complete and parent branches are recomputed immediately.
+
+### Runtime integration
+- `VillageActionsController` emits barter-complete callback after payment is consumed and reward item is granted.
+- `Game` forwards this event to `QuestProgressTracker` and re-renders the quest UI instantly.
+- If no node matches, a verbose system message explains that barter was registered but not tied to an active objective.
+- `Game` also extracts all barter leaves (`person` + `item`) and configures village barter contracts dynamically, so runtime barter NPCs and reward artifacts follow generated quest data rather than fixed names.
+
+### Practical example now solvable
+- Quest text:
+  - Title: `Barter with Olive`
+  - Description: `Negotiate with Olive and exchange for Kator Kaesh.`
+  - Condition: `Complete one barter deal and obtain Kator Kaesh.`
+- Runtime:
+  - Find Olive in her persistent home village.
+  - Complete her barter transaction.
+  - Quest node updates to completed immediately after the trade.
+
+### Name-independence guarantee
+- The barter pipeline does **not** depend on literal names such as `Olive` or `Kator Kaesh`.
+- Any generated barter leaf with valid entities:
+  - `person` = trader
+  - `item` = reward artifact
+  is automatically supported end-to-end with the same flow.
+
+### Runtime safety note (constructor ordering)
+- `Game.initializeQuestUi(...)` now runs **after** `VillageActionsController` is constructed and assigned.
+- Reason: `initializeQuestUi` configures quest barter contracts through `villageActionsController.configureQuestBarterContracts(...)`.
+- Calling it earlier can throw:
+  - `TypeError: Cannot read properties of undefined (reading 'configureQuestBarterContracts')`.
+- This ordering requirement is now part of the expected initialization contract.

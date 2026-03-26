@@ -25,6 +25,22 @@ export default class QuestProgressTracker {
         return true;
     }
 
+    public recordBarterCompletion(traderName: string, itemName: string): boolean {
+        const normalizedTrader = traderName.trim().toLocaleLowerCase();
+        const normalizedItem = itemName.trim().toLocaleLowerCase();
+        if (!normalizedTrader || !normalizedItem) {
+            return false;
+        }
+
+        const changed = this.markBarterObjectives(this.root, normalizedTrader, normalizedItem);
+        if (!changed) {
+            return false;
+        }
+
+        this.recomputeCompletion(this.root);
+        return true;
+    }
+
     private markLocationObjectives(node: QuestNode, normalizedLocation: string): boolean {
         let changed = false;
 
@@ -50,6 +66,33 @@ export default class QuestProgressTracker {
         }
 
         if (node.isCompleted) {
+            return changed;
+        }
+
+        node.isCompleted = true;
+        return true;
+    }
+
+    private markBarterObjectives(node: QuestNode, normalizedTrader: string, normalizedItem: string): boolean {
+        let changed = false;
+
+        for (const child of node.children) {
+            changed = this.markBarterObjectives(child, normalizedTrader, normalizedItem) || changed;
+        }
+
+        if (node.objectiveType !== 'barter' || node.children.length > 0 || node.isCompleted) {
+            return changed;
+        }
+
+        const trader = node.entities.find((entity) => entity.type === 'person');
+        const item = node.entities.find((entity) => entity.type === 'item');
+        if (!trader || !item) {
+            return changed;
+        }
+
+        const traderMatches = trader.text.trim().toLocaleLowerCase() === normalizedTrader;
+        const itemMatches = item.text.trim().toLocaleLowerCase() === normalizedItem;
+        if (!traderMatches || !itemMatches) {
             return changed;
         }
 

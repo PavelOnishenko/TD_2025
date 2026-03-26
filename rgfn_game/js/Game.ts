@@ -70,6 +70,7 @@ export default class Game {
     private readonly hudCoordinator: GameHudCoordinator;
     private readonly battleCoordinator: GameBattleCoordinator;
     private readonly worldModeController: WorldModeController;
+    private readonly villageActionsController: VillageActionsController;
     private readonly worldMap: WorldMap;
     private readonly battleMap: BattleMap;
     private readonly player: Player;
@@ -121,7 +122,6 @@ export default class Game {
             },
         );
         const loreBookController = new LoreBookController({ loreBody: ui.hudElements.loreBody }, player, worldMap);
-        this.initializeQuestUi(questGenerator, questUiController);
         const magicSystem = new MagicSystem(player);
         const battleUiController = new BattleUiController(ui.battleUI, battleMap, turnManager, player, ui.gameLogUI.log, magicSystem);
         let battleCommandControllerRef: BattleCommandController | null = null;
@@ -144,7 +144,10 @@ export default class Game {
             onUpdateHUD: () => this.hudCoordinator.updateHUD(),
             onLeaveVillage: () => this.stateMachine.transition(MODES.WORLD_MAP),
             getVillageDirectionHint: (settlementName: string) => this.worldMap.getVillageDirectionHintFromPlayer(settlementName),
+            onVillageBarterCompleted: (traderName: string, itemName: string) => this.recordBarterCompletion(traderName, itemName),
         });
+        this.villageActionsController = villageActionsController;
+        this.initializeQuestUi(questGenerator, questUiController);
         this.villageCoordinator = new GameVillageCoordinator(ui.hudElements, ui.battleUI, ui.villageUI, ui.worldUI, villageLifeRenderer, villageActionsController);
         this.stateMachine = this.createStateMachine(ui);
         const battlePlayerActionController = new BattlePlayerActionController(turnManager, battleUiController, player, {
@@ -215,6 +218,7 @@ export default class Game {
         this.activeQuest = quest;
         this.questUiController = questUiController;
         this.questProgressTracker = new QuestProgressTracker(quest);
+        this.villageActionsController.configureQuestBarterContracts(this.collectBarterContracts(quest));
         this.registerQuestLocations(quest);
         questUiController.renderQuest(quest);
         if (shouldShowIntro) {
@@ -234,6 +238,21 @@ export default class Game {
         this.questUiController.renderQuest(this.activeQuest);
     }
 
+    private recordBarterCompletion(traderName: string, itemName: string): void {
+        if (!this.activeQuest || !this.questUiController || !this.questProgressTracker) {
+            return;
+        }
+
+        if (!this.questProgressTracker.recordBarterCompletion(traderName, itemName)) {
+            this.hudCoordinator.addBattleLog(`Quest tracker: barter registered (${traderName} -> ${itemName}), but no active objective matched.`, 'system-message');
+            return;
+        }
+
+        this.hudCoordinator.addBattleLog(`Quest tracker: barter objective completed (${traderName} -> ${itemName}).`, 'system');
+        this.questUiController.renderQuest(this.activeQuest);
+    }
+
+
     private registerQuestLocations(quest: QuestNode): void {
         for (const entity of quest.entities) {
             if (entity.type === 'location') {
@@ -244,6 +263,24 @@ export default class Game {
         for (const child of quest.children) {
             this.registerQuestLocations(child);
         }
+    }
+
+    private collectBarterContracts(quest: QuestNode): Array<{ traderName: string; itemName: string }> {
+        const contracts: Array<{ traderName: string; itemName: string }> = [];
+        const visit = (node: QuestNode): void => {
+            if (node.objectiveType === 'barter' && node.children.length === 0) {
+                const trader = node.entities.find((entity) => entity.type === 'person')?.text?.trim();
+                const item = node.entities.find((entity) => entity.type === 'item')?.text?.trim();
+                if (trader && item) {
+                    contracts.push({ traderName: trader, itemName: item });
+                }
+            }
+
+            node.children.forEach((child) => visit(child));
+        };
+
+        visit(quest);
+        return contracts;
     }
 
 
