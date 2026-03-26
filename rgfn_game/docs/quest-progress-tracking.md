@@ -16,6 +16,14 @@
   - a leading checkmark (`✓`)
   - a completed visual style (`.quest-node.is-completed`)
 - The quest panel is re-rendered immediately after progress changes.
+- Default quest boilerplate text is hidden at every tree level:
+  - Root defaults:
+    - `Complete every branch of this quest tree to prove your character can end the darkness over the region.`
+    - `All child objectives are completed.`
+  - Composite branch defaults:
+    - `A composite objective. All listed subtasks must be completed.`
+    - `Each subtask in this branch is completed.`
+  - Custom descriptions and conditions still render as normal.
 
 ## Integration points
 - `QuestProgressTracker` owns runtime completion evaluation.
