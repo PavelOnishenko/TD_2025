@@ -544,3 +544,26 @@ So tests asserting fixed literal HP values (for example zombie `7`) will fail wh
   - no movement updates during battle-start splash transition,
   - no movement updates during battle-end splash transition,
   - movement updates resuming after `onPlayerTurnReady()`.
+
+## 2026-03 Skills Panel GOD Button (RGFN, dev-only)
+
+### Behavior summary
+- Skills panel now includes `GOD +20 ALL` (`#god-skills-btn`) for development/debug workflows.
+- On click, all six skills are boosted by +20 in one action.
+- The action is persisted immediately via `Game.saveGameIfChanged()` callback wiring (instead of waiting for the next frame tick).
+
+### Why implementation uses temporary skill-point credit
+- `Player.addStat(...)` already handles:
+  - derived stat recomputation,
+  - HP/mana clamping rules,
+  - intelligence-to-magic-point gains.
+- To reuse this safely, the coordinator temporarily credits exactly enough `skillPoints` for the bulk operation, applies six `addStat` calls, and ends with original net skill points.
+- This avoids adding a second stat-mutation path that could drift from normal leveling/stat rules.
+
+### Manual verification checklist
+1. Open `Skills` panel.
+2. Record current values for all 6 skills.
+3. Click `GOD +20 ALL`.
+4. Verify each skill increased by exactly 20.
+5. Refresh the page and confirm boosted values persist from save data.
+6. Confirm battle log contains: `[DEV] GOD boost applied: +20 to all skills.`

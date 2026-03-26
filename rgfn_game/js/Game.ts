@@ -345,6 +345,10 @@ export default class Game {
             onAddStat: (stat) => this.hudCoordinator.handleAddStat(stat),
             onRemoveStat: (stat) => this.hudCoordinator.handleRemoveStat(stat),
             onSaveSkillChanges: () => this.hudCoordinator.handleSaveSkillChanges(),
+            onGodSkillsBoost: () => {
+                this.hudCoordinator.handleGodSkillsBoost();
+                this.saveGameIfChanged();
+            },
             onCastSpell: (spellId) => this.battleCoordinator.handleCastSpell(spellId),
             onUpgradeSpell: (spellId) => this.hudCoordinator.handleUpgradeSpell(spellId),
             onCanvasClick: (event) => this.battleCoordinator.handleCanvasClick(event, this.canvas),
