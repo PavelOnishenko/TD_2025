@@ -1,3 +1,27 @@
+## March 25, 2026 update: village populations are now persistent per settlement
+
+### What changed
+- Villagers are now generated once per village name and cached in `VillagePopulation`.
+- Re-entering the same village no longer re-rolls NPC roster size, colors, animations, or base routing indices.
+- Different villages still receive different villager rosters.
+- On re-entry, villagers are re-aligned to current village layout coordinates (important when canvas size changes) before rendering resumes.
+
+### Why this matters
+- Fixes immersion break where villagers changed every time the player left and re-entered the same village tile.
+- Keeps village social context stable over time while preserving per-village uniqueness.
+
+### Files involved
+- `js/systems/village/VillagePopulation.ts`
+- `js/systems/village/VillageLifeRenderer.ts`
+- `test/systems/villagePopulation.test.js`
+
+### Verification checklist
+1. Enter village A, note visible villagers (count/look).
+2. Leave and re-enter village A multiple times.
+3. Confirm same villagers remain present.
+4. Travel to village B and confirm villagers differ from village A.
+5. Return to village A and confirm original villagers are restored.
+
 # Verification and Testing Discussion
 
 ## March 25, 2026 update: village sidebar now shows current village name
