@@ -943,6 +943,16 @@ h1 {
     background: color-mix(in srgb, var(--color-primary-bg) 35%, transparent);
 }
 
+.quest-node.is-completed > .quest-node-title {
+    color: #2f6f39;
+    text-decoration: line-through;
+}
+
+.quest-node-check {
+    color: #2f6f39;
+    font-weight: 700;
+}
+
 .quest-node-title {
     color: var(--color-primary-accent);
     font-weight: 700;
