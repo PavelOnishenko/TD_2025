@@ -34,6 +34,7 @@ export default class QuestUiController {
         this.introCloseBtn = introCloseBtn;
         this.callbacks = callbacks;
         this.feedbackElements = [this.createFeedbackElement(this.questBody), this.createFeedbackElement(this.introBody)];
+        this.introModal.classList.add('hidden');
         this.bindEvents();
     }
 
