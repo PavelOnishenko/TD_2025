@@ -67,6 +67,20 @@ test('QuestLeafFactory supports the four added leaf quest types', async () => {
   assert.equal(travel.objectiveType, 'travel');
 });
 
+test('QuestLeafFactory delivery quests include pickup source person and village in text and objective data', async () => {
+  const packService = new FakeQuestPackService(createNames());
+  const random = new ScriptedQuestRandom({ picks: ['deliver'] });
+  const factory = new QuestLeafFactory(packService, random);
+
+  const deliver = await factory.create('main.9');
+
+  assert.equal(deliver.objectiveType, 'deliver');
+  assert.match(deliver.description, /from/);
+  assert.match(deliver.description, /then carry it to/);
+  assert.equal(typeof deliver.objectiveData?.deliver?.sourceVillage, 'string');
+  assert.equal(typeof deliver.objectiveData?.deliver?.sourceTrader, 'string');
+  assert.equal(typeof deliver.objectiveData?.deliver?.destinationVillage, 'string');
+});
 test('QuestLeafFactory purge objectives include anchored village intel and monster profile data', async () => {
   const packService = new FakeQuestPackService(createNames());
   const random = new ScriptedQuestRandom({

@@ -1,6 +1,14 @@
 import QuestPackService from './QuestPackService.js';
 import { QuestRandom } from './QuestRandom.js';
-import { GeneratedName, QuestNode, QuestObjectiveData, QuestObjectiveType, QuestTextEntity, RareMonsterProfile } from './QuestTypes.js';
+import {
+    DeliverObjectiveData,
+    GeneratedName,
+    QuestNode,
+    QuestObjectiveData,
+    QuestObjectiveType,
+    QuestTextEntity,
+    RareMonsterProfile,
+} from './QuestTypes.js';
 
 const LEAF_TYPES: QuestObjectiveType[] = ['eliminate', 'deliver', 'travel', 'barter', 'scout', 'hunt', 'recover', 'escort', 'defend'];
 const MONSTER_STATS = ['feral strength', 'void armor', 'acid blood', 'blink speed', 'barbed hide', 'grave intellect'];
@@ -59,14 +67,26 @@ export default class QuestLeafFactory {
 
     private async createDeliverNode(id: string): Promise<QuestNode> {
         const artifact = await this.packService.generateName('artifact', 4);
-        const destination = await this.packService.generateName('location', 4);
+        const sourceTrader = await this.packService.generateName('character', 3);
+        const sourceVillage = await this.packService.generateName('location', 4);
+        let destination = await this.packService.generateName('location', 4);
+        if (destination.text.trim().toLocaleLowerCase() === sourceVillage.text.trim().toLocaleLowerCase()) {
+            destination = await this.packService.generateName('location', 4);
+        }
+        const objectiveData: DeliverObjectiveData = {
+            sourceVillage: sourceVillage.text,
+            sourceTrader: sourceTrader.text,
+            destinationVillage: destination.text,
+            itemName: artifact.text,
+        };
         return this.node(
             id,
             `Courier: ${artifact.text}`,
-            `Carry the ${this.label(artifact)} and bring it to ${destination.text}.`,
-            `Reach ${destination.text} while carrying ${this.label(artifact)}.`,
+            `Acquire ${this.label(artifact)} from ${sourceTrader.text} in ${sourceVillage.text}, then carry it to ${destination.text}.`,
+            `Reach ${destination.text} while carrying ${this.label(artifact)} obtained from ${sourceTrader.text} in ${sourceVillage.text}.`,
             'deliver',
-            this.entities(artifact, destination),
+            this.entities(artifact, sourceTrader, sourceVillage, destination),
+            { deliver: objectiveData },
         );
     }
 
@@ -229,7 +249,7 @@ export default class QuestLeafFactory {
                         ? 'person'
                         : name.domain === 'monster'
                             ? 'monster'
-                        : null;
+                            : null;
 
             if (!type) {
                 continue;

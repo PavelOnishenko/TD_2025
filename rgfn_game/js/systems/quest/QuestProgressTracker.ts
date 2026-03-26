@@ -16,7 +16,9 @@ export default class QuestProgressTracker {
             return false;
         }
 
-        const changed = this.markLocationObjectives(this.root, normalizedLocation);
+        const changed = this.markLocationObjectives(this.root, normalizedLocation)
+            || this.markDeliverObjectives(this.root, normalizedLocation, new Set());
+
         if (!changed) {
             return false;
         }
@@ -25,14 +27,40 @@ export default class QuestProgressTracker {
         return true;
     }
 
-    public recordBarterCompletion(traderName: string, itemName: string): boolean {
-        const normalizedTrader = traderName.trim().toLocaleLowerCase();
-        const normalizedItem = itemName.trim().toLocaleLowerCase();
-        if (!normalizedTrader || !normalizedItem) {
+    public recordLocationEntryWithInventory(locationName: string, carriedItems: string[]): boolean {
+        const normalizedLocation = locationName.trim().toLocaleLowerCase();
+        if (!normalizedLocation) {
             return false;
         }
 
-        const changed = this.markBarterObjectives(this.root, normalizedTrader, normalizedItem);
+        const carried = new Set(
+            carriedItems
+                .map((item) => item.trim().toLocaleLowerCase())
+                .filter(Boolean),
+        );
+
+        const changed = this.markLocationObjectives(this.root, normalizedLocation)
+            || this.markDeliverObjectives(this.root, normalizedLocation, carried);
+
+        if (!changed) {
+            return false;
+        }
+
+        this.recomputeCompletion(this.root);
+        return true;
+    }
+
+    public recordBarterCompletion(traderName: string, itemName: string, villageName: string): boolean {
+        const normalizedTrader = traderName.trim().toLocaleLowerCase();
+        const normalizedItem = itemName.trim().toLocaleLowerCase();
+        const normalizedVillage = villageName.trim().toLocaleLowerCase();
+        if (!normalizedTrader || !normalizedItem || !normalizedVillage) {
+            return false;
+        }
+
+        const changed = this.markBarterObjectives(this.root, normalizedTrader, normalizedItem)
+            || this.markDeliverPickupObjectives(this.root, normalizedTrader, normalizedItem, normalizedVillage);
+
         if (!changed) {
             return false;
         }
@@ -60,6 +88,64 @@ export default class QuestProgressTracker {
         const objectives: Array<{ targetName: string; villageName?: string; remainingKills: number; mutations: string[] }> = [];
         this.collectActiveMonsterObjectives(this.root, objectives);
         return objectives;
+    }
+
+    private markDeliverObjectives(node: QuestNode, normalizedLocation: string, carriedItems: Set<string>): boolean {
+        let changed = false;
+
+        for (const child of node.children) {
+            changed = this.markDeliverObjectives(child, normalizedLocation, carriedItems) || changed;
+        }
+
+        if (node.objectiveType !== 'deliver' || node.children.length > 0 || node.isCompleted) {
+            return changed;
+        }
+
+        const deliverData = node.objectiveData?.deliver;
+        if (!deliverData?.isPickedUp) {
+            return changed;
+        }
+
+        const destinationMatches = deliverData.destinationVillage.trim().toLocaleLowerCase() === normalizedLocation;
+        const carryingItem = carriedItems.has(deliverData.itemName.trim().toLocaleLowerCase());
+        if (!destinationMatches || !carryingItem) {
+            return changed;
+        }
+
+        node.isCompleted = true;
+        return true;
+    }
+
+    private markDeliverPickupObjectives(
+        node: QuestNode,
+        normalizedTrader: string,
+        normalizedItem: string,
+        normalizedVillage: string,
+    ): boolean {
+        let changed = false;
+
+        for (const child of node.children) {
+            changed = this.markDeliverPickupObjectives(child, normalizedTrader, normalizedItem, normalizedVillage) || changed;
+        }
+
+        if (node.objectiveType !== 'deliver' || node.children.length > 0) {
+            return changed;
+        }
+
+        const deliverData = node.objectiveData?.deliver;
+        if (!deliverData || deliverData.isPickedUp) {
+            return changed;
+        }
+
+        const traderMatches = deliverData.sourceTrader.trim().toLocaleLowerCase() === normalizedTrader;
+        const itemMatches = deliverData.itemName.trim().toLocaleLowerCase() === normalizedItem;
+        const villageMatches = deliverData.sourceVillage.trim().toLocaleLowerCase() === normalizedVillage;
+        if (!traderMatches || !itemMatches || !villageMatches) {
+            return changed;
+        }
+
+        deliverData.isPickedUp = true;
+        return true;
     }
 
     private markLocationObjectives(node: QuestNode, normalizedLocation: string): boolean {
@@ -132,7 +218,9 @@ export default class QuestProgressTracker {
             return changed;
         }
 
-        const objectiveMonster = node.objectiveData?.monster?.targetName ?? node.entities.find((entity) => entity.type === 'monster')?.text;
+        const objectiveMonster = node.objectiveData?.monster?.targetName
+            ?? node.entities.find((entity) => entity.type === 'monster')?.text;
+
         if (!objectiveMonster || objectiveMonster.trim().toLocaleLowerCase() !== normalizedMonsterName) {
             return changed;
         }
@@ -142,10 +230,12 @@ export default class QuestProgressTracker {
             targetName: objectiveMonster,
             requiredKills: 1,
         };
+
         const currentKills = Math.max(0, (monsterData as { currentKills?: number }).currentKills ?? 0);
         const requiredKills = Math.max(1, monsterData.requiredKills ?? 1);
         const nextKills = Math.min(requiredKills, currentKills + 1);
         const nextMonsterData = { ...monsterData, currentKills: nextKills };
+
         node.objectiveData = { ...objectiveData, monster: nextMonsterData };
 
         if (nextKills >= requiredKills) {
@@ -165,7 +255,9 @@ export default class QuestProgressTracker {
             return;
         }
 
-        const targetName = node.objectiveData?.monster?.targetName ?? node.entities.find((entity) => entity.type === 'monster')?.text;
+        const targetName = node.objectiveData?.monster?.targetName
+            ?? node.entities.find((entity) => entity.type === 'monster')?.text;
+
         if (!targetName) {
             return;
         }

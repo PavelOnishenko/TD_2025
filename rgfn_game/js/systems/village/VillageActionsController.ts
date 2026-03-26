@@ -27,7 +27,15 @@ type VillageActionsCallbacks = {
     onUpdateHUD: () => void;
     onLeaveVillage: () => void;
     getVillageDirectionHint: (settlementName: string) => VillageDirectionHint;
-    onVillageBarterCompleted: (traderName: string, itemName: string) => void;
+    onVillageBarterCompleted: (traderName: string, itemName: string, villageName: string) => void;
+};
+
+type QuestBarterContract = {
+    traderName: string;
+    itemName: string;
+    sourceVillage?: string;
+    destinationVillage?: string;
+    contractType: 'barter' | 'deliver';
 };
 
 type VillageOffer = {
@@ -89,7 +97,7 @@ export default class VillageActionsController {
     private npcRoster: VillageNpcProfile[] = [];
     private villageNpcRosters: Map<string, VillageNpcProfile[]> = new Map();
     private villageBarterDeals: Map<string, VillageBarterDeal[]> = new Map();
-    private questBarterContracts: Map<string, { traderName: string; itemName: string }> = new Map();
+    private questBarterContracts: Map<string, QuestBarterContract> = new Map();
     private barterContractVillageById: Map<string, string> = new Map();
     private selectedNpcId: string | null = null;
 
@@ -113,14 +121,12 @@ export default class VillageActionsController {
         this.villageUI.actions.classList.add('hidden');
         this.gameLog.innerHTML = '';
         this.addLog(`You discover ${villageName}. Enter it?`, 'system');
-        const villageContractTraders = this.getVillageContractTraders(villageName);
-        if (villageContractTraders.length > 0) {
-            this.addLog(`Rumor update: known barter contact(s) in this village: ${villageContractTraders.join(', ')}.`, 'system-message');
-        }
+        const villageContractHints = this.getVillageContractHints(villageName);
+        villageContractHints.forEach((hint) => this.addLog(`Rumor update: ${hint}`, 'system-message'));
         this.updateButtons();
     }
 
-    public configureQuestBarterContracts(contracts: Array<{ traderName: string; itemName: string }>): void {
+    public configureQuestBarterContracts(contracts: QuestBarterContract[]): void {
         this.questBarterContracts.clear();
         this.barterContractVillageById.clear();
         this.villageBarterDeals.clear();
@@ -133,7 +139,13 @@ export default class VillageActionsController {
             }
 
             const contractId = `contract-${index}-${traderName.toLocaleLowerCase()}-${itemName.toLocaleLowerCase()}`;
-            this.questBarterContracts.set(contractId, { traderName, itemName });
+            this.questBarterContracts.set(contractId, {
+                traderName,
+                itemName,
+                sourceVillage: contract.sourceVillage?.trim(),
+                destinationVillage: contract.destinationVillage?.trim(),
+                contractType: contract.contractType,
+            });
         });
     }
 
@@ -345,7 +357,7 @@ export default class VillageActionsController {
         this.addLog(`Barter accepted via "${payableOption.label}".`, 'system-message');
         this.addLog(`You hand over ${payableOption.goldCost}g and agreed tribute. ${selectedNpc.name} gives you ${deal.rewardItem.name}.`, 'system');
         this.addLog(`Quest-item transfer complete: ${deal.rewardItem.name} is now in your inventory.`, 'system-message');
-        this.callbacks.onVillageBarterCompleted(selectedNpc.name, deal.rewardItem.name);
+        this.callbacks.onVillageBarterCompleted(selectedNpc.name, deal.rewardItem.name, this.currentVillageName);
         this.callbacks.onUpdateHUD();
         this.updateButtons();
     }
@@ -623,15 +635,19 @@ export default class VillageActionsController {
             return;
         }
 
-        const hasAnyAssignment = this.barterContractVillageById.size > 0;
-        if (!hasAnyAssignment) {
-            this.questBarterContracts.forEach((_contract, contractId) => this.barterContractVillageById.set(contractId, villageName));
-            return;
-        }
-
-        this.questBarterContracts.forEach((_contract, contractId) => {
+        this.questBarterContracts.forEach((contract, contractId) => {
             if (!this.barterContractVillageById.has(contractId)) {
-                this.barterContractVillageById.set(contractId, villageName);
+                const preferredVillage = contract.sourceVillage?.trim();
+                const normalizedPreferred = preferredVillage?.toLocaleLowerCase();
+                if (normalizedPreferred && normalizedPreferred === villageName.trim().toLocaleLowerCase()) {
+                    this.barterContractVillageById.set(contractId, villageName);
+                    return;
+                }
+
+                const hasAnyAssignment = this.barterContractVillageById.size > 0;
+                if (!hasAnyAssignment && !normalizedPreferred) {
+                    this.barterContractVillageById.set(contractId, villageName);
+                }
             }
         });
     }
@@ -640,6 +656,17 @@ export default class VillageActionsController {
         return Array.from(this.questBarterContracts.entries())
             .filter(([contractId]) => this.barterContractVillageById.get(contractId) === villageName)
             .map(([, contract]) => contract.traderName);
+    }
+
+    private getVillageContractHints(villageName: string): string[] {
+        return Array.from(this.questBarterContracts.entries())
+            .filter(([contractId]) => this.barterContractVillageById.get(contractId) === villageName)
+            .map(([, contract]) => {
+                if (contract.contractType === 'deliver' && contract.destinationVillage) {
+                    return `${contract.traderName} can hand over ${contract.itemName} here. Deliver it to ${contract.destinationVillage}.`;
+                }
+                return `${contract.traderName} is available for barter (${contract.itemName}).`;
+            });
     }
 
     private createDealFromContract(contractId: string, traderName: string, itemName: string): VillageBarterDeal {

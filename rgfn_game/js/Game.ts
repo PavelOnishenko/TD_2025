@@ -144,7 +144,7 @@ export default class Game {
             onUpdateHUD: () => this.hudCoordinator.updateHUD(),
             onLeaveVillage: () => this.stateMachine.transition(MODES.WORLD_MAP),
             getVillageDirectionHint: (settlementName: string) => this.worldMap.getVillageDirectionHintFromPlayer(settlementName),
-            onVillageBarterCompleted: (traderName: string, itemName: string) => this.recordBarterCompletion(traderName, itemName),
+            onVillageBarterCompleted: (traderName: string, itemName: string, villageName: string) => this.recordBarterCompletion(traderName, itemName, villageName),
         });
         this.villageActionsController = villageActionsController;
         this.initializeQuestUi(questGenerator, questUiController);
@@ -233,19 +233,20 @@ export default class Game {
             return;
         }
 
-        if (!this.questProgressTracker.recordLocationEntry(locationName)) {
+        const carriedItemNames = this.player.getInventory().map((item) => item.name);
+        if (!this.questProgressTracker.recordLocationEntryWithInventory(locationName, carriedItemNames)) {
             return;
         }
 
         this.questUiController.renderQuest(this.activeQuest);
     }
 
-    private recordBarterCompletion(traderName: string, itemName: string): void {
+    private recordBarterCompletion(traderName: string, itemName: string, villageName: string): void {
         if (!this.activeQuest || !this.questUiController || !this.questProgressTracker) {
             return;
         }
 
-        if (!this.questProgressTracker.recordBarterCompletion(traderName, itemName)) {
+        if (!this.questProgressTracker.recordBarterCompletion(traderName, itemName, villageName)) {
             this.hudCoordinator.addBattleLog(`Quest tracker: barter registered (${traderName} -> ${itemName}), but no active objective matched.`, 'system-message');
             return;
         }
@@ -323,14 +324,27 @@ export default class Game {
         }
     }
 
-    private collectBarterContracts(quest: QuestNode): Array<{ traderName: string; itemName: string }> {
-        const contracts: Array<{ traderName: string; itemName: string }> = [];
+    private collectBarterContracts(quest: QuestNode): Array<{ traderName: string; itemName: string; sourceVillage?: string; destinationVillage?: string; contractType: 'barter' | 'deliver' }> {
+        const contracts: Array<{ traderName: string; itemName: string; sourceVillage?: string; destinationVillage?: string; contractType: 'barter' | 'deliver' }> = [];
         const visit = (node: QuestNode): void => {
             if (node.objectiveType === 'barter' && node.children.length === 0) {
                 const trader = node.entities.find((entity) => entity.type === 'person')?.text?.trim();
                 const item = node.entities.find((entity) => entity.type === 'item')?.text?.trim();
                 if (trader && item) {
-                    contracts.push({ traderName: trader, itemName: item });
+                    contracts.push({ traderName: trader, itemName: item, contractType: 'barter' });
+                }
+            }
+
+            if (node.objectiveType === 'deliver' && node.children.length === 0) {
+                const deliverData = node.objectiveData?.deliver;
+                if (deliverData?.sourceTrader && deliverData?.itemName) {
+                    contracts.push({
+                        traderName: deliverData.sourceTrader,
+                        itemName: deliverData.itemName,
+                        sourceVillage: deliverData.sourceVillage,
+                        destinationVillage: deliverData.destinationVillage,
+                        contractType: 'deliver',
+                    });
                 }
             }
 
