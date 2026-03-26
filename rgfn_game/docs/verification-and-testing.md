@@ -54,6 +54,38 @@
 
 # Verification and Testing Discussion
 
+## March 26, 2026 update (follow-up): hard-refresh still showed quest modal due default-visible markup
+
+### Why the first fix was not enough
+- The previous logic fix correctly stopped calling `showIntro()` for saved quests.
+- However, the intro modal container in `index.html` was rendered **without** the `hidden` class by default.
+- Because `.quest-intro-modal` is styled as a visible fixed overlay, the modal appeared immediately on page load even when `showIntro()` was never called.
+
+### Final hardening fix
+- Added `hidden` directly in quest intro modal markup:
+  - `class="quest-intro-modal hidden"`
+- Added defensive runtime behavior in `QuestUiController` constructor:
+  - always apply `this.introModal.classList.add('hidden')` on initialization.
+- This gives two layers of safety:
+  1. Correct initial DOM state from HTML.
+  2. Runtime guard in case markup/class is accidentally changed in future edits.
+
+### Regression coverage
+- Updated `questUiController` tests to reflect constructor-level default hiding.
+- Added a dedicated test ensuring intro modal remains hidden by default until `showIntro()` is called.
+
+### Manual retest checklist
+1. Open game with existing save and press `F5`.
+2. Confirm intro modal does **not** auto-open.
+3. Repeat with `Ctrl+Shift+R` hard refresh and confirm modal remains closed.
+4. Press **New Character** and confirm intro modal opens for newly rolled quest.
+5. Close intro modal, refresh again, confirm modal remains closed.
+
+### Commands run for this follow-up
+- `npm run build:rgfn`
+- `node --test rgfn_game/test/systems/questUiController.test.js`
+- `node --test rgfn_game/test/**/*.test.js`
+
 ## March 26, 2026 update: quest intro modal only opens for brand-new characters
 
 ### Reported issue

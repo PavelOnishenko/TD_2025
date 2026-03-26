@@ -74,7 +74,15 @@ test('QuestUiController opens and closes the intro modal through bound events', 
   modal.listeners.click({ target: modal });
 
   assert.deepEqual(modal.classList.removed, ['hidden']);
-  assert.deepEqual(modal.classList.added, ['hidden', 'hidden']);
+  assert.deepEqual(modal.classList.added, ['hidden', 'hidden', 'hidden']);
+});
+
+test('QuestUiController keeps intro modal hidden by default until explicitly opened', () => {
+  const controller = new QuestUiController(createElement(), createElement(), createElement(), createElement(), createElement(), { onLocationClick: () => false });
+  const modal = controller['introModal'];
+
+  assert.deepEqual(modal.classList.added, ['hidden']);
+  assert.deepEqual(modal.classList.removed, []);
 });
 
 test('QuestUiController renders completion styling and checkmark for completed quest nodes', () => {
