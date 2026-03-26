@@ -21,7 +21,20 @@ export type QuestNode = {
     objectiveType: QuestObjectiveType;
     entities: QuestTextEntity[];
     children: QuestNode[];
+    objectiveData?: QuestObjectiveData;
     isCompleted?: boolean;
+};
+
+export type DeliverObjectiveData = {
+    sourceVillage: string;
+    sourceTrader: string;
+    destinationVillage: string;
+    itemName: string;
+    isPickedUp?: boolean;
+};
+
+export type QuestObjectiveData = {
+    deliver?: DeliverObjectiveData;
 };
 
 export type GeneratedName = {
