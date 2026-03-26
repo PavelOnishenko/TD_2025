@@ -163,6 +163,7 @@ test('VillageActionsController injects Olive into first visited village and keep
     getVillageDirectionHint: (settlementName) => ({ settlementName, exists: false }),
     onVillageBarterCompleted: () => {},
   });
+  controller.configureQuestBarterContracts([{ traderName: 'Olive', itemName: 'Kator Kaesh' }]);
 
   controller['dialogueEngine'] = {
     createNpcRoster: () => [{ id: 'other-0', name: 'Mara', role: 'Trader', look: 'cloak', speechStyle: 'calm', disposition: 'truthful' }],
@@ -177,4 +178,29 @@ test('VillageActionsController injects Olive into first visited village and keep
   controller.enterVillage('Mossbrook');
   const secondNames = controller['npcRoster'].map((npc) => npc.name);
   assert.deepEqual(secondNames, names);
+}));
+
+test('VillageActionsController binds dynamically generated barter trader names without hardcoded NPC names', () => withDocumentStub(() => {
+  const villageUI = createVillageUi();
+  const gameLog = createElement();
+  const controller = new VillageActionsController(createPlayerStub(), villageUI, gameLog, {
+    onUpdateHUD: () => {},
+    onLeaveVillage: () => {},
+    getVillageDirectionHint: (settlementName) => ({ settlementName, exists: true, direction: 'north', distanceCells: 5 }),
+    onVillageBarterCompleted: () => {},
+  });
+
+  controller.configureQuestBarterContracts([{ traderName: 'Veyra', itemName: 'Night Sigil' }]);
+  controller['dialogueEngine'] = {
+    createNpcRoster: () => [{ id: 'moss-0', name: 'Mara', role: 'Trader', look: 'cloak', speechStyle: 'calm', disposition: 'truthful' }],
+    buildLocationAnswer: () => ({ speech: '', tone: '', truthfulness: 'truth' }),
+    buildPersonLocationAnswer: () => ({ speech: '', tone: '', truthfulness: 'truth' }),
+  };
+
+  controller.enterVillage('Mossbrook');
+  const names = controller['npcRoster'].map((npc) => npc.name);
+  assert.equal(names.includes('Veyra'), true);
+  const hint = controller['getPersonDirectionHint']('Veyra');
+  assert.equal(hint.exists, true);
+  assert.equal(hint.villageName, 'Mossbrook');
 }));

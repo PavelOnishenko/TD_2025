@@ -49,6 +49,7 @@ type BarterPaymentOption = {
 };
 
 type VillageBarterDeal = {
+    contractId: string;
     traderName: string;
     rewardItem: Item;
     negotiationLine: string;
@@ -88,8 +89,9 @@ export default class VillageActionsController {
     private npcRoster: VillageNpcProfile[] = [];
     private villageNpcRosters: Map<string, VillageNpcProfile[]> = new Map();
     private villageBarterDeals: Map<string, VillageBarterDeal[]> = new Map();
+    private questBarterContracts: Map<string, { traderName: string; itemName: string }> = new Map();
+    private barterContractVillageById: Map<string, string> = new Map();
     private selectedNpcId: string | null = null;
-    private oliveVillageName: string | null = null;
 
     constructor(player: Player, villageUI: VillageUI, gameLog: HTMLElement, callbacks: VillageActionsCallbacks) {
         this.player = player;
@@ -101,9 +103,7 @@ export default class VillageActionsController {
 
     public enterVillage(villageName: string): void {
         this.currentVillageName = villageName;
-        if (!this.oliveVillageName) {
-            this.oliveVillageName = villageName;
-        }
+        this.assignQuestBarterContractsIfNeeded(villageName);
         this.villageUI.title.textContent = `Village: ${villageName}`;
         this.refreshVillageStock();
         this.npcRoster = this.getOrCreateVillageNpcRoster(villageName);
@@ -113,10 +113,28 @@ export default class VillageActionsController {
         this.villageUI.actions.classList.add('hidden');
         this.gameLog.innerHTML = '';
         this.addLog(`You discover ${villageName}. Enter it?`, 'system');
-        if (this.oliveVillageName === villageName) {
-            this.addLog('Rumor update: Olive is known to stay in this village and rarely leaves the market square.', 'system-message');
+        const villageContractTraders = this.getVillageContractTraders(villageName);
+        if (villageContractTraders.length > 0) {
+            this.addLog(`Rumor update: known barter contact(s) in this village: ${villageContractTraders.join(', ')}.`, 'system-message');
         }
         this.updateButtons();
+    }
+
+    public configureQuestBarterContracts(contracts: Array<{ traderName: string; itemName: string }>): void {
+        this.questBarterContracts.clear();
+        this.barterContractVillageById.clear();
+        this.villageBarterDeals.clear();
+
+        contracts.forEach((contract, index) => {
+            const traderName = contract.traderName.trim();
+            const itemName = contract.itemName.trim();
+            if (!traderName || !itemName) {
+                return;
+            }
+
+            const contractId = `contract-${index}-${traderName.toLocaleLowerCase()}-${itemName.toLocaleLowerCase()}`;
+            this.questBarterContracts.set(contractId, { traderName, itemName });
+        });
     }
 
     public exitVillage(): void {
@@ -381,16 +399,19 @@ export default class VillageActionsController {
         }
 
         const roster = this.dialogueEngine.createNpcRoster(villageName);
-        if (villageName === this.oliveVillageName && !roster.some((npc) => npc.name.toLocaleLowerCase() === 'olive')) {
+        this.getVillageContractTraders(villageName).forEach((traderName) => {
+            if (roster.some((npc) => npc.name.toLocaleLowerCase() === traderName.toLocaleLowerCase())) {
+                return;
+            }
             roster.unshift({
-                id: `${villageName.toLowerCase()}-olive`,
-                name: 'Olive',
+                id: `${villageName.toLowerCase()}-${traderName.toLocaleLowerCase()}`,
+                name: traderName,
                 role: 'Barter Broker',
                 look: 'emerald scarf, ledger satchel, watchful eyes',
                 speechStyle: 'steady and transactional',
                 disposition: 'truthful',
             });
-        }
+        });
         this.villageNpcRosters.set(villageName, roster);
         return roster;
     }
@@ -463,33 +484,9 @@ export default class VillageActionsController {
             return cached;
         }
 
-        const deals: VillageBarterDeal[] = [];
-        if (villageName === this.oliveVillageName) {
-            deals.push({
-                traderName: 'Olive',
-                rewardItem: new Item({
-                    id: 'quest_kator_kaesh',
-                    name: 'Kator Kaesh',
-                    description: 'Quest artifact transferred via sworn barter.',
-                    type: 'armor',
-                    goldValue: 0,
-                }),
-                negotiationLine: 'For Kator Kaesh, you can pay coin alone or coin plus reagent. Choose what hurts you less.',
-                paymentOptions: [
-                    {
-                        label: 'Coin-only settlement',
-                        goldCost: 26,
-                        itemCosts: [],
-                    },
-                    {
-                        label: 'Split payment',
-                        goldCost: 8,
-                        itemCosts: [{ itemId: 'manaPotion', itemName: 'Mana Potion', quantity: 1 }],
-                    },
-                ],
-                isCompleted: false,
-            });
-        }
+        const deals: VillageBarterDeal[] = Array.from(this.questBarterContracts.entries())
+            .filter(([contractId]) => this.barterContractVillageById.get(contractId) === villageName)
+            .map(([contractId, contract]) => this.createDealFromContract(contractId, contract.traderName, contract.itemName));
 
         this.villageBarterDeals.set(villageName, deals);
         return deals;
@@ -502,12 +499,20 @@ export default class VillageActionsController {
 
     private getPersonDirectionHint(personName: string): PersonDirectionHint {
         const normalizedPerson = personName.trim().toLocaleLowerCase();
-        if (normalizedPerson === 'olive' && this.oliveVillageName) {
-            const villageHint = this.callbacks.getVillageDirectionHint(this.oliveVillageName);
+        const contract = Array.from(this.questBarterContracts.entries())
+            .find(([, value]) => value.traderName.trim().toLocaleLowerCase() === normalizedPerson);
+        if (contract) {
+            const [contractId, value] = contract;
+            const villageName = this.barterContractVillageById.get(contractId);
+            if (!villageName) {
+                return { personName: value.traderName, exists: false };
+            }
+
+            const villageHint = this.callbacks.getVillageDirectionHint(villageName);
             return {
-                personName: 'Olive',
+                personName: value.traderName,
                 exists: villageHint.exists,
-                villageName: villageHint.exists ? this.oliveVillageName : undefined,
+                villageName: villageHint.exists ? villageName : undefined,
                 direction: villageHint.direction,
                 distanceCells: villageHint.distanceCells,
             };
@@ -611,5 +616,52 @@ export default class VillageActionsController {
             [copy[i], copy[j]] = [copy[j], copy[i]];
         }
         return copy.slice(0, Math.min(count, copy.length));
+    }
+
+    private assignQuestBarterContractsIfNeeded(villageName: string): void {
+        if (this.questBarterContracts.size === 0) {
+            return;
+        }
+
+        const hasAnyAssignment = this.barterContractVillageById.size > 0;
+        if (!hasAnyAssignment) {
+            this.questBarterContracts.forEach((_contract, contractId) => this.barterContractVillageById.set(contractId, villageName));
+            return;
+        }
+
+        this.questBarterContracts.forEach((_contract, contractId) => {
+            if (!this.barterContractVillageById.has(contractId)) {
+                this.barterContractVillageById.set(contractId, villageName);
+            }
+        });
+    }
+
+    private getVillageContractTraders(villageName: string): string[] {
+        return Array.from(this.questBarterContracts.entries())
+            .filter(([contractId]) => this.barterContractVillageById.get(contractId) === villageName)
+            .map(([, contract]) => contract.traderName);
+    }
+
+    private createDealFromContract(contractId: string, traderName: string, itemName: string): VillageBarterDeal {
+        const normalized = itemName.toLocaleLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+        const majorGoldCost = Math.max(14, Math.min(40, 12 + itemName.length));
+        const splitGoldCost = Math.max(4, Math.floor(majorGoldCost * 0.35));
+        return {
+            contractId,
+            traderName,
+            rewardItem: new Item({
+                id: `quest_${normalized || 'artifact'}`,
+                name: itemName,
+                description: 'Quest artifact transferred via sworn barter.',
+                type: 'armor',
+                goldValue: 0,
+            }),
+            negotiationLine: `For ${itemName}, pay in coin or combine coin with reagent. Choose your route.`,
+            paymentOptions: [
+                { label: 'Coin-only settlement', goldCost: majorGoldCost, itemCosts: [] },
+                { label: 'Split payment', goldCost: splitGoldCost, itemCosts: [{ itemId: 'manaPotion', itemName: 'Mana Potion', quantity: 1 }] },
+            ],
+            isCompleted: false,
+        };
     }
 }

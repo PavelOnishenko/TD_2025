@@ -58,7 +58,7 @@ Village rumors now support asking about **people**, not only settlements.
 
 ### UX flow
 1. Select an NPC in the rumor panel.
-2. Type a person name (example: `Olive`) in the person input.
+2. Type a person name from quest text (example: `Olive` or any generated trader name) in the person input.
 3. Click **Ask about person**.
 
 ### Reliability model (intentionally lower than village directions)
@@ -70,8 +70,9 @@ Village rumors now support asking about **people**, not only settlements.
   - occasional lie or malicious misdirection.
 
 ### Current data source behavior
-- `Olive` is guaranteed as a persistent NPC in the first village the player enters.
-- Person-direction hints for Olive are resolved against Olive’s bound village.
+- The system is **contract-driven**, not hardcoded to specific names.
+- For each active barter quest leaf (`person` + `item` entities), the trader is bound to a persistent home village.
+- Person-direction hints are resolved from this quest barter contract mapping.
 - Unknown names return `exists: false`, then dialogue personality decides whether NPC admits ignorance or fabricates.
 
 ### Logging

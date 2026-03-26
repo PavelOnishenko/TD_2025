@@ -70,6 +70,7 @@ export default class Game {
     private readonly hudCoordinator: GameHudCoordinator;
     private readonly battleCoordinator: GameBattleCoordinator;
     private readonly worldModeController: WorldModeController;
+    private readonly villageActionsController: VillageActionsController;
     private readonly worldMap: WorldMap;
     private readonly battleMap: BattleMap;
     private readonly player: Player;
@@ -146,6 +147,7 @@ export default class Game {
             getVillageDirectionHint: (settlementName: string) => this.worldMap.getVillageDirectionHintFromPlayer(settlementName),
             onVillageBarterCompleted: (traderName: string, itemName: string) => this.recordBarterCompletion(traderName, itemName),
         });
+        this.villageActionsController = villageActionsController;
         this.villageCoordinator = new GameVillageCoordinator(ui.hudElements, ui.battleUI, ui.villageUI, ui.worldUI, villageLifeRenderer, villageActionsController);
         this.stateMachine = this.createStateMachine(ui);
         const battlePlayerActionController = new BattlePlayerActionController(turnManager, battleUiController, player, {
@@ -215,6 +217,7 @@ export default class Game {
         this.activeQuest = quest;
         this.questUiController = questUiController;
         this.questProgressTracker = new QuestProgressTracker(quest);
+        this.villageActionsController.configureQuestBarterContracts(this.collectBarterContracts(quest));
         this.registerQuestLocations(quest);
         questUiController.renderQuest(quest);
         questUiController.showIntro();
@@ -257,6 +260,24 @@ export default class Game {
         for (const child of quest.children) {
             this.registerQuestLocations(child);
         }
+    }
+
+    private collectBarterContracts(quest: QuestNode): Array<{ traderName: string; itemName: string }> {
+        const contracts: Array<{ traderName: string; itemName: string }> = [];
+        const visit = (node: QuestNode): void => {
+            if (node.objectiveType === 'barter' && node.children.length === 0) {
+                const trader = node.entities.find((entity) => entity.type === 'person')?.text?.trim();
+                const item = node.entities.find((entity) => entity.type === 'item')?.text?.trim();
+                if (trader && item) {
+                    contracts.push({ traderName: trader, itemName: item });
+                }
+            }
+
+            node.children.forEach((child) => visit(child));
+        };
+
+        visit(quest);
+        return contracts;
     }
 
 

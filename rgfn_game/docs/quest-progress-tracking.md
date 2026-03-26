@@ -56,6 +56,7 @@
 - `VillageActionsController` emits barter-complete callback after payment is consumed and reward item is granted.
 - `Game` forwards this event to `QuestProgressTracker` and re-renders the quest UI instantly.
 - If no node matches, a verbose system message explains that barter was registered but not tied to an active objective.
+- `Game` also extracts all barter leaves (`person` + `item`) and configures village barter contracts dynamically, so runtime barter NPCs and reward artifacts follow generated quest data rather than fixed names.
 
 ### Practical example now solvable
 - Quest text:
@@ -66,3 +67,10 @@
   - Find Olive in her persistent home village.
   - Complete her barter transaction.
   - Quest node updates to completed immediately after the trade.
+
+### Name-independence guarantee
+- The barter pipeline does **not** depend on literal names such as `Olive` or `Kator Kaesh`.
+- Any generated barter leaf with valid entities:
+  - `person` = trader
+  - `item` = reward artifact
+  is automatically supported end-to-end with the same flow.
