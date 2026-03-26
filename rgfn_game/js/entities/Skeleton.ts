@@ -21,7 +21,16 @@ export interface EnemyConfig {
     behavior?: EnemyBehavior;
     baseStats?: Partial<CreatureBaseStats>;
     skills?: Partial<Record<CreatureSkill, number>>;
+    mutations?: MonsterMutationTrait[];
 }
+
+export type MonsterMutationTrait =
+    | 'feral strength'
+    | 'void armor'
+    | 'acid blood'
+    | 'blink speed'
+    | 'barbed hide'
+    | 'grave intellect';
 
 const DamageableEntity = withDamageable(Entity);
 
@@ -59,6 +68,7 @@ export default class Skeleton extends DamageableEntity {
     public maxMana: number;
     public magicPoints: number;
     public mana: number;
+    public readonly mutations: MonsterMutationTrait[];
     private cursedArmorReduction: number = 0;
     private curseTurns: number = 0;
     private slowTurns: number = 0;
@@ -94,6 +104,8 @@ export default class Skeleton extends DamageableEntity {
         this.maxMana = derivedStats.maxMana;
         this.magicPoints = derivedStats.magicPoints;
         this.mana = derivedStats.maxMana;
+        this.mutations = [...(config.mutations ?? [])];
+        this.applyMutations();
         const hpMultiplier = Math.max(0, balanceConfig.enemies.hpMultiplier ?? 1);
         this.initDamageable(Math.round(derivedStats.maxHp * hpMultiplier));
     }
@@ -315,6 +327,44 @@ export default class Skeleton extends DamageableEntity {
     public shouldPassEncounter(): boolean {
         const chance = this.behavior.passEncounterChance ?? 0;
         return chance > 0 && Math.random() < chance;
+    }
+
+    public onDamagedByPlayer(isMelee: boolean): { retaliationDamage: number; logs: string[] } {
+        const logs: string[] = [];
+        let retaliationDamage = 0;
+
+        if (this.mutations.includes('acid blood')) {
+            retaliationDamage += 1;
+            logs.push(`${this.name}'s acid blood splashes back for 1 damage.`);
+        }
+
+        if (isMelee && this.mutations.includes('barbed hide')) {
+            retaliationDamage += 1;
+            logs.push(`${this.name}'s barbed hide cuts the attacker for 1 damage.`);
+        }
+
+        return { retaliationDamage, logs };
+    }
+
+    private applyMutations(): void {
+        if (this.mutations.includes('feral strength')) {
+            this.damage = Math.max(1, Math.round(this.damage * 1.35));
+        }
+
+        if (this.mutations.includes('void armor')) {
+            this.armor += 3;
+        }
+
+        if (this.mutations.includes('blink speed')) {
+            this.avoidChance = Math.min(0.8, this.avoidChance + 0.12);
+        }
+
+        if (this.mutations.includes('grave intellect')) {
+            this.magicPoints += 3;
+            this.maxMana += 8;
+            this.mana = this.maxMana;
+            this.behavior.doubleDamageChance = Math.max(this.behavior.doubleDamageChance ?? 0, 0.12);
+        }
     }
 
     private drawHealthBar(ctx: CanvasRenderingContext2D, screenX: number, screenY: number): void {

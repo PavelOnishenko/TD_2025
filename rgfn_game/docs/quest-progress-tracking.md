@@ -41,3 +41,75 @@
 ## Follow-up opportunities
 - Expand tracker events for non-location objective types (`deliver`, `barter`, `escort`, etc.).
 - Show quest completion notifications in battle log / village log.
+
+## Update: barter objective tracking is now live
+
+### What is now supported
+- `QuestProgressTracker` now supports direct completion updates for **barter** leaves through:
+  - `recordBarterCompletion(traderName, itemName)`.
+- Matching is case-insensitive and requires both:
+  - `person` quest entity == barter partner name
+  - `item` quest entity == received item name
+- Once matched, the barter leaf is marked complete and parent branches are recomputed immediately.
+
+### Runtime integration
+- `VillageActionsController` emits barter-complete callback after payment is consumed and reward item is granted.
+- `Game` forwards this event to `QuestProgressTracker` and re-renders the quest UI instantly.
+- If no node matches, a verbose system message explains that barter was registered but not tied to an active objective.
+- `Game` also extracts all barter leaves (`person` + `item`) and configures village barter contracts dynamically, so runtime barter NPCs and reward artifacts follow generated quest data rather than fixed names.
+
+### Practical example now solvable
+- Quest text:
+  - Title: `Barter with Olive`
+  - Description: `Negotiate with Olive and exchange for Kator Kaesh.`
+  - Condition: `Complete one barter deal and obtain Kator Kaesh.`
+- Runtime:
+  - Find Olive in her persistent home village.
+  - Complete her barter transaction.
+  - Quest node updates to completed immediately after the trade.
+
+### Name-independence guarantee
+- The barter pipeline does **not** depend on literal names such as `Olive` or `Kator Kaesh`.
+- Any generated barter leaf with valid entities:
+  - `person` = trader
+  - `item` = reward artifact
+  is automatically supported end-to-end with the same flow.
+
+### Runtime safety note (constructor ordering)
+- `Game.initializeQuestUi(...)` now runs **after** `VillageActionsController` is constructed and assigned.
+- Reason: `initializeQuestUi` configures quest barter contracts through `villageActionsController.configureQuestBarterContracts(...)`.
+- Calling it earlier can throw:
+  - `TypeError: Cannot read properties of undefined (reading 'configureQuestBarterContracts')`.
+- This ordering requirement is now part of the expected initialization contract.
+
+## March 26, 2026 update: courier objectives are now fully completable with explicit pickup source
+
+### Problem
+- Courier leaves only described destination + item carry condition.
+- There was no explicit, enforced pickup source in objective state.
+- Result: players lacked clear guidance on where to obtain courier items, and objective completion could be unclear.
+
+### Fix
+- Courier leaf generation now embeds complete pickup/delivery data in `objectiveData.deliver`:
+  - source village
+  - source trader
+  - destination village
+  - item name
+  - pickup progress flag
+- Courier description + condition now explicitly state:
+  - who provides the item,
+  - where pickup happens,
+  - where delivery completes.
+- Village barter contracts now include courier entries and preserve source village assignment.
+- Village rumor logs now print courier-specific hints for villages that host pickup traders.
+- Progress tracker now completes courier objectives only when:
+  1. pickup happened via matching trader+item at matching source village,
+  2. destination village is reached,
+  3. required item is still in inventory.
+
+### Verification checklist
+1. Start a new run and locate a courier objective in the quest tree.
+2. Confirm quest text includes source trader and source village.
+3. Reach source village and barter with named trader for required item.
+4. Travel to destination while carrying item.
+5. Confirm courier leaf is marked complete in quest UI.
