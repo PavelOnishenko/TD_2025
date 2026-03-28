@@ -72,28 +72,17 @@ test('EncounterSystem blocks item discoveries when discovery is disabled for kno
   assert.notEqual(result.type, 'item');
 });
 
-test('EncounterSystem blocks random village discoveries when village discovery is disabled for known tiles', () => {
+test('EncounterSystem never creates village encounter results (villages are map-generated only)', () => {
   const encounters = new EncounterSystem(1);
+  const generatedTypes = new Set();
 
-  const result = withPatchedProperty(encounters, 'itemDiscoveryChance', 0, () => {
-    setupEventType(encounters, 'village');
-    setupEncounterType(encounters, 'skeleton');
-    return encounters.generateEncounter(true, false);
+  withPatchedProperty(encounters, 'itemDiscoveryChance', 0, () => {
+    for (let i = 0; i < 80; i += 1) {
+      generatedTypes.add(encounters.generateEncounter(true).type);
+    }
   });
 
-  assert.notEqual(result.type, 'village');
-  assert.equal(result.type, 'battle');
-});
-
-test('EncounterSystem still allows forced village encounters when village discovery is disabled', () => {
-  const encounters = new EncounterSystem(1);
-
-  const result = withPatchedProperty(encounters, 'itemDiscoveryChance', 0, () => {
-    encounters.queueForcedEncounter('village');
-    return encounters.generateEncounter(true, false);
-  });
-
-  assert.equal(result.type, 'village');
+  assert.equal(generatedTypes.has('village'), false);
 });
 
 test('EncounterSystem handles dragon pass encounter branch', () => {
@@ -169,14 +158,13 @@ test('EncounterSystem exposes current encounter type toggle states', () => {
   const encounters = new EncounterSystem(1);
 
   encounters.setAllEncounterTypesEnabled(false);
-  encounters.setEncounterTypeEnabled('village', true);
+  encounters.setEncounterTypeEnabled('traveler', true);
 
   const states = encounters.getEncounterTypeStates();
 
   assert.deepEqual(states, {
     monster: false,
     item: false,
-    village: true,
-    traveler: false,
+    traveler: true,
   });
 });

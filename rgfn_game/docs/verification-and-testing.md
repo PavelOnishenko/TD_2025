@@ -591,3 +591,46 @@ So tests asserting fixed literal HP values (for example zombie `7`) will fail wh
 - Existing location objective completion remains functional.
 - Existing barter objective completion remains functional.
 - Non-quest random encounters still function when no objective encounter is injected.
+
+## March 28, 2026 update: villages are map-generated only (no encounter-based village creation)
+
+### What changed
+- Village creation through the encounter pipeline was fully removed.
+- Villages now come only from initial world generation (`WorldMap.generateVillages`).
+- Random encounter event types now include only:
+  - `monster`,
+  - `item`,
+  - `traveler`.
+- Forced developer queue no longer offers a `village` event option.
+
+### Why this was changed
+- Previous behavior still allowed encounter-driven village creation.
+- Requested behavior is stricter: **only initial villages should exist**.
+- This eliminates late-run world map mutation from random encounter rolls.
+
+### Configuration knobs that still matter
+- `balanceConfig.villageCreationRateMultiplier`
+  - Applies to initial world generation village count only.
+  - Default `1 / 3` keeps the reduced world density target.
+- `balanceConfig.worldMap.villages.minCount`
+  - Baseline floor before multiplier.
+- `balanceConfig.worldMap.villages.densityPerCell`
+  - Baseline density before multiplier.
+
+### Verification checklist
+1. Start a fresh run and note village count/distribution on map.
+2. Travel extensively on undiscovered and discovered tiles:
+   - confirm no village encounter result appears,
+   - confirm no new villages are added at player position by encounters.
+3. Open developer event queue:
+   - confirm `Village` is absent from queue options,
+   - confirm random encounter toggles list only Monster / Item / Traveler.
+4. Confirm existing systems that depend on village names still work:
+   - quest map-village sourcing,
+   - village direction hints,
+   - village entry/re-entry from existing tiles.
+
+### Implementation notes
+- `EncounterSystem.RandomEncounterType` and resolver event type list no longer include `village`.
+- `WorldModeController` no longer has runtime branch that marks a village on `encounter.type === 'village'`.
+- `ForcedEncounterType` no longer includes `village`, and dev UI no longer exposes village queue actions.

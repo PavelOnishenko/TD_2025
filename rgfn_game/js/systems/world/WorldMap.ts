@@ -402,7 +402,11 @@ export default class WorldMap {
 
     private generateVillages(): void {
         const dims = this.grid.getDimensions();
-        const villageCount = Math.max(6, Math.floor((dims.columns * dims.rows) * 0.012));
+        const baseVillageCount = Math.max(
+            balanceConfig.worldMap.villages.minCount,
+            Math.floor((dims.columns * dims.rows) * balanceConfig.worldMap.villages.densityPerCell),
+        );
+        const villageCount = Math.max(1, Math.floor(baseVillageCount * balanceConfig.villageCreationRateMultiplier));
         this.villages.clear();
         this.villageIndexSet.clear();
 

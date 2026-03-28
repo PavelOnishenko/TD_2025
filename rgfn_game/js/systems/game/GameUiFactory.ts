@@ -235,7 +235,6 @@ export default class GameUiFactory {
             encounterTypeToggles: {
                 monster: document.getElementById('dev-encounter-type-monster')! as HTMLInputElement,
                 item: document.getElementById('dev-encounter-type-item')! as HTMLInputElement,
-                village: document.getElementById('dev-encounter-type-village')! as HTMLInputElement,
                 traveler: document.getElementById('dev-encounter-type-traveler')! as HTMLInputElement,
             },
             nextRollOpenBtn: document.getElementById('dev-next-roll-open-btn')! as HTMLButtonElement,

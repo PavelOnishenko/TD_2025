@@ -63,10 +63,18 @@ const creatureArchetypes: Record<string, CreatureArchetype> = {
 };
 
 export const balanceConfig = {
+    // Global multiplier that scales all automatic village creation systems.
+    // 1 = baseline density, 0.333... = roughly 3x fewer initially generated villages.
+    villageCreationRateMultiplier: 1 / 3,
+
     worldMap: {
         dimensions: {
             columns: 100,
             rows: 100,
+        },
+        villages: {
+            minCount: 6,
+            densityPerCell: 0.012,
         },
         visibilityRadius: 2,
         terrainWeights: {
@@ -339,7 +347,6 @@ export const balanceConfig = {
         eventTypeWeights: [
             { type: 'monster', weight: 40 },
             { type: 'item', weight: 10 },
-            { type: 'village', weight: 5 },
             { type: 'traveler', weight: 10 },
         ],
 

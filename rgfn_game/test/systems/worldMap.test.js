@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import WorldMap from '../../dist/systems/world/WorldMap.js';
 import { balanceConfig } from '../../dist/config/balanceConfig.js';
 import { theme } from '../../dist/config/ThemeConfig.js';
-import { createMockCanvasContext, withMockedRandom } from '../helpers/testUtils.js';
+import { createMockCanvasContext, withMockedRandom, withPatchedProperty } from '../helpers/testUtils.js';
 
 function placePlayerAt(worldMap, col, row) {
   const state = worldMap.getState();
@@ -34,6 +34,19 @@ test('WorldMap generates villages before placing the player into the world', () 
   const state = worldMap.getState();
 
   assert.equal(state.villages.includes(`${state.playerGridPos.col},${state.playerGridPos.row}`), false);
+}));
+
+test('WorldMap scales generated village count with global village creation multiplier', () => withMockedRandom([0.11, 0.11], () => {
+  const fullVillageCount = withPatchedProperty(balanceConfig, 'villageCreationRateMultiplier', 1, () => (
+    new WorldMap(100, 100, 20).getState().villages.length
+  ));
+
+  const reducedVillageCount = withPatchedProperty(balanceConfig, 'villageCreationRateMultiplier', 1 / 3, () => (
+    new WorldMap(100, 100, 20).getState().villages.length
+  ));
+
+  assert.equal(reducedVillageCount < fullVillageCount, true);
+  assert.equal(Math.abs(reducedVillageCount - Math.floor(fullVillageCount / 3)) <= 2, true);
 }));
 
 test('WorldMap uses a different persistent seed for each new world generation', () => withMockedRandom([0.11, 0.25], () => {
