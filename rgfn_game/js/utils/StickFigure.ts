@@ -1,11 +1,10 @@
 /**
- * EVA-specific wrapper over shared engine stick figure renderer.
- * Keeps local imports stable while delegating animation playback logic to engine.
+ * RGFN-specific wrapper over shared engine stick figure renderer.
  */
 
 import EngineStickFigure from '../../../engine/rendering/StickFigure.js';
 import type { ImportedAnimationMeta, ImportedKeyframe } from '../animations/types.js';
-import { decorationConfig } from '../config/decorationConfig.js';
+import { theme } from '../config/ThemeConfig.js';
 
 export interface StickFigurePose {
     torsoTopX?: number;
@@ -41,6 +40,10 @@ export interface StickFigurePose {
 }
 
 export default class StickFigure {
+    private static readonly LIMB_LINE_WIDTH = 2.2;
+    private static readonly CORE_BONE_LINE_WIDTH = 2.4;
+    private static readonly OUTLINE_WIDTH = 1.1;
+
     public static draw(
         ctx: CanvasRenderingContext2D,
         x: number,
@@ -51,10 +54,10 @@ export default class StickFigure {
         scale: number = 1
     ): void {
         EngineStickFigure.draw(ctx, x, y, pose, color, facingRight, scale, {
-            limbLineWidth: decorationConfig.stickFigure.limbLineWidth,
-            coreBoneLineWidth: decorationConfig.stickFigure.coreBoneLineWidth,
-            outlineWidth: decorationConfig.stickFigure.outlineWidth,
-            outlineColor: decorationConfig.stickFigure.outlineColor
+            limbLineWidth: this.LIMB_LINE_WIDTH,
+            coreBoneLineWidth: this.CORE_BONE_LINE_WIDTH,
+            outlineWidth: this.OUTLINE_WIDTH,
+            outlineColor: theme.ui.primaryBg
         });
     }
 
