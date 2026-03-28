@@ -97,6 +97,33 @@ Condition template:
 - Avoid too many leaves with identical type in one branch.
 - If future telemetry appears, tune probabilities by completion rates.
 
+## Name Length Control (March 28, 2026)
+
+To reduce awkward ultra-long quest entities and make names easier to read in UI, quest name generation now has centralized word-length controls in config:
+
+- File: `js/config/balanceConfig.ts`
+- Section: `balanceConfig.questNameGeneration`
+  - `maxWordsByDomain`: hard caps per domain (`location`, `artifact`, `character`, `monster`, `mainQuest`).
+  - `wordLengthWeightsByDomain`: weighted length distribution per domain.
+
+Current policy:
+- 1-word and 2-word names are dominant.
+- 3-word names are intentionally uncommon.
+- 4-word names are intentionally **extremely rare**.
+
+Implementation details:
+- `QuestLeafFactory` and `QuestGenerator` no longer hardcode `3`/`4` caps; they request limits from config.
+- `QuestPackService` now resolves target word count via the configured weighted tables for **all** quest name domains.
+- For each generated name:
+  1. Pick target word count from weights (respecting the domain cap).
+  2. Compose name tokens from available pack sources (`local-pattern`, `echo`, optional remotes, map village source for locations).
+
+Practical balancing workflow:
+1. Increase weight of `1` and/or `2` to make names shorter more often.
+2. Lower weight of `3` if UI lines wrap too much.
+3. Keep weight of `4` at `1` (or `0`) unless long ceremonial names are desired.
+4. Keep domain caps explicit, so content teams can tune domains independently (e.g., shorter NPC names but slightly longer main-quest titles).
+
 ## Future Expansion Ideas
 - Specific named targets (boss IDs).
 - Optional tasks that grant bonuses but are not required for completion.

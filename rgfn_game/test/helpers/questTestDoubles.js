@@ -44,10 +44,10 @@ export class FakeQuestPackService {
     this.calls = [];
   }
 
-  async generateName(domain) {
+  async generateName(domain, maxWords) {
     const values = this.names[domain];
     const next = values.shift() ?? `${domain}-fallback`;
-    this.calls.push(domain);
+    this.calls.push({ domain, maxWords });
     return { text: next, domain, sourceTypes: ['local-pattern'] };
   }
 }

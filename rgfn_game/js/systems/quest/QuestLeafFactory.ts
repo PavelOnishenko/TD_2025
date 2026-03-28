@@ -1,5 +1,6 @@
 import QuestPackService from './QuestPackService.js';
 import { QuestRandom } from './QuestRandom.js';
+import { balanceConfig } from '../../config/balanceConfig.js';
 import {
     DeliverObjectiveData,
     GeneratedName,
@@ -19,6 +20,7 @@ const MUTATED_FROM_SPECIES = ['wolf', 'boar', 'bear', 'crow', 'human', 'stag', '
 export default class QuestLeafFactory {
     private readonly packService: QuestPackService;
     private readonly random: QuestRandom;
+    private readonly maxWordsByDomain = balanceConfig.questNameGeneration.maxWordsByDomain;
 
     constructor(packService: QuestPackService, random: QuestRandom) {
         this.packService = packService;
@@ -39,9 +41,9 @@ export default class QuestLeafFactory {
     }
 
     private async createEliminateNode(id: string): Promise<QuestNode> {
-        const target = await this.packService.generateName('monster', 3);
+        const target = await this.generateName('monster');
         const amount = this.random.nextInt(1, 4);
-        const location = await this.packService.generateName('location', 4);
+        const location = await this.generateName('location');
         const where = ` near ${location.text}`;
         const mutatedFrom = this.random.pick(MUTATED_FROM_SPECIES);
         const mutations = this.pickMany(MONSTER_STATS, this.random.nextBool(0.5) ? 2 : 3);
@@ -66,12 +68,12 @@ export default class QuestLeafFactory {
     }
 
     private async createDeliverNode(id: string): Promise<QuestNode> {
-        const artifact = await this.packService.generateName('artifact', 4);
-        const sourceTrader = await this.packService.generateName('character', 3);
-        const sourceVillage = await this.packService.generateName('location', 4);
-        let destination = await this.packService.generateName('location', 4);
+        const artifact = await this.generateName('artifact');
+        const sourceTrader = await this.generateName('character');
+        const sourceVillage = await this.generateName('location');
+        let destination = await this.generateName('location');
         if (destination.text.trim().toLocaleLowerCase() === sourceVillage.text.trim().toLocaleLowerCase()) {
-            destination = await this.packService.generateName('location', 4);
+            destination = await this.generateName('location');
         }
         const objectiveData: DeliverObjectiveData = {
             sourceVillage: sourceVillage.text,
@@ -91,7 +93,7 @@ export default class QuestLeafFactory {
     }
 
     private async createTravelNode(id: string): Promise<QuestNode> {
-        const destination = await this.packService.generateName('location', 4);
+        const destination = await this.generateName('location');
         return this.node(
             id,
             `Scout ${destination.text}`,
@@ -103,8 +105,8 @@ export default class QuestLeafFactory {
     }
 
     private async createBarterNode(id: string): Promise<QuestNode> {
-        const trader = await this.packService.generateName('character', 3);
-        const artifact = await this.packService.generateName('artifact', 4);
+        const trader = await this.generateName('character');
+        const artifact = await this.generateName('artifact');
         return this.node(
             id,
             `Barter with ${trader.text}`,
@@ -116,7 +118,7 @@ export default class QuestLeafFactory {
     }
 
     private async createScoutNode(id: string): Promise<QuestNode> {
-        const destination = await this.packService.generateName('location', 4);
+        const destination = await this.generateName('location');
         return this.node(
             id,
             `Investigate ${destination.text}`,
@@ -129,7 +131,7 @@ export default class QuestLeafFactory {
 
     private async createHuntNode(id: string): Promise<QuestNode> {
         const profile = await this.rareMonsterProfile();
-        const location = await this.packService.generateName('location', 4);
+        const location = await this.generateName('location');
         const details = `Origin: mutated from ${profile.mutatedFrom}. Stats: ${profile.stats.join(', ')}. Effects: ${profile.effects.join(', ')}. Bonus: ${profile.bonus}.`;
         return this.node(
             id,
@@ -151,8 +153,8 @@ export default class QuestLeafFactory {
     }
 
     private async createRecoverNode(id: string): Promise<QuestNode> {
-        const artifact = await this.packService.generateName('artifact', 4);
-        const location = await this.packService.generateName('location', 4);
+        const artifact = await this.generateName('artifact');
+        const location = await this.generateName('location');
         return this.node(
             id,
             `Recover ${artifact.text}`,
@@ -164,8 +166,8 @@ export default class QuestLeafFactory {
     }
 
     private async createEscortNode(id: string): Promise<QuestNode> {
-        const character = await this.packService.generateName('character', 3);
-        const destination = await this.packService.generateName('location', 4);
+        const character = await this.generateName('character');
+        const destination = await this.generateName('location');
         return this.node(
             id,
             `Escort ${character.text}`,
@@ -177,8 +179,8 @@ export default class QuestLeafFactory {
     }
 
     private async createDefendNode(id: string): Promise<QuestNode> {
-        const location = await this.packService.generateName('location', 4);
-        const artifact = await this.packService.generateName('artifact', 4);
+        const location = await this.generateName('location');
+        const artifact = await this.generateName('artifact');
         return this.node(
             id,
             `Defend ${location.text}`,
@@ -203,13 +205,17 @@ export default class QuestLeafFactory {
 
     private async rareMonsterProfile(): Promise<RareMonsterProfile> {
         return {
-            name: await this.packService.generateName('monster', 3),
+            name: await this.generateName('monster'),
             count: this.random.nextInt(1, 3),
             stats: this.pickMany(MONSTER_STATS, 2),
             effects: this.pickMany(MONSTER_EFFECTS, 2),
             bonus: this.random.pick(MONSTER_BONUSES),
             mutatedFrom: this.random.pick(MUTATED_FROM_SPECIES),
         };
+    }
+
+    private async generateName(domain: 'location' | 'artifact' | 'character' | 'monster'): Promise<GeneratedName> {
+        return this.packService.generateName(domain, this.maxWordsByDomain[domain]);
     }
 
     private pickMany(pool: string[], count: number): string[] {
