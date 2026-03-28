@@ -184,3 +184,29 @@ Hamburger-opened HUD panels are now interactive floating windows:
 5. Resize viewport below `920px`:
    - panels return to normal stacked flow (no shifted transforms),
    - close button still works.
+
+## HUD panel height/scroll policy update (March 28, 2026, follow-up)
+
+To match the new draggable-window workflow, **HUD content panels no longer auto-clamp their height** and no longer force internal panel scrollbars:
+
+- `Stats`, `Skills`, `Inventory`, `Magic`, `Quests`, `Lore`, `Selected`:
+  - keep fixed panel width styling,
+  - no `max-height` viewport clamp,
+  - no forced `overflow: auto` scrollbar behavior.
+- If several open panels overlap, the intended flow is:
+  1. drag panels to reposition, or
+  2. close unneeded ones from hamburger menu / panel `✕`.
+
+This keeps panel size/content natural and avoids the old "single-column fallback" scrollbar tuning that is no longer needed for desktop draggable windows.
+
+### Important exception
+
+`World Map` sidebar and `Log` keep scroll constraints by design because they can contain intentionally long content and controls with high update frequency.
+
+### Quick regression checklist for this follow-up
+
+1. Open `Stats`, `Inventory`, `Magic` together on desktop:
+   - no panel-internal scrollbar should appear unless content itself defines one for a nested element.
+2. Verify panel height does not auto-shrink to viewport clamp when opening multiple panels.
+3. Drag overlapping panels and confirm usability still comes from dragging/closing (not from panel auto-scroll resizing).
+4. Confirm `Log` panel still scrolls as messages accumulate.

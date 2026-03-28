@@ -338,7 +338,13 @@ h1 {
     font-weight: 700;
 }
 
-#magic-panel, #inventory-panel, #skills-panel, #quests-panel, #lore-panel, #stats-panel, #selected-panel, #world-sidebar, #game-log-container {
+#magic-panel, #inventory-panel, #skills-panel, #quests-panel, #lore-panel, #stats-panel, #selected-panel {
+    width: min(340px, calc(100vw - 48px));
+    overflow: visible;
+}
+
+#world-sidebar,
+#game-log-container {
     width: min(340px, calc(100vw - 48px));
     max-height: min(100%, calc(100dvh - 180px));
     overflow: auto;
