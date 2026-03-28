@@ -80,7 +80,7 @@ export const balanceConfig = {
             minCount: 6,
             densityPerCell: 0.012,
         },
-        visibilityRadius: 2,
+        visibilityRadius: 3,
         terrainWeights: {
             grass: 0.32,
             forest: 0.48,

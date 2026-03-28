@@ -185,7 +185,7 @@ test('WorldMap applies terrain-based line of sight rules', () => {
 
     worldMap.restoreState({ ...worldMap.getState(), playerGridPos: { col: 6, row: 4 } });
 
-    assert.equal(worldMap.isCellVisible(7, 4), false);
+    assert.equal(worldMap.isCellVisible(7, 4), true);
     assert.equal(worldMap.isCellVisible(8, 4), false);
     assert.equal(worldMap.isCellVisible(6, 3), true);
     assert.equal(worldMap.isCellVisible(6, 2), false);
