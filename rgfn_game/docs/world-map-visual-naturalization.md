@@ -25,6 +25,20 @@
 ### 5) Theme safety net
 - `theme.worldMap.gridLines` alpha set to `0` as an additional safeguard in case grid rendering is re-enabled later.
 
+### 6) Unknown fog visualization changed from `?` glyphs to animated fog wisps
+- Renderer no longer draws `?` text for `unknown` cells.
+- Unknown cells now get a lightweight animated overlay:
+  - 2-3 drifting radial wisps (count depends on detail level),
+  - 2-4 tiny upward-moving particles for ambient motion.
+- Motion is deterministic per-cell (seeded by `col/row`) and time-based (`performance.now()`), so:
+  - neighboring cells do not move in lockstep,
+  - animation is stable across redraws and panning.
+
+### 7) Performance constraints for animated fog
+- Low-detail mode (`detailLevel === 'low'` or tiny cell sizes) still uses a single static fill and skips all animated passes.
+- Medium/full detail use very small fixed primitive counts per cell (no unbounded loops, no per-frame allocations outside canvas gradients).
+- Existing fog/terrain cache split remains intact; this change only affects visual fog overlay rendering for currently visible cells.
+
 ## Why this should remove yellow stripes
 - The artifact could come from two sources:
   1. Explicit grid line rendering.
@@ -43,3 +57,4 @@
 ## Notes for future iterations
 - If map looks too uniform after seam fix, add larger-scale blended overlays (macro noise / biome gradients) instead of per-cell border decoration.
 - If needed, expose a config toggle for optional subtle grid lines for debug mode only.
+- If profiling shows fog overlay pressure on very large viewports, first knob to reduce is particle count in `drawUnknownCell()` before touching terrain detail.

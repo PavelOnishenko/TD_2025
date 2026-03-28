@@ -354,12 +354,60 @@ export default class WorldMapRenderer {
 
         const path = this.createCellRectPath(cell);
         ctx.fill(path);
-        ctx.fillStyle = this.withAlpha(theme.ui.primaryAccent, 0.35);
-        ctx.font = `${Math.max(12, Math.floor(cell.width * 0.45))}px Georgia`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        const questionMarkOffset = theme.worldMap.questionMarkOffset;
-        ctx.fillText('?', cell.x + (cell.width / 2) + questionMarkOffset.x, cell.y + (cell.height / 2) + questionMarkOffset.y);
+
+        ctx.save();
+        ctx.clip(path);
+        const supportsRadialGradients = typeof (ctx as CanvasRenderingContext2D & { createRadialGradient?: unknown }).createRadialGradient === 'function';
+
+        const fogSeed = (cell.col * 73856093) ^ (cell.row * 19349663);
+        const fogTime = this.getAnimationTimeSeconds();
+        const wispCount = detailLevel === 'full' ? 3 : 2;
+        const driftStrength = cell.width * 0.1;
+        const shimmerBase = 0.08 + (Math.sin((fogTime * 1.8) + (fogSeed * 0.00007)) * 0.02);
+
+        if (supportsRadialGradients) {
+            for (let index = 0; index < wispCount; index += 1) {
+                const seededOffset = this.seededRandom(fogSeed + (index * 19));
+                const baseX = cell.x + (cell.width * (0.2 + (this.seededRandom(fogSeed + (index * 31)) * 0.6)));
+                const baseY = cell.y + (cell.height * (0.18 + (this.seededRandom(fogSeed + (index * 47)) * 0.64)));
+                const drift = Math.sin((fogTime * (0.7 + (seededOffset * 0.6))) + (index * 1.8)) * driftStrength;
+                const radiusX = cell.width * (0.2 + (this.seededRandom(fogSeed + (index * 53)) * 0.12));
+                const radiusY = cell.height * (0.16 + (this.seededRandom(fogSeed + (index * 61)) * 0.1));
+                const alpha = shimmerBase + (0.02 * index);
+
+                const gradient = ctx.createRadialGradient(
+                    baseX + (drift * 0.35),
+                    baseY,
+                    0,
+                    baseX + drift,
+                    baseY + (Math.cos((fogTime * 1.1) + index) * (cell.height * 0.04)),
+                    Math.max(radiusX, radiusY),
+                );
+                gradient.addColorStop(0, this.withAlpha(theme.ui.panelHighlight, alpha + 0.05));
+                gradient.addColorStop(1, this.withAlpha(theme.worldMap.unknown, 0));
+                ctx.fillStyle = gradient;
+                ctx.fillRect(baseX - radiusX + drift - 2, baseY - radiusY - 2, (radiusX * 2) + 4, (radiusY * 2) + 4);
+            }
+        } else {
+            ctx.fillStyle = this.withAlpha(theme.ui.panelHighlight, shimmerBase + 0.07);
+            ctx.fillRect(cell.x, cell.y, cell.width, cell.height);
+        }
+
+        const particleCount = detailLevel === 'full' ? 4 : 2;
+        ctx.fillStyle = this.withAlpha(theme.ui.panelHighlight, 0.18);
+        for (let index = 0; index < particleCount; index += 1) {
+            const lifeRate = 0.1 + (this.seededRandom(fogSeed + (index * 71)) * 0.15);
+            const lifeT = ((fogTime * lifeRate) + this.seededRandom(fogSeed + (index * 79))) % 1;
+            const x = cell.x + (this.seededRandom(fogSeed + (index * 89)) * cell.width);
+            const y = cell.y + (cell.height * (1 - lifeT));
+            const radius = 0.6 + (this.seededRandom(fogSeed + (index * 97)) * 1.4);
+            ctx.globalAlpha = 0.15 + ((1 - lifeT) * 0.25);
+            ctx.beginPath();
+            ctx.arc(x, y, radius, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        ctx.restore();
         ctx.restore();
     }
 
@@ -728,5 +776,12 @@ export default class WorldMapRenderer {
     private seededRandom(seed: number): number {
         const value = Math.sin(seed * 0.001 + 1.123) * 43758.5453;
         return value - Math.floor(value);
+    }
+
+    private getAnimationTimeSeconds(): number {
+        if (typeof performance !== 'undefined' && typeof performance.now === 'function') {
+            return performance.now() / 1000;
+        }
+        return Date.now() / 1000;
     }
 }
