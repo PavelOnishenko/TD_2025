@@ -1,4 +1,6 @@
 import { theme } from '../../config/ThemeConfig.js';
+import { WALK_KEYFRAMES, WALK_META } from '../../animations/imported/walkImported.js';
+import StickFigure from '../../utils/StickFigure.js';
 import VillagePopulation, { VillageSpot, VillageVillager } from './VillagePopulation.js';
 
 export type VillageHouse = {
@@ -210,39 +212,22 @@ export default class VillageLifeRenderer {
     }
 
     private drawVillageVillager(ctx: CanvasRenderingContext2D, villager: VillageVillager, time: number): void {
-        const speed = villager.isWalking ? 4.1 : 1.1;
-        const amp = villager.isWalking ? 2.8 : 0.6;
-        const step = Math.sin(time * speed + villager.propSwingOffset) * amp;
-        const arm = Math.sin(time * speed + villager.armSwingOffset + Math.PI * 0.5) * amp;
+        const fromSpot = this.villageSpots[villager.fromSpot];
+        const toSpot = this.villageSpots[villager.toSpot];
+        const movementX = (toSpot?.x ?? villager.x) - (fromSpot?.x ?? villager.x);
+        const isFacingRight = movementX >= 0;
+        const walkCycleTime = (time * 1.6) + villager.armSwingOffset;
+        const walkDuration = Math.max(0.0001, WALK_META.duration);
+        const wrappedTime = ((walkCycleTime % walkDuration) + walkDuration) % walkDuration;
+        const animationProgress = villager.isWalking ? (wrappedTime / walkDuration) : 0;
+        const pose = StickFigure.getPoseFromImportedAnimation(WALK_KEYFRAMES, WALK_META, animationProgress);
+
         ctx.save();
-        ctx.translate(villager.x, villager.y);
-        ctx.scale(villager.size * 0.72, villager.size * 0.72);
-        ctx.fillStyle = villager.shirtColor;
-        ctx.strokeStyle = VillageLifeRenderer.OUTLINE_COLOR;
-        ctx.lineWidth = 1.8;
-        ctx.fillRect(-8, -8, 16, 20);
-        ctx.strokeRect(-8, -8, 16, 20);
-        ctx.fillStyle = villager.skinColor;
-        ctx.beginPath();
-        ctx.arc(0, -16, 7, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.stroke();
-        ctx.strokeStyle = villager.pantsColor;
-        ctx.lineWidth = 2.2;
-        ctx.beginPath();
-        ctx.moveTo(-4, 12);
-        ctx.lineTo(-5 + step * 0.2, 25);
-        ctx.moveTo(4, 12);
-        ctx.lineTo(5 - step * 0.2, 25);
-        ctx.stroke();
-        ctx.strokeStyle = villager.skinColor;
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(-8, -1);
-        ctx.lineTo(-13 + arm * 0.3, 10 + Math.abs(step) * 0.14);
-        ctx.moveTo(8, -1);
-        ctx.lineTo(13 - arm * 0.3, 10 + Math.abs(step) * 0.14);
-        ctx.stroke();
+        const drawX = villager.x;
+        const drawY = villager.y + (villager.size * 2.2);
+        const bodyColor = this.mixColors(villager.shirtColor, villager.pantsColor, 0.45);
+        const renderScale = villager.size * 0.75;
+        StickFigure.draw(ctx, drawX, drawY, pose, bodyColor, isFacingRight, renderScale);
         ctx.restore();
     }
 
