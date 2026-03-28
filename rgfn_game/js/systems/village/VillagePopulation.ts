@@ -169,7 +169,7 @@ export default class VillagePopulation {
             shirtColor: this.pickFrom(shirtPalette),
             pantsColor: this.pickFrom(pantsPalette),
             hatColor: this.pickFrom(hatPalette),
-            size: 0.86 + Math.random() * 0.26,
+            size: 0.62 + Math.random() * 0.18,
             activity: this.pickActivity(),
             propSwingOffset: Math.random() * Math.PI * 2,
             armSwingOffset: Math.random() * Math.PI * 2,
