@@ -1,3 +1,30 @@
+## March 28, 2026 update: expanded deterministic village name generator
+
+### Problem statement
+- Village names had a very small combinatorial pool (100 variants), so repeats appeared quickly.
+- This reduced perceived world scale and made quest location flavor feel repetitive.
+
+### Implementation summary
+- Added a dedicated generator module with token dictionaries + pattern templates:
+  - `js/systems/world/VillageNameGenerator.ts`
+- Wired `WorldMap.getVillageName(...)` to use the new deterministic seed-driven generator.
+- Wired `VillageLifeRenderer` fallback naming path to the same generator style.
+
+### Reliability constraints kept
+- Name remains deterministic for identical world seed + coordinates.
+- Name style remains readable and settlement-like.
+- No network dependency added.
+
+### Regression tests
+- `test/systems/worldMap.test.js`
+  - Added test that samples a 15x15 coordinate area and expects >100 unique village names.
+  - Added deterministic same-coordinate equality check.
+
+### Commands run
+- `npm run build:rgfn`
+- `node --test rgfn_game/test/systems/worldMap.test.js`
+- `node --test rgfn_game/test/**/*.test.js`
+
 ## March 26, 2026 update: village rumors NPC roster persistence fix (actual root cause)
 
 ### Symptom seen in UI

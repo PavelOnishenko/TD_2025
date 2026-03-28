@@ -3,6 +3,7 @@ import { FogState, MapDisplayConfig, TerrainData, GridPosition, Direction, GridC
 import { theme } from '../../config/ThemeConfig.js';
 import WorldMapRenderer from './WorldMapRenderer.js';
 import { balanceConfig } from '../../config/balanceConfig.js';
+import { generateVillageName } from './VillageNameGenerator.js';
 
 export type KnownVillage = {
     name: string;
@@ -908,10 +909,8 @@ export default class WorldMap {
     }
 
     private getVillageName(col: number, row: number): string {
-        const first = ['Oak', 'River', 'Sun', 'Stone', 'Amber', 'Willow', 'Moss', 'Silver', 'Pine', 'Moon'];
-        const second = ['ford', 'field', 'brook', 'haven', 'hill', 'cross', 'watch', 'stead', 'rest', 'meadow'];
-        const seed = this.hashSeed((col + 11) * 92837111, (row + 17) * 689287499);
-        return `${first[seed % first.length]}${second[Math.floor(seed / first.length) % second.length]}`;
+        const seed = this.hashSeed((col + 11) * 92837111, (row + 17) * 689287499, 14057);
+        return generateVillageName(seed);
     }
 
     public isPlayerOnVillage(): boolean {

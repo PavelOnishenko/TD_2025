@@ -2,6 +2,7 @@ import { theme } from '../../config/ThemeConfig.js';
 import { WALK_KEYFRAMES, WALK_META } from '../../animations/imported/walkImported.js';
 import StickFigure from '../../utils/StickFigure.js';
 import VillagePopulation, { VillageSpot, VillageVillager } from './VillagePopulation.js';
+import { generateVillageName } from '../world/VillageNameGenerator.js';
 
 export type VillageHouse = {
     worldX: number;
@@ -255,9 +256,7 @@ export default class VillageLifeRenderer {
     }
 
     private generateVillageName(): string {
-        const first = ['Oak', 'River', 'Sun', 'Stone', 'Amber', 'Willow', 'Moss', 'Silver', 'Pine', 'Moon'];
-        const second = ['ford', 'field', 'brook', 'haven', 'hill', 'cross', 'watch', 'stead', 'rest', 'meadow'];
-        return `${first[Math.floor(Math.random() * first.length)]}${second[Math.floor(Math.random() * second.length)]}`;
+        return generateVillageName(Math.floor(Math.random() * 0x7fffffff));
     }
 
     private mixColors(colorA: string, colorB: string, ratio: number): string {
