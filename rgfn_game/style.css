@@ -359,6 +359,10 @@ h1 {
 #game-log-container {
     min-height: 220px;
     max-height: min(42vh, 360px);
+    min-width: 260px;
+    min-inline-size: 260px;
+    resize: both;
+    overflow: hidden;
 }
 
 #game-log-container h3 {
@@ -599,6 +603,7 @@ h1 {
     #game-log-container {
         margin-top: 0;
         max-height: 260px;
+        resize: none;
     }
 
     .village-floating-rumors {
