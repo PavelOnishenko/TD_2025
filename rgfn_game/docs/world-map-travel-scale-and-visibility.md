@@ -6,7 +6,7 @@ _Date: 2026-03-28_
 
 Current RGFN world-map assumptions combine two factors:
 
-- **Cell travel time** is currently set to `20` minutes per step (`theme.worldMap.cellTravelMinutes`).
+- **Road travel time** is currently set to `12` minutes per step (`theme.worldMap.cellTravelMinutes`).
 - **Visibility radius** is currently `2`, but line-of-sight is heavily cut by forests and mountains (`balanceConfig.worldMap.visibilityRadius` + `WorldMap.isCellVisible(...)`).
 
 This can make forest navigation feel harsh: technically radius is not zero, but forests block line-of-sight aggressively and effectively create a "blind tunnel" feeling.
@@ -24,6 +24,25 @@ Practical effect:
 - Open terrain feels less claustrophobic due to larger default radius.
 - Forest traversal remains tense, but immediate orientation in forest is now possible (no longer effectively "blind" for adjacent forest tile).
 
+## Implementation status (March 28, 2026 terrain-speed follow-up)
+
+Implemented in code:
+
+- Road tiles use the base multiplier: `1.0x`.
+- Off-road `grass` uses multiplier: `2.0x`.
+- Off-road `forest` uses multiplier: `4.0x`.
+
+With `cellTravelMinutes = 12`, that gives:
+
+- Road: **12 min/cell**
+- Off-road grass: **24 min/cell**
+- Off-road forest: **48 min/cell**
+
+Additional UX update:
+
+- Selected-cell travel field now shows minutes + mode (`road`, `off-road`, or `blocked`) instead of only walkability.
+- World-map legend now summarizes the road/off-road minute scale.
+
 ## Practical target for better pacing
 
 For RGFN specifically, a strong baseline is:
@@ -35,7 +54,7 @@ Why 12 min is a good anchor:
 1. **Session rhythm:** 5 cells ≈ 1 hour of in-world time (easy mental math).
 2. **Meaningful but not sluggish:** travel still feels non-trivial; unlike 20 min, routes no longer feel overlong.
 3. **Quest readability:** shorter per-cell time reduces friction when players traverse several tiles to validate rumors/objectives.
-4. **Future scaling flexibility:** allows adding terrain modifiers (e.g., mountain 1.5x, road 0.75x) without exploding total travel time.
+4. **Future scaling flexibility:** supports terrain modifiers without exploding total travel time.
 
 ## Recommended visibility interpretation by terrain
 
@@ -77,11 +96,14 @@ Result: minimal risk, but forest pain point may remain.
 Primary touchpoints:
 
 1. `rgfn_game/js/config/ThemeConfig.ts`
-   - `theme.worldMap.cellTravelMinutes`
+   - `theme.worldMap.cellTravelMinutes` (base road movement unit)
 2. `rgfn_game/js/config/balanceConfig.ts`
    - `worldMap.visibilityRadius`
 3. `rgfn_game/js/systems/world/WorldMap.ts`
    - `isCellVisible(...)` terrain line-of-sight rules, especially forest handling.
+   - terrain travel modifiers, per-step travel-minute calculation, total travel-minute accumulation.
+4. `rgfn_game/js/systems/HudController.ts`
+   - selected-cell travel label formatting for road/off-road/blocked states.
 
 ## Recommendation summary
 

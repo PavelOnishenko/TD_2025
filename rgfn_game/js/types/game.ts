@@ -62,6 +62,8 @@ export interface SelectedWorldCellInfo {
     villageName: string | null;
     villageStatus: 'current' | 'mapped' | null;
     isTraversable: boolean;
+    travelMinutes: number | null;
+    travelMode: 'road' | 'offroad' | 'blocked';
 }
 
 export interface SelectedBattleCellInfo {

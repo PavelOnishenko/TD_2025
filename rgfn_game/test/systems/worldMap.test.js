@@ -285,6 +285,14 @@ test('WorldMap exposes selected cell info from mouse position after viewport tra
   worldMap.resizeToCanvas(480, 360);
   worldMap.zoomIn();
 
+  worldMap.terrainData.set('6,4', {
+    ...worldMap.terrainData.get('6,4'),
+    type: 'grass',
+    color: theme.worldMap.terrain.grass,
+    pattern: 'plain',
+  });
+  worldMap.roadIndexSet.add((4 * worldMap.grid.columns) + 6);
+
   const [x, y] = worldMap.getPlayerPixelPosition();
   worldMap.updateSelectedCellFromPixel(x, y);
 
@@ -299,7 +307,45 @@ test('WorldMap exposes selected cell info from mouse position after viewport tra
     villageName: null,
     villageStatus: null,
     isTraversable: worldMap.getCurrentTerrain().type !== 'water',
+    travelMinutes: theme.worldMap.cellTravelMinutes,
+    travelMode: 'road',
   });
+});
+
+test('WorldMap applies road/off-road travel multipliers and tracks total travel minutes', () => {
+  const worldMap = new WorldMap(12, 9, 10);
+  placePlayerAt(worldMap, 6, 4);
+
+  worldMap.terrainData.set('7,4', { ...worldMap.terrainData.get('7,4'), type: 'grass', color: theme.worldMap.terrain.grass, pattern: 'plain' });
+  worldMap.terrainData.set('8,4', { ...worldMap.terrainData.get('8,4'), type: 'forest', color: theme.worldMap.terrain.forest, pattern: 'groves' });
+  worldMap.terrainData.set('9,4', { ...worldMap.terrainData.get('9,4'), type: 'grass', color: theme.worldMap.terrain.grass, pattern: 'plain' });
+
+  const roadCellIndex = (4 * worldMap.grid.columns) + 9;
+  worldMap.roadIndexSet.add(roadCellIndex);
+
+  assert.equal(worldMap.getTotalTravelMinutes(), 0);
+
+  assert.deepEqual(worldMap.movePlayer('right'), { moved: true, isPreviouslyDiscovered: false });
+  assert.equal(worldMap.getTotalTravelMinutes(), theme.worldMap.cellTravelMinutes * 2);
+
+  assert.deepEqual(worldMap.movePlayer('right'), { moved: true, isPreviouslyDiscovered: false });
+  assert.equal(worldMap.getTotalTravelMinutes(), theme.worldMap.cellTravelMinutes * 6);
+
+  assert.deepEqual(worldMap.movePlayer('right'), { moved: true, isPreviouslyDiscovered: false });
+  assert.equal(worldMap.getTotalTravelMinutes(), theme.worldMap.cellTravelMinutes * 7);
+});
+
+test('WorldMap saves and restores accumulated travel minutes', () => {
+  const worldMap = new WorldMap(12, 9, 10);
+  const state = worldMap.getState();
+  const restored = new WorldMap(12, 9, 10);
+
+  restored.restoreState({
+    ...state,
+    totalTravelMinutes: 123,
+  });
+
+  assert.equal(restored.getTotalTravelMinutes(), 123);
 });
 
 test('WorldMap draw renders visible terrain, fog and grid without throwing on a 100x100 map', () => {

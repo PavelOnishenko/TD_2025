@@ -69,6 +69,11 @@ type TerrainLayerCache = {
     detailLevel: 'low' | 'medium';
 };
 
+const OFFROAD_TRAVEL_MULTIPLIER_BY_TERRAIN: Partial<Record<TerrainType, number>> = {
+    grass: 2,
+    forest: 4,
+};
+
 export default class WorldMap {
     private grid: GridMap;
     private playerGridPos: GridPosition;
@@ -92,6 +97,7 @@ export default class WorldMap {
     private terrainLayerCaches: Partial<Record<'low' | 'medium', TerrainLayerCache>>;
     private fogRevision: number;
     private terrainRevision: number;
+    private totalTravelMinutes: number;
 
     constructor(columns: number, rows: number, cellSize: number) {
         this.grid = new GridMap(columns, rows, cellSize);
@@ -116,6 +122,7 @@ export default class WorldMap {
         this.terrainLayerCaches = {};
         this.fogRevision = 0;
         this.terrainRevision = 0;
+        this.totalTravelMinutes = 0;
         this.initializeFogOfWar();
         this.generateWorld();
         this.visitedCells.add(this.getCellKey(this.playerGridPos.col, this.playerGridPos.row));
@@ -724,6 +731,7 @@ export default class WorldMap {
             const destinationKey = this.getCellKey(newCol, newRow);
             const isPreviouslyDiscovered = this.visitedCells.has(destinationKey);
             this.playerGridPos = { col: newCol, row: newRow };
+            this.totalTravelMinutes += this.getTravelMinutesForCell(newCol, newRow);
             this.visitedCells.add(destinationKey);
             this.refreshVisibility();
             this.ensureCellIsVisible(newCol, newRow);
@@ -1027,7 +1035,16 @@ export default class WorldMap {
         if (selectedCell) {
             this.renderer.drawCursorMarker(ctx, selectedCell, this.isCellVisible(selectedCell.col, selectedCell.row));
         }
-        this.renderer.drawScaleLegend(ctx, this.grid, `${theme.worldMap.cellTravelMinutes} min walk / cell`, this.canvasWidth, this.canvasHeight);
+        const baseMinutes = theme.worldMap.cellTravelMinutes;
+        const grassOffroadMinutes = baseMinutes * (OFFROAD_TRAVEL_MULTIPLIER_BY_TERRAIN.grass ?? 1);
+        const forestOffroadMinutes = baseMinutes * (OFFROAD_TRAVEL_MULTIPLIER_BY_TERRAIN.forest ?? 1);
+        this.renderer.drawScaleLegend(
+            ctx,
+            this.grid,
+            `Road ${baseMinutes}m · Off-road ${grassOffroadMinutes}/${forestOffroadMinutes}m`,
+            this.canvasWidth,
+            this.canvasHeight,
+        );
     }
 
     public registerNamedLocation(name: string): void {
@@ -1316,6 +1333,7 @@ export default class WorldMap {
             fogStates: Array.from(this.fogStates.entries()),
             villages: Array.from(this.villages.values()),
             visitedCells: Array.from(this.visitedCells.values()),
+            totalTravelMinutes: this.totalTravelMinutes,
             viewport: {
                 cellSize: this.grid.cellSize,
                 offsetX: this.grid.offsetX,
@@ -1376,6 +1394,10 @@ export default class WorldMap {
             this.visitedCells = new Set([this.getCellKey(this.playerGridPos.col, this.playerGridPos.row)]);
         }
 
+        this.totalTravelMinutes = typeof state.totalTravelMinutes === 'number' && Number.isFinite(state.totalTravelMinutes)
+            ? Math.max(0, state.totalTravelMinutes)
+            : 0;
+
         const viewport = state.viewport as { cellSize?: unknown; offsetX?: unknown; offsetY?: unknown } | undefined;
         if (viewport && typeof viewport.cellSize === 'number' && typeof viewport.offsetX === 'number' && typeof viewport.offsetY === 'number') {
             const clampedCellSize = Math.max(theme.worldMap.cellSize.min, Math.min(theme.worldMap.cellSize.max, viewport.cellSize));
@@ -1433,6 +1455,8 @@ export default class WorldMap {
             && this.selectedGridPos.col === this.playerGridPos.col
             && this.selectedGridPos.row === this.playerGridPos.row;
 
+        const travelInfo = this.getTravelInfoForCell(this.selectedGridPos.col, this.selectedGridPos.row);
+
         return {
             mode: 'world',
             col: this.selectedGridPos.col,
@@ -1444,6 +1468,34 @@ export default class WorldMap {
             villageName: isVillage ? this.getVillageName(this.selectedGridPos.col, this.selectedGridPos.row) : null,
             villageStatus: isVillage ? (isCurrentVillage ? 'current' : 'mapped') : null,
             isTraversable: terrain.type !== 'water',
+            travelMinutes: travelInfo.minutes,
+            travelMode: travelInfo.mode,
+        };
+    }
+
+    public getTotalTravelMinutes(): number {
+        return this.totalTravelMinutes;
+    }
+
+    private getTravelMinutesForCell(col: number, row: number): number {
+        return this.getTravelInfoForCell(col, row).minutes ?? 0;
+    }
+
+    private getTravelInfoForCell(col: number, row: number): { minutes: number | null; mode: 'road' | 'offroad' | 'blocked' } {
+        const terrain = this.getTerrain(col, row);
+        if (!terrain || terrain.type === 'water') {
+            return { minutes: null, mode: 'blocked' };
+        }
+
+        const baseMinutes = theme.worldMap.cellTravelMinutes;
+        if (this.roadIndexSet.has(this.getCellIndex(col, row))) {
+            return { minutes: baseMinutes, mode: 'road' };
+        }
+
+        const offroadMultiplier = OFFROAD_TRAVEL_MULTIPLIER_BY_TERRAIN[terrain.type] ?? 1;
+        return {
+            minutes: Math.round(baseMinutes * offroadMultiplier),
+            mode: 'offroad',
         };
     }
 

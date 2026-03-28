@@ -262,10 +262,28 @@ export default class HudController {
         const villageDetailsKnown = terrainIsKnown && selectedCell.isVillage;
         this.hudElements.selectedCellTerrain.textContent = terrainIsKnown ? this.formatTerrainLabel(selectedCell.terrainType) : 'Unknown';
         this.hudElements.selectedCellVisibility.textContent = this.formatVisibilityLabel(selectedCell);
-        this.hudElements.selectedCellTraversable.textContent = terrainIsKnown ? (selectedCell.isTraversable ? 'Walkable' : 'Blocked') : 'Unknown';
+        this.hudElements.selectedCellTraversable.textContent = terrainIsKnown
+            ? this.formatTravelLabel(selectedCell)
+            : 'Unknown';
         this.hudElements.selectedCellVillage.textContent = terrainIsKnown ? (selectedCell.isVillage ? 'Yes' : 'No') : 'Unknown';
         this.hudElements.selectedCellVillageName.textContent = terrainIsKnown ? (selectedCell.villageName ?? '—') : 'Unknown';
         this.hudElements.selectedCellVillageStatus.textContent = villageDetailsKnown ? this.formatVillageStatusLabel(selectedCell.villageStatus) : (terrainIsKnown ? '—' : 'Unknown');
+    }
+
+    private formatTravelLabel(selectedCell: Extract<SelectedCellInfo, { mode: 'world' }>): string {
+        if (!selectedCell.isTraversable || selectedCell.travelMinutes === null) {
+            return 'Blocked';
+        }
+
+        if (selectedCell.travelMode === 'road') {
+            return `${selectedCell.travelMinutes} min (road)`;
+        }
+
+        if (selectedCell.travelMode === 'offroad') {
+            return `${selectedCell.travelMinutes} min (off-road)`;
+        }
+
+        return `${selectedCell.travelMinutes} min`;
     }
 
     private bindEquipmentSlotEvents(): void {
