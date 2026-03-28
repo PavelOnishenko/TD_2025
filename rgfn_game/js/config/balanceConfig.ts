@@ -66,6 +66,10 @@ export const balanceConfig = {
     // Global multiplier that scales all automatic village creation systems.
     // 1 = baseline density, 0.333... = roughly 3x fewer initially generated villages.
     villageCreationRateMultiplier: 1 / 3,
+    questUi: {
+        // Time a quest feedback message stays visible (milliseconds)
+        feedbackMessageDurationMs: 5000,
+    },
 
     worldMap: {
         dimensions: {

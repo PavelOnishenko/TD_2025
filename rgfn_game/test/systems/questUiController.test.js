@@ -104,3 +104,38 @@ test('QuestUiController renders completion styling and checkmark for completed q
   assert.equal(bodyHtml.includes('quest-node is-completed'), true);
   assert.equal(bodyHtml.includes('quest-node-check'), true);
 });
+
+test('QuestUiController clears quest feedback after configured timeout', () => {
+  const originalSetTimeout = global.setTimeout;
+  const originalClearTimeout = global.clearTimeout;
+  let scheduledCallback = null;
+  let scheduledDelay = -1;
+  const clearedTimeoutIds = [];
+
+  global.setTimeout = (callback, delay) => {
+    scheduledCallback = callback;
+    scheduledDelay = delay;
+    return 77;
+  };
+  global.clearTimeout = (timeoutId) => {
+    clearedTimeoutIds.push(timeoutId);
+  };
+
+  try {
+    const controller = new QuestUiController(createElement(), createElement(), createElement(), createElement(), createElement(), { onLocationClick: () => false });
+
+    controller['setFeedback']('Oakcross is not discovered yet.', true);
+    assert.equal(scheduledDelay, 5000);
+    assert.equal(controller['feedbackElements'][0].textContent, 'Oakcross is not discovered yet.');
+
+    scheduledCallback();
+    assert.equal(controller['feedbackElements'][0].textContent, '');
+
+    controller['setFeedback']('Showing Oakcross on the world map.', false);
+    controller['setFeedback']('Showing Fog Chapel on the world map.', false);
+    assert.deepEqual(clearedTimeoutIds, [77]);
+  } finally {
+    global.setTimeout = originalSetTimeout;
+    global.clearTimeout = originalClearTimeout;
+  }
+});

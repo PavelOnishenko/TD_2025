@@ -62,7 +62,8 @@ Village rumors now support asking about **people**, not only settlements.
 3. Click **Ask about person**.
 
 ### Button availability rule (RGFN UX)
-- The following three dialogue/barter buttons are now always enabled in the village UI:
+- The following four dialogue/barter buttons are now always enabled in the village UI:
+  - **Ask about location**
   - **Ask about person**
   - **Ask about barter**
   - **I have what you need, let's do our barter**
