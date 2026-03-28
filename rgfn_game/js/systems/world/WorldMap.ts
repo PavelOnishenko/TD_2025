@@ -1393,7 +1393,7 @@ export default class WorldMap {
                             height: cellSize,
                             data: {},
                         },
-                        this.getFogState(col, row),
+                        FOG_STATE.DISCOVERED,
                         terrain,
                         undefined,
                         {

@@ -114,3 +114,28 @@ In non-browser/test contexts (no `document` or no `drawImage`), rendering falls 
 ### Guardrails added
 
 - New automated test verifies medium-detail cache behavior: second draw performs significantly fewer `drawCell` calls than first draw (terrain layer reuse).
+
+## March 2026 regression fix: stale unknown (`?`) cells while moving on grassland
+
+### Symptom
+
+- After the optimization changes, entering unknown grassland sometimes did not reveal nearby cells around the hero (expected radius stayed as `?`).
+- After moving away and returning, map visuals could become mixed: part of nearby terrain rendered discovered, part still rendered as stale `?`.
+
+### Root cause
+
+- Terrain-layer cache generation used per-cell runtime fog state.
+- At cache-build time, many cells were still `unknown`, so the cache baked unknown visuals directly into the terrain layer.
+- Because fog updates intentionally no longer invalidate terrain cache, those baked unknown cells persisted visually even when fog state later changed to discovered/hidden.
+
+### Fix implemented
+
+- Cache generation now always renders base terrain as `discovered` fog state.
+- Dynamic fog (`unknown`/`hidden`) remains handled only by the dedicated fog overlay pass for currently visible cells.
+- This keeps cache content fog-agnostic (stable terrain only) and prevents stale `?` artifacts.
+
+### Regression coverage added
+
+- Added automated test:
+  - `WorldMap terrain cache render is fog-agnostic and does not draw unknown cells into cached terrain layer`
+- Test asserts cache-build `drawCell(..., { showFogOverlay: false })` calls use only `discovered` fog state.
