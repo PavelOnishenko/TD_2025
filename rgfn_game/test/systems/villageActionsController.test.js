@@ -47,6 +47,7 @@ function createVillageUi() {
     prompt: createElement(),
     actions: createElement(),
     openDialogueBtn: createElement('button'),
+    sleepRoomBtn: createElement('button'),
     dialogueModal: createElement(),
     dialogueCloseBtn: createElement('button'),
     dialogueSelectedNpc: createElement(),
@@ -65,6 +66,7 @@ function createVillageUi() {
     askPersonBtn: createElement('button'),
     askBarterBtn: createElement('button'),
     barterNowBtn: createElement('button'),
+    leaveBtn: createElement('button'),
   };
 }
 
@@ -77,6 +79,7 @@ function createPlayerStub() {
     getInventory: () => [...inventory],
     heal: () => {},
     restoreMana: () => {},
+    recoverFatigue: () => 0,
   };
 }
 
@@ -240,4 +243,34 @@ test('VillageActionsController mirrors dialogue lines into modal log and toggles
 
   controller.closeDialogueWindow();
   assert.equal(villageUI.dialogueModal.classList.added.includes('hidden'), true);
+}));
+
+test('VillageActionsController allows safe room sleep only with innkeeper selected', () => withDocumentStub(() => {
+  const villageUI = createVillageUi();
+  const gameLog = createElement();
+  const player = createPlayerStub();
+  player.gold = 20;
+  let recovered = 0;
+  player.recoverFatigue = (value) => { recovered = value; return value; };
+
+  const controller = new VillageActionsController(player, villageUI, gameLog, {
+    onUpdateHUD: () => {},
+    onLeaveVillage: () => {},
+    getVillageDirectionHint: (settlementName) => ({ settlementName, exists: false }),
+    onVillageBarterCompleted: () => {},
+  });
+
+  controller['dialogueEngine'] = {
+    createNpcRoster: () => [{ id: 'inn-0', name: 'Mara', role: 'Innkeeper', look: 'cloak', speechStyle: 'calm', disposition: 'truthful' }],
+    buildLocationAnswer: () => ({ speech: '', tone: '', truthfulness: 'truth' }),
+    buildPersonLocationAnswer: () => ({ speech: '', tone: '', truthfulness: 'truth' }),
+  };
+
+  controller.enterVillage('Mossbrook');
+  controller.handleEnter('Mossbrook');
+  controller.handleSelectNpc(0);
+  controller.handleSleepInRoom();
+
+  assert.equal(recovered > 0, true);
+  assert.equal(player.gold < 20, true);
 }));

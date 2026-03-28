@@ -30,6 +30,7 @@ type GameUiEventCallbacks = {
     onCenterWorldMapOnPlayer: () => void;
     onUsePotionFromWorld: () => void;
     onEnterVillageFromWorld: () => void;
+    onCampSleepFromWorld: () => void;
     onTogglePanel: (panel: 'stats' | 'skills' | 'inventory' | 'magic' | 'quests' | 'lore' | 'selected' | 'worldMap' | 'log') => void;
 };
 
@@ -109,6 +110,7 @@ export default class GameUiEventBinder {
         this.hudElements.worldMapPanRightBtn.addEventListener('click', () => this.callbacks.onWorldMapPan('right'));
         this.worldUI.usePotionBtn.addEventListener('click', () => this.callbacks.onUsePotionFromWorld());
         this.worldUI.enterVillageBtn.addEventListener('click', () => this.callbacks.onEnterVillageFromWorld());
+        this.worldUI.campSleepBtn.addEventListener('click', () => this.callbacks.onCampSleepFromWorld());
         this.worldUI.centerOnCharacterBtn.addEventListener('click', () => this.callbacks.onCenterWorldMapOnPlayer());
         this.hudElements.toggleStatsPanelBtn.addEventListener('click', () => this.handlePanelToggle('stats'));
         this.hudElements.toggleSkillsPanelBtn.addEventListener('click', () => this.handlePanelToggle('skills'));
@@ -287,6 +289,7 @@ export default class GameUiEventBinder {
         this.villageUI.askPersonBtn.addEventListener('click', () => this.villageActionsController.handleAskAboutPerson());
         this.villageUI.askBarterBtn.addEventListener('click', () => this.villageActionsController.handleAskAboutBarter());
         this.villageUI.barterNowBtn.addEventListener('click', () => this.villageActionsController.handleConfirmBarter());
+        this.villageUI.sleepRoomBtn.addEventListener('click', () => this.villageActionsController.handleSleepInRoom());
         this.villageUI.leaveBtn.addEventListener('click', () => this.villageActionsController.handleLeave());
     }
 
