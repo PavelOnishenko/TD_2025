@@ -41,7 +41,11 @@ export default class GameRenderRouter {
         this.deps.villageLifeRenderer.render(ctx, time);
         ctx.fillStyle = theme.ui.primaryAccent;
         ctx.font = 'bold 34px Georgia, serif';
-        ctx.fillText(this.deps.villageLifeRenderer.getVillageName(), 24, 56);
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        ctx.fillText(this.deps.villageLifeRenderer.getVillageName(), width * 0.5, 20);
+        ctx.textAlign = 'start';
+        ctx.textBaseline = 'alphabetic';
     }
 
     public renderBattleMode(enemies: Skeleton[], selectedEnemy: Skeleton | null): void {
