@@ -298,7 +298,9 @@ h1 {
 }
 
 .draggable-panel {
-    position: relative;
+    position: absolute;
+    top: 0;
+    left: 0;
     transform: translate(var(--panel-offset-x, 0px), var(--panel-offset-y, 0px));
 }
 
@@ -348,6 +350,12 @@ h1 {
     width: min(340px, calc(100vw - 48px));
     max-height: min(100%, calc(100dvh - 180px));
     overflow: auto;
+}
+
+#world-sidebar {
+    flex-shrink: 0;
+    max-height: none;
+    overflow: visible;
 }
 
 #world-sidebar.hidden,
@@ -593,6 +601,7 @@ h1 {
     }
 
     .draggable-panel {
+        position: static;
         transform: none;
     }
 

@@ -413,6 +413,7 @@ export default class Game {
             onUseManaPotionFromHud: () => this.battleCoordinator.handleUseManaPotion(false),
             onUsePotionFromWorld: () => this.battleCoordinator.handleUsePotion(false),
             onEnterVillageFromWorld: () => this.tryEnterVillageFromWorldMap(),
+            onCampSleepFromWorld: () => this.worldModeController.handleCampSleep(),
             onNewCharacter: () => this.startNewCharacter(),
             onAddStat: (stat) => this.hudCoordinator.handleAddStat(stat),
             onRemoveStat: (stat) => this.hudCoordinator.handleRemoveStat(stat),

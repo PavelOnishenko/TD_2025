@@ -7,6 +7,7 @@ import Item from '../entities/Item.js';
 import Wanderer from '../entities/Wanderer.js';
 import { ItemDiscoverySplash } from '../ui/ItemDiscoverySplash.js';
 import { Direction, TerrainType } from '../types/game.js';
+import { balanceConfig } from '../config/balanceConfig.js';
 
 type WorldModeCallbacks = {
     onEnterVillage: () => void;
@@ -81,6 +82,29 @@ export default class WorldModeController {
 
         this.callbacks.onEnterVillage();
         return true;
+    }
+
+    public handleCampSleep(): void {
+        if (this.worldMap.isPlayerOnVillage()) {
+            this.callbacks.onAddBattleLog('You are at a village. Rent a room from an innkeeper for safer sleep.', 'system');
+            return;
+        }
+
+        const recovered = this.player.recoverFatigue(balanceConfig.survival.wildSleepFatigueRecovery);
+        this.callbacks.onAddBattleLog(`You camp in the wild and recover ${Math.round(recovered)} fatigue.`, 'player');
+
+        if (Math.random() < balanceConfig.survival.wildSleepAmbushChance) {
+            this.player.takeDamage(balanceConfig.survival.wildSleepAmbushHpLoss);
+            const manaLoss = Math.max(0, balanceConfig.survival.wildSleepAmbushManaLoss);
+            if (manaLoss > 0) {
+                this.player.mana = Math.max(0, this.player.mana - manaLoss);
+            }
+            this.callbacks.onAddBattleLog('Night ambush! You were caught off guard while sleeping.', 'enemy');
+        } else {
+            this.callbacks.onAddBattleLog('The night is quiet. You wake up before dawn.', 'system');
+        }
+
+        this.callbacks.onUpdateHUD();
     }
 
     private handleMapViewportInput(): void {
@@ -169,6 +193,7 @@ export default class WorldModeController {
     }
 
     private onPlayerMoved(isPreviouslyDiscovered: boolean): void {
+        this.player.addTravelFatigue(1);
         this.player.restoreMana(1);
         this.callbacks.onUpdateHUD();
 

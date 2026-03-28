@@ -43,6 +43,8 @@ export default class GameUiFactory {
             playerDodgeFormula: document.getElementById('player-dodge-formula')!,
             playerWeapon: document.getElementById('player-weapon')!,
             playerGold: document.getElementById('player-gold')!,
+            playerFatigue: document.getElementById('player-fatigue')!,
+            playerFatigueState: document.getElementById('player-fatigue-state')!,
             skillPoints: document.getElementById('skill-points')!,
             magicPoints: document.getElementById('magic-points')!,
             magicPanelPoints: document.getElementById('magic-panel-points')!,
@@ -163,6 +165,7 @@ export default class GameUiFactory {
             sidebar: document.getElementById('world-sidebar')!,
             usePotionBtn: document.getElementById('world-use-potion-btn')! as HTMLButtonElement,
             enterVillageBtn: document.getElementById('world-enter-village-btn')! as HTMLButtonElement,
+            campSleepBtn: document.getElementById('world-camp-sleep-btn')! as HTMLButtonElement,
             centerOnCharacterBtn: document.getElementById('world-center-on-character-btn')! as HTMLButtonElement,
         };
     }
@@ -174,6 +177,7 @@ export default class GameUiFactory {
             prompt: document.getElementById('village-prompt')!,
             actions: document.getElementById('village-actions')!,
             openDialogueBtn: document.getElementById('village-open-dialogue-btn')! as HTMLButtonElement,
+            sleepRoomBtn: document.getElementById('village-sleep-room-btn')! as HTMLButtonElement,
             dialogueModal: document.getElementById('village-dialogue-modal')!,
             dialogueCloseBtn: document.getElementById('village-dialogue-close-btn')! as HTMLButtonElement,
             dialogueSelectedNpc: document.getElementById('village-dialogue-selected-npc')!,
