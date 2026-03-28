@@ -215,41 +215,6 @@ h1 {
     box-shadow: none;
 }
 
-#world-map-controls {
-    position: absolute;
-    right: 18px;
-    bottom: 18px;
-    display: flex;
-    gap: 10px;
-    align-items: flex-end;
-    pointer-events: none;
-    z-index: 3;
-}
-
-.world-map-control-group,
-.world-map-control-pad {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    pointer-events: auto;
-}
-
-.world-map-control-pad {
-    align-items: center;
-}
-
-.world-map-control-pad-row {
-    display: flex;
-    gap: 6px;
-}
-
-.world-map-control-btn {
-    min-width: 56px;
-    padding: 6px 8px;
-    background: color-mix(in srgb, var(--color-panel-highlight) 92%, transparent);
-    backdrop-filter: blur(4px);
-}
-
 .overlay-stack {
     position: absolute;
     inset: 16px;

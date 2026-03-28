@@ -79,6 +79,8 @@ export default class Game {
     private questUiController: QuestUiController | null = null;
     private questProgressTracker: QuestProgressTracker | null = null;
     private lastSavedSnapshot: string = '';
+    private isWorldMapMiddleDragActive = false;
+    private worldMapDragPointer = { x: 0, y: 0 };
 
     constructor(canvas: HTMLCanvasElement) {
         this.canvas = canvas;
@@ -427,9 +429,9 @@ export default class Game {
             onCanvasClick: (event) => this.battleCoordinator.handleCanvasClick(event, this.canvas),
             onCanvasMove: (event) => this.handleCanvasMove(event),
             onCanvasLeave: () => this.handleCanvasLeave(),
-            onWorldMapZoomIn: () => this.handleWorldMapZoom('in'),
-            onWorldMapZoomOut: () => this.handleWorldMapZoom('out'),
-            onWorldMapPan: (direction) => this.handleWorldMapPan(direction),
+            onWorldMapWheel: (event) => this.handleWorldMapWheel(event),
+            onWorldMapMiddleDragStart: (event) => this.handleWorldMapMiddleDragStart(event),
+            onWorldMapKeyboardZoom: (direction) => this.handleWorldMapKeyboardZoom(direction),
             onCenterWorldMapOnPlayer: () => this.centerWorldMapOnPlayer(),
             onTogglePanel: (panel) => this.hudCoordinator.togglePanel(panel),
         }).bind(() => this.villageCoordinator.getVillageName());
@@ -521,6 +523,10 @@ export default class Game {
     }
 
     private handleCanvasMove(event: MouseEvent): void {
+        if (this.isWorldMapMiddleDragActive && this.stateMachine.isInState(MODES.WORLD_MAP)) {
+            this.handleWorldMapMiddleDragMove(event);
+        }
+
         const rect = this.canvas.getBoundingClientRect();
         const scaleX = this.canvas.width / rect.width;
         const scaleY = this.canvas.height / rect.height;
@@ -540,6 +546,8 @@ export default class Game {
     }
 
     private handleCanvasLeave(): void {
+        this.stopWorldMapMiddleDrag();
+
         if (this.stateMachine.isInState(MODES.WORLD_MAP)) {
             this.worldMap.clearSelectedCell();
             this.hudCoordinator.updateSelectedCell(null);
@@ -576,6 +584,61 @@ export default class Game {
         const [x, y] = this.worldMap.getPlayerPixelPosition();
         this.player.x = x;
         this.player.y = y;
+    }
+
+    private handleWorldMapWheel(event: WheelEvent): void {
+        if (!this.stateMachine.isInState(MODES.WORLD_MAP)) {
+            return;
+        }
+
+        event.preventDefault();
+        const changed = event.deltaY < 0 ? this.worldMap.zoomIn() : this.worldMap.zoomOut();
+        if (!changed) {
+            return;
+        }
+
+        const [x, y] = this.worldMap.getPlayerPixelPosition();
+        this.player.x = x;
+        this.player.y = y;
+    }
+
+    private handleWorldMapKeyboardZoom(direction: 'in' | 'out'): void {
+        if (!this.stateMachine.isInState(MODES.WORLD_MAP)) {
+            return;
+        }
+
+        this.handleWorldMapZoom(direction);
+    }
+
+    private handleWorldMapMiddleDragStart(event: MouseEvent): void {
+        if (event.button !== 1 || !this.stateMachine.isInState(MODES.WORLD_MAP)) {
+            return;
+        }
+
+        event.preventDefault();
+        this.isWorldMapMiddleDragActive = true;
+        this.worldMapDragPointer = { x: event.clientX, y: event.clientY };
+        const stopDrag = (): void => this.stopWorldMapMiddleDrag();
+        window.addEventListener('mouseup', stopDrag, { once: true });
+        window.addEventListener('blur', stopDrag, { once: true });
+    }
+
+    private handleWorldMapMiddleDragMove(event: MouseEvent): void {
+        const deltaX = event.clientX - this.worldMapDragPointer.x;
+        const deltaY = event.clientY - this.worldMapDragPointer.y;
+        this.worldMapDragPointer = { x: event.clientX, y: event.clientY };
+        const changed = this.worldMap.panByPixels(deltaX, deltaY);
+        if (!changed) {
+            return;
+        }
+
+        const [x, y] = this.worldMap.getPlayerPixelPosition();
+        this.player.x = x;
+        this.player.y = y;
+    }
+
+    private stopWorldMapMiddleDrag(): void {
+        this.isWorldMapMiddleDragActive = false;
     }
 
     private centerWorldMapOnPlayer(): void {

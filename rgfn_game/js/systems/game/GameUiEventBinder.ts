@@ -24,9 +24,9 @@ type GameUiEventCallbacks = {
     onCanvasClick: (event: MouseEvent) => void;
     onCanvasMove: (event: MouseEvent) => void;
     onCanvasLeave: () => void;
-    onWorldMapZoomIn: () => void;
-    onWorldMapZoomOut: () => void;
-    onWorldMapPan: (direction: 'up' | 'down' | 'left' | 'right') => void;
+    onWorldMapWheel: (event: WheelEvent) => void;
+    onWorldMapMiddleDragStart: (event: MouseEvent) => void;
+    onWorldMapKeyboardZoom: (direction: 'in' | 'out') => void;
     onCenterWorldMapOnPlayer: () => void;
     onUsePotionFromWorld: () => void;
     onEnterVillageFromWorld: () => void;
@@ -84,6 +84,29 @@ export default class GameUiEventBinder {
         this.canvas.addEventListener('click', (event: MouseEvent) => this.callbacks.onCanvasClick(event));
         this.canvas.addEventListener('mousemove', (event: MouseEvent) => this.callbacks.onCanvasMove(event));
         this.canvas.addEventListener('mouseleave', () => this.callbacks.onCanvasLeave());
+        this.canvas.addEventListener('wheel', (event: WheelEvent) => this.callbacks.onWorldMapWheel(event), { passive: false });
+        this.canvas.addEventListener('mousedown', (event: MouseEvent) => this.callbacks.onWorldMapMiddleDragStart(event));
+        this.canvas.addEventListener('auxclick', (event: MouseEvent) => {
+            if (event.button === 1) {
+                event.preventDefault();
+            }
+        });
+        document.addEventListener('keydown', (event: KeyboardEvent) => {
+            if (!event.ctrlKey) {
+                return;
+            }
+
+            if (event.code === 'Equal' || event.code === 'NumpadAdd') {
+                event.preventDefault();
+                this.callbacks.onWorldMapKeyboardZoom('in');
+                return;
+            }
+
+            if (event.code === 'Minus' || event.code === 'NumpadSubtract') {
+                event.preventDefault();
+                this.callbacks.onWorldMapKeyboardZoom('out');
+            }
+        });
     }
 
     private bindBattleEvents(): void {
@@ -103,12 +126,6 @@ export default class GameUiEventBinder {
         this.hudElements.usePotionBtn.addEventListener('click', () => this.callbacks.onUsePotionFromHud());
         this.hudElements.useManaPotionBtn.addEventListener('click', () => this.callbacks.onUseManaPotionFromHud());
         this.hudElements.newCharacterBtn.addEventListener('click', () => this.callbacks.onNewCharacter());
-        this.hudElements.worldMapZoomInBtn.addEventListener('click', () => this.callbacks.onWorldMapZoomIn());
-        this.hudElements.worldMapZoomOutBtn.addEventListener('click', () => this.callbacks.onWorldMapZoomOut());
-        this.hudElements.worldMapPanUpBtn.addEventListener('click', () => this.callbacks.onWorldMapPan('up'));
-        this.hudElements.worldMapPanDownBtn.addEventListener('click', () => this.callbacks.onWorldMapPan('down'));
-        this.hudElements.worldMapPanLeftBtn.addEventListener('click', () => this.callbacks.onWorldMapPan('left'));
-        this.hudElements.worldMapPanRightBtn.addEventListener('click', () => this.callbacks.onWorldMapPan('right'));
         this.worldUI.usePotionBtn.addEventListener('click', () => this.callbacks.onUsePotionFromWorld());
         this.worldUI.enterVillageBtn.addEventListener('click', () => this.callbacks.onEnterVillageFromWorld());
         this.worldUI.campSleepBtn.addEventListener('click', () => this.callbacks.onCampSleepFromWorld());
