@@ -7,22 +7,27 @@ const DEFAULT_BRANCH_DESCRIPTION = 'A composite objective. All listed subtasks m
 const DEFAULT_BRANCH_CONDITION = 'Each subtask in this branch is completed.';
 const DEFAULT_DESCRIPTIONS = new Set([DEFAULT_DESCRIPTION, DEFAULT_BRANCH_DESCRIPTION]);
 const DEFAULT_CONDITIONS = new Set([DEFAULT_CONDITION, DEFAULT_BRANCH_CONDITION]);
+const KNOWN_ONLY_TOGGLE_STORAGE_KEY = 'rgfn_quests_known_only_toggle_v1';
+const KNOWN_ONLY_TOGGLE_DEFAULT = true;
 type QuestUiCallbacks = {
     onLocationClick: (locationName: string) => boolean;
 };
 
 export default class QuestUiController {
     private readonly questTitle: HTMLElement;
+    private readonly knownOnlyToggle: HTMLInputElement;
     private readonly questBody: HTMLElement;
     private readonly introModal: HTMLElement;
     private readonly introBody: HTMLElement;
     private readonly introCloseBtn: HTMLButtonElement;
     private readonly callbacks: QuestUiCallbacks;
     private readonly feedbackElements: HTMLElement[];
+    private lastRenderedQuest: QuestNode | null = null;
     private feedbackClearTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
     constructor(
         questTitle: HTMLElement,
+        knownOnlyToggle: HTMLInputElement,
         questBody: HTMLElement,
         introModal: HTMLElement,
         introBody: HTMLElement,
@@ -30,6 +35,7 @@ export default class QuestUiController {
         callbacks: QuestUiCallbacks,
     ) {
         this.questTitle = questTitle;
+        this.knownOnlyToggle = knownOnlyToggle;
         this.questBody = questBody;
         this.introModal = introModal;
         this.introBody = introBody;
@@ -37,11 +43,13 @@ export default class QuestUiController {
         this.callbacks = callbacks;
         this.feedbackElements = [this.createFeedbackElement(this.questBody), this.createFeedbackElement(this.introBody)];
         this.introModal.classList.add('hidden');
+        this.applyPersistedKnownOnlyState();
         this.bindEvents();
     }
 
     public renderQuest(quest: QuestNode): void {
-        const markup = this.buildQuestTreeMarkup(quest, 0);
+        this.lastRenderedQuest = quest;
+        const markup = this.buildQuestTreeMarkup(quest);
         this.questTitle.textContent = `Main Quest: ${quest.title}`;
         this.questBody.innerHTML = markup;
         this.introBody.innerHTML = markup;
@@ -53,6 +61,12 @@ export default class QuestUiController {
 
     private bindEvents(): void {
         this.introCloseBtn.addEventListener('click', () => this.introModal.classList.add('hidden'));
+        this.knownOnlyToggle.addEventListener('change', () => {
+            this.persistKnownOnlyState();
+            if (this.lastRenderedQuest) {
+                this.renderQuest(this.lastRenderedQuest);
+            }
+        });
         this.introModal.addEventListener('click', (event: MouseEvent) => {
             if (event.target === this.introModal) {
                 this.introModal.classList.add('hidden');
@@ -62,13 +76,112 @@ export default class QuestUiController {
         this.bindLocationClicks(this.introBody);
     }
 
-    private buildQuestTreeMarkup(quest: QuestNode, depth: number): string {
-        const childMarkup = quest.children.map((child) => this.buildQuestTreeMarkup(child, depth + 1)).join('');
+    private buildQuestTreeMarkup(quest: QuestNode): string {
+        const preorderNodes: QuestNode[] = [];
+        this.collectPreorderNodes(quest, preorderNodes);
+        const maxVisiblePreorderIndex = this.resolveKnownQuestCutoff(preorderNodes);
+        return this.buildQuestTreeMarkupNode(quest, 0, preorderNodes, maxVisiblePreorderIndex) ?? '';
+    }
+
+    private buildQuestTreeMarkupNode(
+        quest: QuestNode,
+        depth: number,
+        preorderNodes: QuestNode[],
+        maxVisiblePreorderIndex: number,
+    ): string | null {
+        const childMarkup = quest.children
+            .map((child) => this.buildQuestTreeMarkupNode(child, depth + 1, preorderNodes, maxVisiblePreorderIndex))
+            .filter((markup): markup is string => markup !== null)
+            .join('');
         const listClass = depth === 0 ? 'quest-tree-root' : 'quest-tree-children';
-        const childList = quest.children.length > 0 ? `<ul class="${listClass}">${childMarkup}</ul>` : '';
+        const hasVisibleChildren = childMarkup.length > 0;
+        const childList = hasVisibleChildren ? `<ul class="${listClass}">${childMarkup}</ul>` : '';
         const completionClass = quest.isCompleted ? ' is-completed' : '';
         const selfNode = `<li class="quest-node${completionClass}" data-depth="${depth}">${this.nodeMarkup(quest)}${childList}</li>`;
+        const shouldShowNode = this.shouldShowNode(quest, preorderNodes, maxVisiblePreorderIndex) || hasVisibleChildren;
+        if (!shouldShowNode) {
+            return null;
+        }
+
         return depth === 0 ? `<ul class="quest-tree-root">${selfNode}</ul>` : selfNode;
+    }
+
+    private shouldShowNode(quest: QuestNode, preorderNodes: QuestNode[], maxVisiblePreorderIndex: number): boolean {
+        if (!this.knownOnlyToggle.checked) {
+            return true;
+        }
+
+        if (quest.isCompleted) {
+            return true;
+        }
+
+        const questPreorderIndex = preorderNodes.indexOf(quest);
+        return questPreorderIndex >= 0 && questPreorderIndex <= maxVisiblePreorderIndex;
+    }
+
+    private applyPersistedKnownOnlyState(): void {
+        const savedState = this.readKnownOnlyState();
+        this.knownOnlyToggle.checked = savedState ?? KNOWN_ONLY_TOGGLE_DEFAULT;
+    }
+
+    private persistKnownOnlyState(): void {
+        const storage = this.getLocalStorage();
+        if (!storage) {
+            return;
+        }
+
+        storage.setItem(KNOWN_ONLY_TOGGLE_STORAGE_KEY, this.knownOnlyToggle.checked ? '1' : '0');
+    }
+
+    private readKnownOnlyState(): boolean | null {
+        const storage = this.getLocalStorage();
+        if (!storage) {
+            return null;
+        }
+
+        const rawValue = storage.getItem(KNOWN_ONLY_TOGGLE_STORAGE_KEY);
+        if (rawValue === '1') {
+            return true;
+        }
+        if (rawValue === '0') {
+            return false;
+        }
+        return null;
+    }
+
+    private getLocalStorage(): Storage | null {
+        if (typeof window === 'undefined') {
+            return null;
+        }
+
+        try {
+            return window.localStorage;
+        } catch {
+            return null;
+        }
+    }
+
+    private collectPreorderNodes(quest: QuestNode, nodes: QuestNode[]): void {
+        nodes.push(quest);
+        quest.children.forEach((child) => this.collectPreorderNodes(child, nodes));
+    }
+
+    private resolveKnownQuestCutoff(preorderNodes: QuestNode[]): number {
+        if (!this.knownOnlyToggle.checked) {
+            return preorderNodes.length - 1;
+        }
+
+        const firstIncompleteLeafIndex = preorderNodes.findIndex((node) => !node.isCompleted && node.children.length === 0);
+        if (firstIncompleteLeafIndex >= 0) {
+            return firstIncompleteLeafIndex;
+        }
+
+        const firstIncompleteIndex = preorderNodes.findIndex((node) => !node.isCompleted);
+        if (firstIncompleteIndex >= 0) {
+            return firstIncompleteIndex;
+        }
+
+        return preorderNodes.length - 1;
     }
 
     private nodeMarkup(quest: QuestNode): string {

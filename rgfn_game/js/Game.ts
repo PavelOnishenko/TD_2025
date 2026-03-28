@@ -109,6 +109,7 @@ export default class Game {
         });
         const questUiController = new QuestUiController(
             ui.hudElements.questsTitle,
+            ui.hudElements.questsKnownOnlyToggle,
             ui.hudElements.questsBody,
             ui.hudElements.questIntroModal,
             ui.hudElements.questIntroBody,

@@ -1,5 +1,52 @@
 # Quest progress tracking notes
 
+## March 28, 2026 update: alternate "known/current only" quest panel mode
+
+- The Quests HUD panel now supports a second display mode controlled by a checkbox:
+  - `Show only known/current quests`
+- Default behavior is now **known-only ON** (checkbox checked) to avoid exposing future objectives unless the player opts in.
+- When checkbox is ON, the panel hides future objectives that are still below the first currently incomplete objective in quest preorder:
+  - keeps already completed objectives visible,
+  - keeps the current first incomplete objective visible,
+  - hides nodes after that cutoff ("future" nodes the player has not reached yet).
+- Checkbox state is persisted in local storage:
+  - key: `rgfn_quests_known_only_toggle_v1`
+  - value `'1'` = checked (known-only mode), `'0'` = unchecked (full tree mode)
+  - if no value is saved, default is checked (`true`).
+
+### UI + implementation details
+
+- Added quest mode toggle in HUD markup:
+  - `#quests-known-only-toggle` in `index.html`.
+  - initial HTML state is checked so first-time users start in spoiler-safe mode.
+- Added toggle styling in `style.css`:
+  - `.quest-mode-toggle`.
+- `QuestUiController` now:
+  - stores the last rendered quest (`lastRenderedQuest`),
+  - restores saved toggle state on construction (`localStorage`) with a safe fallback when storage is unavailable,
+  - persists toggle state on every user change event,
+  - re-renders automatically when the checkbox changes,
+  - computes preorder quest list and cutoff index in known-only mode,
+  - conditionally hides nodes below cutoff unless they are already completed.
+- Wiring updates:
+  - `HudElements` type now includes `questsKnownOnlyToggle`,
+  - `GameUiFactory` collects the checkbox element,
+  - `Game` passes checkbox into `QuestUiController`.
+
+### Why this mode exists
+
+- Reduces cognitive load for long quest trees.
+- Prevents "spoiler" visibility of deep future branches.
+- Keeps an explicit toggle so players can still inspect the full quest structure whenever desired.
+
+### Regression coverage
+
+- Added automated test in `test/systems/questUiController.test.js`:
+  - verifies known-only mode hides nodes below the first incomplete objective while keeping completed + current nodes visible.
+- Added persistence/default tests:
+  - verifies known-only defaults to checked when there is no saved preference,
+  - verifies stored `'0'`/`'1'` values are restored and updated as user toggles the checkbox.
+
 ## March 28, 2026 update: "is not discovered yet" quest-panel warning now auto-hides
 
 ### What changed
