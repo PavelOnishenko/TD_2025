@@ -24,8 +24,24 @@ This satisfies the intended UX: the map always dominates the screen, and UI pane
   - `Use HP Potion` uses a potion without leaving the panel.
   - `Enter Village (Space)` re-enters a village if the hero is currently standing on a village tile.
   - `Center on Character` recenters the map viewport on the hero.
+  - Legacy world-map zoom/pan button cluster was removed from the UI (`#world-map-controls`), so map interaction now happens directly on canvas + keyboard.
 
 All panel buttons use the existing active-button behavior (`.action-btn.active`) so players can see which panel is currently visible.
+
+## World map mouse + keyboard camera controls (March 28, 2026)
+
+- Zoom:
+  - Mouse wheel over game canvas (world-map mode).
+  - Fallback: `Ctrl + +` / `Ctrl + -` (including numpad `+` / `-`).
+- Pan:
+  - Hold middle mouse button and drag map.
+  - Fallback keys: `I/J/K/L` and numpad `8/4/2/6`.
+
+Implementation summary:
+
+- Wheel is handled on canvas with `passive: false`; browser zoom default is prevented while world-map mode is active.
+- Ctrl zoom hotkeys are intercepted on `keydown` and routed to map zoom callbacks.
+- Middle-button drag captures pointer deltas and calls pixel-based panning (`WorldMap.panByPixels`).
 
 ## Developer notes
 
