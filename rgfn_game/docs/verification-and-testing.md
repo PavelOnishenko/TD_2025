@@ -1,3 +1,39 @@
+## March 28, 2026 update: World Map panel must remain independent from sibling panel visibility
+
+### Reported issue
+- World Map panel became visually unstable when additional HUD panels were open.
+- Symptoms:
+  - panel looked auto-resized/compressed,
+  - vertical scrollbar appeared in the panel unexpectedly,
+  - behavior depended on how many other overlay panels were currently visible.
+
+### Root cause summary
+- World Map panel uses the same draggable-window decoration logic as other HUD windows (this is expected and should be preserved).
+- CSS grouped `#world-sidebar` with `#game-log-container` under shared `max-height` + `overflow:auto`, allowing flex shrink + forced scrolling under constrained overlay layout.
+
+### Fix summary
+- Updated `#world-sidebar` CSS to remove auto-clamp/scroll coupling:
+  - `flex-shrink: 0`
+  - `max-height: none`
+  - `overflow: visible`
+- Kept World Map panel in the same draggable/closable HUD window flow so behavior matches other panels (`drag handle` + `✕` close).
+
+### Why this is the correct behavior
+- World Map panel is a primary interaction panel (navigation + recenter + travel actions), not a transient utility panel.
+- It should remain dimensionally stable regardless of how many informational HUD windows are opened nearby.
+- Drag/overlap mechanics and quick close affordance remain available to the player for consistency with other HUD panels.
+
+### Manual QA steps
+1. Open World Map panel and confirm no forced scrollbar appears.
+2. Open/close several other panels (`Stats`, `Skills`, `Inventory`, `Log`) in different sequences.
+3. Verify World Map panel dimensions and content layout remain unchanged.
+4. Verify World Map remains draggable and closable (`✕`) like other HUD panels.
+5. On small viewport/mobile fallback width, confirm layout still stacks without world panel clipping.
+
+### Commands to run
+- `npm run build:rgfn`
+- `node --test rgfn_game/test/**/*.test.js`
+
 ## March 26, 2026 update: village rumors NPC roster persistence fix (actual root cause)
 
 ### Symptom seen in UI
@@ -659,3 +695,39 @@ So tests asserting fixed literal HP values (for example zombie `7`) will fail wh
 - Added regression assertion in `themeConfig.test.js` to lock baseline defaults:
   - `theme.worldMap.cellTravelMinutes === 12`
   - `balanceConfig.worldMap.visibilityRadius === 3`
+
+## March 28, 2026 update: travel fatigue + risky wild sleep + safe inn rooms
+
+- Added fatigue as a persistent player stat driven by world-map travel.
+- Fatigue growth now uses `cellTravelMinutes` as travel-time basis and estimates comfortable daily distance from awake-hour budget.
+- Added **Camp Sleep (Risky)** action on world map:
+  - restores fatigue,
+  - can trigger ambush while sleeping,
+  - applies HP/mana surprise penalties on ambush.
+- Added **Sleep in room** in villages:
+  - requires selecting an innkeeper NPC,
+  - costs gold,
+  - safely restores large fatigue amount plus minor HP/mana.
+- HUD now shows fatigue value and condition state (`Rested/Tired/Exhausted`).
+
+### Files touched
+
+- `js/entities/Player.ts`
+- `js/systems/WorldModeController.ts`
+- `js/systems/village/VillageActionsController.ts`
+- `js/systems/village/VillageDialogueEngine.ts`
+- `js/config/balanceConfig.ts`
+- `index.html`
+- UI wiring updates in `js/systems/game/*`
+
+### Manual smoke checklist
+
+1. Move across multiple world cells and confirm fatigue rises.
+2. Use **Camp Sleep (Risky)** outside village:
+   - confirm fatigue decreases,
+   - confirm occasional ambush penalty logs.
+3. Enter village, select **Innkeeper**, use **Sleep in room**:
+   - confirm gold spent,
+   - fatigue decreases more safely than wild camp,
+   - no ambush penalties.
+4. Save + reload and confirm fatigue persists.

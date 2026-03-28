@@ -153,6 +153,27 @@ export const balanceConfig = {
             width: 1,
         },
     },
+    survival: {
+        // Approximate awake period used to estimate "comfortable" daily travel.
+        awakeHoursPerDay: 16,
+        // Approximate sleep needed after a heavy travel day.
+        requiredSleepHours: 8,
+        // Global fatigue resource for travel/sleep loops.
+        maxFatigue: 100,
+        // Fatigue state thresholds shown in HUD and used by systems.
+        cautionFatigueThreshold: 60,
+        highFatigueThreshold: 80,
+        // Recovery while sleeping in a safe village room.
+        villageSleepFatigueRecovery: 90,
+        // Recovery while sleeping in the wilderness.
+        wildSleepFatigueRecovery: 65,
+        // Wilderness sleep risk profile.
+        wildSleepAmbushChance: 0.35,
+        wildSleepAmbushHpLoss: 2,
+        wildSleepAmbushManaLoss: 2,
+        // Typical inn room cost.
+        innRoomCostGold: 6,
+    },
 
     // ============ PLAYER STATS ============
     player: {

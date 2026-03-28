@@ -350,6 +350,12 @@ h1 {
     overflow: auto;
 }
 
+#world-sidebar {
+    flex-shrink: 0;
+    max-height: none;
+    overflow: visible;
+}
+
 #world-sidebar.hidden,
 #battle-sidebar.hidden,
 #village-sidebar.hidden {
