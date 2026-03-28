@@ -255,17 +255,31 @@
                                     <p class="village-section-title">Village rumors</p>
                                     <p id="village-npc-title" class="village-npc-title">Choose someone to talk to</p>
                                     <div id="village-npc-list" class="village-npc-list"></div>
-                                    <input id="village-ask-settlement-input" class="village-ask-input" type="text" placeholder="Settlement name (e.g. Oakhaven)">
-                                    <button id="village-ask-settlement-btn" class="action-btn">Ask about location</button>
-                                    <input id="village-ask-person-input" class="village-ask-input" type="text" placeholder="Person name (e.g. Olive)">
-                                    <button id="village-ask-person-btn" class="action-btn">Ask about person</button>
-                                    <button id="village-ask-barter-btn" class="action-btn">Ask about barter</button>
-                                    <button id="village-confirm-barter-btn" class="action-btn">I have what you need, let's do our barter</button>
+                                    <button id="village-open-dialogue-btn" class="action-btn">Open NPC dialogue window</button>
                                 </div>
                                 <button id="village-leave-btn" class="action-btn">Leave</button>
                             </div>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="village-dialogue-modal" class="village-dialogue-modal hidden" role="dialog" aria-modal="true" aria-labelledby="village-dialogue-title">
+            <div class="village-dialogue-panel">
+                <div class="village-dialogue-header">
+                    <h2 id="village-dialogue-title">NPC Dialogue</h2>
+                    <button id="village-dialogue-close-btn" class="action-btn" type="button">Close</button>
+                </div>
+                <p id="village-dialogue-selected-npc" class="village-dialogue-selected-npc">Select an NPC in the village rumors panel first.</p>
+                <div id="village-dialogue-log" class="village-dialogue-log"></div>
+                <div class="village-dialogue-actions">
+                    <input id="village-ask-settlement-input" class="village-ask-input" type="text" placeholder="Settlement name (e.g. Oakhaven)">
+                    <button id="village-ask-settlement-btn" class="action-btn">Ask about location</button>
+                    <input id="village-ask-person-input" class="village-ask-input" type="text" placeholder="Person name (e.g. Olive)">
+                    <button id="village-ask-person-btn" class="action-btn">Ask about person</button>
+                    <button id="village-ask-barter-btn" class="action-btn">Ask about barter</button>
+                    <button id="village-confirm-barter-btn" class="action-btn">I have what you need, let's do our barter</button>
                 </div>
             </div>
         </div>

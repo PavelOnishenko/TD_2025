@@ -145,6 +145,13 @@ export default class GameUiEventBinder {
         this.villageUI.sellSelect.addEventListener('change', () => this.villageActionsController.updateButtons());
         this.villageUI.sellSelectedBtn.addEventListener('click', () => this.villageActionsController.handleSellSelected());
         this.villageUI.askVillageInput.addEventListener('input', () => this.villageActionsController.updateButtons());
+        this.villageUI.openDialogueBtn.addEventListener('click', () => this.villageActionsController.openDialogueWindow());
+        this.villageUI.dialogueCloseBtn.addEventListener('click', () => this.villageActionsController.closeDialogueWindow());
+        this.villageUI.dialogueModal.addEventListener('click', (event: MouseEvent) => {
+            if (event.target === this.villageUI.dialogueModal) {
+                this.villageActionsController.closeDialogueWindow();
+            }
+        });
         this.villageUI.askVillageBtn.addEventListener('click', () => this.villageActionsController.handleAskAboutSettlement());
         this.villageUI.askPersonInput.addEventListener('input', () => this.villageActionsController.updateButtons());
         this.villageUI.askPersonBtn.addEventListener('click', () => this.villageActionsController.handleAskAboutPerson());
