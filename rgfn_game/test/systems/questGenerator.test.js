@@ -31,6 +31,18 @@ test('QuestGenerator creates a random main quest title and nested branches', asy
   assert.equal(typeof quest.children[0].children[1].title, 'string');
 });
 
+test('QuestGenerator and QuestLeafFactory request name generation with configured max word limits', async () => {
+  const packService = new FakeQuestPackService(createNames());
+  const random = new ScriptedQuestRandom({ ints: [1], bools: [false], picks: ['barter'] });
+  const generator = new QuestGenerator({ packService, random });
+
+  await generator.generateMainQuest();
+
+  assert.equal(packService.calls.some((call) => call.domain === 'mainQuest' && call.maxWords === 4), true);
+  assert.equal(packService.calls.some((call) => call.domain === 'character' && call.maxWords === 4), true);
+  assert.equal(packService.calls.some((call) => call.domain === 'artifact' && call.maxWords === 4), true);
+});
+
 test('QuestLeafFactory creates rare mutant hunt quests with stats, effects, and bonus text', async () => {
   const packService = new FakeQuestPackService(createNames());
   const random = new ScriptedQuestRandom({ ints: [2], picks: ['hunt', 'feral strength', 'void armor', 'causes fear', 'drains mana', 'legendary reagent drop'] });

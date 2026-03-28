@@ -70,6 +70,50 @@ export const balanceConfig = {
         // Time a quest feedback message stays visible (milliseconds)
         feedbackMessageDurationMs: 5000,
     },
+    questNameGeneration: {
+        // Maximum number of words allowed per generated name for each quest text domain.
+        maxWordsByDomain: {
+            location: 4,
+            artifact: 4,
+            character: 4,
+            monster: 4,
+            mainQuest: 4,
+        },
+        // Weighted probability distribution for name lengths.
+        // Goal: 1-2 words dominate, 3 words uncommon, 4 words extremely rare.
+        wordLengthWeightsByDomain: {
+            location: {
+                1: 52,
+                2: 40,
+                3: 7,
+                4: 1,
+            },
+            artifact: {
+                1: 50,
+                2: 42,
+                3: 7,
+                4: 1,
+            },
+            character: {
+                1: 58,
+                2: 36,
+                3: 5,
+                4: 1,
+            },
+            monster: {
+                1: 54,
+                2: 38,
+                3: 7,
+                4: 1,
+            },
+            mainQuest: {
+                1: 48,
+                2: 42,
+                3: 9,
+                4: 1,
+            },
+        },
+    },
 
     worldMap: {
         dimensions: {

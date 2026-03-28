@@ -1,6 +1,7 @@
 import { LOCAL_PATTERNS } from './QuestPatterns.js';
 import { DefaultQuestRandom, QuestRandom } from './QuestRandom.js';
 import { GeneratedName, PackSourceType, QuestNameDomain } from './QuestTypes.js';
+import { balanceConfig } from '../../config/balanceConfig.js';
 
 type FetchLike = (input: string) => Promise<{ text(): Promise<string>; json(): Promise<unknown> }>;
 type AssetMap = Record<string, string[]>;
@@ -14,6 +15,7 @@ type QuestPackServiceDeps = {
 
 type CountryRecord = { name?: { common?: string }; capital?: string[]; region?: string; subregion?: string };
 type RandomUserResponse = { results: Array<{ name: { first: string; last: string } }> };
+type LengthWeightMap = Partial<Record<1 | 2 | 3 | 4, number>>;
 
 const ASSET_PATHS = {
     ADJECTIVE: '../../../data/quest-packs/common/adjectives.txt',
@@ -83,16 +85,8 @@ export default class QuestPackService {
 
     private pickWordTarget(domain: QuestNameDomain, maxWords: number): number {
         const cap = Math.max(1, maxWords);
-        if (domain !== 'location') {
-            return this.random.nextInt(1, cap);
-        }
-
-        const weightedTargets = [
-            { words: 2, weight: 42 },
-            { words: 1, weight: 38 },
-            { words: 3, weight: 17 },
-            { words: 4, weight: 3 },
-        ].filter((entry) => entry.words <= cap);
+        const configuredWeights = balanceConfig.questNameGeneration.wordLengthWeightsByDomain[domain] as LengthWeightMap | undefined;
+        const weightedTargets = this.resolveLengthWeights(configuredWeights, cap);
 
         const totalWeight = weightedTargets.reduce((sum, entry) => sum + entry.weight, 0);
         let roll = this.random.nextInt(1, totalWeight);
@@ -104,6 +98,25 @@ export default class QuestPackService {
         }
 
         return Math.min(2, cap);
+    }
+
+    private resolveLengthWeights(weights: LengthWeightMap | undefined, cap: number): Array<{ words: number; weight: number }> {
+        if (!weights) {
+            return [{ words: 1, weight: 1 }];
+        }
+
+        const entries = (Object.entries(weights) as Array<[string, number]>)
+            .map(([length, weight]) => ({ words: Number(length), weight }))
+            .filter((entry) => Number.isInteger(entry.words)
+                && entry.words >= 1
+                && entry.words <= cap
+                && entry.weight > 0);
+
+        if (entries.length > 0) {
+            return entries;
+        }
+
+        return [{ words: 1, weight: 1 }];
     }
 
     private async loadAssets(): Promise<void> {
