@@ -225,6 +225,20 @@ test('WorldMap can center the viewport back on the player after panning', () => 
   assert.deepEqual(reCenteredViewport, centeredViewport);
 });
 
+test('WorldMap supports pixel-based panning for middle-mouse dragging', () => {
+  const worldMap = new WorldMap(100, 100, theme.worldMap.cellSize.default);
+  worldMap.resizeToCanvas(720, 720);
+  worldMap.centerOnPlayer();
+
+  const viewportBefore = worldMap.getState().viewport;
+  const changed = worldMap.panByPixels(48, -36);
+  const viewportAfter = worldMap.getState().viewport;
+
+  assert.equal(changed, true);
+  assert.notEqual(viewportAfter.offsetX, viewportBefore.offsetX);
+  assert.notEqual(viewportAfter.offsetY, viewportBefore.offsetY);
+});
+
 test('WorldMap supports developer map display combinations for full reveal and fog-free exploration', () => {
   const worldMap = new WorldMap(12, 9, 20);
   placePlayerAt(worldMap, 6, 4);

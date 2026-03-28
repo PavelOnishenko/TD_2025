@@ -769,6 +769,18 @@ export default class WorldMap {
         return beforeX !== this.grid.offsetX || beforeY !== this.grid.offsetY;
     }
 
+    public panByPixels(deltaX: number, deltaY: number): boolean {
+        if (deltaX === 0 && deltaY === 0) {
+            return false;
+        }
+
+        const beforeX = this.grid.offsetX;
+        const beforeY = this.grid.offsetY;
+        this.grid.updateLayout(this.grid.cellSize, beforeX + deltaX, beforeY + deltaY);
+        this.clampViewport();
+        return beforeX !== this.grid.offsetX || beforeY !== this.grid.offsetY;
+    }
+
     private centerViewportOnCell(col: number, row: number): void {
         const offsetX = Math.round((this.canvasWidth / 2) - ((col + 0.5) * this.grid.cellSize) + theme.worldMap.gridOffset.x);
         const offsetY = Math.round((this.canvasHeight / 2) - ((row + 0.5) * this.grid.cellSize) + theme.worldMap.gridOffset.y);

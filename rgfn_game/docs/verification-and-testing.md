@@ -246,7 +246,13 @@
 2. Leave village, press **Space**, and confirm village prompt opens again.
 3. Leave village, open World Map panel, click **Enter Village (Space)**, and confirm village prompt opens again.
 4. Press **Space** while not on a village tile and confirm no state transition occurs.
-5. Confirm existing world controls still work: movement, zoom, pan, centering.
+5. Confirm existing world controls still work:
+   - movement (WASD / arrows),
+   - zoom by mouse wheel over canvas,
+   - zoom fallback via `Ctrl + +` and `Ctrl + -`,
+   - middle-mouse drag panning,
+   - keyboard pan fallback (`I/J/K/L`, numpad `8/4/2/6`),
+   - centering via `Center on Character`.
 
 ---
 

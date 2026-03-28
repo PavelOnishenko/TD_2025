@@ -84,12 +84,6 @@ export default class WorldModeController {
     }
 
     private handleMapViewportInput(): void {
-        if (this.input.wasActionPressed('worldMapZoomIn')) {
-            this.worldMap.zoomIn();
-        }
-        if (this.input.wasActionPressed('worldMapZoomOut')) {
-            this.worldMap.zoomOut();
-        }
         if (this.input.wasActionPressed('worldMapPanUp')) {
             this.worldMap.pan('up');
         }
