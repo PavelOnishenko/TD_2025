@@ -1,3 +1,36 @@
+## March 28, 2026 update (follow-up 4): roads are now discoverable by road cells, not only by villages
+
+### Problem seen after first road pass
+- Curved roads were rendered only when their endpoint villages were visible.
+- Result: standing directly on a road corridor could still show no road unless both connected villages had already been discovered.
+- This contradicted expected exploration behavior (road discovery should happen from road traversal itself).
+
+### What was changed
+- Added explicit **road-per-cell** world state:
+  - `roadIndexSet: Set<number>` stores whether each world-map cell contains a road fragment.
+  - `villageRoadLinks` stores deterministic curved road topology used for rendering.
+- Added deterministic road network build step:
+  - `generateVillageRoadNetwork()` now runs after village generation and after village restore.
+  - Links are still nearest-neighbor + de-duplicated, but each link is sampled and rasterized into road cells.
+- Rendering behavior changed:
+  - Roads are no longer gated by village visibility.
+  - Renderer samples each curved link and draws only contiguous segments whose sampled cells are no longer `unknown` fog.
+  - This means road fragments become visible as soon as those road cells are discovered (visited/seen), even before both villages are known.
+- Styling kept:
+  - Thin warm-yellow line with soft glow.
+  - Smooth visual path via sampled points + quadratic smoothing in renderer.
+
+### Additional regression coverage
+- Added a world-map test that verifies:
+  - road cells are actually tracked (`roadIndexSet` populated),
+  - non-village road cells exist,
+  - drawing emits road paths after revealing a road cell (without requiring both village endpoints to be known).
+
+### Commands run
+- `npm run build:rgfn`
+- `node --test rgfn_game/test/systems/worldMap.test.js rgfn_game/test/systems/worldMapRenderer.test.js`
+- `node --test rgfn_game/test/**/*.test.js` (full suite pass in this run)
+
 ## March 28, 2026 update (follow-up 3): curved village roads on the world map
 
 ### Feedback addressed

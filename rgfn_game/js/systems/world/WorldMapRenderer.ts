@@ -3,18 +3,10 @@ import { FogState, TerrainData, GridCell, TerrainNeighbors, TerrainPattern, Terr
 import { theme } from '../../config/ThemeConfig.js';
 
 export default class WorldMapRenderer {
-    public drawVillageRoad(
-        ctx: CanvasRenderingContext2D,
-        startX: number,
-        startY: number,
-        control1X: number,
-        control1Y: number,
-        control2X: number,
-        control2Y: number,
-        endX: number,
-        endY: number,
-        alpha: number,
-    ): void {
+    public drawVillageRoadPath(ctx: CanvasRenderingContext2D, points: Array<{ x: number; y: number }>, alpha: number): void {
+        if (points.length < 2) {
+            return;
+        }
         const clampedAlpha = Math.max(0.3, Math.min(1, alpha));
         ctx.save();
         ctx.lineCap = 'round';
@@ -23,19 +15,33 @@ export default class WorldMapRenderer {
         ctx.strokeStyle = this.withAlpha('#f7d969', 0.18 * clampedAlpha);
         ctx.lineWidth = 4;
         ctx.beginPath();
-        ctx.moveTo(startX, startY);
-        ctx.quadraticCurveTo(control1X, control1Y, (startX + endX) * 0.5, (startY + endY) * 0.5);
-        ctx.quadraticCurveTo(control2X, control2Y, endX, endY);
+        this.traceSmoothPath(ctx, points);
         ctx.stroke();
 
         ctx.strokeStyle = this.withAlpha('#f8db66', 0.84 * clampedAlpha);
         ctx.lineWidth = 1.35;
         ctx.beginPath();
-        ctx.moveTo(startX, startY);
-        ctx.quadraticCurveTo(control1X, control1Y, (startX + endX) * 0.5, (startY + endY) * 0.5);
-        ctx.quadraticCurveTo(control2X, control2Y, endX, endY);
+        this.traceSmoothPath(ctx, points);
         ctx.stroke();
         ctx.restore();
+    }
+
+    private traceSmoothPath(ctx: CanvasRenderingContext2D, points: Array<{ x: number; y: number }>): void {
+        ctx.moveTo(points[0].x, points[0].y);
+        if (points.length === 2) {
+            ctx.lineTo(points[1].x, points[1].y);
+            return;
+        }
+        for (let index = 1; index < points.length - 1; index += 1) {
+            const current = points[index];
+            const next = points[index + 1];
+            const midX = (current.x + next.x) * 0.5;
+            const midY = (current.y + next.y) * 0.5;
+            ctx.quadraticCurveTo(current.x, current.y, midX, midY);
+        }
+        const secondLast = points[points.length - 2];
+        const last = points[points.length - 1];
+        ctx.quadraticCurveTo(secondLast.x, secondLast.y, last.x, last.y);
     }
 
     public drawNamedLocation(
