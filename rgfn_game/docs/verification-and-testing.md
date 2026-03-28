@@ -32,6 +32,59 @@
 
 ### Commands to run
 - `npm run build:rgfn`
+## March 28, 2026 update (follow-up): village names shortened + spacing frequency increased
+
+### Feedback addressed
+- Names felt too bulky after the first expansion (too many stitched segments).
+- Multi-word names with spaces were too rare.
+- Desired profile: mostly 1–2 words, 3-word rare, 4-word very rare.
+
+### What was changed
+- Reworked village generator to two-level weighting:
+  1. **Name pattern weighting** controls word count (`COMPACT` / `DESCRIPTOR` / `PLACE` tokens).
+  2. **Compound complexity weighting** controls stitched-part count inside compact words.
+- Compact word internals now strongly prefer 2-part compounds, with 3-part rare and 4-part very rare.
+- Spaced outputs are intentionally frequent enough to avoid a constant one-token look.
+
+### Regression tests updated
+- `test/systems/worldMap.test.js`
+  - samples 20x20 coordinate names (400 total),
+  - validates uniqueness growth,
+  - validates 1–2 word dominance,
+  - validates 4-word rarity,
+  - validates spaced-name frequency,
+  - validates deterministic same-coordinate output.
+
+### Commands run
+- `npm run build:rgfn`
+- `node --test rgfn_game/test/systems/worldMap.test.js`
+- `node --test rgfn_game/test/**/*.test.js`
+
+## March 28, 2026 update: expanded deterministic village name generator
+
+### Problem statement
+- Village names had a very small combinatorial pool (100 variants), so repeats appeared quickly.
+- This reduced perceived world scale and made quest location flavor feel repetitive.
+
+### Implementation summary
+- Added a dedicated generator module with token dictionaries + pattern templates:
+  - `js/systems/world/VillageNameGenerator.ts`
+- Wired `WorldMap.getVillageName(...)` to use the new deterministic seed-driven generator.
+- Wired `VillageLifeRenderer` fallback naming path to the same generator style.
+
+### Reliability constraints kept
+- Name remains deterministic for identical world seed + coordinates.
+- Name style remains readable and settlement-like.
+- No network dependency added.
+
+### Regression tests
+- `test/systems/worldMap.test.js`
+  - Added test that samples a 15x15 coordinate area and expects >100 unique village names.
+  - Added deterministic same-coordinate equality check.
+
+### Commands run
+- `npm run build:rgfn`
+- `node --test rgfn_game/test/systems/worldMap.test.js`
 - `node --test rgfn_game/test/**/*.test.js`
 
 ## March 26, 2026 update: village rumors NPC roster persistence fix (actual root cause)
@@ -282,7 +335,13 @@
 2. Leave village, press **Space**, and confirm village prompt opens again.
 3. Leave village, open World Map panel, click **Enter Village (Space)**, and confirm village prompt opens again.
 4. Press **Space** while not on a village tile and confirm no state transition occurs.
-5. Confirm existing world controls still work: movement, zoom, pan, centering.
+5. Confirm existing world controls still work:
+   - movement (WASD / arrows),
+   - zoom by mouse wheel over canvas,
+   - zoom fallback via `Ctrl + +` and `Ctrl + -`,
+   - middle-mouse drag panning,
+   - keyboard pan fallback (`I/J/K/L`, numpad `8/4/2/6`),
+   - centering via `Center on Character`.
 
 ---
 

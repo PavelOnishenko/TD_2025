@@ -155,7 +155,7 @@ const GAME_THEME: Theme = {
       desert: '#d4b17a',
     },
     unknown: '#a18a67',
-    gridLines: 'rgba(46, 32, 19, 0.12)',
+    gridLines: 'rgba(46, 32, 19, 0)',
     playerMarker: '#8f1f1f',
     iconScale: {
       character: 1,

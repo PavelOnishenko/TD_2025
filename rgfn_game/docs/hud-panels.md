@@ -24,8 +24,24 @@ This satisfies the intended UX: the map always dominates the screen, and UI pane
   - `Use HP Potion` uses a potion without leaving the panel.
   - `Enter Village (Space)` re-enters a village if the hero is currently standing on a village tile.
   - `Center on Character` recenters the map viewport on the hero.
+  - Legacy world-map zoom/pan button cluster was removed from the UI (`#world-map-controls`), so map interaction now happens directly on canvas + keyboard.
 
 All panel buttons use the existing active-button behavior (`.action-btn.active`) so players can see which panel is currently visible.
+
+## World map mouse + keyboard camera controls (March 28, 2026)
+
+- Zoom:
+  - Mouse wheel over game canvas (world-map mode).
+  - Fallback: `Ctrl + +` / `Ctrl + -` (including numpad `+` / `-`).
+- Pan:
+  - Hold middle mouse button and drag map.
+  - Fallback keys: `I/J/K/L` and numpad `8/4/2/6`.
+
+Implementation summary:
+
+- Wheel is handled on canvas with `passive: false`; browser zoom default is prevented while world-map mode is active.
+- Ctrl zoom hotkeys are intercepted on `keydown` and routed to map zoom callbacks.
+- Middle-button drag captures pointer deltas and calls pixel-based panning (`WorldMap.panByPixels`).
 
 ## Developer notes
 
@@ -287,3 +303,41 @@ Two systems were interacting in a bad way:
 3. Drag `Magic` to a custom location, close it, reopen it:
    - it should keep the moved position (spawn offset should not be re-applied).
 4. Verify close button and drag interactions still work exactly as before.
+
+## Resizable Log window (March 28, 2026, follow-up #3)
+
+The `Log` panel (`#game-log-container`) now supports manual resize on desktop:
+
+- Uses native CSS resizing (`resize: both`) so players can widen/tall the log while playing.
+- Enforces a minimum inline size (`260px`) to prevent collapsing into unreadable widths.
+- Allows near-fullscreen expansion on desktop by setting explicit viewport caps:
+  - `max-width: calc(100vw - 32px)`
+  - `max-height: calc(100dvh - 32px)`
+- Keeps log internals stable by setting panel overflow to `hidden` while the inner `#game-log` element continues to own scroll behavior.
+- Removes legacy desktop-size clamp behavior (old `max-height` caps) that previously prevented growing the panel to large sizes.
+- On narrow/mobile layout (`max-width: 920px`), resizing is intentionally disabled (`resize: none`) so the stacked single-column flow remains predictable.
+
+### Why this change helps
+
+- The log is one of the highest-frequency information streams during world traversal, village actions, and battles.
+- Fixed-size height was often too small when tracking long combat sequences or dialogue-heavy village interactions.
+- Draggable windows + resizable log together improve readability without forcing global font/layout changes.
+
+
+### Implementation gotchas (helpful for future UI work)
+
+- The log panel previously shared a grouped selector with `#world-sidebar`, which imposed a stricter `max-height` clamp suitable for static sidebars but too restrictive for freeform resize UX.
+- Splitting those selectors is important: `#world-sidebar` keeps conservative height limits, while `#game-log-container` gets viewport-scale caps and resize affordance.
+- In flex containers, `align-self: flex-start` helps resized windows avoid unintended stretch behavior from parent alignment rules.
+
+### Quick QA checklist
+
+1. Open HUD menu → `Log`.
+2. Drag the lower-right resize affordance of the log window:
+   - width should increase/decrease;
+   - height should increase/decrease.
+3. Add several new log entries (combat, movement, village actions):
+   - inner log should still auto-scroll to newest entries.
+4. Reduce viewport below `920px`:
+   - resize affordance should be disabled;
+   - log should follow normal mobile stacked flow.

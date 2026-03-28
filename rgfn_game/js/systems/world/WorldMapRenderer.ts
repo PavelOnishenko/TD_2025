@@ -311,7 +311,7 @@ export default class WorldMapRenderer {
             return;
         }
 
-        const path = this.createRoundedRectPath(cell.x + 1, cell.y + 1, cell.width - 2, cell.height - 2, Math.max(4, cell.width * 0.18));
+        const path = this.createCellRectPath(cell);
         ctx.fill(path);
         ctx.fillStyle = this.withAlpha(theme.ui.primaryAccent, 0.35);
         ctx.font = `${Math.max(12, Math.floor(cell.width * 0.45))}px Georgia`;
@@ -373,7 +373,7 @@ export default class WorldMapRenderer {
     }
 
     private drawTerrainTexture(ctx: CanvasRenderingContext2D, cell: GridCell, terrain: TerrainData, brightness: number): void {
-        const textureColor = this.withAlpha(this.mixColors(theme.ui.primaryAccent, theme.ui.panelHighlight, 0.25), 0.18 * brightness);
+        const textureColor = this.withAlpha(this.mixColors(theme.ui.primaryAccent, theme.ui.panelHighlight, 0.25), 0.14 * brightness);
         ctx.strokeStyle = textureColor;
         ctx.fillStyle = textureColor;
         ctx.lineWidth = 1;
@@ -455,41 +455,46 @@ export default class WorldMapRenderer {
     }
 
     private drawDotsPattern(ctx: CanvasRenderingContext2D, cell: GridCell, brightness: number): void {
-        ctx.fillStyle = this.withAlpha(theme.ui.primaryAccent, 0.08 * brightness);
-        for (let i = 0; i < 3; i++) {
-            for (let j = 0; j < 3; j++) {
-                const x = cell.x + ((i + 1) * cell.width / 4);
-                const y = cell.y + ((j + 1) * cell.height / 4);
-                ctx.beginPath();
-                ctx.arc(x, y, 1.2, 0, Math.PI * 2);
-                ctx.fill();
-            }
+        const seedBase = (cell.col * 73856093) ^ (cell.row * 19349663);
+        ctx.fillStyle = this.withAlpha(theme.ui.primaryAccent, 0.07 * brightness);
+        for (let index = 0; index < 10; index += 1) {
+            const offsetX = (0.1 + (this.seededRandom(seedBase + index) * 0.8)) * cell.width;
+            const offsetY = (0.1 + (this.seededRandom(seedBase + (index * 11)) * 0.8)) * cell.height;
+            const radius = 0.7 + (this.seededRandom(seedBase + (index * 19)) * 1.1);
+            ctx.beginPath();
+            ctx.arc(cell.x + offsetX, cell.y + offsetY, radius, 0, Math.PI * 2);
+            ctx.fill();
         }
     }
 
     private drawLinesPattern(ctx: CanvasRenderingContext2D, cell: GridCell, brightness: number): void {
-        ctx.strokeStyle = this.withAlpha(theme.ui.primaryAccent, 0.12 * brightness);
+        const seedBase = (cell.col * 73856093) ^ (cell.row * 19349663);
+        ctx.strokeStyle = this.withAlpha(theme.ui.primaryAccent, 0.1 * brightness);
         ctx.lineWidth = 1;
-        ctx.beginPath();
-        for (let i = 1; i < 5; i++) {
-            const x = cell.x + ((i * cell.width) / 5);
-            ctx.moveTo(x, cell.y + 3);
-            ctx.lineTo(x, cell.y + cell.height - 3);
+        for (let index = 0; index < 4; index += 1) {
+            const startX = cell.x + (cell.width * (0.12 + (index * 0.22)));
+            const sway = (this.seededRandom(seedBase + (index * 17)) - 0.5) * (cell.width * 0.16);
+            ctx.beginPath();
+            ctx.moveTo(startX, cell.y + 3);
+            ctx.quadraticCurveTo(startX + sway, cell.y + (cell.height * 0.5), startX + (sway * 0.35), cell.y + cell.height - 3);
+            ctx.stroke();
         }
-        ctx.stroke();
     }
 
     private drawCrossPattern(ctx: CanvasRenderingContext2D, cell: GridCell, brightness: number): void {
-        const centerX = cell.x + cell.width / 2;
-        const centerY = cell.y + cell.height / 2;
-        ctx.strokeStyle = this.withAlpha(theme.ui.primaryAccent, 0.12 * brightness);
+        const seedBase = (cell.col * 73856093) ^ (cell.row * 19349663);
+        ctx.strokeStyle = this.withAlpha(theme.ui.primaryAccent, 0.08 * brightness);
         ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.moveTo(cell.x + 2, centerY);
-        ctx.lineTo(cell.x + cell.width - 2, centerY);
-        ctx.moveTo(centerX, cell.y + 2);
-        ctx.lineTo(centerX, cell.y + cell.height - 2);
-        ctx.stroke();
+        for (let index = 0; index < 5; index += 1) {
+            const x1 = cell.x + (this.seededRandom(seedBase + (index * 7)) * cell.width);
+            const y1 = cell.y + (this.seededRandom(seedBase + (index * 13)) * cell.height);
+            const x2 = cell.x + (this.seededRandom(seedBase + (index * 19)) * cell.width);
+            const y2 = cell.y + (this.seededRandom(seedBase + (index * 23)) * cell.height);
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.stroke();
+        }
     }
 
     private drawWavePattern(ctx: CanvasRenderingContext2D, cell: GridCell, brightness: number, seed: number): void {
@@ -545,54 +550,15 @@ export default class WorldMapRenderer {
         }
     }
 
-    private createTerrainPath(cell: GridCell, neighbors?: TerrainNeighbors): Path2D {
-        const inset = Math.max(1, cell.width * 0.03);
-        const baseX = cell.x + inset;
-        const baseY = cell.y + inset;
-        const width = cell.width - (inset * 2);
-        const height = cell.height - (inset * 2);
-        const radius = Math.max(4, Math.min(theme.worldMap.cellCornerRadius, width * 0.28, height * 0.28));
-        const connectorSize = Math.max(3, Math.min(theme.worldMap.connectorRadius, cell.width * 0.32));
-        const path = this.createRoundedRectPath(baseX, baseY, width, height, radius);
+    private createTerrainPath(cell: GridCell, _neighbors?: TerrainNeighbors): Path2D {
+        // Always fill the full cell. This removes anti-aliased seams and decorative ribbons
+        // that can appear as bright/yellow border lines on some zoom levels.
+        return this.createCellRectPath(cell);
+    }
 
-        if (!neighbors) {
-            return path;
-        }
-
-        const halfWidth = width / 2;
-        const halfHeight = height / 2;
-
-        if (neighbors.north) {
-            path.addPath(this.createRoundedRectPath(baseX + (width * 0.16), baseY - connectorSize, width * 0.68, halfHeight + connectorSize, radius * 0.9));
-        }
-        if (neighbors.south) {
-            path.addPath(this.createRoundedRectPath(baseX + (width * 0.16), baseY + halfHeight, width * 0.68, halfHeight + connectorSize, radius * 0.9));
-        }
-        if (neighbors.west) {
-            path.addPath(this.createRoundedRectPath(baseX - connectorSize, baseY + (height * 0.16), halfWidth + connectorSize, height * 0.68, radius * 0.9));
-        }
-        if (neighbors.east) {
-            path.addPath(this.createRoundedRectPath(baseX + halfWidth, baseY + (height * 0.16), halfWidth + connectorSize, height * 0.68, radius * 0.9));
-        }
-
-        if (neighbors.north && neighbors.west && neighbors.northWest) {
-            path.addPath(this.createRoundedRectPath(baseX - connectorSize * 0.58, baseY - connectorSize * 0.58, halfWidth + connectorSize * 0.58, halfHeight + connectorSize * 0.58, radius));
-        }
-        if (neighbors.north && neighbors.east && neighbors.northEast) {
-            path.addPath(this.createRoundedRectPath(baseX + halfWidth, baseY - connectorSize * 0.58, halfWidth + connectorSize * 0.58, halfHeight + connectorSize * 0.58, radius));
-        }
-        if (neighbors.south && neighbors.west && neighbors.southWest) {
-            path.addPath(this.createRoundedRectPath(baseX - connectorSize * 0.58, baseY + halfHeight, halfWidth + connectorSize * 0.58, halfHeight + connectorSize * 0.58, radius));
-        }
-        if (neighbors.south && neighbors.east && neighbors.southEast) {
-            path.addPath(this.createRoundedRectPath(baseX + halfWidth, baseY + halfHeight, halfWidth + connectorSize * 0.58, halfHeight + connectorSize * 0.58, radius));
-        }
-
-        this.addDiagonalRibbon(path, baseX, baseY, width, height, 'northWest', neighbors.northWest && !neighbors.north && !neighbors.west);
-        this.addDiagonalRibbon(path, baseX, baseY, width, height, 'northEast', neighbors.northEast && !neighbors.north && !neighbors.east);
-        this.addDiagonalRibbon(path, baseX, baseY, width, height, 'southWest', neighbors.southWest && !neighbors.south && !neighbors.west);
-        this.addDiagonalRibbon(path, baseX, baseY, width, height, 'southEast', neighbors.southEast && !neighbors.south && !neighbors.east);
-
+    private createCellRectPath(cell: GridCell): Path2D {
+        const path = new Path2D();
+        path.rect(cell.x, cell.y, cell.width, cell.height);
         return path;
     }
 
