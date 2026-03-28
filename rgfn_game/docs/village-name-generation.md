@@ -2,65 +2,83 @@
 
 ## Why this exists
 
-Village names were previously generated from only 10 prefixes x 10 suffixes (`100` total combinations), which led to frequent repeats in medium/large worlds.
+Village names previously repeated too quickly and also drifted toward overly long stitched compounds after the first expansion pass.
 
-This document explains the newer generator and the constraints we keep for gameplay consistency.
+The current generator balances three constraints at once:
 
-## Goals
+1. **High variety** (avoid repeats on medium/large worlds),
+2. **Readable length** (mostly short names),
+3. **Mixed spacing style** (single-word and multi-word names both common enough).
 
-- Keep names deterministic for world coordinates + world seed.
-- Dramatically increase combinatorial variety without external APIs.
-- Keep names readable and "settlement-like" (not random noise strings).
-- Reuse pattern-based generation style already used in quest/item/NPC naming systems.
+## Target output profile
 
-## Generator design
+The generator is tuned so that:
 
-Implementation file:
+- **1–2 words** are the default in most cases,
+- **3-word names** are rare,
+- **4-word names** are very rare,
+- names with spaces are not rare (roughly frequent enough to feel natural among compact names).
+
+Inside compact words:
+
+- 2 stitched parts are most common,
+- 3 stitched parts are rare,
+- 4 stitched parts are very rare.
+
+## Implementation
+
+Primary file:
 - `js/systems/world/VillageNameGenerator.ts`
 
-### Building blocks
+### Pattern layer (word-count control)
 
-`VillageNameGenerator` uses:
+`NAME_PATTERNS` uses weighted templates over token classes:
 
-- **Template patterns** (token sequences):
-  - `PREFIX + STEM + SUFFIX`
-  - `PREFIX + STEM + STEM + SUFFIX`
-  - `PREFIX + STEM + LINK + SUFFIX`
-  - `STEM + SUFFIX`
-  - and other variants.
-- **Large token dictionaries**:
-  - `PREFIX` (terrain/cultural starts like `ash`, `oak`, `raven`, `storm`, ...)
-  - `STEM` (toponymic cores like `brook`, `crest`, `haven`, `ridge`, ...)
-  - `SUFFIX` (settlement endings like `ford`, `meadow`, `ward`, `wich`, ...)
-  - `LINK` (`-` and `'`) for rare stylistic compounds.
+- `COMPACT`
+- `DESCRIPTOR`
+- `PLACE`
 
-### Determinism model
+This controls whether output tends to be one-word or spaced multi-word (e.g., `Oakridge`, `Silver Haven`, `Red Oakford`).
 
-- World map calls generator with a **hashed coordinate seed**:
-  - `hashSeed((col+11)*..., (row+17)*..., 14057)`
-- Same world seed + same coordinates => same village name forever.
-- Different world seed can produce different naming distribution.
+### Word-construction layer (anti-bulk control)
 
-### Formatting rules
+`COMPACT` words are built from:
 
-- Capitalize each lexical part.
-- If previous piece ends with `-` or `'`, next piece is appended directly with capitalized start.
-- Rarely insert a space between first and remaining chunks for extra variety while keeping readability.
+- `COMPACT_START`
+- optional `COMPACT_MID`
+- `COMPACT_END`
+
+with weighted part-count complexity:
+
+- 2 parts: dominant,
+- 3 parts: uncommon,
+- 4 parts: very rare.
+
+Optional linkers (`''`, `-`, `'`) keep style variation without forcing giant names.
+
+## Determinism model
+
+- World map calls the generator via a stable coordinate hash seed.
+- Same world seed + same tile coordinates => same village name.
+- Save/load stability remains intact.
 
 ## Runtime integration
 
-- `WorldMap.getVillageName(...)` now delegates to `generateVillageName(seed)`.
-- `VillageLifeRenderer` fallback random name generation also uses `generateVillageName(...)` to keep naming style consistent if village name is absent.
+- `WorldMap.getVillageName(...)` delegates to `generateVillageName(seed)`.
+- `VillageLifeRenderer` fallback naming path uses the same generator, so fallback village names follow identical style rules.
 
-## Test strategy
+## Regression checks
 
-- Added world map regression test proving larger effective name space:
-  - Sample 225 coordinate-based names (15x15 area).
-  - Assert more than 100 unique names.
-- This intentionally guards against accidental rollback to tiny two-list concatenation.
+`test/systems/worldMap.test.js` now validates:
+
+- large effective unique name space,
+- mostly 1–2 word names,
+- 4-word names remain rare,
+- spaced names occur often enough,
+- deterministic same-coordinate behavior.
 
 ## Future extension ideas
 
-- Biome-aware weighting (e.g., desert villages avoid `brook/ford` tokens).
-- Culture packs for region-specific phonetics.
-- Reserved-name collision avoidance for story-critical settlements.
+- Biome-sensitive token weighting (e.g., fewer river words in arid zones).
+- Regional culture packs with different phonetic dictionaries.
+- Protected canonical names for story-critical settlements.

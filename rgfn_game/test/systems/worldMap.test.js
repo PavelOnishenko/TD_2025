@@ -50,19 +50,26 @@ test('WorldMap scales generated village count with global village creation multi
 }));
 
 
-test('WorldMap village naming generator produces a large deterministic name space', () => withMockedRandom([0.11], () => {
+test('WorldMap village naming generator produces a large deterministic name space with mostly short names', () => withMockedRandom([0.11], () => {
   const worldMap = new WorldMap(40, 30, 20);
   const sampledNames = [];
 
-  for (let col = 0; col < 15; col += 1) {
-    for (let row = 0; row < 15; row += 1) {
+  for (let col = 0; col < 20; col += 1) {
+    for (let row = 0; row < 20; row += 1) {
       sampledNames.push(worldMap['getVillageName'](col, row));
     }
   }
 
   const uniqueNames = new Set(sampledNames);
+  const wordCounts = sampledNames.map((name) => name.trim().split(/\s+/).length);
+  const oneOrTwoWordCount = wordCounts.filter((count) => count <= 2).length;
+  const fourWordCount = wordCounts.filter((count) => count >= 4).length;
+  const spacedCount = sampledNames.filter((name) => name.includes(' ')).length;
 
-  assert.equal(uniqueNames.size > 100, true);
+  assert.equal(uniqueNames.size > 180, true);
+  assert.equal(oneOrTwoWordCount >= sampledNames.length * 0.9, true);
+  assert.equal(fourWordCount <= sampledNames.length * 0.05, true);
+  assert.equal(spacedCount >= sampledNames.length * 0.35, true);
   assert.equal(worldMap['getVillageName'](4, 7), worldMap['getVillageName'](4, 7));
 }));
 

@@ -1,39 +1,59 @@
-const VILLAGE_NAME_TEMPLATES: ReadonlyArray<ReadonlyArray<'PREFIX' | 'STEM' | 'SUFFIX' | 'LINK'>> = [
-    ['PREFIX', 'STEM', 'SUFFIX'],
-    ['PREFIX', 'STEM', 'STEM', 'SUFFIX'],
-    ['PREFIX', 'STEM', 'LINK', 'SUFFIX'],
-    ['PREFIX', 'STEM', 'SUFFIX', 'SUFFIX'],
-    ['STEM', 'SUFFIX'],
-    ['PREFIX', 'STEM'],
-    ['PREFIX', 'LINK', 'STEM', 'SUFFIX'],
-    ['PREFIX', 'STEM', 'LINK', 'STEM', 'SUFFIX'],
+type NameWordToken = 'COMPACT' | 'DESCRIPTOR' | 'PLACE';
+
+type NamePattern = {
+    tokens: NameWordToken[];
+    weight: number;
+};
+
+const NAME_PATTERNS: NamePattern[] = [
+    { tokens: ['COMPACT'], weight: 52 },
+    { tokens: ['DESCRIPTOR', 'PLACE'], weight: 17 },
+    { tokens: ['COMPACT', 'PLACE'], weight: 14 },
+    { tokens: ['DESCRIPTOR', 'COMPACT'], weight: 7 },
+    { tokens: ['COMPACT', 'COMPACT'], weight: 6 },
+    { tokens: ['DESCRIPTOR', 'PLACE', 'PLACE'], weight: 2 },
+    { tokens: ['COMPACT', 'PLACE', 'PLACE'], weight: 1 },
+    { tokens: ['DESCRIPTOR', 'COMPACT', 'PLACE', 'PLACE'], weight: 1 },
 ];
 
-const VILLAGE_NAME_PARTS = {
-    PREFIX: [
-        'ash', 'black', 'briar', 'brim', 'cedar', 'cinder', 'cold', 'crow', 'dawn', 'deep',
-        'drift', 'dusk', 'east', 'ember', 'fallow', 'frost', 'glen', 'gold', 'gray', 'green',
-        'high', 'hollow', 'iron', 'lake', 'long', 'mist', 'moon', 'moss', 'north', 'oak',
-        'pine', 'raven', 'red', 'reed', 'river', 'rose', 'salt', 'shadow', 'silver', 'snow',
-        'south', 'spruce', 'star', 'stone', 'storm', 'sun', 'thorn', 'timber', 'vale', 'west',
-        'white', 'wild', 'willow', 'wind', 'wolf',
-    ],
-    STEM: [
-        'barrow', 'brook', 'burn', 'cliff', 'crest', 'cross', 'dale', 'den', 'dun', 'fall',
-        'fen', 'field', 'ford', 'gate', 'glen', 'grove', 'guard', 'harbor', 'haven', 'helm',
-        'hill', 'holt', 'keep', 'mere', 'moor', 'pass', 'peak', 'point', 'port', 'reach',
-        'rest', 'ridge', 'rock', 'run', 'shade', 'shore', 'stead', 'stone', 'vale', 'watch',
-        'water', 'way', 'well', 'wild', 'wind', 'wood',
-    ],
-    SUFFIX: [
-        'bank', 'barrow', 'bend', 'borough', 'bridge', 'brook', 'burgh', 'cross', 'dale', 'den',
-        'edge', 'end', 'fall', 'field', 'ford', 'gate', 'grove', 'guard', 'ham', 'haven',
-        'helm', 'hill', 'hold', 'hollow', 'keep', 'landing', 'march', 'market', 'meadow', 'mill',
-        'moor', 'mouth', 'point', 'rest', 'ridge', 'rock', 'run', 'stead', 'stone', 'strand',
-        'tower', 'vale', 'view', 'ward', 'watch', 'way', 'well', 'wich', 'wood',
-    ],
-    LINK: ['-', "'"],
-} as const;
+const DESCRIPTORS = [
+    'ash', 'black', 'briar', 'cedar', 'cinder', 'cold', 'crow', 'dawn', 'deep', 'drift',
+    'dusk', 'east', 'ember', 'fallow', 'frost', 'gold', 'gray', 'green', 'high', 'hollow',
+    'iron', 'long', 'mist', 'moon', 'moss', 'north', 'oak', 'pine', 'raven', 'red',
+    'reed', 'river', 'rose', 'salt', 'shadow', 'silver', 'snow', 'south', 'star', 'stone',
+    'storm', 'sun', 'thorn', 'timber', 'vale', 'west', 'white', 'wild', 'willow', 'wind', 'wolf',
+] as const;
+
+const COMPACT_START = [
+    'ash', 'briar', 'brim', 'cedar', 'crow', 'dawn', 'deep', 'dun', 'east', 'ember',
+    'fallow', 'frost', 'glen', 'gray', 'green', 'high', 'iron', 'lake', 'long', 'mist',
+    'moon', 'moss', 'north', 'oak', 'pine', 'raven', 'red', 'river', 'rose', 'shadow',
+    'silver', 'snow', 'south', 'star', 'stone', 'storm', 'sun', 'thorn', 'west', 'white',
+    'wild', 'willow', 'wind', 'wolf',
+] as const;
+
+const COMPACT_MID = [
+    'bar', 'brook', 'crest', 'cross', 'den', 'fen', 'field', 'ford', 'glen', 'guard',
+    'har', 'haven', 'helm', 'hill', 'holt', 'mere', 'moor', 'point', 'reach', 'rest',
+    'ridge', 'rock', 'run', 'shade', 'shore', 'stead', 'stone', 'watch', 'water', 'well', 'wood',
+] as const;
+
+const COMPACT_END = [
+    'bank', 'barrow', 'bend', 'bridge', 'brook', 'cross', 'dale', 'den', 'edge', 'end',
+    'fall', 'field', 'ford', 'gate', 'grove', 'guard', 'ham', 'haven', 'helm', 'hill',
+    'hold', 'hollow', 'keep', 'landing', 'march', 'market', 'meadow', 'mill', 'moor', 'point',
+    'rest', 'ridge', 'rock', 'run', 'stead', 'stone', 'strand', 'tower', 'vale', 'view',
+    'ward', 'watch', 'way', 'well', 'wich', 'wood',
+] as const;
+
+const PLACE_WORDS = [
+    'bank', 'barrow', 'bridge', 'crossing', 'dale', 'den', 'fields', 'ford', 'gate', 'grove',
+    'harbor', 'haven', 'heights', 'hollow', 'keep', 'landing', 'market', 'meadow', 'mills', 'moor',
+    'pass', 'reach', 'rest', 'ridge', 'shore', 'stead', 'tower', 'vale', 'ward', 'watch',
+    'way', 'well', 'woods',
+] as const;
+
+const COMPOUND_LINKERS = ['', '-', "'"] as const;
 
 function seededRandom(seed: number): number {
     const value = Math.sin(seed) * 10000;
@@ -45,39 +65,71 @@ function pickFrom<T>(items: readonly T[], seed: number): T {
     return items[index];
 }
 
+function pickWeightedPattern(seed: number): NamePattern {
+    const totalWeight = NAME_PATTERNS.reduce((total, pattern) => total + pattern.weight, 0);
+    let roll = Math.floor(seededRandom(seed) * totalWeight) + 1;
+    for (const pattern of NAME_PATTERNS) {
+        roll -= pattern.weight;
+        if (roll <= 0) {
+            return pattern;
+        }
+    }
+    return NAME_PATTERNS[0];
+}
+
 function capitalizePart(word: string): string {
     return word.charAt(0).toUpperCase() + word.slice(1);
 }
 
+function buildCompoundWord(seed: number): string {
+    const complexityRoll = seededRandom(seed + 33);
+    const partCount = complexityRoll < 0.9
+        ? 2
+        : complexityRoll < 0.99
+            ? 3
+            : 4;
+
+    const linker = pickFrom(COMPOUND_LINKERS, seed + 49);
+    const parts: string[] = [];
+    parts.push(pickFrom(COMPACT_START, seed + 101));
+
+    const midPartCount = Math.max(0, partCount - 2);
+    for (let index = 0; index < midPartCount; index += 1) {
+        parts.push(pickFrom(COMPACT_MID, seed + 201 + (index * 37)));
+    }
+
+    parts.push(pickFrom(COMPACT_END, seed + 401));
+
+    const merged = parts.reduce((total, part, index) => {
+        if (index === 0) {
+            return capitalizePart(part);
+        }
+
+        if (!linker) {
+            return `${total}${part}`;
+        }
+
+        return `${total}${linker}${capitalizePart(part)}`;
+    }, '');
+
+    return merged;
+}
+
+function buildWord(token: NameWordToken, seed: number): string {
+    if (token === 'DESCRIPTOR') {
+        return capitalizePart(pickFrom(DESCRIPTORS, seed + 701));
+    }
+
+    if (token === 'PLACE') {
+        return capitalizePart(pickFrom(PLACE_WORDS, seed + 809));
+    }
+
+    return buildCompoundWord(seed + 907);
+}
+
 export function generateVillageName(seed: number): string {
-    const template = pickFrom(VILLAGE_NAME_TEMPLATES, (seed * 1.13) + 17);
-    let offset = 0;
-    const pieces = template.map((token) => {
-        const part = pickFrom(VILLAGE_NAME_PARTS[token], seed + (offset * 37.19));
-        offset += 1;
-        return part;
-    });
-
-    const merged: string[] = [];
-    for (const piece of pieces) {
-        if (piece === '-' || piece === "'") {
-            if (merged.length === 0) {
-                continue;
-            }
-            merged[merged.length - 1] += piece;
-            continue;
-        }
-
-        if (merged.length > 0 && (merged[merged.length - 1].endsWith('-') || merged[merged.length - 1].endsWith("'"))) {
-            merged[merged.length - 1] += capitalizePart(piece);
-        } else {
-            merged.push(capitalizePart(piece));
-        }
-    }
-
-    if (merged.length > 1 && seededRandom(seed + 911) < 0.26) {
-        return `${merged[0]} ${merged.slice(1).join('')}`;
-    }
-
-    return merged.join('');
+    const pattern = pickWeightedPattern(seed + 11);
+    return pattern.tokens
+        .map((token, index) => buildWord(token, seed + (index * 131)))
+        .join(' ');
 }
