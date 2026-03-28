@@ -1,4 +1,5 @@
 import { QuestNode } from './QuestTypes.js';
+import { balanceConfig } from '../../config/balanceConfig.js';
 
 const DEFAULT_DESCRIPTION = 'Complete every branch of this quest tree to prove your character can end the darkness over the region.';
 const DEFAULT_CONDITION = 'All child objectives are completed.';
@@ -18,6 +19,7 @@ export default class QuestUiController {
     private readonly introCloseBtn: HTMLButtonElement;
     private readonly callbacks: QuestUiCallbacks;
     private readonly feedbackElements: HTMLElement[];
+    private feedbackClearTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
     constructor(
         questTitle: HTMLElement,
@@ -164,9 +166,37 @@ export default class QuestUiController {
     }
 
     private setFeedback(message: string, isError: boolean): void {
+        this.clearScheduledFeedbackReset();
         for (const element of this.feedbackElements) {
             element.textContent = message;
             element.classList.toggle('is-error', isError);
+        }
+
+        const feedbackDurationMs = Math.max(0, balanceConfig.questUi.feedbackMessageDurationMs);
+        if (feedbackDurationMs === 0) {
+            this.clearFeedback();
+            return;
+        }
+
+        this.feedbackClearTimeoutId = setTimeout(() => {
+            this.clearFeedback();
+            this.feedbackClearTimeoutId = null;
+        }, feedbackDurationMs);
+    }
+
+    private clearScheduledFeedbackReset(): void {
+        if (this.feedbackClearTimeoutId === null) {
+            return;
+        }
+
+        clearTimeout(this.feedbackClearTimeoutId);
+        this.feedbackClearTimeoutId = null;
+    }
+
+    private clearFeedback(): void {
+        for (const element of this.feedbackElements) {
+            element.textContent = '';
+            element.classList.toggle('is-error', false);
         }
     }
 
