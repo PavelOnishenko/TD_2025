@@ -62,6 +62,13 @@ A new test validates:
 
 File: `rgfn_game/test/systems/villageActionsController.test.js`.
 
+## Known pitfall fixed (March 28, 2026)
+
+- Symptom: after selecting an NPC from rumors list, `Open NPC dialogue window` stayed disabled.
+- Root cause: `handleSelectNpc(...)` refreshed labels and NPC buttons but did not recalculate button enabled/disabled state.
+- Fix: call `updateButtons()` inside `handleSelectNpc(...)` right after selecting NPC and rerendering.
+- Regression guard: test now checks the button is disabled before selection and enabled immediately after selection.
+
 ## Notes for future extension
 
 - If needed, next step is to render only NPC conversation lines in modal (filter by tags), while keeping full system log in main log panel.

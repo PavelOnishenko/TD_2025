@@ -228,7 +228,9 @@ test('VillageActionsController mirrors dialogue lines into modal log and toggles
 
   controller.enterVillage('Mossbrook');
   controller.handleEnter('Mossbrook');
+  assert.equal(villageUI.openDialogueBtn.disabled, true);
   controller.handleSelectNpc(0);
+  assert.equal(villageUI.openDialogueBtn.disabled, false);
   controller.openDialogueWindow();
   assert.equal(villageUI.dialogueModal.classList.removed.includes('hidden'), true);
 

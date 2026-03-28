@@ -259,6 +259,7 @@ export default class VillageActionsController {
         this.selectedNpcId = npc.id;
         this.updateNpcPanel();
         this.renderNpcButtons();
+        this.updateButtons();
         this.addLog(`You approach ${npc.name} the ${npc.role}.`, 'player');
         this.addLog(`${npc.name} looks ${npc.look} and speaks in a ${npc.speechStyle} manner.`, 'system-message');
     }
