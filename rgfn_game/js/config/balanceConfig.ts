@@ -63,6 +63,11 @@ const creatureArchetypes: Record<string, CreatureArchetype> = {
 };
 
 export const balanceConfig = {
+    questUi: {
+        // Time a quest feedback message stays visible (milliseconds)
+        feedbackMessageDurationMs: 5000,
+    },
+
     worldMap: {
         dimensions: {
             columns: 100,

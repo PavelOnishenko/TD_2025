@@ -1,5 +1,29 @@
 # Quest progress tracking notes
 
+## March 28, 2026 update: "is not discovered yet" quest-panel warning now auto-hides
+
+### What changed
+- The red feedback text shown after clicking an undiscovered quest location (for example, `Oakcross is not discovered yet.`) no longer remains stuck at the bottom of the quests panel.
+- `QuestUiController` now auto-clears quest feedback after a configurable timeout.
+- Timeout is controlled by balance config:
+  - `balanceConfig.questUi.feedbackMessageDurationMs`
+  - default value: `5000` (5 seconds)
+
+### Runtime behavior details
+- Every new feedback message resets the previous clear timer to avoid race conditions.
+- Both error feedback (red "not discovered yet") and non-error feedback ("Showing ... on the world map.") now auto-hide after the configured delay.
+- Setting timeout to `0` clears feedback immediately (useful for experiments/tests).
+
+### Why this implementation
+- Keeping the timeout in **balance** config makes tuning UX possible without touching controller logic.
+- Timer cancellation on message replacement prevents older timers from clearing newer messages unexpectedly.
+
+### Regression coverage
+- Added automated test in `test/systems/questUiController.test.js` that verifies:
+  1. timeout is scheduled with `5000` ms by default,
+  2. scheduled callback clears feedback text,
+  3. replacing feedback cancels the prior timeout.
+
 ## Problem fixed
 - Some location-based objectives (for example `Scout Oakcross` with condition `Enter Oakcross.`) were not visibly marked as completed in the quest panel after entering the target village.
 
