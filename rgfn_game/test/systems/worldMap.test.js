@@ -301,6 +301,43 @@ test('WorldMap draw switches to low-detail rendering when zoomed out with fog di
   assert.ok(ctx.calls.some((call) => call[0] === 'fillRect'));
 });
 
+test('WorldMap medium-detail caching avoids full terrain redraw on subsequent frames', () => {
+  const worldMap = new WorldMap(100, 100, 12);
+  worldMap.resizeToCanvas(720, 720);
+  worldMap.setMapDisplayConfig({ fogOfWar: true, everythingDiscovered: false });
+  const ctx = createMockCanvasContext();
+  ctx.drawImage = (...args) => ctx.calls.push(['drawImage', ...args]);
+  const originalDocument = globalThis.document;
+  globalThis.document = {
+    createElement: () => ({
+      width: 0,
+      height: 0,
+      getContext: () => createMockCanvasContext(),
+    }),
+  };
+  const originalDrawCell = worldMap.renderer.drawCell.bind(worldMap.renderer);
+  let drawCellCallsFirst = 0;
+  let drawCellCallsSecond = 0;
+  try {
+    worldMap.renderer.drawCell = (drawCtx, cell, fogState, terrain, neighbors, options) => {
+      drawCellCallsFirst += 1;
+      return originalDrawCell(drawCtx, cell, fogState, terrain, neighbors, options);
+    };
+    worldMap.draw(ctx, null);
+
+    worldMap.renderer.drawCell = (drawCtx, cell, fogState, terrain, neighbors, options) => {
+      drawCellCallsSecond += 1;
+      return originalDrawCell(drawCtx, cell, fogState, terrain, neighbors, options);
+    };
+    worldMap.draw(ctx, null);
+  } finally {
+    globalThis.document = originalDocument;
+  }
+
+  assert.ok(drawCellCallsSecond > 0);
+  assert.ok(drawCellCallsFirst > drawCellCallsSecond * 2);
+});
+
 test('WorldMap exposes village names and anchors matching quest locations to village tiles', () => withMockedRandom([0.11], () => {
   const worldMap = new WorldMap(40, 30, 20);
   const state = worldMap.getState();

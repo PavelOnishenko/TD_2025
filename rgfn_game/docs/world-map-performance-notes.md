@@ -1,5 +1,10 @@
 # World map performance notes (zoomed-out / small cell-size)
 
+
+## Follow-up planning
+
+- See `rgfn_game/docs/world-map-optimization-scientific-plan.md` for a structured, experiment-driven optimization workflow (baseline protocol, KPIs, staged rollout, and regression guardrails).
+
 ## March 2026 optimization pass
 
 Context: when the world map is zoomed far out (small cell size, broad visible bounds), frame time was dominated by hot-path per-cell lookups.
@@ -77,3 +82,35 @@ At low zoom, this removes thousands of per-frame canvas calls and style/state tr
 ### Safety fallback
 
 In non-browser/test contexts (no `document` or no `drawImage`), rendering falls back to the existing per-cell path to keep tests deterministic and environment-agnostic.
+
+## March 2026 optimization pass #3 (medium-detail and fog-invalidation improvements)
+
+### Problem observed after pass #2
+
+- Low-detail caching improved panning throughput, but cache rebuild frequency was still tied to fog updates.
+- Because `fogRevision` changes when player visibility updates, long sessions still did expensive low-detail terrain repaints.
+- Medium detail still repainted full terrain every frame.
+
+### Additional changes
+
+1. Replaced single low-detail cache with terrain-layer caches for both:
+   - `low`
+   - `medium`
+2. Cache now stores **terrain-only** layer:
+   - `showFogOverlay: false` during cache generation.
+   - Fog/unknown overlays are rendered as a lightweight visible-bounds pass on top.
+3. Cache invalidation is now based on terrain/layout only:
+   - detail level,
+   - cell size,
+   - terrain revision.
+4. Fog display toggles no longer force terrain cache rebuild.
+
+### Why this matters
+
+- Player movement changes fog state frequently; decoupling fog from terrain cache avoids expensive full-map redraw work on every visibility update.
+- Medium-detail zoom now benefits from the same “blit static terrain, draw dynamic overlays” strategy as low detail.
+- Net result should be more stable frame pacing and lower sustained CPU load during pan/move workflows.
+
+### Guardrails added
+
+- New automated test verifies medium-detail cache behavior: second draw performs significantly fewer `drawCell` calls than first draw (terrain layer reuse).
