@@ -720,3 +720,31 @@ So tests asserting fixed literal HP values (for example zombie `7`) will fail wh
 - Added regression assertion in `themeConfig.test.js` to lock baseline defaults:
   - `theme.worldMap.cellTravelMinutes === 12`
   - `balanceConfig.worldMap.visibilityRadius === 3`
+
+## March 28, 2026 update (follow-up 2): map villages now use the new quest-pack-style naming pipeline
+
+### Issue
+- Villages generated at world creation still looked like legacy compounds (`MossStead`, `OakCrook`, etc.).
+- Request was to switch map village naming to the newer naming direction from recently merged name-generation work.
+
+### What changed
+- Replaced legacy village token pools with a quest-pack-aligned pipeline in:
+  - `js/systems/world/VillageNameGenerator.ts`
+- New village naming now composes from:
+  - deterministic **echo syllable** words (same phonetic family as quest-name echo generation),
+  - curated adjective + place-word sets aligned with quest naming vocabulary.
+- This removes the old oak/moss/stead-style bias while preserving deterministic behavior by coordinate seed.
+
+### Determinism and save safety
+- `WorldMap` integration path is unchanged (`getVillageName(...)` still derives from stable coordinate hash).
+- Same world seed + same tile coordinates still produce the same village name.
+
+### Validation performed
+1. `npm run build:rgfn`
+2. `node --test rgfn_game/test/systems/worldMap.test.js`
+3. `node --test rgfn_game/test/systems/questPackService.test.js`
+4. `node --test rgfn_game/test/systems/villageActionsController.test.js`
+
+### Notes for future iteration
+- If we later want fully shared generation internals (not just style family), we can extract a common deterministic token source module used by both quest and village generators.
+- Biome-aware weighting can be layered on top of this without changing external APIs.

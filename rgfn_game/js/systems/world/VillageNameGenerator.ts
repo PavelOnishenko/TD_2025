@@ -1,4 +1,4 @@
-type NameWordToken = 'COMPACT' | 'DESCRIPTOR' | 'PLACE';
+type NameWordToken = 'ECHO' | 'ADJECTIVE' | 'PLACE';
 
 type NamePattern = {
     tokens: NameWordToken[];
@@ -6,54 +6,35 @@ type NamePattern = {
 };
 
 const NAME_PATTERNS: NamePattern[] = [
-    { tokens: ['COMPACT'], weight: 52 },
-    { tokens: ['DESCRIPTOR', 'PLACE'], weight: 17 },
-    { tokens: ['COMPACT', 'PLACE'], weight: 14 },
-    { tokens: ['DESCRIPTOR', 'COMPACT'], weight: 7 },
-    { tokens: ['COMPACT', 'COMPACT'], weight: 6 },
-    { tokens: ['DESCRIPTOR', 'PLACE', 'PLACE'], weight: 2 },
-    { tokens: ['COMPACT', 'PLACE', 'PLACE'], weight: 1 },
-    { tokens: ['DESCRIPTOR', 'COMPACT', 'PLACE', 'PLACE'], weight: 1 },
+    { tokens: ['ECHO'], weight: 39 },
+    { tokens: ['ADJECTIVE', 'PLACE'], weight: 34 },
+    { tokens: ['ECHO', 'PLACE'], weight: 14 },
+    { tokens: ['PLACE', 'PLACE'], weight: 6 },
+    { tokens: ['ADJECTIVE', 'ECHO'], weight: 5 },
+    { tokens: ['ADJECTIVE', 'PLACE', 'PLACE'], weight: 2 },
 ];
 
-const DESCRIPTORS = [
-    'ash', 'black', 'briar', 'cedar', 'cinder', 'cold', 'crow', 'dawn', 'deep', 'drift',
-    'dusk', 'east', 'ember', 'fallow', 'frost', 'gold', 'gray', 'green', 'high', 'hollow',
-    'iron', 'long', 'mist', 'moon', 'moss', 'north', 'oak', 'pine', 'raven', 'red',
-    'reed', 'river', 'rose', 'salt', 'shadow', 'silver', 'snow', 'south', 'star', 'stone',
-    'storm', 'sun', 'thorn', 'timber', 'vale', 'west', 'white', 'wild', 'willow', 'wind', 'wolf',
+// Uses the same phonetic direction introduced by quest name generation packs
+// (short pseudo-words stitched from stable syllables) instead of the legacy
+// oak/moss/stead-style compounds.
+const ECHO_SYLLABLES = [
+    'va', 'lor', 'quin', 'esh', 'dra', 'morn', 'lys', 'tor', 'zen', 'ka',
+    'thal', 'vor', 'ira', 'sel', 'nor', 'vel', 'ryn', 'hal', 'cor', 'myr',
 ] as const;
 
-const COMPACT_START = [
-    'ash', 'briar', 'brim', 'cedar', 'crow', 'dawn', 'deep', 'dun', 'east', 'ember',
-    'fallow', 'frost', 'glen', 'gray', 'green', 'high', 'iron', 'lake', 'long', 'mist',
-    'moon', 'moss', 'north', 'oak', 'pine', 'raven', 'red', 'river', 'rose', 'shadow',
-    'silver', 'snow', 'south', 'star', 'stone', 'storm', 'sun', 'thorn', 'west', 'white',
-    'wild', 'willow', 'wind', 'wolf',
-] as const;
-
-const COMPACT_MID = [
-    'bar', 'brook', 'crest', 'cross', 'den', 'fen', 'field', 'ford', 'glen', 'guard',
-    'har', 'haven', 'helm', 'hill', 'holt', 'mere', 'moor', 'point', 'reach', 'rest',
-    'ridge', 'rock', 'run', 'shade', 'shore', 'stead', 'stone', 'watch', 'water', 'well', 'wood',
-] as const;
-
-const COMPACT_END = [
-    'bank', 'barrow', 'bend', 'bridge', 'brook', 'cross', 'dale', 'den', 'edge', 'end',
-    'fall', 'field', 'ford', 'gate', 'grove', 'guard', 'ham', 'haven', 'helm', 'hill',
-    'hold', 'hollow', 'keep', 'landing', 'march', 'market', 'meadow', 'mill', 'moor', 'point',
-    'rest', 'ridge', 'rock', 'run', 'stead', 'stone', 'strand', 'tower', 'vale', 'view',
-    'ward', 'watch', 'way', 'well', 'wich', 'wood',
+const ADJECTIVES = [
+    'Ancient', 'Bleak', 'Bright', 'Calm', 'Crimson', 'Distant', 'Feral',
+    'Golden', 'Hollow', 'Luminous', 'Misty', 'Quiet', 'Sacred', 'Scarlet',
+    'Silent', 'Silver', 'Stormy', 'Sunlit', 'Verdant', 'Windblown',
 ] as const;
 
 const PLACE_WORDS = [
-    'bank', 'barrow', 'bridge', 'crossing', 'dale', 'den', 'fields', 'ford', 'gate', 'grove',
-    'harbor', 'haven', 'heights', 'hollow', 'keep', 'landing', 'market', 'meadow', 'mills', 'moor',
-    'pass', 'reach', 'rest', 'ridge', 'shore', 'stead', 'tower', 'vale', 'ward', 'watch',
-    'way', 'well', 'woods',
+    'Abbey', 'Archive', 'Beacon', 'Bridge', 'Camp', 'Citadel', 'Cove',
+    'Crossing', 'Dale', 'Field', 'Ford', 'Garden', 'Gate', 'Grove',
+    'Harbor', 'Heights', 'Hollow', 'Keep', 'Marsh', 'Meadow', 'Pass',
+    'Reach', 'Rest', 'Ridge', 'Sanctuary', 'Shore', 'Spire', 'Summit',
+    'Temple', 'Threshold', 'Tower', 'Vale', 'Vault', 'Watch', 'Well',
 ] as const;
-
-const COMPOUND_LINKERS = ['', '-', "'"] as const;
 
 function seededRandom(seed: number): number {
     const value = Math.sin(seed) * 10000;
@@ -81,50 +62,31 @@ function capitalizePart(word: string): string {
     return word.charAt(0).toUpperCase() + word.slice(1);
 }
 
-function buildCompoundWord(seed: number): string {
-    const complexityRoll = seededRandom(seed + 33);
-    const partCount = complexityRoll < 0.9
+function buildEchoWord(seed: number): string {
+    const complexityRoll = seededRandom(seed + 37);
+    const partCount = complexityRoll < 0.84
         ? 2
-        : complexityRoll < 0.99
+        : complexityRoll < 0.97
             ? 3
             : 4;
 
-    const linker = pickFrom(COMPOUND_LINKERS, seed + 49);
-    const parts: string[] = [];
-    parts.push(pickFrom(COMPACT_START, seed + 101));
+    const parts = Array.from({ length: partCount }, (_, index) => (
+        pickFrom(ECHO_SYLLABLES, seed + 211 + (index * 67))
+    ));
 
-    const midPartCount = Math.max(0, partCount - 2);
-    for (let index = 0; index < midPartCount; index += 1) {
-        parts.push(pickFrom(COMPACT_MID, seed + 201 + (index * 37)));
-    }
-
-    parts.push(pickFrom(COMPACT_END, seed + 401));
-
-    const merged = parts.reduce((total, part, index) => {
-        if (index === 0) {
-            return capitalizePart(part);
-        }
-
-        if (!linker) {
-            return `${total}${part}`;
-        }
-
-        return `${total}${linker}${capitalizePart(part)}`;
-    }, '');
-
-    return merged;
+    return capitalizePart(parts.join(''));
 }
 
 function buildWord(token: NameWordToken, seed: number): string {
-    if (token === 'DESCRIPTOR') {
-        return capitalizePart(pickFrom(DESCRIPTORS, seed + 701));
+    if (token === 'ADJECTIVE') {
+        return pickFrom(ADJECTIVES, seed + 701);
     }
 
     if (token === 'PLACE') {
-        return capitalizePart(pickFrom(PLACE_WORDS, seed + 809));
+        return pickFrom(PLACE_WORDS, seed + 809);
     }
 
-    return buildCompoundWord(seed + 907);
+    return buildEchoWord(seed + 907);
 }
 
 export function generateVillageName(seed: number): string {
