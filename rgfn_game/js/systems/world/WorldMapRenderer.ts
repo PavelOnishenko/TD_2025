@@ -3,6 +3,41 @@ import { FogState, TerrainData, GridCell, TerrainNeighbors, TerrainPattern, Terr
 import { theme } from '../../config/ThemeConfig.js';
 
 export default class WorldMapRenderer {
+    public drawVillageRoad(
+        ctx: CanvasRenderingContext2D,
+        startX: number,
+        startY: number,
+        control1X: number,
+        control1Y: number,
+        control2X: number,
+        control2Y: number,
+        endX: number,
+        endY: number,
+        alpha: number,
+    ): void {
+        const clampedAlpha = Math.max(0.3, Math.min(1, alpha));
+        ctx.save();
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+
+        ctx.strokeStyle = this.withAlpha('#f7d969', 0.18 * clampedAlpha);
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(startX, startY);
+        ctx.quadraticCurveTo(control1X, control1Y, (startX + endX) * 0.5, (startY + endY) * 0.5);
+        ctx.quadraticCurveTo(control2X, control2Y, endX, endY);
+        ctx.stroke();
+
+        ctx.strokeStyle = this.withAlpha('#f8db66', 0.84 * clampedAlpha);
+        ctx.lineWidth = 1.35;
+        ctx.beginPath();
+        ctx.moveTo(startX, startY);
+        ctx.quadraticCurveTo(control1X, control1Y, (startX + endX) * 0.5, (startY + endY) * 0.5);
+        ctx.quadraticCurveTo(control2X, control2Y, endX, endY);
+        ctx.stroke();
+        ctx.restore();
+    }
+
     public drawNamedLocation(
         ctx: CanvasRenderingContext2D,
         cell: GridCell,

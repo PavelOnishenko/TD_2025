@@ -37,6 +37,14 @@ type NamedLocation = {
     terrainType: TerrainType;
 };
 
+type VillageRoadPoint = {
+    col: number;
+    row: number;
+    x: number;
+    y: number;
+    fogState: FogState;
+};
+
 type ClimateCell = {
     col: number;
     row: number;
@@ -998,6 +1006,7 @@ export default class WorldMap {
         if (drawGrid) {
             this.renderer.drawGrid(ctx, this.grid, this.canvasWidth, this.canvasHeight);
         }
+        this.drawVillageRoads(ctx, bounds);
         this.drawVillages(ctx, bounds);
         this.drawNamedLocations(ctx, bounds);
         this.drawNamedLocationFocus(ctx);
@@ -1077,6 +1086,110 @@ export default class WorldMap {
             const villageGlow = fogState === FOG_STATE.DISCOVERED ? 0.95 : 0.82;
             this.renderer.drawVillage(ctx, x, y, villageGlow);
         });
+    }
+
+    private drawVillageRoads(ctx: CanvasRenderingContext2D, bounds: { startCol: number; endCol: number; startRow: number; endRow: number }): void {
+        const visibleVillages = this.getVisibleVillageRoadPoints(bounds);
+        if (visibleVillages.length < 2) {
+            return;
+        }
+
+        const roadLinks = this.buildVillageRoadLinks(visibleVillages);
+        roadLinks.forEach(({ from, to }) => {
+            const { control1X, control1Y, control2X, control2Y } = this.buildVillageRoadControls(from, to);
+            const minGlow = Math.min(
+                from.fogState === FOG_STATE.DISCOVERED ? 0.95 : 0.72,
+                to.fogState === FOG_STATE.DISCOVERED ? 0.95 : 0.72,
+            );
+            this.renderer.drawVillageRoad(
+                ctx,
+                from.x,
+                from.y,
+                control1X,
+                control1Y,
+                control2X,
+                control2Y,
+                to.x,
+                to.y,
+                minGlow,
+            );
+        });
+    }
+
+    private getVisibleVillageRoadPoints(bounds: { startCol: number; endCol: number; startRow: number; endRow: number }): VillageRoadPoint[] {
+        const points: VillageRoadPoint[] = [];
+        this.villages.forEach((key) => {
+            const [colText, rowText] = key.split(',');
+            const col = Number(colText);
+            const row = Number(rowText);
+            if (col < bounds.startCol || col > bounds.endCol || row < bounds.startRow || row > bounds.endRow) {
+                return;
+            }
+            const fogState = this.getFogState(col, row);
+            if (fogState === FOG_STATE.UNKNOWN) {
+                return;
+            }
+            const cell = this.grid.getCellAt(col, row);
+            if (!cell) {
+                return;
+            }
+            points.push({
+                col,
+                row,
+                fogState,
+                x: cell.x + (cell.width / 2),
+                y: cell.y + (cell.height / 2),
+            });
+        });
+        return points;
+    }
+
+    private buildVillageRoadLinks(villages: VillageRoadPoint[]): Array<{ from: VillageRoadPoint; to: VillageRoadPoint }> {
+        const links = new Map<string, { from: VillageRoadPoint; to: VillageRoadPoint }>();
+        villages.forEach((village, index) => {
+            const neighbors = villages
+                .map((candidate, candidateIndex) => ({
+                    candidate,
+                    candidateIndex,
+                    distance: Math.hypot(candidate.col - village.col, candidate.row - village.row),
+                }))
+                .filter((item) => item.candidateIndex !== index)
+                .sort((a, b) => a.distance - b.distance)
+                .slice(0, 2);
+
+            neighbors.forEach(({ candidate }) => {
+                const first = this.getCellIndex(village.col, village.row);
+                const second = this.getCellIndex(candidate.col, candidate.row);
+                const key = first < second ? `${first}-${second}` : `${second}-${first}`;
+                if (!links.has(key)) {
+                    links.set(key, { from: village, to: candidate });
+                }
+            });
+        });
+        return Array.from(links.values());
+    }
+
+    private buildVillageRoadControls(from: VillageRoadPoint, to: VillageRoadPoint): { control1X: number; control1Y: number; control2X: number; control2Y: number } {
+        const dx = to.x - from.x;
+        const dy = to.y - from.y;
+        const distance = Math.hypot(dx, dy);
+        const unitX = distance === 0 ? 0 : dx / distance;
+        const unitY = distance === 0 ? 0 : dy / distance;
+        const normalX = -unitY;
+        const normalY = unitX;
+
+        const pairSeed = this.hashSeed((from.col + 1) * 911, (from.row + 1) * 353, (to.col + 1) * 719, (to.row + 1) * 197);
+        const curveDirection = this.seededRandom(pairSeed) > 0.5 ? 1 : -1;
+        const bendStrength = Math.max(this.grid.cellSize * 0.5, Math.min(distance * 0.26, this.grid.cellSize * 1.8));
+        const bendNoise = 0.8 + (this.seededRandom(pairSeed * 1.37) * 0.5);
+        const bend = bendStrength * bendNoise * curveDirection;
+
+        const control1X = from.x + (dx * 0.33) + (normalX * bend);
+        const control1Y = from.y + (dy * 0.33) + (normalY * bend);
+        const control2X = from.x + (dx * 0.66) + (normalX * bend * 0.85);
+        const control2Y = from.y + (dy * 0.66) + (normalY * bend * 0.85);
+
+        return { control1X, control1Y, control2X, control2Y };
     }
 
     private drawNamedLocations(ctx: CanvasRenderingContext2D, bounds: { startCol: number; endCol: number; startRow: number; endRow: number }): void {
