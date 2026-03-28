@@ -48,7 +48,6 @@ type DeveloperCallbacks = {
 const ENCOUNTER_LABELS: Record<RandomEncounterType, string> = {
     monster: 'Monster',
     item: 'Item',
-    village: 'Village',
     traveler: 'Traveler',
 };
 

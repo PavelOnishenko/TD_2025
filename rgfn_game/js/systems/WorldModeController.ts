@@ -196,7 +196,7 @@ export default class WorldModeController {
             return;
         }
 
-        const encounter = this.encounterSystem.generateEncounter(!isPreviouslyDiscovered, !isPreviouslyDiscovered);
+        const encounter = this.encounterSystem.generateEncounter(!isPreviouslyDiscovered);
         if (encounter.type === 'battle') {
             this.callbacks.onStartBattle(encounter.enemies, this.worldMap.getCurrentTerrain().type);
             return;
@@ -209,12 +209,6 @@ export default class WorldModeController {
 
         if (encounter.type === 'item') {
             this.handleItemDiscovery(encounter.item);
-            return;
-        }
-
-        if (encounter.type === 'village') {
-            this.worldMap.markVillageAtPlayerPosition();
-            this.callbacks.onEnterVillage();
             return;
         }
 

@@ -1,5 +1,6 @@
 import VillageActionsController from '../village/VillageActionsController.js';
 import DeveloperEventController from '../encounter/DeveloperEventController.js';
+import { RandomEncounterType } from '../encounter/EncounterSystem.js';
 import { BattleUI, DeveloperUI, HudElements, VillageUI, WorldUI } from './GameUiTypes.js';
 import { BaseSpellId } from '../magic/MagicSystem.js';
 import { CombatMove } from '../combat/DirectionalCombat.js';
@@ -185,7 +186,7 @@ export default class GameUiEventBinder {
         this.developerUI.enableAllEncountersBtn.addEventListener('click', () => this.developerEventController.handleEncounterTypesToggleAll(true));
         this.developerUI.disableAllEncountersBtn.addEventListener('click', () => this.developerEventController.handleEncounterTypesToggleAll(false));
         Object.entries(this.developerUI.encounterTypeToggles).forEach(([type, input]) => {
-            input.addEventListener('change', () => this.developerEventController.handleEncounterTypeToggle(type as 'monster' | 'item' | 'village' | 'traveler', input.checked));
+            input.addEventListener('change', () => this.developerEventController.handleEncounterTypeToggle(type as RandomEncounterType, input.checked));
         });
     }
 

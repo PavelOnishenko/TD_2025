@@ -9,13 +9,12 @@ export type EncounterResult =
     | { type: 'battle', enemies: Skeleton[] }
     | { type: 'none' }
     | { type: 'item', item: Item }
-    | { type: 'village' }
     | { type: 'traveler', traveler: Wanderer, isHostile: boolean };
 
-export type ForcedEncounterType = 'skeleton' | 'zombie' | 'ninja' | 'darkKnight' | 'dragon' | 'item' | 'none' | 'village' | 'traveler';
-export type RandomEncounterType = 'monster' | 'item' | 'village' | 'traveler';
+export type ForcedEncounterType = 'skeleton' | 'zombie' | 'ninja' | 'darkKnight' | 'dragon' | 'item' | 'none' | 'traveler';
+export type RandomEncounterType = 'monster' | 'item' | 'traveler';
 
-export const RANDOM_ENCOUNTER_TYPES: RandomEncounterType[] = ['monster', 'item', 'village', 'traveler'];
+export const RANDOM_ENCOUNTER_TYPES: RandomEncounterType[] = ['monster', 'item', 'traveler'];
 
 export default class EncounterSystem {
     private encounterRate: number;
@@ -54,7 +53,7 @@ export default class EncounterSystem {
         return false;
     }
 
-    public generateEncounter(canDiscoverItems: boolean = true, canDiscoverVillages: boolean = true): EncounterResult {
+    public generateEncounter(canDiscoverItems: boolean = true): EncounterResult {
         if (this.shouldSkipRandomEncounter()) {
             return { type: 'none' };
         }
@@ -64,7 +63,6 @@ export default class EncounterSystem {
             rollEncounterType: () => this.rollEncounterType(),
         }, {
             canDiscoverItems: canDiscoverItems && this.isEncounterTypeEnabled('item'),
-            canDiscoverVillages,
             enabledEventTypes: this.getEnabledEncounterTypes(),
         });
     }
@@ -103,7 +101,6 @@ export default class EncounterSystem {
         return {
             monster: true,
             item: true,
-            village: true,
             traveler: true,
         };
     }

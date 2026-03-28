@@ -39,7 +39,6 @@ function createDeveloperUi() {
     encounterTypeToggles: {
       monster: createInput(),
       item: createInput(),
-      village: createInput(),
       traveler: createInput(),
     },
     nextRollSummary: { textContent: '' },
@@ -88,7 +87,7 @@ test('DeveloperEventController updates encounter toggle summary when a type is d
 
   assert.equal(encounterSystem.isEncounterTypeEnabled('item'), false);
   assert.equal(developerUI.encounterTypeToggles.item.checked, false);
-  assert.equal(developerUI.encounterTypeSummary.textContent, 'Enabled random encounters: Monster, Village, Traveler.');
+  assert.equal(developerUI.encounterTypeSummary.textContent, 'Enabled random encounters: Monster, Traveler.');
   assert.equal(logs[0], '[DEV] Item encounters disabled.');
 });
 
@@ -103,7 +102,6 @@ test('DeveloperEventController can disable all random encounter types from the d
   assert.deepEqual(encounterSystem.getEncounterTypeStates(), {
     monster: false,
     item: false,
-    village: false,
     traveler: false,
   });
   assert.equal(developerUI.encounterTypeSummary.textContent, 'Random encounters disabled. Forced queue still works.');

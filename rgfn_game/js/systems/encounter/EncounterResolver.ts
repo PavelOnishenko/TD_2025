@@ -5,7 +5,7 @@ import { balanceConfig } from '../../config/balanceConfig.js';
 import type { EncounterResult, ForcedEncounterType, RandomEncounterType } from './EncounterSystem.js';
 import Wanderer from '../../entities/Wanderer.js';
 
-type EncounterEventType = 'monster' | 'item' | 'village' | 'traveler';
+type EncounterEventType = 'monster' | 'item' | 'traveler';
 
 type EncounterRolls = {
     rollEncounterEventType: () => EncounterEventType;
@@ -14,7 +14,6 @@ type EncounterRolls = {
 
 type EncounterGenerationOptions = {
     canDiscoverItems?: boolean;
-    canDiscoverVillages?: boolean;
     enabledEventTypes?: RandomEncounterType[];
 };
 
@@ -28,8 +27,7 @@ export default class EncounterResolver {
     public generateEncounter(itemDiscoveryChance: number, rolls: EncounterRolls, options: EncounterGenerationOptions = {}): EncounterResult {
         const {
             canDiscoverItems = true,
-            canDiscoverVillages = true,
-            enabledEventTypes = ['monster', 'item', 'village', 'traveler'],
+            enabledEventTypes = ['monster', 'item', 'traveler'],
         } = options;
 
         if (enabledEventTypes.length === 0) {
@@ -48,13 +46,6 @@ export default class EncounterResolver {
         }
 
         const eventType = rolls.rollEncounterEventType();
-        if (eventType === 'village') {
-            if (canDiscoverVillages) {
-                return { type: 'village' };
-            }
-
-            return { type: 'battle', enemies: this.createEnemiesForEncounter(rolls.rollEncounterType()) };
-        }
 
         if (eventType === 'item') {
             if (canDiscoverItems) {
@@ -127,10 +118,6 @@ export default class EncounterResolver {
 
         if (type === 'item') {
             return this.createRandomItemEncounter();
-        }
-
-        if (type === 'village') {
-            return { type: 'village' };
         }
 
         if (type === 'traveler') {
