@@ -338,6 +338,39 @@ test('WorldMap medium-detail caching avoids full terrain redraw on subsequent fr
   assert.ok(drawCellCallsFirst > drawCellCallsSecond * 2);
 });
 
+test('WorldMap terrain cache render is fog-agnostic and does not draw unknown cells into cached terrain layer', () => {
+  const worldMap = new WorldMap(100, 100, 12);
+  worldMap.resizeToCanvas(720, 720);
+  worldMap.setMapDisplayConfig({ fogOfWar: true, everythingDiscovered: false });
+  const ctx = createMockCanvasContext();
+  ctx.drawImage = (...args) => ctx.calls.push(['drawImage', ...args]);
+  const originalDocument = globalThis.document;
+  globalThis.document = {
+    createElement: () => ({
+      width: 0,
+      height: 0,
+      getContext: () => createMockCanvasContext(),
+    }),
+  };
+
+  const originalDrawCell = worldMap.renderer.drawCell.bind(worldMap.renderer);
+  const cachedTerrainFogStates = [];
+  try {
+    worldMap.renderer.drawCell = (drawCtx, cell, fogState, terrain, neighbors, options) => {
+      if (options?.showFogOverlay === false) {
+        cachedTerrainFogStates.push(fogState);
+      }
+      return originalDrawCell(drawCtx, cell, fogState, terrain, neighbors, options);
+    };
+    worldMap.draw(ctx, null);
+  } finally {
+    globalThis.document = originalDocument;
+  }
+
+  assert.ok(cachedTerrainFogStates.length > 0);
+  assert.deepEqual(new Set(cachedTerrainFogStates), new Set(['discovered']));
+});
+
 test('WorldMap exposes village names and anchors matching quest locations to village tiles', () => withMockedRandom([0.11], () => {
   const worldMap = new WorldMap(40, 30, 20);
   const state = worldMap.getState();
