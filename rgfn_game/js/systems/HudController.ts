@@ -27,6 +27,8 @@ type HudElements = {
     playerDodgeFormula: HTMLElement;
     playerWeapon: HTMLElement;
     playerGold: HTMLElement;
+    playerFatigue: HTMLElement;
+    playerFatigueState: HTMLElement;
     skillPoints: HTMLElement;
     magicPoints: HTMLElement;
     magicPanelPoints: HTMLElement;
@@ -185,6 +187,8 @@ export default class HudController {
 
         this.hudElements.playerWeapon.textContent = this.player.equippedWeapon ? this.player.equippedWeapon.name : 'None';
         this.hudElements.playerGold.textContent = String(this.player.gold);
+        this.hudElements.playerFatigue.textContent = `${Math.round(this.player.fatigue)}/${this.player.getMaxFatigue()} (${this.player.getFatiguePercent().toFixed(0)}%)`;
+        this.hudElements.playerFatigueState.textContent = this.player.getFatigueStateLabel();
 
         this.renderEquipmentSlots();
 

@@ -23,6 +23,8 @@ export type HudElements = {
     playerDodgeFormula: HTMLElement;
     playerWeapon: HTMLElement;
     playerGold: HTMLElement;
+    playerFatigue: HTMLElement;
+    playerFatigueState: HTMLElement;
     skillPoints: HTMLElement;
     magicPoints: HTMLElement;
     magicPanelPoints: HTMLElement;
@@ -128,6 +130,7 @@ export type WorldUI = {
     sidebar: HTMLElement;
     usePotionBtn: HTMLButtonElement;
     enterVillageBtn: HTMLButtonElement;
+    campSleepBtn: HTMLButtonElement;
     centerOnCharacterBtn: HTMLButtonElement;
 };
 
@@ -137,6 +140,7 @@ export type VillageUI = {
     prompt: HTMLElement;
     actions: HTMLElement;
     openDialogueBtn: HTMLButtonElement;
+    sleepRoomBtn: HTMLButtonElement;
     dialogueModal: HTMLElement;
     dialogueCloseBtn: HTMLButtonElement;
     dialogueSelectedNpc: HTMLElement;

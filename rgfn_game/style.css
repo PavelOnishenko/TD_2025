@@ -263,7 +263,9 @@ h1 {
 }
 
 .draggable-panel {
-    position: relative;
+    position: absolute;
+    top: 0;
+    left: 0;
     transform: translate(var(--panel-offset-x, 0px), var(--panel-offset-y, 0px));
 }
 
@@ -314,6 +316,11 @@ h1 {
     overflow: auto;
 }
 
+#world-sidebar {
+    flex-shrink: 0;
+    max-height: none;
+    overflow: visible;
+}
 #game-log-container {
     width: min(340px, calc(100vw - 48px));
     max-width: calc(100vw - 32px);
@@ -584,6 +591,7 @@ h1 {
     }
 
     .draggable-panel {
+        position: static;
         transform: none;
     }
 

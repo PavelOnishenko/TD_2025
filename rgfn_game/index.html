@@ -58,6 +58,8 @@
                             <div id="player-dodge-formula" class="stat-detail">1 - 1/(1 + AGI×0.045), cap 45% = 0%</div>
                         </div>
                         <div class="stat">Weapon: <span id="player-weapon">None</span></div>
+                        <div class="stat">Fatigue: <span id="player-fatigue">0/100 (0%)</span></div>
+                        <div class="stat">Condition: <span id="player-fatigue-state">Rested</span></div>
                     </div>
                     <div id="skills-panel" class="hud-section stats overlay-panel hidden">
                         <div class="stat">Skill Points: <span id="skill-points">0</span></div>
@@ -178,6 +180,7 @@
                             <div id="world-action-buttons">
                                 <button id="world-use-potion-btn" class="action-btn">Use HP Potion</button>
                                 <button id="world-enter-village-btn" class="action-btn">Enter Village (Space)</button>
+                                <button id="world-camp-sleep-btn" class="action-btn">Camp Sleep (Risky)</button>
                                 <button id="world-center-on-character-btn" class="action-btn">Center on Character</button>
                             </div>
                         </div>
@@ -246,6 +249,7 @@
                                     <p id="village-npc-title" class="village-npc-title">Choose someone to talk to</p>
                                     <div id="village-npc-list" class="village-npc-list"></div>
                                     <button id="village-open-dialogue-btn" class="action-btn">Open NPC dialogue window</button>
+                                    <button id="village-sleep-room-btn" class="action-btn">Sleep in room</button>
                                 </div>
                                 <button id="village-leave-btn" class="action-btn">Leave</button>
                             </div>
