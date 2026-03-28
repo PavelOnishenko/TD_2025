@@ -20,27 +20,44 @@ function createWorldMapMock({ onVillage = false } = {}) {
     movePlayer: () => ({ moved: false, isPreviouslyDiscovered: false }),
     getPlayerPixelPosition: () => [12, 34],
     isPlayerOnVillage: () => onVillage,
+    getCurrentTerrain: () => ({ type: 'plains' }),
+    getCurrentNamedLocation: () => null,
   };
 }
 
-function createController({ onVillage = false, pressed = [] } = {}) {
+function createController({ onVillage = false, pressed = [], encounterSystemOverrides = {}, callbacksOverrides = {}, worldMapOverrides = {} } = {}) {
   const calls = {
     enteredVillage: 0,
+    startedBattle: 0,
+    questEncounterChecks: 0,
+  };
+  const encounterSystem = {
+    onPlayerMove: () => {},
+    checkEncounter: () => false,
+    generateEncounter: () => ({ type: 'none' }),
+    isEncounterTypeEnabled: () => true,
+    ...encounterSystemOverrides,
+  };
+  const callbacks = {
+    onEnterVillage: () => { calls.enteredVillage += 1; },
+    onStartBattle: () => { calls.startedBattle += 1; },
+    onAddBattleLog: () => {},
+    onUpdateHUD: () => {},
+    onRememberTraveler: () => {},
+    getQuestBattleEncounter: () => {
+      calls.questEncounterChecks += 1;
+      return null;
+    },
+    ...callbacksOverrides,
   };
 
   const controller = new WorldModeController(
     createInputMock({ pressed }),
     { x: 0, y: 0, restoreMana: () => {} },
-    createWorldMapMock({ onVillage }),
-    { onPlayerMove: () => {}, checkEncounter: () => false, generateEncounter: () => ({ type: 'none' }) },
+    { ...createWorldMapMock({ onVillage }), ...worldMapOverrides },
+    encounterSystem,
     { showItemDiscovery: () => {} },
-    {
-      onEnterVillage: () => { calls.enteredVillage += 1; },
-      onStartBattle: () => {},
-      onAddBattleLog: () => {},
-      onUpdateHUD: () => {},
-      onRememberTraveler: () => {},
-    },
+    callbacks,
   );
 
   return { controller, calls };
@@ -70,4 +87,49 @@ test('WorldModeController Space action enters village from world mode', () => {
   controller.updateWorldMode();
 
   assert.equal(calls.enteredVillage, 1);
+});
+
+test('WorldModeController allows quest monster encounters when monster random encounters are enabled', () => {
+  const { controller, calls } = createController({
+    pressed: ['moveUp'],
+    worldMapOverrides: {
+      movePlayer: () => ({ moved: true, isPreviouslyDiscovered: false }),
+      isPlayerOnVillage: () => false,
+    },
+    callbacksOverrides: {
+      getQuestBattleEncounter: () => {
+        calls.questEncounterChecks += 1;
+        return { enemies: [] };
+      },
+    },
+  });
+
+  controller.updateWorldMode();
+
+  assert.equal(calls.questEncounterChecks, 1);
+  assert.equal(calls.startedBattle, 1);
+});
+
+test('WorldModeController blocks quest monster encounters when monster random encounters are disabled', () => {
+  const { controller, calls } = createController({
+    pressed: ['moveUp'],
+    worldMapOverrides: {
+      movePlayer: () => ({ moved: true, isPreviouslyDiscovered: false }),
+      isPlayerOnVillage: () => false,
+    },
+    encounterSystemOverrides: {
+      isEncounterTypeEnabled: () => false,
+    },
+    callbacksOverrides: {
+      getQuestBattleEncounter: () => {
+        calls.questEncounterChecks += 1;
+        return { enemies: [] };
+      },
+    },
+  });
+
+  controller.updateWorldMode();
+
+  assert.equal(calls.questEncounterChecks, 0);
+  assert.equal(calls.startedBattle, 0);
 });
