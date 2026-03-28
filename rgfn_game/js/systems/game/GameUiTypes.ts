@@ -141,6 +141,11 @@ export type VillageUI = {
     title: HTMLElement;
     prompt: HTMLElement;
     actions: HTMLElement;
+    openDialogueBtn: HTMLButtonElement;
+    dialogueModal: HTMLElement;
+    dialogueCloseBtn: HTMLButtonElement;
+    dialogueSelectedNpc: HTMLElement;
+    dialogueLog: HTMLElement;
     enterBtn: HTMLButtonElement;
     skipBtn: HTMLButtonElement;
     waitBtn: HTMLButtonElement;

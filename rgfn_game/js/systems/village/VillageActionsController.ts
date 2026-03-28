@@ -7,6 +7,11 @@ type VillageUI = {
     title: HTMLElement;
     prompt: HTMLElement;
     actions: HTMLElement;
+    openDialogueBtn: HTMLButtonElement;
+    dialogueModal: HTMLElement;
+    dialogueCloseBtn: HTMLButtonElement;
+    dialogueSelectedNpc: HTMLElement;
+    dialogueLog: HTMLElement;
     buyOffer1Btn: HTMLButtonElement;
     buyOffer2Btn: HTMLButtonElement;
     buyOffer3Btn: HTMLButtonElement;
@@ -119,6 +124,8 @@ export default class VillageActionsController {
         this.villageUI.sidebar.classList.remove('hidden');
         this.villageUI.prompt.classList.remove('hidden');
         this.villageUI.actions.classList.add('hidden');
+        this.closeDialogueWindow();
+        this.villageUI.dialogueLog.innerHTML = '';
         this.gameLog.innerHTML = '';
         this.addLog(`You discover ${villageName}. Enter it?`, 'system');
         const villageContractHints = this.getVillageContractHints(villageName);
@@ -151,6 +158,7 @@ export default class VillageActionsController {
 
     public exitVillage(): void {
         this.villageUI.sidebar.classList.add('hidden');
+        this.closeDialogueWindow();
     }
 
     public handleEnter(villageName: string): void {
@@ -162,6 +170,19 @@ export default class VillageActionsController {
         this.renderNpcButtons();
         this.updateNpcPanel();
         this.updateButtons();
+    }
+
+    public openDialogueWindow(): void {
+        if (!this.getSelectedNpc()) {
+            this.addLog('Choose an NPC first before opening a dialogue window.', 'system');
+            return;
+        }
+
+        this.villageUI.dialogueModal.classList.remove('hidden');
+    }
+
+    public closeDialogueWindow(): void {
+        this.villageUI.dialogueModal.classList.add('hidden');
     }
 
     public handleSkip(): void {
@@ -238,6 +259,7 @@ export default class VillageActionsController {
         this.selectedNpcId = npc.id;
         this.updateNpcPanel();
         this.renderNpcButtons();
+        this.updateButtons();
         this.addLog(`You approach ${npc.name} the ${npc.role}.`, 'player');
         this.addLog(`${npc.name} looks ${npc.look} and speaks in a ${npc.speechStyle} manner.`, 'system-message');
     }
@@ -368,11 +390,10 @@ export default class VillageActionsController {
     }
 
     public addLog(message: string, type: string = 'system'): void {
-        const line = document.createElement('div');
-        line.textContent = message;
-        line.classList.add(`${type}-action`);
-        this.gameLog.appendChild(line);
+        this.appendLogLine(this.gameLog, message, type);
+        this.appendLogLine(this.villageUI.dialogueLog, message, type);
         this.gameLog.scrollTop = this.gameLog.scrollHeight;
+        this.villageUI.dialogueLog.scrollTop = this.villageUI.dialogueLog.scrollHeight;
     }
 
     public updateButtons(): void {
@@ -398,10 +419,12 @@ export default class VillageActionsController {
 
         this.refreshSellOptions();
         this.villageUI.sellSelectedBtn.disabled = this.villageUI.sellSelect.disabled;
-        this.villageUI.askVillageBtn.disabled = false;
-        this.villageUI.askPersonBtn.disabled = false;
-        this.villageUI.askBarterBtn.disabled = false;
-        this.villageUI.barterNowBtn.disabled = false;
+        const hasSelectedNpc = this.getSelectedNpc() !== null;
+        this.villageUI.openDialogueBtn.disabled = !hasSelectedNpc;
+        this.villageUI.askVillageBtn.disabled = !hasSelectedNpc;
+        this.villageUI.askPersonBtn.disabled = !hasSelectedNpc;
+        this.villageUI.askBarterBtn.disabled = !hasSelectedNpc;
+        this.villageUI.barterNowBtn.disabled = !hasSelectedNpc;
     }
 
     private getOrCreateVillageNpcRoster(villageName: string): VillageNpcProfile[] {
@@ -484,10 +507,19 @@ export default class VillageActionsController {
         const npc = this.getSelectedNpc();
         if (!npc) {
             this.villageUI.npcTitle.textContent = 'Choose someone to talk to';
+            this.villageUI.dialogueSelectedNpc.textContent = 'Select an NPC in the village rumors panel first.';
             return;
         }
 
         this.villageUI.npcTitle.textContent = `${npc.name}, ${npc.role} — ${npc.speechStyle}`;
+        this.villageUI.dialogueSelectedNpc.textContent = `Speaking with ${npc.name}, ${npc.role}.`;
+    }
+
+    private appendLogLine(container: HTMLElement, message: string, type: string): void {
+        const line = document.createElement('div');
+        line.textContent = message;
+        line.classList.add(`${type}-action`);
+        container.appendChild(line);
     }
 
     private getOrCreateVillageBarterDeals(villageName: string): VillageBarterDeal[] {

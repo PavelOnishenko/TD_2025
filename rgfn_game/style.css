@@ -1160,3 +1160,68 @@ button.quest-entity-name.location:hover {
     color: var(--color-text-primary);
     font-size: 14px;
 }
+
+.village-dialogue-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 75;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: color-mix(in srgb, #000 60%, transparent);
+}
+
+.village-dialogue-modal.hidden {
+    display: none;
+}
+
+.village-dialogue-panel {
+    width: min(560px, calc(100vw - 24px));
+    max-height: min(82vh, 760px);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid var(--color-secondary-accent);
+    background: color-mix(in srgb, var(--color-secondary-bg) 92%, #000);
+    box-shadow: 0 16px 30px color-mix(in srgb, #000 45%, transparent);
+}
+
+.village-dialogue-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+}
+
+.village-dialogue-header h2 {
+    margin: 0;
+    font-size: 18px;
+    color: var(--color-enemy);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+}
+
+.village-dialogue-selected-npc {
+    margin: 0;
+    font-size: 13px;
+    color: var(--color-text-muted);
+}
+
+.village-dialogue-log {
+    flex: 1;
+    min-height: 180px;
+    overflow-y: auto;
+    padding: 10px;
+    border: 1px solid var(--color-secondary-accent);
+    border-radius: 6px;
+    background-color: color-mix(in srgb, var(--color-panel-highlight) 74%, transparent);
+}
+
+.village-dialogue-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}

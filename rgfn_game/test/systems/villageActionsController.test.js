@@ -46,6 +46,11 @@ function createVillageUi() {
     title: createElement(),
     prompt: createElement(),
     actions: createElement(),
+    openDialogueBtn: createElement('button'),
+    dialogueModal: createElement(),
+    dialogueCloseBtn: createElement('button'),
+    dialogueSelectedNpc: createElement(),
+    dialogueLog: createElement(),
     buyOffer1Btn: createElement('button'),
     buyOffer2Btn: createElement('button'),
     buyOffer3Btn: createElement('button'),
@@ -203,4 +208,36 @@ test('VillageActionsController binds dynamically generated barter trader names w
   const hint = controller['getPersonDirectionHint']('Veyra');
   assert.equal(hint.exists, true);
   assert.equal(hint.villageName, 'Mossbrook');
+}));
+
+test('VillageActionsController mirrors dialogue lines into modal log and toggles modal visibility', () => withDocumentStub(() => {
+  const villageUI = createVillageUi();
+  const gameLog = createElement();
+  const controller = new VillageActionsController(createPlayerStub(), villageUI, gameLog, {
+    onUpdateHUD: () => {},
+    onLeaveVillage: () => {},
+    getVillageDirectionHint: (settlementName) => ({ settlementName, exists: false }),
+    onVillageBarterCompleted: () => {},
+  });
+
+  controller['dialogueEngine'] = {
+    createNpcRoster: () => [{ id: 'moss-0', name: 'Mara', role: 'Trader', look: 'cloak', speechStyle: 'calm', disposition: 'truthful' }],
+    buildLocationAnswer: () => ({ speech: '', tone: '', truthfulness: 'truth' }),
+    buildPersonLocationAnswer: () => ({ speech: '', tone: '', truthfulness: 'truth' }),
+  };
+
+  controller.enterVillage('Mossbrook');
+  controller.handleEnter('Mossbrook');
+  assert.equal(villageUI.openDialogueBtn.disabled, true);
+  controller.handleSelectNpc(0);
+  assert.equal(villageUI.openDialogueBtn.disabled, false);
+  controller.openDialogueWindow();
+  assert.equal(villageUI.dialogueModal.classList.removed.includes('hidden'), true);
+
+  controller.addLog('Modal mirror check', 'system');
+  assert.equal(gameLog.children.some((child) => child.textContent === 'Modal mirror check'), true);
+  assert.equal(villageUI.dialogueLog.children.some((child) => child.textContent === 'Modal mirror check'), true);
+
+  controller.closeDialogueWindow();
+  assert.equal(villageUI.dialogueModal.classList.added.includes('hidden'), true);
 }));
