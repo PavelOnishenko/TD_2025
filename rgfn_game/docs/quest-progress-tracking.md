@@ -31,6 +31,14 @@
 - `QuestUiController` renders completion state using `QuestNode.isCompleted`.
 - `Game` now persists the full active quest tree (`title`, structure, entities, and `isCompleted` flags) inside `rgfn_game_save_v1`, then restores it on refresh so completed nodes remain completed.
 
+## Quest data contract note
+- `QuestNode` may carry optional structured runtime data in `objectiveData`.
+- Current structured payloads in active use:
+  - `objectiveData.deliver` for courier pickup and destination state.
+  - `objectiveData.monster` for kill targets, required kill counts, mutation traits, and runtime kill progress.
+- Important: monster mutation origin belongs inside `objectiveData.monster.mutatedFrom`, not as a required top-level field on `QuestObjectiveData`.
+- If future quest types need machine-readable progression, add a new optional branch under `objectiveData` instead of encoding logic-critical state only in description text.
+
 ## Persistence behavior
 - Save payload now includes `quest: QuestNode | null`.
 - Quest bootstrap now prefers the saved quest from localStorage and only generates a fresh quest when no saved quest exists.

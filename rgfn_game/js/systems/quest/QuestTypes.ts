@@ -20,6 +20,7 @@ export type QuestNode = {
     conditionText: string;
     objectiveType: QuestObjectiveType;
     entities: QuestTextEntity[];
+    objectiveData?: QuestObjectiveData;
     children: QuestNode[];
     isCompleted?: boolean;
 };
@@ -64,5 +65,4 @@ export type MonsterObjectiveData = {
 export type QuestObjectiveData = {
     deliver?: DeliverObjectiveData;
     monster?: MonsterObjectiveData;
-    mutatedFrom: string;
 };
