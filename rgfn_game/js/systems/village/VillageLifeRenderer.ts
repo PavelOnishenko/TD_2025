@@ -1,15 +1,43 @@
 import { theme } from '../../config/ThemeConfig.js';
 import VillagePopulation, { VillageSpot, VillageVillager } from './VillagePopulation.js';
 
-export type VillageHouse = { x: number; y: number; width: number; height: number; roofColor: string; doorOpenAmount: number; doorTargetOpenAmount: number; doorStateUntil: number; isShop: boolean; };
-type VillageHouseConfig = { gridX: number; gridY: number; width: number; height: number; roofColor: string; isShop?: boolean; };
+export type VillageHouse = {
+    worldX: number;
+    worldY: number;
+    footprintWidth: number;
+    footprintDepth: number;
+    wallHeight: number;
+    roofHeight: number;
+    roofColor: string;
+    doorOpenAmount: number;
+    doorTargetOpenAmount: number;
+    doorStateUntil: number;
+    isShop: boolean;
+};
+
+type VillageHouseConfig = {
+    gridX: number;
+    gridY: number;
+    footprintWidth: number;
+    footprintDepth: number;
+    wallHeight: number;
+    roofHeight: number;
+    roofColor: string;
+    isShop?: boolean;
+};
 
 export default class VillageLifeRenderer {
     private static readonly OUTLINE_COLOR = '#1d1b22';
+    private static readonly ISO_COS = Math.cos(Math.PI / 6);
+    private static readonly ISO_SIN = Math.sin(Math.PI / 6);
+
     private readonly villagePopulation: VillagePopulation;
     private villageHouses: VillageHouse[] = [];
     private villageSpots: VillageSpot[] = [];
     private currentVillageName = '';
+    private isoOriginX = 0;
+    private isoOriginY = 0;
+    private isoScale = 1;
 
     constructor(villagePopulation: VillagePopulation) {
         this.villagePopulation = villagePopulation;
@@ -18,40 +46,24 @@ export default class VillageLifeRenderer {
     public initialize(width: number, height: number, villageName?: string): void {
         this.currentVillageName = villageName ?? this.generateVillageName();
         const roof = this.getRoofVariants();
-        const tileW = Math.max(56, width * 0.075);
-        const tileH = tileW * 0.5;
-        const centerX = width * 0.5;
-        const topY = height * 0.28;
-        const houses: VillageHouseConfig[] = [
-            { gridX: -2, gridY: 0, width: 74, height: 44, roofColor: roof[0] },
-            { gridX: 0, gridY: -1, width: 80, height: 48, roofColor: roof[1] },
-            { gridX: 2, gridY: 0, width: 72, height: 43, roofColor: roof[2], isShop: true },
-            { gridX: -2, gridY: 2, width: 76, height: 46, roofColor: roof[3] },
-            { gridX: 0, gridY: 3, width: 70, height: 42, roofColor: roof[4] },
-            { gridX: 2, gridY: 2, width: 74, height: 44, roofColor: this.mixColors(roof[1], roof[3], 0.4) },
-        ];
-        this.villageHouses = houses.map((config) => {
-            const point = this.isoToScreen(centerX, topY, tileW, tileH, config.gridX, config.gridY);
-            const house = this.createVillageHouse(point.x - config.width * 0.5, point.y - config.height * 0.85, config.width, config.height, config.roofColor, Boolean(config.isShop));
-            if (house.isShop) {
-                house.roofColor = this.mixColors(config.roofColor, theme.ui.primaryAccent, 0.2);
-            }
+        this.isoScale = Math.max(18, width * 0.024);
+        this.isoOriginX = width * 0.5;
+        this.isoOriginY = height * 0.34;
 
-            return house;
-        });
-        this.villageSpots = [
-            { ...this.isoToScreen(centerX, topY, tileW, tileH, -2, 1), houseIndex: 0 },
-            { ...this.isoToScreen(centerX, topY, tileW, tileH, -1, 1) },
-            { ...this.isoToScreen(centerX, topY, tileW, tileH, 0, 0), houseIndex: 1 },
-            { ...this.isoToScreen(centerX, topY, tileW, tileH, 1, 1) },
-            { ...this.isoToScreen(centerX, topY, tileW, tileH, 2, 1), houseIndex: 2 },
-            { ...this.isoToScreen(centerX, topY, tileW, tileH, -2, 3), houseIndex: 3 },
-            { ...this.isoToScreen(centerX, topY, tileW, tileH, -1, 3) },
-            { ...this.isoToScreen(centerX, topY, tileW, tileH, 0, 4), houseIndex: 4 },
-            { ...this.isoToScreen(centerX, topY, tileW, tileH, 1, 3) },
-            { ...this.isoToScreen(centerX, topY, tileW, tileH, 2, 3), houseIndex: 5 },
-            { ...this.isoToScreen(centerX, topY, tileW, tileH, 0, 2) },
+        const houses: VillageHouseConfig[] = [
+            { gridX: -4.2, gridY: -0.4, footprintWidth: 1.6, footprintDepth: 1.6, wallHeight: 1.2, roofHeight: 0.8, roofColor: roof[0] },
+            { gridX: -1.6, gridY: -1.8, footprintWidth: 1.8, footprintDepth: 1.6, wallHeight: 1.28, roofHeight: 0.85, roofColor: roof[1] },
+            { gridX: 1.8, gridY: -0.6, footprintWidth: 1.9, footprintDepth: 1.8, wallHeight: 1.35, roofHeight: 0.9, roofColor: roof[2], isShop: true },
+            { gridX: -4.4, gridY: 2.1, footprintWidth: 1.7, footprintDepth: 1.7, wallHeight: 1.18, roofHeight: 0.82, roofColor: roof[3] },
+            { gridX: -0.9, gridY: 2.8, footprintWidth: 1.65, footprintDepth: 1.65, wallHeight: 1.12, roofHeight: 0.78, roofColor: roof[4] },
+            { gridX: 2.5, gridY: 2.5, footprintWidth: 1.75, footprintDepth: 1.6, wallHeight: 1.18, roofHeight: 0.82, roofColor: this.mixColors(roof[1], roof[3], 0.36) },
         ];
+
+        this.villageHouses = houses
+            .map((house) => this.createVillageHouse(house))
+            .sort((a, b) => (a.worldX + a.worldY) - (b.worldX + b.worldY));
+
+        this.villageSpots = this.buildVillageSpots();
         this.villagePopulation.initialize(this.villageSpots, performance.now() * 0.001, this.currentVillageName);
     }
 
@@ -69,19 +81,56 @@ export default class VillageLifeRenderer {
         return this.currentVillageName;
     }
 
-    private getRoofVariants(): string[] {
-        return [theme.ui.secondaryAccent, this.mixColors(theme.ui.secondaryAccent, theme.ui.primaryAccent, 0.2), this.mixColors(theme.ui.secondaryAccent, theme.worldMap.terrain.desert, 0.28), this.mixColors(theme.ui.secondaryAccent, theme.worldMap.terrain.forest, 0.3), this.mixColors(theme.ui.secondaryAccent, theme.worldMap.terrain.mountain, 0.2)];
+    private buildVillageSpots(): VillageSpot[] {
+        const spots: VillageSpot[] = [];
+        this.villageHouses.forEach((house, houseIndex) => {
+            const frontDoor = this.projectIso(house.worldX + (house.footprintWidth * 0.5), house.worldY + house.footprintDepth + 0.26, 0);
+            const nearDoor = this.projectIso(house.worldX + (house.footprintWidth * 0.5), house.worldY + house.footprintDepth + 0.9, 0);
+            spots.push({ x: frontDoor.x, y: frontDoor.y, houseIndex });
+            spots.push({ x: nearDoor.x, y: nearDoor.y });
+        });
+
+        const crossroads = [
+            this.projectIso(-1.1, 1.1, 0),
+            this.projectIso(0.4, 0.6, 0),
+            this.projectIso(1.2, 2.1, 0),
+            this.projectIso(-2.1, 2.0, 0),
+        ];
+        crossroads.forEach((spot) => spots.push({ x: spot.x, y: spot.y }));
+        return spots;
     }
 
-    private createVillageHouse(x: number, y: number, width: number, height: number, roofColor: string, isShop: boolean): VillageHouse {
-        return { x, y, width, height, roofColor, doorOpenAmount: 0, doorTargetOpenAmount: 0, doorStateUntil: 0, isShop };
+    private getRoofVariants(): string[] {
+        return [
+            theme.ui.secondaryAccent,
+            this.mixColors(theme.ui.secondaryAccent, theme.ui.primaryAccent, 0.2),
+            this.mixColors(theme.ui.secondaryAccent, theme.worldMap.terrain.desert, 0.28),
+            this.mixColors(theme.ui.secondaryAccent, theme.worldMap.terrain.forest, 0.3),
+            this.mixColors(theme.ui.secondaryAccent, theme.worldMap.terrain.mountain, 0.2),
+        ];
+    }
+
+    private createVillageHouse(config: VillageHouseConfig): VillageHouse {
+        return {
+            worldX: config.gridX,
+            worldY: config.gridY,
+            footprintWidth: config.footprintWidth,
+            footprintDepth: config.footprintDepth,
+            wallHeight: config.wallHeight,
+            roofHeight: config.roofHeight,
+            roofColor: config.isShop ? this.mixColors(config.roofColor, theme.ui.primaryAccent, 0.2) : config.roofColor,
+            doorOpenAmount: 0,
+            doorTargetOpenAmount: 0,
+            doorStateUntil: 0,
+            isShop: Boolean(config.isShop),
+        };
     }
 
     private updateHouseDoors(now: number): void {
         this.villageHouses.forEach((house) => {
             const open = now < house.doorStateUntil;
             house.doorTargetOpenAmount = open ? 1 : 0;
-            house.doorOpenAmount += (house.doorTargetOpenAmount - house.doorOpenAmount) * (open ? 0.17 : 0.1);
+            house.doorOpenAmount += (house.doorTargetOpenAmount - house.doorOpenAmount) * (open ? 0.18 : 0.1);
             house.doorOpenAmount = Math.max(0, Math.min(1, house.doorOpenAmount));
         });
     }
@@ -97,66 +146,66 @@ export default class VillageLifeRenderer {
     }
 
     private drawVillageHouse(ctx: CanvasRenderingContext2D, house: VillageHouse): void {
-        const { x, y, width, height, roofColor, doorOpenAmount, isShop } = house;
         const edge = VillageLifeRenderer.OUTLINE_COLOR;
-        const roofHeight = height * 0.5;
-        const isoDepth = width * 0.18;
-        const doorX = x + width * 0.42;
-        const doorY = y + height * 0.5;
-        const doorWidth = width * 0.16;
-        const doorHeight = height * 0.5;
-        const openAngle = (Math.PI / 2) * doorOpenAmount;
-        const openEdgeX = doorX + Math.cos(openAngle) * doorWidth;
-        const openEdgeY = doorY - Math.sin(openAngle) * doorWidth * 0.34;
+        const wallLight = this.mixColors(theme.worldMap.terrain.desert, theme.worldMap.terrain.mountain, 0.24);
+        const wallDark = this.mixColors(theme.worldMap.terrain.mountain, theme.worldMap.terrain.forest, 0.5);
 
-        ctx.fillStyle = this.mixColors(theme.worldMap.terrain.desert, theme.worldMap.terrain.mountain, 0.35);
-        ctx.fillRect(x, y, width, height);
+        const a = this.projectIso(house.worldX, house.worldY, 0);
+        const b = this.projectIso(house.worldX + house.footprintWidth, house.worldY, 0);
+        const c = this.projectIso(house.worldX + house.footprintWidth, house.worldY + house.footprintDepth, 0);
+        const d = this.projectIso(house.worldX, house.worldY + house.footprintDepth, 0);
+
+        const at = this.projectIso(house.worldX, house.worldY, house.wallHeight);
+        const bt = this.projectIso(house.worldX + house.footprintWidth, house.worldY, house.wallHeight);
+        const ct = this.projectIso(house.worldX + house.footprintWidth, house.worldY + house.footprintDepth, house.wallHeight);
+        const dt = this.projectIso(house.worldX, house.worldY + house.footprintDepth, house.wallHeight);
+
+        const roofPeak = this.projectIso(
+            house.worldX + house.footprintWidth * 0.5,
+            house.worldY + house.footprintDepth * 0.5,
+            house.wallHeight + house.roofHeight,
+        );
+
         ctx.strokeStyle = edge;
-        ctx.lineWidth = 2;
-        ctx.strokeRect(x, y, width, height);
+        ctx.lineWidth = 1.8;
 
-        ctx.fillStyle = this.mixColors(theme.worldMap.terrain.mountain, theme.worldMap.terrain.forest, 0.45);
-        ctx.beginPath();
-        ctx.moveTo(x + width, y);
-        ctx.lineTo(x + width + isoDepth, y - isoDepth * 0.35);
-        ctx.lineTo(x + width + isoDepth, y + height - isoDepth * 0.35);
-        ctx.lineTo(x + width, y + height);
-        ctx.closePath();
-        ctx.fill();
-        ctx.stroke();
+        this.fillPolygon(ctx, [d, c, ct, dt], wallLight);
+        this.fillPolygon(ctx, [b, c, ct, bt], wallDark);
+        this.fillPolygon(ctx, [at, bt, roofPeak], house.roofColor);
+        this.fillPolygon(ctx, [bt, ct, roofPeak], this.mixColors(house.roofColor, theme.worldMap.terrain.mountain, 0.2));
+        this.fillPolygon(ctx, [ct, dt, roofPeak], this.mixColors(house.roofColor, theme.worldMap.terrain.desert, 0.14));
+        this.fillPolygon(ctx, [dt, at, roofPeak], this.mixColors(house.roofColor, theme.worldMap.terrain.forest, 0.24));
 
-        ctx.fillStyle = roofColor;
-        ctx.beginPath();
-        ctx.moveTo(x - 10, y);
-        ctx.lineTo(x + width * 0.48, y - roofHeight);
-        ctx.lineTo(x + width + 10, y);
-        ctx.lineTo(x + width + isoDepth, y - isoDepth * 0.35);
-        ctx.lineTo(x + width * 0.48 + isoDepth, y - roofHeight - isoDepth * 0.35);
-        ctx.lineTo(x - 10 + isoDepth, y - isoDepth * 0.35);
-        ctx.closePath();
-        ctx.fill();
-        ctx.stroke();
+        const doorCenterX = house.worldX + house.footprintWidth * 0.58;
+        const doorBottomY = house.worldY + house.footprintDepth;
+        const doorHalf = house.footprintWidth * 0.11;
+        const doorHeight = house.wallHeight * 0.62;
 
-        ctx.fillStyle = this.mixColors(theme.ui.primaryBg, theme.worldMap.terrain.mountain, 0.35);
-        ctx.fillRect(doorX, doorY, doorWidth, doorHeight);
-        ctx.strokeRect(doorX, doorY, doorWidth, doorHeight);
-        ctx.fillStyle = this.mixColors(theme.worldMap.terrain.desert, theme.ui.primaryBg, 0.35);
-        ctx.beginPath();
-        ctx.moveTo(doorX, doorY);
-        ctx.lineTo(openEdgeX, openEdgeY);
-        ctx.lineTo(openEdgeX, openEdgeY + doorHeight);
-        ctx.lineTo(doorX, doorY + doorHeight);
-        ctx.closePath();
-        ctx.fill();
-        ctx.stroke();
+        const doorLeftBottom = this.projectIso(doorCenterX - doorHalf, doorBottomY, 0);
+        const doorRightBottom = this.projectIso(doorCenterX + doorHalf, doorBottomY, 0);
+        const doorRightTop = this.projectIso(doorCenterX + doorHalf, doorBottomY, doorHeight);
+        const doorLeftTop = this.projectIso(doorCenterX - doorHalf, doorBottomY, doorHeight);
 
-        if (isShop) {
-            ctx.fillStyle = this.mixColors(theme.ui.panelHighlight, theme.ui.secondaryAccent, 0.3);
-            ctx.fillRect(x + width * 0.3, y + height * 0.18, width * 0.4, height * 0.14);
-            ctx.strokeRect(x + width * 0.3, y + height * 0.18, width * 0.4, height * 0.14);
+        this.fillPolygon(ctx, [doorLeftBottom, doorRightBottom, doorRightTop, doorLeftTop], this.mixColors(theme.ui.primaryBg, theme.worldMap.terrain.mountain, 0.35));
+
+        const hinge = doorLeftBottom;
+        const openRad = (Math.PI / 2) * house.doorOpenAmount;
+        const openX = Math.cos(openRad) * (doorRightBottom.x - doorLeftBottom.x);
+        const openY = Math.sin(openRad) * (doorRightBottom.x - doorLeftBottom.x) * 0.22;
+        const openBottom = { x: hinge.x + openX, y: hinge.y + openY };
+        const openTop = { x: doorLeftTop.x + openX, y: doorLeftTop.y + openY };
+        this.fillPolygon(ctx, [hinge, openBottom, openTop, doorLeftTop], this.mixColors(theme.worldMap.terrain.desert, theme.ui.primaryBg, 0.35));
+
+        if (house.isShop) {
+            const signBottomLeft = this.projectIso(house.worldX + house.footprintWidth * 0.36, house.worldY + house.footprintDepth + 0.02, house.wallHeight * 0.7);
+            const signBottomRight = this.projectIso(house.worldX + house.footprintWidth * 0.72, house.worldY + house.footprintDepth + 0.02, house.wallHeight * 0.7);
+            const signTopRight = this.projectIso(house.worldX + house.footprintWidth * 0.72, house.worldY + house.footprintDepth + 0.02, house.wallHeight * 0.95);
+            const signTopLeft = this.projectIso(house.worldX + house.footprintWidth * 0.36, house.worldY + house.footprintDepth + 0.02, house.wallHeight * 0.95);
+            this.fillPolygon(ctx, [signBottomLeft, signBottomRight, signTopRight, signTopLeft], this.mixColors(theme.ui.panelHighlight, theme.ui.secondaryAccent, 0.34));
             ctx.fillStyle = theme.ui.primaryBg;
-            ctx.font = 'bold 11px Arial, sans-serif';
-            ctx.fillText('SHOP', x + width * 0.34, y + height * 0.29);
+            ctx.font = 'bold 10px Arial, sans-serif';
+            const textAnchor = this.projectIso(house.worldX + house.footprintWidth * 0.44, house.worldY + house.footprintDepth + 0.04, house.wallHeight * 0.88);
+            ctx.fillText('SHOP', textAnchor.x, textAnchor.y);
         }
     }
 
@@ -197,11 +246,27 @@ export default class VillageLifeRenderer {
         ctx.restore();
     }
 
-    private isoToScreen(centerX: number, topY: number, tileWidth: number, tileHeight: number, gridX: number, gridY: number): { x: number; y: number } {
+    private projectIso(x: number, y: number, z: number): { x: number; y: number } {
         return {
-            x: centerX + (gridX - gridY) * (tileWidth * 0.5),
-            y: topY + (gridX + gridY) * (tileHeight * 0.5),
+            x: this.isoOriginX + (x - y) * VillageLifeRenderer.ISO_COS * this.isoScale,
+            y: this.isoOriginY + (x + y) * VillageLifeRenderer.ISO_SIN * this.isoScale - z * this.isoScale,
         };
+    }
+
+    private fillPolygon(ctx: CanvasRenderingContext2D, points: Array<{ x: number; y: number }>, fillStyle: string): void {
+        if (points.length < 3) {
+            return;
+        }
+
+        ctx.fillStyle = fillStyle;
+        ctx.beginPath();
+        ctx.moveTo(points[0].x, points[0].y);
+        for (let i = 1; i < points.length; i += 1) {
+            ctx.lineTo(points[i].x, points[i].y);
+        }
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
     }
 
     private generateVillageName(): string {

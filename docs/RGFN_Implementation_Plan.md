@@ -472,3 +472,13 @@ Game Flow:
   - `rgfn_game/js/systems/village/VillageEnvironmentRenderer.ts`
   - `rgfn_game/js/systems/village/VillageLifeRenderer.ts`
   - `rgfn_game/js/systems/village/VillagePopulation.ts`
+- Isometric projection used for houses (2:1 dimetric style with 30° axis):
+  - `screenX = originX + (worldX - worldY) * cos(30°) * scale`
+  - `screenY = originY + (worldX + worldY) * sin(30°) * scale - worldZ * scale`
+  - Practical constants:
+    - `cos(30°) ≈ 0.8660254`
+    - `sin(30°) = 0.5`
+- House meshes are rendered as simple prisms with explicit faces:
+  - Two visible wall quads.
+  - Four triangular roof faces meeting at a raised roof peak.
+  - Door is drawn on the front wall and animated with a hinge-like open angle.
