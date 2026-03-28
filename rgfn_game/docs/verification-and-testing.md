@@ -1,3 +1,68 @@
+## March 28, 2026 update (follow-up 4): roads are now discoverable by road cells, not only by villages
+
+### Problem seen after first road pass
+- Curved roads were rendered only when their endpoint villages were visible.
+- Result: standing directly on a road corridor could still show no road unless both connected villages had already been discovered.
+- This contradicted expected exploration behavior (road discovery should happen from road traversal itself).
+
+### What was changed
+- Added explicit **road-per-cell** world state:
+  - `roadIndexSet: Set<number>` stores whether each world-map cell contains a road fragment.
+  - `villageRoadLinks` stores deterministic curved road topology used for rendering.
+- Added deterministic road network build step:
+  - `generateVillageRoadNetwork()` now runs after village generation and after village restore.
+  - Links are still nearest-neighbor + de-duplicated, but each link is sampled and rasterized into road cells.
+- Rendering behavior changed:
+  - Roads are no longer gated by village visibility.
+  - Renderer samples each curved link and draws only contiguous segments whose sampled cells are no longer `unknown` fog.
+  - This means road fragments become visible as soon as those road cells are discovered (visited/seen), even before both villages are known.
+- Styling kept:
+  - Thin warm-yellow line with soft glow.
+  - Smooth visual path via sampled points + quadratic smoothing in renderer.
+
+### Additional regression coverage
+- Added a world-map test that verifies:
+  - road cells are actually tracked (`roadIndexSet` populated),
+  - non-village road cells exist,
+  - drawing emits road paths after revealing a road cell (without requiring both village endpoints to be known).
+
+### Commands run
+- `npm run build:rgfn`
+- `node --test rgfn_game/test/systems/worldMap.test.js rgfn_game/test/systems/worldMapRenderer.test.js`
+- `node --test rgfn_game/test/**/*.test.js` (full suite pass in this run)
+
+## March 28, 2026 update (follow-up 3): curved village roads on the world map
+
+### Feedback addressed
+- Villages looked disconnected on larger maps.
+- Requested presentation: thin yellow roads, visually smooth (curves instead of rectangular/angular turns), and stylized enough to feel "alive" rather than purely geometric.
+
+### What was changed
+- Added a dedicated curved-road draw pass in world-map rendering:
+  - `WorldMap.drawVillageRoads(...)` now runs before village icon rendering, so roads sit under village markers.
+- Road link generation:
+  - For each visible village, map selects its two nearest visible village neighbors.
+  - Duplicate links are normalized and removed (A↔B drawn once).
+- Curve shaping:
+  - Per-road deterministic bend is generated from world-seed-derived pair hashing, so road silhouettes are stable for a given world seed/layout.
+  - Each road is rendered as two chained quadratic curves (smooth S/C arcs), avoiding rectilinear elbows.
+- Style pass:
+  - Thin warm-yellow core stroke with a soft wider glow stroke underneath.
+  - Alpha is slightly reduced for hidden (but discovered) villages and stronger for currently visible discovered villages.
+
+### Files touched
+- `js/systems/world/WorldMap.ts`
+- `js/systems/world/WorldMapRenderer.ts`
+
+### Notes for future tuning
+- If map density increases, road count may become visually busy; if so, reduce nearest-neighbor count from 2 → 1 for sparse "main route" style.
+- If roads should avoid water/mountain biomes in a future pass, add terrain-aware pathfinding/polyline sampling before final curve fitting.
+
+### Commands run
+- `npm run build:rgfn`
+- `node --test rgfn_game/test/systems/worldMap.test.js rgfn_game/test/systems/worldMapRenderer.test.js`
+- `node --test rgfn_game/test/**/*.test.js` (one unrelated pre-existing failure in `skeleton.test.js`)
+
 ## March 28, 2026 update (follow-up): village names shortened + spacing frequency increased
 
 ### Feedback addressed

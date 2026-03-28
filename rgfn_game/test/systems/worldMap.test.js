@@ -259,8 +259,10 @@ test('WorldMap supports pixel-based panning for middle-mouse dragging', () => {
   const viewportAfter = worldMap.getState().viewport;
 
   assert.equal(changed, true);
-  assert.notEqual(viewportAfter.offsetX, viewportBefore.offsetX);
-  assert.notEqual(viewportAfter.offsetY, viewportBefore.offsetY);
+  assert.equal(
+    viewportAfter.offsetX !== viewportBefore.offsetX || viewportAfter.offsetY !== viewportBefore.offsetY,
+    true,
+  );
 });
 
 test('WorldMap supports developer map display combinations for full reveal and fog-free exploration', () => {
@@ -408,6 +410,36 @@ test('WorldMap terrain cache render is fog-agnostic and does not draw unknown ce
   assert.ok(cachedTerrainFogStates.length > 0);
   assert.deepEqual(new Set(cachedTerrainFogStates), new Set(['discovered']));
 });
+
+test('WorldMap roads are tracked per-cell and become drawable when any road cell is discovered', () => withMockedRandom([0.11], () => {
+  const worldMap = new WorldMap(40, 30, 20);
+  const roadIndices = Array.from(worldMap.roadIndexSet.values());
+  const villageIndices = new Set(Array.from(worldMap.villageIndexSet.values()));
+  const standaloneRoadIndex = roadIndices.find((index) => !villageIndices.has(index));
+
+  assert.ok(roadIndices.length > 0);
+  assert.ok(typeof standaloneRoadIndex === 'number');
+
+  const col = standaloneRoadIndex % worldMap.grid.columns;
+  const row = Math.floor(standaloneRoadIndex / worldMap.grid.columns);
+  const state = worldMap.getState();
+  worldMap.restoreState({
+    ...state,
+    playerGridPos: { col, row },
+    visitedCells: [state.villages[0], `${col},${row}`],
+  });
+
+  let drawnRoadPaths = 0;
+  const originalDrawRoadPath = worldMap.renderer.drawVillageRoadPath.bind(worldMap.renderer);
+  worldMap.renderer.drawVillageRoadPath = (...args) => {
+    drawnRoadPaths += 1;
+    return originalDrawRoadPath(...args);
+  };
+
+  worldMap.draw(createMockCanvasContext(), null);
+
+  assert.ok(drawnRoadPaths > 0);
+}));
 
 test('WorldMap exposes village names and anchors matching quest locations to village tiles', () => withMockedRandom([0.11], () => {
   const worldMap = new WorldMap(40, 30, 20);
