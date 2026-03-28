@@ -7,6 +7,8 @@ const DEFAULT_BRANCH_DESCRIPTION = 'A composite objective. All listed subtasks m
 const DEFAULT_BRANCH_CONDITION = 'Each subtask in this branch is completed.';
 const DEFAULT_DESCRIPTIONS = new Set([DEFAULT_DESCRIPTION, DEFAULT_BRANCH_DESCRIPTION]);
 const DEFAULT_CONDITIONS = new Set([DEFAULT_CONDITION, DEFAULT_BRANCH_CONDITION]);
+const KNOWN_ONLY_TOGGLE_STORAGE_KEY = 'rgfn_quests_known_only_toggle_v1';
+const KNOWN_ONLY_TOGGLE_DEFAULT = true;
 type QuestUiCallbacks = {
     onLocationClick: (locationName: string) => boolean;
 };
@@ -41,6 +43,7 @@ export default class QuestUiController {
         this.callbacks = callbacks;
         this.feedbackElements = [this.createFeedbackElement(this.questBody), this.createFeedbackElement(this.introBody)];
         this.introModal.classList.add('hidden');
+        this.applyPersistedKnownOnlyState();
         this.bindEvents();
     }
 
@@ -59,6 +62,7 @@ export default class QuestUiController {
     private bindEvents(): void {
         this.introCloseBtn.addEventListener('click', () => this.introModal.classList.add('hidden'));
         this.knownOnlyToggle.addEventListener('change', () => {
+            this.persistKnownOnlyState();
             if (this.lastRenderedQuest) {
                 this.renderQuest(this.lastRenderedQuest);
             }
@@ -113,6 +117,48 @@ export default class QuestUiController {
 
         const questPreorderIndex = preorderNodes.indexOf(quest);
         return questPreorderIndex >= 0 && questPreorderIndex <= maxVisiblePreorderIndex;
+    }
+
+    private applyPersistedKnownOnlyState(): void {
+        const savedState = this.readKnownOnlyState();
+        this.knownOnlyToggle.checked = savedState ?? KNOWN_ONLY_TOGGLE_DEFAULT;
+    }
+
+    private persistKnownOnlyState(): void {
+        const storage = this.getLocalStorage();
+        if (!storage) {
+            return;
+        }
+
+        storage.setItem(KNOWN_ONLY_TOGGLE_STORAGE_KEY, this.knownOnlyToggle.checked ? '1' : '0');
+    }
+
+    private readKnownOnlyState(): boolean | null {
+        const storage = this.getLocalStorage();
+        if (!storage) {
+            return null;
+        }
+
+        const rawValue = storage.getItem(KNOWN_ONLY_TOGGLE_STORAGE_KEY);
+        if (rawValue === '1') {
+            return true;
+        }
+        if (rawValue === '0') {
+            return false;
+        }
+        return null;
+    }
+
+    private getLocalStorage(): Storage | null {
+        if (typeof window === 'undefined') {
+            return null;
+        }
+
+        try {
+            return window.localStorage;
+        } catch {
+            return null;
+        }
     }
 
     private collectPreorderNodes(quest: QuestNode, nodes: QuestNode[]): void {
