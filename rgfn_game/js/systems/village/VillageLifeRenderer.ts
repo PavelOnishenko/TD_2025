@@ -1,7 +1,8 @@
 import { theme } from '../../config/ThemeConfig.js';
 import VillagePopulation, { VillageSpot, VillageVillager } from './VillagePopulation.js';
 
-export type VillageHouse = { x: number; y: number; width: number; height: number; roofColor: string; doorOpenAmount: number; doorTargetOpenAmount: number; doorStateUntil: number; };
+export type VillageHouse = { x: number; y: number; width: number; height: number; roofColor: string; doorOpenAmount: number; doorTargetOpenAmount: number; doorStateUntil: number; isShop: boolean; };
+type VillageHouseConfig = { gridX: number; gridY: number; width: number; height: number; roofColor: string; isShop?: boolean; };
 
 export default class VillageLifeRenderer {
     private static readonly OUTLINE_COLOR = '#1d1b22';
@@ -17,16 +18,39 @@ export default class VillageLifeRenderer {
     public initialize(width: number, height: number, villageName?: string): void {
         this.currentVillageName = villageName ?? this.generateVillageName();
         const roof = this.getRoofVariants();
-        this.villageHouses = [
-            this.createVillageHouse(width * 0.1, height * 0.61, 104, 68, roof[0]), this.createVillageHouse(width * 0.26, height * 0.58, 116, 74, roof[1]),
-            this.createVillageHouse(width * 0.45, height * 0.57, 108, 70, roof[2]), this.createVillageHouse(width * 0.64, height * 0.56, 124, 78, roof[3]),
-            this.createVillageHouse(width * 0.82, height * 0.61, 96, 64, roof[4]),
+        const tileW = Math.max(56, width * 0.075);
+        const tileH = tileW * 0.5;
+        const centerX = width * 0.5;
+        const topY = height * 0.28;
+        const houses: VillageHouseConfig[] = [
+            { gridX: -2, gridY: 0, width: 74, height: 44, roofColor: roof[0] },
+            { gridX: 0, gridY: -1, width: 80, height: 48, roofColor: roof[1] },
+            { gridX: 2, gridY: 0, width: 72, height: 43, roofColor: roof[2], isShop: true },
+            { gridX: -2, gridY: 2, width: 76, height: 46, roofColor: roof[3] },
+            { gridX: 0, gridY: 3, width: 70, height: 42, roofColor: roof[4] },
+            { gridX: 2, gridY: 2, width: 74, height: 44, roofColor: this.mixColors(roof[1], roof[3], 0.4) },
         ];
+        this.villageHouses = houses.map((config) => {
+            const point = this.isoToScreen(centerX, topY, tileW, tileH, config.gridX, config.gridY);
+            const house = this.createVillageHouse(point.x - config.width * 0.5, point.y - config.height * 0.85, config.width, config.height, config.roofColor, Boolean(config.isShop));
+            if (house.isShop) {
+                house.roofColor = this.mixColors(config.roofColor, theme.ui.primaryAccent, 0.2);
+            }
+
+            return house;
+        });
         this.villageSpots = [
-            { x: width * 0.13, y: height * 0.8, houseIndex: 0 }, { x: width * 0.23, y: height * 0.84 }, { x: width * 0.33, y: height * 0.8, houseIndex: 1 },
-            { x: width * 0.43, y: height * 0.84 }, { x: width * 0.55, y: height * 0.8, houseIndex: 2 }, { x: width * 0.67, y: height * 0.84 },
-            { x: width * 0.79, y: height * 0.81, houseIndex: 3 }, { x: width * 0.57, y: height * 0.7 }, { x: width * 0.78, y: height * 0.7, houseIndex: 4 },
-            { x: width * 0.31, y: height * 0.7 },
+            { ...this.isoToScreen(centerX, topY, tileW, tileH, -2, 1), houseIndex: 0 },
+            { ...this.isoToScreen(centerX, topY, tileW, tileH, -1, 1) },
+            { ...this.isoToScreen(centerX, topY, tileW, tileH, 0, 0), houseIndex: 1 },
+            { ...this.isoToScreen(centerX, topY, tileW, tileH, 1, 1) },
+            { ...this.isoToScreen(centerX, topY, tileW, tileH, 2, 1), houseIndex: 2 },
+            { ...this.isoToScreen(centerX, topY, tileW, tileH, -2, 3), houseIndex: 3 },
+            { ...this.isoToScreen(centerX, topY, tileW, tileH, -1, 3) },
+            { ...this.isoToScreen(centerX, topY, tileW, tileH, 0, 4), houseIndex: 4 },
+            { ...this.isoToScreen(centerX, topY, tileW, tileH, 1, 3) },
+            { ...this.isoToScreen(centerX, topY, tileW, tileH, 2, 3), houseIndex: 5 },
+            { ...this.isoToScreen(centerX, topY, tileW, tileH, 0, 2) },
         ];
         this.villagePopulation.initialize(this.villageSpots, performance.now() * 0.001, this.currentVillageName);
     }
@@ -49,8 +73,8 @@ export default class VillageLifeRenderer {
         return [theme.ui.secondaryAccent, this.mixColors(theme.ui.secondaryAccent, theme.ui.primaryAccent, 0.2), this.mixColors(theme.ui.secondaryAccent, theme.worldMap.terrain.desert, 0.28), this.mixColors(theme.ui.secondaryAccent, theme.worldMap.terrain.forest, 0.3), this.mixColors(theme.ui.secondaryAccent, theme.worldMap.terrain.mountain, 0.2)];
     }
 
-    private createVillageHouse(x: number, y: number, width: number, height: number, roofColor: string): VillageHouse {
-        return { x, y, width, height, roofColor, doorOpenAmount: 0, doorTargetOpenAmount: 0, doorStateUntil: 0 };
+    private createVillageHouse(x: number, y: number, width: number, height: number, roofColor: string, isShop: boolean): VillageHouse {
+        return { x, y, width, height, roofColor, doorOpenAmount: 0, doorTargetOpenAmount: 0, doorStateUntil: 0, isShop };
     }
 
     private updateHouseDoors(now: number): void {
@@ -73,14 +97,14 @@ export default class VillageLifeRenderer {
     }
 
     private drawVillageHouse(ctx: CanvasRenderingContext2D, house: VillageHouse): void {
-        const { x, y, width, height, roofColor, doorOpenAmount } = house;
+        const { x, y, width, height, roofColor, doorOpenAmount, isShop } = house;
         const edge = VillageLifeRenderer.OUTLINE_COLOR;
-        const roofHeight = height * 0.44;
-        const isoDepth = width * 0.16;
-        const doorX = x + width * 0.4;
-        const doorY = y + height * 0.46;
-        const doorWidth = width * 0.2;
-        const doorHeight = height * 0.54;
+        const roofHeight = height * 0.5;
+        const isoDepth = width * 0.18;
+        const doorX = x + width * 0.42;
+        const doorY = y + height * 0.5;
+        const doorWidth = width * 0.16;
+        const doorHeight = height * 0.5;
         const openAngle = (Math.PI / 2) * doorOpenAmount;
         const openEdgeX = doorX + Math.cos(openAngle) * doorWidth;
         const openEdgeY = doorY - Math.sin(openAngle) * doorWidth * 0.34;
@@ -125,43 +149,59 @@ export default class VillageLifeRenderer {
         ctx.closePath();
         ctx.fill();
         ctx.stroke();
+
+        if (isShop) {
+            ctx.fillStyle = this.mixColors(theme.ui.panelHighlight, theme.ui.secondaryAccent, 0.3);
+            ctx.fillRect(x + width * 0.3, y + height * 0.18, width * 0.4, height * 0.14);
+            ctx.strokeRect(x + width * 0.3, y + height * 0.18, width * 0.4, height * 0.14);
+            ctx.fillStyle = theme.ui.primaryBg;
+            ctx.font = 'bold 11px Arial, sans-serif';
+            ctx.fillText('SHOP', x + width * 0.34, y + height * 0.29);
+        }
     }
 
     private drawVillageVillager(ctx: CanvasRenderingContext2D, villager: VillageVillager, time: number): void {
-        const speed = villager.isWalking ? 4.4 : 1.2;
-        const amp = villager.isWalking ? 4.2 : 0.9;
+        const speed = villager.isWalking ? 4.1 : 1.1;
+        const amp = villager.isWalking ? 2.8 : 0.6;
         const step = Math.sin(time * speed + villager.propSwingOffset) * amp;
         const arm = Math.sin(time * speed + villager.armSwingOffset + Math.PI * 0.5) * amp;
         ctx.save();
         ctx.translate(villager.x, villager.y);
-        ctx.scale(villager.size, villager.size);
+        ctx.scale(villager.size * 0.72, villager.size * 0.72);
         ctx.fillStyle = villager.shirtColor;
         ctx.strokeStyle = VillageLifeRenderer.OUTLINE_COLOR;
-        ctx.lineWidth = 2;
-        ctx.fillRect(-9, -10, 18, 24);
-        ctx.strokeRect(-9, -10, 18, 24);
+        ctx.lineWidth = 1.8;
+        ctx.fillRect(-8, -8, 16, 20);
+        ctx.strokeRect(-8, -8, 16, 20);
         ctx.fillStyle = villager.skinColor;
         ctx.beginPath();
-        ctx.arc(0, -20, 10, 0, Math.PI * 2);
+        ctx.arc(0, -16, 7, 0, Math.PI * 2);
         ctx.fill();
         ctx.stroke();
         ctx.strokeStyle = villager.pantsColor;
-        ctx.lineWidth = 2.8;
+        ctx.lineWidth = 2.2;
         ctx.beginPath();
-        ctx.moveTo(-5, 14);
-        ctx.lineTo(-6 + step * 0.24, 34);
-        ctx.moveTo(5, 14);
-        ctx.lineTo(6 - step * 0.24, 34);
+        ctx.moveTo(-4, 12);
+        ctx.lineTo(-5 + step * 0.2, 25);
+        ctx.moveTo(4, 12);
+        ctx.lineTo(5 - step * 0.2, 25);
         ctx.stroke();
         ctx.strokeStyle = villager.skinColor;
-        ctx.lineWidth = 2.5;
+        ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.moveTo(-9, -2);
-        ctx.lineTo(-17 + arm * 0.45, 12 + Math.abs(step) * 0.2);
-        ctx.moveTo(9, -2);
-        ctx.lineTo(17 - arm * 0.45, 12 + Math.abs(step) * 0.2);
+        ctx.moveTo(-8, -1);
+        ctx.lineTo(-13 + arm * 0.3, 10 + Math.abs(step) * 0.14);
+        ctx.moveTo(8, -1);
+        ctx.lineTo(13 - arm * 0.3, 10 + Math.abs(step) * 0.14);
         ctx.stroke();
         ctx.restore();
+    }
+
+    private isoToScreen(centerX: number, topY: number, tileWidth: number, tileHeight: number, gridX: number, gridY: number): { x: number; y: number } {
+        return {
+            x: centerX + (gridX - gridY) * (tileWidth * 0.5),
+            y: topY + (gridX + gridY) * (tileHeight * 0.5),
+        };
     }
 
     private generateVillageName(): string {
