@@ -20,12 +20,29 @@ This satisfies the intended UX: the map always dominates the screen, and UI pane
 - `World Map` button → toggles `#world-sidebar` panel.
 - `Log` button → toggles `#game-log-container` panel.
 - Village sidebar heading now includes current settlement name via `#village-title` (format: `Village: <name>`), so players always see which village they are interacting with.
+- Village scene canvas title (`VillageName` text rendered directly on the map) is horizontally centered at the top (`x = canvas.width / 2`, `y = 20`) to avoid overlap with the top-left hamburger menu.
 - Inside the `World Map` panel:
   - `Use HP Potion` uses a potion without leaving the panel.
   - `Enter Village (Space)` re-enters a village if the hero is currently standing on a village tile.
   - `Center on Character` recenters the map viewport on the hero.
+  - Legacy world-map zoom/pan button cluster was removed from the UI (`#world-map-controls`), so map interaction now happens directly on canvas + keyboard.
 
 All panel buttons use the existing active-button behavior (`.action-btn.active`) so players can see which panel is currently visible.
+
+## World map mouse + keyboard camera controls (March 28, 2026)
+
+- Zoom:
+  - Mouse wheel over game canvas (world-map mode).
+  - Fallback: `Ctrl + +` / `Ctrl + -` (including numpad `+` / `-`).
+- Pan:
+  - Hold middle mouse button and drag map.
+  - Fallback keys: `I/J/K/L` and numpad `8/4/2/6`.
+
+Implementation summary:
+
+- Wheel is handled on canvas with `passive: false`; browser zoom default is prevented while world-map mode is active.
+- Ctrl zoom hotkeys are intercepted on `keydown` and routed to map zoom callbacks.
+- Middle-button drag captures pointer deltas and calls pixel-based panning (`WorldMap.panByPixels`).
 
 ## Developer notes
 
@@ -118,6 +135,7 @@ To improve battle readability, the player now renders as a full mini-avatar (sha
    - In village mode on desktop width:
      - `Village rumors` appears left of the right sidebar (closer to map center), not below stock/sell.
      - Right sidebar still keeps `Village Actions` content on the right edge.
+     - Village name at the top of the scene is centered and no longer clipped by the hamburger button in the top-left corner.
    - On narrow viewports/mobile width:
      - `Village rumors` returns beneath the rest of village actions (single-column fallback).
 
@@ -329,3 +347,71 @@ Two systems were interacting in a bad way:
 3. Drag `Magic` to a custom location, close it, reopen it:
    - it should keep the moved position (spawn offset should not be re-applied).
 4. Verify close button and drag interactions still work exactly as before.
+
+## Resizable Log window (March 28, 2026, follow-up #3)
+
+The `Log` panel (`#game-log-container`) now supports manual resize on desktop:
+
+- Uses native CSS resizing (`resize: both`) so players can widen/tall the log while playing.
+- Enforces a minimum inline size (`260px`) to prevent collapsing into unreadable widths.
+- Allows near-fullscreen expansion on desktop by setting explicit viewport caps:
+  - `max-width: calc(100vw - 32px)`
+  - `max-height: calc(100dvh - 32px)`
+- Keeps log internals stable by setting panel overflow to `hidden` while the inner `#game-log` element continues to own scroll behavior.
+- Removes legacy desktop-size clamp behavior (old `max-height` caps) that previously prevented growing the panel to large sizes.
+- On narrow/mobile layout (`max-width: 920px`), resizing is intentionally disabled (`resize: none`) so the stacked single-column flow remains predictable.
+
+### Why this change helps
+
+- The log is one of the highest-frequency information streams during world traversal, village actions, and battles.
+- Fixed-size height was often too small when tracking long combat sequences or dialogue-heavy village interactions.
+- Draggable windows + resizable log together improve readability without forcing global font/layout changes.
+
+
+### Implementation gotchas (helpful for future UI work)
+
+- The log panel previously shared a grouped selector with `#world-sidebar`, which imposed a stricter `max-height` clamp suitable for static sidebars but too restrictive for freeform resize UX.
+- Splitting those selectors is important: `#world-sidebar` keeps conservative height limits, while `#game-log-container` gets viewport-scale caps and resize affordance.
+- In flex containers, `align-self: flex-start` helps resized windows avoid unintended stretch behavior from parent alignment rules.
+
+### Quick QA checklist
+
+1. Open HUD menu → `Log`.
+2. Drag the lower-right resize affordance of the log window:
+   - width should increase/decrease;
+   - height should increase/decrease.
+3. Add several new log entries (combat, movement, village actions):
+   - inner log should still auto-scroll to newest entries.
+4. Reduce viewport below `920px`:
+   - resize affordance should be disabled;
+   - log should follow normal mobile stacked flow.
+
+## Resizable Quest window (March 28, 2026, follow-up #4)
+
+The `Quests` panel (`#quests-panel`) now mirrors the desktop resize behavior of the `Log` panel:
+
+- Enables native panel resizing with `resize: both`.
+- Uses the same desktop safety bounds as log:
+  - `min-width: 260px`, `min-height: 220px`
+  - `max-width: calc(100vw - 32px)`, `max-height: calc(100dvh - 32px)`
+- Keeps panel geometry stable with `overflow: hidden` + `align-self: flex-start` so the window expands from its own corner instead of stretching with parent layout rules.
+- Moves scrolling responsibility fully into `.quests-body` (`flex: 1`, `min-height: 0`, `overflow: auto`) so objective lists stay scrollable at any panel size.
+- On narrow/mobile layout (`max-width: 920px`), quest resizing is disabled (`resize: none`) just like log to preserve predictable stacked HUD flow.
+
+### Why this helps
+
+- Quest chains can become long; fixed-height panel states force extra scroll churn during active objective tracking.
+- Matching log + quests resize behavior gives players consistent window ergonomics across the two most text-heavy HUD panels.
+- The shared constraints reduce future maintenance risk (same viewport/min-size rules for both high-traffic windows).
+
+### Quick QA checklist
+
+1. Open HUD menu → `Quests`.
+2. Drag bottom-right resize affordance:
+   - panel width/height should change freely on desktop.
+3. Fill/expand quest tree (multiple quest nodes):
+   - inner quest list should scroll inside panel instead of overflowing viewport.
+4. Drag/move panel after resizing:
+   - drag behavior should remain unchanged.
+5. Reduce viewport below `920px`:
+   - resize affordance should disappear for quests (and still for log).

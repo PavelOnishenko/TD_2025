@@ -108,12 +108,6 @@ export default class WorldModeController {
     }
 
     private handleMapViewportInput(): void {
-        if (this.input.wasActionPressed('worldMapZoomIn')) {
-            this.worldMap.zoomIn();
-        }
-        if (this.input.wasActionPressed('worldMapZoomOut')) {
-            this.worldMap.zoomOut();
-        }
         if (this.input.wasActionPressed('worldMapPanUp')) {
             this.worldMap.pan('up');
         }
@@ -208,7 +202,10 @@ export default class WorldModeController {
         }
 
         this.encounterSystem.onPlayerMove();
-        const questEncounter = this.callbacks.getQuestBattleEncounter();
+        const monsterEncountersEnabled = this.encounterSystem.isEncounterTypeEnabled('monster');
+        const questEncounter = monsterEncountersEnabled
+            ? this.callbacks.getQuestBattleEncounter()
+            : null;
         if (questEncounter) {
             if (questEncounter.hint) {
                 this.callbacks.onAddBattleLog(questEncounter.hint, 'system-message');

@@ -60,6 +60,124 @@
 
 ### Commands to run
 - `npm run build:rgfn`
+## March 28, 2026 update (follow-up 4): roads are now discoverable by road cells, not only by villages
+
+### Problem seen after first road pass
+- Curved roads were rendered only when their endpoint villages were visible.
+- Result: standing directly on a road corridor could still show no road unless both connected villages had already been discovered.
+- This contradicted expected exploration behavior (road discovery should happen from road traversal itself).
+
+### What was changed
+- Added explicit **road-per-cell** world state:
+  - `roadIndexSet: Set<number>` stores whether each world-map cell contains a road fragment.
+  - `villageRoadLinks` stores deterministic curved road topology used for rendering.
+- Added deterministic road network build step:
+  - `generateVillageRoadNetwork()` now runs after village generation and after village restore.
+  - Links are still nearest-neighbor + de-duplicated, but each link is sampled and rasterized into road cells.
+- Rendering behavior changed:
+  - Roads are no longer gated by village visibility.
+  - Renderer samples each curved link and draws only contiguous segments whose sampled cells are no longer `unknown` fog.
+  - This means road fragments become visible as soon as those road cells are discovered (visited/seen), even before both villages are known.
+- Styling kept:
+  - Thin warm-yellow line with soft glow.
+  - Smooth visual path via sampled points + quadratic smoothing in renderer.
+
+### Additional regression coverage
+- Added a world-map test that verifies:
+  - road cells are actually tracked (`roadIndexSet` populated),
+  - non-village road cells exist,
+  - drawing emits road paths after revealing a road cell (without requiring both village endpoints to be known).
+
+### Commands run
+- `npm run build:rgfn`
+- `node --test rgfn_game/test/systems/worldMap.test.js rgfn_game/test/systems/worldMapRenderer.test.js`
+- `node --test rgfn_game/test/**/*.test.js` (full suite pass in this run)
+
+## March 28, 2026 update (follow-up 3): curved village roads on the world map
+
+### Feedback addressed
+- Villages looked disconnected on larger maps.
+- Requested presentation: thin yellow roads, visually smooth (curves instead of rectangular/angular turns), and stylized enough to feel "alive" rather than purely geometric.
+
+### What was changed
+- Added a dedicated curved-road draw pass in world-map rendering:
+  - `WorldMap.drawVillageRoads(...)` now runs before village icon rendering, so roads sit under village markers.
+- Road link generation:
+  - For each visible village, map selects its two nearest visible village neighbors.
+  - Duplicate links are normalized and removed (A↔B drawn once).
+- Curve shaping:
+  - Per-road deterministic bend is generated from world-seed-derived pair hashing, so road silhouettes are stable for a given world seed/layout.
+  - Each road is rendered as two chained quadratic curves (smooth S/C arcs), avoiding rectilinear elbows.
+- Style pass:
+  - Thin warm-yellow core stroke with a soft wider glow stroke underneath.
+  - Alpha is slightly reduced for hidden (but discovered) villages and stronger for currently visible discovered villages.
+
+### Files touched
+- `js/systems/world/WorldMap.ts`
+- `js/systems/world/WorldMapRenderer.ts`
+
+### Notes for future tuning
+- If map density increases, road count may become visually busy; if so, reduce nearest-neighbor count from 2 → 1 for sparse "main route" style.
+- If roads should avoid water/mountain biomes in a future pass, add terrain-aware pathfinding/polyline sampling before final curve fitting.
+
+### Commands run
+- `npm run build:rgfn`
+- `node --test rgfn_game/test/systems/worldMap.test.js rgfn_game/test/systems/worldMapRenderer.test.js`
+- `node --test rgfn_game/test/**/*.test.js` (one unrelated pre-existing failure in `skeleton.test.js`)
+
+## March 28, 2026 update (follow-up): village names shortened + spacing frequency increased
+
+### Feedback addressed
+- Names felt too bulky after the first expansion (too many stitched segments).
+- Multi-word names with spaces were too rare.
+- Desired profile: mostly 1–2 words, 3-word rare, 4-word very rare.
+
+### What was changed
+- Reworked village generator to two-level weighting:
+  1. **Name pattern weighting** controls word count (`COMPACT` / `DESCRIPTOR` / `PLACE` tokens).
+  2. **Compound complexity weighting** controls stitched-part count inside compact words.
+- Compact word internals now strongly prefer 2-part compounds, with 3-part rare and 4-part very rare.
+- Spaced outputs are intentionally frequent enough to avoid a constant one-token look.
+
+### Regression tests updated
+- `test/systems/worldMap.test.js`
+  - samples 20x20 coordinate names (400 total),
+  - validates uniqueness growth,
+  - validates 1–2 word dominance,
+  - validates 4-word rarity,
+  - validates spaced-name frequency,
+  - validates deterministic same-coordinate output.
+
+### Commands run
+- `npm run build:rgfn`
+- `node --test rgfn_game/test/systems/worldMap.test.js`
+- `node --test rgfn_game/test/**/*.test.js`
+
+## March 28, 2026 update: expanded deterministic village name generator
+
+### Problem statement
+- Village names had a very small combinatorial pool (100 variants), so repeats appeared quickly.
+- This reduced perceived world scale and made quest location flavor feel repetitive.
+
+### Implementation summary
+- Added a dedicated generator module with token dictionaries + pattern templates:
+  - `js/systems/world/VillageNameGenerator.ts`
+- Wired `WorldMap.getVillageName(...)` to use the new deterministic seed-driven generator.
+- Wired `VillageLifeRenderer` fallback naming path to the same generator style.
+
+### Reliability constraints kept
+- Name remains deterministic for identical world seed + coordinates.
+- Name style remains readable and settlement-like.
+- No network dependency added.
+
+### Regression tests
+- `test/systems/worldMap.test.js`
+  - Added test that samples a 15x15 coordinate area and expects >100 unique village names.
+  - Added deterministic same-coordinate equality check.
+
+### Commands run
+- `npm run build:rgfn`
+- `node --test rgfn_game/test/systems/worldMap.test.js`
 - `node --test rgfn_game/test/**/*.test.js`
 
 ## March 26, 2026 update: village rumors NPC roster persistence fix (actual root cause)
@@ -310,7 +428,13 @@
 2. Leave village, press **Space**, and confirm village prompt opens again.
 3. Leave village, open World Map panel, click **Enter Village (Space)**, and confirm village prompt opens again.
 4. Press **Space** while not on a village tile and confirm no state transition occurs.
-5. Confirm existing world controls still work: movement, zoom, pan, centering.
+5. Confirm existing world controls still work:
+   - movement (WASD / arrows),
+   - zoom by mouse wheel over canvas,
+   - zoom fallback via `Ctrl + +` and `Ctrl + -`,
+   - middle-mouse drag panning,
+   - keyboard pan fallback (`I/J/K/L`, numpad `8/4/2/6`),
+   - centering via `Center on Character`.
 
 ---
 
@@ -759,3 +883,57 @@ So tests asserting fixed literal HP values (for example zombie `7`) will fail wh
    - fatigue decreases more safely than wild camp,
    - no ambush penalties.
 4. Save + reload and confirm fatigue persists.
+## March 28, 2026 update (follow-up 2): map villages now use the new quest-pack-style naming pipeline
+
+### Issue
+- Villages generated at world creation still looked like legacy compounds (`MossStead`, `OakCrook`, etc.).
+- Request was to switch map village naming to the newer naming direction from recently merged name-generation work.
+
+### What changed
+- Replaced legacy village token pools with a quest-pack-aligned pipeline in:
+  - `js/systems/world/VillageNameGenerator.ts`
+- New village naming now composes from:
+  - deterministic **echo syllable** words (same phonetic family as quest-name echo generation),
+  - curated adjective + place-word sets aligned with quest naming vocabulary.
+- This removes the old oak/moss/stead-style bias while preserving deterministic behavior by coordinate seed.
+
+### Determinism and save safety
+- `WorldMap` integration path is unchanged (`getVillageName(...)` still derives from stable coordinate hash).
+- Same world seed + same tile coordinates still produce the same village name.
+
+### Validation performed
+1. `npm run build:rgfn`
+2. `node --test rgfn_game/test/systems/worldMap.test.js`
+3. `node --test rgfn_game/test/systems/questPackService.test.js`
+4. `node --test rgfn_game/test/systems/villageActionsController.test.js`
+
+### Notes for future iteration
+- If we later want fully shared generation internals (not just style family), we can extract a common deterministic token source module used by both quest and village generators.
+- Biome-aware weighting can be layered on top of this without changing external APIs.
+
+## March 28, 2026 update: quest-generated monster encounters now obey dev Monster toggle
+
+### Reported issue
+- In world travel, quest-target monster packs (generated from active objective data) could still trigger even after disabling **Monster** encounters from the Developer Console.
+- This created a mismatch: random monster encounters were disabled, but objective monster battles still happened.
+
+### Root cause
+- `WorldModeController` always requested quest monster encounters via `getQuestBattleEncounter()` before normal random encounter flow.
+- That callback path was not gated by `EncounterSystem.isEncounterTypeEnabled('monster')`.
+
+### Fix implemented
+- Added a monster-toggle gate in `WorldModeController.onPlayerMoved(...)`:
+  - if `isEncounterTypeEnabled('monster')` is `false`, quest battle callback is skipped entirely,
+  - therefore no quest monster encounter is started while Monster encounters are disabled.
+- Existing behavior when Monster is enabled is unchanged.
+
+### Validation strategy
+1. Unit test for positive path:
+   - with Monster enabled and movement occurring, quest encounter callback is consulted and battle starts.
+2. Unit test for disabled path:
+   - with Monster disabled and movement occurring, quest encounter callback is not consulted and no battle starts.
+3. Full RGFN test run to ensure no regressions in encounter, world, and quest flows.
+
+### Notes
+- This fix intentionally treats quest-generated monster packs as part of the same Monster encounter category exposed in Developer Console.
+- Item/traveler random encounter toggles are unaffected.

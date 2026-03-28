@@ -1,3 +1,4 @@
+```js
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
@@ -25,11 +26,41 @@ function createWorldMapMock({ onVillage = false } = {}) {
   };
 }
 
-function createController({ onVillage = false, pressed = [], moveResult = { moved: false, isPreviouslyDiscovered: false } } = {}) {
+function createController({
+  onVillage = false,
+  pressed = [],
+  moveResult = { moved: false, isPreviouslyDiscovered: false },
+  encounterSystemOverrides = {},
+  callbacksOverrides = {},
+  worldMapOverrides = {},
+} = {}) {
   const calls = {
     enteredVillage: 0,
+    startedBattle: 0,
+    questEncounterChecks: 0,
     fatigueAdded: 0,
     fatigueRecovered: 0,
+  };
+
+  const encounterSystem = {
+    onPlayerMove: () => {},
+    checkEncounter: () => false,
+    generateEncounter: () => ({ type: 'none' }),
+    isEncounterTypeEnabled: () => true,
+    ...encounterSystemOverrides,
+  };
+
+  const callbacks = {
+    onEnterVillage: () => { calls.enteredVillage += 1; },
+    onStartBattle: () => { calls.startedBattle += 1; },
+    onAddBattleLog: () => {},
+    onUpdateHUD: () => {},
+    onRememberTraveler: () => {},
+    getQuestBattleEncounter: () => {
+      calls.questEncounterChecks += 1;
+      return null;
+    },
+    ...callbacksOverrides,
   };
 
   const controller = new WorldModeController(
@@ -40,20 +71,20 @@ function createController({ onVillage = false, pressed = [], moveResult = { move
       mana: 5,
       restoreMana: () => {},
       addTravelFatigue: () => { calls.fatigueAdded += 1; },
-      recoverFatigue: () => { calls.fatigueRecovered += 1; return 10; },
+      recoverFatigue: () => {
+        calls.fatigueRecovered += 1;
+        return 10;
+      },
       takeDamage: () => {},
     },
-    { ...createWorldMapMock({ onVillage }), movePlayer: () => moveResult },
-    { onPlayerMove: () => {}, checkEncounter: () => false, generateEncounter: () => ({ type: 'none' }) },
-    { showItemDiscovery: () => {} },
     {
-      onEnterVillage: () => { calls.enteredVillage += 1; },
-      onStartBattle: () => {},
-      onAddBattleLog: () => {},
-      onUpdateHUD: () => {},
-      onRememberTraveler: () => {},
-      getQuestBattleEncounter: () => null,
+      ...createWorldMapMock({ onVillage }),
+      movePlayer: () => moveResult,
+      ...worldMapOverrides,
     },
+    encounterSystem,
+    { showItemDiscovery: () => {} },
+    callbacks,
   );
 
   return { controller, calls };
@@ -103,3 +134,49 @@ test('WorldModeController camp sleep recovers fatigue outside villages', () => {
 
   assert.equal(calls.fatigueRecovered, 1);
 });
+
+test('WorldModeController allows quest monster encounters when monster random encounters are enabled', () => {
+  const { controller, calls } = createController({
+    pressed: ['moveUp'],
+    worldMapOverrides: {
+      movePlayer: () => ({ moved: true, isPreviouslyDiscovered: false }),
+      isPlayerOnVillage: () => false,
+    },
+    callbacksOverrides: {
+      getQuestBattleEncounter: () => {
+        calls.questEncounterChecks += 1;
+        return { enemies: [] };
+      },
+    },
+  });
+
+  controller.updateWorldMode();
+
+  assert.equal(calls.questEncounterChecks, 1);
+  assert.equal(calls.startedBattle, 1);
+});
+
+test('WorldModeController blocks quest monster encounters when monster random encounters are disabled', () => {
+  const { controller, calls } = createController({
+    pressed: ['moveUp'],
+    worldMapOverrides: {
+      movePlayer: () => ({ moved: true, isPreviouslyDiscovered: false }),
+      isPlayerOnVillage: () => false,
+    },
+    encounterSystemOverrides: {
+      isEncounterTypeEnabled: () => false,
+    },
+    callbacksOverrides: {
+      getQuestBattleEncounter: () => {
+        calls.questEncounterChecks += 1;
+        return { enemies: [] };
+      },
+    },
+  });
+
+  controller.updateWorldMode();
+
+  assert.equal(calls.questEncounterChecks, 0);
+  assert.equal(calls.startedBattle, 0);
+});
+```

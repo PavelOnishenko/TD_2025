@@ -215,41 +215,6 @@ h1 {
     box-shadow: none;
 }
 
-#world-map-controls {
-    position: absolute;
-    right: 18px;
-    bottom: 18px;
-    display: flex;
-    gap: 10px;
-    align-items: flex-end;
-    pointer-events: none;
-    z-index: 3;
-}
-
-.world-map-control-group,
-.world-map-control-pad {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    pointer-events: auto;
-}
-
-.world-map-control-pad {
-    align-items: center;
-}
-
-.world-map-control-pad-row {
-    display: flex;
-    gap: 6px;
-}
-
-.world-map-control-btn {
-    min-width: 56px;
-    padding: 6px 8px;
-    background: color-mix(in srgb, var(--color-panel-highlight) 92%, transparent);
-    backdrop-filter: blur(4px);
-}
-
 .overlay-stack {
     position: absolute;
     inset: 16px;
@@ -345,8 +310,7 @@ h1 {
     overflow: visible;
 }
 
-#world-sidebar,
-#game-log-container {
+#world-sidebar {
     width: min(340px, calc(100vw - 48px));
     max-height: min(100%, calc(100dvh - 180px));
     overflow: auto;
@@ -357,6 +321,15 @@ h1 {
     max-height: none;
     overflow: visible;
 }
+#game-log-container {
+    width: min(340px, calc(100vw - 48px));
+    max-width: calc(100vw - 32px);
+    max-inline-size: calc(100vw - 32px);
+    max-height: calc(100dvh - 32px);
+    max-block-size: calc(100dvh - 32px);
+    overflow: hidden;
+    align-self: flex-start;
+}
 
 #world-sidebar.hidden,
 #battle-sidebar.hidden,
@@ -366,7 +339,24 @@ h1 {
 
 #game-log-container {
     min-height: 220px;
-    max-height: min(42vh, 360px);
+    height: min(42vh, 360px);
+    min-width: 260px;
+    min-inline-size: 260px;
+    resize: both;
+}
+
+#quests-panel {
+    max-width: calc(100vw - 32px);
+    max-inline-size: calc(100vw - 32px);
+    max-height: calc(100dvh - 32px);
+    max-block-size: calc(100dvh - 32px);
+    min-height: 220px;
+    height: min(42vh, 360px);
+    min-width: 260px;
+    min-inline-size: 260px;
+    overflow: hidden;
+    align-self: flex-start;
+    resize: both;
 }
 
 #game-log-container h3 {
@@ -552,7 +542,7 @@ h1 {
     }
 
     #game-log-container {
-        max-height: min(34vh, 280px);
+        height: min(34vh, 280px);
     }
 }
 
@@ -605,9 +595,12 @@ h1 {
         transform: none;
     }
 
-    #game-log-container {
+    #game-log-container,
+    #quests-panel {
         margin-top: 0;
+        height: 260px;
         max-height: 260px;
+        resize: none;
     }
 
     .village-floating-rumors {
@@ -987,12 +980,26 @@ h1 {
 
 
 .quests-body {
-    max-height: 420px;
+    flex: 1;
+    min-height: 0;
     overflow: auto;
     padding: 8px;
     border: 1px solid var(--color-secondary-accent);
     border-radius: 6px;
     background: color-mix(in srgb, var(--color-panel-highlight) 60%, transparent);
+}
+
+.quest-mode-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin: 6px 0 8px;
+    font-size: 12px;
+    color: var(--color-text-primary);
+}
+
+.quest-mode-toggle input[type='checkbox'] {
+    accent-color: var(--color-primary-accent);
 }
 
 .quest-tree-root,

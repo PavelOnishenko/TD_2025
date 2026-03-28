@@ -3,6 +3,7 @@ import { FogState, MapDisplayConfig, TerrainData, GridPosition, Direction, GridC
 import { theme } from '../../config/ThemeConfig.js';
 import WorldMapRenderer from './WorldMapRenderer.js';
 import { balanceConfig } from '../../config/balanceConfig.js';
+import { generateVillageName } from './VillageNameGenerator.js';
 
 export type KnownVillage = {
     name: string;
@@ -34,6 +35,18 @@ type NamedLocation = {
     name: string;
     position: GridPosition;
     terrainType: TerrainType;
+};
+
+type VillageRoadPoint = {
+    x: number;
+    y: number;
+};
+
+type VillageRoadLink = {
+    from: GridPosition;
+    to: GridPosition;
+    control1: VillageRoadPoint;
+    control2: VillageRoadPoint;
 };
 
 type ClimateCell = {
@@ -74,6 +87,8 @@ export default class WorldMap {
     private fogStatesByIndex: FogState[];
     private terrainByIndex: Array<TerrainData | undefined>;
     private villageIndexSet: Set<number>;
+    private roadIndexSet: Set<number>;
+    private villageRoadLinks: VillageRoadLink[];
     private terrainLayerCaches: Partial<Record<'low' | 'medium', TerrainLayerCache>>;
     private fogRevision: number;
     private terrainRevision: number;
@@ -96,6 +111,8 @@ export default class WorldMap {
         this.fogStatesByIndex = [];
         this.terrainByIndex = [];
         this.villageIndexSet = new Set<number>();
+        this.roadIndexSet = new Set<number>();
+        this.villageRoadLinks = [];
         this.terrainLayerCaches = {};
         this.fogRevision = 0;
         this.terrainRevision = 0;
@@ -116,6 +133,7 @@ export default class WorldMap {
     private generateWorld(): void {
         this.generateTerrain();
         this.generateVillages();
+        this.generateVillageRoadNetwork();
         this.pickRandomPlayerStart();
     }
 
@@ -769,6 +787,18 @@ export default class WorldMap {
         return beforeX !== this.grid.offsetX || beforeY !== this.grid.offsetY;
     }
 
+    public panByPixels(deltaX: number, deltaY: number): boolean {
+        if (deltaX === 0 && deltaY === 0) {
+            return false;
+        }
+
+        const beforeX = this.grid.offsetX;
+        const beforeY = this.grid.offsetY;
+        this.grid.updateLayout(this.grid.cellSize, beforeX + deltaX, beforeY + deltaY);
+        this.clampViewport();
+        return beforeX !== this.grid.offsetX || beforeY !== this.grid.offsetY;
+    }
+
     private centerViewportOnCell(col: number, row: number): void {
         const offsetX = Math.round((this.canvasWidth / 2) - ((col + 0.5) * this.grid.cellSize) + theme.worldMap.gridOffset.x);
         const offsetY = Math.round((this.canvasHeight / 2) - ((row + 0.5) * this.grid.cellSize) + theme.worldMap.gridOffset.y);
@@ -908,10 +938,8 @@ export default class WorldMap {
     }
 
     private getVillageName(col: number, row: number): string {
-        const first = ['Oak', 'River', 'Sun', 'Stone', 'Amber', 'Willow', 'Moss', 'Silver', 'Pine', 'Moon'];
-        const second = ['ford', 'field', 'brook', 'haven', 'hill', 'cross', 'watch', 'stead', 'rest', 'meadow'];
-        const seed = this.hashSeed((col + 11) * 92837111, (row + 17) * 689287499);
-        return `${first[seed % first.length]}${second[Math.floor(seed / first.length) % second.length]}`;
+        const seed = this.hashSeed((col + 11) * 92837111, (row + 17) * 689287499, 14057);
+        return generateVillageName(seed);
     }
 
     public isPlayerOnVillage(): boolean {
@@ -950,7 +978,8 @@ export default class WorldMap {
         this.renderer.drawBackground(ctx, this.canvasWidth, this.canvasHeight);
         const bounds = this.getVisibleBounds();
         const detailLevel = this.getRenderDetailLevel(bounds);
-        const drawGrid = detailLevel !== 'low' && this.grid.cellSize >= 12;
+        // Keep terrain seamless and avoid decorative tabletop-like cell borders.
+        const drawGrid = false;
         const shouldUseTerrainCache = detailLevel === 'low' || detailLevel === 'medium';
 
         const terrainRenderedFromCache = shouldUseTerrainCache
@@ -986,6 +1015,7 @@ export default class WorldMap {
         if (drawGrid) {
             this.renderer.drawGrid(ctx, this.grid, this.canvasWidth, this.canvasHeight);
         }
+        this.drawVillageRoads(ctx, bounds);
         this.drawVillages(ctx, bounds);
         this.drawNamedLocations(ctx, bounds);
         this.drawNamedLocationFocus(ctx);
@@ -1065,6 +1095,192 @@ export default class WorldMap {
             const villageGlow = fogState === FOG_STATE.DISCOVERED ? 0.95 : 0.82;
             this.renderer.drawVillage(ctx, x, y, villageGlow);
         });
+    }
+
+    private drawVillageRoads(ctx: CanvasRenderingContext2D, bounds: { startCol: number; endCol: number; startRow: number; endRow: number }): void {
+        this.villageRoadLinks.forEach((link) => {
+            if (!this.isRoadLinkWithinBounds(link, bounds)) {
+                return;
+            }
+            const visibleSegments = this.buildVisibleRoadSegments(link);
+            visibleSegments.forEach((segment) => {
+                this.renderer.drawVillageRoadPath(ctx, segment.points, segment.alpha);
+            });
+        });
+    }
+
+    private buildVillageRoadLinks(villages: GridPosition[]): Array<{ from: GridPosition; to: GridPosition }> {
+        const links = new Map<string, { from: GridPosition; to: GridPosition }>();
+        villages.forEach((village, index) => {
+            const neighbors = villages
+                .map((candidate, candidateIndex) => ({
+                    candidate,
+                    candidateIndex,
+                    distance: Math.hypot(candidate.col - village.col, candidate.row - village.row),
+                }))
+                .filter((item) => item.candidateIndex !== index)
+                .sort((a, b) => a.distance - b.distance)
+                .slice(0, 2);
+
+            neighbors.forEach(({ candidate }) => {
+                const first = this.getCellIndex(village.col, village.row);
+                const second = this.getCellIndex(candidate.col, candidate.row);
+                const key = first < second ? `${first}-${second}` : `${second}-${first}`;
+                if (!links.has(key)) {
+                    links.set(key, { from: village, to: candidate });
+                }
+            });
+        });
+        return Array.from(links.values());
+    }
+
+    private buildVillageRoadControls(from: GridPosition, to: GridPosition): { control1: VillageRoadPoint; control2: VillageRoadPoint } {
+        const fromCenter = this.getGridCenterPoint(from.col, from.row);
+        const toCenter = this.getGridCenterPoint(to.col, to.row);
+        const dx = toCenter.x - fromCenter.x;
+        const dy = toCenter.y - fromCenter.y;
+        const distance = Math.hypot(dx, dy);
+        const unitX = distance === 0 ? 0 : dx / distance;
+        const unitY = distance === 0 ? 0 : dy / distance;
+        const normalX = -unitY;
+        const normalY = unitX;
+
+        const pairSeed = this.hashSeed((from.col + 1) * 911, (from.row + 1) * 353, (to.col + 1) * 719, (to.row + 1) * 197);
+        const curveDirection = this.seededRandom(pairSeed) > 0.5 ? 1 : -1;
+        const bendStrength = Math.max(0.55, Math.min(distance * 0.26, 1.8));
+        const bendNoise = 0.8 + (this.seededRandom(pairSeed * 1.37) * 0.5);
+        const bend = bendStrength * bendNoise * curveDirection;
+
+        const control1 = {
+            x: fromCenter.x + (dx * 0.33) + (normalX * bend),
+            y: fromCenter.y + (dy * 0.33) + (normalY * bend),
+        };
+        const control2 = {
+            x: fromCenter.x + (dx * 0.66) + (normalX * bend * 0.85),
+            y: fromCenter.y + (dy * 0.66) + (normalY * bend * 0.85),
+        };
+
+        return { control1, control2 };
+    }
+
+    private generateVillageRoadNetwork(): void {
+        const villages = Array.from(this.villages.values())
+            .map((key) => {
+                const [colText, rowText] = key.split(',');
+                const col = Number(colText);
+                const row = Number(rowText);
+                return this.grid.isValidPosition(col, row) ? { col, row } : null;
+            })
+            .filter((value): value is GridPosition => value !== null);
+
+        this.roadIndexSet.clear();
+        if (villages.length < 2) {
+            this.villageRoadLinks = [];
+            return;
+        }
+
+        const links = this.buildVillageRoadLinks(villages);
+        this.villageRoadLinks = links.map(({ from, to }) => {
+            const controls = this.buildVillageRoadControls(from, to);
+            const link: VillageRoadLink = { from, to, control1: controls.control1, control2: controls.control2 };
+            this.markRoadCellsForLink(link);
+            return link;
+        });
+    }
+
+    private markRoadCellsForLink(link: VillageRoadLink): void {
+        const samples = Math.max(28, Math.ceil(this.getRoadLinkDistance(link) * 8));
+        let previous = this.sampleRoadLinkPoint(link, 0);
+        this.markRoadCell(previous.x, previous.y);
+        for (let index = 1; index <= samples; index += 1) {
+            const point = this.sampleRoadLinkPoint(link, index / samples);
+            const steps = Math.max(1, Math.ceil(Math.max(Math.abs(point.x - previous.x), Math.abs(point.y - previous.y)) * 6));
+            for (let step = 1; step <= steps; step += 1) {
+                const t = step / steps;
+                this.markRoadCell(previous.x + ((point.x - previous.x) * t), previous.y + ((point.y - previous.y) * t));
+            }
+            previous = point;
+        }
+    }
+
+    private markRoadCell(gridX: number, gridY: number): void {
+        const col = Math.floor(gridX);
+        const row = Math.floor(gridY);
+        if (!this.grid.isValidPosition(col, row)) {
+            return;
+        }
+        this.roadIndexSet.add(this.getCellIndex(col, row));
+    }
+
+    private sampleRoadLinkPoint(link: VillageRoadLink, t: number): VillageRoadPoint {
+        const from = this.getGridCenterPoint(link.from.col, link.from.row);
+        const to = this.getGridCenterPoint(link.to.col, link.to.row);
+        const midpoint = { x: (from.x + to.x) * 0.5, y: (from.y + to.y) * 0.5 };
+
+        if (t <= 0.5) {
+            return this.quadraticPoint(from, link.control1, midpoint, t * 2);
+        }
+        return this.quadraticPoint(midpoint, link.control2, to, (t - 0.5) * 2);
+    }
+
+    private quadraticPoint(start: VillageRoadPoint, control: VillageRoadPoint, end: VillageRoadPoint, t: number): VillageRoadPoint {
+        const oneMinusT = 1 - t;
+        return {
+            x: (oneMinusT * oneMinusT * start.x) + (2 * oneMinusT * t * control.x) + (t * t * end.x),
+            y: (oneMinusT * oneMinusT * start.y) + (2 * oneMinusT * t * control.y) + (t * t * end.y),
+        };
+    }
+
+    private buildVisibleRoadSegments(link: VillageRoadLink): Array<{ points: VillageRoadPoint[]; alpha: number }> {
+        const segments: Array<{ points: VillageRoadPoint[]; alpha: number }> = [];
+        const samples = Math.max(26, Math.ceil(this.getRoadLinkDistance(link) * 7));
+        let active: VillageRoadPoint[] = [];
+
+        for (let index = 0; index <= samples; index += 1) {
+            const gridPoint = this.sampleRoadLinkPoint(link, index / samples);
+            const col = Math.floor(gridPoint.x);
+            const row = Math.floor(gridPoint.y);
+            const hasRoad = this.grid.isValidPosition(col, row) && this.roadIndexSet.has(this.getCellIndex(col, row));
+            const fogState = hasRoad ? this.getFogState(col, row) : FOG_STATE.UNKNOWN;
+            if (fogState === FOG_STATE.UNKNOWN) {
+                if (active.length >= 2) {
+                    segments.push({ points: active, alpha: 0.9 });
+                }
+                active = [];
+                continue;
+            }
+
+            const pixel = this.gridPointToCanvas(gridPoint);
+            active.push(pixel);
+        }
+
+        if (active.length >= 2) {
+            segments.push({ points: active, alpha: 0.9 });
+        }
+        return segments;
+    }
+
+    private gridPointToCanvas(point: VillageRoadPoint): VillageRoadPoint {
+        return {
+            x: this.grid.offsetX + (point.x * this.grid.cellSize),
+            y: this.grid.offsetY + (point.y * this.grid.cellSize),
+        };
+    }
+
+    private isRoadLinkWithinBounds(link: VillageRoadLink, bounds: { startCol: number; endCol: number; startRow: number; endRow: number }): boolean {
+        const minCol = Math.min(link.from.col, link.to.col, Math.floor(link.control1.x), Math.floor(link.control2.x));
+        const maxCol = Math.max(link.from.col, link.to.col, Math.floor(link.control1.x), Math.floor(link.control2.x));
+        const minRow = Math.min(link.from.row, link.to.row, Math.floor(link.control1.y), Math.floor(link.control2.y));
+        const maxRow = Math.max(link.from.row, link.to.row, Math.floor(link.control1.y), Math.floor(link.control2.y));
+        return !(maxCol < bounds.startCol || minCol > bounds.endCol || maxRow < bounds.startRow || minRow > bounds.endRow);
+    }
+
+    private getGridCenterPoint(col: number, row: number): VillageRoadPoint {
+        return { x: col + 0.5, y: row + 0.5 };
+    }
+
+    private getRoadLinkDistance(link: VillageRoadLink): number {
+        return Math.hypot(link.to.col - link.from.col, link.to.row - link.from.row);
     }
 
     private drawNamedLocations(ctx: CanvasRenderingContext2D, bounds: { startCol: number; endCol: number; startRow: number; endRow: number }): void {
@@ -1152,6 +1368,7 @@ export default class WorldMap {
                 }
             });
         }
+        this.generateVillageRoadNetwork();
 
         if (Array.isArray(state.visitedCells)) {
             this.visitedCells = new Set(state.visitedCells.filter((entry): entry is string => typeof entry === 'string'));

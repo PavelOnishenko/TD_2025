@@ -39,20 +39,6 @@
             <div id="main-view-stage">
                 <div id="world-map-shell">
                     <canvas id="game-canvas" width="800" height="600"></canvas>
-                    <div id="world-map-controls" aria-label="World map controls">
-                        <div class="world-map-control-group">
-                            <button id="world-map-zoom-in-btn" class="action-btn world-map-control-btn" type="button">Zoom +</button>
-                            <button id="world-map-zoom-out-btn" class="action-btn world-map-control-btn" type="button">Zoom -</button>
-                        </div>
-                        <div class="world-map-control-pad">
-                            <button id="world-map-pan-up-btn" class="action-btn world-map-control-btn" type="button">↑</button>
-                            <div class="world-map-control-pad-row">
-                                <button id="world-map-pan-left-btn" class="action-btn world-map-control-btn" type="button">←</button>
-                                <button id="world-map-pan-right-btn" class="action-btn world-map-control-btn" type="button">→</button>
-                            </div>
-                            <button id="world-map-pan-down-btn" class="action-btn world-map-control-btn" type="button">↓</button>
-                        </div>
-                    </div>
                 </div>
                 <div id="left-overlay-stack" class="overlay-stack">
                     <div id="stats-panel" class="hud-section stats overlay-panel hidden">
@@ -164,6 +150,10 @@
                     </div>
                     <div id="quests-panel" class="hud-section stats overlay-panel hidden">
                         <div id="quests-title" class="stat">Main Quest</div>
+                        <label class="quest-mode-toggle" for="quests-known-only-toggle">
+                            <input id="quests-known-only-toggle" type="checkbox" checked>
+                            Show only known/current quests
+                        </label>
                         <div id="quests-body" class="quests-body"></div>
                     </div>
                     <div id="lore-panel" class="hud-section stats overlay-panel hidden">
