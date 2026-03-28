@@ -142,3 +142,112 @@ To improve battle readability, the player now renders as a full mini-avatar (sha
   3. click handler in `GameUiEventBinder`,
   4. stat application in `GameHudCoordinator.handleGodSkillsBoost`,
   5. immediate save via `Game.saveGameIfChanged()`.
+
+## Draggable HUD windows with close button (March 28, 2026)
+
+Hamburger-opened HUD panels are now interactive floating windows:
+
+- A compact header is injected at runtime for each panel:
+  - `Stats`, `Skills`, `Inventory`, `Magic`, `Quests`, `Lore`, `Selected`, `World Map`, `Log`.
+- Header contains:
+  - a **drag handle** (panel title area),
+  - a **close button** (`✕`) that closes only that panel.
+- Dragging details:
+  - Drag uses pointer events on `.panel-drag-handle`.
+  - Panel offset is stored in `data-offset-x` / `data-offset-y`.
+  - Visual position is applied via CSS transform variables:
+    - `--panel-offset-x`
+    - `--panel-offset-y`
+  - Last interacted panel gets higher `z-index` so overlap feels natural.
+- Mobile behavior:
+  - On narrow layout (`max-width: 920px`), transforms are disabled (`transform: none`) so stacked mobile flow remains stable and readable.
+
+### Implementation map
+
+1. `GameUiEventBinder.initializeHudPanelWindows()` prepares panel metadata.
+2. `decorateHudPanelWindow(...)` prepends header + close button to panel DOM.
+3. `bindPanelDragEvents(...)` handles drag lifecycle (`pointerdown` → `pointermove` → `pointerup/cancel`).
+4. Existing `onTogglePanel(...)` callback is reused to preserve active-button state logic in `HudController`.
+
+### Manual QA for draggable windows
+
+1. Open hamburger menu and toggle `Stats`.
+2. Grab `Stats` header and drag panel:
+   - panel should move,
+   - cursor should switch grab → grabbing while dragging.
+3. Click `✕` in panel header:
+   - panel hides,
+   - corresponding hamburger button deactivates.
+4. Open 2-3 panels (e.g. `World Map`, `Log`, `Inventory`) and drag them:
+   - panels can overlap,
+   - last dragged panel should appear above previous ones.
+5. Resize viewport below `920px`:
+   - panels return to normal stacked flow (no shifted transforms),
+   - close button still works.
+
+## HUD panel height/scroll policy update (March 28, 2026, follow-up)
+
+To match the new draggable-window workflow, **HUD content panels no longer auto-clamp their height** and no longer force internal panel scrollbars:
+
+- `Stats`, `Skills`, `Inventory`, `Magic`, `Quests`, `Lore`, `Selected`:
+  - keep fixed panel width styling,
+  - no `max-height` viewport clamp,
+  - no forced `overflow: auto` scrollbar behavior.
+- If several open panels overlap, the intended flow is:
+  1. drag panels to reposition, or
+  2. close unneeded ones from hamburger menu / panel `✕`.
+
+This keeps panel size/content natural and avoids the old "single-column fallback" scrollbar tuning that is no longer needed for desktop draggable windows.
+
+### Important exception
+
+`World Map` sidebar and `Log` keep scroll constraints by design because they can contain intentionally long content and controls with high update frequency.
+
+### Quick regression checklist for this follow-up
+
+1. Open `Stats`, `Inventory`, `Magic` together on desktop:
+   - no panel-internal scrollbar should appear unless content itself defines one for a nested element.
+2. Verify panel height does not auto-shrink to viewport clamp when opening multiple panels.
+3. Drag overlapping panels and confirm usability still comes from dragging/closing (not from panel auto-scroll resizing).
+4. Confirm `Log` panel still scrolls as messages accumulate.
+
+## Default spawn placement for draggable HUD windows (March 28, 2026, follow-up #2)
+
+Problem addressed:
+
+- Panels were opening at legacy stack-based coordinates (including right-column origins), then becoming draggable.
+- This felt like they still "belonged" to the old two-column/stack flow.
+
+New behavior:
+
+- Each draggable HUD panel now receives a **one-time spawn offset** the first time it becomes visible.
+- Spawn anchor is intentionally near the **left edge** of the viewport.
+- Panels are vertically staggered with a small Y step, so opening several panels does not place every window at the exact same Y coordinate.
+
+Implementation details:
+
+1. `GameUiEventBinder` defines spawn constants:
+   - `panelSpawnOrigin = { x: 24, y: 96 }`
+   - `panelSpawnStepY = 34`
+2. During panel decoration, binder attaches `bindPanelSpawnPositioning(panel, panelIndex)`.
+3. A `MutationObserver` watches panel class changes (`hidden` ↔ visible).
+4. On first visible state, binder computes offset from current DOM position to spawn target and writes:
+   - `data-offset-x`, `data-offset-y`
+   - CSS vars `--panel-offset-x`, `--panel-offset-y`
+5. After first placement, `data-spawn-positioned=true` prevents re-applying spawn (player drag position is preserved for later open/close toggles in the same session).
+
+Why this is better:
+
+- Opened panels now feel consistent and predictable: they always appear near the left gameplay edge first.
+- The player still retains full manual control via drag.
+- Existing draggable implementation (transform via CSS variables) is reused; no separate absolute-positioning mode was introduced.
+
+### Regression checklist for spawn behavior
+
+1. Open `Inventory` from hamburger:
+   - panel appears near left edge, not at right stack origin.
+2. Open `Stats`, `Magic`, `Skills`:
+   - each opens near left edge with visible Y staggering.
+3. Drag `Magic` to a custom location, close it, reopen it:
+   - it should keep the moved position (spawn offset should not be re-applied).
+4. Verify close button and drag interactions still work exactly as before.
