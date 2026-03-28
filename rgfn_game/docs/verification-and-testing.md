@@ -634,3 +634,28 @@ So tests asserting fixed literal HP values (for example zombie `7`) will fail wh
 - `EncounterSystem.RandomEncounterType` and resolver event type list no longer include `village`.
 - `WorldModeController` no longer has runtime branch that marks a village on `encounter.type === 'village'`.
 - `ForcedEncounterType` no longer includes `village`, and dev UI no longer exposes village queue actions.
+
+## March 28, 2026 update: world-map travel scale and forest visibility readability
+
+### What changed
+- World-map pace baseline changed to **12 min per cell** (from 20).
+- Default world-map visibility radius changed to **3** (from 2).
+- Forest line-of-sight now allows visibility of the immediate target forest tile, while still blocking sight beyond forest.
+
+### Why
+- Improve navigation readability without removing terrain identity.
+- Preserve forest tension while avoiding the prior near-blind orientation effect.
+
+### Manual checks
+1. Start world mode and inspect scale legend:
+   - should read `12 min walk / cell`.
+2. Place the hero near mixed terrain (grass + forest).
+3. Confirm adjacent forest tile can be seen/revealed when in radius.
+4. Confirm tile behind that forest (same line) is still blocked from visibility.
+5. Confirm mountains still block line-of-sight beyond mountain cells.
+
+### Automated checks
+- Updated unit coverage in `worldMap.test.js` for terrain LoS expectations.
+- Added regression assertion in `themeConfig.test.js` to lock baseline defaults:
+  - `theme.worldMap.cellTravelMinutes === 12`
+  - `balanceConfig.worldMap.visibilityRadius === 3`

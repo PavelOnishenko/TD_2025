@@ -617,7 +617,7 @@ export default class WorldMap {
 
             const isTarget = step.col === col && step.row === row;
             if (terrain.type === 'forest') {
-                return false;
+                return isTarget;
             }
 
             if (terrain.type === 'mountain') {

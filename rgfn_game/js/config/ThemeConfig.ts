@@ -184,7 +184,7 @@ const GAME_THEME: Theme = {
       zoomStep: 4,
       panStepCells: 4,
     },
-    cellTravelMinutes: 20,
+    cellTravelMinutes: 12,
     cellCornerRadius: 10,
     connectorRadius: 16,
   },
