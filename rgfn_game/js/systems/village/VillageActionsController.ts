@@ -398,7 +398,7 @@ export default class VillageActionsController {
 
         this.refreshSellOptions();
         this.villageUI.sellSelectedBtn.disabled = this.villageUI.sellSelect.disabled;
-        this.villageUI.askVillageBtn.disabled = !this.getSelectedNpc() || !this.villageUI.askVillageInput.value.trim();
+        this.villageUI.askVillageBtn.disabled = false;
         this.villageUI.askPersonBtn.disabled = false;
         this.villageUI.askBarterBtn.disabled = false;
         this.villageUI.barterNowBtn.disabled = false;
