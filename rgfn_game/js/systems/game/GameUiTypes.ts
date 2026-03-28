@@ -79,6 +79,7 @@ export type HudElements = {
     worldMapPanel: HTMLElement;
     logPanel: HTMLElement;
     questsTitle: HTMLElement;
+    questsKnownOnlyToggle: HTMLInputElement;
     questsBody: HTMLElement;
     loreBody: HTMLElement;
     selectedCellEmpty: HTMLElement;

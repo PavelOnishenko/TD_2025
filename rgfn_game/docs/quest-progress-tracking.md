@@ -1,5 +1,42 @@
 # Quest progress tracking notes
 
+## March 28, 2026 update: alternate "known/current only" quest panel mode
+
+- The Quests HUD panel now supports a second display mode controlled by a checkbox:
+  - `Show only known/current quests`
+- Default behavior is unchanged (checkbox OFF): full generated quest tree is rendered as before.
+- When checkbox is ON, the panel hides future objectives that are still below the first currently incomplete objective in quest preorder:
+  - keeps already completed objectives visible,
+  - keeps the current first incomplete objective visible,
+  - hides nodes after that cutoff ("future" nodes the player has not reached yet).
+
+### UI + implementation details
+
+- Added quest mode toggle in HUD markup:
+  - `#quests-known-only-toggle` in `index.html`.
+- Added toggle styling in `style.css`:
+  - `.quest-mode-toggle`.
+- `QuestUiController` now:
+  - stores the last rendered quest (`lastRenderedQuest`),
+  - re-renders automatically when the checkbox changes,
+  - computes preorder quest list and cutoff index in known-only mode,
+  - conditionally hides nodes below cutoff unless they are already completed.
+- Wiring updates:
+  - `HudElements` type now includes `questsKnownOnlyToggle`,
+  - `GameUiFactory` collects the checkbox element,
+  - `Game` passes checkbox into `QuestUiController`.
+
+### Why this mode exists
+
+- Reduces cognitive load for long quest trees.
+- Prevents "spoiler" visibility of deep future branches.
+- Keeps an explicit toggle so players can still inspect the full quest structure whenever desired.
+
+### Regression coverage
+
+- Added automated test in `test/systems/questUiController.test.js`:
+  - verifies known-only mode hides nodes below the first incomplete objective while keeping completed + current nodes visible.
+
 ## March 28, 2026 update: "is not discovered yet" quest-panel warning now auto-hides
 
 ### What changed

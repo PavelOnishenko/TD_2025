@@ -93,6 +93,7 @@ export default class GameUiFactory {
             worldMapPanel: document.getElementById('world-sidebar')!,
             logPanel: document.getElementById('game-log-container')!,
             questsTitle: document.getElementById('quests-title')!,
+            questsKnownOnlyToggle: document.getElementById('quests-known-only-toggle')! as HTMLInputElement,
             questsBody: document.getElementById('quests-body')!,
             loreBody: document.getElementById('lore-body')!,
             selectedCellEmpty: document.getElementById('selected-cell-empty')!,
