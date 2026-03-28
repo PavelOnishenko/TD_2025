@@ -33,6 +33,8 @@ type GameUiEventCallbacks = {
     onTogglePanel: (panel: 'stats' | 'skills' | 'inventory' | 'magic' | 'quests' | 'lore' | 'selected' | 'worldMap' | 'log') => void;
 };
 
+type HudPanelToggle = 'stats' | 'skills' | 'inventory' | 'magic' | 'quests' | 'lore' | 'selected' | 'worldMap' | 'log';
+
 export default class GameUiEventBinder {
     private canvas: HTMLCanvasElement;
     private hudElements: HudElements;
@@ -43,6 +45,7 @@ export default class GameUiEventBinder {
     private villageActionsController: VillageActionsController;
     private developerEventController: DeveloperEventController;
     private callbacks: GameUiEventCallbacks;
+    private nextPanelZIndex = 10;
 
     constructor(
         canvas: HTMLCanvasElement,
@@ -72,6 +75,7 @@ export default class GameUiEventBinder {
         this.bindDeveloperEvents();
         this.bindStatEvents();
         this.bindHudMenuEvents();
+        this.initializeHudPanelWindows();
 
         this.canvas.addEventListener('click', (event: MouseEvent) => this.callbacks.onCanvasClick(event));
         this.canvas.addEventListener('mousemove', (event: MouseEvent) => this.callbacks.onCanvasMove(event));
@@ -122,7 +126,7 @@ export default class GameUiEventBinder {
         });
     }
 
-    private handlePanelToggle(panel: 'stats' | 'skills' | 'inventory' | 'magic' | 'quests' | 'lore' | 'selected' | 'worldMap' | 'log'): void {
+    private handlePanelToggle(panel: HudPanelToggle): void {
         this.callbacks.onTogglePanel(panel);
         this.setHudMenuOpen(false);
     }
@@ -130,6 +134,93 @@ export default class GameUiEventBinder {
     private setHudMenuOpen(isOpen: boolean): void {
         this.hudElements.hudMenuPanel.classList.toggle('hidden', !isOpen);
         this.hudElements.hudMenuToggleBtn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    }
+
+    private initializeHudPanelWindows(): void {
+        const panels: Array<{ key: HudPanelToggle; title: string; element: HTMLElement }> = [
+            { key: 'stats', title: 'Stats', element: this.hudElements.statsPanel },
+            { key: 'skills', title: 'Skills', element: this.hudElements.skillsPanel },
+            { key: 'inventory', title: 'Inventory', element: this.hudElements.inventoryPanel },
+            { key: 'magic', title: 'Magic', element: this.hudElements.magicPanel },
+            { key: 'quests', title: 'Quests', element: this.hudElements.questsPanel },
+            { key: 'lore', title: 'Lore', element: this.hudElements.lorePanel },
+            { key: 'selected', title: 'Selected', element: this.hudElements.selectedPanel },
+            { key: 'worldMap', title: 'World Map', element: this.hudElements.worldMapPanel },
+            { key: 'log', title: 'Log', element: this.hudElements.logPanel },
+        ];
+
+        panels.forEach(({ key, title, element }) => this.decorateHudPanelWindow(key, title, element));
+    }
+
+    private decorateHudPanelWindow(panelKey: HudPanelToggle, title: string, panel: HTMLElement): void {
+        if (panel.querySelector('.panel-window-header')) {
+            return;
+        }
+
+        panel.classList.add('draggable-panel');
+
+        const header = document.createElement('div');
+        header.className = 'panel-window-header';
+
+        const dragHandle = document.createElement('div');
+        dragHandle.className = 'panel-drag-handle';
+        dragHandle.textContent = title;
+        dragHandle.title = 'Drag to move panel';
+
+        const closeBtn = document.createElement('button');
+        closeBtn.className = 'action-btn panel-close-btn';
+        closeBtn.type = 'button';
+        closeBtn.textContent = '✕';
+        closeBtn.setAttribute('aria-label', `Close ${title} panel`);
+        closeBtn.addEventListener('click', () => {
+            if (!panel.classList.contains('hidden')) {
+                this.callbacks.onTogglePanel(panelKey);
+            }
+            this.setHudMenuOpen(false);
+        });
+
+        header.append(dragHandle, closeBtn);
+        panel.prepend(header);
+
+        this.bindPanelDragEvents(panel, dragHandle);
+    }
+
+    private bindPanelDragEvents(panel: HTMLElement, dragHandle: HTMLElement): void {
+        dragHandle.addEventListener('pointerdown', (event: PointerEvent) => {
+            if (event.button !== 0) {
+                return;
+            }
+
+            event.preventDefault();
+            dragHandle.setPointerCapture(event.pointerId);
+            panel.style.zIndex = String(this.nextPanelZIndex++);
+            panel.classList.add('panel-dragging');
+
+            const startX = event.clientX;
+            const startY = event.clientY;
+            const initialOffsetX = Number.parseFloat(panel.dataset.offsetX ?? '0') || 0;
+            const initialOffsetY = Number.parseFloat(panel.dataset.offsetY ?? '0') || 0;
+
+            const onPointerMove = (moveEvent: PointerEvent): void => {
+                const nextOffsetX = initialOffsetX + (moveEvent.clientX - startX);
+                const nextOffsetY = initialOffsetY + (moveEvent.clientY - startY);
+                panel.dataset.offsetX = String(nextOffsetX);
+                panel.dataset.offsetY = String(nextOffsetY);
+                panel.style.setProperty('--panel-offset-x', `${nextOffsetX}px`);
+                panel.style.setProperty('--panel-offset-y', `${nextOffsetY}px`);
+            };
+
+            const stopDrag = (): void => {
+                panel.classList.remove('panel-dragging');
+                dragHandle.removeEventListener('pointermove', onPointerMove);
+                dragHandle.removeEventListener('pointerup', stopDrag);
+                dragHandle.removeEventListener('pointercancel', stopDrag);
+            };
+
+            dragHandle.addEventListener('pointermove', onPointerMove);
+            dragHandle.addEventListener('pointerup', stopDrag);
+            dragHandle.addEventListener('pointercancel', stopDrag);
+        });
     }
 
     private bindVillageEvents(villageNameProvider: () => string): void {

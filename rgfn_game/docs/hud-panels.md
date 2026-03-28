@@ -142,3 +142,45 @@ To improve battle readability, the player now renders as a full mini-avatar (sha
   3. click handler in `GameUiEventBinder`,
   4. stat application in `GameHudCoordinator.handleGodSkillsBoost`,
   5. immediate save via `Game.saveGameIfChanged()`.
+
+## Draggable HUD windows with close button (March 28, 2026)
+
+Hamburger-opened HUD panels are now interactive floating windows:
+
+- A compact header is injected at runtime for each panel:
+  - `Stats`, `Skills`, `Inventory`, `Magic`, `Quests`, `Lore`, `Selected`, `World Map`, `Log`.
+- Header contains:
+  - a **drag handle** (panel title area),
+  - a **close button** (`✕`) that closes only that panel.
+- Dragging details:
+  - Drag uses pointer events on `.panel-drag-handle`.
+  - Panel offset is stored in `data-offset-x` / `data-offset-y`.
+  - Visual position is applied via CSS transform variables:
+    - `--panel-offset-x`
+    - `--panel-offset-y`
+  - Last interacted panel gets higher `z-index` so overlap feels natural.
+- Mobile behavior:
+  - On narrow layout (`max-width: 920px`), transforms are disabled (`transform: none`) so stacked mobile flow remains stable and readable.
+
+### Implementation map
+
+1. `GameUiEventBinder.initializeHudPanelWindows()` prepares panel metadata.
+2. `decorateHudPanelWindow(...)` prepends header + close button to panel DOM.
+3. `bindPanelDragEvents(...)` handles drag lifecycle (`pointerdown` → `pointermove` → `pointerup/cancel`).
+4. Existing `onTogglePanel(...)` callback is reused to preserve active-button state logic in `HudController`.
+
+### Manual QA for draggable windows
+
+1. Open hamburger menu and toggle `Stats`.
+2. Grab `Stats` header and drag panel:
+   - panel should move,
+   - cursor should switch grab → grabbing while dragging.
+3. Click `✕` in panel header:
+   - panel hides,
+   - corresponding hamburger button deactivates.
+4. Open 2-3 panels (e.g. `World Map`, `Log`, `Inventory`) and drag them:
+   - panels can overlap,
+   - last dragged panel should appear above previous ones.
+5. Resize viewport below `920px`:
+   - panels return to normal stacked flow (no shifted transforms),
+   - close button still works.
