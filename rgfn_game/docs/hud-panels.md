@@ -210,3 +210,44 @@ This keeps panel size/content natural and avoids the old "single-column fallback
 2. Verify panel height does not auto-shrink to viewport clamp when opening multiple panels.
 3. Drag overlapping panels and confirm usability still comes from dragging/closing (not from panel auto-scroll resizing).
 4. Confirm `Log` panel still scrolls as messages accumulate.
+
+## Default spawn placement for draggable HUD windows (March 28, 2026, follow-up #2)
+
+Problem addressed:
+
+- Panels were opening at legacy stack-based coordinates (including right-column origins), then becoming draggable.
+- This felt like they still "belonged" to the old two-column/stack flow.
+
+New behavior:
+
+- Each draggable HUD panel now receives a **one-time spawn offset** the first time it becomes visible.
+- Spawn anchor is intentionally near the **left edge** of the viewport.
+- Panels are vertically staggered with a small Y step, so opening several panels does not place every window at the exact same Y coordinate.
+
+Implementation details:
+
+1. `GameUiEventBinder` defines spawn constants:
+   - `panelSpawnOrigin = { x: 24, y: 96 }`
+   - `panelSpawnStepY = 34`
+2. During panel decoration, binder attaches `bindPanelSpawnPositioning(panel, panelIndex)`.
+3. A `MutationObserver` watches panel class changes (`hidden` ↔ visible).
+4. On first visible state, binder computes offset from current DOM position to spawn target and writes:
+   - `data-offset-x`, `data-offset-y`
+   - CSS vars `--panel-offset-x`, `--panel-offset-y`
+5. After first placement, `data-spawn-positioned=true` prevents re-applying spawn (player drag position is preserved for later open/close toggles in the same session).
+
+Why this is better:
+
+- Opened panels now feel consistent and predictable: they always appear near the left gameplay edge first.
+- The player still retains full manual control via drag.
+- Existing draggable implementation (transform via CSS variables) is reused; no separate absolute-positioning mode was introduced.
+
+### Regression checklist for spawn behavior
+
+1. Open `Inventory` from hamburger:
+   - panel appears near left edge, not at right stack origin.
+2. Open `Stats`, `Magic`, `Skills`:
+   - each opens near left edge with visible Y staggering.
+3. Drag `Magic` to a custom location, close it, reopen it:
+   - it should keep the moved position (spawn offset should not be re-applied).
+4. Verify close button and drag interactions still work exactly as before.

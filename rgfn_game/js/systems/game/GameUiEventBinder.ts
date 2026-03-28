@@ -46,6 +46,8 @@ export default class GameUiEventBinder {
     private developerEventController: DeveloperEventController;
     private callbacks: GameUiEventCallbacks;
     private nextPanelZIndex = 10;
+    private readonly panelSpawnOrigin = { x: 24, y: 96 };
+    private readonly panelSpawnStepY = 34;
 
     constructor(
         canvas: HTMLCanvasElement,
@@ -149,10 +151,10 @@ export default class GameUiEventBinder {
             { key: 'log', title: 'Log', element: this.hudElements.logPanel },
         ];
 
-        panels.forEach(({ key, title, element }) => this.decorateHudPanelWindow(key, title, element));
+        panels.forEach(({ key, title, element }, panelIndex) => this.decorateHudPanelWindow(key, title, element, panelIndex));
     }
 
-    private decorateHudPanelWindow(panelKey: HudPanelToggle, title: string, panel: HTMLElement): void {
+    private decorateHudPanelWindow(panelKey: HudPanelToggle, title: string, panel: HTMLElement, panelIndex: number): void {
         if (panel.querySelector('.panel-window-header')) {
             return;
         }
@@ -183,6 +185,7 @@ export default class GameUiEventBinder {
         panel.prepend(header);
 
         this.bindPanelDragEvents(panel, dragHandle);
+        this.bindPanelSpawnPositioning(panel, panelIndex);
     }
 
     private bindPanelDragEvents(panel: HTMLElement, dragHandle: HTMLElement): void {
@@ -221,6 +224,42 @@ export default class GameUiEventBinder {
             dragHandle.addEventListener('pointerup', stopDrag);
             dragHandle.addEventListener('pointercancel', stopDrag);
         });
+    }
+
+    private bindPanelSpawnPositioning(panel: HTMLElement, panelIndex: number): void {
+        const placePanelAtSpawn = (): void => {
+            if (panel.classList.contains('hidden') || panel.dataset.spawnPositioned === 'true') {
+                return;
+            }
+
+            const panelRect = panel.getBoundingClientRect();
+            if (panelRect.width <= 0 || panelRect.height <= 0) {
+                return;
+            }
+
+            const targetX = this.panelSpawnOrigin.x;
+            const targetY = this.panelSpawnOrigin.y + (panelIndex * this.panelSpawnStepY);
+            const nextOffsetX = targetX - panelRect.left;
+            const nextOffsetY = targetY - panelRect.top;
+
+            panel.dataset.offsetX = String(nextOffsetX);
+            panel.dataset.offsetY = String(nextOffsetY);
+            panel.dataset.spawnPositioned = 'true';
+            panel.style.setProperty('--panel-offset-x', `${nextOffsetX}px`);
+            panel.style.setProperty('--panel-offset-y', `${nextOffsetY}px`);
+        };
+
+        const scheduleSpawnPlacement = (): void => {
+            requestAnimationFrame(() => placePanelAtSpawn());
+        };
+
+        scheduleSpawnPlacement();
+
+        const visibilityObserver = new MutationObserver(() => {
+            scheduleSpawnPlacement();
+        });
+
+        visibilityObserver.observe(panel, { attributes: true, attributeFilter: ['class'] });
     }
 
     private bindVillageEvents(villageNameProvider: () => string): void {
