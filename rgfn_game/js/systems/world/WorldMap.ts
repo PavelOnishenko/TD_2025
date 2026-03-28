@@ -962,7 +962,8 @@ export default class WorldMap {
         this.renderer.drawBackground(ctx, this.canvasWidth, this.canvasHeight);
         const bounds = this.getVisibleBounds();
         const detailLevel = this.getRenderDetailLevel(bounds);
-        const drawGrid = detailLevel !== 'low' && this.grid.cellSize >= 12;
+        // Keep terrain seamless and avoid decorative tabletop-like cell borders.
+        const drawGrid = false;
         const shouldUseTerrainCache = detailLevel === 'low' || detailLevel === 'medium';
 
         const terrainRenderedFromCache = shouldUseTerrainCache
