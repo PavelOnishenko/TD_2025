@@ -338,6 +338,20 @@ h1 {
     resize: both;
 }
 
+#quests-panel {
+    max-width: calc(100vw - 32px);
+    max-inline-size: calc(100vw - 32px);
+    max-height: calc(100dvh - 32px);
+    max-block-size: calc(100dvh - 32px);
+    min-height: 220px;
+    height: min(42vh, 360px);
+    min-width: 260px;
+    min-inline-size: 260px;
+    overflow: hidden;
+    align-self: flex-start;
+    resize: both;
+}
+
 #game-log-container h3 {
     margin: 0;
     font-size: 13px;
@@ -573,7 +587,8 @@ h1 {
         transform: none;
     }
 
-    #game-log-container {
+    #game-log-container,
+    #quests-panel {
         margin-top: 0;
         height: 260px;
         max-height: 260px;
@@ -957,7 +972,8 @@ h1 {
 
 
 .quests-body {
-    max-height: 420px;
+    flex: 1;
+    min-height: 0;
     overflow: auto;
     padding: 8px;
     border: 1px solid var(--color-secondary-accent);

@@ -305,3 +305,33 @@ The `Log` panel (`#game-log-container`) now supports manual resize on desktop:
 4. Reduce viewport below `920px`:
    - resize affordance should be disabled;
    - log should follow normal mobile stacked flow.
+
+## Resizable Quest window (March 28, 2026, follow-up #4)
+
+The `Quests` panel (`#quests-panel`) now mirrors the desktop resize behavior of the `Log` panel:
+
+- Enables native panel resizing with `resize: both`.
+- Uses the same desktop safety bounds as log:
+  - `min-width: 260px`, `min-height: 220px`
+  - `max-width: calc(100vw - 32px)`, `max-height: calc(100dvh - 32px)`
+- Keeps panel geometry stable with `overflow: hidden` + `align-self: flex-start` so the window expands from its own corner instead of stretching with parent layout rules.
+- Moves scrolling responsibility fully into `.quests-body` (`flex: 1`, `min-height: 0`, `overflow: auto`) so objective lists stay scrollable at any panel size.
+- On narrow/mobile layout (`max-width: 920px`), quest resizing is disabled (`resize: none`) just like log to preserve predictable stacked HUD flow.
+
+### Why this helps
+
+- Quest chains can become long; fixed-height panel states force extra scroll churn during active objective tracking.
+- Matching log + quests resize behavior gives players consistent window ergonomics across the two most text-heavy HUD panels.
+- The shared constraints reduce future maintenance risk (same viewport/min-size rules for both high-traffic windows).
+
+### Quick QA checklist
+
+1. Open HUD menu → `Quests`.
+2. Drag bottom-right resize affordance:
+   - panel width/height should change freely on desktop.
+3. Fill/expand quest tree (multiple quest nodes):
+   - inner quest list should scroll inside panel instead of overflowing viewport.
+4. Drag/move panel after resizing:
+   - drag behavior should remain unchanged.
+5. Reduce viewport below `920px`:
+   - resize affordance should disappear for quests (and still for log).
