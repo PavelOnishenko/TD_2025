@@ -1,3 +1,40 @@
+## March 28, 2026 update: World Map panel must remain independent from sibling panel visibility
+
+### Reported issue
+- World Map panel became visually unstable when additional HUD panels were open.
+- Symptoms:
+  - panel looked auto-resized/compressed,
+  - vertical scrollbar appeared in the panel unexpectedly,
+  - behavior depended on how many other overlay panels were currently visible.
+
+### Root cause summary
+- World Map panel was still routed through generic draggable-window decoration logic (header injection + spawn handling).
+- CSS grouped `#world-sidebar` with `#game-log-container` under shared `max-height` + `overflow:auto`, allowing flex shrink + forced scrolling under constrained overlay layout.
+
+### Fix summary
+- Excluded `worldMap` from runtime draggable decoration in `GameUiEventBinder`.
+- Marked world map panel as static (`static-panel-window`) to make intent explicit and future-proof.
+- Updated `#world-sidebar` CSS to remove auto-clamp/scroll coupling:
+  - `flex-shrink: 0`
+  - `max-height: none`
+  - `overflow: visible`
+
+### Why this is the correct behavior
+- World Map panel is a primary interaction panel (navigation + recenter + travel actions), not a transient utility panel.
+- It should remain dimensionally stable regardless of how many informational HUD windows are opened nearby.
+- Drag/overlap mechanics are still preserved for utility panels where that interaction model is valuable.
+
+### Manual QA steps
+1. Open World Map panel and confirm no forced scrollbar appears.
+2. Open/close several other panels (`Stats`, `Skills`, `Inventory`, `Log`) in different sequences.
+3. Verify World Map panel dimensions and content layout remain unchanged.
+4. Verify utility panels remain draggable with close buttons.
+5. On small viewport/mobile fallback width, confirm layout still stacks without world panel clipping.
+
+### Commands to run
+- `npm run build:rgfn`
+- `node --test rgfn_game/test/**/*.test.js`
+
 ## March 26, 2026 update: village rumors NPC roster persistence fix (actual root cause)
 
 ### Symptom seen in UI

@@ -238,6 +238,43 @@ Implementation details:
 
 Why this is better:
 
+## World Map panel decoupled from draggable auto-resize/scroll behavior (March 28, 2026, follow-up #3)
+
+### User-visible issue
+
+When other draggable HUD panels were opened, the **World Map** panel could become vertically compressed and start showing an internal scrollbar (including the browser-specific scrollbar chrome near the panel header). This made it look like the old panel auto-resize mechanism was still active for this specific panel.
+
+### Root cause
+
+Two systems were interacting in a bad way:
+
+1. Runtime window decorator (`GameUiEventBinder.initializeHudPanelWindows`) treated `worldMap` exactly like draggable utility panels, injecting the same draggable header and participating in shared spawn/stack behavior.
+2. CSS base for sidebar/log panel pair (`#world-sidebar, #game-log-container`) still applied `max-height` + `overflow:auto`, so when overlay stack space became constrained by other open panels, `#world-sidebar` could shrink and force a scrollbar.
+
+### Fix implemented
+
+- `worldMap` is now treated as a **static panel window**:
+  - excluded from runtime draggable decoration and spawn-offset injection,
+  - receives marker class `static-panel-window` for explicit semantic intent in DOM/CSS tooling.
+- `#world-sidebar` now opts out of shared sidebar clamping:
+  - `flex-shrink: 0;`
+  - `max-height: none;`
+  - `overflow: visible;`
+
+### Resulting behavior contract
+
+- Opening/closing other HUD panels should no longer resize the World Map panel.
+- World Map panel should not auto-add an internal scrollbar due to sibling panel visibility.
+- World Map controls stay stable and independent of concurrent panel count.
+
+### Focused manual regression checklist
+
+1. Open `World Map` panel only → verify full intended panel height with no forced internal scrollbar.
+2. Open `Stats`, `Skills`, `Inventory`, `Log` while keeping `World Map` open.
+3. Confirm World Map panel dimensions remain stable while other windows are toggled.
+4. Confirm `World Map` still closes/reopens correctly from hamburger toggle button.
+5. Confirm other panels (`Stats`, `Skills`, `Inventory`, `Log`) remain draggable and keep close-button behavior.
+
 - Opened panels now feel consistent and predictable: they always appear near the left gameplay edge first.
 - The player still retains full manual control via drag.
 - Existing draggable implementation (transform via CSS variables) is reused; no separate absolute-positioning mode was introduced.

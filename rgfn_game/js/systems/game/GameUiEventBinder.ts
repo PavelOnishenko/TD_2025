@@ -49,6 +49,7 @@ export default class GameUiEventBinder {
     private nextPanelZIndex = 10;
     private readonly panelSpawnOrigin = { x: 24, y: 96 };
     private readonly panelSpawnStepY = 34;
+    private readonly staticHudPanels = new Set<HudPanelToggle>(['worldMap']);
 
     constructor(
         canvas: HTMLCanvasElement,
@@ -158,6 +159,11 @@ export default class GameUiEventBinder {
 
     private decorateHudPanelWindow(panelKey: HudPanelToggle, title: string, panel: HTMLElement, panelIndex: number): void {
         if (panel.querySelector('.panel-window-header')) {
+            return;
+        }
+
+        if (this.staticHudPanels.has(panelKey)) {
+            panel.classList.add('static-panel-window');
             return;
         }
 
