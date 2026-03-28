@@ -20,6 +20,7 @@ This satisfies the intended UX: the map always dominates the screen, and UI pane
 - `World Map` button → toggles `#world-sidebar` panel.
 - `Log` button → toggles `#game-log-container` panel.
 - Village sidebar heading now includes current settlement name via `#village-title` (format: `Village: <name>`), so players always see which village they are interacting with.
+- Village scene canvas title (`VillageName` text rendered directly on the map) is horizontally centered at the top (`x = canvas.width / 2`, `y = 20`) to avoid overlap with the top-left hamburger menu.
 - Inside the `World Map` panel:
   - `Use HP Potion` uses a potion without leaving the panel.
   - `Enter Village (Space)` re-enters a village if the hero is currently standing on a village tile.
@@ -134,6 +135,7 @@ To improve battle readability, the player now renders as a full mini-avatar (sha
    - In village mode on desktop width:
      - `Village rumors` appears left of the right sidebar (closer to map center), not below stock/sell.
      - Right sidebar still keeps `Village Actions` content on the right edge.
+     - Village name at the top of the scene is centered and no longer clipped by the hamburger button in the top-left corner.
    - On narrow viewports/mobile width:
      - `Village rumors` returns beneath the rest of village actions (single-column fallback).
 
