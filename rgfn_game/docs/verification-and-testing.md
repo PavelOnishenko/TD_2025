@@ -748,3 +748,30 @@ So tests asserting fixed literal HP values (for example zombie `7`) will fail wh
 ### Notes for future iteration
 - If we later want fully shared generation internals (not just style family), we can extract a common deterministic token source module used by both quest and village generators.
 - Biome-aware weighting can be layered on top of this without changing external APIs.
+
+## March 28, 2026 update: quest-generated monster encounters now obey dev Monster toggle
+
+### Reported issue
+- In world travel, quest-target monster packs (generated from active objective data) could still trigger even after disabling **Monster** encounters from the Developer Console.
+- This created a mismatch: random monster encounters were disabled, but objective monster battles still happened.
+
+### Root cause
+- `WorldModeController` always requested quest monster encounters via `getQuestBattleEncounter()` before normal random encounter flow.
+- That callback path was not gated by `EncounterSystem.isEncounterTypeEnabled('monster')`.
+
+### Fix implemented
+- Added a monster-toggle gate in `WorldModeController.onPlayerMoved(...)`:
+  - if `isEncounterTypeEnabled('monster')` is `false`, quest battle callback is skipped entirely,
+  - therefore no quest monster encounter is started while Monster encounters are disabled.
+- Existing behavior when Monster is enabled is unchanged.
+
+### Validation strategy
+1. Unit test for positive path:
+   - with Monster enabled and movement occurring, quest encounter callback is consulted and battle starts.
+2. Unit test for disabled path:
+   - with Monster disabled and movement occurring, quest encounter callback is not consulted and no battle starts.
+3. Full RGFN test run to ensure no regressions in encounter, world, and quest flows.
+
+### Notes
+- This fix intentionally treats quest-generated monster packs as part of the same Monster encounter category exposed in Developer Console.
+- Item/traveler random encounter toggles are unaffected.

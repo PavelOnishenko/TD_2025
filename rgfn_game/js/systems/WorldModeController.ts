@@ -177,7 +177,10 @@ export default class WorldModeController {
         }
 
         this.encounterSystem.onPlayerMove();
-        const questEncounter = this.callbacks.getQuestBattleEncounter();
+        const monsterEncountersEnabled = this.encounterSystem.isEncounterTypeEnabled('monster');
+        const questEncounter = monsterEncountersEnabled
+            ? this.callbacks.getQuestBattleEncounter()
+            : null;
         if (questEncounter) {
             if (questEncounter.hint) {
                 this.callbacks.onAddBattleLog(questEncounter.hint, 'system-message');
