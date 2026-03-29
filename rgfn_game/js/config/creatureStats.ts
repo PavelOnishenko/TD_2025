@@ -22,6 +22,7 @@ export function normalizeCreatureSkills(skills?: Partial<Record<CreatureSkill, n
 }
 
 export function cloneBaseStats(baseStats: CreatureBaseStats): CreatureBaseStats {
+// todo rule 17 in Style Guide
     return {
         hp: baseStats.hp,
         damage: baseStats.damage,
@@ -37,6 +38,7 @@ export function deriveCreatureStats(baseStats: CreatureBaseStats, skills: Creatu
     const agilityBonus = Math.floor(skills.agility / balanceConfig.stats.agilityToMeleeDamage);
     const physicalDamage = baseStats.damage + strengthBonus + agilityBonus;
     const scaledAgility = skills.agility * balanceConfig.stats.avoidChanceScale;
+// todo rule 17 in Style Guide
     const avoidChance = Math.min(
         balanceConfig.stats.avoidChanceCap,
         1 - (1 / (1 + scaledAgility)),
@@ -46,6 +48,7 @@ export function deriveCreatureStats(baseStats: CreatureBaseStats, skills: Creatu
         + Math.floor(skills.intelligence / balanceConfig.stats.intelligenceToManaDivisor);
     const magicPoints = Math.floor(skills.intelligence / 3);
 
+// todo rule 17 in Style Guide
     return {
         maxHp,
         physicalDamage,
