@@ -209,6 +209,14 @@ Note: Semi-transparent overlays can use fixed colors, but all UI elements must u
 
 ## Common Patterns
 
+### Pattern -1: Remove Dead Helpers Immediately
+
+If a config/system helper is no longer used in production code, remove it instead of keeping "maybe useful later" exports.
+
+- Prefer deleting unused helpers in the same task where they become unused.
+- Verify usage with `rg -n "functionOrSymbolName" rgfn_game/js rgfn_game/test`.
+- If a helper is intentionally test-only, document that in the test file where it is used.
+
 ### Pattern 0: Selected Tile Labels Must Use Entity Display Names
 
 When filling "Selected Tile" details in battle mode, do **not** rely on `constructor.name` for enemy labels.
