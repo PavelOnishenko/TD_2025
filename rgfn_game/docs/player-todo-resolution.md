@@ -55,3 +55,37 @@ During refactor, the main style-guide pressure points were:
   - `PlayerCombatState`: directional bonus consume/expire behavior
   - `PlayerPersistence`: numeric coercion + inventory restoration compatibility
 - Consider replacing inheritance with composed domain services later if runtime construction constraints allow.
+
+## 2026-03-29: PlayerInventory TODO Sweep
+
+The TODO backlog in `rgfn_game/js/entities/player/PlayerInventory.ts` was fully cleared with behavior-preserving refactors:
+
+- Converted simple getter/query utilities to class-field arrow functions to align method style consistently.
+- Replaced inline equipment-clearing logic in `removeItemAt` with `clearRemovedItemFromEquipment` to keep mutating responsibilities isolated and reduce repeated hook triggers.
+- Split `equipWeaponToSlot` branch-heavy logic into:
+  - `equipTwoHandedWeapon`
+  - `equipOneHandedWeapon`
+  This keeps each helper focused and makes slot rules easier to test.
+- Introduced explicit `InventoryState` and `RestoreInventoryStateArgs` types to remove long inline object signatures and improve API readability.
+- Updated `restoreState` to use a named object argument (instead of a long positional parameter list), which also makes call sites less error-prone.
+- Updated `PlayerPersistence.restoreState` to call the new object-form inventory restore API.
+
+### Why This Matters
+
+- Fewer long methods reduce regression risk when changing equip logic.
+- Named restore arguments prevent ordering bugs in save/load code.
+- Isolated helpers make it easier to add unit tests around two-handed/offhand edge cases.
+
+## 2026-03-29 (Follow-up): Hard Line-Budget Compliance for Inventory Classes
+
+After review feedback, the inventory TODO was enforced literally: **no class in the extracted inventory flow remains above 200 lines**.
+
+- `PlayerInventory.ts` now acts as a compact orchestration layer (190 lines).
+- Equipment-specific state transitions were moved into `PlayerInventoryEquipment.ts` (139 lines).
+- Shared inventory contracts were moved into `PlayerInventoryTypes.ts` for cleaner dependency boundaries.
+
+### Practical lessons captured
+
+1. If a TODO says “extract to new classes”, partial in-place cleanup is not enough—line budget must be satisfied directly.
+2. Stateful domains (equipment vs. bag storage) split cleanly when one class owns equip/unequip semantics and another owns inventory capacity + item collection.
+3. Using object-shaped restore arguments plus dedicated type modules keeps save/load changes safer across refactors.
