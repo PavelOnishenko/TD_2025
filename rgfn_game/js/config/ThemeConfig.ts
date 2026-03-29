@@ -3,6 +3,7 @@
  * Fixed color palette - no theme switching
  */
 
+// todo this Theme interface should live in dedicated file.
 export interface Theme {
   name: string;
 
@@ -169,6 +170,7 @@ const GAME_THEME: Theme = {
     },
     worldMap: {
         background: '#c9ab7f',
+    // todo rule 17 in Style_Guide
         terrain: {
             grass: '#8da75d',
             forest: '#577235',
@@ -179,26 +181,32 @@ const GAME_THEME: Theme = {
         unknown: '#a18a67',
         gridLines: 'rgba(46, 32, 19, 0)',
         playerMarker: '#8f1f1f',
+    // todo rule 17 in Style_Guide
         iconScale: {
             character: 1,
             village: 0.5,
         },
+    // todo rule 17 in Style_Guide
         questionMarkOffset: {
             x: 0,
             y: 0,
         },
+    // todo rule 17 in Style_Guide
         gridOffset: {
             x: 0,
             y: 0,
         },
+    // todo rule 17 in Style_Guide
         gridDimensions: {
             columns: 100,
             rows: 100,
         },
+    // todo rule 17 in Style_Guide
         viewportSize: {
             width: 720,
             height: 720,
         },
+    // todo rule 17 in Style_Guide
         cellSize: {
             default: 28,
             min: 8,
@@ -221,6 +229,7 @@ const GAME_THEME: Theme = {
         obstacleFill: '#71553a',
         obstacleEdge: '#2e2013',
         obstacleShadow: 'rgba(46, 32, 19, 0.22)',
+    // todo rule 17 in Style_Guide
         gridSize: {
             columns: 10,
             rows: 8,
