@@ -3,131 +3,7 @@
  * Fixed color palette - no theme switching
  */
 
-// todo this Theme interface should live in dedicated file.
-export interface Theme {
-  name: string;
-
-  // UI Colors
-  ui: {
-    primaryBg: string;
-    secondaryBg: string;
-    canvasBg: string;
-    primaryAccent: string;
-    secondaryAccent: string;
-    enemyColor: string;
-    warningColor: string;
-    disabledColor: string;
-    systemMessageColor: string;
-    textPrimary: string;
-    textMuted: string;
-    panelShadow: string;
-    panelHighlight: string;
-    locationNameColor: string;
-    itemNameColor: string;
-    personNameColor: string;
-  };
-
-  // Entity Colors
-  entities: {
-    player: {
-      body: string;
-      face: string;
-      healthBg: string;
-      healthHigh: string;
-      healthMid: string;
-      healthLow: string;
-    };
-    skeleton: {
-      body: string;
-      features: string;
-      healthBg: string;
-      healthBar: string;
-    };
-  };
-
-  // World Map Colors
-  worldMap: {
-    background: string;
-    terrain: {
-      grass: string;
-      forest: string;
-      mountain: string;
-      water: string;
-      desert: string;
-    };
-    unknown: string;
-    gridLines: string;
-    playerMarker: string;
-    iconScale: {
-      character: number;
-      village: number;
-    };
-    questionMarkOffset: {
-      x: number;
-      y: number;
-    };
-    gridOffset: {
-      x: number;
-      y: number;
-    };
-    gridDimensions: {
-      columns: number;
-      rows: number;
-    };
-    viewportSize: {
-      width: number;
-      height: number;
-    };
-    cellSize: {
-      default: number;
-      min: number;
-      max: number;
-      zoomStep: number;
-      panStepCells: number;
-    };
-    cellTravelMinutes: number;
-    cellCornerRadius: number;
-    connectorRadius: number;
-  };
-
-  // Battle Map Colors
-  battleMap: {
-    background: string;
-    tileDark: string;
-    tileLight: string;
-    currentEntityPlayer: string;
-    currentEntityEnemy: string;
-    selectedEnemy: string;
-    gridBorders: string;
-    obstacleFill: string;
-    obstacleEdge: string;
-    obstacleShadow: string;
-    gridSize: {
-      columns: number;
-      rows: number;
-    };
-  };
-
-  quest: {
-    feedbackMessageDurationMs: number;
-    nameGeneration: {
-      maxWordsByDomain: {
-        location: number;
-        artifact: number;
-        character: number;
-        monster: number;
-        mainQuest: number;
-      };
-      wordLengthWeightsByDomain: {
-        location: Record<number, number>;
-        artifact: Record<number, number>;
-        character: Record<number, number>;
-        monster: Record<number, number>;
-        mainQuest: Record<number, number>;
-      };
-    };
-  };
-}
+import { Theme } from './Theme';
 
 // Fixed game theme (light parchment fantasy aesthetic)
 const GAME_THEME: Theme = {
@@ -150,7 +26,6 @@ const GAME_THEME: Theme = {
         itemNameColor: '#7b4a24',
         personNameColor: '#6f2f75',
     },
-    // todo rule 17 in Style_Guide
     entities: {
         player: {
             body: '#2f5ea8',
@@ -160,60 +35,20 @@ const GAME_THEME: Theme = {
             healthMid: '#b78532',
             healthLow: '#8f1f1f',
         },
-    // todo rule 17 in Style_Guide
-        skeleton: {
-            body: '#d8ccbc',
-            features: '#332318',
-            healthBg: '#4f3924',
-            healthBar: '#8f1f1f',
-        },
+        skeleton: { body: '#d8ccbc', features: '#332318', healthBg: '#4f3924', healthBar: '#8f1f1f' },
     },
     worldMap: {
         background: '#c9ab7f',
-    // todo rule 17 in Style_Guide
-        terrain: {
-            grass: '#8da75d',
-            forest: '#577235',
-            mountain: '#948068',
-            water: '#5f8ba8',
-            desert: '#d4b17a',
-        },
+        terrain: { grass: '#8da75d', forest: '#577235', mountain: '#948068', water: '#5f8ba8', desert: '#d4b17a' },
         unknown: '#a18a67',
         gridLines: 'rgba(46, 32, 19, 0)',
         playerMarker: '#8f1f1f',
-    // todo rule 17 in Style_Guide
-        iconScale: {
-            character: 1,
-            village: 0.5,
-        },
-    // todo rule 17 in Style_Guide
-        questionMarkOffset: {
-            x: 0,
-            y: 0,
-        },
-    // todo rule 17 in Style_Guide
-        gridOffset: {
-            x: 0,
-            y: 0,
-        },
-    // todo rule 17 in Style_Guide
-        gridDimensions: {
-            columns: 100,
-            rows: 100,
-        },
-    // todo rule 17 in Style_Guide
-        viewportSize: {
-            width: 720,
-            height: 720,
-        },
-    // todo rule 17 in Style_Guide
-        cellSize: {
-            default: 28,
-            min: 8,
-            max: 64,
-            zoomStep: 4,
-            panStepCells: 4,
-        },
+        iconScale: { character: 1, village: 0.5 },
+        questionMarkOffset: { x: 0, y: 0 },
+        gridOffset: { x: 0, y: 0 },
+        gridDimensions: { columns: 100, rows: 100 },
+        viewportSize: { width: 720, height: 720 },
+        cellSize: { default: 28, min: 8, max: 64, zoomStep: 4, panStepCells: 4 },
         cellTravelMinutes: 12,
         cellCornerRadius: 10,
         connectorRadius: 16,
@@ -229,11 +64,7 @@ const GAME_THEME: Theme = {
         obstacleFill: '#71553a',
         obstacleEdge: '#2e2013',
         obstacleShadow: 'rgba(46, 32, 19, 0.22)',
-    // todo rule 17 in Style_Guide
-        gridSize: {
-            columns: 10,
-            rows: 8,
-        },
+        gridSize: { columns: 10, rows: 8 },
     },
     quest: {
         feedbackMessageDurationMs: 5000,
