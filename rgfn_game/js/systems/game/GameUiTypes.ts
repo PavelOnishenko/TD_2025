@@ -132,6 +132,10 @@ export type WorldUI = {
     enterVillageBtn: HTMLButtonElement;
     campSleepBtn: HTMLButtonElement;
     centerOnCharacterBtn: HTMLButtonElement;
+    villageEntryPopup: HTMLElement;
+    villageEntryTitle: HTMLElement;
+    villageEntryEnterBtn: HTMLButtonElement;
+    villageEntryPassBtn: HTMLButtonElement;
 };
 
 export type VillageUI = {

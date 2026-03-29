@@ -127,8 +127,10 @@ To improve battle readability, the player now renders as a full mini-avatar (sha
 
 7. Village interaction checks:
    - Stand on a village tile, leave the village, then re-enter:
-     - Press `Space` on the world map → village entry prompt opens.
-     - Click `Enter Village (Space)` in the world panel → same behavior.
+     - Step onto a village tile on world map → village entry popup opens automatically near the tile.
+     - Press `Space` on the world map or click `Enter Village` in world panel while still on tile → same popup can be reopened manually.
+     - Click popup `Enter` → village mode opens directly into village actions (no additional Enter/Continue prompt inside village sidebar).
+     - Click popup `Pass by` → popup closes and world movement continues.
    - Move to a non-village tile and test `Space` / `Enter Village (Space)`:
      - Game stays in world mode.
      - A guidance log line is shown instead.
