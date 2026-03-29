@@ -269,6 +269,7 @@ export default class PlayerInventory {
         return true;
     }
 
+    // todo arrow
     private findPotionIndex(id: 'healingPotion' | 'manaPotion'): number {
         return this.inventory.findIndex((item) => item.id === id);
     }
