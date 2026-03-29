@@ -1,3 +1,5 @@
+// todo this file is too long per Style_Guide. Extract functionality to new classes. Adhere strictly to style_guide.
+
 import Item from './Item.js';
 
 type PlayerInventoryHooks = {
@@ -50,26 +52,32 @@ export default class PlayerInventory {
         return true;
     }
 
+    // todo arrow
     public getItems(): Item[] {
         return [...this.inventory];
     }
 
+    // todo arrow
     public getHealingPotionCount(): number {
         return this.inventory.filter((item) => item.id === 'healingPotion').length;
     }
 
+    // todo arrow
     public getManaPotionCount(): number {
         return this.inventory.filter((item) => item.id === 'manaPotion').length;
     }
 
+    // todo arrow
     public removeHealingPotion(): boolean {
         return this.removePotionById('healingPotion');
     }
 
+    // todo arrow
     public removeManaPotion(): boolean {
         return this.removePotionById('manaPotion');
     }
 
+    // todo arrow
     public removeItemAt(index: number): Item | null {
         if (index < 0 || index >= this.inventory.length) {
             return null;
@@ -131,26 +139,32 @@ export default class PlayerInventory {
         return armor;
     }
 
+    // todo arrow
     public getAttackRange(): number {
         return Math.max(this.equippedMainWeapon?.attackRange ?? 1, this.equippedOffhandWeapon?.attackRange ?? 1);
     }
 
+    // todo arrow
     public hasWeapon(): boolean {
         return this.equippedMainWeapon !== null || this.equippedOffhandWeapon !== null;
     }
 
+    // todo arrow
     public getEquippedWeapon(): Item | null {
         return this.equippedMainWeapon;
     }
 
+    // todo arrow
     public getEquippedMainWeapon(): Item | null {
         return this.equippedMainWeapon;
     }
 
+    // todo arrow
     public getEquippedOffhandWeapon(): Item | null {
         return this.equippedOffhandWeapon;
     }
 
+    // todo arrow
     public getEquippedArmor(): Item | null {
         return this.equippedArmor;
     }
@@ -172,6 +186,7 @@ export default class PlayerInventory {
         this.hooks.onEquipmentChanged();
     }
 
+    // todo this func is too long. Extract parts to new funcs, adhere strict to style_Guide.
     public equipWeaponToSlot(weapon: Item, slot: 'main' | 'offhand'): void {
         const previousMainWeapon = this.equippedMainWeapon;
         const previousOffhandWeapon = this.equippedOffhandWeapon;
