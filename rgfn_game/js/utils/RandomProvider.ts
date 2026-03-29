@@ -28,10 +28,7 @@ function readStoredSettings(): { mode: RandomProviderMode; pseudoSeed: string } 
     try {
         const parsed = JSON.parse(raw) as Partial<{ mode: RandomProviderMode; pseudoSeed: string }>;
         const mode = parsed.mode === 'pseudo' ? 'pseudo' : 'true';
-        return {
-            mode,
-            pseudoSeed: normalizePseudoSeed(parsed.pseudoSeed ?? DEFAULT_PSEUDO_SEED),
-        };
+        return { mode, pseudoSeed: normalizePseudoSeed(parsed.pseudoSeed ?? DEFAULT_PSEUDO_SEED) };
     } catch {
         return null;
     }
@@ -42,10 +39,7 @@ function persistSettings(mode: RandomProviderMode, pseudoSeed: string): void {
         return;
     }
 
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify({
-        mode,
-        pseudoSeed: normalizePseudoSeed(pseudoSeed),
-    }));
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ mode, pseudoSeed: normalizePseudoSeed(pseudoSeed) }));
 }
 
 function createRandomizedSeed(): string {
@@ -111,11 +105,7 @@ class RandomProvider {
     }
 
     public getSettings(): RandomProviderSettings {
-        return {
-            mode: this.mode,
-            pseudoSeed: this.pseudoSeed,
-            activeSeed: this.activeSeed,
-        };
+        return { mode: this.mode, pseudoSeed: this.pseudoSeed, activeSeed: this.activeSeed };
     }
 
     public nextFloat(): number {
