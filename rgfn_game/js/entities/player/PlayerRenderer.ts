@@ -30,6 +30,7 @@ export default class PlayerRenderer {
         ctx.fill();
     }
 
+    // todo rule 17 should be applied to this parameter list (probably one liner would do here). Make sure linter triggers on such situations. Edit linter if needed. 
     private drawBody(
         ctx: CanvasRenderingContext2D,
         screenX: number,
@@ -75,6 +76,7 @@ export default class PlayerRenderer {
         ctx.fillRect(left + width - 7, top + 12, 5, 4);
     }
 
+    // todo rule 17 should be applied to this parameter list (probably one liner would do here).
     private drawHealthBar(
         ctx: CanvasRenderingContext2D,
         player: PlayerRenderState,
