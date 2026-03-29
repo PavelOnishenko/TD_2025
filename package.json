@@ -11,9 +11,16 @@
     "watch:rgfn": "tsc -p rgfn_game/tsconfig.json --watch",
     "build:eva": "tsc -p eva_game/tsconfig.json",
     "watch:eva": "tsc -p eva_game/tsconfig.json --watch",
-    "test:eva": "node --test eva_game/test/*.test.js "
+    "test:eva": "node --test eva_game/test/*.test.js ",
+    "lint:ts": "eslint . --ext .ts",
+    "lint:ts:fix": "eslint . --ext .ts --fix",
+    "style-guide:audit": "node scripts/style-guide-audit.mjs",
+    "check:ts-style": "npm run lint:ts && npm run style-guide:audit"
   },
   "devDependencies": {
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "eslint": "^9.23.0",
+    "@typescript-eslint/parser": "^8.28.0",
+    "@typescript-eslint/eslint-plugin": "^8.28.0"
   }
 }
