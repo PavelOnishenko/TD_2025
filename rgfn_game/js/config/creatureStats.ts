@@ -22,13 +22,7 @@ export function normalizeCreatureSkills(skills?: Partial<Record<CreatureSkill, n
 }
 
 export function cloneBaseStats(baseStats: CreatureBaseStats): CreatureBaseStats {
-// todo rule 17 in Style Guide
-    return {
-        hp: baseStats.hp,
-        damage: baseStats.damage,
-        armor: baseStats.armor,
-        mana: baseStats.mana,
-    };
+    return { hp: baseStats.hp, damage: baseStats.damage, armor: baseStats.armor, mana: baseStats.mana };
 }
 
 export function deriveCreatureStats(baseStats: CreatureBaseStats, skills: CreatureSkills): CreatureDerivedStats {
@@ -38,33 +32,17 @@ export function deriveCreatureStats(baseStats: CreatureBaseStats, skills: Creatu
     const agilityBonus = Math.floor(skills.agility / balanceConfig.stats.agilityToMeleeDamage);
     const physicalDamage = baseStats.damage + strengthBonus + agilityBonus;
     const scaledAgility = skills.agility * balanceConfig.stats.avoidChanceScale;
-// todo rule 17 in Style Guide
-    const avoidChance = Math.min(
-        balanceConfig.stats.avoidChanceCap,
-        1 - (1 / (1 + scaledAgility)),
-    );
+    const avoidChance = Math.min(balanceConfig.stats.avoidChanceCap, 1 - (1 / (1 + scaledAgility)));
     const maxMana = baseStats.mana
         + (skills.connection * balanceConfig.stats.connectionToMana)
         + Math.floor(skills.intelligence / balanceConfig.stats.intelligenceToManaDivisor);
     const magicPoints = Math.floor(skills.intelligence / 3);
 
-// todo rule 17 in Style Guide
-    return {
-        maxHp,
-        physicalDamage,
-        armor,
-        avoidChance,
-        maxMana,
-        magicPoints,
-    };
+    return { maxHp, physicalDamage, armor, avoidChance, maxMana, magicPoints };
 }
 
-// todo can u do it arrow function?
-export function deriveArchetypeStats(archetype: CreatureArchetype): CreatureDerivedStats {
-    return deriveCreatureStats(archetype.baseStats, archetype.skills);
-}
+export const deriveArchetypeStats = (archetype: CreatureArchetype): CreatureDerivedStats =>
+    deriveCreatureStats(archetype.baseStats, archetype.skills);
 
-// todo can u do it arrow function?
-export function formatCreatureSkills(skills: CreatureSkills): string {
-    return CREATURE_SKILLS.map((skill) => `${skill.slice(0, 3).toUpperCase()} ${skills[skill]}`).join(', ');
-}
+export const formatCreatureSkills = (skills: CreatureSkills): string =>
+    CREATURE_SKILLS.map((skill) => `${skill.slice(0, 3).toUpperCase()} ${skills[skill]}`).join(', ');
