@@ -16,13 +16,7 @@ export default class Wanderer extends Skeleton {
     private equippedArmor: Item | null;
 
     constructor(level: number, inventory: Item[]) {
-        super(0, 0, {
-            archetypeId: 'human',
-            xpValue: 3 * level,
-            name: `Wanderer Lv.${level}`,
-            width: 30,
-            height: 30,
-        });
+        super(0, 0, { archetypeId: 'human', xpValue: 3 * level, name: `Wanderer Lv.${level}`, width: 30, height: 30 });
         this.level = level;
         this.armorAbsorbedHp = 0;
         this.inventory = inventory;

@@ -25,10 +25,7 @@ export default class EncounterResolver {
     }
 
     public generateEncounter(itemDiscoveryChance: number, rolls: EncounterRolls, options: EncounterGenerationOptions = {}): EncounterResult {
-        const {
-            canDiscoverItems = true,
-            enabledEventTypes = ['monster', 'item', 'traveler'],
-        } = options;
+        const { canDiscoverItems = true, enabledEventTypes = ['monster', 'item', 'traveler'] } = options;
 
         if (enabledEventTypes.length === 0) {
             return { type: 'none' };

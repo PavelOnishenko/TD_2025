@@ -83,10 +83,7 @@ export default class BattleUiController {
             return { selectedEnemy: enemyInDirection, moved: false };
         }
 
-        return {
-            selectedEnemy,
-            moved: this.battleMap.moveEntity(this.player, direction),
-        };
+        return { selectedEnemy, moved: this.battleMap.moveEntity(this.player, direction) };
     }
 
     public selectEnemyFromCanvasClick(event: MouseEvent, canvas: HTMLCanvasElement): Skeleton | null {

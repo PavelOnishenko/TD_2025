@@ -43,3 +43,37 @@ Typical transformations that consistently reduced warnings:
 ## Suggested next wave
 - Continue with files that have 1-3 Rule 17 warnings first (quick wins): `Wanderer.ts`, `BattleUiController.ts`, `MagicSystem.ts`, `BattleSplashView.ts`, `StateMachine.ts`.
 - Then handle medium clusters: `VillagePopulation.ts`, `BattleMap.ts`, `DirectionalCombat.ts`, `WorldMap.ts`.
+
+---
+
+## Follow-up pass (same date): targeted 15-fix batch for RGFN
+
+### Goal for this pass
+- Fix exactly **15 additional Rule 17 warnings** in `rgfn_game` with low-risk formatting-only edits.
+- Keep scope away from Neon Void/root gameplay files.
+
+### Commands used
+- `npm run lint:ts:rgfn:eslint` (before + after validation).
+- `npm test` (full repository test run requested by task custom instructions).
+
+### Outcome
+- Rule 17 warnings went from **53 → 38** (**15 fixed**, as requested).
+- Existing non-Rule-17 warning in `rgfn_game/js/entities/Item.ts` (`indent`) still present and intentionally untouched in this pass.
+
+### Files updated in the 15-fix batch
+- `rgfn_game/js/entities/Skeleton.ts` (2 warnings)
+- `rgfn_game/js/entities/Wanderer.ts` (1 warning)
+- `rgfn_game/js/systems/BattleUiController.ts` (1 warning)
+- `rgfn_game/js/systems/combat/BattleMap.ts` (5 warnings)
+- `rgfn_game/js/systems/combat/DirectionalCombat.ts` (3 warnings)
+- `rgfn_game/js/systems/encounter/DeveloperEventController.ts` (1 warning)
+- `rgfn_game/js/systems/encounter/EncounterResolver.ts` (1 warning)
+- `rgfn_game/js/systems/encounter/EncounterSystem.ts` (1 warning)
+
+### Additional engineering notes
+- Full `npm test` currently fails mainly due to pre-existing repository-wide issues outside this lint-only task:
+  - missing built `dist` artifacts for `eva_game` and `rgfn_game` tests,
+  - several existing projectile test fixture/runtime mismatches (`enemy.takeDamage is not a function`).
+- Suggested stabilization sequence for future contributors:
+  1. Build target games before test execution (`npm run build:eva` and `npm run build:rgfn`), then rerun tests.
+  2. If projectile tests still fail, align test doubles with current enemy API in `test/projectiles.test.js`.

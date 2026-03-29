@@ -45,11 +45,7 @@ type ExchangeParams = {
     opponentBuffs: CombatBuffSnapshot;
 };
 
-const ATTACK_DIRECTIONS: Record<'AttackLeft' | 'AttackCenter' | 'AttackRight', number> = {
-    AttackLeft: 0,
-    AttackCenter: 1,
-    AttackRight: 2,
-};
+const ATTACK_DIRECTIONS: Record<'AttackLeft' | 'AttackCenter' | 'AttackRight', number> = { AttackLeft: 0, AttackCenter: 1, AttackRight: 2 };
 
 export function isAttackMove(move: CombatMove): boolean {
     return move === 'AttackLeft' || move === 'AttackCenter' || move === 'AttackRight';
@@ -123,25 +119,11 @@ function getDodgeVulnerableMove(move: CombatMove): CombatMove | null {
 }
 
 function createNoDamageResolution(move: CombatMove): MoveResolution {
-    return {
-        move,
-        isAttack: isAttackMove(move),
-        damageDealt: 0,
-        logs: [],
-    };
+    return { move, isAttack: isAttackMove(move), damageDealt: 0, logs: [] };
 }
 
 export function resolveDirectionalCombatExchange(params: ExchangeParams): ExchangeResolution {
-    const {
-        actorName,
-        opponentName,
-        actorMove,
-        opponentMove,
-        actorBaseDamage,
-        opponentBaseDamage,
-        actorBuffs,
-        opponentBuffs,
-    } = params;
+    const { actorName, opponentName, actorMove, opponentMove, actorBaseDamage, opponentBaseDamage, actorBuffs, opponentBuffs } = params;
 
     const actor = createNoDamageResolution(actorMove);
     const opponent = createNoDamageResolution(opponentMove);
