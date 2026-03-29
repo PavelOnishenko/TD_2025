@@ -117,3 +117,20 @@ This setup gives:
 - strict, automatic checks for objective syntax/style issues;
 - transparent audit visibility for structural debt;
 - a repeatable policy that can be tightened over time.
+
+## Practical Rule 17 note (collection/object initialization)
+
+For `docs/Style_Guide.txt` Rule 17, always minimize LOC while staying within Rule 1 max line length (170 chars).
+
+Use this priority order for collection/object initialization:
+
+1. **Single-line form (preferred):** keep all members on one line with braces when line length allows.
+2. **Two-brace-lines form:** if one line is too long, keep members on one internal line between opening/closing brace lines.
+3. **Two-member-lines form:** if still too long, split members across two internal lines.
+4. **One-member-per-line form:** only when required by max length/readability constraints.
+
+Applied example for `rgfn_game/js/config/creatureTypes.ts`:
+
+- `createZeroSkills` should remain a compact single-line object return because it fits within Rule 1.
+
+This section intentionally mirrors Rule 17 so future edits consistently choose the minimum-line acceptable form first.
