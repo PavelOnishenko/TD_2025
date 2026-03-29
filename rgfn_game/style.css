@@ -205,6 +205,37 @@ h1 {
     min-height: 0;
 }
 
+.world-village-entry-popup {
+    position: absolute;
+    left: 0;
+    top: 0;
+    z-index: 3;
+    min-width: 180px;
+    max-width: min(260px, calc(100vw - 48px));
+    padding: 10px;
+    border: 2px solid var(--color-secondary-accent);
+    border-radius: 8px;
+    background: linear-gradient(180deg, color-mix(in srgb, var(--color-panel-highlight) 98%, transparent), color-mix(in srgb, var(--color-secondary-bg) 92%, transparent));
+    box-shadow: 0 10px 24px color-mix(in srgb, var(--color-panel-shadow) 45%, transparent);
+    pointer-events: auto;
+}
+
+.world-village-entry-title {
+    font-size: 13px;
+    line-height: 1.35;
+    margin-bottom: 8px;
+    color: var(--color-primary-accent);
+}
+
+.world-village-entry-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.world-village-entry-actions .action-btn {
+    flex: 1 1 auto;
+}
+
 #game-canvas {
     display: block;
     border: 0;

@@ -129,6 +129,10 @@ export type WorldUI = {
     usePotionBtn: HTMLButtonElement;
     enterVillageBtn: HTMLButtonElement;
     centerOnCharacterBtn: HTMLButtonElement;
+    villageEntryPopup: HTMLElement;
+    villageEntryTitle: HTMLElement;
+    villageEntryEnterBtn: HTMLButtonElement;
+    villageEntryPassBtn: HTMLButtonElement;
 };
 
 export type VillageUI = {

@@ -20,6 +20,7 @@ function createWorldMapMock({ onVillage = false } = {}) {
     movePlayer: () => ({ moved: false, isPreviouslyDiscovered: false }),
     getPlayerPixelPosition: () => [12, 34],
     isPlayerOnVillage: () => onVillage,
+    getVillageNameAtPlayerPosition: () => 'Oakcross',
     getCurrentTerrain: () => ({ type: 'plains' }),
     getCurrentNamedLocation: () => null,
   };
@@ -28,6 +29,8 @@ function createWorldMapMock({ onVillage = false } = {}) {
 function createController({ onVillage = false, pressed = [], encounterSystemOverrides = {}, callbacksOverrides = {}, worldMapOverrides = {} } = {}) {
   const calls = {
     enteredVillage: 0,
+    requestedVillagePrompt: 0,
+    closedVillagePrompt: 0,
     startedBattle: 0,
     questEncounterChecks: 0,
   };
@@ -40,6 +43,8 @@ function createController({ onVillage = false, pressed = [], encounterSystemOver
   };
   const callbacks = {
     onEnterVillage: () => { calls.enteredVillage += 1; },
+    onRequestVillageEntryPrompt: () => { calls.requestedVillagePrompt += 1; },
+    onCloseVillageEntryPrompt: () => { calls.closedVillagePrompt += 1; },
     onStartBattle: () => { calls.startedBattle += 1; },
     onAddBattleLog: () => {},
     onUpdateHUD: () => {},
@@ -63,13 +68,14 @@ function createController({ onVillage = false, pressed = [], encounterSystemOver
   return { controller, calls };
 }
 
-test('WorldModeController re-enters village when player is on a village tile', () => {
+test('WorldModeController opens village entry popup when player is on a village tile', () => {
   const { controller, calls } = createController({ onVillage: true });
 
   const entered = controller.tryEnterVillageAtCurrentPosition();
 
   assert.equal(entered, true);
-  assert.equal(calls.enteredVillage, 1);
+  assert.equal(calls.requestedVillagePrompt, 1);
+  assert.equal(calls.enteredVillage, 0);
 });
 
 test('WorldModeController ignores re-entry when player is not on a village tile', () => {
@@ -81,12 +87,66 @@ test('WorldModeController ignores re-entry when player is not on a village tile'
   assert.equal(calls.enteredVillage, 0);
 });
 
-test('WorldModeController Space action enters village from world mode', () => {
+test('WorldModeController Space action opens village prompt from world mode', () => {
   const { controller, calls } = createController({ onVillage: true, pressed: ['enterVillage'] });
 
   controller.updateWorldMode();
 
+  assert.equal(calls.requestedVillagePrompt, 1);
+  assert.equal(calls.enteredVillage, 0);
+});
+
+test('WorldModeController opens village prompt immediately when stepping onto village tile', () => {
+  const villageState = { onVillage: false };
+  const { controller, calls } = createController({
+    pressed: ['moveUp'],
+    worldMapOverrides: {
+      movePlayer: () => {
+        villageState.onVillage = true;
+        return { moved: true, isPreviouslyDiscovered: false };
+      },
+      isPlayerOnVillage: () => villageState.onVillage,
+    },
+  });
+
+  controller.updateWorldMode();
+
+  assert.equal(calls.requestedVillagePrompt, 1);
+  assert.equal(calls.questEncounterChecks, 0);
+  assert.equal(calls.startedBattle, 0);
+});
+
+test('WorldModeController confirms village entry from popup only while still on village tile', () => {
+  const { controller, calls } = createController({ onVillage: true });
+
+  controller.tryEnterVillageAtCurrentPosition();
+  const entered = controller.confirmVillageEntryFromPrompt();
+
+  assert.equal(entered, true);
+  assert.equal(calls.closedVillagePrompt, 1);
   assert.equal(calls.enteredVillage, 1);
+});
+
+test('WorldModeController closes village popup immediately when player leaves village cell', () => {
+  const villageState = { onVillage: true };
+  const { controller, calls } = createController({
+    pressed: ['moveUp'],
+    worldMapOverrides: {
+      movePlayer: () => {
+        villageState.onVillage = false;
+        return { moved: true, isPreviouslyDiscovered: true };
+      },
+      isPlayerOnVillage: () => villageState.onVillage,
+      getVillageNameAtPlayerPosition: () => 'Oakcross',
+      getPlayerPixelPosition: () => [12, 34],
+    },
+  });
+
+  controller.tryEnterVillageAtCurrentPosition();
+  controller.updateWorldMode();
+
+  assert.equal(calls.requestedVillagePrompt >= 1, true);
+  assert.equal(calls.closedVillagePrompt, 1);
 });
 
 test('WorldModeController allows quest monster encounters when monster random encounters are enabled', () => {
