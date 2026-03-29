@@ -44,11 +44,7 @@ export default class VillageDialogueEngine {
 
     public buildLocationAnswer(npc: VillageNpcProfile, hint: VillageDirectionHint): VillageDialogueOutcome {
         if (npc.disposition === 'silent') {
-            return {
-                speech: `"I don't discuss roads with strangers."`,
-                tone: `${npc.name} folds their arms and avoids eye contact.`,
-                truthfulness: 'refusal',
-            };
+            return { speech: `"I don't discuss roads with strangers."`, tone: `${npc.name} folds their arms and avoids eye contact.`, truthfulness: 'refusal' };
         }
 
         if (!hint.exists) {

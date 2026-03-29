@@ -259,11 +259,7 @@ export default class DeveloperEventController {
         const pseudoSeed = getNormalizedPseudoRandomSeed(this.developerUI.randomSeedInput.value);
         const current = getGameRandomProviderSettings();
 
-        return {
-            mode,
-            pseudoSeed,
-            activeSeed: current.activeSeed,
-        };
+        return { mode, pseudoSeed, activeSeed: current.activeSeed };
     }
 
     private setRandomStatus(message: string, isError: boolean): void {

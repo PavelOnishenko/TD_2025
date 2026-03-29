@@ -68,10 +68,7 @@ export default class EncounterSystem {
         const encounter = this.encounterResolver.generateEncounter(this.itemDiscoveryChance, {
             rollEncounterEventType: () => 'monster',
             rollEncounterType: () => this.rollEncounterType(),
-        }, {
-            canDiscoverItems: false,
-            enabledEventTypes: ['monster'],
-        });
+        }, { canDiscoverItems: false, enabledEventTypes: ['monster'] });
 
         if (encounter.type === 'battle') {
             return encounter;
@@ -111,11 +108,7 @@ export default class EncounterSystem {
     }
 
     private createInitialEncounterTypeStates(): Record<RandomEncounterType, boolean> {
-        return {
-            monster: true,
-            item: true,
-            traveler: true,
-        };
+        return { monster: true, item: true, traveler: true };
     }
 
     private shouldSkipRandomEncounter(): boolean {

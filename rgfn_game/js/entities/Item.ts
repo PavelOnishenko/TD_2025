@@ -125,7 +125,7 @@ const generatedWeapons: ItemData[] = WEAPON_VARIANTS.flatMap((variant) => (
     })
 ));
 
- // todo is this needed? Dead code check. We destroy dead code. If it's needed, can it be processed normally instead like all other weapons? Do it.
+// todo is this needed? Dead code check. We destroy dead code. If it's needed, can it be processed normally instead like all other weapons? Do it.
 export const BOW_ITEM: ItemData = {...generatedWeapons.find((item) => item.id === 'bow_t1')!, id: 'bow', name: 'Bow', };
 
 export const HEALING_POTION_ITEM: ItemData = {
@@ -133,9 +133,7 @@ export const HEALING_POTION_ITEM: ItemData = {
     spriteClass: 'potion-sprite',
 };
 
-export const MANA_POTION_ITEM: ItemData = {
-    id: 'manaPotion', name: 'Mana Potion', description: 'A restorative potion that recovers mana when used', type: 'consumable'
-};
+export const MANA_POTION_ITEM: ItemData = { id: 'manaPotion', name: 'Mana Potion', description: 'A restorative potion that recovers mana when used', type: 'consumable' };
 
 export const ITEM_LIBRARY: ItemData[] = [
     HEALING_POTION_ITEM,

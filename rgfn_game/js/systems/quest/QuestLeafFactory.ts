@@ -55,15 +55,7 @@ export default class QuestLeafFactory {
             this.killText(amount, target, where),
             'eliminate',
             this.entities(target, location),
-            {
-                monster: {
-                    targetName: target.text,
-                    requiredKills: amount,
-                    villageName: location.text,
-                    mutations,
-                    mutatedFrom,
-                },
-            },
+            { monster: { targetName: target.text, requiredKills: amount, villageName: location.text, mutations, mutatedFrom } },
         );
     }
 

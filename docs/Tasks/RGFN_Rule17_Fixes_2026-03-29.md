@@ -77,3 +77,49 @@ Typical transformations that consistently reduced warnings:
 - Suggested stabilization sequence for future contributors:
   1. Build target games before test execution (`npm run build:eva` and `npm run build:rgfn`), then rerun tests.
   2. If projectile tests still fail, align test doubles with current enemy API in `test/projectiles.test.js`.
+
+---
+
+## Follow-up pass (same date): targeted 18-fix batch for RGFN
+
+### Goal for this pass
+- Fix exactly **18 additional Rule 17 warnings** in `rgfn_game` (formatting-only, low-risk).
+- Keep scope limited to RGFN and avoid Neon Void/root game behavior changes.
+
+### Commands used
+- `npm run lint:ts:rgfn:eslint` (before + after).
+- `npm test` (requested by custom instructions; known repository-wide instability remains).
+
+### Outcome
+- Rule 17 warnings went from **37 → 19** (**18 fixed**, as requested).
+- No non-Rule-17 warning remains in the current `rgfn_game` lint output snapshot.
+
+### Files updated in this 18-fix batch
+- `rgfn_game/js/entities/Item.ts`
+- `rgfn_game/js/systems/combat/BattleMapView.ts`
+- `rgfn_game/js/systems/encounter/DeveloperEventController.ts`
+- `rgfn_game/js/systems/encounter/EncounterResolver.ts`
+- `rgfn_game/js/systems/encounter/EncounterSystem.ts`
+- `rgfn_game/js/systems/game/runtime/GameModeStateMachine.ts`
+- `rgfn_game/js/systems/magic/MagicSystem.ts`
+- `rgfn_game/js/systems/quest/QuestLeafFactory.ts`
+- `rgfn_game/js/systems/quest/QuestPatterns.ts`
+- `rgfn_game/js/systems/quest/QuestProgressTracker.ts`
+- `rgfn_game/js/systems/quest/QuestUiController.ts`
+- `rgfn_game/js/systems/village/VillageActionsController.ts`
+- `rgfn_game/js/systems/village/VillageDialogueEngine.ts`
+
+### Remaining Rule 17 backlog after this pass
+- `VillageDialogueEngine.ts`: 2 warnings
+- `VillageLifeRenderer.ts`: 1 warning
+- `VillagePopulation.ts`: 5 warnings
+- `WorldMap.ts`: 6 warnings
+- `WorldMapRenderer.ts`: 1 warning
+- `BattleSplashView.ts`: 1 warning
+- `GridMap.ts`: 2 warnings
+- `StateMachine.ts`: 1 warning
+
+### Test status note
+- `npm test` still fails due to pre-existing repo-wide issues unrelated to this formatting pass:
+  - missing `dist/` build artifacts for `eva_game` and `rgfn_game` test imports,
+  - existing projectile tests expecting `enemy.takeDamage` in root game tests.
