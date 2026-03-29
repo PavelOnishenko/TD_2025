@@ -65,12 +65,6 @@ function checkRule17Layout(node, context) {
         return;
     }
 
-    if (itemLines.length > 2 && itemLines.length !== details.items.length) {
-        context.report({
-            node,
-            message: 'Rule 17: member start-line grouping should be 1 line, 2 lines, or one member per line.'
-        });
-    }
 
     for (const lineNumber of itemLines) {
         const lineText = lines[lineNumber - 1] || '';
