@@ -1,40 +1,21 @@
-// todo Mark in some main important MD file that ANY AND EVERY TODO relates to line of code right after it OR a block starting right after it. ALways unless explicitly stated otherwise.
-
 /**
  * Item - Represents items that can be discovered and equipped by the player
  */
 
-// todo all declaration located above "export default class Item" should be extracted to different file, something like "ItemDeclarations.ts" or something.
-export type ItemId = 'bow' | 'healingPotion' | 'manaPotion';
+import type {
+    EquipmentHands,
+    ItemData,
+    ItemEffects,
+    ItemRequirements,
+} from './ItemDeclarations.js';
 
-export type EquipmentHands = 1 | 2;
-
-export interface ItemRequirements {
-    agility?: number;
-    strength?: number;
-}
-
-export interface ItemEffects {
-    flatArmor?: number;
-    damageReductionPercent?: number;
-    maxAbsorbHp?: number;
-}
-
-export interface ItemData {
-    id: string;
-    name: string;
-    description: string;
-    type: 'weapon' | 'armor' | 'consumable';
-    attackRange?: number;
-    handsRequired?: EquipmentHands;
-    damageBonus?: number;
-    requirements?: ItemRequirements;
-    goldValue?: number;
-    findWeight?: number;
-    isRanged?: boolean;
-    spriteClass?: string;
-    effects?: ItemEffects;
-}
+export type { ItemId } from './ItemDeclarations.js';
+export type {
+    EquipmentHands,
+    ItemData,
+    ItemEffects,
+    ItemRequirements,
+} from './ItemDeclarations.js';
 
 export default class Item {
     public id: string;
@@ -79,15 +60,65 @@ const WEAPON_VARIANTS: Array<{
     isRanged?: boolean;
     attackRange?: number;
 
-    // todo apply proper rule 17 formatting to 6 lines in this block - from knife to crossbow. We have some lines too long there (4 out of 6). 
-    // They should be split in several lines in a way chosen by rule 17 in Style_Guide. Rule 17 is very important. Reflect it in all MD docs needed to always adhere to Style_Guide.
 }> = [
-    { key: 'knife', baseName: 'Knife', damageBonuses: [1, 2, 3, 4], handsRequired: 1, requirements: { agility: 2 }, goldValue: 2, findWeight: 10 },
-    { key: 'shortSword', baseName: 'Short Sword', damageBonuses: [2, 3, 4, 5], handsRequired: 1, requirements: { agility: 4, strength: 2 }, goldValue: 5, findWeight: 9 },
-    { key: 'axe', baseName: 'Axe', damageBonuses: [3, 4, 5, 6], handsRequired: 1, requirements: { agility: 4, strength: 6 }, goldValue: 7, findWeight: 7 },
-    { key: 'twoHandedSword', baseName: 'Two-Handed Sword', damageBonuses: [9, 11, 13, 14], handsRequired: 2, requirements: { agility: 4, strength: 12 }, goldValue: 18, findWeight: 5 },
-    { key: 'bow', baseName: 'Bow', damageBonuses: [1, 2, 3, 4], handsRequired: 2, requirements: { agility: 8, strength: 2 }, goldValue: 12, findWeight: 3, isRanged: true, attackRange: 2 },
-    { key: 'crossbow', baseName: 'Crossbow', damageBonuses: [3, 4, 5, 6], handsRequired: 2, requirements: { agility: 10, strength: 6 }, goldValue: 20, findWeight: 2, isRanged: true, attackRange: 3 },
+    {
+        key: 'knife',
+        baseName: 'Knife',
+        damageBonuses: [1, 2, 3, 4],
+        handsRequired: 1,
+        requirements: { agility: 2 },
+        goldValue: 2,
+        findWeight: 10,
+    },
+    {
+        key: 'shortSword',
+        baseName: 'Short Sword',
+        damageBonuses: [2, 3, 4, 5],
+        handsRequired: 1,
+        requirements: { agility: 4, strength: 2 },
+        goldValue: 5,
+        findWeight: 9,
+    },
+    {
+        key: 'axe',
+        baseName: 'Axe',
+        damageBonuses: [3, 4, 5, 6],
+        handsRequired: 1,
+        requirements: { agility: 4, strength: 6 },
+        goldValue: 7,
+        findWeight: 7,
+    },
+    {
+        key: 'twoHandedSword',
+        baseName: 'Two-Handed Sword',
+        damageBonuses: [9, 11, 13, 14],
+        handsRequired: 2,
+        requirements: { agility: 4, strength: 12 },
+        goldValue: 18,
+        findWeight: 5,
+    },
+    {
+        key: 'bow',
+        baseName: 'Bow',
+        damageBonuses: [1, 2, 3, 4],
+        handsRequired: 2,
+        requirements: { agility: 8, strength: 2 },
+        goldValue: 12,
+        findWeight: 3,
+        isRanged: true,
+        attackRange: 2,
+    },
+    {
+        key: 'crossbow',
+        baseName: 'Crossbow',
+        damageBonuses: [3, 4, 5, 6],
+        handsRequired: 2,
+        requirements: { agility: 10, strength: 6 },
+        goldValue: 20,
+        findWeight: 2,
+        isRanged: true,
+        attackRange: 3,
+    },
 ];
 
 const ARMOR_VARIANTS: Array<{
@@ -99,7 +130,6 @@ const ARMOR_VARIANTS: Array<{
     goldValue: number;
     spriteClass: string;
 }> = [
-  // todo rule 17
     {
         id: 'armor_t1',
         name: 'Armor +1',
@@ -109,7 +139,6 @@ const ARMOR_VARIANTS: Array<{
         goldValue: 12,
         spriteClass: 'armor-t1-sprite'
     },
-  // todo rule 17
     {
         id: 'armor_t2',
         name: 'Armor +1 Guarded',
@@ -119,7 +148,6 @@ const ARMOR_VARIANTS: Array<{
         goldValue: 16,
         spriteClass: 'armor-t2-sprite'
     },
-  // todo rule 17
     {
         id: 'armor_t3',
         name: 'Armor +2 Fragile',
@@ -129,7 +157,6 @@ const ARMOR_VARIANTS: Array<{
         goldValue: 18,
         spriteClass: 'armor-t3-sprite'
     },
-  // todo rule 17
     {
         id: 'armor_t4',
         name: 'Armor Bulwark',
@@ -161,14 +188,12 @@ const generatedWeapons: ItemData[] = WEAPON_VARIANTS.flatMap((variant) => (
     })
 ));
 
-  // todo rule 17
 export const BOW_ITEM: ItemData = {
     ...generatedWeapons.find((item) => item.id === 'bow_t1')!,
     id: 'bow',
     name: 'Bow',
 };
 
-  // todo rule 17
 export const HEALING_POTION_ITEM: ItemData = {
     id: 'healingPotion',
     name: 'Healing Potion',
@@ -178,7 +203,6 @@ export const HEALING_POTION_ITEM: ItemData = {
     spriteClass: 'potion-sprite',
 };
 
-  // todo rule 17
 export const MANA_POTION_ITEM: ItemData = {
     id: 'manaPotion',
     name: 'Mana Potion',
@@ -191,7 +215,6 @@ export const ITEM_LIBRARY: ItemData[] = [
     MANA_POTION_ITEM,
     BOW_ITEM,
     ...generatedWeapons.filter((item) => item.id !== 'bow_t1'),
-  // todo rule 17
     ...ARMOR_VARIANTS.map((armor) => ({
         id: armor.id,
         name: armor.name,
