@@ -3,7 +3,7 @@ import BattleUiController from '../BattleUiController.js';
 import Skeleton from '../../entities/Skeleton.js';
 import timingConfig from '../../config/timingConfig.js';
 import { Direction } from '../../types/game.js';
-import Player from '../../entities/Player.js';
+import Player from '../../entities/player/Player.js';
 
 type BattlePlayerActionCallbacks = {
     onAddBattleLog: (message: string, type?: string) => void;

@@ -1,0 +1,57 @@
+# Player TODO Resolution Knowledge Base
+
+## What Was Actually Done
+
+The TODO requiring strict extraction was completed by splitting the original monolithic `Player.ts` into a layered class hierarchy where **every resulting file is under 200 lines**:
+
+- `rgfn_game/js/entities/Player.ts` (5 lines, public entrypoint only)
+- `rgfn_game/js/entities/player/PlayerBase.ts` (core construction + damage + stat derivation)
+- `rgfn_game/js/entities/player/PlayerProgression.ts` (XP, level-up, stat spending)
+- `rgfn_game/js/entities/player/PlayerCombatState.ts` (rage, directional combat buffs, fatigue)
+- `rgfn_game/js/entities/player/PlayerInventoryAndRender.ts` (inventory API surface + formulas + draw)
+- `rgfn_game/js/entities/player/PlayerPersistence.ts` (save/restore state)
+- `rgfn_game/js/entities/player/PlayerTypes.ts` (shared type/constants)
+
+## Why This Shape Works
+
+The hierarchy separates responsibilities by domain while preserving the original `Player` API for callers:
+
+1. **Construction and base formulas** stay in `PlayerBase`.
+2. **Character progression** is isolated from combat state transitions.
+3. **Combat-turn statuses** are isolated from inventory and UI-facing methods.
+4. **Inventory façade + rendering helpers** remain separate from persistence concerns.
+5. **Persistence logic** can evolve without contaminating real-time combat code.
+
+This keeps each source file short, readable, and easier to test independently.
+
+## Style-Guide Compliance Notes
+
+During refactor, the main style-guide pressure points were:
+
+- avoid giant methods by extracting cohesive helpers/classes
+- keep branch formatting lint-compliant (curly braces where required)
+- preserve existing public API behavior while reshaping internals
+- keep file lengths constrained and auditable (`wc -l` check)
+
+## Practical Repeatable Workflow (for future large TODOs)
+
+1. Freeze public API signatures first.
+2. Group methods by behavior domain (construction, combat, progression, persistence, UI/inventory).
+3. Extract one domain at a time into an inherited layer or collaborator.
+4. Re-run TypeScript build after each extraction wave.
+5. Re-run lint and fix style-guide violations immediately.
+6. Verify file length budgets at the end with `wc -l`.
+
+## Checks Run for This Refactor
+
+- `npm run build:rgfn` (passes after extraction)
+- `npm run lint:ts:rgfn:eslint -- rgfn_game/js/entities/Player.ts rgfn_game/js/entities/player` (no new lint errors in changed files; one pre-existing warning remains in `rgfn_game/js/entities/Item.ts`)
+- `npm test` (fails due to existing repository baseline issues unrelated to this refactor: missing dist-module test imports and known unrelated failing tests)
+
+## Useful Follow-up Opportunities
+
+- Add focused tests for each extracted layer:
+  - `PlayerProgression`: XP overflow + level cap + intelligence magic-point gains
+  - `PlayerCombatState`: directional bonus consume/expire behavior
+  - `PlayerPersistence`: numeric coercion + inventory restoration compatibility
+- Consider replacing inheritance with composed domain services later if runtime construction constraints allow.

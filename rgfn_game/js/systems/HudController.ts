@@ -1,4 +1,4 @@
-import Player from '../entities/Player.js';
+import Player from '../entities/player/Player.js';
 import Item from '../entities/Item.js';
 import { balanceConfig } from '../config/balance/balanceConfig.js';
 import MagicSystem from './magic/MagicSystem.js';

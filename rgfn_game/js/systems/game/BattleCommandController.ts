@@ -1,7 +1,7 @@
 import BattleMap from '../combat/BattleMap.js';
 import TurnManager from '../combat/TurnManager.js';
 import StateMachine from '../../utils/StateMachine.js';
-import Player from '../../entities/Player.js';
+import Player from '../../entities/player/Player.js';
 import Skeleton from '../../entities/Skeleton.js';
 import timingConfig from '../../config/timingConfig.js';
 import { balanceConfig } from '../../config/balance/balanceConfig.js';
