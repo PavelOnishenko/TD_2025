@@ -14,6 +14,8 @@
     "test:eva": "node --test eva_game/test/*.test.js ",
     "lint:ts": "eslint . --ext .ts",
     "lint:ts:fix": "eslint . --ext .ts --fix",
+    "lint:ts:rgfn": "eslint rgfn_game --ext .ts",
+    "lint:ts:rgfn:fix": "eslint rgfn_game --ext .ts --fix",
     "style-guide:audit": "node scripts/style-guide-audit.mjs",
     "check:ts-style": "npm run lint:ts && npm run style-guide:audit"
   },

@@ -2,7 +2,7 @@
 
 ## Goal
 
-This repository now has a **single TypeScript linter workflow** that should be run for every task before code is submitted for review.
+This repository now has a **TypeScript linter workflow** with both repository-wide and game-scoped options.
 
 Mandatory expectation for every change:
 
@@ -18,6 +18,8 @@ Mandatory expectation for every change:
 ```bash
 npm run lint:ts
 npm run lint:ts:fix
+npm run lint:ts:rgfn
+npm run lint:ts:rgfn:fix
 npm run style-guide:audit
 npm run check:ts-style
 ```
@@ -26,16 +28,27 @@ What each command does:
 
 - `npm run lint:ts` — runs ESLint for all `.ts` files in the repository.
 - `npm run lint:ts:fix` — same as above, but auto-fixes supported issues.
+- `npm run lint:ts:rgfn` — runs ESLint only for TypeScript files inside `rgfn_game/`.
+- `npm run lint:ts:rgfn:fix` — same as above, but auto-fixes supported issues.
 - `npm run style-guide:audit` — informational audit for style-guide rules that are hard to fully auto-enforce.
 - `npm run check:ts-style` — runs lint + audit in one command.
+
+## Choosing the right lint scope
+
+- **RGFN-only task (`rgfn_game/`)**: run `npm run lint:ts:rgfn` (and optionally `npm run lint:ts:rgfn:fix`).
+- **Cross-game/shared task** (e.g. `engine/`, root config/scripts, or multiple games): run `npm run lint:ts`.
+
+This keeps RGFN work fast while still preserving full-repository checks when changes can impact other games.
 
 ## Mandatory execution policy for every task
 
 Before publishing any code changes:
 
-1. Run `npm run lint:ts`.
-2. If there are errors, run `npm run lint:ts:fix` and/or make manual fixes.
-3. Run `npm run lint:ts` again and ensure there are no errors.
+1. Choose lint scope:
+   - RGFN-only: `npm run lint:ts:rgfn`
+   - Cross-project/shared: `npm run lint:ts`
+2. If there are errors, run the matching `:fix` command and/or make manual fixes.
+3. Re-run the same lint command and ensure there are no errors.
 4. Run tests (`npm test`, and any relevant project-specific tests).
 5. Include lint/test command output summary in task notes or PR.
 
@@ -82,7 +95,7 @@ These must be checked by the author and reviewer during implementation and revie
 
 ```text
 Pre-review checklist:
-- [ ] npm run lint:ts
+- [ ] Use correct lint scope (`npm run lint:ts:rgfn` for RGFN-only, otherwise `npm run lint:ts`)
 - [ ] npm run style-guide:audit
 - [ ] npm test
 - [ ] Relevant project-specific tests
