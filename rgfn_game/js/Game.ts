@@ -420,6 +420,7 @@ export default class Game {
             onEnterVillageFromWorld: () => this.tryEnterVillageFromWorldMap(),
             onConfirmVillageEntryPrompt: () => this.confirmWorldVillageEntry(),
             onDismissVillageEntryPrompt: () => this.worldModeController.dismissVillageEntryPrompt(),
+            onCampSleepFromWorld: () => this.worldModeController.handleCampSleep(),
             onNewCharacter: () => this.startNewCharacter(),
             onAddStat: (stat) => this.hudCoordinator.handleAddStat(stat),
             onRemoveStat: (stat) => this.hudCoordinator.handleRemoveStat(stat),
