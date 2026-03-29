@@ -1,7 +1,7 @@
 import { LOCAL_PATTERNS } from './QuestPatterns.js';
 import { DefaultQuestRandom, QuestRandom } from './QuestRandom.js';
 import { GeneratedName, PackSourceType, QuestNameDomain } from './QuestTypes.js';
-import { balanceConfig } from '../../config/balanceConfig.js';
+import { theme } from '../../config/ThemeConfig.js';
 
 type FetchLike = (input: string) => Promise<{ text(): Promise<string>; json(): Promise<unknown> }>;
 type AssetMap = Record<string, string[]>;
@@ -85,7 +85,7 @@ export default class QuestPackService {
 
     private pickWordTarget(domain: QuestNameDomain, maxWords: number): number {
         const cap = Math.max(1, maxWords);
-        const configuredWeights = balanceConfig.questNameGeneration.wordLengthWeightsByDomain[domain] as LengthWeightMap | undefined;
+        const configuredWeights = theme.quest.nameGeneration.wordLengthWeightsByDomain[domain] as LengthWeightMap | undefined;
         const weightedTargets = this.resolveLengthWeights(configuredWeights, cap);
 
         const totalWeight = weightedTargets.reduce((sum, entry) => sum + entry.weight, 0);

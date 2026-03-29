@@ -2,7 +2,7 @@ import QuestLeafFactory from './QuestLeafFactory.js';
 import QuestPackService from './QuestPackService.js';
 import { DefaultQuestRandom, QuestRandom } from './QuestRandom.js';
 import { QuestNode } from './QuestTypes.js';
-import { balanceConfig } from '../../config/balanceConfig.js';
+import { theme } from '../../config/ThemeConfig.js';
 
 type GenerationContext = { depth: number; idPrefix: string };
 type QuestGeneratorDeps = { packService?: QuestPackService; random?: QuestRandom };
@@ -23,7 +23,7 @@ export default class QuestGenerator {
     }
 
     public async generateMainQuest(): Promise<QuestNode> {
-        const title = await this.packService.generateName('mainQuest', balanceConfig.questNameGeneration.maxWordsByDomain.mainQuest);
+        const title = await this.packService.generateName('mainQuest', theme.quest.nameGeneration.maxWordsByDomain.mainQuest);
         const children = await this.generateChildren();
         return this.node('main', title.text, DEFAULT_DESCRIPTION, DEFAULT_CONDITION, children);
     }

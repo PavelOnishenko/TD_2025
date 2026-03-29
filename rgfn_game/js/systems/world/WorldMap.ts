@@ -421,7 +421,7 @@ export default class WorldMap {
             balanceConfig.worldMap.villages.minCount,
             Math.floor((dims.columns * dims.rows) * balanceConfig.worldMap.villages.densityPerCell),
         );
-        const villageCount = Math.max(1, Math.floor(baseVillageCount * balanceConfig.villageCreationRateMultiplier));
+        const villageCount = Math.max(1, Math.floor(baseVillageCount * (balanceConfig.worldMap.villages.creationRateMultiplier ?? 1)));
         this.villages.clear();
         this.villageIndexSet.clear();
 

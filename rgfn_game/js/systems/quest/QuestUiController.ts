@@ -1,5 +1,5 @@
 import { QuestNode } from './QuestTypes.js';
-import { balanceConfig } from '../../config/balanceConfig.js';
+import { theme } from '../../config/ThemeConfig.js';
 
 const DEFAULT_DESCRIPTION = 'Complete every branch of this quest tree to prove your character can end the darkness over the region.';
 const DEFAULT_CONDITION = 'All child objectives are completed.';
@@ -285,7 +285,7 @@ export default class QuestUiController {
             element.classList.toggle('is-error', isError);
         }
 
-        const feedbackDurationMs = Math.max(0, balanceConfig.questUi.feedbackMessageDurationMs);
+        const feedbackDurationMs = Math.max(0, theme.quest.feedbackMessageDurationMs);
         if (feedbackDurationMs === 0) {
             this.clearFeedback();
             return;

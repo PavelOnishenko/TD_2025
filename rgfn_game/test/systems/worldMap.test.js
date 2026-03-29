@@ -44,12 +44,12 @@ test('WorldMap generates villages before placing the player into the world', () 
   assert.equal(state.villages.includes(`${state.playerGridPos.col},${state.playerGridPos.row}`), false);
 }));
 
-test('WorldMap scales generated village count with global village creation multiplier', () => withMockedRandom([0.11, 0.11], () => {
-  const fullVillageCount = withPatchedProperty(balanceConfig, 'villageCreationRateMultiplier', 1, () => (
+test('WorldMap scales generated village count with world-map village creation multiplier', () => withMockedRandom([0.11, 0.11], () => {
+  const fullVillageCount = withPatchedProperty(balanceConfig.worldMap.villages, 'creationRateMultiplier', 1, () => (
     new WorldMap(100, 100, 20).getState().villages.length
   ));
 
-  const reducedVillageCount = withPatchedProperty(balanceConfig, 'villageCreationRateMultiplier', 1 / 3, () => (
+  const reducedVillageCount = withPatchedProperty(balanceConfig.worldMap.villages, 'creationRateMultiplier', 1 / 3, () => (
     new WorldMap(100, 100, 20).getState().villages.length
   ));
 

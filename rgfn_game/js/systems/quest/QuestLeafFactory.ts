@@ -1,6 +1,6 @@
 import QuestPackService from './QuestPackService.js';
 import { QuestRandom } from './QuestRandom.js';
-import { balanceConfig } from '../../config/balanceConfig.js';
+import { theme } from '../../config/ThemeConfig.js';
 import {
     DeliverObjectiveData,
     GeneratedName,
@@ -20,7 +20,7 @@ const MUTATED_FROM_SPECIES = ['wolf', 'boar', 'bear', 'crow', 'human', 'stag', '
 export default class QuestLeafFactory {
     private readonly packService: QuestPackService;
     private readonly random: QuestRandom;
-    private readonly maxWordsByDomain = balanceConfig.questNameGeneration.maxWordsByDomain;
+    private readonly maxWordsByDomain = theme.quest.nameGeneration.maxWordsByDomain;
 
     constructor(packService: QuestPackService, random: QuestRandom) {
         this.packService = packService;
