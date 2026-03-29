@@ -10,6 +10,8 @@ import { Direction, TerrainType } from '../types/game.js';
 
 type WorldModeCallbacks = {
     onEnterVillage: () => void;
+    onRequestVillageEntryPrompt: (villageName: string, anchor: { x: number; y: number }) => void;
+    onCloseVillageEntryPrompt: () => void;
     onStartBattle: (enemies: Skeleton[], terrainType: TerrainType) => void;
     onAddBattleLog: (message: string, type?: string) => void;
     onUpdateHUD: () => void;
@@ -24,6 +26,7 @@ export default class WorldModeController {
     private encounterSystem: EncounterSystem;
     private itemDiscoverySplash: ItemDiscoverySplash;
     private callbacks: WorldModeCallbacks;
+    private isVillagePromptOpen = false;
 
     constructor(
         input: InputManager,
@@ -42,6 +45,7 @@ export default class WorldModeController {
     }
 
     public enterWorldMode(hudModeIndicator: HTMLElement, worldSidebar: HTMLElement, battleSidebar: HTMLElement, villageSidebar: HTMLElement): void {
+        this.closeVillageEntryPrompt();
         hudModeIndicator.textContent = 'World Map';
         worldSidebar.classList.add('hidden');
         battleSidebar.classList.add('hidden');
@@ -56,6 +60,7 @@ export default class WorldModeController {
 
     public updateWorldMode(): void {
         this.handleMapViewportInput();
+        this.syncVillagePromptWithPlayerPosition();
 
         if (this.input.wasActionPressed('enterVillage') && this.tryEnterVillageAtCurrentPosition()) {
             return;
@@ -79,8 +84,23 @@ export default class WorldModeController {
             return false;
         }
 
+        this.openVillageEntryPrompt();
+        return true;
+    }
+
+    public confirmVillageEntryFromPrompt(): boolean {
+        if (!this.worldMap.isPlayerOnVillage()) {
+            this.closeVillageEntryPrompt();
+            return false;
+        }
+
+        this.closeVillageEntryPrompt();
         this.callbacks.onEnterVillage();
         return true;
+    }
+
+    public dismissVillageEntryPrompt(): void {
+        this.closeVillageEntryPrompt();
     }
 
     private handleMapViewportInput(): void {
@@ -171,10 +191,7 @@ export default class WorldModeController {
             this.callbacks.onAddBattleLog(`You arrive at ${namedLocation}.`, 'system');
         }
 
-        if (this.worldMap.isPlayerOnVillage()) {
-            this.callbacks.onEnterVillage();
-            return;
-        }
+        this.syncVillagePromptWithPlayerPosition();
 
         this.encounterSystem.onPlayerMove();
         const monsterEncountersEnabled = this.encounterSystem.isEncounterTypeEnabled('monster');
@@ -271,5 +288,36 @@ export default class WorldModeController {
 
             this.callbacks.onUpdateHUD();
         });
+    }
+
+    private openVillageEntryPrompt(): void {
+        const villageName = this.worldMap.getVillageNameAtPlayerPosition();
+        const [x, y] = this.worldMap.getPlayerPixelPosition();
+        this.isVillagePromptOpen = true;
+        this.callbacks.onRequestVillageEntryPrompt(villageName, { x, y });
+    }
+
+    private closeVillageEntryPrompt(): void {
+        if (!this.isVillagePromptOpen) {
+            return;
+        }
+
+        this.isVillagePromptOpen = false;
+        this.callbacks.onCloseVillageEntryPrompt();
+    }
+
+    private syncVillagePromptWithPlayerPosition(): void {
+        if (!this.isVillagePromptOpen) {
+            return;
+        }
+
+        if (!this.worldMap.isPlayerOnVillage()) {
+            this.closeVillageEntryPrompt();
+            return;
+        }
+
+        const villageName = this.worldMap.getVillageNameAtPlayerPosition();
+        const [x, y] = this.worldMap.getPlayerPixelPosition();
+        this.callbacks.onRequestVillageEntryPrompt(villageName, { x, y });
     }
 }
