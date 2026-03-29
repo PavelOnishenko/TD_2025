@@ -39,26 +39,32 @@ export default class Wanderer extends Skeleton {
         return new Wanderer(level, this.rollInventory(level));
     }
 
+    // todo arrow
     public canUseMagic(): boolean {
         return this.magicPoints > 0 && this.mana >= this.getMagicManaCost();
     }
 
+    // todo arrow
     public getMagicDamage(): number {
         return 2 + this.magicPoints + Math.floor(this.skills.intelligence / 4);
     }
 
+    // todo arrow
     public spendMana(amount: number): void {
         this.mana = Math.max(0, this.mana - amount);
     }
 
+    // todo arrow
     public getMagicManaCost(): number {
         return 2;
     }
 
+    // todo arrow
     public getAttackRange(): number {
         return this.equippedWeapon?.attackRange ?? 1;
     }
 
+    // todo arrow
     public getLootItems(): Item[] {
         return [...this.inventory];
     }
@@ -71,7 +77,9 @@ export default class Wanderer extends Skeleton {
         const equippedWeapon = this.equippedWeapon?.name ?? 'Bare hands';
         const equippedArmor = this.equippedArmor?.name ?? 'No armor';
 
-        return `Base profile: HP ${this.baseStats.hp}, DMG ${this.baseStats.damage}, ARM ${this.baseStats.armor}, Mana ${this.baseStats.mana}. Resulting stats: HP ${this.maxHp}, DMG ${this.damage}, ARM ${this.armor}, Mana ${this.maxMana}. Skills: ${skills}. ${magic}. Equipped: ${equippedWeapon}, ${equippedArmor}.`;
+        return `Base profile: HP ${this.baseStats.hp}, DMG ${this.baseStats.damage}, ARM ${this.baseStats.armor}, Mana ${this.baseStats.mana}. `
+            + `Resulting stats: HP ${this.maxHp}, DMG ${this.damage}, ARM ${this.armor}, Mana ${this.maxMana}. Skills: ${skills}. ${magic}. `
+            + `Equipped: ${equippedWeapon}, ${equippedArmor}.`;
     }
 
     public takeDamage(amount: number): boolean {
@@ -94,10 +102,12 @@ export default class Wanderer extends Skeleton {
         return super.takeMagicDamage(finalDamage);
     }
 
+    // todo arrow
     public getSkillRecord(): CreatureSkills {
         return normalizeCreatureSkills(this.skills);
     }
 
+    // todo arrow, use ternary
     private static rollLevel(): number {
         if (Math.random() < 0.9) {
             return randomInt(1, 9);
@@ -146,6 +156,7 @@ export default class Wanderer extends Skeleton {
         this.damage = this.computeDamage();
     }
 
+    // todo arrow
     private canEquip(item: Item): boolean {
         return this.skills.agility >= (item.requirements.agility ?? 0) && this.skills.strength >= (item.requirements.strength ?? 0);
     }
@@ -169,6 +180,7 @@ export default class Wanderer extends Skeleton {
         return this.equippedWeapon.damageBonus + weaponStatBonus + offhandDamage;
     }
 
+    // todo arrow, use ternary
     private pickBestWeapon(items: Item[]): Item | null {
         if (items.length === 0) {
             return null;
@@ -177,6 +189,7 @@ export default class Wanderer extends Skeleton {
         return items.reduce((best, current) => current.damageBonus > best.damageBonus ? current : best);
     }
 
+    // todo arrow, use ternary
     private pickBestArmor(items: Item[]): Item | null {
         if (items.length === 0) {
             return null;
