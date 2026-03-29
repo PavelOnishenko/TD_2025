@@ -33,3 +33,5 @@ If it's still too long, place each member on dedicated line. Example:
    Height = 200, 
    IsRound = isRound     
 }
+
+18. We allow no dead code!

@@ -32,6 +32,7 @@ export function getTotalXpForLevel(level: number): number {
 /**
  * Calculate armor from toughness stat
  */
+// todo do this one in 1 or 2 line arrow form 
 export function calculateArmor(toughness: number): number {
     return Math.floor(toughness / balanceConfig.stats.toughnessToArmor);
 }
@@ -39,6 +40,7 @@ export function calculateArmor(toughness: number): number {
 /**
  * Calculate melee damage bonus from strength and agility stats
  */
+// todo do this one in 1 or 2 line arrow form 
 export function calculateMeleeDamageBonus(strength: number, agility: number): number {
     const strengthBonus = Math.floor(strength / balanceConfig.stats.strengthToMeleeDamage);
     const agilityBonus = Math.floor(agility / balanceConfig.stats.agilityToMeleeDamage);
@@ -48,6 +50,7 @@ export function calculateMeleeDamageBonus(strength: number, agility: number): nu
 /**
  * Calculate bow damage bonus from strength and agility stats
  */
+// todo do this one in 1 or 2 line arrow form 
 export function calculateBowDamageBonus(strength: number, agility: number): number {
     const strengthBonus = Math.floor(strength / balanceConfig.stats.strengthToBowDamage);
     const agilityBonus = Math.floor(agility / balanceConfig.stats.agilityToBowDamage);
@@ -57,6 +60,7 @@ export function calculateBowDamageBonus(strength: number, agility: number): numb
 /**
  * Calculate agility-based avoid chance with diminishing returns
  */
+// todo do this one in 1 or 2 line arrow form 
 export function calculateAvoidChance(agility: number): number {
     const scaledAgility = agility * balanceConfig.stats.avoidChanceScale;
     const avoidChance = 1 - (1 / (1 + scaledAgility));
@@ -66,6 +70,7 @@ export function calculateAvoidChance(agility: number): number {
 /**
  * Calculate max HP from vitality stat
  */
+// todo do this one in 1 or 2 line arrow form 
 export function calculateMaxHp(vitality: number): number {
     return balanceConfig.player.baseHp + (vitality * balanceConfig.stats.vitalityToHp);
 }
@@ -75,6 +80,7 @@ export function calculateMaxHp(vitality: number): number {
  * Connection gives 1 mana each.
  * Intelligence gives 1/3 mana each.
  */
+// todo do this one in 1 or 2 line arrow form 
 export function calculateMana(connection: number, intelligence: number): number {
     const connectionMana = connection * balanceConfig.stats.connectionToMana;
     const intelligenceMana = intelligence / balanceConfig.stats.intelligenceToManaDivisor;
@@ -84,6 +90,7 @@ export function calculateMana(connection: number, intelligence: number): number 
 /**
  * Calculate total melee damage from strength/agility stats
  */
+// todo do this one in 1 or 2 line arrow form 
 export function calculateTotalMeleeDamage(strength: number, agility: number): number {
     return balanceConfig.player.baseDamage + calculateMeleeDamageBonus(strength, agility);
 }
@@ -91,6 +98,8 @@ export function calculateTotalMeleeDamage(strength: number, agility: number): nu
 /**
  * Calculate total bow damage from strength/agility stats
  */
+// todo do this one in 1 or 2 line arrow form 
+// todo do we use this somewhere in prod code? If not, we should remove it. We allow no dead code. Save this rule in MD docs.
 export function calculateTotalBowDamage(strength: number, agility: number): number {
     return balanceConfig.player.baseDamage + calculateBowDamageBonus(strength, agility);
 }
