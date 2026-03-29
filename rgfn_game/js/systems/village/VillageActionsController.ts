@@ -672,13 +672,9 @@ export default class VillageActionsController {
         return 'very far';
     }
 
-    private getSellPrice(item: Item): number {
-        return Math.max(1, Math.ceil(item.goldValue * 0.5));
-    }
+    private getSellPrice = (item: Item): number => Math.max(1, Math.ceil(item.goldValue * 0.5));
 
-    private pickOne<T>(array: T[]): T {
-        return array[Math.floor(Math.random() * array.length)];
-    }
+    private pickOne = <T>(array: T[]): T => array[Math.floor(Math.random() * array.length)];
 
     private pickMany<T>(array: T[], count: number): T[] {
         const copy = [...array];
@@ -711,22 +707,18 @@ export default class VillageActionsController {
         });
     }
 
-    private getVillageContractTraders(villageName: string): string[] {
-        return Array.from(this.questBarterContracts.entries())
-            .filter(([contractId]) => this.barterContractVillageById.get(contractId) === villageName)
-            .map(([, contract]) => contract.traderName);
-    }
+    private getVillageContractTraders = (villageName: string): string[] => Array.from(this.questBarterContracts.entries())
+        .filter(([contractId]) => this.barterContractVillageById.get(contractId) === villageName)
+        .map(([, contract]) => contract.traderName);
 
-    private getVillageContractHints(villageName: string): string[] {
-        return Array.from(this.questBarterContracts.entries())
-            .filter(([contractId]) => this.barterContractVillageById.get(contractId) === villageName)
-            .map(([, contract]) => {
-                if (contract.contractType === 'deliver' && contract.destinationVillage) {
-                    return `${contract.traderName} can hand over ${contract.itemName} here. Deliver it to ${contract.destinationVillage}.`;
-                }
-                return `${contract.traderName} is available for barter (${contract.itemName}).`;
-            });
-    }
+    private getVillageContractHints = (villageName: string): string[] => Array.from(this.questBarterContracts.entries())
+        .filter(([contractId]) => this.barterContractVillageById.get(contractId) === villageName)
+        .map(([, contract]) => {
+            if (contract.contractType === 'deliver' && contract.destinationVillage) {
+                return `${contract.traderName} can hand over ${contract.itemName} here. Deliver it to ${contract.destinationVillage}.`;
+            }
+            return `${contract.traderName} is available for barter (${contract.itemName}).`;
+        });
 
     private createDealFromContract(contractId: string, traderName: string, itemName: string): VillageBarterDeal {
         const normalized = itemName.toLocaleLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');

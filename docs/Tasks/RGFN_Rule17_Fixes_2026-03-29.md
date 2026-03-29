@@ -159,3 +159,31 @@ Typical transformations that consistently reduced warnings:
   1. Collapse only the warned function signature parameter list.
   2. Re-run `npm run lint:ts:rgfn`.
   3. Avoid touching method body formatting unless needed (reduces merge conflicts and risk).
+
+---
+
+## Follow-up pass: arrow-function-style warnings in quest/village cluster
+
+### Why this pass was needed
+- A targeted warning list flagged `style-guide/arrow-function-style` violations in quest and village systems where methods had a single return statement and should use concise arrow-function style.
+
+### What was changed
+- Converted the listed methods to property arrow functions with concise return bodies.
+- Used parenthesized concise object returns (`=> ({ ... })`) where a literal object was returned.
+- Kept behavior unchanged; this pass is style-only.
+
+### Files updated
+- `rgfn_game/js/systems/quest/QuestLeafFactory.ts`
+- `rgfn_game/js/systems/quest/QuestPackService.ts`
+- `rgfn_game/js/systems/quest/QuestRandom.ts`
+- `rgfn_game/js/systems/quest/QuestUiController.ts`
+- `rgfn_game/js/systems/village/VillageActionsController.ts`
+- `rgfn_game/js/systems/village/VillageDialogueEngine.ts`
+
+### Validation commands
+- `npx eslint rgfn_game/js/systems/quest/QuestLeafFactory.ts rgfn_game/js/systems/quest/QuestPackService.ts rgfn_game/js/systems/quest/QuestRandom.ts rgfn_game/js/systems/quest/QuestUiController.ts rgfn_game/js/systems/village/VillageActionsController.ts rgfn_game/js/systems/village/VillageDialogueEngine.ts --ext .ts`
+  - Result: clean for the targeted files (0 warnings / 0 errors).
+- `npm run lint:ts:rgfn:eslint`
+  - Result: existing repository-wide warnings remain outside this targeted scope.
+- `npm test`
+  - Result: existing repository-wide failures remain (missing `dist` imports and projectile fixture mismatch: `enemy.takeDamage is not a function`).
