@@ -117,3 +117,13 @@ This setup gives:
 - strict, automatic checks for objective syntax/style issues;
 - transparent audit visibility for structural debt;
 - a repeatable policy that can be tightened over time.
+
+## Practical TODO-resolution note (RGFN creature config)
+
+When touching `rgfn_game/js/config/creatureTypes.ts`, prefer:
+
+- Arrow function form for short pure factory helpers (example: `createZeroSkills`).
+- Explicit multi-line object literal returns for stat/skill maps, with one property per line for readability and easier future diffs.
+- Stable property ordering for skill collections (`vitality`, `toughness`, `strength`, `agility`, `connection`, `intelligence`) so downstream formatting and comparisons stay predictable.
+
+This keeps the file aligned with the repository linting + style-guide workflow while preserving clear domain intent in config objects.
