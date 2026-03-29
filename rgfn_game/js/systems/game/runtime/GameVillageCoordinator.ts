@@ -39,9 +39,7 @@ export default class GameVillageCoordinator {
         this.villageActionsController.exitVillage();
     }
 
-    public getVillageName(): string {
-        return this.villageLifeRenderer.getVillageName();
-    }
+    public getVillageName = (): string => this.villageLifeRenderer.getVillageName();
 
     public getDeveloperEventLabel(type: ForcedEncounterType): string {
         const labels: Record<ForcedEncounterType, string> = {

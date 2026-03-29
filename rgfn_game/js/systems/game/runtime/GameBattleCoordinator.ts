@@ -157,9 +157,9 @@ export default class GameBattleCoordinator {
         this.controllers.battleCommandController.handleUsePotion(fromBattleControls);
     }
 
-    public onPlayerTurnTransitionStart(): void {
+    public onPlayerTurnTransitionStart = (): void => {
         this.turnTransitioning = true;
-    }
+    };
 
     public onPlayerTurnReady(): void {
         this.turnTransitioning = false;
@@ -192,13 +192,9 @@ export default class GameBattleCoordinator {
         this.battleMap.clearSelectedCell();
     }
 
-    public getCurrentEnemies(): Skeleton[] {
-        return this.currentEnemies;
-    }
+    public getCurrentEnemies = (): Skeleton[] => this.currentEnemies;
 
-    public getSelectedEnemy(): Skeleton | null {
-        return this.controllers.battlePlayerActionController.getSelectedEnemy();
-    }
+    public getSelectedEnemy = (): Skeleton | null => this.controllers.battlePlayerActionController.getSelectedEnemy();
 
     private startBattle(enemies: Skeleton[]): void {
         this.battleMap.setup(this.player, this.currentEnemies, this.currentTerrainType);
