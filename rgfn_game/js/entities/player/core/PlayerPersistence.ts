@@ -68,7 +68,5 @@ export default class PlayerPersistence extends PlayerInventoryAndRender {
         this.mana = Math.max(0, Math.min(this.maxMana, this.toNumber(state.mana, this.mana)));
     }
 
-    private toNumber(value: unknown, fallback: number): number {
-        return typeof value === 'number' && Number.isFinite(value) ? value : fallback;
-    }
+    private toNumber = (value: unknown, fallback: number): number => (typeof value === 'number' && Number.isFinite(value) ? value : fallback);
 }

@@ -154,9 +154,9 @@ export default class BattleUiController {
         this.gameLog.scrollTop = this.gameLog.scrollHeight;
     }
 
-    public clearBattleLog(): void {
+    public clearBattleLog = (): void => {
         this.gameLog.innerHTML = '';
-    }
+    };
 
     public describeEncounter(enemies: Skeleton[]): string {
         if (enemies.length === 0) {
