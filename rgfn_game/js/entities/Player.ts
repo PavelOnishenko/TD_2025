@@ -5,8 +5,6 @@ import {
     calculateMaxHp,
     calculateMeleeDamageBonus,
     calculateBowDamageBonus,
-    calculateTotalMeleeDamage,
-    calculateTotalBowDamage,
     calculateAvoidChance,
     calculateArmor,
     calculateMana,
@@ -622,7 +620,7 @@ export default class Player extends DamageableEntity {
         return this.agility >= requiredAgility && this.strength >= requiredStrength;
     }
 
-    public draw(ctx: CanvasRenderingContext2D, viewport?: any): void {
+    public draw(ctx: CanvasRenderingContext2D, _viewport?: any): void {
         this.renderer.draw(ctx, this);
     }
 

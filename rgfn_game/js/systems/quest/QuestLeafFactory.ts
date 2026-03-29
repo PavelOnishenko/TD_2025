@@ -29,14 +29,14 @@ export default class QuestLeafFactory {
 
     public async create(id: string): Promise<QuestNode> {
         const type = this.random.pick(LEAF_TYPES);
-        if (type === 'eliminate') return this.createEliminateNode(id);
-        if (type === 'deliver') return this.createDeliverNode(id);
-        if (type === 'travel') return this.createTravelNode(id);
-        if (type === 'barter') return this.createBarterNode(id);
-        if (type === 'scout') return this.createScoutNode(id);
-        if (type === 'hunt') return this.createHuntNode(id);
-        if (type === 'recover') return this.createRecoverNode(id);
-        if (type === 'escort') return this.createEscortNode(id);
+        if (type === 'eliminate') {return this.createEliminateNode(id);}
+        if (type === 'deliver') {return this.createDeliverNode(id);}
+        if (type === 'travel') {return this.createTravelNode(id);}
+        if (type === 'barter') {return this.createBarterNode(id);}
+        if (type === 'scout') {return this.createScoutNode(id);}
+        if (type === 'hunt') {return this.createHuntNode(id);}
+        if (type === 'recover') {return this.createRecoverNode(id);}
+        if (type === 'escort') {return this.createEscortNode(id);}
         return this.createDefendNode(id);
     }
 

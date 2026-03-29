@@ -73,7 +73,7 @@ export class ItemDiscoverySplash {
      * @param callback - Function to call when splash is done
      */
     showItemDiscovery(item: Item, callback: () => void): void {
-        if (!this.overlay || !this.title || !this.itemName || !this.itemDescription) return;
+        if (!this.overlay || !this.title || !this.itemName || !this.itemDescription) {return;}
 
         // Set content
         this.itemName.textContent = item.name;
@@ -93,7 +93,7 @@ export class ItemDiscoverySplash {
      * Schedules splash dismissal and allows left-click skipping
      */
     private scheduleDismiss(callback: () => void, duration: number): void {
-        if (!this.overlay) return;
+        if (!this.overlay) {return;}
 
         this.clearDismissTimeout();
         this.overlay.addEventListener('click', this.onOverlayClickBound);
@@ -108,7 +108,7 @@ export class ItemDiscoverySplash {
      * Handles skip via left mouse click
      */
     private handleOverlayClick(event: MouseEvent): void {
-        if (event.button !== 0) return;
+        if (event.button !== 0) {return;}
 
         this.dismiss();
     }
@@ -117,7 +117,7 @@ export class ItemDiscoverySplash {
      * Dismisses splash safely exactly once
      */
     private dismiss(): void {
-        if (!this.overlay || this.overlay.style.display === 'none' || !this.dismissCallback) return;
+        if (!this.overlay || this.overlay.style.display === 'none' || !this.dismissCallback) {return;}
 
         const callback = this.dismissCallback;
         this.dismissCallback = null;
@@ -141,7 +141,7 @@ export class ItemDiscoverySplash {
      * Applies theme colors to splash screen elements
      */
     private applyThemeColors(): void {
-        if (!this.modal || !this.title || !this.itemName || !this.itemDescription || !this.decorativeBorder) return;
+        if (!this.modal || !this.title || !this.itemName || !this.itemDescription || !this.decorativeBorder) {return;}
 
         // Base styling - use theme colors
         this.modal.style.backgroundColor = theme.ui.primaryBg;
@@ -159,7 +159,7 @@ export class ItemDiscoverySplash {
      * Shows the splash screen with animation
      */
     private show(callback: () => void): void {
-        if (!this.overlay || !this.modal) return;
+        if (!this.overlay || !this.modal) {return;}
 
         // Reset animation
         this.modal.style.animation = 'none';
@@ -179,7 +179,7 @@ export class ItemDiscoverySplash {
      * Hides the splash screen with animation
      */
     private hide(callback: () => void): void {
-        if (!this.overlay || !this.modal) return;
+        if (!this.overlay || !this.modal) {return;}
 
         // Exit animation
         this.modal.style.animation = 'item-discovery-exit 0.5s ease-in';

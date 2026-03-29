@@ -180,7 +180,14 @@ export default class Game {
             onPlayerTurnReady: () => this.battleCoordinator.onPlayerTurnReady(),
         });
         this.battleCoordinator = new GameBattleCoordinator(this.input, this.stateMachine, {
-            player, battleMap, turnManager, battleSplash: new BattleSplash(), hudElements: ui.hudElements, battleUI: ui.battleUI, villageUI: ui.villageUI, worldUI: ui.worldUI,
+            player,
+            battleMap,
+            turnManager,
+            battleSplash: new BattleSplash(),
+            hudElements: ui.hudElements,
+            battleUI: ui.battleUI,
+            villageUI: ui.villageUI,
+            worldUI: ui.worldUI,
         }, { battlePlayerActionController, battleCommandController, battleTurnController }, {
             onClearBattleLog: () => this.hudCoordinator.clearBattleLog(),
             onAddBattleLog: (m: string, t: string = 'system') => this.hudCoordinator.addBattleLog(m, t),
@@ -389,7 +396,8 @@ export default class Game {
         return new GameModeStateMachine<{ enemies: Skeleton[]; terrainType: TerrainType }>({
             onEnterWorld: () => this.worldModeController.enterWorldMode(ui.hudElements.modeIndicator, ui.worldUI.sidebar, ui.battleUI.sidebar, ui.villageUI.sidebar),
             onUpdateWorld: () => this.worldModeController.updateWorldMode(),
-            onEnterBattle: (battleData: { enemies: Skeleton[]; terrainType: TerrainType }) => this.battleCoordinator.enterBattleMode(battleData.enemies, battleData.terrainType),
+            onEnterBattle: (battleData: { enemies: Skeleton[]; terrainType: TerrainType }) =>
+                this.battleCoordinator.enterBattleMode(battleData.enemies, battleData.terrainType),
             onUpdateBattle: () => this.battleCoordinator.updateBattleMode(),
             onExitBattle: () => this.battleCoordinator.exitBattleMode(),
             onEnterVillage: () => {
@@ -457,8 +465,8 @@ export default class Game {
 
     private render(): void {
         this.renderer.beginFrame();
-        if (this.stateMachine.isInState(MODES.WORLD_MAP)) this.renderRouter.renderWorldMode();
-        if (this.stateMachine.isInState(MODES.VILLAGE)) this.renderRouter.renderVillageMode();
+        if (this.stateMachine.isInState(MODES.WORLD_MAP)) {this.renderRouter.renderWorldMode();}
+        if (this.stateMachine.isInState(MODES.VILLAGE)) {this.renderRouter.renderVillageMode();}
         if (this.stateMachine.isInState(MODES.BATTLE)) {
             this.renderRouter.renderBattleMode(this.battleCoordinator.getCurrentEnemies(), this.battleCoordinator.getSelectedEnemy());
         }

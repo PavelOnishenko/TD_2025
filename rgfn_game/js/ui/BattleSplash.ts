@@ -58,7 +58,7 @@ export class BattleSplash {
      * Handles skip via left mouse click
      */
     private handleOverlayClick(event: MouseEvent): void {
-        if (event.button !== 0) return;
+        if (event.button !== 0) {return;}
 
         this.dismiss();
     }
@@ -67,7 +67,7 @@ export class BattleSplash {
      * Dismisses splash safely exactly once
      */
     private dismiss(): void {
-        if (!this.view.isVisible() || !this.dismissCallback) return;
+        if (!this.view.isVisible() || !this.dismissCallback) {return;}
 
         const callback = this.dismissCallback;
         this.dismissCallback = null;

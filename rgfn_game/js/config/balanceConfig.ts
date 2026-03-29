@@ -1,6 +1,6 @@
-    // todo this file is too long. 
-    // Extract parts from it in separate config files so that none of the resulting files including this one is longer than 200 LOC.
-    // Place all these files into newly created balance folder.
+// todo this file is too long. 
+// Extract parts from it in separate config files so that none of the resulting files including this one is longer than 200 LOC.
+// Place all these files into newly created balance folder.
 
 /**
  * Balance Configuration
@@ -103,28 +103,28 @@ export const balanceConfig = {
                 3: 7,
                 4: 1,
             },
-        // todo rule 17 in Style Guide
+            // todo rule 17 in Style Guide
             artifact: {
                 1: 50,
                 2: 42,
                 3: 7,
                 4: 1,
             },
-        // todo rule 17 in Style Guide
+            // todo rule 17 in Style Guide
             character: {
                 1: 58,
                 2: 36,
                 3: 5,
                 4: 1,
             },
-        // todo rule 17 in Style Guide
+            // todo rule 17 in Style Guide
             monster: {
                 1: 54,
                 2: 38,
                 3: 7,
                 4: 1,
             },
-        // todo rule 17 in Style Guide
+            // todo rule 17 in Style Guide
             mainQuest: {
                 1: 48,
                 2: 42,

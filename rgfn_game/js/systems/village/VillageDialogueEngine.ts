@@ -210,15 +210,15 @@ export default class VillageDialogueEngine {
     }
 
     private distanceText(distanceCells: number): string {
-        if (distanceCells <= 4) return 'a short walk';
-        if (distanceCells <= 12) return 'half a day';
-        if (distanceCells <= 24) return 'about a day';
+        if (distanceCells <= 4) {return 'a short walk';}
+        if (distanceCells <= 12) {return 'half a day';}
+        if (distanceCells <= 24) {return 'about a day';}
         return 'several days';
     }
 
     private impreciseDistance(distanceCells: number): string {
-        if (distanceCells <= 8) return 'nearby';
-        if (distanceCells <= 18) return 'not too far';
+        if (distanceCells <= 8) {return 'nearby';}
+        if (distanceCells <= 18) {return 'not too far';}
         return 'far from here';
     }
 }

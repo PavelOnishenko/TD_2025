@@ -1,5 +1,5 @@
 import GridMap from '../../utils/GridMap.js';
-import { FogState, TerrainData, GridCell, TerrainNeighbors, TerrainPattern, TerrainType } from '../../types/game.js';
+import { FogState, TerrainData, GridCell, TerrainNeighbors, TerrainType } from '../../types/game.js';
 import { theme } from '../../config/ThemeConfig.js';
 
 export default class WorldMapRenderer {
@@ -198,7 +198,7 @@ export default class WorldMapRenderer {
         ctx.restore();
     }
 
-     public drawNamedLocationFocus(ctx: CanvasRenderingContext2D, cell: GridCell, label: string): void {
+    public drawNamedLocationFocus(ctx: CanvasRenderingContext2D, cell: GridCell, label: string): void {
         const inset = Math.max(3, cell.width * 0.08);
         const path = this.createRoundedRectPath(
             cell.x + inset,

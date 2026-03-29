@@ -1,7 +1,7 @@
 import { theme } from '../../config/ThemeConfig.js';
 
 export default class VillageEnvironmentRenderer {
-    public render(ctx: CanvasRenderingContext2D, width: number, height: number, time: number): void {
+    public render(ctx: CanvasRenderingContext2D, width: number, height: number, _time: number): void {
         const skyGradient = ctx.createLinearGradient(0, 0, 0, height);
         skyGradient.addColorStop(0, this.mixColors(theme.worldMap.background, theme.worldMap.terrain.water, 0.25));
         skyGradient.addColorStop(1, this.mixColors(theme.worldMap.terrain.grass, theme.worldMap.terrain.forest, 0.25));

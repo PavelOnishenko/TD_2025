@@ -153,7 +153,6 @@ export default class VillageLifeRenderer {
         const wallLight = this.mixColors(theme.worldMap.terrain.desert, theme.worldMap.terrain.mountain, 0.24);
         const wallDark = this.mixColors(theme.worldMap.terrain.mountain, theme.worldMap.terrain.forest, 0.5);
 
-        const a = this.projectIso(house.worldX, house.worldY, 0);
         const b = this.projectIso(house.worldX + house.footprintWidth, house.worldY, 0);
         const c = this.projectIso(house.worldX + house.footprintWidth, house.worldY + house.footprintDepth, 0);
         const d = this.projectIso(house.worldX, house.worldY + house.footprintDepth, 0);

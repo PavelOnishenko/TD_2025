@@ -226,7 +226,7 @@ export default class Skeleton extends DamageableEntity {
         return cloneBaseStats(this.baseStats);
     }
 
-    public draw(ctx: CanvasRenderingContext2D, viewport?: any): void {
+    public draw(ctx: CanvasRenderingContext2D, _viewport?: any): void {
         const x = this.x;
         const y = this.y;
         const left = x - this.width / 2;

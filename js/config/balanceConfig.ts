@@ -73,7 +73,7 @@ export const balanceConfig: BalanceConfig = {
     waves: {
         difficultyMultiplier: 1,    // todo up this to make waves more epic
         schedule: [
-           { difficulty: 13, enemyHp: 1.34 },
+            { difficulty: 13, enemyHp: 1.34 },
             { difficulty: 13, enemyHp: 1.64 },
             { difficulty: 14, enemyHp: 1.94 },
             { difficulty: 14, enemyHp: 2.24 },

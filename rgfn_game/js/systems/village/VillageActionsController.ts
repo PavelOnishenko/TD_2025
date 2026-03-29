@@ -1,6 +1,6 @@
 import Player from '../../entities/Player.js';
 import Item, { createItemById } from '../../entities/Item.js';
-import VillageDialogueEngine, { CompassDirection, PersonDirectionHint, VillageDialogueOutcome, VillageDirectionHint, VillageNpcProfile } from './VillageDialogueEngine.js';
+import VillageDialogueEngine, { PersonDirectionHint, VillageDirectionHint, VillageNpcProfile } from './VillageDialogueEngine.js';
 import { balanceConfig } from '../../config/balanceConfig.js';
 
 type VillageUI = {
