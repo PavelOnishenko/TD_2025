@@ -385,7 +385,7 @@ When in doubt, look at existing features like `BattleSplash.ts`, `ThemeEditor.ts
 
 ---
 
-*Last Updated: 2026-01-06*
+*Last Updated: 2026-03-29*
 *Maintainer: RGFN Development Team*
 
 ## Quest objective state and courier contracts (March 26, 2026)
@@ -396,3 +396,10 @@ When in doubt, look at existing features like `BattleSplash.ts`, `ThemeEditor.ts
   - include source trader, source village, destination village, and item in metadata;
   - do not mark complete on location entry unless required item is present in inventory and pickup source was validated.
 - Contract systems that bind quest objectives to runtime NPC/village behavior must preserve deterministic assignment when objective metadata specifies a source location.
+
+## TODO semantics and object literal formatting (March 29, 2026)
+
+- TODO comments apply to the immediately following line or the block that starts right after the TODO, unless the TODO text explicitly declares a wider scope.
+- Resolve TODO comments as part of the same task whenever possible; do not keep stale TODOs after implementation is complete.
+- For dense object literals (variant tables, config arrays, item declarations), prefer one property per line when a single-line object is hard to scan or exceeds normal line length.
+- Keep trailing commas in multiline object literals and arrays to reduce diff noise.
