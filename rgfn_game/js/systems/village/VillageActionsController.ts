@@ -1,6 +1,7 @@
 import Player from '../../entities/Player.js';
 import Item, { createItemById } from '../../entities/Item.js';
 import VillageDialogueEngine, { CompassDirection, PersonDirectionHint, VillageDialogueOutcome, VillageDirectionHint, VillageNpcProfile } from './VillageDialogueEngine.js';
+import { balanceConfig } from '../../config/balanceConfig.js';
 
 type VillageUI = {
     sidebar: HTMLElement;
@@ -8,6 +9,7 @@ type VillageUI = {
     prompt: HTMLElement;
     actions: HTMLElement;
     openDialogueBtn: HTMLButtonElement;
+    sleepRoomBtn: HTMLButtonElement;
     dialogueModal: HTMLElement;
     dialogueCloseBtn: HTMLButtonElement;
     dialogueSelectedNpc: HTMLElement;
@@ -200,6 +202,28 @@ export default class VillageActionsController {
         this.player.restoreMana(1);
         this.addLog('You wait at the inn and recover 1 HP and 1 mana.', 'player');
         this.callbacks.onUpdateHUD();
+    }
+
+    public handleSleepInRoom(): void {
+        const selectedNpc = this.getSelectedNpc();
+        if (!selectedNpc || !this.isInnkeeper(selectedNpc.role)) {
+            this.addLog('To rent a safe room, speak with an innkeeper first.', 'system');
+            return;
+        }
+
+        const roomCost = balanceConfig.survival.innRoomCostGold;
+        if (this.player.gold < roomCost) {
+            this.addLog(`Room costs ${roomCost}g. You need more gold.`, 'system');
+            return;
+        }
+
+        this.player.gold -= roomCost;
+        const recovered = this.player.recoverFatigue(balanceConfig.survival.villageSleepFatigueRecovery);
+        this.player.heal(2);
+        this.player.restoreMana(2);
+        this.addLog(`${selectedNpc.name} rents you a room for ${roomCost}g. Safe sleep restores ${Math.round(recovered)} fatigue.`, 'player');
+        this.callbacks.onUpdateHUD();
+        this.updateButtons();
     }
 
     public handleBuyOffer(offerIndex: number): void {
@@ -430,6 +454,7 @@ export default class VillageActionsController {
         this.villageUI.askPersonBtn.disabled = !hasSelectedNpc;
         this.villageUI.askBarterBtn.disabled = !hasSelectedNpc;
         this.villageUI.barterNowBtn.disabled = !hasSelectedNpc;
+        this.villageUI.sleepRoomBtn.disabled = !hasSelectedNpc || !this.isInnkeeper(this.getSelectedNpc()?.role ?? '');
     }
 
     private getOrCreateVillageNpcRoster(villageName: string): VillageNpcProfile[] {
@@ -635,6 +660,11 @@ export default class VillageActionsController {
         }
 
         return this.npcRoster.find((npc) => npc.id === this.selectedNpcId) ?? null;
+    }
+
+    private isInnkeeper(role: string): boolean {
+        const normalized = role.trim().toLocaleLowerCase();
+        return normalized.includes('innkeeper') || normalized.includes('tavern') || normalized.includes('host');
     }
 
     private describeDistance(distanceCells: number): string {

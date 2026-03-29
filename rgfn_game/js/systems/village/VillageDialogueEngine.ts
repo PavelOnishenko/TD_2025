@@ -177,7 +177,7 @@ export default class VillageDialogueEngine {
 
     private createNpc(villageName: string, index: number): VillageNpcProfile {
         const names = ['Mara', 'Iven', 'Tor', 'Selene', 'Garr', 'Nira', 'Bram', 'Talia', 'Daren', 'Ysolde'];
-        const roles = ['Trader', 'Hunter', 'Miller', 'Guard', 'Herbalist', 'Carpenter'];
+        const roles = ['Trader', 'Hunter', 'Miller', 'Guard', 'Herbalist', 'Carpenter', 'Innkeeper'];
         const looks = [
             'scarred face, travel cloak, muddy boots',
             'sunburnt skin, braided hair, patched vest',

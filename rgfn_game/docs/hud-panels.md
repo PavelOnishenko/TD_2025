@@ -258,6 +258,84 @@ Implementation details:
 
 Why this is better:
 
+## World Map panel decoupled from sibling auto-resize/scroll behavior while staying draggable (March 28, 2026, follow-up #3)
+
+### User-visible issue
+
+When other draggable HUD panels were opened, the **World Map** panel could become vertically compressed and start showing an internal scrollbar (including the browser-specific scrollbar chrome near the panel header). This made it look like the old panel auto-resize mechanism was still active for this specific panel.
+
+### Root cause
+
+Two systems were interacting in a bad way:
+
+1. World Map panel intentionally uses the same draggable window decorator as other HUD panels (header + close button + drag handle). This behavior is desired and should remain enabled.
+2. CSS base for sidebar/log panel pair (`#world-sidebar, #game-log-container`) applied shared `max-height` + `overflow:auto`, so when overlay stack space became constrained by other open panels, `#world-sidebar` could shrink and force a scrollbar.
+
+### Fix implemented
+
+- `worldMap` remains a normal draggable HUD window with runtime header injection and close button.
+- `#world-sidebar` now opts out of shared sidebar clamping:
+  - `flex-shrink: 0;`
+  - `max-height: none;`
+  - `overflow: visible;`
+
+### Resulting behavior contract
+
+- Opening/closing other HUD panels should no longer resize the World Map panel.
+- World Map panel should not auto-add an internal scrollbar due to sibling panel visibility.
+- World Map controls stay stable and independent of concurrent panel count.
+- World Map panel keeps the same draggable behavior and `✕` close interaction as other HUD windows.
+
+### Focused manual regression checklist
+
+1. Open `World Map` panel only → verify full intended panel height with no forced internal scrollbar.
+2. Open `Stats`, `Skills`, `Inventory`, `Log` while keeping `World Map` open.
+3. Confirm World Map panel dimensions remain stable while other windows are toggled.
+4. Confirm `World Map` still closes/reopens correctly from hamburger toggle button.
+5. Confirm World Map remains draggable (header drag handle) and closable via `✕`, and that other panels (`Stats`, `Skills`, `Inventory`, `Log`) still behave the same.
+
+## Draggable panel parity fix: remove flow-coupling drift (March 28, 2026, follow-up #4)
+
+### Symptom observed after follow-up #3
+
+- World Map could still "disappear" when another panel was opened from hamburger menu.
+- Toggling the second panel back off made World Map appear again near its previous location.
+- This made World Map feel different from other panels even though it had drag/close controls.
+
+### Technical root cause
+
+- `.draggable-panel` used `position: relative` with transform offsets.
+- Relative-positioned elements **still occupy normal flex layout space** in `#left-overlay-stack` / `#right-overlay-stack`.
+- When another panel was shown/hidden, stack layout reflow shifted each panel’s base box.
+- Because drag/spawn uses transform deltas from that base, visual position could jump off-screen without losing stored offset.
+
+### Final fix
+
+- Switched `.draggable-panel` to out-of-flow positioning:
+  - `position: absolute; top: 0; left: 0;`
+  - kept transform-offset model unchanged (`--panel-offset-x/y`).
+- On mobile fallback (`max-width: 920px`), explicitly reset draggable panels to in-flow:
+  - `position: static; transform: none;`
+
+### Why this resolves parity issues
+
+- Open/close of any panel no longer changes another panel’s layout origin.
+- World Map now uses the exact same drag/close + spawn mechanics as other panels without reflow side effects.
+- Existing drag persistence/session offset behavior remains intact.
+
+### Regression checklist (important)
+
+1. Open `World Map` only; drag to custom location.
+2. Open `Stats`, `Skills`, `Inventory`, `Log` one-by-one:
+   - World Map should stay where dragged.
+   - no vanish/jump when siblings are toggled.
+3. Close each sibling panel:
+   - World Map should not snap/reappear from hidden offset.
+4. Confirm `✕` closes World Map and hamburger toggle reopens it at the same session position.
+5. Resize below `920px`:
+   - stacked layout returns,
+   - no absolute overlap issues on mobile flow.
+
 - Opened panels now feel consistent and predictable: they always appear near the left gameplay edge first.
 - The player still retains full manual control via drag.
 - Existing draggable implementation (transform via CSS variables) is reused; no separate absolute-positioning mode was introduced.
