@@ -18,9 +18,9 @@
     "check:ts-style": "npm run lint:ts && npm run style-guide:audit"
   },
   "devDependencies": {
-    "typescript": "^5.9.3",
-    "eslint": "^9.23.0",
+    "@typescript-eslint/eslint-plugin": "^8.28.0",
     "@typescript-eslint/parser": "^8.28.0",
-    "@typescript-eslint/eslint-plugin": "^8.28.0"
+    "eslint": "^9.39.4",
+    "typescript": "^5.9.3"
   }
 }
