@@ -12,8 +12,8 @@ import {
 import { balanceConfig } from '../../config/balance/balanceConfig.js';
 import { cloneBaseStats } from '../../config/creatureStats.js';
 import { CreatureBaseStats } from '../../config/creatureTypes.js';
-import PlayerInventory from '../PlayerInventory.js';
-import PlayerRenderer from '../PlayerRenderer.js';
+import PlayerInventory from './PlayerInventory.js';
+import PlayerRenderer from './PlayerRenderer.js';
 import { NextCharacterRollAllocation } from '../../utils/NextCharacterRollConfig.js';
 import Item from '../Item.js';
 import { PlayerCreationOptions, PlayerStat, RANDOM_NAME_POOL, RANDOM_STAT_POOL } from './PlayerTypes.js';

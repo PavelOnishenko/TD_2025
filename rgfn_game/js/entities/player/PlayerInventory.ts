@@ -1,6 +1,6 @@
 // todo this file is too long per Style_Guide. Extract functionality to new classes. Adhere strictly to style_guide.
 
-import Item from './Item.js';
+import Item from '../Item.js';
 
 type PlayerInventoryHooks = {
     onEquipmentChanged: () => void;
@@ -77,7 +77,7 @@ export default class PlayerInventory {
         return this.removePotionById('manaPotion');
     }
 
-    // todo arrow
+    // todo this func is too long. Fix per Style_guide
     public removeItemAt(index: number): Item | null {
         if (index < 0 || index >= this.inventory.length) {
             return null;
@@ -224,6 +224,7 @@ export default class PlayerInventory {
         this.hooks.onEquipmentChanged();
     }
 
+    // todo rule 17 here! It should apply to parameters lists too, yes! Mark this as needed in docs.
     public restoreState(
         itemIds: string[],
         equippedWeaponId: string | null,
@@ -248,6 +249,7 @@ export default class PlayerInventory {
         this.hooks.onEquipmentChanged();
     }
 
+    // todo this should be arrow func with members in curly braces formatted in 2 lines.
     public getState(): { inventoryItemIds: string[]; equippedWeaponId: string | null; equippedOffhandWeaponId: string | null; equippedArmorId: string | null } {
         return {
             inventoryItemIds: this.inventory.map((item) => item.id),
