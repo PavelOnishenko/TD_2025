@@ -1,8 +1,8 @@
-import { calculateBowDamageBonus, calculateMeleeDamageBonus } from '../../config/levelConfig.js';
-import { normalizeCreatureSkills } from '../../config/creatureStats.js';
-import { CreatureSkills } from '../../config/creatureTypes.js';
-import { balanceConfig } from '../../config/balance/balanceConfig.js';
-import Item from '../Item.js';
+import { calculateBowDamageBonus, calculateMeleeDamageBonus } from '../../../config/levelConfig.js';
+import { normalizeCreatureSkills } from '../../../config/creatureStats.js';
+import { CreatureSkills } from '../../../config/creatureTypes.js';
+import { balanceConfig } from '../../../config/balance/balanceConfig.js';
+import Item from '../../Item.js';
 import PlayerCombatState from './PlayerCombatState.js';
 
 export default class PlayerInventoryAndRender extends PlayerCombatState {

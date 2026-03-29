@@ -1,4 +1,4 @@
-import Item from '../Item.js';
+import Item from '../../Item.js';
 
 type WeaponSlot = 'main' | 'offhand';
 

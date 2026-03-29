@@ -1,4 +1,4 @@
-import { createItemById } from '../Item.js';
+import { createItemById } from '../../Item.js';
 import PlayerInventoryAndRender from './PlayerInventoryAndRender.js';
 
 export default class PlayerPersistence extends PlayerInventoryAndRender {

@@ -1,4 +1,4 @@
-import Item from '../Item.js';
+import Item from '../../Item.js';
 import PlayerInventoryEquipment from './PlayerInventoryEquipment.js';
 import type { InventoryState, PlayerInventoryHooks, PotionItemId, RestoreInventoryStateArgs } from './PlayerInventoryTypes.js';
 

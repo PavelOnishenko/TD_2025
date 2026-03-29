@@ -1,4 +1,4 @@
-import Item from '../Item.js';
+import Item from '../../Item.js';
 
 export type PlayerInventoryHooks = {
     onEquipmentChanged: () => void;

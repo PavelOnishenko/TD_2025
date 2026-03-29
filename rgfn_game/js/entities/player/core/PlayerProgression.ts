@@ -1,6 +1,6 @@
-import { getXpForLevel, levelConfig } from '../../config/levelConfig.js';
+import { getXpForLevel, levelConfig } from '../../../config/levelConfig.js';
 import PlayerBase from './PlayerBase.js';
-import { PlayerStat } from './PlayerTypes.js';
+import { PlayerStat } from '../shared/PlayerTypes.js';
 
 export default class PlayerProgression extends PlayerBase {
     public addXp(amount: number): boolean {
