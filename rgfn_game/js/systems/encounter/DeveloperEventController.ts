@@ -45,11 +45,7 @@ type DeveloperCallbacks = {
     setMapDisplayConfig: (config: Partial<MapDisplayConfig>) => void;
 };
 
-const ENCOUNTER_LABELS: Record<RandomEncounterType, string> = {
-    monster: 'Monster',
-    item: 'Item',
-    traveler: 'Traveler',
-};
+const ENCOUNTER_LABELS: Record<RandomEncounterType, string> = { monster: 'Monster', item: 'Item', traveler: 'Traveler' };
 
 export default class DeveloperEventController {
     private developerUI: DeveloperUI;

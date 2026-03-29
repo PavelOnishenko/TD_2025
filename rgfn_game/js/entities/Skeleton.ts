@@ -80,14 +80,8 @@ export default class Skeleton extends DamageableEntity {
         const config: EnemyConfig = enemyConfig ?? balanceConfig.enemies.skeleton;
         const archetypeId = config.archetypeId ?? 'skeleton';
         const archetype = balanceConfig.creatureArchetypes[archetypeId] ?? balanceConfig.creatureArchetypes.skeleton;
-        const mergedBaseStats = {
-            ...cloneBaseStats(archetype.baseStats),
-            ...(config.baseStats ?? {}),
-        };
-        const mergedSkills = normalizeCreatureSkills({
-            ...archetype.skills,
-            ...(config.skills ?? {}),
-        });
+        const mergedBaseStats = { ...cloneBaseStats(archetype.baseStats), ...(config.baseStats ?? {}) };
+        const mergedSkills = normalizeCreatureSkills({ ...archetype.skills, ...(config.skills ?? {}) });
         const derivedStats = deriveCreatureStats(mergedBaseStats, mergedSkills);
 
         this.width = config.width;

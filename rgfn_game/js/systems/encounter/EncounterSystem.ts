@@ -61,10 +61,7 @@ export default class EncounterSystem {
         return this.encounterResolver.generateEncounter(this.itemDiscoveryChance, {
             rollEncounterEventType: () => this.rollEncounterEventType(),
             rollEncounterType: () => this.rollEncounterType(),
-        }, {
-            canDiscoverItems: canDiscoverItems && this.isEncounterTypeEnabled('item'),
-            enabledEventTypes: this.getEnabledEncounterTypes(),
-        });
+        }, { canDiscoverItems: canDiscoverItems && this.isEncounterTypeEnabled('item'), enabledEventTypes: this.getEnabledEncounterTypes() });
     }
 
     public generateMonsterBattleEncounter(): { type: 'battle'; enemies: Skeleton[] } {

@@ -3,12 +3,7 @@ import { CombatEntity, Direction, GridPosition, SelectedBattleCellInfo, TerrainT
 import { theme } from '../../config/ThemeConfig.js';
 import BattleMapView, { BattleObstacle, BattleObstacleKind } from './BattleMapView.js';
 
-const CARDINAL_STEPS: GridPosition[] = [
-    { col: 1, row: 0 },
-    { col: -1, row: 0 },
-    { col: 0, row: 1 },
-    { col: 0, row: -1 },
-];
+const CARDINAL_STEPS: GridPosition[] = [{ col: 1, row: 0 }, { col: -1, row: 0 }, { col: 0, row: 1 }, { col: 0, row: -1 }];
 
 type PathOptions = {
     ignoreEntity?: CombatEntity | null;
@@ -57,10 +52,7 @@ export default class BattleMap {
     public isInAttackRange(attacker: CombatEntity, target: CombatEntity, range: number): boolean {
         const source = this.getEntityGridPosition(attacker);
         const destination = this.getEntityGridPosition(target);
-        const distance = this.getPathDistance(source, destination, {
-            ignoreEntity: attacker,
-            allowDestinationOccupied: true,
-        });
+        const distance = this.getPathDistance(source, destination, { ignoreEntity: attacker, allowDestinationOccupied: true });
         return distance !== null && distance <= range;
     }
 
@@ -191,10 +183,7 @@ export default class BattleMap {
     }
 
     private getPlayerSpawnPosition(): GridPosition {
-        return {
-            col: Math.floor(this.grid.columns / 2),
-            row: this.grid.rows - 2,
-        };
+        return { col: Math.floor(this.grid.columns / 2), row: this.grid.rows - 2 };
     }
 
     private getEnemySpawnPositions(enemyCount: number): GridPosition[] {
@@ -232,11 +221,7 @@ export default class BattleMap {
                 continue;
             }
 
-            const obstacle: BattleObstacle = {
-                col: candidate.col,
-                row: candidate.row,
-                kind: profile.kinds[this.randomInt(0, profile.kinds.length - 1)],
-            };
+            const obstacle: BattleObstacle = { col: candidate.col, row: candidate.row, kind: profile.kinds[this.randomInt(0, profile.kinds.length - 1)] };
             this.obstacles.set(key, obstacle);
 
             if (!this.isWalkableArenaConnected() || !this.allEnemiesHaveMeleeLane(playerSpawn, enemySpawns)) {
@@ -424,10 +409,7 @@ export default class BattleMap {
                 return;
             }
 
-            const path = this.findPath(source, { col, row }, {
-                ignoreEntity: entity,
-                allowDestinationOccupied: false,
-            });
+            const path = this.findPath(source, { col, row }, { ignoreEntity: entity, allowDestinationOccupied: false });
             if (path && path.length > 1) {
                 candidateTargets.push({ goal: { col, row }, path });
             }
