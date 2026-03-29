@@ -1002,3 +1002,17 @@ So tests asserting fixed literal HP values (for example zombie `7`) will fail wh
 ### Engineering policy capture (March 29, 2026)
 - Default RGFN implementation stance: **fail fast and hard** for unexpected states; avoid silent/degrading fallbacks unless explicitly requested.
 - Any future ambush/encounter work should preserve this rule and prefer explicit errors over substitute behavior.
+
+
+## LOC analysis utility
+
+Use this when you need a quick size/profile snapshot of the RGFN codebase and engine split.
+
+```bash
+python3 rgfn_game/scripts/loc_report.py
+```
+
+This prints:
+- RGFN-only LOC by language,
+- engine-only LOC by language,
+- combined totals with language percentages.
