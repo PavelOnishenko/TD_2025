@@ -50,11 +50,7 @@ export class MonsterMutationEngine {
         return passEncounterChance > 0 && Math.random() < passEncounterChance;
     }
 
-    public static onDamagedByPlayer(
-        name: string,
-        mutations: MonsterMutationTrait[],
-        isMelee: boolean,
-    ): { retaliationDamage: number; logs: string[] } {
+    public static onDamagedByPlayer(name: string, mutations: MonsterMutationTrait[], isMelee: boolean): { retaliationDamage: number; logs: string[] } {
         const logs: string[] = [];
         let retaliationDamage = 0;
         if (mutations.includes('acid blood')) {

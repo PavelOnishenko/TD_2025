@@ -70,13 +70,7 @@ export default class BattleMapView {
         ctx.restore();
     }
 
-    private drawCurrentEntityHighlight(
-        ctx: CanvasRenderingContext2D,
-        cell: GridCell,
-        col: number,
-        row: number,
-        currentEntity: CombatEntity | null,
-    ): void {
+    private drawCurrentEntityHighlight(ctx: CanvasRenderingContext2D, cell: GridCell, col: number, row: number, currentEntity: CombatEntity | null): void {
         if (!this.isEntityAtCell(currentEntity, col, row)) {
             return;
         }
@@ -88,13 +82,7 @@ export default class BattleMapView {
         ctx.fill(path);
     }
 
-    private drawSelectedEnemyHighlight(
-        ctx: CanvasRenderingContext2D,
-        cell: GridCell,
-        col: number,
-        row: number,
-        selectedEnemy: CombatEntity | null,
-    ): void {
+    private drawSelectedEnemyHighlight(ctx: CanvasRenderingContext2D, cell: GridCell, col: number, row: number, selectedEnemy: CombatEntity | null): void {
         if (!this.isEntityAtCell(selectedEnemy, col, row)) {
             return;
         }
@@ -109,13 +97,7 @@ export default class BattleMapView {
         ctx.stroke(this.createRoundedRectPath(cell.x + 1, cell.y + 1, cell.width - 2, cell.height - 2, Math.max(4, cell.width * 0.14)));
     }
 
-    private drawSelectedEnemyBorder(
-        ctx: CanvasRenderingContext2D,
-        cell: GridCell,
-        col: number,
-        row: number,
-        selectedEnemy: CombatEntity | null,
-    ): void {
+    private drawSelectedEnemyBorder(ctx: CanvasRenderingContext2D, cell: GridCell, col: number, row: number, selectedEnemy: CombatEntity | null): void {
         if (!this.isEntityAtCell(selectedEnemy, col, row)) {
             return;
         }
@@ -124,13 +106,7 @@ export default class BattleMapView {
         ctx.stroke(this.createRoundedRectPath(cell.x + 4, cell.y + 4, cell.width - 8, cell.height - 8, Math.max(4, cell.width * 0.12)));
     }
 
-    private drawSelectedCellHighlight(
-        ctx: CanvasRenderingContext2D,
-        cell: GridCell,
-        col: number,
-        row: number,
-        selectedCell: GridPosition | null,
-    ): void {
+    private drawSelectedCellHighlight(ctx: CanvasRenderingContext2D, cell: GridCell, col: number, row: number, selectedCell: GridPosition | null): void {
         if (!selectedCell || selectedCell.col !== col || selectedCell.row !== row) {
             return;
         }
@@ -139,13 +115,7 @@ export default class BattleMapView {
         ctx.fill(path);
     }
 
-    private drawSelectedCellBorder(
-        ctx: CanvasRenderingContext2D,
-        cell: GridCell,
-        col: number,
-        row: number,
-        selectedCell: GridPosition | null,
-    ): void {
+    private drawSelectedCellBorder(ctx: CanvasRenderingContext2D, cell: GridCell, col: number, row: number, selectedCell: GridPosition | null): void {
         if (!selectedCell || selectedCell.col !== col || selectedCell.row !== row) {
             return;
         }

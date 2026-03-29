@@ -30,15 +30,7 @@ export default class PlayerRenderer {
         ctx.fill();
     }
 
-    // todo rule 17 should be applied to this parameter list (probably one liner would do here). Make sure linter triggers on such situations. Edit linter if needed. 
-    private drawBody(
-        ctx: CanvasRenderingContext2D,
-        screenX: number,
-        top: number,
-        left: number,
-        width: number,
-        height: number
-    ): void {
+    private drawBody(ctx: CanvasRenderingContext2D, screenX: number, top: number, left: number, width: number, height: number): void {
         ctx.fillStyle = theme.entities.player.body;
         ctx.beginPath();
         ctx.moveTo(screenX, top + 2);
@@ -76,13 +68,7 @@ export default class PlayerRenderer {
         ctx.fillRect(left + width - 7, top + 12, 5, 4);
     }
 
-    // todo rule 17 should be applied to this parameter list (probably one liner would do here).
-    private drawHealthBar(
-        ctx: CanvasRenderingContext2D,
-        player: PlayerRenderState,
-        screenX: number,
-        screenY: number
-    ): void {
+    private drawHealthBar(ctx: CanvasRenderingContext2D, player: PlayerRenderState, screenX: number, screenY: number): void {
         const barHeight = 4;
         const barY = screenY - player.height / 2 - 8;
 

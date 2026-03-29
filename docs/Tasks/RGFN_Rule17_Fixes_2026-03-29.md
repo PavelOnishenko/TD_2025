@@ -123,3 +123,39 @@ Typical transformations that consistently reduced warnings:
 - `npm test` still fails due to pre-existing repo-wide issues unrelated to this formatting pass:
   - missing `dist/` build artifacts for `eva_game` and `rgfn_game` test imports,
   - existing projectile tests expecting `enemy.takeDamage` in root game tests.
+
+---
+
+## Follow-up pass (same date): targeted final 16-warning cleanup for listed files
+
+### Goal for this pass
+- Resolve the remaining **16 explicitly reported Rule 17 warnings** by converting parameter lists to compact one-line signatures where the linter indicates they fit.
+- Keep changes formatting-only (no logic/behavior modifications).
+
+### Commands used
+- `npm run lint:ts:rgfn` (verification that RGFN lint passes and no Rule 17 warnings remain in this batch).
+- `npm run style-guide:audit:rgfn` (informational style audit report).
+- `npm test` (requested by custom instructions; known unrelated failures remain).
+
+### Outcome
+- All 16 listed Rule 17 warnings were fixed in-place.
+- `npm run lint:ts:rgfn` now succeeds for this scope.
+- `npm test` still reports pre-existing failures unrelated to these formatting-only changes.
+
+### Files updated in this 16-warning pass
+- `rgfn_game/js/entities/monster/MonsterMutationEngine.ts`
+- `rgfn_game/js/entities/monster/MonsterVisualRenderer.ts`
+- `rgfn_game/js/entities/player/core/PlayerRenderer.ts`
+- `rgfn_game/js/systems/combat/BattleMap.ts`
+- `rgfn_game/js/systems/combat/BattleMapView.ts`
+- `rgfn_game/js/systems/quest/QuestProgressTracker.ts`
+- `rgfn_game/js/systems/quest/QuestUiController.ts`
+- `rgfn_game/js/systems/world/WorldMapRenderer.ts`
+- `rgfn_game/js/utils/StickFigure.ts`
+
+### Notes / reusable knowledge
+- Rule 17 regularly flags multiline function parameter lists that can fit on one line even at 150+ characters with indentation context; this frequently occurs in rendering and UI helper methods with many scalar arguments.
+- Fastest low-risk workflow for future cleanup:
+  1. Collapse only the warned function signature parameter list.
+  2. Re-run `npm run lint:ts:rgfn`.
+  3. Avoid touching method body formatting unless needed (reduces merge conflicts and risk).

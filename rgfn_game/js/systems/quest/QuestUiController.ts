@@ -83,12 +83,7 @@ export default class QuestUiController {
         return this.buildQuestTreeMarkupNode(quest, 0, preorderNodes, maxVisiblePreorderIndex) ?? '';
     }
 
-    private buildQuestTreeMarkupNode(
-        quest: QuestNode,
-        depth: number,
-        preorderNodes: QuestNode[],
-        maxVisiblePreorderIndex: number,
-    ): string | null {
+    private buildQuestTreeMarkupNode(quest: QuestNode, depth: number, preorderNodes: QuestNode[], maxVisiblePreorderIndex: number): string | null {
         const childMarkup = quest.children
             .map((child) => this.buildQuestTreeMarkupNode(child, depth + 1, preorderNodes, maxVisiblePreorderIndex))
             .filter((markup): markup is string => markup !== null)
