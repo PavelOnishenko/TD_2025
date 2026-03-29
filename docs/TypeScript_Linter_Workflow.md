@@ -106,8 +106,9 @@ These must be checked by the author and reviewer during implementation and revie
 
 1. If initialization spans multiple lines, members must sit between surrounding opening/closing brace-or-bracket lines (the brace/bracket lines may contain additional syntax such as `foo(`, `)`, or `;`).
 2. Dedicated brace-only lines are **not** required; only the member block must be visually surrounded by those lines.
-3. Internal member lines must not exceed Rule 1 max length (170 chars).
-4. Grouping shape (1 line vs 2 lines vs one-member-per-line) is currently reviewer-guided instead of auto-enforced, because AST-only grouping heuristics produced false positives in nested callback-heavy objects.
+3. If a multiline initializer can be compacted to a single line within 170 chars, lint now warns and asks for the one-line form (most terse Rule 17 mode).
+4. Internal member lines must not exceed Rule 1 max length (170 chars).
+5. Grouping shape beyond the one-line compactness check (for example whether to use one or two internal lines when multiline is required) remains reviewer-guided.
 
 This rule is warning-level today to allow gradual cleanup of existing formatting debt while still enforcing Rule 17 on newly touched code.
 

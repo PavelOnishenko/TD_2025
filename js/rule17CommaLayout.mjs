@@ -27,6 +27,20 @@ function getMemberStartLines(items) {
     return Array.from(lines).sort((a, b) => a - b);
 }
 
+
+function toCompactSingleLine(text) {
+    return text
+        .replace(/\s+/g, ' ')
+        .replace(/\s*([,])\s*/g, '$1 ')
+        .replace(/\(\s+/g, '(')
+        .replace(/\s+\)/g, ')')
+        .replace(/\[\s+/g, '[')
+        .replace(/\s+\]/g, ']')
+        .replace(/\{\s+/g, '{ ')
+        .replace(/\s+\}/g, ' }')
+        .trim();
+}
+
 function checkRule17Layout(node, context) {
     const details = getContainerDetails(node);
     if (!details || details.items.length < 2) {
@@ -49,6 +63,15 @@ function checkRule17Layout(node, context) {
     }
 
     const lines = sourceCode.lines;
+    const compactCandidate = toCompactSingleLine(sourceCode.getText(node));
+    if (compactCandidate.length <= MAX_LINE_LENGTH) {
+        context.report({
+            node,
+            message: `Rule 17: this comma-separated initializer can fit on one line (${compactCandidate.length} chars); use the most compact one-line form.`
+        });
+        return;
+    }
+
     const itemLines = getMemberStartLines(details.items);
     if (itemLines.length === 0) {
         return;
