@@ -5,6 +5,7 @@
 
 import { CreatureArchetype } from './creatureTypes.js';
 
+// todo move this archetypes stuff to a different separate file.
 const creatureArchetypes: Record<string, CreatureArchetype> = {
     human: {
         id: 'human',
@@ -63,13 +64,19 @@ const creatureArchetypes: Record<string, CreatureArchetype> = {
 };
 
 export const balanceConfig = {
+
+    // todo villageCreationRateMultiplier will work with single type of village generation. We have only 1 way now - generation on map creation.
+    // So it should not be global in fact. Maybe it's not even needed if its functionality is handled in other config. 
+    
     // Global multiplier that scales all automatic village creation systems.
     // 1 = baseline density, 0.333... = roughly 3x fewer initially generated villages.
     villageCreationRateMultiplier: 1 / 3,
     questUi: {
+        // todo feedbackMessageDurationMs should not be in balance config. Move it to theme config. As it doesn't affect game balance.
         // Time a quest feedback message stays visible (milliseconds)
         feedbackMessageDurationMs: 5000,
     },
+    // todo move questNameGeneration to theme config.
     questNameGeneration: {
         // Maximum number of words allowed per generated name for each quest text domain.
         maxWordsByDomain: {
