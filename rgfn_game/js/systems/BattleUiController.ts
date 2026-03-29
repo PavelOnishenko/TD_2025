@@ -4,7 +4,7 @@ import Player from '../entities/Player.js';
 import Skeleton from '../entities/Skeleton.js';
 import { Direction } from '../types/game.js';
 import MagicSystem from './magic/MagicSystem.js';
-import { balanceConfig } from '../config/balanceConfig.js';
+import { balanceConfig } from '../config/balance/balanceConfig.js';
 import { CombatMove } from './combat/DirectionalCombat.js';
 
 type BattleUI = {

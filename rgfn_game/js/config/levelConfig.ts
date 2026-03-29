@@ -3,7 +3,7 @@
  * Defines XP requirements, stat formulas, and progression
  */
 
-import { balanceConfig } from './balanceConfig.js';
+import { balanceConfig } from './balance/balanceConfig.js';
 
 // Re-export for convenience
 export const levelConfig = balanceConfig.leveling;

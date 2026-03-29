@@ -10,7 +10,7 @@ import {
     calculateMana,
     levelConfig
 } from '../config/levelConfig.js';
-import { balanceConfig } from '../config/balanceConfig.js';
+import { balanceConfig } from '../config/balance/balanceConfig.js';
 import { cloneBaseStats, normalizeCreatureSkills } from '../config/creatureStats.js';
 import { CreatureBaseStats, CreatureSkills } from '../config/creatureTypes.js';
 import Item from './Item.js';

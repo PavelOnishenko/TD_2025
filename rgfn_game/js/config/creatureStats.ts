@@ -1,4 +1,4 @@
-import { balanceConfig } from './balanceConfig.js';
+import { balanceConfig } from './balance/balanceConfig.js';
 import {
     CreatureArchetype,
     CreatureBaseStats,

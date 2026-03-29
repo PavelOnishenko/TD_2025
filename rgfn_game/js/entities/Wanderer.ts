@@ -1,5 +1,5 @@
 import { randomInt } from '../../../engine/utils/MathUtils.js';
-import { balanceConfig } from '../config/balanceConfig.js';
+import { balanceConfig } from '../config/balance/balanceConfig.js';
 import { deriveCreatureStats, formatCreatureSkills, normalizeCreatureSkills } from '../config/creatureStats.js';
 import { calculateBowDamageBonus, calculateMeleeDamageBonus } from '../config/levelConfig.js';
 import { CreatureSkill, CreatureSkills, CREATURE_SKILLS } from '../config/creatureTypes.js';

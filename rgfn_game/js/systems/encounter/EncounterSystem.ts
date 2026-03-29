@@ -1,5 +1,5 @@
 import { randomInt } from '../../../../engine/utils/MathUtils.js';
-import { balanceConfig } from '../../config/balanceConfig.js';
+import { balanceConfig } from '../../config/balance/balanceConfig.js';
 import Item from '../../entities/Item.js';
 import Skeleton from '../../entities/Skeleton.js';
 import Wanderer from '../../entities/Wanderer.js';

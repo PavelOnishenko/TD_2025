@@ -2,7 +2,7 @@ import GridMap from '../../utils/GridMap.js';
 import { FogState, MapDisplayConfig, TerrainData, GridPosition, Direction, GridCell, TerrainNeighbors, TerrainType, SelectedWorldCellInfo } from '../../types/game.js';
 import { theme } from '../../config/ThemeConfig.js';
 import WorldMapRenderer from './WorldMapRenderer.js';
-import { balanceConfig } from '../../config/balanceConfig.js';
+import { balanceConfig } from '../../config/balance/balanceConfig.js';
 import { generateVillageName } from './VillageNameGenerator.js';
 
 export type KnownVillage = {

@@ -4,7 +4,7 @@ import StateMachine from '../../utils/StateMachine.js';
 import Player from '../../entities/Player.js';
 import Skeleton from '../../entities/Skeleton.js';
 import timingConfig from '../../config/timingConfig.js';
-import { balanceConfig } from '../../config/balanceConfig.js';
+import { balanceConfig } from '../../config/balance/balanceConfig.js';
 import MagicSystem, { BaseSpellId } from '../magic/MagicSystem.js';
 import Item, { DISCOVERABLE_ITEM_LIBRARY } from '../../entities/Item.js';
 import Wanderer from '../../entities/Wanderer.js';

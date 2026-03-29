@@ -7,7 +7,7 @@ import Item from '../entities/Item.js';
 import Wanderer from '../entities/Wanderer.js';
 import { ItemDiscoverySplash } from '../ui/ItemDiscoverySplash.js';
 import { Direction, TerrainType } from '../types/game.js';
-import { balanceConfig } from '../config/balanceConfig.js';
+import { balanceConfig } from '../config/balance/balanceConfig.js';
 
 type WorldModeCallbacks = {
     onEnterVillage: () => void;
