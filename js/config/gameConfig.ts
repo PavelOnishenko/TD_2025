@@ -38,11 +38,11 @@ interface GameConfig {
 const hasAcknowledged = (context: TutorialContext | undefined, id: string): boolean => Boolean(context?.acknowledgedSteps?.has?.(id));
 const hasMerges = (context: TutorialContext | undefined): boolean => Number(context?.merges ?? 0) > 0;
 const hasRemovals = (context: TutorialContext | undefined): boolean => Number(context?.removals ?? 0) > 0;
-const hasEnergyGain = (context: TutorialContext | undefined): boolean => Number(context?.energyGained ?? 0) > 0;
-const hasEnergyGainFromGame = (game: MergeGame | undefined): boolean => Number.isFinite(game?.energy)
+const _hasEnergyGain = (context: TutorialContext | undefined): boolean => Number(context?.energyGained ?? 0) > 0;
+const _hasEnergyGainFromGame = (game: MergeGame | undefined): boolean => Number.isFinite(game?.energy)
     && Number.isFinite(game?.initialEnergy)
     && game.energy > game.initialEnergy;
-const hasScoreProgress = (game: MergeGame | undefined, context: TutorialContext | undefined): boolean => {
+const _hasScoreProgress = (game: MergeGame | undefined, context: TutorialContext | undefined): boolean => {
     const scoreFromContext = Number(context?.scoreTotal ?? 0);
     const gained = Number(context?.scoreGained ?? 0);
     const score = game?.scoreManager ? game.scoreManager.getCurrentScore() : 0;
@@ -57,13 +57,13 @@ const hasMergeableTowers = (game: MergeGame | undefined): boolean => {
     const rows = [game.grid.topCells, game.grid.bottomCells];
 
     for (const row of rows) {
-        if (!Array.isArray(row)) continue;
+        if (!Array.isArray(row)) {continue;}
 
         for (let i = 0; i < row.length - 1; i++) {
             const cellA = row[i];
             const cellB = row[i + 1];
 
-            if (!cellA?.occupied || !cellB?.occupied) continue;
+            if (!cellA?.occupied || !cellB?.occupied) {continue;}
 
             const towerA = game.getTowerAt?.(cellA);
             const towerB = game.getTowerAt?.(cellB);

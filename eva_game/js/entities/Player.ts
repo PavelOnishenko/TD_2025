@@ -549,7 +549,7 @@ export default class Player extends Entity {
         return (this.facingRight && dx > 0) || (!this.facingRight && dx < 0);
     }
 
-    public draw(ctx: CanvasRenderingContext2D, viewport?: Viewport): void {
+    public draw(ctx: CanvasRenderingContext2D, _viewport?: Viewport): void {
         const screenX: number = this.x;
         const baseY: number = this.y;
         const screenY: number = baseY + this.jumpVisualOffset;

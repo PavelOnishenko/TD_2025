@@ -134,7 +134,15 @@ export default class HudController {
     private pendingSkillAllocations: PendingSkillAllocations = { vitality: 0, toughness: 0, strength: 0, agility: 0, connection: 0, intelligence: 0 };
     private onBattleEquipmentAction: BattleEquipmentActionHandler | null;
 
-    constructor(player: Player, hudElements: HudElements, battleUI: BattleUiHudElements, magicSystem: MagicSystem, gameLog: HTMLElement, loreBookController: LoreBookController, onBattleEquipmentAction?: BattleEquipmentActionHandler) {
+    constructor(
+        player: Player,
+        hudElements: HudElements,
+        battleUI: BattleUiHudElements,
+        magicSystem: MagicSystem,
+        gameLog: HTMLElement,
+        loreBookController: LoreBookController,
+        onBattleEquipmentAction?: BattleEquipmentActionHandler,
+    ) {
         this.player = player;
         this.hudElements = hudElements;
         this.battleUI = battleUI;

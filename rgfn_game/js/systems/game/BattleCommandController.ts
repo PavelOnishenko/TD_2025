@@ -178,7 +178,7 @@ export default class BattleCommandController {
     }
 
     public handleWait(): void { /* unchanged */
-        if (!this.canUseBattleTurnInput()) return;
+        if (!this.canUseBattleTurnInput()) {return;}
         this.callbacks.onEnableBattleButtons(false);
         this.callbacks.onPlayerTurnTransitionStart();
         this.turnManager.waitingForPlayer = false;
@@ -191,8 +191,8 @@ export default class BattleCommandController {
 
     public handleUseManaPotion(fromBattleControls: boolean): void {
         const inBattle = this.stateMachine.isInState('BATTLE');
-        if (fromBattleControls && !inBattle) return;
-        if (inBattle && !this.canUseBattleTurnInput()) return;
+        if (fromBattleControls && !inBattle) {return;}
+        if (inBattle && !this.canUseBattleTurnInput()) {return;}
 
         if (!this.player.useManaPotion()) {
             this.callbacks.onAddBattleLog('No mana potions in inventory.', 'system');
@@ -203,7 +203,7 @@ export default class BattleCommandController {
         this.callbacks.onAddBattleLog(`You drink a mana potion (+${balanceConfig.combat.manaPotionRestore} mana).`, inBattle ? 'player' : 'system');
         this.callbacks.onUpdateHUD();
 
-        if (!inBattle) return;
+        if (!inBattle) {return;}
 
         this.player.expireDirectionalBonusesWithoutAttack().forEach((message) => this.callbacks.onAddBattleLog(message, 'system'));
         this.callbacks.onEnableBattleButtons(false);
@@ -215,8 +215,8 @@ export default class BattleCommandController {
 
     public handleUsePotion(fromBattleControls: boolean): void {
         const inBattle = this.stateMachine.isInState('BATTLE');
-        if (fromBattleControls && !inBattle) return;
-        if (inBattle && !this.canUseBattleTurnInput()) return;
+        if (fromBattleControls && !inBattle) {return;}
+        if (inBattle && !this.canUseBattleTurnInput()) {return;}
 
         if (!this.player.useHealingPotion()) {
             this.callbacks.onAddBattleLog('No healing potions in inventory.', 'system');
@@ -227,7 +227,7 @@ export default class BattleCommandController {
         this.callbacks.onAddBattleLog('You drink a healing potion (+5 HP).', inBattle ? 'player' : 'system');
         this.callbacks.onUpdateHUD();
 
-        if (!inBattle) return;
+        if (!inBattle) {return;}
 
         this.player.expireDirectionalBonusesWithoutAttack().forEach((message) => this.callbacks.onAddBattleLog(message, 'system'));
         this.callbacks.onEnableBattleButtons(false);
@@ -264,20 +264,20 @@ export default class BattleCommandController {
     private resolveAttackTarget(enemies: Skeleton[]): Skeleton | null {
         const selectedEnemy = this.callbacks.getSelectedEnemy();
         const attackRange = this.player.getAttackRange();
-        if (selectedEnemy && !selectedEnemy.isDead() && this.battleMap.isInAttackRange(this.player, selectedEnemy, attackRange)) return selectedEnemy;
+        if (selectedEnemy && !selectedEnemy.isDead() && this.battleMap.isInAttackRange(this.player, selectedEnemy, attackRange)) {return selectedEnemy;}
         return enemies.find((enemy) => this.battleMap.isInAttackRange(this.player, enemy, attackRange)) ?? null;
     }
 
     private resolveSpellTarget(spellId: BaseSpellId, enemies: Skeleton[]): Skeleton | null {
         const selectedEnemy = this.callbacks.getSelectedEnemy();
         const spellRange = (spellId === 'slow' ? balanceConfig.combat.spellRanges.slow : undefined) ?? this.player.getAttackRange();
-        if (selectedEnemy && !selectedEnemy.isDead() && this.battleMap.isInAttackRange(this.player, selectedEnemy, spellRange)) return selectedEnemy;
+        if (selectedEnemy && !selectedEnemy.isDead() && this.battleMap.isInAttackRange(this.player, selectedEnemy, spellRange)) {return selectedEnemy;}
         return enemies.find((enemy) => this.battleMap.isInAttackRange(this.player, enemy, spellRange)) ?? null;
     }
 
     private resolveDirectionalTarget(enemies: Skeleton[]): Skeleton | null {
         const selectedEnemy = this.callbacks.getSelectedEnemy();
-        if (selectedEnemy && !selectedEnemy.isDead() && this.battleMap.isInMeleeRange(this.player, selectedEnemy)) return selectedEnemy;
+        if (selectedEnemy && !selectedEnemy.isDead() && this.battleMap.isInMeleeRange(this.player, selectedEnemy)) {return selectedEnemy;}
         return enemies.find((enemy) => this.battleMap.isInMeleeRange(this.player, enemy)) ?? null;
     }
 

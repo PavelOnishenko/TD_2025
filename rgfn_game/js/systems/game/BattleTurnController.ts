@@ -101,7 +101,12 @@ export default class BattleTurnController {
     }
 
     private performEnemyAttack(enemy: Skeleton): void {
-        const caster = enemy as Skeleton & { canUseMagic?: () => boolean; getMagicManaCost?: () => number; getMagicDamage?: () => number; spendMana?: (amount: number) => void };
+        const caster = enemy as Skeleton & {
+            canUseMagic?: () => boolean;
+            getMagicManaCost?: () => number;
+            getMagicDamage?: () => number;
+            spendMana?: (amount: number) => void;
+        };
         if (caster.canUseMagic && caster.canUseMagic() && Math.random() < 0.35) {
             enemy.expireDirectionalBonusesWithoutAttack().forEach((message) => this.callbacks.onAddBattleLog(message, 'system'));
             const magicDamage = caster.getMagicDamage ? caster.getMagicDamage() : enemy.damage;

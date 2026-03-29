@@ -128,7 +128,12 @@ export default class BattleMap {
         }
 
         const obstacle = this.obstacles.get(this.getCellKey(this.selectedGridPos.col, this.selectedGridPos.row));
-        const occupant = this.entities.find((entity) => entity.gridCol === this.selectedGridPos?.col && entity.gridRow === this.selectedGridPos?.row && !entity.isDead()) ?? null;
+        const occupant = this.entities.find(
+            (entity) =>
+                entity.gridCol === this.selectedGridPos?.col
+                && entity.gridRow === this.selectedGridPos?.row
+                && !entity.isDead()
+        ) ?? null;
         const occupantType = occupant ? (occupant.constructor.name === 'Player' ? 'player' : 'enemy') : null;
         const occupantName = this.getOccupantDisplayName(occupant);
 

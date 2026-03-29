@@ -309,27 +309,67 @@ export default class BattleMapView {
     private getTerrainPalette(terrainType: TerrainType, lightVariant: boolean): { base: string; shade: string; detail: string } {
         if (terrainType === 'forest') {
             return lightVariant
-                ? { base: this.mixColors(theme.worldMap.terrain.forest, theme.ui.panelHighlight, 0.14), shade: this.mixColors(theme.worldMap.terrain.forest, theme.ui.primaryAccent, 0.12), detail: this.withAlpha(theme.ui.panelHighlight, 0.16) }
-                : { base: this.mixColors(theme.worldMap.terrain.forest, theme.ui.primaryAccent, 0.08), shade: this.mixColors(theme.worldMap.terrain.forest, theme.ui.primaryAccent, 0.18), detail: this.withAlpha(theme.ui.panelHighlight, 0.12) };
+                ? {
+                    base: this.mixColors(theme.worldMap.terrain.forest, theme.ui.panelHighlight, 0.14),
+                    shade: this.mixColors(theme.worldMap.terrain.forest, theme.ui.primaryAccent, 0.12),
+                    detail: this.withAlpha(theme.ui.panelHighlight, 0.16),
+                }
+                : {
+                    base: this.mixColors(theme.worldMap.terrain.forest, theme.ui.primaryAccent, 0.08),
+                    shade: this.mixColors(theme.worldMap.terrain.forest, theme.ui.primaryAccent, 0.18),
+                    detail: this.withAlpha(theme.ui.panelHighlight, 0.12),
+                };
         }
         if (terrainType === 'mountain') {
             return lightVariant
-                ? { base: this.mixColors(theme.worldMap.terrain.mountain, theme.ui.panelHighlight, 0.18), shade: this.mixColors(theme.worldMap.terrain.mountain, theme.ui.primaryAccent, 0.16), detail: this.withAlpha(theme.ui.primaryAccent, 0.18) }
-                : { base: this.mixColors(theme.worldMap.terrain.mountain, theme.ui.primaryAccent, 0.08), shade: this.mixColors(theme.worldMap.terrain.mountain, theme.ui.primaryAccent, 0.24), detail: this.withAlpha(theme.ui.panelHighlight, 0.12) };
+                ? {
+                    base: this.mixColors(theme.worldMap.terrain.mountain, theme.ui.panelHighlight, 0.18),
+                    shade: this.mixColors(theme.worldMap.terrain.mountain, theme.ui.primaryAccent, 0.16),
+                    detail: this.withAlpha(theme.ui.primaryAccent, 0.18),
+                }
+                : {
+                    base: this.mixColors(theme.worldMap.terrain.mountain, theme.ui.primaryAccent, 0.08),
+                    shade: this.mixColors(theme.worldMap.terrain.mountain, theme.ui.primaryAccent, 0.24),
+                    detail: this.withAlpha(theme.ui.panelHighlight, 0.12),
+                };
         }
         if (terrainType === 'water') {
             return lightVariant
-                ? { base: this.mixColors(theme.worldMap.terrain.water, theme.ui.panelHighlight, 0.22), shade: this.mixColors(theme.worldMap.terrain.water, theme.ui.primaryAccent, 0.1), detail: this.withAlpha(theme.ui.panelHighlight, 0.2) }
-                : { base: this.mixColors(theme.worldMap.terrain.water, theme.ui.primaryAccent, 0.02), shade: this.mixColors(theme.worldMap.terrain.water, theme.ui.primaryAccent, 0.16), detail: this.withAlpha(theme.ui.panelHighlight, 0.16) };
+                ? {
+                    base: this.mixColors(theme.worldMap.terrain.water, theme.ui.panelHighlight, 0.22),
+                    shade: this.mixColors(theme.worldMap.terrain.water, theme.ui.primaryAccent, 0.1),
+                    detail: this.withAlpha(theme.ui.panelHighlight, 0.2),
+                }
+                : {
+                    base: this.mixColors(theme.worldMap.terrain.water, theme.ui.primaryAccent, 0.02),
+                    shade: this.mixColors(theme.worldMap.terrain.water, theme.ui.primaryAccent, 0.16),
+                    detail: this.withAlpha(theme.ui.panelHighlight, 0.16),
+                };
         }
         if (terrainType === 'desert') {
             return lightVariant
-                ? { base: this.mixColors(theme.worldMap.terrain.desert, theme.ui.panelHighlight, 0.15), shade: this.mixColors(theme.worldMap.terrain.desert, theme.ui.secondaryAccent, 0.1), detail: this.withAlpha(theme.ui.primaryAccent, 0.12) }
-                : { base: this.mixColors(theme.worldMap.terrain.desert, theme.ui.secondaryAccent, 0.04), shade: this.mixColors(theme.worldMap.terrain.desert, theme.ui.primaryAccent, 0.12), detail: this.withAlpha(theme.ui.primaryAccent, 0.1) };
+                ? {
+                    base: this.mixColors(theme.worldMap.terrain.desert, theme.ui.panelHighlight, 0.15),
+                    shade: this.mixColors(theme.worldMap.terrain.desert, theme.ui.secondaryAccent, 0.1),
+                    detail: this.withAlpha(theme.ui.primaryAccent, 0.12),
+                }
+                : {
+                    base: this.mixColors(theme.worldMap.terrain.desert, theme.ui.secondaryAccent, 0.04),
+                    shade: this.mixColors(theme.worldMap.terrain.desert, theme.ui.primaryAccent, 0.12),
+                    detail: this.withAlpha(theme.ui.primaryAccent, 0.1),
+                };
         }
         return lightVariant
-            ? { base: this.mixColors(theme.worldMap.terrain.grass, theme.ui.panelHighlight, 0.14), shade: this.mixColors(theme.worldMap.terrain.grass, theme.ui.primaryAccent, 0.08), detail: this.withAlpha(theme.ui.panelHighlight, 0.13) }
-            : { base: this.mixColors(theme.worldMap.terrain.grass, theme.ui.primaryAccent, 0.05), shade: this.mixColors(theme.worldMap.terrain.grass, theme.ui.primaryAccent, 0.12), detail: this.withAlpha(theme.ui.primaryAccent, 0.1) };
+            ? {
+                base: this.mixColors(theme.worldMap.terrain.grass, theme.ui.panelHighlight, 0.14),
+                shade: this.mixColors(theme.worldMap.terrain.grass, theme.ui.primaryAccent, 0.08),
+                detail: this.withAlpha(theme.ui.panelHighlight, 0.13),
+            }
+            : {
+                base: this.mixColors(theme.worldMap.terrain.grass, theme.ui.primaryAccent, 0.05),
+                shade: this.mixColors(theme.worldMap.terrain.grass, theme.ui.primaryAccent, 0.12),
+                detail: this.withAlpha(theme.ui.primaryAccent, 0.1),
+            };
     }
 
     private getObstacleAccent(terrainType: TerrainType): string {

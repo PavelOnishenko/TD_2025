@@ -80,7 +80,7 @@ export default class EncounterResolver {
     }
 
     private createRandomItemEncounter(): EncounterResult {
-        const discoverableItems: Item[] = [new Item(HEALING_POTION_ITEM), new Item(MANA_POTION_ITEM)];
+        const _discoverableItems: Item[] = [new Item(HEALING_POTION_ITEM), new Item(MANA_POTION_ITEM)];
         const weightedPool = balanceConfig.items.discoveryPool;
         const totalWeight = weightedPool.reduce((sum, item) => sum + item.weight, 0);
 

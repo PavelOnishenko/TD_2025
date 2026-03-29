@@ -209,7 +209,13 @@ export default class PlayerInventory {
         this.hooks.onEquipmentChanged();
     }
 
-    public restoreState(itemIds: string[], equippedWeaponId: string | null, equippedArmorId: string | null, itemFactory: (id: string) => Item | null, equippedOffhandWeaponId?: string | null): void {
+    public restoreState(
+        itemIds: string[],
+        equippedWeaponId: string | null,
+        equippedArmorId: string | null,
+        itemFactory: (id: string) => Item | null,
+        equippedOffhandWeaponId?: string | null,
+    ): void {
         this.inventory.length = 0;
         for (const itemId of itemIds) {
             const item = itemFactory(itemId);
