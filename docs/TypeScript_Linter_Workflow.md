@@ -104,8 +104,8 @@ These must be checked by the author and reviewer during implementation and revie
 
 `style-guide/rule17-comma-layout` now validates comma-separated object/array initializers and destructuring patterns (`ObjectExpression`, `ArrayExpression`, `ObjectPattern`, `ArrayPattern`) with these checks:
 
-1. If initialization spans multiple lines, opening and closing braces/brackets must be on dedicated surrounding lines.
-2. Members must remain strictly between those surrounding lines.
+1. If initialization spans multiple lines, members must sit between surrounding opening/closing brace-or-bracket lines (the brace/bracket lines may contain additional syntax such as `foo(`, `)`, or `;`).
+2. Dedicated brace-only lines are **not** required; only the member block must be visually surrounded by those lines.
 3. Internal member-line grouping must be one of:
    - one internal line,
    - two internal lines,
@@ -118,6 +118,7 @@ Implementation reference:
 
 - `js/rule17CommaLayout.mjs`
 - `eslint.config.mjs`
+- Practical exception captured from review feedback: `someCall({\n  a,\n  b,\n});` is valid Rule 17 multiline form even though `{` and `}` share lines with other tokens.
 
 ## Recommended task template (copy-paste)
 

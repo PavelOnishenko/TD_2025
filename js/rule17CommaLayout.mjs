@@ -52,17 +52,6 @@ function checkRule17Layout(node, context) {
     }
 
     const lines = sourceCode.lines;
-    const openLineText = lines[startLine - 1] || '';
-    const closeLineText = lines[endLine - 1] || '';
-
-    if (openLineText.trim() !== details.opener || closeLineText.trim() !== details.closer) {
-        context.report({
-            node,
-            message: 'Rule 17: multiline collections/initializers must place opening and closing braces/brackets on dedicated surrounding lines.'
-        });
-        return;
-    }
-
     const itemLines = getDistinctLines(details.items);
     if (itemLines.length === 0) {
         return;
@@ -74,7 +63,7 @@ function checkRule17Layout(node, context) {
     if (minItemLine <= startLine || maxItemLine >= endLine) {
         context.report({
             node,
-            message: 'Rule 17: all comma-separated members must stay between the surrounding brace/bracket lines.'
+            message: 'Rule 17: multiline comma-separated members must be placed between surrounding opening and closing brace/bracket lines.'
         });
         return;
     }
