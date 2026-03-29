@@ -158,13 +158,9 @@ export default class QuestPackService {
         }
     }
 
-    private pickSource(domain: QuestNameDomain): PackSource {
-        return this.random.pick(this.sources.filter((source) => source.domain === domain && source.available));
-    }
+    private pickSource = (domain: QuestNameDomain): PackSource => this.random.pick(this.sources.filter((source) => source.domain === domain && source.available));
 
-    private localSource(domain: QuestNameDomain): PackSource {
-        return { type: 'local-pattern', domain, available: true, generate: (limit) => this.localPack(domain, limit) };
-    }
+    private localSource = (domain: QuestNameDomain): PackSource => ({ type: 'local-pattern', domain, available: true, generate: (limit) => this.localPack(domain, limit) });
 
     private async localPack(domain: QuestNameDomain, limit: number): Promise<string[]> {
         const options = LOCAL_PATTERNS.filter((item) => item.domain === domain && item.tokens.length <= limit);
@@ -173,9 +169,7 @@ export default class QuestPackService {
     }
 
 
-    private mapVillageSource(): PackSource {
-        return { type: 'map-village', domain: 'location', available: true, generate: () => this.mapVillagePack() };
-    }
+    private mapVillageSource = (): PackSource => ({ type: 'map-village', domain: 'location', available: true, generate: () => this.mapVillagePack() });
 
     private async mapVillagePack(): Promise<string[]> {
         const villageNames = (await this.locationNamesProvider())
@@ -188,9 +182,7 @@ export default class QuestPackService {
         return selected ? [selected] : [];
     }
 
-    private locationSource(): PackSource {
-        return { type: 'remote-location', domain: 'location', available: false, generate: () => this.fetchLocationPack() };
-    }
+    private locationSource = (): PackSource => ({ type: 'remote-location', domain: 'location', available: false, generate: () => this.fetchLocationPack() });
 
     private async fetchLocationPack(): Promise<string[]> {
         const response = await this.fetchImpl(PLACE_URL);
@@ -199,9 +191,7 @@ export default class QuestPackService {
         return this.wordList(this.random.pick(choices)).slice(0, 3);
     }
 
-    private nameSource(domain: QuestNameDomain): PackSource {
-        return { type: 'remote-name', domain, available: false, generate: (limit) => this.fetchName(limit) };
-    }
+    private nameSource = (domain: QuestNameDomain): PackSource => ({ type: 'remote-name', domain, available: false, generate: (limit) => this.fetchName(limit) });
 
     private async fetchName(limit: number): Promise<string[]> {
         const response = await this.fetchImpl(NAME_URL);
@@ -210,25 +200,15 @@ export default class QuestPackService {
         return [name.first, name.last].map((part) => part.toLowerCase()).slice(0, limit);
     }
 
-    private echoSource(domain: QuestNameDomain): PackSource {
-        return { type: 'echo', domain, available: true, generate: (limit) => Promise.resolve(this.echoPack(limit)) };
-    }
+    private echoSource = (domain: QuestNameDomain): PackSource => ({ type: 'echo', domain, available: true, generate: (limit) => Promise.resolve(this.echoPack(limit)) });
 
-    private echoPack(limit: number): string[] {
-        return Array.from({ length: Math.max(1, limit) }, () => `${this.random.pick(ECHO_SYLLABLES)}${this.random.pick(ECHO_SYLLABLES)}`);
-    }
+    private echoPack = (limit: number): string[] => Array.from({ length: Math.max(1, limit) }, () => `${this.random.pick(ECHO_SYLLABLES)}${this.random.pick(ECHO_SYLLABLES)}`);
 
-    private titleCase(words: string[]): string {
-        return words.map((word) => this.capitalizeWord(word)).join(' ');
-    }
+    private titleCase = (words: string[]): string => words.map((word) => this.capitalizeWord(word)).join(' ');
 
-    private capitalizeWord(word: string): string {
-        return word.split('-').map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join('-');
-    }
+    private capitalizeWord = (word: string): string => word.split('-').map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join('-');
 
-    private wordList(text: string): string[] {
-        return text.split(/\s+/).map((word) => word.trim()).filter(Boolean);
-    }
+    private wordList = (text: string): string[] => text.split(/\s+/).map((word) => word.trim()).filter(Boolean);
 
     private async readTextAsset(path: string): Promise<string> {
         const url = new URL(path, import.meta.url);

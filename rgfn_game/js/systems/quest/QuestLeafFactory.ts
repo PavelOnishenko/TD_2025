@@ -183,32 +183,22 @@ export default class QuestLeafFactory {
         );
     }
 
-    private removeText(amount: number, target: GeneratedName, where: string): string {
-        return `Remove ${amount} ${this.pluralLabel(target, amount)}${where}.`;
-    }
+    private removeText = (amount: number, target: GeneratedName, where: string): string => `Remove ${amount} ${this.pluralLabel(target, amount)}${where}.`;
 
-    private killText(amount: number, target: GeneratedName, where: string): string {
-        return `Kill ${amount} ${this.pluralLabel(target, amount)}${where}.`;
-    }
+    private killText = (amount: number, target: GeneratedName, where: string): string => `Kill ${amount} ${this.pluralLabel(target, amount)}${where}.`;
 
-    private pluralLabel(name: GeneratedName, count: number): string {
-        return `${this.label(name)}${count > 1 ? 's' : ''}`;
-    }
+    private pluralLabel = (name: GeneratedName, count: number): string => `${this.label(name)}${count > 1 ? 's' : ''}`;
 
-    private async rareMonsterProfile(): Promise<RareMonsterProfile> {
-        return {
-            name: await this.generateName('monster'),
-            count: this.random.nextInt(1, 3),
-            stats: this.pickMany(MONSTER_STATS, 2),
-            effects: this.pickMany(MONSTER_EFFECTS, 2),
-            bonus: this.random.pick(MONSTER_BONUSES),
-            mutatedFrom: this.random.pick(MUTATED_FROM_SPECIES),
-        };
-    }
+    private rareMonsterProfile = async (): Promise<RareMonsterProfile> => ({
+        name: await this.generateName('monster'),
+        count: this.random.nextInt(1, 3),
+        stats: this.pickMany(MONSTER_STATS, 2),
+        effects: this.pickMany(MONSTER_EFFECTS, 2),
+        bonus: this.random.pick(MONSTER_BONUSES),
+        mutatedFrom: this.random.pick(MUTATED_FROM_SPECIES),
+    });
 
-    private async generateName(domain: 'location' | 'artifact' | 'character' | 'monster'): Promise<GeneratedName> {
-        return this.packService.generateName(domain, this.maxWordsByDomain[domain]);
-    }
+    private generateName = (domain: 'location' | 'artifact' | 'character' | 'monster'): Promise<GeneratedName> => this.packService.generateName(domain, this.maxWordsByDomain[domain]);
 
     private pickMany(pool: string[], count: number): string[] {
         const selected = new Set<string>();
@@ -227,9 +217,7 @@ export default class QuestLeafFactory {
         return Array.from(selected);
     }
 
-    private label(name: GeneratedName): string {
-        return name.text;
-    }
+    private label = (name: GeneratedName): string => name.text;
 
     private entities(...names: Array<GeneratedName | null>): QuestTextEntity[] {
         const unique = new Map<string, QuestTextEntity>();
@@ -259,7 +247,7 @@ export default class QuestLeafFactory {
         return Array.from(unique.values());
     }
 
-    private node(
+    private node = (
         id: string,
         title: string,
         description: string,
@@ -267,7 +255,5 @@ export default class QuestLeafFactory {
         objectiveType: QuestObjectiveType,
         entities: QuestTextEntity[],
         objectiveData?: QuestObjectiveData,
-    ): QuestNode {
-        return { id, title, description, conditionText, objectiveType, entities, objectiveData, children: [] };
-    }
+    ): QuestNode => ({ id, title, description, conditionText, objectiveType, entities, objectiveData, children: [] });
 }

@@ -179,30 +179,20 @@ export default class QuestUiController {
         return preorderNodes.length - 1;
     }
 
-    private nodeMarkup(quest: QuestNode): string {
-        return `${this.titleMarkup(quest)}${this.descriptionMarkup(quest)}${this.conditionMarkup(quest)}`;
-    }
+    private nodeMarkup = (quest: QuestNode): string => `${this.titleMarkup(quest)}${this.descriptionMarkup(quest)}${this.conditionMarkup(quest)}`;
 
     private titleMarkup(quest: QuestNode): string {
         const completionPrefix = quest.isCompleted ? '<span class="quest-node-check" aria-hidden="true">✓ </span>' : '';
         return `<div class="quest-node-title">${completionPrefix}${this.formatText(quest.title, quest)}</div>`;
     }
 
-    private descriptionMarkup(quest: QuestNode): string {
-        return this.shouldRenderDescription(quest) ? `<div class="quest-node-description">${this.formatText(quest.description, quest)}</div>` : '';
-    }
+    private descriptionMarkup = (quest: QuestNode): string => this.shouldRenderDescription(quest) ? `<div class="quest-node-description">${this.formatText(quest.description, quest)}</div>` : '';
 
-    private conditionMarkup(quest: QuestNode): string {
-        return this.shouldRenderCondition(quest) ? `<div class="quest-node-condition">Condition: ${this.formatText(quest.conditionText, quest)}</div>` : '';
-    }
+    private conditionMarkup = (quest: QuestNode): string => this.shouldRenderCondition(quest) ? `<div class="quest-node-condition">Condition: ${this.formatText(quest.conditionText, quest)}</div>` : '';
 
-    private shouldRenderDescription(quest: QuestNode): boolean {
-        return quest.description.trim().length > 0 && !DEFAULT_DESCRIPTIONS.has(quest.description);
-    }
+    private shouldRenderDescription = (quest: QuestNode): boolean => quest.description.trim().length > 0 && !DEFAULT_DESCRIPTIONS.has(quest.description);
 
-    private shouldRenderCondition(quest: QuestNode): boolean {
-        return quest.conditionText.trim().length > 0 && !DEFAULT_CONDITIONS.has(quest.conditionText);
-    }
+    private shouldRenderCondition = (quest: QuestNode): boolean => quest.conditionText.trim().length > 0 && !DEFAULT_CONDITIONS.has(quest.conditionText);
 
     private formatText(text: string, quest: QuestNode): string {
         let markup = this.escapeHtml(text);
@@ -302,12 +292,10 @@ export default class QuestUiController {
         }
     }
 
-    private escapeHtml(text: string): string {
-        return text
-            .split('&').join('&amp;')
-            .split('<').join('&lt;')
-            .split('>').join('&gt;')
-            .split('"').join('&quot;')
-            .split("'").join('&#39;');
-    }
+    private escapeHtml = (text: string): string => text
+        .split('&').join('&amp;')
+        .split('<').join('&lt;')
+        .split('>').join('&gt;')
+        .split('"').join('&quot;')
+        .split("'").join('&#39;');
 }
