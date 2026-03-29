@@ -1,4 +1,3 @@
-```js
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
@@ -50,6 +49,7 @@ function createController({
     onPlayerMove: () => {},
     checkEncounter: () => false,
     generateEncounter: () => ({ type: 'none' }),
+    generateMonsterBattleEncounter: () => ({ type: 'battle', enemies: [] }),
     isEncounterTypeEnabled: () => true,
     ...encounterSystemOverrides,
   };
@@ -195,6 +195,61 @@ test('WorldModeController camp sleep recovers fatigue outside villages', () => {
   assert.equal(calls.fatigueRecovered, 1);
 });
 
+test('WorldModeController wild camp ambush starts a quest battle when quest encounter is available', () => {
+  const originalRandom = Math.random;
+  Math.random = () => 0;
+  const originalWindow = globalThis.window;
+  globalThis.window = { alert: () => {} };
+
+  const { controller, calls } = createController({
+    onVillage: false,
+    callbacksOverrides: {
+      getQuestBattleEncounter: () => {
+        calls.questEncounterChecks += 1;
+        return { enemies: [] };
+      },
+    },
+  });
+
+  try {
+    controller.handleCampSleep();
+  } finally {
+    Math.random = originalRandom;
+    globalThis.window = originalWindow;
+  }
+
+  assert.equal(calls.questEncounterChecks, 1);
+  assert.equal(calls.startedBattle, 1);
+});
+
+test('WorldModeController wild camp ambush starts a regular monster battle when no quest encounter exists', () => {
+  const originalRandom = Math.random;
+  Math.random = () => 0;
+  const originalWindow = globalThis.window;
+  globalThis.window = { alert: () => {} };
+  let generatedBattleCount = 0;
+
+  const { controller, calls } = createController({
+    onVillage: false,
+    encounterSystemOverrides: {
+      generateMonsterBattleEncounter: () => {
+        generatedBattleCount += 1;
+        return { type: 'battle', enemies: [] };
+      },
+    },
+  });
+
+  try {
+    controller.handleCampSleep();
+  } finally {
+    Math.random = originalRandom;
+    globalThis.window = originalWindow;
+  }
+
+  assert.equal(generatedBattleCount, 1);
+  assert.equal(calls.startedBattle, 1);
+});
+
 test('WorldModeController allows quest monster encounters when monster random encounters are enabled', () => {
   const { controller, calls } = createController({
     pressed: ['moveUp'],
@@ -239,4 +294,3 @@ test('WorldModeController blocks quest monster encounters when monster random en
   assert.equal(calls.questEncounterChecks, 0);
   assert.equal(calls.startedBattle, 0);
 });
-```

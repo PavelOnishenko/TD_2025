@@ -937,3 +937,35 @@ So tests asserting fixed literal HP values (for example zombie `7`) will fail wh
 ### Notes
 - This fix intentionally treats quest-generated monster packs as part of the same Monster encounter category exposed in Developer Console.
 - Item/traveler random encounter toggles are unaffected.
+
+## March 28, 2026 update: wild camp night ambush now launches full battles
+
+### Requested behavior
+- During wild **Camp Sleep (Risky)** ambush, do not only apply HP/mana loss + log.
+- Show explicit player-facing popup (`Night ambush!`) and launch full combat.
+- If a quest battle encounter is currently eligible, that quest encounter should be used first.
+
+### Implementation summary
+- `WorldModeController.handleCampSleep()` now triggers:
+  - popup (`window.alert('Night ambush!')`) when ambush occurs,
+  - quest battle start when `getQuestBattleEncounter()` returns enemies,
+  - regular monster battle via `EncounterSystem.generateMonsterBattleEncounter()` when no quest encounter is available.
+- `EncounterSystem` received `generateMonsterBattleEncounter()` to produce battle-only monster encounters (event type hard-locked to `monster`) and **throw immediately** if a non-battle encounter appears.
+
+### Validation
+1. Build:
+   - `npm run build:rgfn`
+2. Targeted test:
+   - `node --test rgfn_game/test/systems/worldModeController.test.js`
+3. Full RGFN test suite:
+   - `node --test rgfn_game/test/**/*.test.js`
+
+### Added/updated unit coverage
+- `worldModeController.test.js`
+  - verifies ambush starts quest battle when quest encounter exists,
+  - verifies ambush starts normal monster battle when quest encounter is absent,
+  - retains existing movement/village/quest-toggle coverage.
+
+### Engineering policy capture (March 29, 2026)
+- Default RGFN implementation stance: **fail fast and hard** for unexpected states; avoid silent/degrading fallbacks unless explicitly requested.
+- Any future ambush/encounter work should preserve this rule and prefer explicit errors over substitute behavior.
