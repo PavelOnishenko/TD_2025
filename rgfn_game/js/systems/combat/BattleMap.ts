@@ -105,9 +105,9 @@ export default class BattleMap {
         return true;
     }
 
-    public clearSelectedCell(): void {
+    public clearSelectedCell = (): void => {
         this.selectedGridPos = null;
-    }
+    };
 
     public getSelectedCellInfo(): SelectedBattleCellInfo | null {
         if (!this.selectedGridPos) {
@@ -169,17 +169,11 @@ export default class BattleMap {
         return col === 0 || col === lastCol || row === 0 || row === lastRow;
     }
 
-    public isObstacle(col: number, row: number): boolean {
-        return this.obstacles.has(this.getCellKey(col, row));
-    }
+    public isObstacle = (col: number, row: number): boolean => this.obstacles.has(this.getCellKey(col, row));
 
-    public getObstacles(): BattleObstacle[] {
-        return Array.from(this.obstacles.values());
-    }
+    public getObstacles = (): BattleObstacle[] => Array.from(this.obstacles.values());
 
-    private getPlayerSpawnPosition(): GridPosition {
-        return { col: Math.floor(this.grid.columns / 2), row: this.grid.rows - 2 };
-    }
+    private getPlayerSpawnPosition = (): GridPosition => ({ col: Math.floor(this.grid.columns / 2), row: this.grid.rows - 2 });
 
     private getEnemySpawnPositions(enemyCount: number): GridPosition[] {
         const clampedCount = Math.max(1, enemyCount);
@@ -283,17 +277,15 @@ export default class BattleMap {
         return candidates;
     }
 
-    private allEnemiesHaveMeleeLane(playerSpawn: GridPosition, enemySpawns: GridPosition[]): boolean {
-        return enemySpawns.every((spawn) => {
-            const reachableAdjacentCells = CARDINAL_STEPS
-                .map((step) => ({ col: spawn.col + step.col, row: spawn.row + step.row }))
-                .filter((candidate) => this.grid.isValidPosition(candidate.col, candidate.row) && !this.isObstacle(candidate.col, candidate.row));
+    private allEnemiesHaveMeleeLane = (playerSpawn: GridPosition, enemySpawns: GridPosition[]): boolean => enemySpawns.every((spawn) => {
+        const reachableAdjacentCells = CARDINAL_STEPS
+            .map((step) => ({ col: spawn.col + step.col, row: spawn.row + step.row }))
+            .filter((candidate) => this.grid.isValidPosition(candidate.col, candidate.row) && !this.isObstacle(candidate.col, candidate.row));
 
-            return reachableAdjacentCells.some((candidate) => this.findPath(playerSpawn, candidate, {
-                allowDestinationOccupied: false,
-            }) !== null);
-        });
-    }
+        return reachableAdjacentCells.some((candidate) => this.findPath(playerSpawn, candidate, {
+            allowDestinationOccupied: false,
+        }) !== null);
+    });
 
     private isWalkableArenaConnected(): boolean {
         const walkableCells: GridPosition[] = [];
@@ -332,9 +324,10 @@ export default class BattleMap {
         return visited.size === walkableCells.length;
     }
 
-    private countAdjacentObstacles(col: number, row: number): number {
-        return CARDINAL_STEPS.reduce((count, step) => count + (this.isObstacle(col + step.col, row + step.row) ? 1 : 0), 0);
-    }
+    private countAdjacentObstacles = (col: number, row: number): number => CARDINAL_STEPS.reduce(
+        (count, step) => count + (this.isObstacle(col + step.col, row + step.row) ? 1 : 0),
+        0,
+    );
 
     private placeEntity(entity: CombatEntity, col: number, row: number): void {
         entity.gridCol = col;
@@ -345,9 +338,7 @@ export default class BattleMap {
         this.entities.push(entity);
     }
 
-    private getEntityGridPosition(entity: CombatEntity): GridPosition {
-        return { col: entity.gridCol ?? 0, row: entity.gridRow ?? 0 };
-    }
+    private getEntityGridPosition = (entity: CombatEntity): GridPosition => ({ col: entity.gridCol ?? 0, row: entity.gridRow ?? 0 });
 
     private getDirectionalStep(source: GridPosition, direction: Direction): GridPosition {
         if (direction === 'up') {
@@ -373,13 +364,11 @@ export default class BattleMap {
         return true;
     }
 
-    private isOccupiedByLivingEntity(entity: CombatEntity, col: number, row: number): boolean {
-        return this.entities.some((currentEntity) => {
-            const isSameEntity = currentEntity === entity;
-            const sharesGridPosition = currentEntity.gridCol === col && currentEntity.gridRow === row;
-            return !isSameEntity && sharesGridPosition && !currentEntity.isDead();
-        });
-    }
+    private isOccupiedByLivingEntity = (entity: CombatEntity, col: number, row: number): boolean => this.entities.some((currentEntity) => {
+        const isSameEntity = currentEntity === entity;
+        const sharesGridPosition = currentEntity.gridCol === col && currentEntity.gridRow === row;
+        return !isSameEntity && sharesGridPosition && !currentEntity.isDead();
+    });
 
     private placeEntityAtCurrentGridPosition(entity: CombatEntity, col: number, row: number): void {
         entity.gridCol = col;
@@ -490,9 +479,7 @@ export default class BattleMap {
         return path.reverse();
     }
 
-    private getCellKey(col: number, row: number): string {
-        return `${col},${row}`;
-    }
+    private getCellKey = (col: number, row: number): string => `${col},${row}`;
 
     private shuffle<T>(items: T[]): T[] {
         const result = [...items];
@@ -505,11 +492,7 @@ export default class BattleMap {
         return result;
     }
 
-    private randomInt(min: number, max: number): number {
-        return Math.floor(Math.random() * ((max - min) + 1)) + min;
-    }
+    private randomInt = (min: number, max: number): number => Math.floor(Math.random() * ((max - min) + 1)) + min;
 
-    private formatObstacleName(kind: BattleObstacleKind): string {
-        return kind.charAt(0).toUpperCase() + kind.slice(1);
-    }
+    private formatObstacleName = (kind: BattleObstacleKind): string => kind.charAt(0).toUpperCase() + kind.slice(1);
 }

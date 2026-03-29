@@ -374,9 +374,7 @@ export default class BattleMapView {
         return path;
     }
 
-    private isEntityAtCell(entity: CombatEntity | null, col: number, row: number): boolean {
-        return entity !== null && entity.gridCol === col && entity.gridRow === row;
-    }
+    private isEntityAtCell = (entity: CombatEntity | null, col: number, row: number): boolean => entity !== null && entity.gridCol === col && entity.gridRow === row;
 
     private mixColors(colorA: string, colorB: string, ratio: number): string {
         const a = this.parseColor(colorA);

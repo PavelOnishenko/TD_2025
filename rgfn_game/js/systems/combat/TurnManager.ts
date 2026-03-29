@@ -94,7 +94,5 @@ export default class TurnManager {
         return players.length > 0 && enemies.length > 0;
     }
 
-    public getActiveEnemies(): CombatEntity[] {
-        return this.entities.filter(e => e.constructor.name !== 'Player' && !e.isDead());
-    }
+    public getActiveEnemies = (): CombatEntity[] => this.entities.filter(e => e.constructor.name !== 'Player' && !e.isDead());
 }
