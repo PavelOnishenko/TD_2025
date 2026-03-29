@@ -35,3 +35,4 @@ If it's still too long, place each member on dedicated line. Example:
 }
 
 18. We allow no dead code!
+19. We love arrow functions and use it whenever we can if it's not absurd ofc.

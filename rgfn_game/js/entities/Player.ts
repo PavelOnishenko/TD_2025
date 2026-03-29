@@ -1,5 +1,10 @@
+// todo this file is too long. Extract functionality into different classes like it is done in good practical OOP. Adhere to style_guide. 
+// Neither this file nor extracted files should be longer than 200 lines. It might take from you to extract 10 files to achieve this result. It's ok.
+// Just do it strictly and don't save tokens or try to avoid problems. Just do good code adhering to standards I set.  
+
 import Entity from '../../../engine/core/Entity.js';
 import { withDamageable } from '../../../engine/core/Damageable.js';
+  // todo rule 17
 import {
     getXpForLevel,
     calculateMaxHp,
@@ -89,34 +94,42 @@ export default class Player extends DamageableEntity {
     private readonly renderer: PlayerRenderer;
     private armorAbsorbedHp: number = 0;
 
+    // todo arrow
     public get equippedWeapon(): Item | null {
         return this.inventorySystem.getEquippedWeapon();
     }
 
+    // todo arrow
     public get equippedMainWeapon(): Item | null {
         return this.inventorySystem.getEquippedMainWeapon();
     }
 
+    // todo arrow
     public get equippedOffhandWeapon(): Item | null {
         return this.inventorySystem.getEquippedOffhandWeapon();
     }
 
 
+    // todo arrow
     public get equippedArmor(): Item | null {
         return this.inventorySystem.getEquippedArmor();
     }
 
+    // todo arrow
     public set equippedArmor(armor: Item | null) {
         this.inventorySystem.setEquippedArmor(armor);
     }
+    // todo arrow
     public set equippedWeapon(weapon: Item | null) {
         this.inventorySystem.setEquippedWeapon(weapon);
     }
 
+    // todo arrow
     public set equippedOffhandWeapon(weapon: Item | null) {
         this.inventorySystem.setEquippedOffhandWeapon(weapon);
     }
 
+    // todo this ctor is too long. Extract parts of it in new functions. Adhere to Style_Guide. Write all info needed about how to resolve such cases, into MD files.
     constructor(x: number, y: number, options: PlayerCreationOptions = {}) {
         super(x, y);
         this.name = Player.generateRandomName();
@@ -150,6 +163,7 @@ export default class Player extends DamageableEntity {
         this.initDamageable(this.maxHp);
     }
 
+    // todo arrow
     private static generateRandomName(): string {
         return RANDOM_NAME_POOL[Math.floor(Math.random() * RANDOM_NAME_POOL.length)];
     }
@@ -160,6 +174,7 @@ export default class Player extends DamageableEntity {
         const plannedPoints = RANDOM_STAT_POOL.reduce((total, stat) => total + plannedAllocation[stat], 0);
 
         if (plannedPoints === pointsToAllocate) {
+            // todo no need for curly braces in the function passed into foreach. Do into 1 line arrow func. 
             RANDOM_STAT_POOL.forEach((stat) => {
                 this[stat] += plannedAllocation[stat];
             });
@@ -173,6 +188,7 @@ export default class Player extends DamageableEntity {
     }
 
     private normalizeStartingSkillAllocation(startingSkillAllocation: Partial<Record<PlayerStat, number>> | null): NextCharacterRollAllocation {
+     // todo rule 17
         const normalizedAllocation = {
             vitality: 0,
             toughness: 0,
@@ -191,6 +207,7 @@ export default class Player extends DamageableEntity {
         return normalizedAllocation;
     }
 
+    // todo this function is too long. Fix this.
     public takeDamage(amount: number): boolean {
         if (amount <= 0) {
             return super.takeDamage(0);
@@ -203,6 +220,7 @@ export default class Player extends DamageableEntity {
         const armorDepleted = typeof armorCap === 'number' && this.armorAbsorbedHp >= armorCap;
 
         const effectiveArmor = armorDepleted ? 0 : this.armor;
+     // todo rule 17
         const damageAfterArmor = Math.max(
             balanceConfig.combat.minDamageAfterArmor,
             reducedByPercent - effectiveArmor
@@ -216,10 +234,12 @@ export default class Player extends DamageableEntity {
         return super.takeDamage(damageAfterArmor);
     }
 
+  // todo arrow
     public takeMagicDamage(amount: number): boolean {
         return super.takeDamage(Math.max(0, amount));
     }
 
+    // todo this function is too long. Fix this.
     public updateStats(): void {
         const previousMaxMana = this.maxMana;
         const previousMana = this.mana;
@@ -364,10 +384,12 @@ export default class Player extends DamageableEntity {
         return true;
     }
 
+    // todo arrow
     public canSpendMana(amount: number): boolean {
         return this.mana >= amount;
     }
 
+    // todo arrow
     public getMaxFatigue(): number {
         return Math.max(1, balanceConfig.survival.maxFatigue);
     }
@@ -396,6 +418,7 @@ export default class Player extends DamageableEntity {
         return previous - this.fatigue;
     }
 
+    // todo arrow
     public getFatiguePercent(): number {
         return (this.fatigue / this.getMaxFatigue()) * 100;
     }
@@ -410,11 +433,14 @@ export default class Player extends DamageableEntity {
         return 'Rested';
     }
 
+    // todo arrow
     public getPhysicalDamageWithBuff(): number {
         return Math.round(this.damage * this.rageMultiplier);
     }
 
+    // todo arrow
     public getDirectionalCombatBuffSnapshot(): CombatBuffSnapshot {
+        // todo rule 17
         return {
             hasBlockAdvantage: this.blockAdvantage,
             hasSuccessfulDodgeMultiplier: this.successfulDodgeMultiplier !== null,
@@ -470,6 +496,7 @@ export default class Player extends DamageableEntity {
         return events;
     }
 
+    // todo arrow
     public getMagicPowerMultiplier(): number {
         return this.rageMultiplier;
     }
@@ -493,70 +520,86 @@ export default class Player extends DamageableEntity {
         return events;
     }
 
+    // todo arrow
     public getArmorReduction(): number {
         return this.armor;
     }
 
+    // todo arrow
     public getInventoryCapacity(): number {
         return this.getInventoryCapacityForStrength(this.strength);
     }
 
+    // todo try to do arrow but it might now work in our rules system so you may let it be if this turns out to be the case
     public getInventoryCapacityForStrength(strength: number): number {
         const safeStrength = Math.max(0, Math.floor(strength));
         const strengthSlots = Math.floor(safeStrength / balanceConfig.player.strengthPerInventorySlot);
         return balanceConfig.player.baseInventorySlots + strengthSlots;
     }
 
+    // todo arrow
     public addItemToInventory(item: Item): boolean {
         return this.inventorySystem.addItem(item);
     }
 
+    // todo arrow
     public useHealingPotion(): boolean {
         return this.inventorySystem.useHealingPotion();
     }
 
+    // todo arrow
     public getInventory(): Item[] {
         return this.inventorySystem.getItems();
     }
 
+    // todo arrow
     public getHealingPotionCount(): number {
         return this.inventorySystem.getHealingPotionCount();
     }
 
+    // todo arrow
     public getManaPotionCount(): number {
         return this.inventorySystem.getManaPotionCount();
     }
 
+    // todo arrow
     public useManaPotion(): boolean {
         return this.inventorySystem.useManaPotion();
     }
 
+    // todo arrow
     public removeHealingPotionFromInventory(): boolean {
         return this.inventorySystem.removeHealingPotion();
     }
 
+    // todo arrow
     public removeManaPotionFromInventory(): boolean {
         return this.inventorySystem.removeManaPotion();
     }
 
 
+    // todo arrow
     public removeInventoryItemAt(index: number): Item | null {
         return this.inventorySystem.removeItemAt(index);
     }
 
 
+    // todo arrow
     public unequipWeapon(): Item | null {
         return this.inventorySystem.unequipWeapon();
     }
 
+    // todo arrow
     public unequipOffhandWeapon(): Item | null {
         return this.inventorySystem.unequipOffhandWeapon();
     }
 
+    // todo arrow
     public equipWeaponToSlot(weapon: Item, slot: 'main' | 'offhand'): void {
         this.inventorySystem.equipWeaponToSlot(weapon, slot);
     }
 
+    // todo arrow
     public unequipArmor(): Item | null {
         return this.inventorySystem.unequipArmor();
     }
@@ -565,10 +608,12 @@ export default class Player extends DamageableEntity {
      * Get the player's current attack range
      * @returns number of cells the player can attack from
      */
+    // todo arrow
     public getAttackRange(): number {
         return this.inventorySystem.getAttackRange();
     }
 
+    // todo arrow
     public hasWeapon(): boolean {
         return this.inventorySystem.hasWeapon();
     }
@@ -584,6 +629,7 @@ export default class Player extends DamageableEntity {
         return `min(${capPercent}%, (1 - 1/(1 + AGI×${scale.toFixed(3)}))×100) = ${finalPercent}%`;
     }
 
+    // todo this func is too long. Extract, adhere to Style Guide.
     public getDamageFormulaText(): string {
         const fistBaseDamage = balanceConfig.combat.fistDamagePerHand;
         const mainWeapon = this.equippedMainWeapon;
@@ -614,21 +660,25 @@ export default class Player extends DamageableEntity {
         return `Dual hand: main ${mainHandText} + off ${offHandText} = ${this.damage}`;
     }
 
+    // todo arrow
     public canEquipItem(item: Item): boolean {
         const requiredAgility = item.requirements.agility ?? 0;
         const requiredStrength = item.requirements.strength ?? 0;
         return this.agility >= requiredAgility && this.strength >= requiredStrength;
     }
 
+    // todo arrow
     public draw(ctx: CanvasRenderingContext2D, _viewport?: any): void {
         this.renderer.draw(ctx, this);
     }
 
 
+    // todo arrow
     public getBaseStatsRecord(): CreatureBaseStats {
         return cloneBaseStats(balanceConfig.creatureArchetypes.human.baseStats);
     }
 
+    // todo arrow
     public getSkillRecord(): CreatureSkills {
         return normalizeCreatureSkills({
             vitality: this.vitality,
@@ -671,6 +721,7 @@ export default class Player extends DamageableEntity {
         };
     }
 
+    // todo this func is too long. Take action!
     public restoreState(state: Record<string, unknown>): void {
         const toNumber = (value: unknown, fallback: number): number => typeof value === 'number' && Number.isFinite(value) ? value : fallback;
 
