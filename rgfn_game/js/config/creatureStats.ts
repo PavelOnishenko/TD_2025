@@ -59,10 +59,12 @@ export function deriveCreatureStats(baseStats: CreatureBaseStats, skills: Creatu
     };
 }
 
+// todo can u do it arrow function?
 export function deriveArchetypeStats(archetype: CreatureArchetype): CreatureDerivedStats {
     return deriveCreatureStats(archetype.baseStats, archetype.skills);
 }
 
+// todo can u do it arrow function?
 export function formatCreatureSkills(skills: CreatureSkills): string {
     return CREATURE_SKILLS.map((skill) => `${skill.slice(0, 3).toUpperCase()} ${skills[skill]}`).join(', ');
 }
