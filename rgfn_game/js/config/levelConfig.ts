@@ -80,8 +80,3 @@ export const calculateMana = (connection: number, intelligence: number): number 
  */
 export const calculateTotalMeleeDamage = (strength: number, agility: number): number =>
     balanceConfig.player.baseDamage + calculateMeleeDamageBonus(strength, agility);
-
-/**
- * Calculate total bow damage from strength/agility stats
- */
-// Removed unused total bow damage helper to avoid dead code.
