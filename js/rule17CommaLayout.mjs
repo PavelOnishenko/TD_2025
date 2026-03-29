@@ -1,16 +1,56 @@
 const MAX_LINE_LENGTH = 170;
 
-function getContainerDetails(node) {
+function getCommaListDetails(node) {
     switch (node.type) {
         case 'ObjectExpression':
         case 'ObjectPattern':
-            return { opener: '{', closer: '}', items: node.properties };
+            return { opener: '{', closer: '}', items: node.properties, kind: 'initializer', boundaryNoun: 'brace/bracket' };
         case 'ArrayExpression':
         case 'ArrayPattern':
-            return { opener: '[', closer: ']', items: node.elements.filter((element) => element !== null) };
+            return {
+                opener: '[',
+                closer: ']',
+                items: node.elements.filter((element) => element !== null),
+                kind: 'initializer',
+                boundaryNoun: 'brace/bracket'
+            };
+        case 'FunctionDeclaration':
+        case 'FunctionExpression':
+        case 'ArrowFunctionExpression':
+        case 'TSDeclareFunction':
+        case 'TSCallSignatureDeclaration':
+        case 'TSConstructSignatureDeclaration':
+        case 'TSMethodSignature':
+        case 'TSFunctionType':
+            return { opener: '(', closer: ')', items: node.params ?? [], kind: 'parameter list', boundaryNoun: 'parenthesis' };
         default:
             return null;
     }
+}
+
+function getListBoundaryTokens(sourceCode, node, details) {
+    if (details.kind !== 'parameter list') {
+        return {
+            openingToken: sourceCode.getFirstToken(node, (token) => token.value === details.opener),
+            closingToken: sourceCode.getLastToken(node, (token) => token.value === details.closer)
+        };
+    }
+
+    if (details.items.length === 0) {
+        return { openingToken: null, closingToken: null };
+    }
+
+    const firstItemToken = sourceCode.getFirstToken(details.items[0]);
+    const lastItemToken = sourceCode.getLastToken(details.items[details.items.length - 1]);
+
+    if (!firstItemToken || !lastItemToken) {
+        return { openingToken: null, closingToken: null };
+    }
+
+    return {
+        openingToken: sourceCode.getTokenBefore(firstItemToken, (token) => token.value === details.opener),
+        closingToken: sourceCode.getTokenAfter(lastItemToken, (token) => token.value === details.closer)
+    };
 }
 
 function getMemberStartLines(items) {
@@ -42,14 +82,13 @@ function toCompactSingleLine(text) {
 }
 
 function checkRule17Layout(node, context) {
-    const details = getContainerDetails(node);
+    const details = getCommaListDetails(node);
     if (!details || details.items.length < 2) {
         return;
     }
 
     const sourceCode = context.sourceCode;
-    const openingToken = sourceCode.getFirstToken(node, (token) => token.value === details.opener);
-    const closingToken = sourceCode.getLastToken(node, (token) => token.value === details.closer);
+    const { openingToken, closingToken } = getListBoundaryTokens(sourceCode, node, details);
 
     if (!openingToken || !closingToken) {
         return;
@@ -63,17 +102,19 @@ function checkRule17Layout(node, context) {
     }
 
     const lines = sourceCode.lines;
-    const compactCandidate = toCompactSingleLine(sourceCode.getText(node));
+    const listText = sourceCode.text.slice(openingToken.range[0], closingToken.range[1]);
+    const compactCandidate = toCompactSingleLine(listText);
 
-    const prefixLength = node.loc?.start.column ?? 0;
-    const endLineText = lines[(node.loc?.end.line ?? endLine) - 1] || '';
-    const suffixLength = endLineText.slice(node.loc?.end.column ?? 0).length;
+    const lineStartText = lines[startLine - 1] || '';
+    const endLineText = lines[endLine - 1] || '';
+    const prefixLength = lineStartText.slice(0, openingToken.loc.start.column).length;
+    const suffixLength = endLineText.slice(closingToken.loc.end.column).length;
     const projectedSingleLineLength = prefixLength + compactCandidate.length + suffixLength;
 
     if (projectedSingleLineLength <= MAX_LINE_LENGTH) {
         context.report({
             node,
-            message: `Rule 17: this comma-separated initializer can fit on one line (${projectedSingleLineLength} chars with indentation/context); use the most compact one-line form.`
+            message: `Rule 17: this comma-separated ${details.kind} can fit on one line (${projectedSingleLineLength} chars with indentation/context); use the most compact one-line form.`
         });
         return;
     }
@@ -89,7 +130,7 @@ function checkRule17Layout(node, context) {
     if (minItemLine <= startLine || maxItemLine >= endLine) {
         context.report({
             node,
-            message: 'Rule 17: multiline comma-separated members must be placed between surrounding opening and closing brace/bracket lines.'
+            message: `Rule 17: multiline comma-separated members must be placed between surrounding opening and closing ${details.boundaryNoun} lines.`
         });
         return;
     }
@@ -127,6 +168,30 @@ export const rule17CommaLayout = {
                 checkRule17Layout(node, context);
             },
             ArrayPattern(node) {
+                checkRule17Layout(node, context);
+            },
+            FunctionDeclaration(node) {
+                checkRule17Layout(node, context);
+            },
+            FunctionExpression(node) {
+                checkRule17Layout(node, context);
+            },
+            ArrowFunctionExpression(node) {
+                checkRule17Layout(node, context);
+            },
+            TSDeclareFunction(node) {
+                checkRule17Layout(node, context);
+            },
+            TSCallSignatureDeclaration(node) {
+                checkRule17Layout(node, context);
+            },
+            TSConstructSignatureDeclaration(node) {
+                checkRule17Layout(node, context);
+            },
+            TSMethodSignature(node) {
+                checkRule17Layout(node, context);
+            },
+            TSFunctionType(node) {
                 checkRule17Layout(node, context);
             }
         };

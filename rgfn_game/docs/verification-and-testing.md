@@ -1,3 +1,26 @@
+## March 29, 2026 update: Rule 17 now covers multiline function parameter lists
+
+### What changed
+- Extended ESLint custom rule `style-guide/rule17-comma-layout` to treat **function/method/type parameter lists** as the same class of comma-separated list as object/array initializers.
+- New behavior mirrors the existing brace/bracket logic exactly:
+  - if multiline params can fit into one line under Rule 17 line budget, lint warns to compact,
+  - multiline layout must keep list members strictly between opening and closing parenthesis lines,
+  - each internal member line must remain within line-length budget.
+- Applies to runtime and TS signature nodes (`FunctionDeclaration`, `FunctionExpression`, `ArrowFunctionExpression`, `TSDeclareFunction`, `TSCallSignatureDeclaration`, `TSConstructSignatureDeclaration`, `TSMethodSignature`, `TSFunctionType`).
+
+### Why this is useful
+- Makes formatting policy consistent across all comma-separated value lists.
+- Catches verbose multiline signatures like:
+  - `public drawEntity( ... many short params ... ): void { ... }`
+  - when they actually fit in a single compact line.
+
+### Verification commands and outcomes
+- `npm run lint:ts:rgfn:eslint` ✅
+  - Rule now emits parameter-list warnings across RGFN where signatures are compactable (16 warnings in current tree).
+- `npm run build:rgfn` ✅
+- `node --test rgfn_game/test/**/*.test.js` ⚠️
+  - 9 pre-existing failures remain due to missing dist imports (`rgfn_game/dist/config/balanceConfig.js`, `rgfn_game/dist/entities/Player.js`) in several test files.
+
 ## March 29, 2026 update: RGFN Rule 17 layout cleanup pass (20 violations fixed)
 
 ### Scope and objective
