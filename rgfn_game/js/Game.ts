@@ -190,6 +190,8 @@ export default class Game {
         });
         this.worldModeController = new WorldModeController(this.input, player, worldMap, encounterSystem, new ItemDiscoverySplash(), {
             onEnterVillage: () => this.stateMachine.transition(MODES.VILLAGE),
+            onRequestVillageEntryPrompt: (villageName, anchor) => this.showWorldVillageEntryPrompt(ui.worldUI, villageName, anchor),
+            onCloseVillageEntryPrompt: () => this.hideWorldVillageEntryPrompt(ui.worldUI),
             onStartBattle: (enemies: Skeleton[], terrainType) => this.stateMachine.transition(MODES.BATTLE, { enemies, terrainType }),
             onAddBattleLog: (m: string, t: string = 'system') => this.hudCoordinator.addBattleLog(m, t),
             onUpdateHUD: () => this.hudCoordinator.updateHUD(),
@@ -416,6 +418,8 @@ export default class Game {
             onUseManaPotionFromHud: () => this.battleCoordinator.handleUseManaPotion(false),
             onUsePotionFromWorld: () => this.battleCoordinator.handleUsePotion(false),
             onEnterVillageFromWorld: () => this.tryEnterVillageFromWorldMap(),
+            onConfirmVillageEntryPrompt: () => this.confirmWorldVillageEntry(),
+            onDismissVillageEntryPrompt: () => this.worldModeController.dismissVillageEntryPrompt(),
             onCampSleepFromWorld: () => this.worldModeController.handleCampSleep(),
             onNewCharacter: () => this.startNewCharacter(),
             onAddStat: (stat) => this.hudCoordinator.handleAddStat(stat),
@@ -664,6 +668,46 @@ export default class Game {
         }
 
         this.hudCoordinator.addBattleLog('Stand on a village tile to enter it.', 'system');
+    }
+
+    private confirmWorldVillageEntry(): void {
+        if (!this.stateMachine.isInState(MODES.WORLD_MAP)) {
+            this.worldModeController.dismissVillageEntryPrompt();
+            return;
+        }
+
+        const enteredVillage = this.worldModeController.confirmVillageEntryFromPrompt();
+        if (enteredVillage) {
+            return;
+        }
+
+        this.hudCoordinator.addBattleLog('You must stand on the village tile to enter.', 'system');
+    }
+
+    private showWorldVillageEntryPrompt(worldUI: WorldUI, villageName: string, anchor: { x: number; y: number }): void {
+        worldUI.villageEntryTitle.textContent = `You found ${villageName}.`;
+        this.positionWorldVillageEntryPrompt(worldUI, anchor);
+        worldUI.villageEntryPopup.classList.remove('hidden');
+    }
+
+    private hideWorldVillageEntryPrompt(worldUI: WorldUI): void {
+        worldUI.villageEntryPopup.classList.add('hidden');
+    }
+
+    private positionWorldVillageEntryPrompt(worldUI: WorldUI, anchor: { x: number; y: number }): void {
+        const popupWidth = worldUI.villageEntryPopup.offsetWidth || 190;
+        const popupHeight = worldUI.villageEntryPopup.offsetHeight || 84;
+        const horizontalPadding = 14;
+        const verticalPadding = 14;
+        const pointerLift = 16;
+        const preferredX = anchor.x - (popupWidth / 2);
+        const preferredY = anchor.y - popupHeight - pointerLift;
+        const maxX = Math.max(horizontalPadding, this.canvas.width - popupWidth - horizontalPadding);
+        const maxY = Math.max(verticalPadding, this.canvas.height - popupHeight - verticalPadding);
+        const left = Math.max(horizontalPadding, Math.min(maxX, preferredX));
+        const top = Math.max(verticalPadding, Math.min(maxY, preferredY));
+        worldUI.villageEntryPopup.style.left = `${left}px`;
+        worldUI.villageEntryPopup.style.top = `${top}px`;
     }
 
     private startNewCharacter(): void {

@@ -67,6 +67,22 @@ export default class EncounterSystem {
         });
     }
 
+    public generateMonsterBattleEncounter(): { type: 'battle'; enemies: Skeleton[] } {
+        const encounter = this.encounterResolver.generateEncounter(this.itemDiscoveryChance, {
+            rollEncounterEventType: () => 'monster',
+            rollEncounterType: () => this.rollEncounterType(),
+        }, {
+            canDiscoverItems: false,
+            enabledEventTypes: ['monster'],
+        });
+
+        if (encounter.type === 'battle') {
+            return encounter;
+        }
+
+        throw new Error(`Expected monster ambush to produce battle encounter, got "${encounter.type}".`);
+    }
+
     public queueForcedEncounter(type: ForcedEncounterType): void {
         this.encounterResolver.queueForcedEncounter(type);
     }

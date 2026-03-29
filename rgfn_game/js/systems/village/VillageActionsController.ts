@@ -124,14 +124,19 @@ export default class VillageActionsController {
         this.npcRoster = this.getOrCreateVillageNpcRoster(villageName);
         this.selectedNpcId = null;
         this.villageUI.sidebar.classList.remove('hidden');
-        this.villageUI.prompt.classList.remove('hidden');
-        this.villageUI.actions.classList.add('hidden');
+        this.villageUI.prompt.classList.add('hidden');
+        this.villageUI.actions.classList.remove('hidden');
         this.closeDialogueWindow();
         this.villageUI.dialogueLog.innerHTML = '';
         this.gameLog.innerHTML = '';
-        this.addLog(`You discover ${villageName}. Enter it?`, 'system');
+        this.addLog(`You arrive at ${villageName}.`, 'system');
+        this.addLog(`You enter ${villageName} market square.`, 'system');
+        this.addLog('This village offers one potion type and three random item kinds.', 'system');
+        this.addLog(`You notice ${this.npcRoster.length} locals open for conversation.`, 'system');
         const villageContractHints = this.getVillageContractHints(villageName);
         villageContractHints.forEach((hint) => this.addLog(`Rumor update: ${hint}`, 'system-message'));
+        this.renderNpcButtons();
+        this.updateNpcPanel();
         this.updateButtons();
     }
 

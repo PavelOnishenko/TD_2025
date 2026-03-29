@@ -39,6 +39,13 @@
             <div id="main-view-stage">
                 <div id="world-map-shell">
                     <canvas id="game-canvas" width="800" height="600"></canvas>
+                    <div id="world-village-entry-popup" class="world-village-entry-popup hidden" role="dialog" aria-live="polite" aria-label="Village entry prompt">
+                        <p id="world-village-entry-title" class="world-village-entry-title">Village nearby</p>
+                        <div class="world-village-entry-actions">
+                            <button id="world-village-entry-enter-btn" class="action-btn" type="button">Enter</button>
+                            <button id="world-village-entry-pass-btn" class="action-btn" type="button">Pass by</button>
+                        </div>
+                    </div>
                 </div>
                 <div id="left-overlay-stack" class="overlay-stack">
                     <div id="stats-panel" class="hud-section stats overlay-panel hidden">

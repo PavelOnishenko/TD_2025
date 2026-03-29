@@ -162,6 +162,10 @@ export default class GameUiFactory {
             enterVillageBtn: document.getElementById('world-enter-village-btn')! as HTMLButtonElement,
             campSleepBtn: document.getElementById('world-camp-sleep-btn')! as HTMLButtonElement,
             centerOnCharacterBtn: document.getElementById('world-center-on-character-btn')! as HTMLButtonElement,
+            villageEntryPopup: document.getElementById('world-village-entry-popup')!,
+            villageEntryTitle: document.getElementById('world-village-entry-title')!,
+            villageEntryEnterBtn: document.getElementById('world-village-entry-enter-btn')! as HTMLButtonElement,
+            villageEntryPassBtn: document.getElementById('world-village-entry-pass-btn')! as HTMLButtonElement,
         };
     }
 
