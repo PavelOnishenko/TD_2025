@@ -1,5 +1,5 @@
-import Entity from '../../../../engine/core/Entity.js';
-import { withDamageable } from '../../../../engine/core/Damageable.js';
+import Entity from '../../../../../engine/core/Entity.js';
+import { withDamageable } from '../../../../../engine/core/Damageable.js';
 import {
     getXpForLevel,
     calculateMaxHp,
@@ -8,15 +8,15 @@ import {
     calculateAvoidChance,
     calculateArmor,
     calculateMana
-} from '../../config/levelConfig.js';
-import { balanceConfig } from '../../config/balance/balanceConfig.js';
-import { cloneBaseStats } from '../../config/creatureStats.js';
-import { CreatureBaseStats } from '../../config/creatureTypes.js';
-import PlayerInventory from './PlayerInventory.js';
+} from '../../../config/levelConfig.js';
+import { balanceConfig } from '../../../config/balance/balanceConfig.js';
+import { cloneBaseStats } from '../../../config/creatureStats.js';
+import { CreatureBaseStats } from '../../../config/creatureTypes.js';
+import PlayerInventory from '../inventory/PlayerInventory.js';
 import PlayerRenderer from './PlayerRenderer.js';
-import { NextCharacterRollAllocation } from '../../utils/NextCharacterRollConfig.js';
-import Item from '../Item.js';
-import { PlayerCreationOptions, PlayerStat, RANDOM_NAME_POOL, RANDOM_STAT_POOL } from './PlayerTypes.js';
+import { NextCharacterRollAllocation } from '../../../utils/NextCharacterRollConfig.js';
+import Item from '../../Item.js';
+import { PlayerCreationOptions, PlayerStat, RANDOM_NAME_POOL, RANDOM_STAT_POOL } from '../shared/PlayerTypes.js';
 
 const DamageableEntity = withDamageable(Entity);
 

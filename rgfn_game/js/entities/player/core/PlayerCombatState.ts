@@ -1,6 +1,6 @@
-import { balanceConfig } from '../../config/balance/balanceConfig.js';
-import { theme } from '../../config/ThemeConfig.js';
-import { CombatBuffSnapshot, CombatStatusState } from '../../systems/combat/DirectionalCombat.js';
+import { balanceConfig } from '../../../config/balance/balanceConfig.js';
+import { theme } from '../../../config/ThemeConfig.js';
+import { CombatBuffSnapshot, CombatStatusState } from '../../../systems/combat/DirectionalCombat.js';
 import PlayerProgression from './PlayerProgression.js';
 
 export default class PlayerCombatState extends PlayerProgression {
