@@ -58,7 +58,6 @@ type ClimateCell = {
     heat: number;
     forestSuitability: number;
     grassSuitability: number;
-    desertSuitability: number;
     inlandWaterSuitability: number;
 };
 
@@ -187,14 +186,12 @@ export default class WorldMap {
         const moistureNoise = this.fractalNoise((nx + 17.2) * 1.72, (ny - 5.4) * 1.72, 4, 0.56, 2.1);
         const heatNoise = this.fractalNoise((nx - 8.1) * 1.28, (ny + 13.7) * 1.28, 3, 0.5, 2.15);
         const forestNoise = this.fractalNoise((nx + 3.4) * 2.15, (ny + 7.9) * 2.15, 3, 0.58, 2.0);
-        const desertNoise = this.fractalNoise((nx - 9.3) * 1.95, (ny + 2.2) * 1.95, 3, 0.52, 2.2);
         const waterNoise = this.fractalNoise((nx + 11.8) * 2.4, (ny - 6.6) * 2.4, 2, 0.6, 2.0);
 
         const elevation = this.clamp01((elevationNoise * 0.85) + (forestNoise * 0.08));
         const moisture = this.clamp01((moistureNoise * 0.76) + ((1 - elevation) * 0.16) + (waterNoise * 0.08));
         const temperateBand = 1 - Math.min(1, Math.abs((ny - 0.5) * 1.15));
         const heat = this.clamp01((heatNoise * 0.44) + (temperateBand * 0.28) + ((1 - moisture) * 0.28));
-        const dryness = this.clamp01(heat - (moisture * 0.72));
         const waterLowlands = this.clamp01((1 - elevation) * 0.7 + (moisture * 0.3));
 
         return {
@@ -206,7 +203,6 @@ export default class WorldMap {
             heat,
             forestSuitability: (weights.forest * 1.4) + (moisture * 0.9) + (forestNoise * 0.55) + (temperateBand * 0.22),
             grassSuitability: (weights.grass * 1.2) + ((1 - Math.abs(moisture - 0.52)) * 0.58) + (temperateBand * 0.22) + ((1 - elevation) * 0.1),
-            desertSuitability: (weights.desert * 1.5) + (dryness * 1.2) + (desertNoise * 0.42),
             inlandWaterSuitability: (weights.water * 1.35) + (waterLowlands * 1.1) + (waterNoise * 0.3),
         };
     }
@@ -219,28 +215,22 @@ export default class WorldMap {
     }
 
     private resolveTerrainType(climate: ClimateCell, forestThreshold: number, isLake: boolean, isRiver: boolean): TerrainType {
-        const mountainThreshold = balanceConfig.worldMap.mountainThreshold ?? 0.86;
+        const highlandThreshold = balanceConfig.worldMap.highlandThreshold ?? 0.86;
         const inlandWaterThreshold = balanceConfig.worldMap.inlandWaterThreshold ?? 0.79;
-        const desertHeatThreshold = balanceConfig.worldMap.desertHeatThreshold ?? 0.68;
-        const desertDrynessThreshold = balanceConfig.worldMap.desertDrynessThreshold ?? 0.58;
-        const dryness = this.clamp01(climate.heat - (climate.moisture * 0.72));
 
         if (isLake || isRiver) {
             return 'water';
         }
-        if (climate.elevation >= mountainThreshold) {
-            return 'mountain';
-        }
-        if (climate.heat >= desertHeatThreshold && dryness >= desertDrynessThreshold && climate.desertSuitability >= climate.grassSuitability + 0.18) {
-            return 'desert';
-        }
         if (climate.forestSuitability >= forestThreshold) {
             return 'forest';
         }
-        if (climate.inlandWaterSuitability >= inlandWaterThreshold && climate.elevation < mountainThreshold - 0.08) {
+        if (climate.elevation >= highlandThreshold && climate.moisture >= 0.48) {
+            return 'forest';
+        }
+        if (climate.inlandWaterSuitability >= inlandWaterThreshold && climate.elevation < highlandThreshold - 0.08) {
             return 'water';
         }
-        return climate.grassSuitability >= climate.desertSuitability ? 'grass' : 'desert';
+        return 'grass';
     }
 
     private generateLakeCells(climateByKey: Map<string, ClimateCell>, columns: number, rows: number): Set<string> {
