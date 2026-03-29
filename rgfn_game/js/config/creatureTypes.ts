@@ -2,7 +2,6 @@ export type CreatureSkill = 'vitality' | 'toughness' | 'strength' | 'agility' | 
 
 export type CreatureSkills = Record<CreatureSkill, number>;
 
-// todo rule 17 in Style Guide
 export type CreatureBaseStats = {
     hp: number;
     damage: number;
@@ -12,7 +11,6 @@ export type CreatureBaseStats = {
 
 export type CreatureCategory = 'character' | 'monster' | 'mutant';
 
-// todo rule 17 in Style Guide
 export type CreatureArchetype = {
     id: string;
     name: string;
@@ -24,7 +22,6 @@ export type CreatureArchetype = {
     notes?: string[];
 };
 
-// todo rule 17 in Style Guide
 export type CreatureDerivedStats = {
     maxHp: number;
     physicalDamage: number;
