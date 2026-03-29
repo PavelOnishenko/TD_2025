@@ -17,7 +17,7 @@ import WorldModeController from './systems/WorldModeController.js';
 import Player from './entities/Player.js';
 import Skeleton, { MonsterMutationTrait } from './entities/Skeleton.js';
 import { BattleSplash } from './ui/BattleSplash.js';
-import { balanceConfig } from './config/balanceConfig.js';
+import { balanceConfig } from './config/balance/balanceConfig.js';
 import { ItemDiscoverySplash } from './ui/ItemDiscoverySplash.js';
 import { applyThemeToCSS } from './config/ThemeConfig.js';
 import GameUiFactory from './systems/game/GameUiFactory.js';

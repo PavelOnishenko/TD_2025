@@ -1,4 +1,4 @@
-import { balanceConfig } from '../../config/balanceConfig.js';
+import { balanceConfig } from '../../config/balance/balanceConfig.js';
 import { deriveArchetypeStats, formatCreatureSkills } from '../../config/creatureStats.js';
 import { CreatureBaseStats, CreatureSkills } from '../../config/creatureTypes.js';
 import Player from '../../entities/Player.js';

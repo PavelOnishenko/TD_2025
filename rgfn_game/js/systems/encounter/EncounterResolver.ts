@@ -1,7 +1,7 @@
 import { randomInt } from '../../../../engine/utils/MathUtils.js';
 import Skeleton, { EnemyConfig } from '../../entities/Skeleton.js';
 import Item, { DISCOVERABLE_ITEM_LIBRARY, HEALING_POTION_ITEM, MANA_POTION_ITEM } from '../../entities/Item.js';
-import { balanceConfig } from '../../config/balanceConfig.js';
+import { balanceConfig } from '../../config/balance/balanceConfig.js';
 import type { EncounterResult, ForcedEncounterType, RandomEncounterType } from './EncounterSystem.js';
 import Wanderer from '../../entities/Wanderer.js';
 

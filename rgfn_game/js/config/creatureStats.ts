@@ -1,5 +1,4 @@
-import { balanceConfig } from './balanceConfig.js';
-// todo rule 17 in Style Guide
+import { balanceConfig } from './balance/balanceConfig.js';
 import {
     CreatureArchetype,
     CreatureBaseStats,

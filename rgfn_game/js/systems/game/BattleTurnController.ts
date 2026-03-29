@@ -3,7 +3,7 @@ import TurnManager from '../combat/TurnManager.js';
 import Player from '../../entities/Player.js';
 import Skeleton from '../../entities/Skeleton.js';
 import timingConfig from '../../config/timingConfig.js';
-import { balanceConfig } from '../../config/balanceConfig.js';
+import { balanceConfig } from '../../config/balance/balanceConfig.js';
 
 type BattleTurnControllerCallbacks = {
     onAddBattleLog: (message: string, type?: string) => void;

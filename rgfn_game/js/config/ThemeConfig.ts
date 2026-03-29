@@ -106,6 +106,26 @@ export interface Theme {
       rows: number;
     };
   };
+
+  quest: {
+    feedbackMessageDurationMs: number;
+    nameGeneration: {
+      maxWordsByDomain: {
+        location: number;
+        artifact: number;
+        character: number;
+        monster: number;
+        mainQuest: number;
+      };
+      wordLengthWeightsByDomain: {
+        location: Record<number, number>;
+        artifact: Record<number, number>;
+        character: Record<number, number>;
+        monster: Record<number, number>;
+        mainQuest: Record<number, number>;
+      };
+    };
+  };
 }
 
 // Fixed game theme (light parchment fantasy aesthetic)
@@ -202,6 +222,19 @@ const GAME_THEME: Theme = {
         gridSize: {
             columns: 10,
             rows: 8,
+        },
+    },
+    quest: {
+        feedbackMessageDurationMs: 5000,
+        nameGeneration: {
+            maxWordsByDomain: { location: 4, artifact: 4, character: 4, monster: 4, mainQuest: 4 },
+            wordLengthWeightsByDomain: {
+                location: { 1: 52, 2: 40, 3: 7, 4: 1 },
+                artifact: { 1: 50, 2: 42, 3: 7, 4: 1 },
+                character: { 1: 58, 2: 36, 3: 5, 4: 1 },
+                monster: { 1: 54, 2: 38, 3: 7, 4: 1 },
+                mainQuest: { 1: 48, 2: 42, 3: 9, 4: 1 },
+            },
         },
     },
 };

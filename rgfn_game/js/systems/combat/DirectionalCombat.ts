@@ -1,4 +1,4 @@
-import { balanceConfig } from '../../config/balanceConfig.js';
+import { balanceConfig } from '../../config/balance/balanceConfig.js';
 
 export type CombatMove =
     | 'AttackLeft'

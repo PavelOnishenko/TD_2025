@@ -1,6 +1,6 @@
 import Player from '../entities/Player.js';
 import Item from '../entities/Item.js';
-import { balanceConfig } from '../config/balanceConfig.js';
+import { balanceConfig } from '../config/balance/balanceConfig.js';
 import MagicSystem from './magic/MagicSystem.js';
 import { calculateBowDamageBonus, calculateMeleeDamageBonus } from '../config/levelConfig.js';
 import LoreBookController from './lore/LoreBookController.js';

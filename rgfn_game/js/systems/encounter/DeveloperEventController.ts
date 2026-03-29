@@ -1,5 +1,5 @@
 import EncounterSystem, { ForcedEncounterType, RANDOM_ENCOUNTER_TYPES, RandomEncounterType } from './EncounterSystem.js';
-import { balanceConfig } from '../../config/balanceConfig.js';
+import { balanceConfig } from '../../config/balance/balanceConfig.js';
 import { MapDisplayConfig } from '../../types/game.js';
 import {
     clearNextCharacterRollAllocation,

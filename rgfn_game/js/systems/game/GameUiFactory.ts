@@ -1,5 +1,5 @@
 import { BattleUI, DeveloperUI, GameLogUI, GameUiBundle, HudElements, VillageUI, WorldUI } from './GameUiTypes.js';
-import { balanceConfig } from '../../config/balanceConfig.js';
+import { balanceConfig } from '../../config/balance/balanceConfig.js';
 import { CombatMove } from '../combat/DirectionalCombat.js';
 
 export default class GameUiFactory {

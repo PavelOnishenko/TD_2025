@@ -1,6 +1,6 @@
 import Entity from '../../../engine/core/Entity.js';
 import { withDamageable } from '../../../engine/core/Damageable.js';
-import { balanceConfig } from '../config/balanceConfig.js';
+import { balanceConfig } from '../config/balance/balanceConfig.js';
 import { theme } from '../config/ThemeConfig.js';
 import { cloneBaseStats, deriveCreatureStats, normalizeCreatureSkills } from '../config/creatureStats.js';
 import { CreatureBaseStats, CreatureSkill, CreatureSkills } from '../config/creatureTypes.js';

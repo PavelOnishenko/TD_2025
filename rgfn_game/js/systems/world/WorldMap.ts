@@ -2,7 +2,7 @@ import GridMap from '../../utils/GridMap.js';
 import { FogState, MapDisplayConfig, TerrainData, GridPosition, Direction, GridCell, TerrainNeighbors, TerrainType, SelectedWorldCellInfo } from '../../types/game.js';
 import { theme } from '../../config/ThemeConfig.js';
 import WorldMapRenderer from './WorldMapRenderer.js';
-import { balanceConfig } from '../../config/balanceConfig.js';
+import { balanceConfig } from '../../config/balance/balanceConfig.js';
 import { generateVillageName } from './VillageNameGenerator.js';
 
 export type KnownVillage = {
@@ -421,7 +421,7 @@ export default class WorldMap {
             balanceConfig.worldMap.villages.minCount,
             Math.floor((dims.columns * dims.rows) * balanceConfig.worldMap.villages.densityPerCell),
         );
-        const villageCount = Math.max(1, Math.floor(baseVillageCount * balanceConfig.villageCreationRateMultiplier));
+        const villageCount = Math.max(1, Math.floor(baseVillageCount * (balanceConfig.worldMap.villages.creationRateMultiplier ?? 1)));
         this.villages.clear();
         this.villageIndexSet.clear();
 
