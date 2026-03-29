@@ -90,12 +90,7 @@ export default class BattleMap {
         });
     }
 
-    public draw(
-        ctx: CanvasRenderingContext2D,
-        _renderer: unknown,
-        currentEntity: CombatEntity | null = null,
-        selectedEnemy: CombatEntity | null = null,
-    ): void {
+    public draw(ctx: CanvasRenderingContext2D, _renderer: unknown, currentEntity: CombatEntity | null = null, selectedEnemy: CombatEntity | null = null): void {
         this.view.draw(ctx, currentEntity, selectedEnemy, this.selectedGridPos);
     }
 

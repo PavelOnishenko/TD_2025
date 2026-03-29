@@ -44,15 +44,7 @@ export default class StickFigure {
     private static readonly CORE_BONE_LINE_WIDTH = 2.4;
     private static readonly OUTLINE_WIDTH = 1.1;
 
-    public static draw(
-        ctx: CanvasRenderingContext2D,
-        x: number,
-        y: number,
-        pose: StickFigurePose,
-        color: string,
-        facingRight: boolean,
-        scale: number = 1
-    ): void {
+    public static draw(ctx: CanvasRenderingContext2D, x: number, y: number, pose: StickFigurePose, color: string, facingRight: boolean, scale: number = 1): void {
         EngineStickFigure.draw(ctx, x, y, pose, color, facingRight, scale, {
             limbLineWidth: this.LIMB_LINE_WIDTH,
             coreBoneLineWidth: this.CORE_BONE_LINE_WIDTH,
@@ -61,11 +53,7 @@ export default class StickFigure {
         });
     }
 
-    public static getPoseFromImportedAnimation(
-        keyframes: ImportedKeyframe[],
-        meta: ImportedAnimationMeta,
-        progress: number
-    ): StickFigurePose {
+    public static getPoseFromImportedAnimation(keyframes: ImportedKeyframe[], meta: ImportedAnimationMeta, progress: number): StickFigurePose {
         return EngineStickFigure.getPoseFromImportedAnimation(keyframes, meta, progress) as StickFigurePose;
     }
 }
