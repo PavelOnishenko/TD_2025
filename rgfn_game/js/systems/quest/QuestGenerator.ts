@@ -55,7 +55,13 @@ export default class QuestGenerator {
         return Promise.all(builders);
     }
 
-    private node(id: string, title: string, description: string, conditionText: string, children: QuestNode[]): QuestNode {
-        return { id, title, description, conditionText, objectiveType: 'scout', entities: [], children };
-    }
+    private node = (id: string, title: string, description: string, conditionText: string, children: QuestNode[]): QuestNode => ({
+        id,
+        title,
+        description,
+        conditionText,
+        objectiveType: 'scout',
+        entities: [],
+        children,
+    });
 }

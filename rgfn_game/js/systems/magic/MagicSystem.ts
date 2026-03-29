@@ -15,9 +15,7 @@ export default class MagicSystem {
         this.spellLevels = { fireball: 0, curse: 0, slow: 0, rage: 0, 'arcane-lance': 0 };
     }
 
-    public getSpellLevels(): Record<BaseSpellId, number> {
-        return { ...this.spellLevels };
-    }
+    public getSpellLevels = (): Record<BaseSpellId, number> => ({ ...this.spellLevels });
 
     public restoreSpellLevels(levels: Partial<Record<BaseSpellId, number>>): void {
         for (const baseId of BASE_SPELL_IDS) {
@@ -118,9 +116,7 @@ export default class MagicSystem {
         return { baseId: baseIdToken as BaseSpellId, level };
     }
 
-    private getSpellLevel(spellId: string): number {
-        return this.parseSpellId(spellId)?.level ?? 0;
-    }
+    private getSpellLevel = (spellId: string): number => this.parseSpellId(spellId)?.level ?? 0;
 }
 
 
