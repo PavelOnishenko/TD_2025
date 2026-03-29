@@ -68,13 +68,11 @@ export default class EncounterResolver {
         this.forcedEncounters.push(type);
     }
 
-    public clearForcedEncounters(): void {
+    public clearForcedEncounters = (): void => {
         this.forcedEncounters = [];
-    }
+    };
 
-    public getForcedEncounterQueue(): ForcedEncounterType[] {
-        return [...this.forcedEncounters];
-    }
+    public getForcedEncounterQueue = (): ForcedEncounterType[] => [...this.forcedEncounters];
 
     private createRandomItemEncounter(): EncounterResult {
         const _discoverableItems: Item[] = [new Item(HEALING_POTION_ITEM), new Item(MANA_POTION_ITEM)];

@@ -85,13 +85,11 @@ export default class EncounterSystem {
         this.encounterResolver.clearForcedEncounters();
     }
 
-    public getForcedEncounterQueue(): ForcedEncounterType[] {
-        return this.encounterResolver.getForcedEncounterQueue();
-    }
+    public getForcedEncounterQueue = (): ForcedEncounterType[] => this.encounterResolver.getForcedEncounterQueue();
 
-    public setEncounterTypeEnabled(type: RandomEncounterType, enabled: boolean): void {
+    public setEncounterTypeEnabled = (type: RandomEncounterType, enabled: boolean): void => {
         this.encounterTypeStates[type] = enabled;
-    }
+    };
 
     public setAllEncounterTypesEnabled(enabled: boolean): void {
         RANDOM_ENCOUNTER_TYPES.forEach((type) => {
@@ -99,25 +97,15 @@ export default class EncounterSystem {
         });
     }
 
-    public isEncounterTypeEnabled(type: RandomEncounterType): boolean {
-        return this.encounterTypeStates[type];
-    }
+    public isEncounterTypeEnabled = (type: RandomEncounterType): boolean => this.encounterTypeStates[type];
 
-    public getEncounterTypeStates(): Record<RandomEncounterType, boolean> {
-        return { ...this.encounterTypeStates };
-    }
+    public getEncounterTypeStates = (): Record<RandomEncounterType, boolean> => ({ ...this.encounterTypeStates });
 
-    private createInitialEncounterTypeStates(): Record<RandomEncounterType, boolean> {
-        return { monster: true, item: true, traveler: true };
-    }
+    private createInitialEncounterTypeStates = (): Record<RandomEncounterType, boolean> => ({ monster: true, item: true, traveler: true });
 
-    private shouldSkipRandomEncounter(): boolean {
-        return this.getEnabledEncounterTypes().length === 0 && this.getForcedEncounterQueue().length === 0;
-    }
+    private shouldSkipRandomEncounter = (): boolean => this.getEnabledEncounterTypes().length === 0 && this.getForcedEncounterQueue().length === 0;
 
-    private getEnabledEncounterTypes(): RandomEncounterType[] {
-        return RANDOM_ENCOUNTER_TYPES.filter((type) => this.encounterTypeStates[type]);
-    }
+    private getEnabledEncounterTypes = (): RandomEncounterType[] => RANDOM_ENCOUNTER_TYPES.filter((type) => this.encounterTypeStates[type]);
 
     private rollEncounterEventType(): RandomEncounterType {
         const enabledTypes = this.getEnabledEncounterTypes();

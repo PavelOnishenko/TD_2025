@@ -255,11 +255,11 @@ export default class BattleCommandController {
         this.callbacks.onUpdateHUD();
     }
 
-    public clearPendingLoot(): void {
+    public clearPendingLoot = (): void => {
         this.pendingLoot = [];
-    }
+    };
 
-    private canUseBattleTurnInput(): boolean { return this.turnManager.isPlayerTurn() && this.turnManager.waitingForPlayer; }
+    private canUseBattleTurnInput = (): boolean => this.turnManager.isPlayerTurn() && this.turnManager.waitingForPlayer;
 
     private resolveAttackTarget(enemies: Skeleton[]): Skeleton | null {
         const selectedEnemy = this.callbacks.getSelectedEnemy();
