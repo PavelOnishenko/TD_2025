@@ -23,21 +23,15 @@ export class MonsterStatusEffects {
         this.curseTurns = Math.max(this.curseTurns, duration);
     }
 
-    public applySlow(duration: number): void {
-        this.slowTurns = Math.max(this.slowTurns, duration);
-    }
+    public applySlow = (duration: number): void => void (this.slowTurns = Math.max(this.slowTurns, duration));
 
-    public shouldSkipTurnFromSlow(): boolean {
-        return this.slowTurns > 0;
-    }
+    public shouldSkipTurnFromSlow = (): boolean => this.slowTurns > 0;
 
-    public getDirectionalCombatBuffSnapshot(): CombatBuffSnapshot {
-        return {
-            hasBlockAdvantage: this.blockAdvantage,
-            hasSuccessfulDodgeMultiplier: this.successfulDodgeMultiplier !== null,
-            successfulDodgeMultiplier: this.successfulDodgeMultiplier ?? 1,
-        };
-    }
+    public getDirectionalCombatBuffSnapshot = (): CombatBuffSnapshot => ({
+        hasBlockAdvantage: this.blockAdvantage,
+        hasSuccessfulDodgeMultiplier: this.successfulDodgeMultiplier !== null,
+        successfulDodgeMultiplier: this.successfulDodgeMultiplier ?? 1,
+    });
 
     public applyDirectionalCombatRewards(rewards: CombatStatusState, name: string): string[] {
         const events: string[] = [];

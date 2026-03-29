@@ -315,9 +315,7 @@ export default class Game {
         return null;
     }
 
-    private isSupportedMutationTrait(value: string): value is MonsterMutationTrait {
-        return ['feral strength', 'void armor', 'acid blood', 'blink speed', 'barbed hide', 'grave intellect'].includes(value);
-    }
+    private isSupportedMutationTrait = (value: string): value is MonsterMutationTrait => ['feral strength', 'void armor', 'acid blood', 'blink speed', 'barbed hide', 'grave intellect'].includes(value);
 
 
     private registerQuestLocations(quest: QuestNode): void {
@@ -388,22 +386,20 @@ export default class Game {
         this.player.y = y;
     }
 
-    private createStateMachine(ui: UIBundle): StateMachine {
-        return new GameModeStateMachine<{ enemies: Skeleton[]; terrainType: TerrainType }>({
-            onEnterWorld: () => this.worldModeController.enterWorldMode(ui.hudElements.modeIndicator, ui.worldUI.sidebar, ui.battleUI.sidebar, ui.villageUI.sidebar),
-            onUpdateWorld: () => this.worldModeController.updateWorldMode(),
-            onEnterBattle: (battleData: { enemies: Skeleton[]; terrainType: TerrainType }) =>
-                this.battleCoordinator.enterBattleMode(battleData.enemies, battleData.terrainType),
-            onUpdateBattle: () => this.battleCoordinator.updateBattleMode(),
-            onExitBattle: () => this.battleCoordinator.exitBattleMode(),
-            onEnterVillage: () => {
-                const villageName = this.worldMap.getVillageNameAtPlayerPosition();
-                this.recordLocationEntry(villageName);
-                this.villageCoordinator.enterVillageMode(this.canvas.width, this.canvas.height, villageName);
-            },
-            onExitVillage: () => this.villageCoordinator.exitVillageMode(),
-        }).create();
-    }
+    private createStateMachine = (ui: UIBundle): StateMachine => new GameModeStateMachine<{ enemies: Skeleton[]; terrainType: TerrainType }>({
+        onEnterWorld: () => this.worldModeController.enterWorldMode(ui.hudElements.modeIndicator, ui.worldUI.sidebar, ui.battleUI.sidebar, ui.villageUI.sidebar),
+        onUpdateWorld: () => this.worldModeController.updateWorldMode(),
+        onEnterBattle: (battleData: { enemies: Skeleton[]; terrainType: TerrainType }) =>
+            this.battleCoordinator.enterBattleMode(battleData.enemies, battleData.terrainType),
+        onUpdateBattle: () => this.battleCoordinator.updateBattleMode(),
+        onExitBattle: () => this.battleCoordinator.exitBattleMode(),
+        onEnterVillage: () => {
+            const villageName = this.worldMap.getVillageNameAtPlayerPosition();
+            this.recordLocationEntry(villageName);
+            this.villageCoordinator.enterVillageMode(this.canvas.width, this.canvas.height, villageName);
+        },
+        onExitVillage: () => this.villageCoordinator.exitVillageMode(),
+    }).create();
 
     private bindUi(ui: UIBundle, villageActionsController: VillageActionsController, encounterSystem: EncounterSystem): void {
         const devController = new DeveloperEventController(ui.developerUI, encounterSystem, {
@@ -475,15 +471,13 @@ export default class Game {
         this.startNewCharacter();
     }
 
-    private buildSaveState(): GameSaveState {
-        return {
-            version: 1,
-            worldMap: this.worldMap.getState(),
-            player: this.player.getState(),
-            spellLevels: this.magicSystem.getSpellLevels(),
-            quest: this.activeQuest,
-        };
-    }
+    private buildSaveState = (): GameSaveState => ({
+        version: 1,
+        worldMap: this.worldMap.getState(),
+        player: this.player.getState(),
+        spellLevels: this.magicSystem.getSpellLevels(),
+        quest: this.activeQuest,
+    });
 
     private saveGameIfChanged(): void {
         const snapshot = JSON.stringify(this.buildSaveState());
@@ -646,9 +640,7 @@ export default class Game {
         this.player.y = y;
     }
 
-    private stopWorldMapMiddleDrag(): void {
-        this.isWorldMapMiddleDragActive = false;
-    }
+    private stopWorldMapMiddleDrag = (): void => void (this.isWorldMapMiddleDragActive = false);
 
     private centerWorldMapOnPlayer(): void {
         if (!this.stateMachine.isInState(MODES.WORLD_MAP)) {
