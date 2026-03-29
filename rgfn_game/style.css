@@ -379,8 +379,8 @@ h1 {
 #quests-panel {
     max-width: calc(100vw - 32px);
     max-inline-size: calc(100vw - 32px);
-    max-height: calc(100dvh - 32px);
-    max-block-size: calc(100dvh - 32px);
+    max-height: none;
+    max-block-size: none;
     min-height: 220px;
     height: min(42vh, 360px);
     min-width: 260px;

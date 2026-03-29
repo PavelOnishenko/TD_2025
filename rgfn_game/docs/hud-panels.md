@@ -219,6 +219,35 @@ To match the new draggable-window workflow, **HUD content panels no longer auto-
 
 This keeps panel size/content natural and avoids the old "single-column fallback" scrollbar tuning that is no longer needed for desktop draggable windows.
 
+## Quests panel resize cap fix (March 29, 2026)
+
+Issue observed in RGFN desktop HUD:
+
+- When many draggable windows were opened, the **Quests** window could stop growing vertically during manual corner-resize.
+- UX felt like an artificial hard limit, even though players expected free-form resize while arranging overlapping panels.
+
+What was changed:
+
+- Removed viewport clamp on `#quests-panel`:
+  - `max-height: calc(100dvh - 32px)` → `max-height: none`
+  - `max-block-size: calc(100dvh - 32px)` → `max-block-size: none`
+- Kept safety constraints that still matter:
+  - `min-height: 220px`
+  - `min-width: 260px`
+  - `resize: both`
+
+Practical result:
+
+- Quests window now continues stretching vertically beyond old viewport-capped maximum.
+- Large quest trees remain easier to inspect when several HUD windows are open and stacked.
+
+Quick manual QA:
+
+1. Open 3-5 HUD windows (`Stats`, `Inventory`, `Log`, `Quests`, etc.).
+2. Drag `Quests` panel to a non-top position.
+3. Grab bottom-right resize handle and increase height repeatedly.
+4. Confirm panel keeps expanding instead of stopping near the previous `100dvh - 32px` limit.
+
 ### Important exception
 
 `World Map` sidebar and `Log` keep scroll constraints by design because they can contain intentionally long content and controls with high update frequency.
