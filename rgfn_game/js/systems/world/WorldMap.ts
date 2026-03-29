@@ -868,6 +868,17 @@ export default class WorldMap {
         return this.grid.gridToPixel(this.playerGridPos.col, this.playerGridPos.row);
     }
 
+
+    public isRoadAt(col: number, row: number): boolean {
+        if (!this.grid.isValidPosition(col, row)) {
+            return false;
+        }
+        return this.roadIndexSet.has(this.getCellIndex(col, row));
+    }
+
+    public isPlayerOnRoad(): boolean {
+        return this.isRoadAt(this.playerGridPos.col, this.playerGridPos.row);
+    }
     public getCurrentTerrain(): TerrainData {
         return this.getTerrain(this.playerGridPos.col, this.playerGridPos.row) ?? {
             type: 'grass',

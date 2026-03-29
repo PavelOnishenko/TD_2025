@@ -218,7 +218,8 @@ export default class WorldModeController {
     }
 
     private onPlayerMoved(isPreviouslyDiscovered: boolean): void {
-        this.player.addTravelFatigue(1);
+        const travelMinutesMultiplier = this.getTravelMinutesMultiplier();
+        this.player.addTravelFatigue(travelMinutesMultiplier);
         this.player.restoreMana(1);
         this.callbacks.onUpdateHUD();
 
@@ -272,6 +273,22 @@ export default class WorldModeController {
         }
     }
 
+
+    private getTravelMinutesMultiplier(): number {
+        if (this.worldMap.isPlayerOnRoad()) {
+            return 1;
+        }
+
+        const terrain = this.worldMap.getCurrentTerrain().type;
+        if (terrain === 'forest') {
+            return 4;
+        }
+        if (terrain === 'grass') {
+            return 2;
+        }
+
+        return 1;
+    }
     private handleTravelerEncounter(traveler: Wanderer, isHostile: boolean): void {
         this.callbacks.onRememberTraveler(traveler, isHostile ? 'hostile' : 'peaceful');
         if (isHostile) {
