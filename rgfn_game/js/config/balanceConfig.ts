@@ -71,6 +71,7 @@ export const balanceConfig = {
     // Global multiplier that scales all automatic village creation systems.
     // 1 = baseline density, 0.333... = roughly 3x fewer initially generated villages.
     villageCreationRateMultiplier: 1 / 3,
+    // todo rule 17 in Style Guide says that this should be written in one line. Don't ever forget about these rules.
     questUi: {
         // todo feedbackMessageDurationMs should not be in balance config. Move it to theme config. As it doesn't affect game balance.
         // Time a quest feedback message stays visible (milliseconds)
