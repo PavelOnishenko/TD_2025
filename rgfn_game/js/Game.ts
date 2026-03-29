@@ -307,11 +307,7 @@ export default class Game {
 
             const spawnCount = Math.max(1, Math.min(3, objective.remainingKills));
             const mutations = objective.mutations.filter(this.isSupportedMutationTrait);
-            const enemies = Array.from({ length: spawnCount }, () => new Skeleton(0, 0, {
-                ...balanceConfig.enemies.skeleton,
-                name: objective.targetName,
-                mutations,
-            }));
+            const enemies = Array.from({ length: spawnCount }, () => new Skeleton(0, 0, { ...balanceConfig.enemies.skeleton, name: objective.targetName, mutations, }));
             const message = `Scouts report ${objective.targetName} tracks near ${objective.villageName} (${hint.direction ?? 'nearby'}).`;
             return { enemies, hint: message };
         }

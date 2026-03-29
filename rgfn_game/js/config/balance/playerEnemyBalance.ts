@@ -27,10 +27,7 @@ export const enemyBalance = {
         archetypeId: 'ninja', hp: 5, damage: 3, xpValue: 7, name: 'Ninja', width: 30, height: 30,
         behavior: { avoidHitChance: 0.5 },
     },
-    darkKnight: {
-        archetypeId: 'darkKnight', hp: 15, damage: 5, xpValue: 12, name: 'Dark Knight', width: 32, height: 32,
-        behavior: { doubleDamageChance: 0.5 },
-    },
+    darkKnight: { archetypeId: 'darkKnight', hp: 15, damage: 5, xpValue: 12, name: 'Dark Knight', width: 32, height: 32, behavior: { doubleDamageChance: 0.5 }, },
     dragon: {
         archetypeId: 'dragon', hp: 50, damage: 10, xpValue: 25, name: 'Dragon', width: 40, height: 40,
         behavior: { passEncounterChance: 0.5 },
