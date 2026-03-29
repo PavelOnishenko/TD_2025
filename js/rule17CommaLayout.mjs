@@ -13,20 +13,17 @@ function getContainerDetails(node) {
     }
 }
 
-function getDistinctLines(items) {
+function getMemberStartLines(items) {
     const lines = new Set();
+
     for (const item of items) {
         const startLine = item.loc?.start.line;
-        const endLine = item.loc?.end.line;
-
-        if (!startLine || !endLine) {
+        if (!startLine) {
             continue;
         }
-
-        for (let line = startLine; line <= endLine; line += 1) {
-            lines.add(line);
-        }
+        lines.add(startLine);
     }
+
     return Array.from(lines).sort((a, b) => a - b);
 }
 
@@ -52,7 +49,7 @@ function checkRule17Layout(node, context) {
     }
 
     const lines = sourceCode.lines;
-    const itemLines = getDistinctLines(details.items);
+    const itemLines = getMemberStartLines(details.items);
     if (itemLines.length === 0) {
         return;
     }
@@ -71,7 +68,7 @@ function checkRule17Layout(node, context) {
     if (itemLines.length > 2 && itemLines.length !== details.items.length) {
         context.report({
             node,
-            message: 'Rule 17: internal member lines should be 1 line, 2 lines, or one member per line.'
+            message: 'Rule 17: member start-line grouping should be 1 line, 2 lines, or one member per line.'
         });
     }
 
