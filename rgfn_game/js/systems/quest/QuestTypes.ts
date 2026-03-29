@@ -20,7 +20,17 @@ export type QuestNode = {
     conditionText: string;
     objectiveType: QuestObjectiveType;
     entities: QuestTextEntity[];
+    objectiveData?: QuestObjectiveData;
     children: QuestNode[];
+    isCompleted?: boolean;
+};
+
+export type DeliverObjectiveData = {
+    sourceVillage: string;
+    sourceTrader: string;
+    destinationVillage: string;
+    itemName: string;
+    isPickedUp?: boolean;
 };
 
 export type GeneratedName = {
@@ -31,7 +41,7 @@ export type GeneratedName = {
 
 export type QuestTextEntity = {
     text: string;
-    type: 'location' | 'item' | 'person';
+    type: 'location' | 'item' | 'person' | 'monster';
 };
 
 export type RareMonsterProfile = {
@@ -40,4 +50,19 @@ export type RareMonsterProfile = {
     stats: string[];
     effects: string[];
     bonus: string;
+    mutatedFrom: string;
+};
+
+export type MonsterObjectiveData = {
+    targetName: string;
+    requiredKills: number;
+    currentKills?: number;
+    villageName?: string;
+    mutations?: string[];
+    mutatedFrom?: string;
+};
+
+export type QuestObjectiveData = {
+    deliver?: DeliverObjectiveData;
+    monster?: MonsterObjectiveData;
 };

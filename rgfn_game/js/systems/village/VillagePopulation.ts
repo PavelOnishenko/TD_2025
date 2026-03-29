@@ -33,11 +33,21 @@ export default class VillagePopulation {
 
     private spots: VillageSpot[] = [];
     private villagers: VillageVillager[] = [];
+    private villageSnapshots: Map<string, VillageVillager[]> = new Map();
+    private activeVillageId = '';
 
-    public initialize(spots: VillageSpot[], now: number): void {
+    public initialize(spots: VillageSpot[], now: number, villageId: string): void {
         this.spots = spots;
+        this.activeVillageId = villageId;
+        const snapshot = this.villageSnapshots.get(villageId);
+        if (snapshot) {
+            this.villagers = snapshot.map((villager) => this.alignVillagerToSpots(villager, now));
+            return;
+        }
+
         const villagerCount = 4 + Math.floor(Math.random() * 3);
         this.villagers = Array.from({ length: villagerCount }, () => this.createVillager(now));
+        this.persistActiveVillageSnapshot();
     }
 
     public update(now: number, onSpotVisited: (spotIndex: number, now: number) => void): void {
@@ -85,10 +95,55 @@ export default class VillagePopulation {
         });
 
         this.villagers.sort((a, b) => a.y - b.y);
+        this.persistActiveVillageSnapshot();
     }
 
     public getVillagers(): VillageVillager[] {
         return this.villagers;
+    }
+
+
+    private persistActiveVillageSnapshot(): void {
+        if (!this.activeVillageId) {
+            return;
+        }
+
+        this.villageSnapshots.set(this.activeVillageId, this.villagers.map((villager) => ({ ...villager })));
+    }
+
+    private alignVillagerToSpots(villager: VillageVillager, now: number): VillageVillager {
+        const safeFromSpot = this.clampSpotIndex(villager.fromSpot);
+        const safeToSpot = this.clampSpotIndex(villager.toSpot);
+        const from = this.spots[safeFromSpot];
+        const to = this.spots[safeToSpot];
+        if (!from || !to) {
+            return { ...villager, x: 0, y: 0, fromSpot: 0, toSpot: 0 };
+        }
+
+        const aligned = { ...villager, fromSpot: safeFromSpot, toSpot: safeToSpot };
+        if (now < aligned.pauseUntil || aligned.fromSpot === aligned.toSpot) {
+            aligned.x = from.x;
+            aligned.y = from.y;
+            return aligned;
+        }
+
+        const travelProgress = Math.max(0, Math.min(1, (now - aligned.travelStart) / Math.max(0.01, aligned.travelDuration)));
+        const smoothProgress = travelProgress * travelProgress * (3 - 2 * travelProgress);
+        aligned.x = from.x + (to.x - from.x) * smoothProgress;
+        aligned.y = from.y + (to.y - from.y) * smoothProgress;
+        return aligned;
+    }
+
+    private clampSpotIndex(spotIndex: number): number {
+        if (this.spots.length === 0) {
+            return 0;
+        }
+
+        if (spotIndex < 0 || spotIndex >= this.spots.length) {
+            return 0;
+        }
+
+        return spotIndex;
     }
 
     private createVillager(now: number): VillageVillager {
@@ -114,7 +169,7 @@ export default class VillagePopulation {
             shirtColor: this.pickFrom(shirtPalette),
             pantsColor: this.pickFrom(pantsPalette),
             hatColor: this.pickFrom(hatPalette),
-            size: 0.86 + Math.random() * 0.26,
+            size: 0.62 + Math.random() * 0.18,
             activity: this.pickActivity(),
             propSwingOffset: Math.random() * Math.PI * 2,
             armSwingOffset: Math.random() * Math.PI * 2,

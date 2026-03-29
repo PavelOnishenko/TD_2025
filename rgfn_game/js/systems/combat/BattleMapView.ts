@@ -1,5 +1,5 @@
 import GridMap from '../../utils/GridMap.js';
-import { CombatEntity, GridCell, TerrainType } from '../../types/game.js';
+import { CombatEntity, GridCell, GridPosition, TerrainType } from '../../types/game.js';
 import { theme } from '../../config/ThemeConfig.js';
 
 export type BattleObstacleKind = 'tree' | 'bush' | 'stump' | 'rock' | 'pillar' | 'cactus' | 'bones' | 'reed' | 'stone' | 'driftwood';
@@ -25,13 +25,14 @@ export default class BattleMapView {
         ctx: CanvasRenderingContext2D,
         currentEntity: CombatEntity | null = null,
         selectedEnemy: CombatEntity | null = null,
+        selectedCell: GridPosition | null = null,
     ): void {
         const dimensions = this.grid.getDimensions();
         ctx.fillStyle = theme.battleMap.background;
         ctx.fillRect(0, 0, dimensions.width, dimensions.height);
         const terrainType = this.terrainProvider();
         this.grid.forEachCell((cell, col, row) => {
-            this.drawCell(ctx, cell, col, row, terrainType, currentEntity, selectedEnemy);
+            this.drawCell(ctx, cell, col, row, terrainType, currentEntity, selectedEnemy, selectedCell);
         });
         this.drawObstacles(ctx, terrainType);
     }
@@ -44,11 +45,14 @@ export default class BattleMapView {
         terrainType: TerrainType,
         currentEntity: CombatEntity | null,
         selectedEnemy: CombatEntity | null,
+        selectedCell: GridPosition | null,
     ): void {
         this.drawBaseTile(ctx, cell, col, row, terrainType);
         this.drawCurrentEntityHighlight(ctx, cell, col, row, currentEntity);
         this.drawSelectedEnemyHighlight(ctx, cell, col, row, selectedEnemy);
+        this.drawSelectedCellHighlight(ctx, cell, col, row, selectedCell);
         this.drawBorder(ctx, cell);
+        this.drawSelectedCellBorder(ctx, cell, col, row, selectedCell);
         this.drawSelectedEnemyBorder(ctx, cell, col, row, selectedEnemy);
     }
 
@@ -118,6 +122,36 @@ export default class BattleMapView {
         ctx.strokeStyle = theme.ui.enemyColor;
         ctx.lineWidth = 3;
         ctx.stroke(this.createRoundedRectPath(cell.x + 4, cell.y + 4, cell.width - 8, cell.height - 8, Math.max(4, cell.width * 0.12)));
+    }
+
+    private drawSelectedCellHighlight(
+        ctx: CanvasRenderingContext2D,
+        cell: GridCell,
+        col: number,
+        row: number,
+        selectedCell: GridPosition | null,
+    ): void {
+        if (!selectedCell || selectedCell.col !== col || selectedCell.row !== row) {
+            return;
+        }
+        const path = this.createRoundedRectPath(cell.x + 8, cell.y + 8, cell.width - 16, cell.height - 16, Math.max(4, cell.width * 0.08));
+        ctx.fillStyle = 'rgba(120, 180, 255, 0.24)';
+        ctx.fill(path);
+    }
+
+    private drawSelectedCellBorder(
+        ctx: CanvasRenderingContext2D,
+        cell: GridCell,
+        col: number,
+        row: number,
+        selectedCell: GridPosition | null,
+    ): void {
+        if (!selectedCell || selectedCell.col !== col || selectedCell.row !== row) {
+            return;
+        }
+        ctx.strokeStyle = theme.ui.primaryAccent;
+        ctx.lineWidth = 2;
+        ctx.stroke(this.createRoundedRectPath(cell.x + 3, cell.y + 3, cell.width - 6, cell.height - 6, Math.max(4, cell.width * 0.12)));
     }
 
     private drawObstacles(ctx: CanvasRenderingContext2D, terrainType: TerrainType): void {

@@ -52,7 +52,6 @@ export default class GameVillageCoordinator {
             dragon: 'Dragon battle',
             item: 'Item discovery',
             none: 'No encounter',
-            village: 'Village',
             traveler: 'Wanderer',
         };
         return labels[type] ?? type;

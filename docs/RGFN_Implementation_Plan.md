@@ -218,6 +218,7 @@ Battle Grid:
 Controls turn-based combat flow:
 
 Properties:
+
 - `turnOrder` - sorted array of entities
 - `currentTurnIndex` - whose turn it is
 - `turnState` - WAITING, ACTING, ANIMATING, ENDED
@@ -460,3 +461,24 @@ Game Flow:
 - Start with minimal features, iterate
 - No TypeScript conversion needed initially (use .js)
 - Module imports from engine: `import X from '../../engine/...'`
+
+## Village Rendering Notes (2026-03 update)
+- The village screen in `rgfn_game` now uses a top-down isometric presentation with a full settlement overview.
+- The scene intentionally renders **only**:
+  - Isometric houses (one marked as a `SHOP` building).
+  - Villagers (small scale) that periodically move between house-adjacent spots.
+- Decorative village props that existed before (field, well, build site, path, cloud props, etc.) are removed from the village drawing code to keep the village view focused and easier to iterate on.
+- Main files:
+  - `rgfn_game/js/systems/village/VillageEnvironmentRenderer.ts`
+  - `rgfn_game/js/systems/village/VillageLifeRenderer.ts`
+  - `rgfn_game/js/systems/village/VillagePopulation.ts`
+- Isometric projection used for houses (2:1 dimetric style with 30° axis):
+  - `screenX = originX + (worldX - worldY) * cos(30°) * scale`
+  - `screenY = originY + (worldX + worldY) * sin(30°) * scale - worldZ * scale`
+  - Practical constants:
+    - `cos(30°) ≈ 0.8660254`
+    - `sin(30°) = 0.5`
+- House meshes are rendered as simple prisms with explicit faces:
+  - Two visible wall quads.
+  - Four triangular roof faces meeting at a raised roof peak.
+  - Door is drawn on the front wall and animated with a hinge-like open angle.

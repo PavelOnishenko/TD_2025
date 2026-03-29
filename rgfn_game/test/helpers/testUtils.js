@@ -1,3 +1,5 @@
+let nextCombatEntityId = 1;
+
 export function withMockedRandom(values, fn) {
   const original = Math.random;
   let i = 0;
@@ -89,6 +91,7 @@ export function createMockCanvasContext() {
 
 export function createCombatEntity(name, col, row, dead = false) {
   return {
+    id: nextCombatEntityId++,
     constructor: { name },
     active: true,
     gridCol: col,

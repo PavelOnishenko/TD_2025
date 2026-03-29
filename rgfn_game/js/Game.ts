@@ -15,7 +15,7 @@ import HudController from './systems/HudController.js';
 import BattleUiController from './systems/BattleUiController.js';
 import WorldModeController from './systems/WorldModeController.js';
 import Player from './entities/Player.js';
-import Skeleton from './entities/Skeleton.js';
+import Skeleton, { MonsterMutationTrait } from './entities/Skeleton.js';
 import { BattleSplash } from './ui/BattleSplash.js';
 import { balanceConfig } from './config/balanceConfig.js';
 import { ItemDiscoverySplash } from './ui/ItemDiscoverySplash.js';
@@ -37,6 +37,7 @@ import MagicSystem from './systems/magic/MagicSystem.js';
 import QuestGenerator from './systems/quest/QuestGenerator.js';
 import QuestPackService from './systems/quest/QuestPackService.js';
 import QuestUiController from './systems/quest/QuestUiController.js';
+import QuestProgressTracker from './systems/quest/QuestProgressTracker.js';
 import { QuestNode } from './systems/quest/QuestTypes.js';
 import { TerrainType } from './types/game.js';
 import { consumeNextCharacterRollAllocation } from './utils/NextCharacterRollConfig.js';
@@ -50,6 +51,7 @@ type GameSaveState = {
     worldMap: Record<string, unknown>;
     player: Record<string, unknown>;
     spellLevels: Record<string, number>;
+    quest: QuestNode | null;
 };
 
 const SAVE_KEY = 'rgfn_game_save_v1';
@@ -68,11 +70,17 @@ export default class Game {
     private readonly hudCoordinator: GameHudCoordinator;
     private readonly battleCoordinator: GameBattleCoordinator;
     private readonly worldModeController: WorldModeController;
+    private readonly villageActionsController: VillageActionsController;
     private readonly worldMap: WorldMap;
     private readonly battleMap: BattleMap;
     private readonly player: Player;
     private readonly magicSystem: MagicSystem;
+    private activeQuest: QuestNode | null = null;
+    private questUiController: QuestUiController | null = null;
+    private questProgressTracker: QuestProgressTracker | null = null;
     private lastSavedSnapshot: string = '';
+    private isWorldMapMiddleDragActive = false;
+    private worldMapDragPointer = { x: 0, y: 0 };
 
     constructor(canvas: HTMLCanvasElement) {
         this.canvas = canvas;
@@ -101,6 +109,7 @@ export default class Game {
         });
         const questUiController = new QuestUiController(
             ui.hudElements.questsTitle,
+            ui.hudElements.questsKnownOnlyToggle,
             ui.hudElements.questsBody,
             ui.hudElements.questIntroModal,
             ui.hudElements.questIntroBody,
@@ -116,20 +125,32 @@ export default class Game {
             },
         );
         const loreBookController = new LoreBookController({ loreBody: ui.hudElements.loreBody }, player, worldMap);
-        this.initializeQuestUi(questGenerator, questUiController);
         const magicSystem = new MagicSystem(player);
         const battleUiController = new BattleUiController(ui.battleUI, battleMap, turnManager, player, ui.gameLogUI.log, magicSystem);
+        let battleCommandControllerRef: BattleCommandController | null = null;
         this.magicSystem = magicSystem;
         this.hudCoordinator = new GameHudCoordinator(
             player,
-            new HudController(player, ui.hudElements, ui.battleUI, magicSystem, ui.gameLogUI.log, loreBookController),
+            new HudController(
+                player,
+                ui.hudElements,
+                ui.battleUI,
+                magicSystem,
+                ui.gameLogUI.log,
+                loreBookController,
+                (actionDescription: string) => battleCommandControllerRef?.handleEquipmentAction(actionDescription) ?? true,
+            ),
             battleUiController,
             magicSystem,
         );
         const villageActionsController = new VillageActionsController(player, ui.villageUI, ui.gameLogUI.log, {
             onUpdateHUD: () => this.hudCoordinator.updateHUD(),
             onLeaveVillage: () => this.stateMachine.transition(MODES.WORLD_MAP),
+            getVillageDirectionHint: (settlementName: string) => this.worldMap.getVillageDirectionHintFromPlayer(settlementName),
+            onVillageBarterCompleted: (traderName: string, itemName: string, villageName: string) => this.recordBarterCompletion(traderName, itemName, villageName),
         });
+        this.villageActionsController = villageActionsController;
+        this.initializeQuestUi(questGenerator, questUiController);
         this.villageCoordinator = new GameVillageCoordinator(ui.hudElements, ui.battleUI, ui.villageUI, ui.worldUI, villageLifeRenderer, villageActionsController);
         this.stateMachine = this.createStateMachine(ui);
         const battlePlayerActionController = new BattlePlayerActionController(turnManager, battleUiController, player, {
@@ -148,7 +169,9 @@ export default class Game {
             onPlayerTurnReady: () => this.battleCoordinator.onPlayerTurnReady(),
             getSelectedEnemy: () => battlePlayerActionController.getSelectedEnemy(),
             setSelectedEnemy: (enemy: Skeleton | null) => battlePlayerActionController.setSelectedEnemy(enemy),
+            onEnemyDefeated: (enemy: Skeleton) => this.recordMonsterKill(enemy.name),
         });
+        battleCommandControllerRef = battleCommandController;
         const battleTurnController = new BattleTurnController(battleMap, turnManager, player, {
             onAddBattleLog: (m: string, t: string = 'system') => this.hudCoordinator.addBattleLog(m, t),
             onUpdateHUD: () => this.hudCoordinator.updateHUD(),
@@ -167,10 +190,13 @@ export default class Game {
         });
         this.worldModeController = new WorldModeController(this.input, player, worldMap, encounterSystem, new ItemDiscoverySplash(), {
             onEnterVillage: () => this.stateMachine.transition(MODES.VILLAGE),
+            onRequestVillageEntryPrompt: (villageName, anchor) => this.showWorldVillageEntryPrompt(ui.worldUI, villageName, anchor),
+            onCloseVillageEntryPrompt: () => this.hideWorldVillageEntryPrompt(ui.worldUI),
             onStartBattle: (enemies: Skeleton[], terrainType) => this.stateMachine.transition(MODES.BATTLE, { enemies, terrainType }),
             onAddBattleLog: (m: string, t: string = 'system') => this.hudCoordinator.addBattleLog(m, t),
             onUpdateHUD: () => this.hudCoordinator.updateHUD(),
             onRememberTraveler: (traveler, disposition) => loreBookController.rememberTraveler(traveler, disposition),
+            getQuestBattleEncounter: () => this.tryCreateQuestMonsterEncounter(),
         });
         this.renderRouter = new GameRenderRouter({
             canvas: this.canvas, renderer: this.renderer, worldMap, player, battleMap, turnManager,
@@ -193,11 +219,103 @@ export default class Game {
     public start(): void { this.handleResize(); this.refreshHud(); this.loop.start(); }
 
     private async initializeQuestUi(questGenerator: QuestGenerator, questUiController: QuestUiController): Promise<void> {
-        const quest = await questGenerator.generateMainQuest();
+        const savedQuest = this.getParsedSaveState()?.quest;
+        const quest = savedQuest ?? await questGenerator.generateMainQuest();
+        const shouldShowIntro = !savedQuest;
+        this.activeQuest = quest;
+        this.questUiController = questUiController;
+        this.questProgressTracker = new QuestProgressTracker(quest);
+        this.villageActionsController.configureQuestBarterContracts(this.collectBarterContracts(quest));
         this.registerQuestLocations(quest);
         questUiController.renderQuest(quest);
-        questUiController.showIntro();
+        if (shouldShowIntro) {
+            questUiController.showIntro();
+        }
     }
+
+    private recordLocationEntry(locationName: string): void {
+        if (!this.activeQuest || !this.questUiController || !this.questProgressTracker) {
+            return;
+        }
+
+        const carriedItemNames = this.player.getInventory().map((item) => item.name);
+        if (!this.questProgressTracker.recordLocationEntryWithInventory(locationName, carriedItemNames)) {
+            return;
+        }
+
+        this.questUiController.renderQuest(this.activeQuest);
+    }
+
+    private recordBarterCompletion(traderName: string, itemName: string, villageName: string): void {
+        if (!this.activeQuest || !this.questUiController || !this.questProgressTracker) {
+            return;
+        }
+
+        if (!this.questProgressTracker.recordBarterCompletion(traderName, itemName, villageName)) {
+            this.hudCoordinator.addBattleLog(`Quest tracker: barter registered (${traderName} -> ${itemName}), but no active objective matched.`, 'system-message');
+            return;
+        }
+
+        this.hudCoordinator.addBattleLog(`Quest tracker: barter objective completed (${traderName} -> ${itemName}).`, 'system');
+        this.questUiController.renderQuest(this.activeQuest);
+    }
+
+    private recordMonsterKill(monsterName: string): void {
+        if (!this.activeQuest || !this.questUiController || !this.questProgressTracker) {
+            return;
+        }
+
+        if (!this.questProgressTracker.recordMonsterKill(monsterName)) {
+            return;
+        }
+
+        this.hudCoordinator.addBattleLog(`Quest tracker: eliminated ${monsterName}.`, 'system');
+        this.questUiController.renderQuest(this.activeQuest);
+    }
+
+    private tryCreateQuestMonsterEncounter(): { enemies: Skeleton[]; hint?: string } | null {
+        if (!this.questProgressTracker) {
+            return null;
+        }
+
+        const activeMonsterObjectives = this.questProgressTracker.getActiveMonsterObjectives();
+        if (activeMonsterObjectives.length === 0) {
+            return null;
+        }
+
+        for (const objective of activeMonsterObjectives) {
+            if (!objective.villageName) {
+                continue;
+            }
+
+            const hint = this.worldMap.getVillageDirectionHintFromPlayer(objective.villageName);
+            if (!hint.exists || typeof hint.distanceCells !== 'number' || hint.distanceCells > 7) {
+                continue;
+            }
+
+            const encounterChance = hint.distanceCells <= 2 ? 0.42 : 0.2;
+            if (Math.random() >= encounterChance) {
+                continue;
+            }
+
+            const spawnCount = Math.max(1, Math.min(3, objective.remainingKills));
+            const mutations = objective.mutations.filter(this.isSupportedMutationTrait);
+            const enemies = Array.from({ length: spawnCount }, () => new Skeleton(0, 0, {
+                ...balanceConfig.enemies.skeleton,
+                name: objective.targetName,
+                mutations,
+            }));
+            const message = `Scouts report ${objective.targetName} tracks near ${objective.villageName} (${hint.direction ?? 'nearby'}).`;
+            return { enemies, hint: message };
+        }
+
+        return null;
+    }
+
+    private isSupportedMutationTrait(value: string): value is MonsterMutationTrait {
+        return ['feral strength', 'void armor', 'acid blood', 'blink speed', 'barbed hide', 'grave intellect'].includes(value);
+    }
+
 
     private registerQuestLocations(quest: QuestNode): void {
         for (const entity of quest.entities) {
@@ -209,6 +327,37 @@ export default class Game {
         for (const child of quest.children) {
             this.registerQuestLocations(child);
         }
+    }
+
+    private collectBarterContracts(quest: QuestNode): Array<{ traderName: string; itemName: string; sourceVillage?: string; destinationVillage?: string; contractType: 'barter' | 'deliver' }> {
+        const contracts: Array<{ traderName: string; itemName: string; sourceVillage?: string; destinationVillage?: string; contractType: 'barter' | 'deliver' }> = [];
+        const visit = (node: QuestNode): void => {
+            if (node.objectiveType === 'barter' && node.children.length === 0) {
+                const trader = node.entities.find((entity) => entity.type === 'person')?.text?.trim();
+                const item = node.entities.find((entity) => entity.type === 'item')?.text?.trim();
+                if (trader && item) {
+                    contracts.push({ traderName: trader, itemName: item, contractType: 'barter' });
+                }
+            }
+
+            if (node.objectiveType === 'deliver' && node.children.length === 0) {
+                const deliverData = node.objectiveData?.deliver;
+                if (deliverData?.sourceTrader && deliverData?.itemName) {
+                    contracts.push({
+                        traderName: deliverData.sourceTrader,
+                        itemName: deliverData.itemName,
+                        sourceVillage: deliverData.sourceVillage,
+                        destinationVillage: deliverData.destinationVillage,
+                        contractType: 'deliver',
+                    });
+                }
+            }
+
+            node.children.forEach((child) => visit(child));
+        };
+
+        visit(quest);
+        return contracts;
     }
 
 
@@ -243,7 +392,11 @@ export default class Game {
             onEnterBattle: (battleData: { enemies: Skeleton[]; terrainType: TerrainType }) => this.battleCoordinator.enterBattleMode(battleData.enemies, battleData.terrainType),
             onUpdateBattle: () => this.battleCoordinator.updateBattleMode(),
             onExitBattle: () => this.battleCoordinator.exitBattleMode(),
-            onEnterVillage: () => this.villageCoordinator.enterVillageMode(this.canvas.width, this.canvas.height, this.worldMap.getVillageNameAtPlayerPosition()),
+            onEnterVillage: () => {
+                const villageName = this.worldMap.getVillageNameAtPlayerPosition();
+                this.recordLocationEntry(villageName);
+                this.villageCoordinator.enterVillageMode(this.canvas.width, this.canvas.height, villageName);
+            },
             onExitVillage: () => this.villageCoordinator.exitVillageMode(),
         }).create();
     }
@@ -264,18 +417,26 @@ export default class Game {
             onUsePotionFromHud: () => this.battleCoordinator.handleUsePotion(false),
             onUseManaPotionFromHud: () => this.battleCoordinator.handleUseManaPotion(false),
             onUsePotionFromWorld: () => this.battleCoordinator.handleUsePotion(false),
+            onEnterVillageFromWorld: () => this.tryEnterVillageFromWorldMap(),
+            onConfirmVillageEntryPrompt: () => this.confirmWorldVillageEntry(),
+            onDismissVillageEntryPrompt: () => this.worldModeController.dismissVillageEntryPrompt(),
+            onCampSleepFromWorld: () => this.worldModeController.handleCampSleep(),
             onNewCharacter: () => this.startNewCharacter(),
             onAddStat: (stat) => this.hudCoordinator.handleAddStat(stat),
             onRemoveStat: (stat) => this.hudCoordinator.handleRemoveStat(stat),
             onSaveSkillChanges: () => this.hudCoordinator.handleSaveSkillChanges(),
+            onGodSkillsBoost: () => {
+                this.hudCoordinator.handleGodSkillsBoost();
+                this.saveGameIfChanged();
+            },
             onCastSpell: (spellId) => this.battleCoordinator.handleCastSpell(spellId),
             onUpgradeSpell: (spellId) => this.hudCoordinator.handleUpgradeSpell(spellId),
             onCanvasClick: (event) => this.battleCoordinator.handleCanvasClick(event, this.canvas),
             onCanvasMove: (event) => this.handleCanvasMove(event),
             onCanvasLeave: () => this.handleCanvasLeave(),
-            onWorldMapZoomIn: () => this.handleWorldMapZoom('in'),
-            onWorldMapZoomOut: () => this.handleWorldMapZoom('out'),
-            onWorldMapPan: (direction) => this.handleWorldMapPan(direction),
+            onWorldMapWheel: (event) => this.handleWorldMapWheel(event),
+            onWorldMapMiddleDragStart: (event) => this.handleWorldMapMiddleDragStart(event),
+            onWorldMapKeyboardZoom: (direction) => this.handleWorldMapKeyboardZoom(direction),
             onCenterWorldMapOnPlayer: () => this.centerWorldMapOnPlayer(),
             onTogglePanel: (panel) => this.hudCoordinator.togglePanel(panel),
         }).bind(() => this.villageCoordinator.getVillageName());
@@ -316,6 +477,7 @@ export default class Game {
             worldMap: this.worldMap.getState(),
             player: this.player.getState(),
             spellLevels: this.magicSystem.getSpellLevels(),
+            quest: this.activeQuest,
         };
     }
 
@@ -330,38 +492,44 @@ export default class Game {
     }
 
     private loadGame(): void {
+        const parsed = this.getParsedSaveState();
+        if (!parsed || !parsed.player || !parsed.worldMap || !parsed.spellLevels) {
+            return;
+        }
+
+        this.worldMap.restoreState(parsed.worldMap);
+        this.player.restoreState(parsed.player);
+        this.magicSystem.restoreSpellLevels(parsed.spellLevels);
+
+        const [x, y] = this.worldMap.getPlayerPixelPosition();
+        this.player.x = x;
+        this.player.y = y;
+        this.refreshHud();
+    }
+
+    private getParsedSaveState(): Partial<GameSaveState> | null {
         const raw = window.localStorage.getItem(SAVE_KEY);
         if (!raw) {
-            return;
+            return null;
         }
 
         try {
             const parsed = JSON.parse(raw) as Partial<GameSaveState>;
-            if (parsed.version !== 1 || !parsed.player || !parsed.worldMap || !parsed.spellLevels) {
-                return;
-            }
-
-            this.worldMap.restoreState(parsed.worldMap);
-            this.player.restoreState(parsed.player);
-            this.magicSystem.restoreSpellLevels(parsed.spellLevels);
-
-            const [x, y] = this.worldMap.getPlayerPixelPosition();
-            this.player.x = x;
-            this.player.y = y;
-            this.refreshHud();
+            return parsed.version === 1 ? parsed : null;
         } catch {
             console.warn('Failed to parse save data, starting a new character.');
+            return null;
         }
     }
 
     private refreshHud(): void {
         this.hudCoordinator.updateHUD();
-        this.hudCoordinator.updateSelectedWorldCell(this.worldMap.getSelectedCellInfo());
+        this.hudCoordinator.updateSelectedCell(this.worldMap.getSelectedCellInfo());
     }
 
     private handleCanvasMove(event: MouseEvent): void {
-        if (!this.stateMachine.isInState(MODES.WORLD_MAP)) {
-            return;
+        if (this.isWorldMapMiddleDragActive && this.stateMachine.isInState(MODES.WORLD_MAP)) {
+            this.handleWorldMapMiddleDragMove(event);
         }
 
         const rect = this.canvas.getBoundingClientRect();
@@ -369,17 +537,32 @@ export default class Game {
         const scaleY = this.canvas.height / rect.height;
         const worldX = (event.clientX - rect.left) * scaleX;
         const worldY = (event.clientY - rect.top) * scaleY;
-        this.worldMap.updateSelectedCellFromPixel(worldX, worldY);
-        this.hudCoordinator.updateSelectedWorldCell(this.worldMap.getSelectedCellInfo());
-    }
 
-    private handleCanvasLeave(): void {
-        if (!this.stateMachine.isInState(MODES.WORLD_MAP)) {
+        if (this.stateMachine.isInState(MODES.WORLD_MAP)) {
+            this.worldMap.updateSelectedCellFromPixel(worldX, worldY);
+            this.hudCoordinator.updateSelectedCell(this.worldMap.getSelectedCellInfo());
             return;
         }
 
-        this.worldMap.clearSelectedCell();
-        this.hudCoordinator.updateSelectedWorldCell(null);
+        if (this.stateMachine.isInState(MODES.BATTLE)) {
+            this.battleMap.updateSelectedCellFromPixel(worldX, worldY);
+            this.hudCoordinator.updateSelectedCell(this.battleMap.getSelectedCellInfo());
+        }
+    }
+
+    private handleCanvasLeave(): void {
+        this.stopWorldMapMiddleDrag();
+
+        if (this.stateMachine.isInState(MODES.WORLD_MAP)) {
+            this.worldMap.clearSelectedCell();
+            this.hudCoordinator.updateSelectedCell(null);
+            return;
+        }
+
+        if (this.stateMachine.isInState(MODES.BATTLE)) {
+            this.battleMap.clearSelectedCell();
+            this.hudCoordinator.updateSelectedCell(null);
+        }
     }
 
     private handleWorldMapZoom(direction: 'in' | 'out'): void {
@@ -408,6 +591,61 @@ export default class Game {
         this.player.y = y;
     }
 
+    private handleWorldMapWheel(event: WheelEvent): void {
+        if (!this.stateMachine.isInState(MODES.WORLD_MAP)) {
+            return;
+        }
+
+        event.preventDefault();
+        const changed = event.deltaY < 0 ? this.worldMap.zoomIn() : this.worldMap.zoomOut();
+        if (!changed) {
+            return;
+        }
+
+        const [x, y] = this.worldMap.getPlayerPixelPosition();
+        this.player.x = x;
+        this.player.y = y;
+    }
+
+    private handleWorldMapKeyboardZoom(direction: 'in' | 'out'): void {
+        if (!this.stateMachine.isInState(MODES.WORLD_MAP)) {
+            return;
+        }
+
+        this.handleWorldMapZoom(direction);
+    }
+
+    private handleWorldMapMiddleDragStart(event: MouseEvent): void {
+        if (event.button !== 1 || !this.stateMachine.isInState(MODES.WORLD_MAP)) {
+            return;
+        }
+
+        event.preventDefault();
+        this.isWorldMapMiddleDragActive = true;
+        this.worldMapDragPointer = { x: event.clientX, y: event.clientY };
+        const stopDrag = (): void => this.stopWorldMapMiddleDrag();
+        window.addEventListener('mouseup', stopDrag, { once: true });
+        window.addEventListener('blur', stopDrag, { once: true });
+    }
+
+    private handleWorldMapMiddleDragMove(event: MouseEvent): void {
+        const deltaX = event.clientX - this.worldMapDragPointer.x;
+        const deltaY = event.clientY - this.worldMapDragPointer.y;
+        this.worldMapDragPointer = { x: event.clientX, y: event.clientY };
+        const changed = this.worldMap.panByPixels(deltaX, deltaY);
+        if (!changed) {
+            return;
+        }
+
+        const [x, y] = this.worldMap.getPlayerPixelPosition();
+        this.player.x = x;
+        this.player.y = y;
+    }
+
+    private stopWorldMapMiddleDrag(): void {
+        this.isWorldMapMiddleDragActive = false;
+    }
+
     private centerWorldMapOnPlayer(): void {
         if (!this.stateMachine.isInState(MODES.WORLD_MAP)) {
             return;
@@ -417,6 +655,59 @@ export default class Game {
         const [x, y] = this.worldMap.getPlayerPixelPosition();
         this.player.x = x;
         this.player.y = y;
+    }
+
+    private tryEnterVillageFromWorldMap(): void {
+        if (!this.stateMachine.isInState(MODES.WORLD_MAP)) {
+            return;
+        }
+
+        const enteredVillage = this.worldModeController.tryEnterVillageAtCurrentPosition();
+        if (enteredVillage) {
+            return;
+        }
+
+        this.hudCoordinator.addBattleLog('Stand on a village tile to enter it.', 'system');
+    }
+
+    private confirmWorldVillageEntry(): void {
+        if (!this.stateMachine.isInState(MODES.WORLD_MAP)) {
+            this.worldModeController.dismissVillageEntryPrompt();
+            return;
+        }
+
+        const enteredVillage = this.worldModeController.confirmVillageEntryFromPrompt();
+        if (enteredVillage) {
+            return;
+        }
+
+        this.hudCoordinator.addBattleLog('You must stand on the village tile to enter.', 'system');
+    }
+
+    private showWorldVillageEntryPrompt(worldUI: WorldUI, villageName: string, anchor: { x: number; y: number }): void {
+        worldUI.villageEntryTitle.textContent = `You found ${villageName}.`;
+        this.positionWorldVillageEntryPrompt(worldUI, anchor);
+        worldUI.villageEntryPopup.classList.remove('hidden');
+    }
+
+    private hideWorldVillageEntryPrompt(worldUI: WorldUI): void {
+        worldUI.villageEntryPopup.classList.add('hidden');
+    }
+
+    private positionWorldVillageEntryPrompt(worldUI: WorldUI, anchor: { x: number; y: number }): void {
+        const popupWidth = worldUI.villageEntryPopup.offsetWidth || 190;
+        const popupHeight = worldUI.villageEntryPopup.offsetHeight || 84;
+        const horizontalPadding = 14;
+        const verticalPadding = 14;
+        const pointerLift = 16;
+        const preferredX = anchor.x - (popupWidth / 2);
+        const preferredY = anchor.y - popupHeight - pointerLift;
+        const maxX = Math.max(horizontalPadding, this.canvas.width - popupWidth - horizontalPadding);
+        const maxY = Math.max(verticalPadding, this.canvas.height - popupHeight - verticalPadding);
+        const left = Math.max(horizontalPadding, Math.min(maxX, preferredX));
+        const top = Math.max(verticalPadding, Math.min(maxY, preferredY));
+        worldUI.villageEntryPopup.style.left = `${left}px`;
+        worldUI.villageEntryPopup.style.top = `${top}px`;
     }
 
     private startNewCharacter(): void {

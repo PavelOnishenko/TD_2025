@@ -209,6 +209,16 @@ Note: Semi-transparent overlays can use fixed colors, but all UI elements must u
 
 ## Common Patterns
 
+### Pattern 0: Selected Tile Labels Must Use Entity Display Names
+
+When filling "Selected Tile" details in battle mode, do **not** rely on `constructor.name` for enemy labels.
+
+- Use `entity.name` as the primary display source for enemies.
+- Keep `constructor.name` only as a fallback when no display name exists.
+- Continue to use `"Hero"` for the player-facing label.
+
+Why: several enemy archetypes reuse shared classes (for example Ninja can be implemented via the `Skeleton` class), so constructor-based UI labels can be wrong even when combat data is correct.
+
 ### Pattern 1: Canvas Drawing
 
 ```typescript
@@ -369,3 +379,12 @@ When in doubt, look at existing features like `BattleSplash.ts`, `ThemeEditor.ts
 
 *Last Updated: 2026-01-06*
 *Maintainer: RGFN Development Team*
+
+## Quest objective state and courier contracts (March 26, 2026)
+
+- Keep objective-completion-critical data in structured fields (`QuestNode.objectiveData`) rather than narrative text.
+- Narrative strings (`title`, `description`, `conditionText`) must remain player-readable, but progression logic must use typed metadata.
+- For courier objectives specifically:
+  - include source trader, source village, destination village, and item in metadata;
+  - do not mark complete on location entry unless required item is present in inventory and pickup source was validated.
+- Contract systems that bind quest objectives to runtime NPC/village behavior must preserve deterministic assignment when objective metadata specifies a source location.

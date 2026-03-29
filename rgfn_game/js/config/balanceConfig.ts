@@ -63,12 +63,68 @@ const creatureArchetypes: Record<string, CreatureArchetype> = {
 };
 
 export const balanceConfig = {
+    // Global multiplier that scales all automatic village creation systems.
+    // 1 = baseline density, 0.333... = roughly 3x fewer initially generated villages.
+    villageCreationRateMultiplier: 1 / 3,
+    questUi: {
+        // Time a quest feedback message stays visible (milliseconds)
+        feedbackMessageDurationMs: 5000,
+    },
+    questNameGeneration: {
+        // Maximum number of words allowed per generated name for each quest text domain.
+        maxWordsByDomain: {
+            location: 4,
+            artifact: 4,
+            character: 4,
+            monster: 4,
+            mainQuest: 4,
+        },
+        // Weighted probability distribution for name lengths.
+        // Goal: 1-2 words dominate, 3 words uncommon, 4 words extremely rare.
+        wordLengthWeightsByDomain: {
+            location: {
+                1: 52,
+                2: 40,
+                3: 7,
+                4: 1,
+            },
+            artifact: {
+                1: 50,
+                2: 42,
+                3: 7,
+                4: 1,
+            },
+            character: {
+                1: 58,
+                2: 36,
+                3: 5,
+                4: 1,
+            },
+            monster: {
+                1: 54,
+                2: 38,
+                3: 7,
+                4: 1,
+            },
+            mainQuest: {
+                1: 48,
+                2: 42,
+                3: 9,
+                4: 1,
+            },
+        },
+    },
+
     worldMap: {
         dimensions: {
             columns: 100,
             rows: 100,
         },
-        visibilityRadius: 2,
+        villages: {
+            minCount: 6,
+            densityPerCell: 0.012,
+        },
+        visibilityRadius: 3,
         terrainWeights: {
             grass: 0.32,
             forest: 0.48,
@@ -96,6 +152,27 @@ export const balanceConfig = {
             turnRate: 0.34,
             width: 1,
         },
+    },
+    survival: {
+        // Approximate awake period used to estimate "comfortable" daily travel.
+        awakeHoursPerDay: 16,
+        // Approximate sleep needed after a heavy travel day.
+        requiredSleepHours: 8,
+        // Global fatigue resource for travel/sleep loops.
+        maxFatigue: 100,
+        // Fatigue state thresholds shown in HUD and used by systems.
+        cautionFatigueThreshold: 60,
+        highFatigueThreshold: 80,
+        // Recovery while sleeping in a safe village room.
+        villageSleepFatigueRecovery: 90,
+        // Recovery while sleeping in the wilderness.
+        wildSleepFatigueRecovery: 65,
+        // Wilderness sleep risk profile.
+        wildSleepAmbushChance: 0.35,
+        wildSleepAmbushHpLoss: 2,
+        wildSleepAmbushManaLoss: 2,
+        // Typical inn room cost.
+        innRoomCostGold: 6,
     },
 
     // ============ PLAYER STATS ============
@@ -319,10 +396,10 @@ export const balanceConfig = {
     // ============ ENCOUNTER SETTINGS ============
     encounters: {
         // Encounter chance per step
-        encounterRate: 0.4,
+        encounterRate: 0.1,
 
         // Encounter chance per step on already discovered (hidden) tiles
-        discoveredEncounterRate: 0.2,
+        discoveredEncounterRate: 0.05,
 
         // Enemy count range per encounter
         minEnemies: 1,
@@ -337,10 +414,9 @@ export const balanceConfig = {
         },
 
         eventTypeWeights: [
-            { type: 'monster', weight: 8 },
-            { type: 'item', weight: 2 },
-            { type: 'village', weight: 1 },
-            { type: 'traveler', weight: 2 },
+            { type: 'monster', weight: 40 },
+            { type: 'item', weight: 10 },
+            { type: 'traveler', weight: 10 },
         ],
 
         zombieMinGroup: 1,

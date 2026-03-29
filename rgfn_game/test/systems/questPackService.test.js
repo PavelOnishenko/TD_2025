@@ -23,7 +23,7 @@ function createFileReader() {
 }
 
 test('QuestPackService falls back to local and echo sources when remote APIs are unavailable', async () => {
-  const random = new ScriptedQuestRandom({ ints: [90], picks: ['local-pattern', ['ADJECTIVE', 'NOUN', 'PREPOSITION'], 'ashen', 'causeway', 'beyond'] });
+  const random = new ScriptedQuestRandom({ ints: [95], picks: ['local-pattern', ['ADJECTIVE', 'NOUN', 'PREPOSITION'], 'ashen', 'causeway', 'beyond'] });
   const fetchImpl = createFetchStub({
     'restcountries.com': new Error('offline'),
     'randomuser.me': new Error('offline'),
@@ -39,7 +39,7 @@ test('QuestPackService falls back to local and echo sources when remote APIs are
 
 test('QuestPackService uses remote location packs only after successful availability checks', async () => {
   const random = new ScriptedQuestRandom({
-    ints: [2],
+    ints: [60],
     picks: [
       { common: 'glass harbor' },
       'glass harbor',
@@ -61,7 +61,7 @@ test('QuestPackService uses remote location packs only after successful availabi
 });
 
 test('QuestPackService can use the remote name source for character packs', async () => {
-  const random = new ScriptedQuestRandom({ ints: [2], picks: ['remote-name'] });
+  const random = new ScriptedQuestRandom({ ints: [90], picks: ['remote-name'] });
   const fetchImpl = createFetchStub({
     'restcountries.com': new Error('offline'),
     'randomuser.me': { results: [{ name: { first: 'Mira', last: 'Stone' } }] },
@@ -91,4 +91,30 @@ test('QuestPackService prefers real world-map village names for quest locations 
 
   assert.equal(result.text, 'Oakford');
   assert.deepEqual(result.sourceTypes, ['map-village']);
+});
+
+test('QuestPackService applies configured weighted word lengths so 4-word names remain possible but rare', async () => {
+  const random = new ScriptedQuestRandom({
+    ints: [100],
+    picks: [
+      'local-pattern',
+      ['NOUN', 'PREPOSITION', 'NOUN'],
+      'causeway',
+      'beyond',
+      'orchard',
+      'local-pattern',
+      ['NOUN'],
+      'chapel',
+    ],
+  });
+  const fetchImpl = createFetchStub({
+    'restcountries.com': new Error('offline'),
+    'randomuser.me': new Error('offline'),
+  });
+  const service = new QuestPackService({ fetchImpl, random, fileReader: createFileReader() });
+
+  const result = await service.generateName('artifact', 4);
+
+  assert.equal(result.text.split(' ').length, 4);
+  assert.equal(result.sourceTypes.every(type => type === 'local-pattern'), true);
 });

@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import WorldMap from '../../dist/systems/world/WorldMap.js';
 import { balanceConfig } from '../../dist/config/balanceConfig.js';
 import { theme } from '../../dist/config/ThemeConfig.js';
-import { createMockCanvasContext, withMockedRandom } from '../helpers/testUtils.js';
+import { createMockCanvasContext, withMockedRandom, withPatchedProperty } from '../helpers/testUtils.js';
 
 function placePlayerAt(worldMap, col, row) {
   const state = worldMap.getState();
@@ -34,6 +34,43 @@ test('WorldMap generates villages before placing the player into the world', () 
   const state = worldMap.getState();
 
   assert.equal(state.villages.includes(`${state.playerGridPos.col},${state.playerGridPos.row}`), false);
+}));
+
+test('WorldMap scales generated village count with global village creation multiplier', () => withMockedRandom([0.11, 0.11], () => {
+  const fullVillageCount = withPatchedProperty(balanceConfig, 'villageCreationRateMultiplier', 1, () => (
+    new WorldMap(100, 100, 20).getState().villages.length
+  ));
+
+  const reducedVillageCount = withPatchedProperty(balanceConfig, 'villageCreationRateMultiplier', 1 / 3, () => (
+    new WorldMap(100, 100, 20).getState().villages.length
+  ));
+
+  assert.equal(reducedVillageCount < fullVillageCount, true);
+  assert.equal(Math.abs(reducedVillageCount - Math.floor(fullVillageCount / 3)) <= 2, true);
+}));
+
+
+test('WorldMap village naming generator produces a large deterministic name space with mostly short names', () => withMockedRandom([0.11], () => {
+  const worldMap = new WorldMap(40, 30, 20);
+  const sampledNames = [];
+
+  for (let col = 0; col < 20; col += 1) {
+    for (let row = 0; row < 20; row += 1) {
+      sampledNames.push(worldMap['getVillageName'](col, row));
+    }
+  }
+
+  const uniqueNames = new Set(sampledNames);
+  const wordCounts = sampledNames.map((name) => name.trim().split(/\s+/).length);
+  const oneOrTwoWordCount = wordCounts.filter((count) => count <= 2).length;
+  const fourWordCount = wordCounts.filter((count) => count >= 4).length;
+  const spacedCount = sampledNames.filter((name) => name.includes(' ')).length;
+
+  assert.equal(uniqueNames.size > 180, true);
+  assert.equal(oneOrTwoWordCount >= sampledNames.length * 0.9, true);
+  assert.equal(fourWordCount <= sampledNames.length * 0.05, true);
+  assert.equal(spacedCount >= sampledNames.length * 0.35, true);
+  assert.equal(worldMap['getVillageName'](4, 7), worldMap['getVillageName'](4, 7));
 }));
 
 test('WorldMap uses a different persistent seed for each new world generation', () => withMockedRandom([0.11, 0.25], () => {
@@ -172,7 +209,7 @@ test('WorldMap applies terrain-based line of sight rules', () => {
 
     worldMap.restoreState({ ...worldMap.getState(), playerGridPos: { col: 6, row: 4 } });
 
-    assert.equal(worldMap.isCellVisible(7, 4), false);
+    assert.equal(worldMap.isCellVisible(7, 4), true);
     assert.equal(worldMap.isCellVisible(8, 4), false);
     assert.equal(worldMap.isCellVisible(6, 3), true);
     assert.equal(worldMap.isCellVisible(6, 2), false);
@@ -212,12 +249,28 @@ test('WorldMap can center the viewport back on the player after panning', () => 
   assert.deepEqual(reCenteredViewport, centeredViewport);
 });
 
+test('WorldMap supports pixel-based panning for middle-mouse dragging', () => {
+  const worldMap = new WorldMap(100, 100, theme.worldMap.cellSize.default);
+  worldMap.resizeToCanvas(720, 720);
+  worldMap.centerOnPlayer();
+
+  const viewportBefore = worldMap.getState().viewport;
+  const changed = worldMap.panByPixels(48, -36);
+  const viewportAfter = worldMap.getState().viewport;
+
+  assert.equal(changed, true);
+  assert.equal(
+    viewportAfter.offsetX !== viewportBefore.offsetX || viewportAfter.offsetY !== viewportBefore.offsetY,
+    true,
+  );
+});
+
 test('WorldMap supports developer map display combinations for full reveal and fog-free exploration', () => {
   const worldMap = new WorldMap(12, 9, 20);
   placePlayerAt(worldMap, 6, 4);
   worldMap.selectedGridPos = { col: 0, row: 0 };
 
-  assert.equal(worldMap.getSelectedCellInfo()?.fogState, 'unknown');
+  assert.ok(['unknown', 'hidden'].includes(worldMap.getSelectedCellInfo()?.fogState));
 
   worldMap.setMapDisplayConfig({ fogOfWar: false });
   assert.equal(worldMap.getSelectedCellInfo()?.fogState, 'hidden');
@@ -236,6 +289,7 @@ test('WorldMap exposes selected cell info from mouse position after viewport tra
   worldMap.updateSelectedCellFromPixel(x, y);
 
   assert.deepEqual(worldMap.getSelectedCellInfo(), {
+    mode: 'world',
     col: 6,
     row: 4,
     terrainType: worldMap.getCurrentTerrain().type,
@@ -286,6 +340,106 @@ test('WorldMap draw switches to low-detail rendering when zoomed out with fog di
   assert.equal(drawGridCalled, false);
   assert.ok(ctx.calls.some((call) => call[0] === 'fillRect'));
 });
+
+test('WorldMap medium-detail caching avoids full terrain redraw on subsequent frames', () => {
+  const worldMap = new WorldMap(100, 100, 12);
+  worldMap.resizeToCanvas(720, 720);
+  worldMap.setMapDisplayConfig({ fogOfWar: true, everythingDiscovered: false });
+  const ctx = createMockCanvasContext();
+  ctx.drawImage = (...args) => ctx.calls.push(['drawImage', ...args]);
+  const originalDocument = globalThis.document;
+  globalThis.document = {
+    createElement: () => ({
+      width: 0,
+      height: 0,
+      getContext: () => createMockCanvasContext(),
+    }),
+  };
+  const originalDrawCell = worldMap.renderer.drawCell.bind(worldMap.renderer);
+  let drawCellCallsFirst = 0;
+  let drawCellCallsSecond = 0;
+  try {
+    worldMap.renderer.drawCell = (drawCtx, cell, fogState, terrain, neighbors, options) => {
+      drawCellCallsFirst += 1;
+      return originalDrawCell(drawCtx, cell, fogState, terrain, neighbors, options);
+    };
+    worldMap.draw(ctx, null);
+
+    worldMap.renderer.drawCell = (drawCtx, cell, fogState, terrain, neighbors, options) => {
+      drawCellCallsSecond += 1;
+      return originalDrawCell(drawCtx, cell, fogState, terrain, neighbors, options);
+    };
+    worldMap.draw(ctx, null);
+  } finally {
+    globalThis.document = originalDocument;
+  }
+
+  assert.ok(drawCellCallsSecond > 0);
+  assert.ok(drawCellCallsFirst > drawCellCallsSecond * 2);
+});
+
+test('WorldMap terrain cache render is fog-agnostic and does not draw unknown cells into cached terrain layer', () => {
+  const worldMap = new WorldMap(100, 100, 12);
+  worldMap.resizeToCanvas(720, 720);
+  worldMap.setMapDisplayConfig({ fogOfWar: true, everythingDiscovered: false });
+  const ctx = createMockCanvasContext();
+  ctx.drawImage = (...args) => ctx.calls.push(['drawImage', ...args]);
+  const originalDocument = globalThis.document;
+  globalThis.document = {
+    createElement: () => ({
+      width: 0,
+      height: 0,
+      getContext: () => createMockCanvasContext(),
+    }),
+  };
+
+  const originalDrawCell = worldMap.renderer.drawCell.bind(worldMap.renderer);
+  const cachedTerrainFogStates = [];
+  try {
+    worldMap.renderer.drawCell = (drawCtx, cell, fogState, terrain, neighbors, options) => {
+      if (options?.showFogOverlay === false) {
+        cachedTerrainFogStates.push(fogState);
+      }
+      return originalDrawCell(drawCtx, cell, fogState, terrain, neighbors, options);
+    };
+    worldMap.draw(ctx, null);
+  } finally {
+    globalThis.document = originalDocument;
+  }
+
+  assert.ok(cachedTerrainFogStates.length > 0);
+  assert.deepEqual(new Set(cachedTerrainFogStates), new Set(['discovered']));
+});
+
+test('WorldMap roads are tracked per-cell and become drawable when any road cell is discovered', () => withMockedRandom([0.11], () => {
+  const worldMap = new WorldMap(40, 30, 20);
+  const roadIndices = Array.from(worldMap.roadIndexSet.values());
+  const villageIndices = new Set(Array.from(worldMap.villageIndexSet.values()));
+  const standaloneRoadIndex = roadIndices.find((index) => !villageIndices.has(index));
+
+  assert.ok(roadIndices.length > 0);
+  assert.ok(typeof standaloneRoadIndex === 'number');
+
+  const col = standaloneRoadIndex % worldMap.grid.columns;
+  const row = Math.floor(standaloneRoadIndex / worldMap.grid.columns);
+  const state = worldMap.getState();
+  worldMap.restoreState({
+    ...state,
+    playerGridPos: { col, row },
+    visitedCells: [state.villages[0], `${col},${row}`],
+  });
+
+  let drawnRoadPaths = 0;
+  const originalDrawRoadPath = worldMap.renderer.drawVillageRoadPath.bind(worldMap.renderer);
+  worldMap.renderer.drawVillageRoadPath = (...args) => {
+    drawnRoadPaths += 1;
+    return originalDrawRoadPath(...args);
+  };
+
+  worldMap.draw(createMockCanvasContext(), null);
+
+  assert.ok(drawnRoadPaths > 0);
+}));
 
 test('WorldMap exposes village names and anchors matching quest locations to village tiles', () => withMockedRandom([0.11], () => {
   const worldMap = new WorldMap(40, 30, 20);

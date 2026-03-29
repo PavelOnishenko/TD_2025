@@ -7,13 +7,17 @@ import Item from '../entities/Item.js';
 import Wanderer from '../entities/Wanderer.js';
 import { ItemDiscoverySplash } from '../ui/ItemDiscoverySplash.js';
 import { Direction, TerrainType } from '../types/game.js';
+import { balanceConfig } from '../config/balanceConfig.js';
 
 type WorldModeCallbacks = {
     onEnterVillage: () => void;
+    onRequestVillageEntryPrompt: (villageName: string, anchor: { x: number; y: number }) => void;
+    onCloseVillageEntryPrompt: () => void;
     onStartBattle: (enemies: Skeleton[], terrainType: TerrainType) => void;
     onAddBattleLog: (message: string, type?: string) => void;
     onUpdateHUD: () => void;
     onRememberTraveler: (traveler: Wanderer, disposition: 'hostile' | 'peaceful') => void;
+    getQuestBattleEncounter: () => { enemies: Skeleton[]; hint?: string } | null;
 };
 
 export default class WorldModeController {
@@ -23,6 +27,7 @@ export default class WorldModeController {
     private encounterSystem: EncounterSystem;
     private itemDiscoverySplash: ItemDiscoverySplash;
     private callbacks: WorldModeCallbacks;
+    private isVillagePromptOpen = false;
 
     constructor(
         input: InputManager,
@@ -41,8 +46,9 @@ export default class WorldModeController {
     }
 
     public enterWorldMode(hudModeIndicator: HTMLElement, worldSidebar: HTMLElement, battleSidebar: HTMLElement, villageSidebar: HTMLElement): void {
+        this.closeVillageEntryPrompt();
         hudModeIndicator.textContent = 'World Map';
-        worldSidebar.classList.remove('hidden');
+        worldSidebar.classList.add('hidden');
         battleSidebar.classList.add('hidden');
         villageSidebar.classList.add('hidden');
 
@@ -55,6 +61,11 @@ export default class WorldModeController {
 
     public updateWorldMode(): void {
         this.handleMapViewportInput();
+        this.syncVillagePromptWithPlayerPosition();
+
+        if (this.input.wasActionPressed('enterVillage') && this.tryEnterVillageAtCurrentPosition()) {
+            return;
+        }
 
         const direction = this.getPendingMoveDirection();
         if (direction) {
@@ -69,13 +80,65 @@ export default class WorldModeController {
         this.player.y = py;
     }
 
+    public tryEnterVillageAtCurrentPosition(): boolean {
+        if (!this.worldMap.isPlayerOnVillage()) {
+            return false;
+        }
+
+        this.openVillageEntryPrompt();
+        return true;
+    }
+
+    public confirmVillageEntryFromPrompt(): boolean {
+        if (!this.worldMap.isPlayerOnVillage()) {
+            this.closeVillageEntryPrompt();
+            return false;
+        }
+
+        this.closeVillageEntryPrompt();
+        this.callbacks.onEnterVillage();
+        return true;
+    }
+
+    public dismissVillageEntryPrompt(): void {
+        this.closeVillageEntryPrompt();
+    }
+  
+    public handleCampSleep(): void {
+        if (this.worldMap.isPlayerOnVillage()) {
+            this.callbacks.onAddBattleLog('You are at a village. Rent a room from an innkeeper for safer sleep.', 'system');
+            return;
+        }
+
+        const recovered = this.player.recoverFatigue(balanceConfig.survival.wildSleepFatigueRecovery);
+        this.callbacks.onAddBattleLog(`You camp in the wild and recover ${Math.round(recovered)} fatigue.`, 'player');
+
+        if (Math.random() < balanceConfig.survival.wildSleepAmbushChance) {
+            if (typeof window !== 'undefined' && typeof window.alert === 'function') {
+                window.alert('Night ambush!');
+            }
+            this.callbacks.onAddBattleLog('Night ambush! You were caught off guard while sleeping.', 'enemy');
+
+            const questEncounter = this.callbacks.getQuestBattleEncounter();
+            if (questEncounter) {
+                if (questEncounter.hint) {
+                    this.callbacks.onAddBattleLog(questEncounter.hint, 'system-message');
+                }
+                this.callbacks.onStartBattle(questEncounter.enemies, this.worldMap.getCurrentTerrain().type);
+                return;
+            }
+
+            const encounter = this.encounterSystem.generateMonsterBattleEncounter();
+            this.callbacks.onStartBattle(encounter.enemies, this.worldMap.getCurrentTerrain().type);
+            return;
+        } else {
+            this.callbacks.onAddBattleLog('The night is quiet. You wake up before dawn.', 'system');
+        }
+
+        this.callbacks.onUpdateHUD();
+    }
+
     private handleMapViewportInput(): void {
-        if (this.input.wasActionPressed('worldMapZoomIn')) {
-            this.worldMap.zoomIn();
-        }
-        if (this.input.wasActionPressed('worldMapZoomOut')) {
-            this.worldMap.zoomOut();
-        }
         if (this.input.wasActionPressed('worldMapPanUp')) {
             this.worldMap.pan('up');
         }
@@ -155,6 +218,8 @@ export default class WorldModeController {
     }
 
     private onPlayerMoved(isPreviouslyDiscovered: boolean): void {
+        const travelMinutesMultiplier = this.getTravelMinutesMultiplier();
+        this.player.addTravelFatigue(travelMinutesMultiplier);
         this.player.restoreMana(1);
         this.callbacks.onUpdateHUD();
 
@@ -164,16 +229,30 @@ export default class WorldModeController {
         }
 
         if (this.worldMap.isPlayerOnVillage()) {
-            this.callbacks.onEnterVillage();
+            this.openVillageEntryPrompt();
             return;
         }
 
+        this.syncVillagePromptWithPlayerPosition();
+
         this.encounterSystem.onPlayerMove();
+        const monsterEncountersEnabled = this.encounterSystem.isEncounterTypeEnabled('monster');
+        const questEncounter = monsterEncountersEnabled
+            ? this.callbacks.getQuestBattleEncounter()
+            : null;
+        if (questEncounter) {
+            if (questEncounter.hint) {
+                this.callbacks.onAddBattleLog(questEncounter.hint, 'system-message');
+            }
+            this.callbacks.onStartBattle(questEncounter.enemies, this.worldMap.getCurrentTerrain().type);
+            return;
+        }
+
         if (!this.encounterSystem.checkEncounter(isPreviouslyDiscovered)) {
             return;
         }
 
-        const encounter = this.encounterSystem.generateEncounter(!isPreviouslyDiscovered, !isPreviouslyDiscovered);
+        const encounter = this.encounterSystem.generateEncounter(!isPreviouslyDiscovered);
         if (encounter.type === 'battle') {
             this.callbacks.onStartBattle(encounter.enemies, this.worldMap.getCurrentTerrain().type);
             return;
@@ -189,17 +268,27 @@ export default class WorldModeController {
             return;
         }
 
-        if (encounter.type === 'village') {
-            this.worldMap.markVillageAtPlayerPosition();
-            this.callbacks.onEnterVillage();
-            return;
-        }
-
         if (encounter.type === 'traveler') {
             this.handleTravelerEncounter(encounter.traveler, encounter.isHostile);
         }
     }
 
+
+    private getTravelMinutesMultiplier(): number {
+        if (this.worldMap.isPlayerOnRoad()) {
+            return 1;
+        }
+
+        const terrain = this.worldMap.getCurrentTerrain().type;
+        if (terrain === 'forest') {
+            return 4;
+        }
+        if (terrain === 'grass') {
+            return 2;
+        }
+
+        return 1;
+    }
     private handleTravelerEncounter(traveler: Wanderer, isHostile: boolean): void {
         this.callbacks.onRememberTraveler(traveler, isHostile ? 'hostile' : 'peaceful');
         if (isHostile) {
@@ -257,5 +346,36 @@ export default class WorldModeController {
 
             this.callbacks.onUpdateHUD();
         });
+    }
+
+    private openVillageEntryPrompt(): void {
+        const villageName = this.worldMap.getVillageNameAtPlayerPosition();
+        const [x, y] = this.worldMap.getPlayerPixelPosition();
+        this.isVillagePromptOpen = true;
+        this.callbacks.onRequestVillageEntryPrompt(villageName, { x, y });
+    }
+
+    private closeVillageEntryPrompt(): void {
+        if (!this.isVillagePromptOpen) {
+            return;
+        }
+
+        this.isVillagePromptOpen = false;
+        this.callbacks.onCloseVillageEntryPrompt();
+    }
+
+    private syncVillagePromptWithPlayerPosition(): void {
+        if (!this.isVillagePromptOpen) {
+            return;
+        }
+
+        if (!this.worldMap.isPlayerOnVillage()) {
+            this.closeVillageEntryPrompt();
+            return;
+        }
+
+        const villageName = this.worldMap.getVillageNameAtPlayerPosition();
+        const [x, y] = this.worldMap.getPlayerPixelPosition();
+        this.callbacks.onRequestVillageEntryPrompt(villageName, { x, y });
     }
 }

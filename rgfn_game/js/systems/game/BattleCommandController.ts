@@ -21,6 +21,7 @@ type BattleCommandCallbacks = {
     onPlayerTurnReady: () => void;
     getSelectedEnemy: () => Skeleton | null;
     setSelectedEnemy: (enemy: Skeleton | null) => void;
+    onEnemyDefeated?: (enemy: Skeleton) => void;
 };
 
 export default class BattleCommandController {
@@ -39,6 +40,28 @@ export default class BattleCommandController {
         this.turnManager = turnManager;
         this.magicSystem = magicSystem;
         this.callbacks = callbacks;
+    }
+
+    public handleEquipmentAction(actionDescription: string): boolean {
+        const inBattle = this.stateMachine.isInState('BATTLE');
+        if (!inBattle) {
+            return true;
+        }
+
+        if (!this.canUseBattleTurnInput()) {
+            this.callbacks.onAddBattleLog('You can only change equipment on your own turn.', 'system');
+            return false;
+        }
+
+        this.callbacks.onEnableBattleButtons(false);
+        this.callbacks.onPlayerTurnTransitionStart();
+        this.turnManager.waitingForPlayer = false;
+        this.player.expireDirectionalBonusesWithoutAttack().forEach((message) => this.callbacks.onAddBattleLog(message, 'system'));
+        this.callbacks.onAddBattleLog(`${actionDescription} It takes 3 turns to complete.`, 'player');
+        this.turnManager.consumeUpcomingTurns(this.player, 2);
+        this.turnManager.nextTurn();
+        setTimeout(() => this.callbacks.onProcessTurn(), timingConfig.battle.playerActionDelay);
+        return true;
     }
 
     public handleAttack(): void {
@@ -270,6 +293,7 @@ export default class BattleCommandController {
         const damage = this.player.getPhysicalDamageWithBuff();
         target.takeDamage(damage);
         this.callbacks.onAddBattleLog(`${target.name} takes ${damage} damage!`, 'damage');
+        this.applyRetaliationEffects(target, true);
 
         if (target.isDead()) {
             this.performKillRewards(target);
@@ -312,6 +336,7 @@ export default class BattleCommandController {
         if (exchange.actor.damageDealt > 0) {
             target.takeDamage(exchange.actor.damageDealt);
             this.callbacks.onAddBattleLog(`${target.name} takes ${exchange.actor.damageDealt} damage from ${getMoveLabel(playerMove)}.`, 'damage');
+            this.applyRetaliationEffects(target, true);
         } else if (isAttackMove(playerMove)) {
             this.callbacks.onAddBattleLog(`Your ${getMoveLabel(playerMove)} deals no damage this turn.`, 'system');
         }
@@ -350,6 +375,7 @@ export default class BattleCommandController {
 
     private performKillRewards(target: Skeleton): void {
         this.callbacks.onAddBattleLog(`${target.name} defeated!`, 'system');
+        this.callbacks.onEnemyDefeated?.(target);
         if (target.xpValue && target.xpValue > 0) {
             const leveledUp = this.player.addXp(target.xpValue);
             this.callbacks.onAddBattleLog(`Gained ${target.xpValue} XP!`, 'system');
@@ -363,6 +389,18 @@ export default class BattleCommandController {
         if (this.callbacks.getSelectedEnemy() === target) {
             this.callbacks.setSelectedEnemy(null);
         }
+    }
+
+    private applyRetaliationEffects(target: Skeleton, isMelee: boolean): void {
+        const retaliation = target.onDamagedByPlayer(isMelee);
+        retaliation.logs.forEach((message) => this.callbacks.onAddBattleLog(message, 'enemy'));
+        if (retaliation.retaliationDamage <= 0) {
+            return;
+        }
+
+        this.player.takeDamage(retaliation.retaliationDamage);
+        this.callbacks.onAddBattleLog(`Player takes ${retaliation.retaliationDamage} retaliation damage.`, 'damage');
+        this.callbacks.onUpdateHUD();
     }
 
     private collectLoot(target: Skeleton): void {

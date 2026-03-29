@@ -27,28 +27,20 @@ body {
     font-family: 'Trebuchet MS', 'Verdana', sans-serif;
     background: linear-gradient(165deg, var(--color-panel-highlight), var(--color-primary-bg));
     color: var(--color-text-primary);
-    display: flex;
-    justify-content: center;
-    align-items: center;
     min-height: 100vh;
     height: 100dvh;
-    padding: 10px;
+    padding: 0;
     overflow: hidden;
 }
 
 html { height: 100%; }
 
 #game-container {
-    width: min(1520px, 100%);
+    width: 100%;
     height: 100%;
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    padding: 12px;
-    background: linear-gradient(180deg, var(--color-panel-highlight), var(--color-primary-bg));
-    border: 3px solid var(--color-secondary-accent);
-    border-radius: 10px;
-    box-shadow: 0 0 0 2px var(--color-panel-shadow), 0 20px 34px rgba(0, 0, 0, 0.22);
+    background: var(--color-canvas-bg);
     overflow: hidden;
 }
 
@@ -57,16 +49,12 @@ html { height: 100%; }
 }
 
 #hud {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    gap: 8px;
-    align-items: start;
-    padding: 10px 12px;
-    background: linear-gradient(180deg, var(--color-primary-bg), var(--color-secondary-bg));
-    border: 2px solid var(--color-secondary-accent);
-    border-radius: 8px;
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    z-index: 12;
+    pointer-events: none;
 }
-
 
 .hud-section {
     display: flex;
@@ -78,14 +66,6 @@ html { height: 100%; }
     background: rgba(242, 229, 201, 0.4);
 }
 
-#hud > .hud-section:first-child {
-    flex-direction: row;
-    align-items: center;
-    gap: 10px;
-    padding: 8px 10px;
-    min-height: 64px;
-}
-
 .hud-section.stats { align-items: flex-start; }
 
 h1 {
@@ -95,13 +75,6 @@ h1 {
     letter-spacing: 2px;
     text-transform: uppercase;
     margin-bottom: 4px;
-}
-
-#hud > .hud-section:first-child h1 {
-    margin: 0;
-    font-size: clamp(32px, 2.2vw, 44px);
-    line-height: 1;
-    white-space: nowrap;
 }
 
 #mode-indicator {
@@ -151,9 +124,15 @@ h1 {
     gap: 6px;
 }
 
-#save-skills-btn {
+#save-skills-btn,
+#god-skills-btn {
     margin-top: 8px;
     width: 100%;
+}
+
+#god-skills-btn {
+    border-color: #8a1a1a;
+    color: #ffd7d7;
 }
 
 .spell-upgrade-row {
@@ -212,11 +191,10 @@ h1 {
     width: 100%;
     height: 100%;
     min-height: 0;
-    border: 2px solid var(--color-secondary-accent);
-    border-radius: 10px;
+    border: 0;
+    border-radius: 0;
     overflow: hidden;
-    background: linear-gradient(180deg, var(--color-panel-highlight), var(--color-canvas-bg));
-    box-shadow: inset 0 0 0 1px var(--color-panel-shadow);
+    background: var(--color-canvas-bg);
 }
 
 #world-map-shell {
@@ -227,6 +205,37 @@ h1 {
     min-height: 0;
 }
 
+.world-village-entry-popup {
+    position: absolute;
+    left: 0;
+    top: 0;
+    z-index: 3;
+    min-width: 180px;
+    max-width: min(260px, calc(100vw - 48px));
+    padding: 10px;
+    border: 2px solid var(--color-secondary-accent);
+    border-radius: 8px;
+    background: linear-gradient(180deg, color-mix(in srgb, var(--color-panel-highlight) 98%, transparent), color-mix(in srgb, var(--color-secondary-bg) 92%, transparent));
+    box-shadow: 0 10px 24px color-mix(in srgb, var(--color-panel-shadow) 45%, transparent);
+    pointer-events: auto;
+}
+
+.world-village-entry-title {
+    font-size: 13px;
+    line-height: 1.35;
+    margin-bottom: 8px;
+    color: var(--color-primary-accent);
+}
+
+.world-village-entry-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.world-village-entry-actions .action-btn {
+    flex: 1 1 auto;
+}
+
 #game-canvas {
     display: block;
     border: 0;
@@ -235,41 +244,6 @@ h1 {
     width: 100%;
     height: 100%;
     box-shadow: none;
-}
-
-#world-map-controls {
-    position: absolute;
-    right: 18px;
-    bottom: 18px;
-    display: flex;
-    gap: 10px;
-    align-items: flex-end;
-    pointer-events: none;
-    z-index: 3;
-}
-
-.world-map-control-group,
-.world-map-control-pad {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    pointer-events: auto;
-}
-
-.world-map-control-pad {
-    align-items: center;
-}
-
-.world-map-control-pad-row {
-    display: flex;
-    gap: 6px;
-}
-
-.world-map-control-btn {
-    min-width: 56px;
-    padding: 6px 8px;
-    background: color-mix(in srgb, var(--color-panel-highlight) 92%, transparent);
-    backdrop-filter: blur(4px);
 }
 
 .overlay-stack {
@@ -319,10 +293,73 @@ h1 {
     backdrop-filter: blur(10px);
 }
 
+.draggable-panel {
+    position: absolute;
+    top: 0;
+    left: 0;
+    transform: translate(var(--panel-offset-x, 0px), var(--panel-offset-y, 0px));
+}
+
+.panel-window-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    border-bottom: 1px solid var(--color-secondary-accent);
+    padding-bottom: 8px;
+    margin-bottom: 2px;
+}
+
+.panel-drag-handle {
+    flex: 1;
+    min-width: 0;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: var(--color-primary-accent);
+    cursor: grab;
+    user-select: none;
+    touch-action: none;
+}
+
+.panel-dragging .panel-drag-handle {
+    cursor: grabbing;
+}
+
+.panel-close-btn {
+    min-width: 32px;
+    min-height: 30px;
+    padding: 4px 8px;
+    font-size: 16px;
+    line-height: 1;
+    font-weight: 700;
+}
+
 #magic-panel, #inventory-panel, #skills-panel, #quests-panel, #lore-panel, #stats-panel, #selected-panel {
+    width: min(340px, calc(100vw - 48px));
+    overflow: visible;
+}
+
+#world-sidebar {
     width: min(340px, calc(100vw - 48px));
     max-height: min(100%, calc(100dvh - 180px));
     overflow: auto;
+}
+
+#world-sidebar {
+    flex-shrink: 0;
+    max-height: none;
+    overflow: visible;
+}
+#game-log-container {
+    width: min(340px, calc(100vw - 48px));
+    max-width: calc(100vw - 32px);
+    max-inline-size: calc(100vw - 32px);
+    max-height: calc(100dvh - 32px);
+    max-block-size: calc(100dvh - 32px);
+    overflow: hidden;
+    align-self: flex-start;
 }
 
 #world-sidebar.hidden,
@@ -332,9 +369,25 @@ h1 {
 }
 
 #game-log-container {
-    margin-top: auto;
     min-height: 220px;
-    max-height: min(42vh, 360px);
+    height: min(42vh, 360px);
+    min-width: 260px;
+    min-inline-size: 260px;
+    resize: both;
+}
+
+#quests-panel {
+    max-width: calc(100vw - 32px);
+    max-inline-size: calc(100vw - 32px);
+    max-height: calc(100dvh - 32px);
+    max-block-size: calc(100dvh - 32px);
+    min-height: 220px;
+    height: min(42vh, 360px);
+    min-width: 260px;
+    min-inline-size: 260px;
+    overflow: hidden;
+    align-self: flex-start;
+    resize: both;
 }
 
 #game-log-container h3 {
@@ -366,15 +419,53 @@ h1 {
 #game-log .system-message, #game-log .system-action { color: var(--color-text-muted); font-style: italic; }
 
 .hud-panel-toggles {
-    display: grid;
-    grid-template-columns: repeat(5, minmax(110px, 1fr));
+    display: flex;
+    flex-direction: column;
     gap: 6px;
-    flex: 1;
 }
 
-#hud > .hud-section:first-child > .action-btn {
-    min-width: 130px;
-    white-space: nowrap;
+.hud-menu-toggle {
+    pointer-events: auto;
+    min-width: 52px;
+    min-height: 52px;
+    font-size: 28px;
+    line-height: 1;
+    padding: 8px;
+    border-width: 2px;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+}
+
+.hud-menu-panel {
+    pointer-events: auto;
+    margin-top: 10px;
+    width: min(320px, calc(100vw - 24px));
+    padding: 12px;
+    border: 2px solid var(--color-secondary-accent);
+    border-radius: 8px;
+    background: linear-gradient(180deg, color-mix(in srgb, var(--color-panel-highlight) 97%, transparent), color-mix(in srgb, var(--color-secondary-bg) 95%, transparent));
+    box-shadow: 0 14px 28px color-mix(in srgb, var(--color-panel-shadow) 35%, transparent);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    backdrop-filter: blur(10px);
+}
+
+.hud-menu-brand-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.hud-menu-brand-row h1 {
+    margin: 0;
+    font-size: 34px;
+    line-height: 1;
+}
+
+.hud-menu-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
 }
 
 .hud-panel-toggles .action-btn.active {
@@ -409,6 +500,11 @@ h1 {
     border-radius: 6px;
 }
 
+#village-actions {
+    position: relative;
+    overflow: visible;
+}
+
 .enemy-stat { margin: 5px 0; font-size: 14px; color: var(--color-text-primary); }
 .enemy-stat span { color: var(--color-enemy); font-weight: 700; }
 
@@ -433,6 +529,16 @@ h1 {
     border-radius: 6px;
     padding: 8px;
     background-color: color-mix(in srgb, var(--color-panel-highlight) 58%, transparent);
+}
+
+.village-floating-rumors {
+    position: absolute;
+    top: 0;
+    right: calc(100% + 16px);
+    width: min(320px, 34vw);
+    max-height: min(58vh, 520px);
+    overflow-y: auto;
+    box-shadow: 0 10px 24px color-mix(in srgb, var(--color-panel-shadow) 32%, transparent);
 }
 
 .village-section-title {
@@ -461,22 +567,13 @@ h1 {
 }
 
 @media (max-width: 1380px), (max-height: 900px) {
-    #hud > .hud-section:first-child {
-        flex-wrap: wrap;
-    }
-
-    .hud-panel-toggles {
-        grid-template-columns: repeat(2, minmax(120px, 1fr));
-        flex: 0 0 100%;
-    }
-
     #left-overlay-stack,
     #right-overlay-stack {
         width: min(320px, calc(100% - 32px));
     }
 
     #game-log-container {
-        max-height: min(34vh, 280px);
+        height: min(34vh, 280px);
     }
 }
 
@@ -496,15 +593,6 @@ h1 {
 }
 
 @media (max-width: 920px) {
-    #hud > .hud-section:first-child {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .hud-panel-toggles {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
     .overlay-stack {
         position: static;
         inset: auto;
@@ -533,24 +621,32 @@ h1 {
         width: 100%;
     }
 
-    #game-log-container {
+    .draggable-panel {
+        position: static;
+        transform: none;
+    }
+
+    #game-log-container,
+    #quests-panel {
         margin-top: 0;
+        height: 260px;
         max-height: 260px;
+        resize: none;
+    }
+
+    .village-floating-rumors {
+        position: static;
+        width: auto;
+        max-height: none;
+        overflow: visible;
+        box-shadow: none;
     }
 }
 
 @media (max-width: 640px) {
-    .hud-panel-toggles { grid-template-columns: minmax(0, 1fr); }
-
-    body {
-        padding: 0;
-    }
-
-    #game-container {
-        width: 100%;
-        border-radius: 0;
-        border-left: 0;
-        border-right: 0;
+    #hud {
+        top: 8px;
+        left: 8px;
     }
 }
 
@@ -761,7 +857,8 @@ h1 {
     margin: 0;
 }
 
-#dev-event-type {
+#dev-event-type,
+#dev-random-mode {
     padding: 7px 10px;
     border-radius: 4px;
     border: 1px solid var(--color-secondary-accent);
@@ -830,6 +927,15 @@ h1 {
     border: 1px solid var(--color-secondary-accent);
     background: var(--color-panel-highlight);
     color: var(--color-text-primary);
+}
+
+.dev-random-grid {
+    grid-template-columns: 1fr minmax(0, 180px);
+}
+
+.dev-random-grid input:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
 }
 
 .dev-roll-footer {
@@ -905,12 +1011,26 @@ h1 {
 
 
 .quests-body {
-    max-height: 420px;
+    flex: 1;
+    min-height: 0;
     overflow: auto;
     padding: 8px;
     border: 1px solid var(--color-secondary-accent);
     border-radius: 6px;
     background: color-mix(in srgb, var(--color-panel-highlight) 60%, transparent);
+}
+
+.quest-mode-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin: 6px 0 8px;
+    font-size: 12px;
+    color: var(--color-text-primary);
+}
+
+.quest-mode-toggle input[type='checkbox'] {
+    accent-color: var(--color-primary-accent);
 }
 
 .quest-tree-root,
@@ -925,6 +1045,16 @@ h1 {
     padding: 8px;
     border-left: 2px solid var(--color-secondary-accent);
     background: color-mix(in srgb, var(--color-primary-bg) 35%, transparent);
+}
+
+.quest-node.is-completed > .quest-node-title {
+    color: #2f6f39;
+    text-decoration: line-through;
+}
+
+.quest-node-check {
+    color: #2f6f39;
+    font-weight: 700;
 }
 
 .quest-node-title {
@@ -1098,4 +1228,98 @@ button.quest-entity-name.location:hover {
 .lore-empty {
     font-size: 13px;
     color: var(--color-text-muted);
+}
+
+.village-npc-title {
+    margin: 0 0 6px;
+    font-size: 13px;
+    color: var(--color-text-muted);
+}
+
+.village-npc-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 8px;
+}
+
+.village-npc-btn.active {
+    box-shadow: inset 0 0 0 2px var(--color-secondary-accent);
+    color: var(--color-enemy);
+}
+
+.village-ask-input {
+    width: 100%;
+    margin-bottom: 6px;
+    padding: 8px;
+    border-radius: 6px;
+    border: 1px solid var(--color-secondary-accent);
+    background: color-mix(in srgb, var(--color-panel-highlight) 88%, transparent);
+    color: var(--color-text-primary);
+    font-size: 14px;
+}
+
+.village-dialogue-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 75;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: color-mix(in srgb, #000 60%, transparent);
+}
+
+.village-dialogue-modal.hidden {
+    display: none;
+}
+
+.village-dialogue-panel {
+    width: min(560px, calc(100vw - 24px));
+    max-height: min(82vh, 760px);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid var(--color-secondary-accent);
+    background: color-mix(in srgb, var(--color-secondary-bg) 92%, #000);
+    box-shadow: 0 16px 30px color-mix(in srgb, #000 45%, transparent);
+}
+
+.village-dialogue-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+}
+
+.village-dialogue-header h2 {
+    margin: 0;
+    font-size: 18px;
+    color: var(--color-enemy);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+}
+
+.village-dialogue-selected-npc {
+    margin: 0;
+    font-size: 13px;
+    color: var(--color-text-muted);
+}
+
+.village-dialogue-log {
+    flex: 1;
+    min-height: 180px;
+    overflow-y: auto;
+    padding: 10px;
+    border: 1px solid var(--color-secondary-accent);
+    border-radius: 6px;
+    background-color: color-mix(in srgb, var(--color-panel-highlight) 74%, transparent);
+}
+
+.village-dialogue-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
 }

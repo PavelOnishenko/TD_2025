@@ -3,9 +3,10 @@ import BattleUiController from '../../BattleUiController.js';
 import HudController from '../../HudController.js';
 import Skeleton from '../../../entities/Skeleton.js';
 import MagicSystem, { BaseSpellId } from '../../magic/MagicSystem.js';
-import { SelectedWorldCellInfo } from '../../../types/game.js';
+import { SelectedCellInfo } from '../../../types/game.js';
 
 type PlayerStat = 'vitality' | 'toughness' | 'strength' | 'agility' | 'connection' | 'intelligence';
+const PLAYER_STATS: PlayerStat[] = ['vitality', 'toughness', 'strength', 'agility', 'connection', 'intelligence'];
 
 export default class GameHudCoordinator {
     private readonly player: Player;
@@ -44,11 +45,11 @@ export default class GameHudCoordinator {
     }
 
 
-    public togglePanel(panel: 'stats' | 'skills' | 'inventory' | 'magic' | 'quests' | 'lore' | 'selected'): void {
+    public togglePanel(panel: 'stats' | 'skills' | 'inventory' | 'magic' | 'quests' | 'lore' | 'selected' | 'worldMap' | 'log'): void {
         this.hudController.togglePanel(panel);
     }
 
-    public updateSelectedWorldCell(selectedCell: SelectedWorldCellInfo | null): void {
+    public updateSelectedCell(selectedCell: SelectedCellInfo | null): void {
         this.hudController.updateSelectedCellInfo(selectedCell);
     }
 
@@ -84,6 +85,20 @@ export default class GameHudCoordinator {
 
         this.updateHUD();
         this.addBattleLog('Saved skill changes.', 'system');
+    }
+
+    public handleGodSkillsBoost(): void {
+        const bonusPerSkill = 20;
+        const totalBonusCost = bonusPerSkill * PLAYER_STATS.length;
+        this.player.skillPoints += totalBonusCost;
+
+        for (const stat of PLAYER_STATS) {
+            this.player.addStat(stat, bonusPerSkill);
+        }
+
+        this.pendingSkillAllocations = { vitality: 0, toughness: 0, strength: 0, agility: 0, connection: 0, intelligence: 0 };
+        this.updateHUD();
+        this.addBattleLog('[DEV] GOD boost applied: +20 to all skills.', 'system');
     }
 
     public handleUpgradeSpell(spellId: BaseSpellId): void {

@@ -39,7 +39,6 @@ function createDeveloperUi() {
     encounterTypeToggles: {
       monster: createInput(),
       item: createInput(),
-      village: createInput(),
       traveler: createInput(),
     },
     nextRollSummary: { textContent: '' },
@@ -54,6 +53,11 @@ function createDeveloperUi() {
       connection: createInput(),
       intelligence: createInput(),
     },
+    randomModeSelect: { value: 'true' },
+    randomSeedInput: { value: 'rgfn-default-seed', disabled: false },
+    randomSummary: { textContent: '' },
+    randomStatus: { textContent: '', classList: createClassList() },
+    randomApplyBtn: {},
     everythingDiscoveredToggle: { checked: false },
     fogOfWarToggle: { checked: true },
   };
@@ -83,7 +87,7 @@ test('DeveloperEventController updates encounter toggle summary when a type is d
 
   assert.equal(encounterSystem.isEncounterTypeEnabled('item'), false);
   assert.equal(developerUI.encounterTypeToggles.item.checked, false);
-  assert.equal(developerUI.encounterTypeSummary.textContent, 'Enabled random encounters: Monster, Village, Traveler.');
+  assert.equal(developerUI.encounterTypeSummary.textContent, 'Enabled random encounters: Monster, Traveler.');
   assert.equal(logs[0], '[DEV] Item encounters disabled.');
 });
 
@@ -98,7 +102,6 @@ test('DeveloperEventController can disable all random encounter types from the d
   assert.deepEqual(encounterSystem.getEncounterTypeStates(), {
     monster: false,
     item: false,
-    village: false,
     traveler: false,
   });
   assert.equal(developerUI.encounterTypeSummary.textContent, 'Random encounters disabled. Forced queue still works.');
@@ -120,4 +123,22 @@ test('DeveloperEventController syncs and updates map display toggles from the de
     '[DEV] Everything discovered enabled.',
     '[DEV] Fog of war disabled.',
   ]);
+});
+
+
+test('DeveloperEventController applies pseudo-random settings from the dev console', () => {
+  const logs = [];
+  const encounterSystem = new EncounterSystem(1);
+  const developerUI = createDeveloperUi();
+  const controller = createController(logs, encounterSystem, developerUI);
+
+  developerUI.randomModeSelect.value = 'pseudo';
+  developerUI.randomSeedInput.value = 'repeatable-run';
+  controller.handleRandomSettingsApply();
+
+  assert.equal(developerUI.randomSeedInput.disabled, false);
+  assert.match(developerUI.randomSummary.textContent, /pseudo random/i);
+  assert.match(developerUI.randomSummary.textContent, /repeatable-run/);
+  assert.match(developerUI.randomStatus.textContent, /Use New Character to replay/i);
+  assert.equal(logs.at(-1), '[DEV] Random provider set to pseudo random (seed: repeatable-run).');
 });

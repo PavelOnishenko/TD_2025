@@ -25,9 +25,6 @@ export default class PlayerInventory {
         }
 
         this.inventory.push(item);
-        if ((item.type === 'weapon' || item.type === 'armor') && this.hooks.canEquip(item)) {
-            this.equipItem(item);
-        }
         return true;
     }
 
@@ -237,32 +234,6 @@ export default class PlayerInventory {
             equippedOffhandWeaponId: this.equippedOffhandWeapon?.id ?? null,
             equippedArmorId: this.equippedArmor?.id ?? null,
         };
-    }
-
-    private equipItem(item: Item): void {
-        this.removeItemFromInventory(item);
-
-        if (item.type === 'weapon') {
-            const previousMainWeapon = this.equippedMainWeapon;
-            const previousOffhandWeapon = this.equippedOffhandWeapon;
-            if (item.handsRequired === 2) {
-                this.equippedMainWeapon = item;
-                this.equippedOffhandWeapon = null;
-            } else if (!this.equippedMainWeapon || this.equippedMainWeapon.handsRequired === 2) {
-                this.equippedMainWeapon = item;
-            } else {
-                this.equippedOffhandWeapon = item;
-            }
-
-            this.moveEquippedItemsToInventory([previousMainWeapon, previousOffhandWeapon], [this.equippedMainWeapon, this.equippedOffhandWeapon]);
-        }
-
-        if (item.type === 'armor') {
-            this.moveEquippedItemsToInventory([this.equippedArmor], [item]);
-            this.equippedArmor = item;
-        }
-
-        this.hooks.onEquipmentChanged();
     }
 
     private removePotionById(id: 'healingPotion' | 'manaPotion'): boolean {

@@ -2,16 +2,12 @@ import type { RandomEncounterType } from '../encounter/EncounterSystem.js';
 import type { CombatMove } from '../combat/DirectionalCombat.js';
 
 export type HudElements = {
+    hudMenuToggleBtn: HTMLButtonElement;
+    hudMenuPanel: HTMLElement;
     modeIndicator: HTMLElement;
     usePotionBtn: HTMLButtonElement;
     useManaPotionBtn: HTMLButtonElement;
     newCharacterBtn: HTMLButtonElement;
-    worldMapZoomInBtn: HTMLButtonElement;
-    worldMapZoomOutBtn: HTMLButtonElement;
-    worldMapPanUpBtn: HTMLButtonElement;
-    worldMapPanDownBtn: HTMLButtonElement;
-    worldMapPanLeftBtn: HTMLButtonElement;
-    worldMapPanRightBtn: HTMLButtonElement;
     playerLevel: HTMLElement;
     playerName: HTMLElement;
     playerXp: HTMLElement;
@@ -27,6 +23,8 @@ export type HudElements = {
     playerDodgeFormula: HTMLElement;
     playerWeapon: HTMLElement;
     playerGold: HTMLElement;
+    playerFatigue: HTMLElement;
+    playerFatigueState: HTMLElement;
     skillPoints: HTMLElement;
     magicPoints: HTMLElement;
     magicPanelPoints: HTMLElement;
@@ -49,6 +47,7 @@ export type HudElements = {
     addIntelligenceBtn: HTMLButtonElement;
     subIntelligenceBtn: HTMLButtonElement;
     saveSkillsBtn: HTMLButtonElement;
+    godSkillsBtn: HTMLButtonElement;
     upgradeFireballBtn: HTMLButtonElement;
     upgradeCurseBtn: HTMLButtonElement;
     upgradeSlowBtn: HTMLButtonElement;
@@ -67,6 +66,7 @@ export type HudElements = {
     inventoryCount: HTMLElement;
     inventoryCapacity: HTMLElement;
     inventoryCapacityHint: HTMLElement;
+    undoLastDropBtn: HTMLButtonElement;
     inventoryGrid: HTMLElement;
     weaponSlotMain: HTMLButtonElement;
     weaponSlotOff: HTMLButtonElement;
@@ -78,7 +78,10 @@ export type HudElements = {
     questsPanel: HTMLElement;
     selectedPanel: HTMLElement;
     lorePanel: HTMLElement;
+    worldMapPanel: HTMLElement;
+    logPanel: HTMLElement;
     questsTitle: HTMLElement;
+    questsKnownOnlyToggle: HTMLInputElement;
     questsBody: HTMLElement;
     loreBody: HTMLElement;
     selectedCellEmpty: HTMLElement;
@@ -97,6 +100,8 @@ export type HudElements = {
     toggleQuestsPanelBtn: HTMLButtonElement;
     toggleLorePanelBtn: HTMLButtonElement;
     toggleSelectedPanelBtn: HTMLButtonElement;
+    toggleWorldMapPanelBtn: HTMLButtonElement;
+    toggleLogPanelBtn: HTMLButtonElement;
     questIntroModal: HTMLElement;
     questIntroBody: HTMLElement;
     questIntroCloseBtn: HTMLButtonElement;
@@ -124,13 +129,26 @@ export type BattleUI = {
 export type WorldUI = {
     sidebar: HTMLElement;
     usePotionBtn: HTMLButtonElement;
+    enterVillageBtn: HTMLButtonElement;
+    campSleepBtn: HTMLButtonElement;
     centerOnCharacterBtn: HTMLButtonElement;
+    villageEntryPopup: HTMLElement;
+    villageEntryTitle: HTMLElement;
+    villageEntryEnterBtn: HTMLButtonElement;
+    villageEntryPassBtn: HTMLButtonElement;
 };
 
 export type VillageUI = {
     sidebar: HTMLElement;
+    title: HTMLElement;
     prompt: HTMLElement;
     actions: HTMLElement;
+    openDialogueBtn: HTMLButtonElement;
+    sleepRoomBtn: HTMLButtonElement;
+    dialogueModal: HTMLElement;
+    dialogueCloseBtn: HTMLButtonElement;
+    dialogueSelectedNpc: HTMLElement;
+    dialogueLog: HTMLElement;
     enterBtn: HTMLButtonElement;
     skipBtn: HTMLButtonElement;
     waitBtn: HTMLButtonElement;
@@ -140,6 +158,14 @@ export type VillageUI = {
     buyOffer4Btn: HTMLButtonElement;
     sellSelect: HTMLSelectElement;
     sellSelectedBtn: HTMLButtonElement;
+    npcList: HTMLElement;
+    npcTitle: HTMLElement;
+    askVillageInput: HTMLInputElement;
+    askVillageBtn: HTMLButtonElement;
+    askPersonInput: HTMLInputElement;
+    askPersonBtn: HTMLButtonElement;
+    askBarterBtn: HTMLButtonElement;
+    barterNowBtn: HTMLButtonElement;
     leaveBtn: HTMLButtonElement;
 };
 
@@ -163,6 +189,11 @@ export type DeveloperUI = {
     nextRollSaveBtn: HTMLButtonElement;
     nextRollClearBtn: HTMLButtonElement;
     nextRollInputs: Record<'vitality' | 'toughness' | 'strength' | 'agility' | 'connection' | 'intelligence', HTMLInputElement>;
+    randomModeSelect: HTMLSelectElement;
+    randomSeedInput: HTMLInputElement;
+    randomSummary: HTMLElement;
+    randomStatus: HTMLElement;
+    randomApplyBtn: HTMLButtonElement;
     everythingDiscoveredToggle: HTMLInputElement;
     fogOfWarToggle: HTMLInputElement;
 };

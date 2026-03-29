@@ -11,9 +11,12 @@
 <body>
     <div id="game-container">
         <div id="hud">
-            <div class="hud-section">
-                <h1>RGFN</h1>
-                <div id="mode-indicator">World Map</div>
+            <button id="hud-menu-toggle-btn" class="action-btn hud-menu-toggle" type="button" aria-expanded="false" aria-controls="hud-menu-panel" aria-label="Toggle HUD menu">☰</button>
+            <div id="hud-menu-panel" class="hud-menu-panel hidden">
+                <div class="hud-menu-brand-row">
+                    <h1>RGFN</h1>
+                    <div id="mode-indicator">World Map</div>
+                </div>
                 <div id="hud-panel-toggles" class="hud-panel-toggles">
                     <button id="toggle-stats-panel-btn" class="action-btn" type="button">Stats</button>
                     <button id="toggle-skills-panel-btn" class="action-btn" type="button">Skills</button>
@@ -22,28 +25,25 @@
                     <button id="toggle-quests-panel-btn" class="action-btn" type="button">Quests</button>
                     <button id="toggle-lore-panel-btn" class="action-btn" type="button">Lore</button>
                     <button id="toggle-selected-panel-btn" class="action-btn" type="button">Selected</button>
+                    <button id="toggle-world-map-panel-btn" class="action-btn" type="button">World Map</button>
+                    <button id="toggle-log-panel-btn" class="action-btn" type="button">Log</button>
                 </div>
-                <button id="use-potion-btn" class="action-btn">Use HP Potion</button>
-                <button id="use-mana-potion-btn" class="action-btn">Use Mana Potion</button>
-                <button id="new-character-btn" class="action-btn">New Character</button>
+                <div class="hud-menu-actions">
+                    <button id="use-potion-btn" class="action-btn">Use HP Potion</button>
+                    <button id="use-mana-potion-btn" class="action-btn">Use Mana Potion</button>
+                    <button id="new-character-btn" class="action-btn">New Character</button>
+                </div>
             </div>
         </div>
         <div id="game-area">
             <div id="main-view-stage">
                 <div id="world-map-shell">
                     <canvas id="game-canvas" width="800" height="600"></canvas>
-                    <div id="world-map-controls" aria-label="World map controls">
-                        <div class="world-map-control-group">
-                            <button id="world-map-zoom-in-btn" class="action-btn world-map-control-btn" type="button">Zoom +</button>
-                            <button id="world-map-zoom-out-btn" class="action-btn world-map-control-btn" type="button">Zoom -</button>
-                        </div>
-                        <div class="world-map-control-pad">
-                            <button id="world-map-pan-up-btn" class="action-btn world-map-control-btn" type="button">↑</button>
-                            <div class="world-map-control-pad-row">
-                                <button id="world-map-pan-left-btn" class="action-btn world-map-control-btn" type="button">←</button>
-                                <button id="world-map-pan-right-btn" class="action-btn world-map-control-btn" type="button">→</button>
-                            </div>
-                            <button id="world-map-pan-down-btn" class="action-btn world-map-control-btn" type="button">↓</button>
+                    <div id="world-village-entry-popup" class="world-village-entry-popup hidden" role="dialog" aria-live="polite" aria-label="Village entry prompt">
+                        <p id="world-village-entry-title" class="world-village-entry-title">Village nearby</p>
+                        <div class="world-village-entry-actions">
+                            <button id="world-village-entry-enter-btn" class="action-btn" type="button">Enter</button>
+                            <button id="world-village-entry-pass-btn" class="action-btn" type="button">Pass by</button>
                         </div>
                     </div>
                 </div>
@@ -65,6 +65,8 @@
                             <div id="player-dodge-formula" class="stat-detail">1 - 1/(1 + AGI×0.045), cap 45% = 0%</div>
                         </div>
                         <div class="stat">Weapon: <span id="player-weapon">None</span></div>
+                        <div class="stat">Fatigue: <span id="player-fatigue">0/100 (0%)</span></div>
+                        <div class="stat">Condition: <span id="player-fatigue-state">Rested</span></div>
                     </div>
                     <div id="skills-panel" class="hud-section stats overlay-panel hidden">
                         <div class="stat">Skill Points: <span id="skill-points">0</span></div>
@@ -111,11 +113,13 @@
                             </div>
                         </div>
                         <button id="save-skills-btn" class="action-btn" type="button">Save</button>
+                        <button id="god-skills-btn" class="action-btn dev-only-btn" type="button" title="Dev only: add +20 to all skills and save instantly">GOD +20 ALL</button>
                     </div>
                     <div id="inventory-panel" class="hud-section stats overlay-panel hidden">
                         <div class="stat">Gold: <span id="player-gold">20</span></div>
                         <div class="stat">Inventory (<span id="inventory-count">0</span>/<span id="inventory-capacity">4</span>)</div>
                         <div id="inventory-capacity-hint" class="stat-detail">4 base slots, +1 slot every 4 STR</div>
+                        <button id="undo-last-drop-btn" class="action-btn" type="button" disabled>Recover Last Dropped Item</button>
                         <div id="inventory-grid" class="inventory-grid"></div>
                         <div class="equipment-panel">
                             <div class="equipment-title">Equipment</div>
@@ -124,7 +128,7 @@
                                 <button id="weapon-slot-off" class="equipment-slot" title="Off hand">Off Hand: Empty</button>
                                 <button id="armor-slot" class="equipment-slot" title="Armor">Armor: Empty</button>
                             </div>
-                            <div class="equipment-hint">Click inventory gear to equip. Click equipped slots to unequip. Right-click any inventory item to drop it permanently.</div>
+                            <div class="equipment-hint">Click inventory gear to equip. Click equipped slots to unequip. Right-click any inventory item to drop it. Use Recover Last Dropped Item to undo your latest drop.</div>
                         </div>
                     </div>
                     <div id="magic-panel" class="hud-section stats overlay-panel hidden">
@@ -153,6 +157,10 @@
                     </div>
                     <div id="quests-panel" class="hud-section stats overlay-panel hidden">
                         <div id="quests-title" class="stat">Main Quest</div>
+                        <label class="quest-mode-toggle" for="quests-known-only-toggle">
+                            <input id="quests-known-only-toggle" type="checkbox" checked>
+                            Show only known/current quests
+                        </label>
                         <div id="quests-body" class="quests-body"></div>
                     </div>
                     <div id="lore-panel" class="hud-section stats overlay-panel hidden">
@@ -167,23 +175,29 @@
                             <div class="stat">Terrain: <span id="selected-cell-terrain">-</span></div>
                             <div class="stat">Visibility: <span id="selected-cell-visibility">-</span></div>
                             <div class="stat">Travel: <span id="selected-cell-traversable">-</span></div>
-                            <div class="stat">Village: <span id="selected-cell-village">-</span></div>
-                            <div class="stat">Village Name: <span id="selected-cell-village-name">-</span></div>
-                            <div class="stat">Village Status: <span id="selected-cell-village-status">-</span></div>
+                            <div class="stat">Type: <span id="selected-cell-village">-</span></div>
+                            <div class="stat">Name: <span id="selected-cell-village-name">-</span></div>
+                            <div class="stat">Status: <span id="selected-cell-village-status">-</span></div>
                         </div>
                     </div>
-                </div>
-                <div id="right-overlay-stack" class="overlay-stack">
-                    <div id="world-sidebar" class="overlay-panel">
+                    <div id="world-sidebar" class="overlay-panel hidden">
                         <h2>World Map</h2>
                         <div id="world-actions">
-                            <p class="world-actions-copy">Prepare for the journey and recenter the map whenever you lose track of your hero.</p>
+                            <p class="world-actions-copy">Prepare for the journey, re-enter known villages, and recenter the map whenever you lose track of your hero.</p>
                             <div id="world-action-buttons">
                                 <button id="world-use-potion-btn" class="action-btn">Use HP Potion</button>
+                                <button id="world-enter-village-btn" class="action-btn">Enter Village (Space)</button>
+                                <button id="world-camp-sleep-btn" class="action-btn">Camp Sleep (Risky)</button>
                                 <button id="world-center-on-character-btn" class="action-btn">Center on Character</button>
                             </div>
                         </div>
                     </div>
+                    <div id="game-log-container" class="overlay-panel hidden">
+                        <h3>Log</h3>
+                        <div id="game-log"></div>
+                    </div>
+                </div>
+                <div id="right-overlay-stack" class="overlay-stack">
                     <div id="battle-sidebar" class="overlay-panel hidden">
                         <h2>Combat</h2>
                         <div id="enemy-info">
@@ -211,7 +225,7 @@
                         </div>
                     </div>
                     <div id="village-sidebar" class="overlay-panel hidden">
-                        <h2>Village</h2>
+                        <h2 id="village-title">Village</h2>
                         <div id="village-prompt">
                             <p>You found a village. Enter?</p>
                             <div id="village-entry-actions">
@@ -237,14 +251,36 @@
                                     <select id="village-sell-select" class="village-sell-select"></select>
                                     <button id="village-sell-selected-btn" class="action-btn">Sell selected</button>
                                 </div>
+                                <div id="village-rumors-section" class="village-section village-floating-rumors">
+                                    <p class="village-section-title">Village rumors</p>
+                                    <p id="village-npc-title" class="village-npc-title">Choose someone to talk to</p>
+                                    <div id="village-npc-list" class="village-npc-list"></div>
+                                    <button id="village-open-dialogue-btn" class="action-btn">Open NPC dialogue window</button>
+                                    <button id="village-sleep-room-btn" class="action-btn">Sleep in room</button>
+                                </div>
                                 <button id="village-leave-btn" class="action-btn">Leave</button>
                             </div>
                         </div>
                     </div>
-                    <div id="game-log-container" class="overlay-panel">
-                        <h3>Log</h3>
-                        <div id="game-log"></div>
-                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="village-dialogue-modal" class="village-dialogue-modal hidden" role="dialog" aria-modal="true" aria-labelledby="village-dialogue-title">
+            <div class="village-dialogue-panel">
+                <div class="village-dialogue-header">
+                    <h2 id="village-dialogue-title">NPC Dialogue</h2>
+                    <button id="village-dialogue-close-btn" class="action-btn" type="button">Close</button>
+                </div>
+                <p id="village-dialogue-selected-npc" class="village-dialogue-selected-npc">Select an NPC in the village rumors panel first.</p>
+                <div id="village-dialogue-log" class="village-dialogue-log"></div>
+                <div class="village-dialogue-actions">
+                    <input id="village-ask-settlement-input" class="village-ask-input" type="text" placeholder="Settlement name (e.g. Oakhaven)">
+                    <button id="village-ask-settlement-btn" class="action-btn">Ask about location</button>
+                    <input id="village-ask-person-input" class="village-ask-input" type="text" placeholder="Person name (e.g. Olive)">
+                    <button id="village-ask-person-btn" class="action-btn">Ask about person</button>
+                    <button id="village-ask-barter-btn" class="action-btn">Ask about barter</button>
+                    <button id="village-confirm-barter-btn" class="action-btn">I have what you need, let's do our barter</button>
                 </div>
             </div>
         </div>
@@ -266,7 +302,6 @@
                         <option value="dragon">Dragon battle</option>
                         <option value="item">Item discovery</option>
                         <option value="none">No encounter</option>
-                        <option value="village">Village</option>
                         <option value="traveler">Wanderer encounter</option>
                     </select>
                     <button id="dev-event-add-btn" class="action-btn" type="button">Queue Event</button>
@@ -278,11 +313,10 @@
                 </div>
                 <div class="dev-events-queue-wrap">
                     <h3>Random encounter types</h3>
-                    <p id="dev-encounter-types-summary" class="dev-events-hint dev-events-hint-tight">Enabled random encounters: Monster, Item, Village, Traveler.</p>
+                    <p id="dev-encounter-types-summary" class="dev-events-hint dev-events-hint-tight">Enabled random encounters: Monster, Item, Traveler.</p>
                     <div class="dev-events-toggle-grid">
                         <label class="dev-events-toggle" for="dev-encounter-type-monster"><input id="dev-encounter-type-monster" type="checkbox" checked> Monster</label>
                         <label class="dev-events-toggle" for="dev-encounter-type-item"><input id="dev-encounter-type-item" type="checkbox" checked> Item</label>
-                        <label class="dev-events-toggle" for="dev-encounter-type-village"><input id="dev-encounter-type-village" type="checkbox" checked> Village</label>
                         <label class="dev-events-toggle" for="dev-encounter-type-traveler"><input id="dev-encounter-type-traveler" type="checkbox" checked> Traveler</label>
                     </div>
                     <div class="dev-roll-actions">
@@ -294,6 +328,25 @@
                     <h3>Next new character roll</h3>
                     <p id="dev-next-roll-summary" class="dev-events-hint dev-events-hint-tight">Next character roll: random.</p>
                     <button id="dev-next-roll-open-btn" class="action-btn" type="button">Setup Next Roll</button>
+                </div>
+                <div class="dev-events-queue-wrap">
+                    <h3>Random provider</h3>
+                    <p id="dev-random-summary" class="dev-events-hint dev-events-hint-tight">Random provider: true random.</p>
+                    <div class="dev-roll-grid dev-random-grid">
+                        <label for="dev-random-mode">Mode</label>
+                        <select id="dev-random-mode">
+                            <option value="true">True random</option>
+                            <option value="pseudo">Pseudo random</option>
+                        </select>
+                        <label for="dev-random-seed">Pseudo seed</label>
+                        <input id="dev-random-seed" type="text" value="rgfn-default-seed" placeholder="Enter deterministic seed">
+                    </div>
+                    <div class="dev-roll-footer">
+                        <div id="dev-random-status" class="dev-events-hint">Choose true random for a fresh runtime seed, or pseudo random to replay identical rolls from the same seed.</div>
+                    </div>
+                    <div class="dev-roll-actions">
+                        <button id="dev-random-apply-btn" class="action-btn" type="button">Apply Random Settings</button>
+                    </div>
                 </div>
                 <div class="dev-events-queue-wrap">
                     <h3>Map display</h3>
@@ -342,7 +395,7 @@
     </div>
 
 
-        <div id="quest-intro-modal" class="quest-intro-modal" role="dialog" aria-modal="true" aria-labelledby="quest-intro-title">
+        <div id="quest-intro-modal" class="quest-intro-modal hidden" role="dialog" aria-modal="true" aria-labelledby="quest-intro-title">
             <div class="quest-intro-panel">
                 <div class="quest-intro-header">
                     <h2 id="quest-intro-title">Main Quest</h2>

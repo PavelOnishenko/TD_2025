@@ -1,15 +1,26 @@
 import QuestPackService from './QuestPackService.js';
 import { QuestRandom } from './QuestRandom.js';
-import { GeneratedName, QuestNode, QuestObjectiveType, QuestTextEntity, RareMonsterProfile } from './QuestTypes.js';
+import { balanceConfig } from '../../config/balanceConfig.js';
+import {
+    DeliverObjectiveData,
+    GeneratedName,
+    QuestNode,
+    QuestObjectiveData,
+    QuestObjectiveType,
+    QuestTextEntity,
+    RareMonsterProfile,
+} from './QuestTypes.js';
 
 const LEAF_TYPES: QuestObjectiveType[] = ['eliminate', 'deliver', 'travel', 'barter', 'scout', 'hunt', 'recover', 'escort', 'defend'];
 const MONSTER_STATS = ['feral strength', 'void armor', 'acid blood', 'blink speed', 'barbed hide', 'grave intellect'];
 const MONSTER_EFFECTS = ['causes fear', 'leaves toxic fog', 'shatters armor', 'drains mana', 'summons spores', 'breaks formation'];
 const MONSTER_BONUSES = ['rich trophy cache', 'legendary reagent drop', 'rare relic trail', 'faction gratitude', 'reputation surge'];
+const MUTATED_FROM_SPECIES = ['wolf', 'boar', 'bear', 'crow', 'human', 'stag', 'hound', 'lizard'];
 
 export default class QuestLeafFactory {
     private readonly packService: QuestPackService;
     private readonly random: QuestRandom;
+    private readonly maxWordsByDomain = balanceConfig.questNameGeneration.maxWordsByDomain;
 
     constructor(packService: QuestPackService, random: QuestRandom) {
         this.packService = packService;
@@ -30,35 +41,59 @@ export default class QuestLeafFactory {
     }
 
     private async createEliminateNode(id: string): Promise<QuestNode> {
-        const target = await this.packService.generateName('monster', 3);
+        const target = await this.generateName('monster');
         const amount = this.random.nextInt(1, 4);
-        const location = await this.optionalLocation();
-        const where = location ? ` in ${location.text}` : '';
+        const location = await this.generateName('location');
+        const where = ` near ${location.text}`;
+        const mutatedFrom = this.random.pick(MUTATED_FROM_SPECIES);
+        const mutations = this.pickMany(MONSTER_STATS, this.random.nextBool(0.5) ? 2 : 3);
+        const details = `Origin: mutated from ${mutatedFrom}. Traits observed: ${mutations.join(', ')}.`;
         return this.node(
             id,
             `Purge ${target.text}${amount > 1 ? ' Pack' : ''}`,
-            this.removeText(amount, target, where),
+            `${this.removeText(amount, target, where)} ${details}`,
             this.killText(amount, target, where),
             'eliminate',
             this.entities(target, location),
+            {
+                monster: {
+                    targetName: target.text,
+                    requiredKills: amount,
+                    villageName: location.text,
+                    mutations,
+                    mutatedFrom,
+                },
+            },
         );
     }
 
     private async createDeliverNode(id: string): Promise<QuestNode> {
-        const artifact = await this.packService.generateName('artifact', 4);
-        const destination = await this.packService.generateName('location', 4);
+        const artifact = await this.generateName('artifact');
+        const sourceTrader = await this.generateName('character');
+        const sourceVillage = await this.generateName('location');
+        let destination = await this.generateName('location');
+        if (destination.text.trim().toLocaleLowerCase() === sourceVillage.text.trim().toLocaleLowerCase()) {
+            destination = await this.generateName('location');
+        }
+        const objectiveData: DeliverObjectiveData = {
+            sourceVillage: sourceVillage.text,
+            sourceTrader: sourceTrader.text,
+            destinationVillage: destination.text,
+            itemName: artifact.text,
+        };
         return this.node(
             id,
             `Courier: ${artifact.text}`,
-            `Carry the ${this.label(artifact)} and bring it to ${destination.text}.`,
-            `Reach ${destination.text} while carrying ${this.label(artifact)}.`,
+            `Acquire ${this.label(artifact)} from ${sourceTrader.text} in ${sourceVillage.text}, then carry it to ${destination.text}.`,
+            `Reach ${destination.text} while carrying ${this.label(artifact)} obtained from ${sourceTrader.text} in ${sourceVillage.text}.`,
             'deliver',
-            this.entities(artifact, destination),
+            this.entities(artifact, sourceTrader, sourceVillage, destination),
+            { deliver: objectiveData },
         );
     }
 
     private async createTravelNode(id: string): Promise<QuestNode> {
-        const destination = await this.packService.generateName('location', 4);
+        const destination = await this.generateName('location');
         return this.node(
             id,
             `Scout ${destination.text}`,
@@ -70,8 +105,8 @@ export default class QuestLeafFactory {
     }
 
     private async createBarterNode(id: string): Promise<QuestNode> {
-        const trader = await this.packService.generateName('character', 3);
-        const artifact = await this.packService.generateName('artifact', 4);
+        const trader = await this.generateName('character');
+        const artifact = await this.generateName('artifact');
         return this.node(
             id,
             `Barter with ${trader.text}`,
@@ -83,7 +118,7 @@ export default class QuestLeafFactory {
     }
 
     private async createScoutNode(id: string): Promise<QuestNode> {
-        const destination = await this.packService.generateName('location', 4);
+        const destination = await this.generateName('location');
         return this.node(
             id,
             `Investigate ${destination.text}`,
@@ -96,8 +131,8 @@ export default class QuestLeafFactory {
 
     private async createHuntNode(id: string): Promise<QuestNode> {
         const profile = await this.rareMonsterProfile();
-        const location = await this.packService.generateName('location', 4);
-        const details = `Stats: ${profile.stats.join(', ')}. Effects: ${profile.effects.join(', ')}. Bonus: ${profile.bonus}.`;
+        const location = await this.generateName('location');
+        const details = `Origin: mutated from ${profile.mutatedFrom}. Stats: ${profile.stats.join(', ')}. Effects: ${profile.effects.join(', ')}. Bonus: ${profile.bonus}.`;
         return this.node(
             id,
             `Hunt ${profile.name.text}`,
@@ -105,12 +140,21 @@ export default class QuestLeafFactory {
             `Kill ${profile.count} ${this.pluralLabel(profile.name, profile.count)} near ${location.text}.`,
             'hunt',
             this.entities(profile.name, location),
+            {
+                monster: {
+                    targetName: profile.name.text,
+                    requiredKills: profile.count,
+                    villageName: location.text,
+                    mutations: profile.stats,
+                    mutatedFrom: profile.mutatedFrom,
+                },
+            },
         );
     }
 
     private async createRecoverNode(id: string): Promise<QuestNode> {
-        const artifact = await this.packService.generateName('artifact', 4);
-        const location = await this.packService.generateName('location', 4);
+        const artifact = await this.generateName('artifact');
+        const location = await this.generateName('location');
         return this.node(
             id,
             `Recover ${artifact.text}`,
@@ -122,8 +166,8 @@ export default class QuestLeafFactory {
     }
 
     private async createEscortNode(id: string): Promise<QuestNode> {
-        const character = await this.packService.generateName('character', 3);
-        const destination = await this.packService.generateName('location', 4);
+        const character = await this.generateName('character');
+        const destination = await this.generateName('location');
         return this.node(
             id,
             `Escort ${character.text}`,
@@ -135,8 +179,8 @@ export default class QuestLeafFactory {
     }
 
     private async createDefendNode(id: string): Promise<QuestNode> {
-        const location = await this.packService.generateName('location', 4);
-        const artifact = await this.packService.generateName('artifact', 4);
+        const location = await this.generateName('location');
+        const artifact = await this.generateName('artifact');
         return this.node(
             id,
             `Defend ${location.text}`,
@@ -159,24 +203,34 @@ export default class QuestLeafFactory {
         return `${this.label(name)}${count > 1 ? 's' : ''}`;
     }
 
-    private async optionalLocation(): Promise<GeneratedName | null> {
-        return this.random.nextBool(0.5) ? this.packService.generateName('location', 4) : null;
-    }
-
     private async rareMonsterProfile(): Promise<RareMonsterProfile> {
         return {
-            name: await this.packService.generateName('monster', 3),
+            name: await this.generateName('monster'),
             count: this.random.nextInt(1, 3),
             stats: this.pickMany(MONSTER_STATS, 2),
             effects: this.pickMany(MONSTER_EFFECTS, 2),
             bonus: this.random.pick(MONSTER_BONUSES),
+            mutatedFrom: this.random.pick(MUTATED_FROM_SPECIES),
         };
+    }
+
+    private async generateName(domain: 'location' | 'artifact' | 'character' | 'monster'): Promise<GeneratedName> {
+        return this.packService.generateName(domain, this.maxWordsByDomain[domain]);
     }
 
     private pickMany(pool: string[], count: number): string[] {
         const selected = new Set<string>();
-        while (selected.size < count) {
+        let attempts = 0;
+        while (selected.size < count && attempts < pool.length * 4) {
             selected.add(this.random.pick(pool));
+            attempts += 1;
+        }
+
+        for (const candidate of pool) {
+            if (selected.size >= count) {
+                break;
+            }
+            selected.add(candidate);
         }
         return Array.from(selected);
     }
@@ -199,7 +253,9 @@ export default class QuestLeafFactory {
                     ? 'item'
                     : name.domain === 'character'
                         ? 'person'
-                        : null;
+                        : name.domain === 'monster'
+                            ? 'monster'
+                            : null;
 
             if (!type) {
                 continue;
@@ -218,7 +274,8 @@ export default class QuestLeafFactory {
         conditionText: string,
         objectiveType: QuestObjectiveType,
         entities: QuestTextEntity[],
+        objectiveData?: QuestObjectiveData,
     ): QuestNode {
-        return { id, title, description, conditionText, objectiveType, entities, children: [] };
+        return { id, title, description, conditionText, objectiveType, entities, objectiveData, children: [] };
     }
 }

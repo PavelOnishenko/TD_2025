@@ -11,6 +11,12 @@ import {
     saveNextCharacterRollAllocation,
     summarizeNextCharacterRollAllocation,
 } from '../../utils/NextCharacterRollConfig.js';
+import {
+    configureGameRandomProvider,
+    getGameRandomProviderSettings,
+    getNormalizedPseudoRandomSeed,
+    RandomProviderMode,
+} from '../../utils/RandomProvider.js';
 
 type DeveloperUI = {
     modal: HTMLElement;
@@ -23,6 +29,11 @@ type DeveloperUI = {
     nextRollTotal: HTMLElement;
     nextRollStatus: HTMLElement;
     nextRollInputs: Record<'vitality' | 'toughness' | 'strength' | 'agility' | 'connection' | 'intelligence', HTMLInputElement>;
+    randomModeSelect: HTMLSelectElement;
+    randomSeedInput: HTMLInputElement;
+    randomSummary: HTMLElement;
+    randomStatus: HTMLElement;
+    randomApplyBtn: HTMLButtonElement;
     everythingDiscoveredToggle: HTMLInputElement;
     fogOfWarToggle: HTMLInputElement;
 };
@@ -37,9 +48,9 @@ type DeveloperCallbacks = {
 const ENCOUNTER_LABELS: Record<RandomEncounterType, string> = {
     monster: 'Monster',
     item: 'Item',
-    village: 'Village',
     traveler: 'Traveler',
 };
+
 export default class DeveloperEventController {
     private developerUI: DeveloperUI;
     private encounterSystem: EncounterSystem;
@@ -50,6 +61,7 @@ export default class DeveloperEventController {
         this.encounterSystem = encounterSystem;
         this.callbacks = callbacks;
     }
+
     public toggleModal(forceVisible?: boolean): void {
         const shouldShow = typeof forceVisible === 'boolean'
             ? forceVisible
@@ -60,29 +72,35 @@ export default class DeveloperEventController {
             this.renderQueue();
             this.renderEncounterTypeControls();
             this.renderNextCharacterRollSummary();
+            this.renderRandomProviderControls();
             this.renderMapDisplayControls();
         }
     }
+
     public handleQueueAdd(): void {
         const type = this.developerUI.eventType.value as ForcedEncounterType;
         this.encounterSystem.queueForcedEncounter(type);
         this.renderQueue();
         this.callbacks.addVillageLog(`[DEV] Queued event: ${this.callbacks.getEventLabel(type)}`, 'system');
     }
+
     public handleQueueClear(): void {
         this.encounterSystem.clearForcedEncounters();
         this.renderQueue();
     }
+
     public handleEncounterTypeToggle(type: RandomEncounterType, enabled: boolean): void {
         this.encounterSystem.setEncounterTypeEnabled(type, enabled);
         this.renderEncounterTypeControls();
         this.callbacks.addVillageLog(`[DEV] ${ENCOUNTER_LABELS[type]} encounters ${enabled ? 'enabled' : 'disabled'}.`, 'system');
     }
+
     public handleEncounterTypesToggleAll(enabled: boolean): void {
         this.encounterSystem.setAllEncounterTypesEnabled(enabled);
         this.renderEncounterTypeControls();
         this.callbacks.addVillageLog(`[DEV] ${enabled ? 'Enabled' : 'Disabled'} all random encounter types.`, 'system');
     }
+
     public toggleNextCharacterRollModal(forceVisible?: boolean): void {
         const shouldShow = typeof forceVisible === 'boolean'
             ? forceVisible
@@ -93,9 +111,11 @@ export default class DeveloperEventController {
             this.renderNextCharacterRollEditor();
         }
     }
+
     public handleNextCharacterRollInputChanged(): void {
         this.renderNextCharacterRollEditor(this.readNextCharacterRollInputs());
     }
+
     public handleNextCharacterRollSave(): void {
         const allocation = this.readNextCharacterRollInputs();
         const total = getNextCharacterRollAllocationTotal(allocation);
@@ -111,6 +131,7 @@ export default class DeveloperEventController {
         this.renderNextCharacterRollSummary();
         this.callbacks.addVillageLog(`[DEV] Next character roll saved: ${summarizeNextCharacterRollAllocation(allocation)}`, 'system');
     }
+
     public handleNextCharacterRollClear(): void {
         clearNextCharacterRollAllocation();
         const emptyAllocation = createEmptyNextCharacterRollAllocation();
@@ -119,6 +140,18 @@ export default class DeveloperEventController {
         this.renderNextCharacterRollSummary();
         this.callbacks.addVillageLog('[DEV] Cleared next character roll override.', 'system');
     }
+
+    public handleRandomSettingsInputChanged(): void {
+        this.renderRandomProviderControls(this.readRandomSettingsInputs(), false);
+    }
+
+    public handleRandomSettingsApply(): void {
+        const settings = this.readRandomSettingsInputs();
+        const configured = configureGameRandomProvider(settings.mode, settings.pseudoSeed);
+        this.renderRandomProviderControls(configured, true);
+        this.callbacks.addVillageLog(`[DEV] Random provider set to ${this.describeRandomProviderForLog(configured)}.`, 'system');
+    }
+
     public handleMapDisplayToggle(setting: keyof MapDisplayConfig, enabled: boolean): void {
         this.callbacks.setMapDisplayConfig({ [setting]: enabled });
         this.renderMapDisplayControls();
@@ -126,6 +159,7 @@ export default class DeveloperEventController {
         const label = setting === 'everythingDiscovered' ? 'Everything discovered' : 'Fog of war';
         this.callbacks.addVillageLog(`[DEV] ${label} ${enabled ? 'enabled' : 'disabled'}.`, 'system');
     }
+
     public renderQueue(): void {
         const queue = this.encounterSystem.getForcedEncounterQueue();
         this.developerUI.queueList.innerHTML = '';
@@ -181,6 +215,64 @@ export default class DeveloperEventController {
         this.writeNextCharacterRollInputs(normalizedAllocation);
         this.developerUI.nextRollTotal.textContent = `${total} / ${expectedTotal}`;
         this.setNextCharacterRollStatus(this.getNextCharacterRollStatus(total, expectedTotal), total !== expectedTotal);
+    }
+
+    private renderRandomProviderControls(settings = getGameRandomProviderSettings(), wasApplied = false): void {
+        const normalizedSeed = getNormalizedPseudoRandomSeed(settings.pseudoSeed);
+        this.developerUI.randomModeSelect.value = settings.mode;
+        this.developerUI.randomSeedInput.value = normalizedSeed;
+        this.developerUI.randomSeedInput.disabled = settings.mode !== 'pseudo';
+        this.developerUI.randomSummary.textContent = this.createRandomProviderSummary(settings.mode, normalizedSeed, settings.activeSeed);
+        this.setRandomStatus(this.getRandomStatusMessage(settings.mode, normalizedSeed, settings.activeSeed, wasApplied), false);
+    }
+
+    private createRandomProviderSummary(mode: RandomProviderMode, pseudoSeed: string, activeSeed: string): string {
+        if (mode === 'pseudo') {
+            return `Random provider: pseudo random. Seed = "${pseudoSeed}". Restart with New Character to reproduce the exact same run.`;
+        }
+
+        return `Random provider: true random. Current runtime seed = "${activeSeed}".`;
+    }
+
+    private getRandomStatusMessage(mode: RandomProviderMode, pseudoSeed: string, activeSeed: string, wasApplied: boolean): string {
+        if (wasApplied && mode === 'pseudo') {
+            return `Pseudo-random seed "${pseudoSeed}" applied. Use New Character to replay the same sequence from the beginning.`;
+        }
+
+        if (wasApplied) {
+            return `True-random runtime seed refreshed to "${activeSeed}".`;
+        }
+
+        if (mode === 'pseudo') {
+            return 'Pseudo mode keeps every random roll deterministic for the same seed, including after New Character reloads.';
+        }
+
+        return 'True mode creates a fresh runtime seed every time you apply settings or reload the game.';
+    }
+
+    private describeRandomProviderForLog(settings: { mode: RandomProviderMode; pseudoSeed: string; activeSeed: string }): string {
+        if (settings.mode === 'pseudo') {
+            return `pseudo random (seed: ${getNormalizedPseudoRandomSeed(settings.pseudoSeed)})`;
+        }
+
+        return `true random (runtime seed: ${settings.activeSeed})`;
+    }
+
+    private readRandomSettingsInputs(): { mode: RandomProviderMode; pseudoSeed: string; activeSeed: string } {
+        const mode = this.developerUI.randomModeSelect.value === 'pseudo' ? 'pseudo' : 'true';
+        const pseudoSeed = getNormalizedPseudoRandomSeed(this.developerUI.randomSeedInput.value);
+        const current = getGameRandomProviderSettings();
+
+        return {
+            mode,
+            pseudoSeed,
+            activeSeed: current.activeSeed,
+        };
+    }
+
+    private setRandomStatus(message: string, isError: boolean): void {
+        this.developerUI.randomStatus.textContent = message;
+        this.developerUI.randomStatus.classList.toggle('dev-events-status-error', isError);
     }
 
     private renderMapDisplayControls(): void {

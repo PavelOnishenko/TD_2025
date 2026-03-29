@@ -21,6 +21,7 @@ import PlayerInventory from './PlayerInventory.js';
 import PlayerRenderer from './PlayerRenderer.js';
 import { NextCharacterRollAllocation } from '../utils/NextCharacterRollConfig.js';
 import { CombatBuffSnapshot, CombatStatusState } from '../systems/combat/DirectionalCombat.js';
+import { theme } from '../config/ThemeConfig.js';
 
 const DamageableEntity = withDamageable(Entity);
 
@@ -79,6 +80,7 @@ export default class Player extends DamageableEntity {
     public mana: number = 0;
     public maxMana: number = 0;
     public gold: number = 0;
+    public fatigue: number = 0;
 
     private rageTurns: number = 0;
     private rageMultiplier: number = 1;
@@ -300,6 +302,8 @@ export default class Player extends DamageableEntity {
         }
 
         const previousIntelligence = this.intelligence;
+        const previousHp = this.hp;
+        const hadFullHp = this.hp >= this.maxHp;
 
         switch (stat) {
             case 'vitality':
@@ -326,10 +330,9 @@ export default class Player extends DamageableEntity {
 
         this.skillPoints -= amount;
 
-        // Store current HP percentage
         // Update derived stats
         this.updateStats();
-        this.hp = Math.min(this.hp, this.maxHp);
+        this.hp = hadFullHp ? this.maxHp : Math.min(previousHp, this.maxHp);
 
         if (stat === 'intelligence') {
             const gainedMagicPoints = Math.floor(this.intelligence / 3) - Math.floor(previousIntelligence / 3);
@@ -365,6 +368,48 @@ export default class Player extends DamageableEntity {
 
     public canSpendMana(amount: number): boolean {
         return this.mana >= amount;
+    }
+
+    public getMaxFatigue(): number {
+        return Math.max(1, balanceConfig.survival.maxFatigue);
+    }
+
+    public addTravelFatigue(cells: number = 1): number {
+        if (cells <= 0) {
+            return 0;
+        }
+
+        const cellTravelMinutes = Math.max(1, theme.worldMap.cellTravelMinutes);
+        const awakeHours = Math.max(1, balanceConfig.survival.awakeHoursPerDay);
+        const comfortableDailyCells = Math.max(1, Math.floor((awakeHours * 60) / cellTravelMinutes));
+        const fatiguePerCell = this.getMaxFatigue() / comfortableDailyCells;
+        const addedFatigue = fatiguePerCell * cells;
+        this.fatigue = Math.min(this.getMaxFatigue(), this.fatigue + addedFatigue);
+        return addedFatigue;
+    }
+
+    public recoverFatigue(amount: number): number {
+        if (amount <= 0) {
+            return 0;
+        }
+
+        const previous = this.fatigue;
+        this.fatigue = Math.max(0, this.fatigue - amount);
+        return previous - this.fatigue;
+    }
+
+    public getFatiguePercent(): number {
+        return (this.fatigue / this.getMaxFatigue()) * 100;
+    }
+
+    public getFatigueStateLabel(): string {
+        if (this.fatigue >= balanceConfig.survival.highFatigueThreshold) {
+            return 'Exhausted';
+        }
+        if (this.fatigue >= balanceConfig.survival.cautionFatigueThreshold) {
+            return 'Tired';
+        }
+        return 'Rested';
     }
 
     public getPhysicalDamageWithBuff(): number {
@@ -615,6 +660,7 @@ export default class Player extends DamageableEntity {
             hp: this.hp,
             mana: this.mana,
             gold: this.gold,
+            fatigue: this.fatigue,
             armorAbsorbedHp: this.armorAbsorbedHp,
             rageTurns: this.rageTurns,
             rageMultiplier: this.rageMultiplier,
@@ -643,6 +689,7 @@ export default class Player extends DamageableEntity {
         this.skillPoints = toNumber(state.skillPoints, this.skillPoints);
         this.magicPoints = toNumber(state.magicPoints, this.magicPoints);
         this.gold = toNumber(state.gold, this.gold);
+        this.fatigue = Math.max(0, Math.min(this.getMaxFatigue(), toNumber(state.fatigue, this.fatigue)));
         this.armorAbsorbedHp = toNumber(state.armorAbsorbedHp, 0);
         this.rageTurns = toNumber(state.rageTurns, 0);
         this.rageMultiplier = toNumber(state.rageMultiplier, 1);

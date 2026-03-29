@@ -3,6 +3,7 @@ import { FogState, MapDisplayConfig, TerrainData, GridPosition, Direction, GridC
 import { theme } from '../../config/ThemeConfig.js';
 import WorldMapRenderer from './WorldMapRenderer.js';
 import { balanceConfig } from '../../config/balanceConfig.js';
+import { generateVillageName } from './VillageNameGenerator.js';
 
 export type KnownVillage = {
     name: string;
@@ -10,6 +11,13 @@ export type KnownVillage = {
     row: number;
     terrain: TerrainType;
     status: 'current' | 'mapped';
+};
+
+export type WorldVillageDirectionHint = {
+    settlementName: string;
+    exists: boolean;
+    direction?: 'north' | 'north-east' | 'east' | 'south-east' | 'south' | 'south-west' | 'west' | 'north-west';
+    distanceCells?: number;
 };
 
 const FOG_STATE = {
@@ -29,6 +37,18 @@ type NamedLocation = {
     terrainType: TerrainType;
 };
 
+type VillageRoadPoint = {
+    x: number;
+    y: number;
+};
+
+type VillageRoadLink = {
+    from: GridPosition;
+    to: GridPosition;
+    control1: VillageRoadPoint;
+    control2: VillageRoadPoint;
+};
+
 type ClimateCell = {
     col: number;
     row: number;
@@ -40,6 +60,13 @@ type ClimateCell = {
     grassSuitability: number;
     desertSuitability: number;
     inlandWaterSuitability: number;
+};
+
+type TerrainLayerCache = {
+    canvas: HTMLCanvasElement;
+    cellSize: number;
+    terrainRevision: number;
+    detailLevel: 'low' | 'medium';
 };
 
 export default class WorldMap {
@@ -57,6 +84,14 @@ export default class WorldMap {
     private canvasWidth: number;
     private canvasHeight: number;
     private mapDisplayConfig: MapDisplayConfig;
+    private fogStatesByIndex: FogState[];
+    private terrainByIndex: Array<TerrainData | undefined>;
+    private villageIndexSet: Set<number>;
+    private roadIndexSet: Set<number>;
+    private villageRoadLinks: VillageRoadLink[];
+    private terrainLayerCaches: Partial<Record<'low' | 'medium', TerrainLayerCache>>;
+    private fogRevision: number;
+    private terrainRevision: number;
 
     constructor(columns: number, rows: number, cellSize: number) {
         this.grid = new GridMap(columns, rows, cellSize);
@@ -73,6 +108,14 @@ export default class WorldMap {
         this.canvasWidth = columns * cellSize;
         this.canvasHeight = rows * cellSize;
         this.mapDisplayConfig = { ...DEFAULT_MAP_DISPLAY_CONFIG };
+        this.fogStatesByIndex = [];
+        this.terrainByIndex = [];
+        this.villageIndexSet = new Set<number>();
+        this.roadIndexSet = new Set<number>();
+        this.villageRoadLinks = [];
+        this.terrainLayerCaches = {};
+        this.fogRevision = 0;
+        this.terrainRevision = 0;
         this.initializeFogOfWar();
         this.generateWorld();
         this.visitedCells.add(this.getCellKey(this.playerGridPos.col, this.playerGridPos.row));
@@ -81,6 +124,7 @@ export default class WorldMap {
     }
 
     private initializeFogOfWar(): void {
+        this.fogStatesByIndex = new Array(this.grid.columns * this.grid.rows).fill(FOG_STATE.UNKNOWN);
         this.grid.forEachCell((_cell: GridCell, col: number, row: number) => {
             this.fogStates.set(this.getCellKey(col, row), FOG_STATE.UNKNOWN);
         });
@@ -89,10 +133,12 @@ export default class WorldMap {
     private generateWorld(): void {
         this.generateTerrain();
         this.generateVillages();
+        this.generateVillageRoadNetwork();
         this.pickRandomPlayerStart();
     }
 
     private generateTerrain(): void {
+        this.terrainRevision += 1;
         const dims = this.grid.getDimensions();
         const climates: ClimateCell[] = [];
 
@@ -113,10 +159,11 @@ export default class WorldMap {
         );
 
         this.terrainData.clear();
+        this.terrainByIndex = new Array(dims.columns * dims.rows);
         climates.forEach((climate) => {
             const key = this.getCellKey(climate.col, climate.row);
             const type = this.resolveTerrainType(climate, forestThreshold, lakeCells.has(key), riverCells.has(key));
-            this.terrainData.set(key, {
+            const terrain = {
                 type,
                 color: this.getTerrainColor(type),
                 pattern: this.generateTerrainPattern(type, climate.seed),
@@ -124,7 +171,9 @@ export default class WorldMap {
                 moisture: climate.moisture,
                 heat: climate.heat,
                 seed: climate.seed,
-            });
+            };
+            this.terrainData.set(key, terrain);
+            this.terrainByIndex[this.getCellIndex(climate.col, climate.row)] = terrain;
         });
     }
 
@@ -378,8 +427,13 @@ export default class WorldMap {
 
     private generateVillages(): void {
         const dims = this.grid.getDimensions();
-        const villageCount = Math.max(6, Math.floor((dims.columns * dims.rows) * 0.012));
+        const baseVillageCount = Math.max(
+            balanceConfig.worldMap.villages.minCount,
+            Math.floor((dims.columns * dims.rows) * balanceConfig.worldMap.villages.densityPerCell),
+        );
+        const villageCount = Math.max(1, Math.floor(baseVillageCount * balanceConfig.villageCreationRateMultiplier));
         this.villages.clear();
+        this.villageIndexSet.clear();
 
         for (let attempt = 0; this.villages.size < villageCount && attempt < dims.columns * dims.rows * 8; attempt += 1) {
             const col = this.seededInt(dims.columns, this.seededValue('village-col', attempt));
@@ -400,7 +454,9 @@ export default class WorldMap {
                 continue;
             }
 
-            this.villages.add(this.getCellKey(col, row));
+            const key = this.getCellKey(col, row);
+            this.villages.add(key);
+            this.villageIndexSet.add(this.getCellIndex(col, row));
         }
     }
 
@@ -507,25 +563,36 @@ export default class WorldMap {
         return `${col},${row}`;
     }
 
+    private getCellIndex(col: number, row: number): number {
+        return (row * this.grid.columns) + col;
+    }
+
     private refreshVisibility(): void {
-        this.grid.forEachCell((_cell: GridCell, col: number, row: number) => {
-            const key = this.getCellKey(col, row);
-            if (this.fogStates.get(key) === FOG_STATE.DISCOVERED) {
-                this.fogStates.set(key, FOG_STATE.HIDDEN);
+        this.fogRevision += 1;
+        for (let index = 0; index < this.fogStatesByIndex.length; index += 1) {
+            if (this.fogStatesByIndex[index] === FOG_STATE.DISCOVERED) {
+                this.fogStatesByIndex[index] = FOG_STATE.HIDDEN;
             }
-        });
+        }
 
         this.grid.forEachCell((_cell: GridCell, col: number, row: number) => {
             if (!this.isCellVisible(col, row)) {
                 return;
             }
 
-            this.fogStates.set(this.getCellKey(col, row), FOG_STATE.DISCOVERED);
+            this.fogStatesByIndex[this.getCellIndex(col, row)] = FOG_STATE.DISCOVERED;
+        });
+
+        this.grid.forEachCell((_cell: GridCell, col: number, row: number) => {
+            const key = this.getCellKey(col, row);
+            this.fogStates.set(key, this.fogStatesByIndex[this.getCellIndex(col, row)] ?? FOG_STATE.UNKNOWN);
         });
     }
 
     private getFogState(col: number, row: number): FogState {
-        const storedFogState = this.fogStates.get(this.getCellKey(col, row)) || FOG_STATE.UNKNOWN;
+        const storedFogState = this.fogStates.get(this.getCellKey(col, row))
+            || this.fogStatesByIndex[this.getCellIndex(col, row)]
+            || FOG_STATE.UNKNOWN;
 
         if (this.mapDisplayConfig.everythingDiscovered) {
             return FOG_STATE.DISCOVERED;
@@ -539,7 +606,7 @@ export default class WorldMap {
     }
 
     private getTerrain(col: number, row: number): TerrainData | undefined {
-        return this.terrainData.get(this.getCellKey(col, row));
+        return this.terrainData.get(this.getCellKey(col, row)) ?? this.terrainByIndex[this.getCellIndex(col, row)];
     }
 
     public isCellVisible(col: number, row: number): boolean {
@@ -568,7 +635,7 @@ export default class WorldMap {
 
             const isTarget = step.col === col && step.row === row;
             if (terrain.type === 'forest') {
-                return false;
+                return isTarget;
             }
 
             if (terrain.type === 'mountain') {
@@ -720,6 +787,18 @@ export default class WorldMap {
         return beforeX !== this.grid.offsetX || beforeY !== this.grid.offsetY;
     }
 
+    public panByPixels(deltaX: number, deltaY: number): boolean {
+        if (deltaX === 0 && deltaY === 0) {
+            return false;
+        }
+
+        const beforeX = this.grid.offsetX;
+        const beforeY = this.grid.offsetY;
+        this.grid.updateLayout(this.grid.cellSize, beforeX + deltaX, beforeY + deltaY);
+        this.clampViewport();
+        return beforeX !== this.grid.offsetX || beforeY !== this.grid.offsetY;
+    }
+
     private centerViewportOnCell(col: number, row: number): void {
         const offsetX = Math.round((this.canvasWidth / 2) - ((col + 0.5) * this.grid.cellSize) + theme.worldMap.gridOffset.x);
         const offsetY = Math.round((this.canvasHeight / 2) - ((row + 0.5) * this.grid.cellSize) + theme.worldMap.gridOffset.y);
@@ -789,6 +868,17 @@ export default class WorldMap {
         return this.grid.gridToPixel(this.playerGridPos.col, this.playerGridPos.row);
     }
 
+
+    public isRoadAt(col: number, row: number): boolean {
+        if (!this.grid.isValidPosition(col, row)) {
+            return false;
+        }
+        return this.roadIndexSet.has(this.getCellIndex(col, row));
+    }
+
+    public isPlayerOnRoad(): boolean {
+        return this.isRoadAt(this.playerGridPos.col, this.playerGridPos.row);
+    }
     public getCurrentTerrain(): TerrainData {
         return this.getTerrain(this.playerGridPos.col, this.playerGridPos.row) ?? {
             type: 'grass',
@@ -828,6 +918,27 @@ export default class WorldMap {
             .sort((left, right) => left.name.localeCompare(right.name));
     }
 
+
+    public getVillageDirectionHintFromPlayer(rawSettlementName: string): WorldVillageDirectionHint {
+        const settlementName = rawSettlementName.trim();
+        const position = this.findVillagePositionByNameInsensitive(settlementName);
+        if (!position) {
+            return {
+                settlementName,
+                exists: false,
+            };
+        }
+
+        const dx = position.col - this.playerGridPos.col;
+        const dy = position.row - this.playerGridPos.row;
+        return {
+            settlementName,
+            exists: true,
+            direction: this.resolveDirection(dx, dy),
+            distanceCells: Math.round(Math.sqrt((dx * dx) + (dy * dy))),
+        };
+    }
+
     public getAllVillageNames(): string[] {
         return Array.from(this.villages.values())
             .map((key) => {
@@ -838,18 +949,18 @@ export default class WorldMap {
     }
 
     private getVillageName(col: number, row: number): string {
-        const first = ['Oak', 'River', 'Sun', 'Stone', 'Amber', 'Willow', 'Moss', 'Silver', 'Pine', 'Moon'];
-        const second = ['ford', 'field', 'brook', 'haven', 'hill', 'cross', 'watch', 'stead', 'rest', 'meadow'];
-        const seed = this.hashSeed((col + 11) * 92837111, (row + 17) * 689287499);
-        return `${first[seed % first.length]}${second[Math.floor(seed / first.length) % second.length]}`;
+        const seed = this.hashSeed((col + 11) * 92837111, (row + 17) * 689287499, 14057);
+        return generateVillageName(seed);
     }
 
     public isPlayerOnVillage(): boolean {
-        return this.villages.has(this.getCellKey(this.playerGridPos.col, this.playerGridPos.row));
+        return this.villageIndexSet.has(this.getCellIndex(this.playerGridPos.col, this.playerGridPos.row));
     }
 
     public markVillageAtPlayerPosition(): void {
-        this.villages.add(this.getCellKey(this.playerGridPos.col, this.playerGridPos.row));
+        const key = this.getCellKey(this.playerGridPos.col, this.playerGridPos.row);
+        this.villages.add(key);
+        this.villageIndexSet.add(this.getCellIndex(this.playerGridPos.col, this.playerGridPos.row));
     }
 
     public isPlayerOnEdge(): boolean {
@@ -878,33 +989,44 @@ export default class WorldMap {
         this.renderer.drawBackground(ctx, this.canvasWidth, this.canvasHeight);
         const bounds = this.getVisibleBounds();
         const detailLevel = this.getRenderDetailLevel(bounds);
-        const drawGrid = detailLevel !== 'low' && this.grid.cellSize >= 12;
+        // Keep terrain seamless and avoid decorative tabletop-like cell borders.
+        const drawGrid = false;
+        const shouldUseTerrainCache = detailLevel === 'low' || detailLevel === 'medium';
 
-        for (let row = bounds.startRow; row <= bounds.endRow; row += 1) {
-            for (let col = bounds.startCol; col <= bounds.endCol; col += 1) {
-                const cell = this.grid.getCellAt(col, row);
-                const terrain = this.getTerrain(col, row);
-                if (!cell) {
-                    continue;
+        const terrainRenderedFromCache = shouldUseTerrainCache
+            && this.drawTerrainLayerFromCache(ctx, bounds, detailLevel);
+
+        if (!terrainRenderedFromCache) {
+            for (let row = bounds.startRow; row <= bounds.endRow; row += 1) {
+                for (let col = bounds.startCol; col <= bounds.endCol; col += 1) {
+                    const cell = this.grid.cells[this.getCellIndex(col, row)];
+                    const terrain = this.getTerrain(col, row);
+                    if (!cell) {
+                        continue;
+                    }
+
+                    this.renderer.drawCell(
+                        ctx,
+                        cell,
+                        this.getFogState(col, row),
+                        terrain,
+                        detailLevel === 'full' && terrain ? this.getTerrainNeighbors(col, row, terrain.type) : undefined,
+                        {
+                            showFogOverlay: this.mapDisplayConfig.fogOfWar,
+                            detailLevel,
+                        },
+                    );
                 }
-
-                this.renderer.drawCell(
-                    ctx,
-                    cell,
-                    this.getFogState(col, row),
-                    terrain,
-                    detailLevel === 'full' && terrain ? this.getTerrainNeighbors(col, row, terrain.type) : undefined,
-                    {
-                        showFogOverlay: this.mapDisplayConfig.fogOfWar,
-                        detailLevel,
-                    },
-                );
             }
+        }
+        if (terrainRenderedFromCache) {
+            this.drawFogOverlayForVisibleCells(ctx, bounds, detailLevel);
         }
 
         if (drawGrid) {
             this.renderer.drawGrid(ctx, this.grid, this.canvasWidth, this.canvasHeight);
         }
+        this.drawVillageRoads(ctx, bounds);
         this.drawVillages(ctx, bounds);
         this.drawNamedLocations(ctx, bounds);
         this.drawNamedLocationFocus(ctx);
@@ -986,6 +1108,192 @@ export default class WorldMap {
         });
     }
 
+    private drawVillageRoads(ctx: CanvasRenderingContext2D, bounds: { startCol: number; endCol: number; startRow: number; endRow: number }): void {
+        this.villageRoadLinks.forEach((link) => {
+            if (!this.isRoadLinkWithinBounds(link, bounds)) {
+                return;
+            }
+            const visibleSegments = this.buildVisibleRoadSegments(link);
+            visibleSegments.forEach((segment) => {
+                this.renderer.drawVillageRoadPath(ctx, segment.points, segment.alpha);
+            });
+        });
+    }
+
+    private buildVillageRoadLinks(villages: GridPosition[]): Array<{ from: GridPosition; to: GridPosition }> {
+        const links = new Map<string, { from: GridPosition; to: GridPosition }>();
+        villages.forEach((village, index) => {
+            const neighbors = villages
+                .map((candidate, candidateIndex) => ({
+                    candidate,
+                    candidateIndex,
+                    distance: Math.hypot(candidate.col - village.col, candidate.row - village.row),
+                }))
+                .filter((item) => item.candidateIndex !== index)
+                .sort((a, b) => a.distance - b.distance)
+                .slice(0, 2);
+
+            neighbors.forEach(({ candidate }) => {
+                const first = this.getCellIndex(village.col, village.row);
+                const second = this.getCellIndex(candidate.col, candidate.row);
+                const key = first < second ? `${first}-${second}` : `${second}-${first}`;
+                if (!links.has(key)) {
+                    links.set(key, { from: village, to: candidate });
+                }
+            });
+        });
+        return Array.from(links.values());
+    }
+
+    private buildVillageRoadControls(from: GridPosition, to: GridPosition): { control1: VillageRoadPoint; control2: VillageRoadPoint } {
+        const fromCenter = this.getGridCenterPoint(from.col, from.row);
+        const toCenter = this.getGridCenterPoint(to.col, to.row);
+        const dx = toCenter.x - fromCenter.x;
+        const dy = toCenter.y - fromCenter.y;
+        const distance = Math.hypot(dx, dy);
+        const unitX = distance === 0 ? 0 : dx / distance;
+        const unitY = distance === 0 ? 0 : dy / distance;
+        const normalX = -unitY;
+        const normalY = unitX;
+
+        const pairSeed = this.hashSeed((from.col + 1) * 911, (from.row + 1) * 353, (to.col + 1) * 719, (to.row + 1) * 197);
+        const curveDirection = this.seededRandom(pairSeed) > 0.5 ? 1 : -1;
+        const bendStrength = Math.max(0.55, Math.min(distance * 0.26, 1.8));
+        const bendNoise = 0.8 + (this.seededRandom(pairSeed * 1.37) * 0.5);
+        const bend = bendStrength * bendNoise * curveDirection;
+
+        const control1 = {
+            x: fromCenter.x + (dx * 0.33) + (normalX * bend),
+            y: fromCenter.y + (dy * 0.33) + (normalY * bend),
+        };
+        const control2 = {
+            x: fromCenter.x + (dx * 0.66) + (normalX * bend * 0.85),
+            y: fromCenter.y + (dy * 0.66) + (normalY * bend * 0.85),
+        };
+
+        return { control1, control2 };
+    }
+
+    private generateVillageRoadNetwork(): void {
+        const villages = Array.from(this.villages.values())
+            .map((key) => {
+                const [colText, rowText] = key.split(',');
+                const col = Number(colText);
+                const row = Number(rowText);
+                return this.grid.isValidPosition(col, row) ? { col, row } : null;
+            })
+            .filter((value): value is GridPosition => value !== null);
+
+        this.roadIndexSet.clear();
+        if (villages.length < 2) {
+            this.villageRoadLinks = [];
+            return;
+        }
+
+        const links = this.buildVillageRoadLinks(villages);
+        this.villageRoadLinks = links.map(({ from, to }) => {
+            const controls = this.buildVillageRoadControls(from, to);
+            const link: VillageRoadLink = { from, to, control1: controls.control1, control2: controls.control2 };
+            this.markRoadCellsForLink(link);
+            return link;
+        });
+    }
+
+    private markRoadCellsForLink(link: VillageRoadLink): void {
+        const samples = Math.max(28, Math.ceil(this.getRoadLinkDistance(link) * 8));
+        let previous = this.sampleRoadLinkPoint(link, 0);
+        this.markRoadCell(previous.x, previous.y);
+        for (let index = 1; index <= samples; index += 1) {
+            const point = this.sampleRoadLinkPoint(link, index / samples);
+            const steps = Math.max(1, Math.ceil(Math.max(Math.abs(point.x - previous.x), Math.abs(point.y - previous.y)) * 6));
+            for (let step = 1; step <= steps; step += 1) {
+                const t = step / steps;
+                this.markRoadCell(previous.x + ((point.x - previous.x) * t), previous.y + ((point.y - previous.y) * t));
+            }
+            previous = point;
+        }
+    }
+
+    private markRoadCell(gridX: number, gridY: number): void {
+        const col = Math.floor(gridX);
+        const row = Math.floor(gridY);
+        if (!this.grid.isValidPosition(col, row)) {
+            return;
+        }
+        this.roadIndexSet.add(this.getCellIndex(col, row));
+    }
+
+    private sampleRoadLinkPoint(link: VillageRoadLink, t: number): VillageRoadPoint {
+        const from = this.getGridCenterPoint(link.from.col, link.from.row);
+        const to = this.getGridCenterPoint(link.to.col, link.to.row);
+        const midpoint = { x: (from.x + to.x) * 0.5, y: (from.y + to.y) * 0.5 };
+
+        if (t <= 0.5) {
+            return this.quadraticPoint(from, link.control1, midpoint, t * 2);
+        }
+        return this.quadraticPoint(midpoint, link.control2, to, (t - 0.5) * 2);
+    }
+
+    private quadraticPoint(start: VillageRoadPoint, control: VillageRoadPoint, end: VillageRoadPoint, t: number): VillageRoadPoint {
+        const oneMinusT = 1 - t;
+        return {
+            x: (oneMinusT * oneMinusT * start.x) + (2 * oneMinusT * t * control.x) + (t * t * end.x),
+            y: (oneMinusT * oneMinusT * start.y) + (2 * oneMinusT * t * control.y) + (t * t * end.y),
+        };
+    }
+
+    private buildVisibleRoadSegments(link: VillageRoadLink): Array<{ points: VillageRoadPoint[]; alpha: number }> {
+        const segments: Array<{ points: VillageRoadPoint[]; alpha: number }> = [];
+        const samples = Math.max(26, Math.ceil(this.getRoadLinkDistance(link) * 7));
+        let active: VillageRoadPoint[] = [];
+
+        for (let index = 0; index <= samples; index += 1) {
+            const gridPoint = this.sampleRoadLinkPoint(link, index / samples);
+            const col = Math.floor(gridPoint.x);
+            const row = Math.floor(gridPoint.y);
+            const hasRoad = this.grid.isValidPosition(col, row) && this.roadIndexSet.has(this.getCellIndex(col, row));
+            const fogState = hasRoad ? this.getFogState(col, row) : FOG_STATE.UNKNOWN;
+            if (fogState === FOG_STATE.UNKNOWN) {
+                if (active.length >= 2) {
+                    segments.push({ points: active, alpha: 0.9 });
+                }
+                active = [];
+                continue;
+            }
+
+            const pixel = this.gridPointToCanvas(gridPoint);
+            active.push(pixel);
+        }
+
+        if (active.length >= 2) {
+            segments.push({ points: active, alpha: 0.9 });
+        }
+        return segments;
+    }
+
+    private gridPointToCanvas(point: VillageRoadPoint): VillageRoadPoint {
+        return {
+            x: this.grid.offsetX + (point.x * this.grid.cellSize),
+            y: this.grid.offsetY + (point.y * this.grid.cellSize),
+        };
+    }
+
+    private isRoadLinkWithinBounds(link: VillageRoadLink, bounds: { startCol: number; endCol: number; startRow: number; endRow: number }): boolean {
+        const minCol = Math.min(link.from.col, link.to.col, Math.floor(link.control1.x), Math.floor(link.control2.x));
+        const maxCol = Math.max(link.from.col, link.to.col, Math.floor(link.control1.x), Math.floor(link.control2.x));
+        const minRow = Math.min(link.from.row, link.to.row, Math.floor(link.control1.y), Math.floor(link.control2.y));
+        const maxRow = Math.max(link.from.row, link.to.row, Math.floor(link.control1.y), Math.floor(link.control2.y));
+        return !(maxCol < bounds.startCol || minCol > bounds.endCol || maxRow < bounds.startRow || minRow > bounds.endRow);
+    }
+
+    private getGridCenterPoint(col: number, row: number): VillageRoadPoint {
+        return { x: col + 0.5, y: row + 0.5 };
+    }
+
+    private getRoadLinkDistance(link: VillageRoadLink): number {
+        return Math.hypot(link.to.col - link.from.col, link.to.row - link.from.row);
+    }
+
     private drawNamedLocations(ctx: CanvasRenderingContext2D, bounds: { startCol: number; endCol: number; startRow: number; endRow: number }): void {
         this.namedLocations.forEach((location) => {
             const { col, row } = location.position;
@@ -1048,11 +1356,30 @@ export default class WorldMap {
                     && typeof entry[0] === 'string'
                     && (entry[1] === FOG_STATE.UNKNOWN || entry[1] === FOG_STATE.HIDDEN || entry[1] === FOG_STATE.DISCOVERED)),
             );
+            this.fogStatesByIndex = new Array(this.grid.columns * this.grid.rows).fill(FOG_STATE.UNKNOWN);
+            this.fogStates.forEach((value, key) => {
+                const [colText, rowText] = key.split(',');
+                const col = Number(colText);
+                const row = Number(rowText);
+                if (this.grid.isValidPosition(col, row)) {
+                    this.fogStatesByIndex[this.getCellIndex(col, row)] = value;
+                }
+            });
         }
 
         if (Array.isArray(state.villages)) {
             this.villages = new Set(state.villages.filter((entry): entry is string => typeof entry === 'string'));
+            this.villageIndexSet = new Set<number>();
+            this.villages.forEach((key) => {
+                const [colText, rowText] = key.split(',');
+                const col = Number(colText);
+                const row = Number(rowText);
+                if (this.grid.isValidPosition(col, row)) {
+                    this.villageIndexSet.add(this.getCellIndex(col, row));
+                }
+            });
         }
+        this.generateVillageRoadNetwork();
 
         if (Array.isArray(state.visitedCells)) {
             this.visitedCells = new Set(state.visitedCells.filter((entry): entry is string => typeof entry === 'string'));
@@ -1112,12 +1439,13 @@ export default class WorldMap {
             return null;
         }
 
-        const isVillage = this.villages.has(this.getCellKey(this.selectedGridPos.col, this.selectedGridPos.row));
+        const isVillage = this.villageIndexSet.has(this.getCellIndex(this.selectedGridPos.col, this.selectedGridPos.row));
         const isCurrentVillage = isVillage
             && this.selectedGridPos.col === this.playerGridPos.col
             && this.selectedGridPos.row === this.playerGridPos.row;
 
         return {
+            mode: 'world',
             col: this.selectedGridPos.col,
             row: this.selectedGridPos.row,
             terrainType: terrain.type,
@@ -1128,6 +1456,37 @@ export default class WorldMap {
             villageStatus: isVillage ? (isCurrentVillage ? 'current' : 'mapped') : null,
             isTraversable: terrain.type !== 'water',
         };
+    }
+
+
+    private findVillagePositionByNameInsensitive(name: string): GridPosition | null {
+        const normalized = name.trim().toLowerCase();
+        for (const key of this.villages.values()) {
+            const [colText, rowText] = key.split(',');
+            const col = Number(colText);
+            const row = Number(rowText);
+            if (this.getVillageName(col, row).toLowerCase() === normalized) {
+                return { col, row };
+            }
+        }
+
+        return null;
+    }
+
+    private resolveDirection(dx: number, dy: number): 'north' | 'north-east' | 'east' | 'south-east' | 'south' | 'south-west' | 'west' | 'north-west' {
+        const angle = Math.atan2(dy, dx);
+        const slice = Math.round(angle / (Math.PI / 4));
+        const dirs: Array<'east' | 'south-east' | 'south' | 'south-west' | 'west' | 'north-west' | 'north' | 'north-east'> = [
+            'east',
+            'south-east',
+            'south',
+            'south-west',
+            'west',
+            'north-west',
+            'north',
+            'north-east',
+        ];
+        return dirs[(slice + 8) % 8];
     }
 
     private findVillagePositionByName(name: string): GridPosition | null {
@@ -1187,5 +1546,123 @@ export default class WorldMap {
         }
 
         this.renderer.drawNamedLocationFocus(ctx, cell, location.name);
+    }
+
+    private drawFogOverlayForVisibleCells(
+        ctx: CanvasRenderingContext2D,
+        bounds: { startCol: number; endCol: number; startRow: number; endRow: number },
+        detailLevel: 'low' | 'medium',
+    ): void {
+        for (let row = bounds.startRow; row <= bounds.endRow; row += 1) {
+            for (let col = bounds.startCol; col <= bounds.endCol; col += 1) {
+                const fogState = this.getFogState(col, row);
+                if (fogState === FOG_STATE.DISCOVERED) {
+                    continue;
+                }
+
+                const cell = this.grid.cells[this.getCellIndex(col, row)];
+                if (!cell) {
+                    continue;
+                }
+
+                this.renderer.drawCell(
+                    ctx,
+                    cell,
+                    fogState,
+                    fogState === FOG_STATE.HIDDEN ? this.getTerrain(col, row) : undefined,
+                    undefined,
+                    {
+                        showFogOverlay: this.mapDisplayConfig.fogOfWar,
+                        detailLevel,
+                    },
+                );
+            }
+        }
+    }
+
+    private drawTerrainLayerFromCache(
+        ctx: CanvasRenderingContext2D,
+        bounds: { startCol: number; endCol: number; startRow: number; endRow: number },
+        detailLevel: 'low' | 'medium',
+    ): boolean {
+        if (typeof document === 'undefined' || typeof (ctx as CanvasRenderingContext2D & { drawImage?: unknown }).drawImage !== 'function') {
+            return false;
+        }
+
+        const cellSize = this.grid.cellSize;
+        const cacheWidth = this.grid.columns * cellSize;
+        const cacheHeight = this.grid.rows * cellSize;
+        const existing = this.terrainLayerCaches[detailLevel];
+        const shouldRebuild = !existing
+            || existing.detailLevel !== detailLevel
+            || existing.cellSize !== cellSize
+            || existing.terrainRevision !== this.terrainRevision;
+
+        if (shouldRebuild) {
+            const cacheCanvas = document.createElement('canvas');
+            cacheCanvas.width = Math.max(1, Math.floor(cacheWidth));
+            cacheCanvas.height = Math.max(1, Math.floor(cacheHeight));
+            const cacheCtx = cacheCanvas.getContext('2d');
+            if (!cacheCtx) {
+                return false;
+            }
+
+            for (let row = 0; row < this.grid.rows; row += 1) {
+                for (let col = 0; col < this.grid.columns; col += 1) {
+                    const terrain = this.getTerrain(col, row);
+                    this.renderer.drawCell(
+                        cacheCtx,
+                        {
+                            col,
+                            row,
+                            x: col * cellSize,
+                            y: row * cellSize,
+                            width: cellSize,
+                            height: cellSize,
+                            data: {},
+                        },
+                        FOG_STATE.DISCOVERED,
+                        terrain,
+                        undefined,
+                        {
+                            showFogOverlay: false,
+                            detailLevel,
+                        },
+                    );
+                }
+            }
+
+            this.terrainLayerCaches[detailLevel] = {
+                canvas: cacheCanvas,
+                cellSize,
+                terrainRevision: this.terrainRevision,
+                detailLevel,
+            };
+        }
+
+        const activeCache = this.terrainLayerCaches[detailLevel];
+        if (!activeCache) {
+            return false;
+        }
+
+        const sourceX = bounds.startCol * cellSize;
+        const sourceY = bounds.startRow * cellSize;
+        const sourceWidth = Math.max(1, (bounds.endCol - bounds.startCol + 1) * cellSize);
+        const sourceHeight = Math.max(1, (bounds.endRow - bounds.startRow + 1) * cellSize);
+        const destinationX = this.grid.offsetX + sourceX;
+        const destinationY = this.grid.offsetY + sourceY;
+
+        ctx.drawImage(
+            activeCache.canvas,
+            sourceX,
+            sourceY,
+            sourceWidth,
+            sourceHeight,
+            destinationX,
+            destinationY,
+            sourceWidth,
+            sourceHeight,
+        );
+        return true;
     }
 }
