@@ -72,6 +72,8 @@ The style guide contains both objective and subjective rules.
 4. **Rule 15**: concise formatting where reasonable — partially supported by the same rules.
 5. Unused variables are warnings to help code cleanliness.
 
+6. **Rule 17**: comma-separated collection/object initialization layout — custom ESLint rule `style-guide/rule17-comma-layout`.
+
 Warnings are visible for all TypeScript files so they can be fixed incrementally. For touched code, warnings should be treated as actionable and fixed whenever practical.
 
 ### Audited (informational report)
@@ -93,9 +95,29 @@ These are tracked by `npm run style-guide:audit` so the team can gradually reduc
 - Rule 11: testability.
 - Rule 12: balanced LOC during extraction.
 - Rule 13: simplicity and effectiveness.
-- Rule 17: collection/object initialization layout choices beyond the baseline lint checks.
+- Rule 17 edge cases not representable in AST-only checks (for example semantic readability exceptions) still require reviewer judgment.
 
 These must be checked by the author and reviewer during implementation and review.
+
+
+### Rule 17 linter enforcement details
+
+`style-guide/rule17-comma-layout` now validates comma-separated object/array initializers and destructuring patterns (`ObjectExpression`, `ArrayExpression`, `ObjectPattern`, `ArrayPattern`) with these checks:
+
+1. If initialization spans multiple lines, opening and closing braces/brackets must be on dedicated surrounding lines.
+2. Members must remain strictly between those surrounding lines.
+3. Internal member-line grouping must be one of:
+   - one internal line,
+   - two internal lines,
+   - one member per line.
+4. Internal member lines must not exceed Rule 1 max length (170 chars).
+
+This rule is warning-level today to allow gradual cleanup of existing formatting debt while still enforcing Rule 17 on newly touched code.
+
+Implementation reference:
+
+- `js/rule17CommaLayout.mjs`
+- `eslint.config.mjs`
 
 ## Recommended task template (copy-paste)
 
