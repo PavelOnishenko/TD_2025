@@ -149,6 +149,7 @@ const GAME_THEME: Theme = {
         itemNameColor: '#7b4a24',
         personNameColor: '#6f2f75',
     },
+    // todo rule 17 in Style_Guide
     entities: {
         player: {
             body: '#2f5ea8',
@@ -158,6 +159,7 @@ const GAME_THEME: Theme = {
             healthMid: '#b78532',
             healthLow: '#8f1f1f',
         },
+    // todo rule 17 in Style_Guide
         skeleton: {
             body: '#d8ccbc',
             features: '#332318',
