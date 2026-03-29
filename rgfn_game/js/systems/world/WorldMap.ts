@@ -20,11 +20,7 @@ export type WorldVillageDirectionHint = {
     distanceCells?: number;
 };
 
-const FOG_STATE = {
-    UNKNOWN: 'unknown' as FogState,
-    DISCOVERED: 'discovered' as FogState,
-    HIDDEN: 'hidden' as FogState,
-};
+const FOG_STATE = { UNKNOWN: 'unknown' as FogState, DISCOVERED: 'discovered' as FogState, HIDDEN: 'hidden' as FogState };
 
 const DEFAULT_MAP_DISPLAY_CONFIG: MapDisplayConfig = {
     everythingDiscovered: false,
@@ -329,14 +325,7 @@ export default class WorldMap {
         riverIndex: number,
         step: number,
     ): GridPosition | null {
-        const directions = [
-            { col: 0, row: 1 },
-            { col: -1, row: 1 },
-            { col: 1, row: 1 },
-            { col: -1, row: 0 },
-            { col: 1, row: 0 },
-            { col: 0, row: -1 },
-        ];
+        const directions = [{ col: 0, row: 1 }, { col: -1, row: 1 }, { col: 1, row: 1 }, { col: -1, row: 0 }, { col: 1, row: 0 }, { col: 0, row: -1 }];
 
         const ranked = directions
             .map((direction, directionIndex) => {
@@ -764,12 +753,7 @@ export default class WorldMap {
     public pan(direction: 'up' | 'down' | 'left' | 'right'): boolean {
         const stepCells = Math.max(1, theme.worldMap.cellSize.panStepCells);
         const step = stepCells * this.grid.cellSize;
-        const offsets = {
-            up: { x: 0, y: step },
-            down: { x: 0, y: -step },
-            left: { x: step, y: 0 },
-            right: { x: -step, y: 0 },
-        }[direction];
+        const offsets = { up: { x: 0, y: step }, down: { x: 0, y: -step }, left: { x: step, y: 0 }, right: { x: -step, y: 0 } }[direction];
         const beforeX = this.grid.offsetX;
         const beforeY = this.grid.offsetY;
         this.grid.updateLayout(this.grid.cellSize, beforeX + offsets.x, beforeY + offsets.y);
@@ -896,13 +880,7 @@ export default class WorldMap {
                 }
                 const terrain = this.getTerrain(col, row)?.type ?? 'grass';
                 const isCurrent = col === this.playerGridPos.col && row === this.playerGridPos.row;
-                return {
-                    name: this.getVillageName(col, row),
-                    col,
-                    row,
-                    terrain,
-                    status: isCurrent ? 'current' : 'mapped',
-                };
+                return { name: this.getVillageName(col, row), col, row, terrain, status: isCurrent ? 'current' : 'mapped' };
             })
             .filter((entry): entry is KnownVillage => entry !== null)
             .sort((left, right) => left.name.localeCompare(right.name));
@@ -913,10 +891,7 @@ export default class WorldMap {
         const settlementName = rawSettlementName.trim();
         const position = this.findVillagePositionByNameInsensitive(settlementName);
         if (!position) {
-            return {
-                settlementName,
-                exists: false,
-            };
+            return { settlementName, exists: false };
         }
 
         const dx = position.col - this.playerGridPos.col;
@@ -1040,11 +1015,7 @@ export default class WorldMap {
         const position = villagePosition ?? this.findNamedLocationPosition();
         if (position) {
             const terrain = this.getTerrain(position.col, position.row);
-            this.namedLocations.set(name, {
-                name,
-                position,
-                terrainType: terrain?.type ?? 'grass',
-            });
+            this.namedLocations.set(name, { name, position, terrainType: terrain?.type ?? 'grass' });
         }
     }
 
@@ -1152,14 +1123,8 @@ export default class WorldMap {
         const bendNoise = 0.8 + (this.seededRandom(pairSeed * 1.37) * 0.5);
         const bend = bendStrength * bendNoise * curveDirection;
 
-        const control1 = {
-            x: fromCenter.x + (dx * 0.33) + (normalX * bend),
-            y: fromCenter.y + (dy * 0.33) + (normalY * bend),
-        };
-        const control2 = {
-            x: fromCenter.x + (dx * 0.66) + (normalX * bend * 0.85),
-            y: fromCenter.y + (dy * 0.66) + (normalY * bend * 0.85),
-        };
+        const control1 = { x: fromCenter.x + (dx * 0.33) + (normalX * bend), y: fromCenter.y + (dy * 0.33) + (normalY * bend) };
+        const control2 = { x: fromCenter.x + (dx * 0.66) + (normalX * bend * 0.85), y: fromCenter.y + (dy * 0.66) + (normalY * bend * 0.85) };
 
         return { control1, control2 };
     }
@@ -1262,10 +1227,7 @@ export default class WorldMap {
     }
 
     private gridPointToCanvas(point: VillageRoadPoint): VillageRoadPoint {
-        return {
-            x: this.grid.offsetX + (point.x * this.grid.cellSize),
-            y: this.grid.offsetY + (point.y * this.grid.cellSize),
-        };
+        return { x: this.grid.offsetX + (point.x * this.grid.cellSize), y: this.grid.offsetY + (point.y * this.grid.cellSize) };
     }
 
     private isRoadLinkWithinBounds(link: VillageRoadLink, bounds: { startCol: number; endCol: number; startRow: number; endRow: number }): boolean {
@@ -1317,11 +1279,7 @@ export default class WorldMap {
             fogStates: Array.from(this.fogStates.entries()),
             villages: Array.from(this.villages.values()),
             visitedCells: Array.from(this.visitedCells.values()),
-            viewport: {
-                cellSize: this.grid.cellSize,
-                offsetX: this.grid.offsetX,
-                offsetY: this.grid.offsetY,
-            },
+            viewport: { cellSize: this.grid.cellSize, offsetX: this.grid.offsetX, offsetY: this.grid.offsetY },
         };
     }
 
@@ -1561,10 +1519,7 @@ export default class WorldMap {
                     fogState,
                     fogState === FOG_STATE.HIDDEN ? this.getTerrain(col, row) : undefined,
                     undefined,
-                    {
-                        showFogOverlay: this.mapDisplayConfig.fogOfWar,
-                        detailLevel,
-                    },
+                    { showFogOverlay: this.mapDisplayConfig.fogOfWar, detailLevel },
                 );
             }
         }
@@ -1614,20 +1569,12 @@ export default class WorldMap {
                         FOG_STATE.DISCOVERED,
                         terrain,
                         undefined,
-                        {
-                            showFogOverlay: false,
-                            detailLevel,
-                        },
+                        { showFogOverlay: false, detailLevel },
                     );
                 }
             }
 
-            this.terrainLayerCaches[detailLevel] = {
-                canvas: cacheCanvas,
-                cellSize,
-                terrainRevision: this.terrainRevision,
-                detailLevel,
-            };
+            this.terrainLayerCaches[detailLevel] = { canvas: cacheCanvas, cellSize, terrainRevision: this.terrainRevision, detailLevel };
         }
 
         const activeCache = this.terrainLayerCaches[detailLevel];

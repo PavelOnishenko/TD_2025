@@ -27,14 +27,7 @@ const GAME_THEME: Theme = {
         personNameColor: '#6f2f75',
     },
     entities: {
-        player: {
-            body: '#2f5ea8',
-            face: '#f2debc',
-            healthBg: '#604429',
-            healthHigh: '#2f7f2f',
-            healthMid: '#b78532',
-            healthLow: '#8f1f1f',
-        },
+        player: { body: '#2f5ea8', face: '#f2debc', healthBg: '#604429', healthHigh: '#2f7f2f', healthMid: '#b78532', healthLow: '#8f1f1f' },
         skeleton: { body: '#d8ccbc', features: '#332318', healthBg: '#4f3924', healthBar: '#8f1f1f' },
     },
     worldMap: {

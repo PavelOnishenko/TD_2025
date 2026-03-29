@@ -11,11 +11,7 @@ export const statsBalance = {
     intelligenceToManaDivisor: 3,
 };
 
-export const levelingBalance = {
-    maxLevel: 20,
-    skillPointsPerLevel: 4,
-    xpRequirements: [5, 8, 13, 18, 23, 28, 33, 38, 43, 48, 53, 58, 63, 68, 73, 78, 83, 88, 93, 98],
-};
+export const levelingBalance = { maxLevel: 20, skillPointsPerLevel: 4, xpRequirements: [5, 8, 13, 18, 23, 28, 33, 38, 43, 48, 53, 58, 63, 68, 73, 78, 83, 88, 93, 98] };
 
 export const combatBalance = {
     manaPotionRestore: 4,

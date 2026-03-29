@@ -39,11 +39,7 @@ export const encounterBalance = {
     minEnemies: 1,
     maxEnemies: 3,
     enemyWeights: { skeleton: 4, zombie: 2, ninja: 1, darkKnight: 1, dragon: 1 },
-    eventTypeWeights: [
-        { type: 'monster', weight: 40 },
-        { type: 'item', weight: 10 },
-        { type: 'traveler', weight: 10 },
-    ],
+    eventTypeWeights: [{ type: 'monster', weight: 40 }, { type: 'item', weight: 10 }, { type: 'traveler', weight: 10 }],
     zombieMinGroup: 1,
     zombieMaxGroup: 2,
 };
