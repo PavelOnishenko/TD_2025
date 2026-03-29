@@ -73,6 +73,9 @@ The style guide contains both objective and subjective rules.
 5. Unused variables are warnings to help code cleanliness.
 
 6. **Rule 17**: comma-separated collection/object initialization layout — custom ESLint rule `style-guide/rule17-comma-layout`.
+7. **Arrow TODO style**: custom ESLint rule `style-guide/arrow-function-style` with two warning modes:
+   - warns when regular functions contain only a single `return` or a single assignment expression and can be converted to arrow style;
+   - warns when an existing arrow function still uses block braces with only a `return` statement (asks for concise `=> expression` form).
 
 Warnings are visible for all TypeScript files so they can be fixed incrementally. For touched code, warnings should be treated as actionable and fixed whenever practical.
 
@@ -120,6 +123,7 @@ This rule is warning-level today to allow gradual cleanup of existing formatting
 Implementation reference:
 
 - `js/rule17CommaLayout.mjs`
+- `js/ruleArrowFunctionStyle.mjs`
 - `eslint.config.mjs`
 - Practical exception captured from review feedback: `someCall({\n  a,\n  b,\n});` is valid Rule 17 multiline form even though `{` and `}` share lines with other tokens.
 

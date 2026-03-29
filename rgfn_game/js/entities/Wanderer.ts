@@ -39,35 +39,17 @@ export default class Wanderer extends Skeleton {
         return new Wanderer(level, this.rollInventory(level));
     }
 
-    // todo arrow
-    public canUseMagic(): boolean {
-        return this.magicPoints > 0 && this.mana >= this.getMagicManaCost();
-    }
+    public canUseMagic = (): boolean => this.magicPoints > 0 && this.mana >= this.getMagicManaCost();
 
-    // todo arrow
-    public getMagicDamage(): number {
-        return 2 + this.magicPoints + Math.floor(this.skills.intelligence / 4);
-    }
+    public getMagicDamage = (): number => 2 + this.magicPoints + Math.floor(this.skills.intelligence / 4);
 
-    // todo arrow
-    public spendMana(amount: number): void {
-        this.mana = Math.max(0, this.mana - amount);
-    }
+    public spendMana = (amount: number): void => void (this.mana = Math.max(0, this.mana - amount));
 
-    // todo arrow
-    public getMagicManaCost(): number {
-        return 2;
-    }
+    public getMagicManaCost = (): number => 2;
 
-    // todo arrow
-    public getAttackRange(): number {
-        return this.equippedWeapon?.attackRange ?? 1;
-    }
+    public getAttackRange = (): number => this.equippedWeapon?.attackRange ?? 1;
 
-    // todo arrow
-    public getLootItems(): Item[] {
-        return [...this.inventory];
-    }
+    public getLootItems = (): Item[] => [...this.inventory];
 
     public getEncounterDescription(): string {
         const skills = formatCreatureSkills(this.skills);
@@ -102,18 +84,10 @@ export default class Wanderer extends Skeleton {
         return super.takeMagicDamage(finalDamage);
     }
 
-    // todo arrow
-    public getSkillRecord(): CreatureSkills {
-        return normalizeCreatureSkills(this.skills);
-    }
+    public getSkillRecord = (): CreatureSkills => normalizeCreatureSkills(this.skills);
 
-    // todo arrow, use ternary
     private static rollLevel(): number {
-        if (Math.random() < 0.9) {
-            return randomInt(1, 9);
-        }
-
-        return randomInt(10, 20);
+        return Math.random() < 0.9 ? randomInt(1, 9) : randomInt(10, 20);
     }
 
     private static rollInventory(level: number): Item[] {
@@ -156,10 +130,7 @@ export default class Wanderer extends Skeleton {
         this.damage = this.computeDamage();
     }
 
-    // todo arrow
-    private canEquip(item: Item): boolean {
-        return this.skills.agility >= (item.requirements.agility ?? 0) && this.skills.strength >= (item.requirements.strength ?? 0);
-    }
+    private canEquip = (item: Item): boolean => this.skills.agility >= (item.requirements.agility ?? 0) && this.skills.strength >= (item.requirements.strength ?? 0);
 
     private computeDamage(): number {
         const meleeBonus = calculateMeleeDamageBonus(this.skills.strength, this.skills.agility);
@@ -180,22 +151,12 @@ export default class Wanderer extends Skeleton {
         return this.equippedWeapon.damageBonus + weaponStatBonus + offhandDamage;
     }
 
-    // todo arrow, use ternary
     private pickBestWeapon(items: Item[]): Item | null {
-        if (items.length === 0) {
-            return null;
-        }
-
-        return items.reduce((best, current) => current.damageBonus > best.damageBonus ? current : best);
+        return items.length === 0 ? null : items.reduce((best, current) => current.damageBonus > best.damageBonus ? current : best);
     }
 
-    // todo arrow, use ternary
     private pickBestArmor(items: Item[]): Item | null {
-        if (items.length === 0) {
-            return null;
-        }
-
-        return items.reduce((best, current) => this.getArmorScore(current) > this.getArmorScore(best) ? current : best);
+        return items.length === 0 ? null : items.reduce((best, current) => this.getArmorScore(current) > this.getArmorScore(best) ? current : best);
     }
 
     private getArmorScore(item: Item): number {

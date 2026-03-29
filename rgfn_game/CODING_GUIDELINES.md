@@ -403,3 +403,12 @@ When in doubt, look at existing features like `BattleSplash.ts`, `ThemeEditor.ts
 - Resolve TODO comments as part of the same task whenever possible; do not keep stale TODOs after implementation is complete.
 - For dense object literals (variant tables, config arrays, item declarations), prefer one property per line when a single-line object is hard to scan or exceeds normal line length.
 - Keep trailing commas in multiline object literals and arrays to reduce diff noise.
+
+## Arrow-function TODO resolution style (March 29, 2026)
+
+- When resolving TODOs that ask for arrow methods, prefer concise single-expression bodies:
+  - ✅ `public canUseMagic = (): boolean => this.magicPoints > 0 && this.mana >= this.getMagicManaCost();`
+  - ❌ `public canUseMagic = (): boolean => { return this.magicPoints > 0 && this.mana >= this.getMagicManaCost(); };`
+- Apply this rule whenever it is type-safe and keeps readability intact.
+- For `void`-typed methods that still fit a single expression, use `void (...)` to preserve concise form without changing the signature:
+  - `public spendMana = (amount: number): void => void (this.mana = Math.max(0, this.mana - amount));`
