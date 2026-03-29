@@ -116,12 +116,7 @@ export default class QuestProgressTracker {
         return true;
     }
 
-    private markDeliverPickupObjectives(
-        node: QuestNode,
-        normalizedTrader: string,
-        normalizedItem: string,
-        normalizedVillage: string,
-    ): boolean {
+    private markDeliverPickupObjectives(node: QuestNode, normalizedTrader: string, normalizedItem: string, normalizedVillage: string): boolean {
         let changed = false;
 
         for (const child of node.children) {

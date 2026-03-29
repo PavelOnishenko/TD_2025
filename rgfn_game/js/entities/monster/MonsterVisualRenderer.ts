@@ -14,14 +14,7 @@ export class MonsterVisualRenderer {
         };
     }
 
-    public drawEntity(
-        ctx: CanvasRenderingContext2D,
-        name: string,
-        x: number,
-        y: number,
-        width: number,
-        height: number,
-    ): void {
+    public drawEntity(ctx: CanvasRenderingContext2D, name: string, x: number, y: number, width: number, height: number): void {
         const left = x - width / 2;
         const top = y - height / 2;
         const drawFn = this.drawByName[name] ?? ((innerCtx, innerLeft, innerTop, innerWidth, innerHeight) => {
@@ -30,15 +23,7 @@ export class MonsterVisualRenderer {
         drawFn(ctx, left, top, width, height);
     }
 
-    public drawHealthBar(
-        ctx: CanvasRenderingContext2D,
-        screenX: number,
-        screenY: number,
-        width: number,
-        height: number,
-        hp: number,
-        maxHp: number,
-    ): void {
+    public drawHealthBar(ctx: CanvasRenderingContext2D, screenX: number, screenY: number, width: number, height: number, hp: number, maxHp: number): void {
         const barHeight = 3;
         const barY = screenY - height / 2 - 6;
         ctx.fillStyle = theme.entities.skeleton.healthBg;

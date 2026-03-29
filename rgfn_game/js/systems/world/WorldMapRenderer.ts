@@ -363,14 +363,7 @@ export default class WorldMapRenderer {
         ctx.restore();
     }
 
-    private drawTerrain(
-        ctx: CanvasRenderingContext2D,
-        cell: GridCell,
-        terrain: TerrainData,
-        brightness: number,
-        path: Path2D,
-        detailLevel: 'full' | 'medium',
-    ): void {
+    private drawTerrain(ctx: CanvasRenderingContext2D, cell: GridCell, terrain: TerrainData, brightness: number, path: Path2D, detailLevel: 'full' | 'medium'): void {
         ctx.save();
         ctx.fillStyle = this.adjustColorBrightness(terrain.color, brightness);
         ctx.fill(path);
