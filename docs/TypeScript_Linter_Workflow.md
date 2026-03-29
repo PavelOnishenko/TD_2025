@@ -21,6 +21,7 @@ npm run lint:ts:fix
 npm run lint:ts:rgfn
 npm run lint:ts:rgfn:fix
 npm run style-guide:audit
+npm run style-guide:audit:rgfn
 npm run check:ts-style
 ```
 
@@ -28,14 +29,19 @@ What each command does:
 
 - `npm run lint:ts` — runs ESLint for all `.ts` files in the repository.
 - `npm run lint:ts:fix` — same as above, but auto-fixes supported issues.
-- `npm run lint:ts:rgfn` — runs ESLint only for TypeScript files inside `rgfn_game/`.
-- `npm run lint:ts:rgfn:fix` — same as above, but auto-fixes supported issues.
+- `npm run lint:ts:rgfn` — runs ESLint only for TypeScript files inside `rgfn_game/`, then prints style-guide audit sections for `rgfn_game/` scope.
+- `npm run lint:ts:rgfn:fix` — same as above, but auto-fixes supported issues first.
 - `npm run style-guide:audit` — informational audit for style-guide rules that are hard to fully auto-enforce.
+- `npm run style-guide:audit:rgfn` — same audit report but scoped to `rgfn_game/` only.
 - `npm run check:ts-style` — runs lint + audit in one command.
 
 ## Choosing the right lint scope
 
-- **RGFN-only task (`rgfn_game/`)**: run `npm run lint:ts:rgfn` (and optionally `npm run lint:ts:rgfn:fix`).
+- **RGFN-only task (`rgfn_game/`)**: run `npm run lint:ts:rgfn` (or `npm run lint:ts:rgfn:fix`).
+  - This command includes style-guide sections in output:
+    - `Top files over limit`
+    - `Top files with long functions (first samples)`
+    - `Top folders over children limit`
 - **Cross-game/shared task** (e.g. `engine/`, root config/scripts, or multiple games): run `npm run lint:ts`.
 
 This keeps RGFN work fast while still preserving full-repository checks when changes can impact other games.

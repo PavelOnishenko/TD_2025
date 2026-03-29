@@ -2,6 +2,14 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const ROOT = process.cwd();
+const args = process.argv.slice(2);
+const scopeFlagIndex = args.indexOf('--scope');
+const scopeArg = scopeFlagIndex >= 0 ? args[scopeFlagIndex + 1] : null;
+if (scopeFlagIndex >= 0 && !scopeArg) {
+    console.error('Missing value for --scope. Example: --scope rgfn_game');
+    process.exit(1);
+}
+const SCAN_ROOT = scopeArg ? path.resolve(ROOT, scopeArg) : ROOT;
 const MAX_FILE_LINES = 200;
 const MAX_FUNCTION_LINES = 20;
 const MAX_CHILDREN_PER_FOLDER = 10;
@@ -38,7 +46,7 @@ function countFolderChildren(dir) {
     const violations = [];
     if (entries.length > MAX_CHILDREN_PER_FOLDER) {
         violations.push({
-            folder: path.relative(ROOT, dir) || '.',
+            folder: path.relative(SCAN_ROOT, dir) || '.',
             childrenCount: entries.length
         });
     }
@@ -94,12 +102,17 @@ function findLargeFunctions(lines) {
     return violations;
 }
 
-const tsFiles = collectTsFiles(ROOT);
+if (!fs.existsSync(SCAN_ROOT) || !fs.statSync(SCAN_ROOT).isDirectory()) {
+    console.error(`Invalid scope path: ${scopeArg}`);
+    process.exit(1);
+}
+
+const tsFiles = collectTsFiles(SCAN_ROOT);
 const fileLineViolations = [];
 const functionViolations = [];
 
 for (const tsFile of tsFiles) {
-    const rel = path.relative(ROOT, tsFile);
+    const rel = path.relative(SCAN_ROOT, tsFile);
     const content = fs.readFileSync(tsFile, 'utf8');
     const lines = content.split(/\r?\n/);
 
@@ -113,31 +126,38 @@ for (const tsFile of tsFiles) {
     }
 }
 
-const folderViolations = countFolderChildren(ROOT);
+const folderViolations = countFolderChildren(SCAN_ROOT);
 
 console.log('Style Guide audit (informational)');
+console.log(`- Scope: ${path.relative(ROOT, SCAN_ROOT) || '.'}`);
 console.log(`- TS files scanned: ${tsFiles.length}`);
 console.log(`- Rule 3 (file <= ${MAX_FILE_LINES} lines) violations: ${fileLineViolations.length}`);
 console.log(`- Rule 2 (named function <= ${MAX_FUNCTION_LINES} lines) potential violations: ${functionViolations.length}`);
 console.log(`- Rule 16 (folder <= ${MAX_CHILDREN_PER_FOLDER} children) violations: ${folderViolations.length}`);
 
-if (fileLineViolations.length > 0) {
-    console.log('\nTop files over limit:');
+console.log('\nTop files over limit:');
+if (fileLineViolations.length === 0) {
+    console.log('  - none');
+} else {
     for (const violation of fileLineViolations.slice(0, 10)) {
         console.log(`  - ${violation.file}: ${violation.lines} lines`);
     }
 }
 
-if (functionViolations.length > 0) {
-    console.log('\nTop files with long functions (first samples):');
+console.log('\nTop files with long functions (first samples):');
+if (functionViolations.length === 0) {
+    console.log('  - none');
+} else {
     for (const violation of functionViolations.slice(0, 10)) {
         const sample = violation.samples.map((item) => `${item.start}-${item.end} (${item.length})`).join(', ');
         console.log(`  - ${violation.file}: ${violation.count} functions [${sample}]`);
     }
 }
 
-if (folderViolations.length > 0) {
-    console.log('\nTop folders over children limit:');
+console.log('\nTop folders over children limit:');
+if (folderViolations.length === 0) {
+    console.log('  - none');
+} else {
     for (const violation of folderViolations.slice(0, 10)) {
         console.log(`  - ${violation.folder}: ${violation.childrenCount} children`);
     }
