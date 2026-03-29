@@ -1,3 +1,7 @@
+    // todo this file is too long. 
+    // Extract parts from it in separate config files so that none of the resulting files including this one is longer than 200 LOC.
+    // Place all these files into newly created balance folder.
+
 /**
  * Balance Configuration
  * Centralized location for all game balance parameters
@@ -80,6 +84,7 @@ export const balanceConfig = {
     // todo move questNameGeneration to theme config.
     questNameGeneration: {
         // Maximum number of words allowed per generated name for each quest text domain.
+        // todo rule 17 in Style Guide says that this should be attempted written in one line. Don't ever forget about these rules.
         maxWordsByDomain: {
             location: 4,
             artifact: 4,
@@ -87,33 +92,39 @@ export const balanceConfig = {
             monster: 4,
             mainQuest: 4,
         },
+        // todo rule 17 in Style Guide
         // Weighted probability distribution for name lengths.
         // Goal: 1-2 words dominate, 3 words uncommon, 4 words extremely rare.
         wordLengthWeightsByDomain: {
+        // todo rule 17 in Style Guide
             location: {
                 1: 52,
                 2: 40,
                 3: 7,
                 4: 1,
             },
+        // todo rule 17 in Style Guide
             artifact: {
                 1: 50,
                 2: 42,
                 3: 7,
                 4: 1,
             },
+        // todo rule 17 in Style Guide
             character: {
                 1: 58,
                 2: 36,
                 3: 5,
                 4: 1,
             },
+        // todo rule 17 in Style Guide
             monster: {
                 1: 54,
                 2: 38,
                 3: 7,
                 4: 1,
             },
+        // todo rule 17 in Style Guide
             mainQuest: {
                 1: 48,
                 2: 42,
@@ -124,32 +135,38 @@ export const balanceConfig = {
     },
 
     worldMap: {
+        // todo rule 17 in Style Guide
         dimensions: {
             columns: 100,
             rows: 100,
         },
+        // todo rule 17 in Style Guide
         villages: {
             minCount: 6,
             densityPerCell: 0.012,
         },
         visibilityRadius: 3,
+        // todo rule 17 in Style Guide
         terrainWeights: {
             grass: 0.4,
             forest: 0.52,
             water: 0.08,
         },
+        // todo rule 17 in Style Guide
         forestCoverage: {
             min: 0.3,
             max: 0.6,
         },
         highlandThreshold: 0.86,
         inlandWaterThreshold: 0.79,
+        // todo rule 17 in Style Guide
         lakes: {
             count: 7,
             minRadius: 2,
             maxRadius: 5,
             jitter: 0.38,
         },
+        // todo rule 17 in Style Guide
         rivers: {
             count: 5,
             maxLengthFactor: 0.72,
@@ -300,6 +317,7 @@ export const balanceConfig = {
         skillPointsPerLevel: 4,
 
         // XP required for each level (index 0 = XP for level 2, etc.)
+        // todo rule 17 in Style Guide
         xpRequirements: [
             5,   // Level 1 -> 2
             8,   // Level 2 -> 3
@@ -340,6 +358,7 @@ export const balanceConfig = {
         adjacentAttackDamagePenalty: 0.6,
         blockDamageReduction: 0.5,
         successfulDodgeDamageMultiplier: 1.5,
+        // todo rule 17 in Style Guide
         enemyDirectionalActionWeights: {
             AttackLeft: 2,
             AttackCenter: 3,
@@ -350,6 +369,7 @@ export const balanceConfig = {
         },
 
         // Spell targeting ranges (in battle map tiles)
+        // todo rule 17 in Style Guide
         spellRanges: {
             slow: 4,
         },
@@ -409,6 +429,7 @@ export const balanceConfig = {
         minEnemies: 1,
         maxEnemies: 3,
 
+        // todo rule 17 in Style Guide
         enemyWeights: {
             skeleton: 4,
             zombie: 2,
@@ -417,6 +438,7 @@ export const balanceConfig = {
             dragon: 1,
         },
 
+        // todo rule 17 in Style Guide
         eventTypeWeights: [
             { type: 'monster', weight: 40 },
             { type: 'item', weight: 10 },
