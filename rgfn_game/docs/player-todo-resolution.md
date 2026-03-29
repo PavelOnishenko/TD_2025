@@ -75,3 +75,17 @@ The TODO backlog in `rgfn_game/js/entities/player/PlayerInventory.ts` was fully 
 - Fewer long methods reduce regression risk when changing equip logic.
 - Named restore arguments prevent ordering bugs in save/load code.
 - Isolated helpers make it easier to add unit tests around two-handed/offhand edge cases.
+
+## 2026-03-29 (Follow-up): Hard Line-Budget Compliance for Inventory Classes
+
+After review feedback, the inventory TODO was enforced literally: **no class in the extracted inventory flow remains above 200 lines**.
+
+- `PlayerInventory.ts` now acts as a compact orchestration layer (190 lines).
+- Equipment-specific state transitions were moved into `PlayerInventoryEquipment.ts` (139 lines).
+- Shared inventory contracts were moved into `PlayerInventoryTypes.ts` for cleaner dependency boundaries.
+
+### Practical lessons captured
+
+1. If a TODO says “extract to new classes”, partial in-place cleanup is not enough—line budget must be satisfied directly.
+2. Stateful domains (equipment vs. bag storage) split cleanly when one class owns equip/unequip semantics and another owns inventory capacity + item collection.
+3. Using object-shaped restore arguments plus dedicated type modules keeps save/load changes safer across refactors.
