@@ -94,12 +94,23 @@ export default class WorldModeController {
         this.callbacks.onAddBattleLog(`You camp in the wild and recover ${Math.round(recovered)} fatigue.`, 'player');
 
         if (Math.random() < balanceConfig.survival.wildSleepAmbushChance) {
-            this.player.takeDamage(balanceConfig.survival.wildSleepAmbushHpLoss);
-            const manaLoss = Math.max(0, balanceConfig.survival.wildSleepAmbushManaLoss);
-            if (manaLoss > 0) {
-                this.player.mana = Math.max(0, this.player.mana - manaLoss);
+            if (typeof window !== 'undefined' && typeof window.alert === 'function') {
+                window.alert('Night ambush!');
             }
             this.callbacks.onAddBattleLog('Night ambush! You were caught off guard while sleeping.', 'enemy');
+
+            const questEncounter = this.callbacks.getQuestBattleEncounter();
+            if (questEncounter) {
+                if (questEncounter.hint) {
+                    this.callbacks.onAddBattleLog(questEncounter.hint, 'system-message');
+                }
+                this.callbacks.onStartBattle(questEncounter.enemies, this.worldMap.getCurrentTerrain().type);
+                return;
+            }
+
+            const encounter = this.encounterSystem.generateMonsterBattleEncounter();
+            this.callbacks.onStartBattle(encounter.enemies, this.worldMap.getCurrentTerrain().type);
+            return;
         } else {
             this.callbacks.onAddBattleLog('The night is quiet. You wake up before dawn.', 'system');
         }

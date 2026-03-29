@@ -52,9 +52,10 @@ Fatigue is also saved/restored in save-state snapshots.
 - Effects:
   - restores fatigue by `wildSleepFatigueRecovery`.
   - has ambush chance `wildSleepAmbushChance`.
-  - ambush applies surprise penalties:
-    - HP loss: `wildSleepAmbushHpLoss`
-    - mana loss: `wildSleepAmbushManaLoss`
+  - if ambushed:
+    - shows a popup (`Night ambush!`),
+    - immediately starts a full combat encounter instead of only applying direct HP/mana penalties,
+    - prioritizes active quest battle packs when available; otherwise starts a normal monster battle.
 
 This models unsafe sleep outside settled places.
 
@@ -80,5 +81,20 @@ Stats panel now shows:
 
 - Convert fatigue state into combat/open-world modifiers.
 - Add time-of-day and multi-day calendar progression.
-- Trigger full battle ambush encounters during failed wild sleep.
 - Add explicit innkeeper dialogue branch (`I want a room for the night`).
+
+### Implementation notes (March 28, 2026 follow-up)
+
+- Ambush battle generation is routed through `EncounterSystem.generateMonsterBattleEncounter()`, which locks event type to `monster` and **throws immediately** if a non-battle encounter result appears.
+- Camp-sleep ambush flow in `WorldModeController.handleCampSleep()` now:
+  1. recovers fatigue,
+  2. rolls ambush chance,
+  3. shows popup + log message on ambush,
+  4. starts quest battle encounter if available,
+  5. otherwise starts regular monster battle at current terrain type.
+- This preserves the “risky camp sleep” identity while making consequences interactive (full fight) rather than purely subtractive (stat loss only).
+
+### Engineering policy note (March 29, 2026)
+
+- RGFN default error-handling approach is **fail fast, no silent/degrading fallbacks** unless explicitly requested otherwise.
+- For this ambush path specifically, unexpected non-battle outputs are treated as hard logic errors (exception throw), not auto-corrected to substitute encounters.

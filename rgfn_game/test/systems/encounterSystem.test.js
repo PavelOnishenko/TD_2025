@@ -168,3 +168,30 @@ test('EncounterSystem exposes current encounter type toggle states', () => {
     traveler: true,
   });
 });
+
+test('EncounterSystem generateMonsterBattleEncounter returns a battle when resolver returns monster battle', () => {
+  const encounters = new EncounterSystem(1);
+
+  const result = encounters.generateMonsterBattleEncounter();
+
+  assert.equal(result.type, 'battle');
+  assert.equal(Array.isArray(result.enemies), true);
+});
+
+test('EncounterSystem generateMonsterBattleEncounter throws when resolver returns a non-battle result', () => {
+  const encounters = new EncounterSystem(1);
+
+  const thrown = withPatchedProperty(encounters, 'encounterResolver', {
+    generateEncounter: () => ({ type: 'none' }),
+  }, () => {
+    try {
+      encounters.generateMonsterBattleEncounter();
+      return null;
+    } catch (error) {
+      return error;
+    }
+  });
+
+  assert.equal(thrown instanceof Error, true);
+  assert.match(String(thrown?.message ?? ''), /Expected monster ambush to produce battle encounter/);
+});
