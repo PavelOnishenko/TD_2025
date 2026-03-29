@@ -154,9 +154,9 @@ export default class HudController {
         this.bindInventoryRecoveryEvents();
     }
 
-    public setPendingSkillAllocations(pendingSkillAllocations: PendingSkillAllocations): void {
+    public setPendingSkillAllocations = (pendingSkillAllocations: PendingSkillAllocations): void => {
         this.pendingSkillAllocations = pendingSkillAllocations;
-    }
+    };
 
     public updateHUD(): void {
         this.hudElements.playerLevel.textContent = String(this.player.level);

@@ -16,8 +16,8 @@ export default class PlayerCombatState extends PlayerProgression {
         return true;
     }
 
-    public canSpendMana(amount: number): boolean { return this.mana >= amount; }
-    public getMaxFatigue(): number { return Math.max(1, balanceConfig.survival.maxFatigue); }
+    public canSpendMana = (amount: number): boolean => this.mana >= amount;
+    public getMaxFatigue = (): number => Math.max(1, balanceConfig.survival.maxFatigue);
 
     public addTravelFatigue(cells: number = 1): number {
         if (cells <= 0) {return 0;}
@@ -37,24 +37,22 @@ export default class PlayerCombatState extends PlayerProgression {
         return previous - this.fatigue;
     }
 
-    public getFatiguePercent(): number { return (this.fatigue / this.getMaxFatigue()) * 100; }
+    public getFatiguePercent = (): number => (this.fatigue / this.getMaxFatigue()) * 100;
     public getFatigueStateLabel(): string {
         if (this.fatigue >= balanceConfig.survival.highFatigueThreshold) {return 'Exhausted';}
         if (this.fatigue >= balanceConfig.survival.cautionFatigueThreshold) {return 'Tired';}
         return 'Rested';
     }
 
-    public getPhysicalDamageWithBuff(): number { return Math.round(this.damage * this.rageMultiplier); }
-    public getMagicPowerMultiplier(): number { return this.rageMultiplier; }
-    public getArmorReduction(): number { return this.armor; }
+    public getPhysicalDamageWithBuff = (): number => Math.round(this.damage * this.rageMultiplier);
+    public getMagicPowerMultiplier = (): number => this.rageMultiplier;
+    public getArmorReduction = (): number => this.armor;
 
-    public getDirectionalCombatBuffSnapshot(): CombatBuffSnapshot {
-        return {
-            hasBlockAdvantage: this.blockAdvantage,
-            hasSuccessfulDodgeMultiplier: this.successfulDodgeMultiplier !== null,
-            successfulDodgeMultiplier: this.successfulDodgeMultiplier ?? 1,
-        };
-    }
+    public getDirectionalCombatBuffSnapshot = (): CombatBuffSnapshot => ({
+        hasBlockAdvantage: this.blockAdvantage,
+        hasSuccessfulDodgeMultiplier: this.successfulDodgeMultiplier !== null,
+        successfulDodgeMultiplier: this.successfulDodgeMultiplier ?? 1,
+    });
 
     public applyDirectionalCombatRewards(rewards: CombatStatusState): string[] {
         const events: string[] = [];
@@ -103,14 +101,12 @@ export default class PlayerCombatState extends PlayerProgression {
         return ['Rage fades.'];
     }
 
-    protected getCombatState(): { rageTurns: number; rageMultiplier: number; blockAdvantage: boolean; successfulDodgeMultiplier: number | null } {
-        return {
-            rageTurns: this.rageTurns,
-            rageMultiplier: this.rageMultiplier,
-            blockAdvantage: this.blockAdvantage,
-            successfulDodgeMultiplier: this.successfulDodgeMultiplier,
-        };
-    }
+    protected getCombatState = (): { rageTurns: number; rageMultiplier: number; blockAdvantage: boolean; successfulDodgeMultiplier: number | null } => ({
+        rageTurns: this.rageTurns,
+        rageMultiplier: this.rageMultiplier,
+        blockAdvantage: this.blockAdvantage,
+        successfulDodgeMultiplier: this.successfulDodgeMultiplier,
+    });
 
     protected setCombatState(state: { rageTurns: number; rageMultiplier: number; blockAdvantage: boolean; successfulDodgeMultiplier: number | null }): void {
         this.rageTurns = state.rageTurns;
