@@ -213,9 +213,7 @@ export default class WorldModeController {
         return null;
     }
 
-    private wasMoveTriggered(action: string): boolean {
-        return this.input.wasActionPressed(action);
-    }
+    private wasMoveTriggered = (action: string): boolean => this.input.wasActionPressed(action);
 
     private onPlayerMoved(isPreviouslyDiscovered: boolean): void {
         const travelMinutesMultiplier = this.getTravelMinutesMultiplier();
