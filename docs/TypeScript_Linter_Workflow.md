@@ -107,6 +107,11 @@ These must be checked by the author and reviewer during implementation and revie
 1. If initialization spans multiple lines, members must sit between surrounding opening/closing brace-or-bracket lines (the brace/bracket lines may contain additional syntax such as `foo(`, `)`, or `;`).
 2. Dedicated brace-only lines are **not** required; only the member block must be visually surrounded by those lines.
 3. If a multiline initializer can be compacted to a single line within 170 chars, lint now warns and asks for the one-line form (most terse Rule 17 mode).
+   - Important: the 170-char calculation is done against the **projected full line length**, not just the object/array literal text. This includes:
+     - leading indentation spaces;
+     - any syntax before the initializer on that line (for example `foo(`, `=`, argument commas);
+     - any trailing syntax after the initializer (for example `);`).
+   - This prevents false positives where `{ ... }` alone is short enough, but the real one-line statement would exceed Rule 1 max length.
 4. Internal member lines must not exceed Rule 1 max length (170 chars).
 5. Grouping shape beyond the one-line compactness check (for example whether to use one or two internal lines when multiline is required) remains reviewer-guided.
 

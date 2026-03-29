@@ -64,10 +64,16 @@ function checkRule17Layout(node, context) {
 
     const lines = sourceCode.lines;
     const compactCandidate = toCompactSingleLine(sourceCode.getText(node));
-    if (compactCandidate.length <= MAX_LINE_LENGTH) {
+
+    const prefixLength = node.loc?.start.column ?? 0;
+    const endLineText = lines[(node.loc?.end.line ?? endLine) - 1] || '';
+    const suffixLength = endLineText.slice(node.loc?.end.column ?? 0).length;
+    const projectedSingleLineLength = prefixLength + compactCandidate.length + suffixLength;
+
+    if (projectedSingleLineLength <= MAX_LINE_LENGTH) {
         context.report({
             node,
-            message: `Rule 17: this comma-separated initializer can fit on one line (${compactCandidate.length} chars); use the most compact one-line form.`
+            message: `Rule 17: this comma-separated initializer can fit on one line (${projectedSingleLineLength} chars with indentation/context); use the most compact one-line form.`
         });
         return;
     }
