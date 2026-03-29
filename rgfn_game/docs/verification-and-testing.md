@@ -1,3 +1,37 @@
+## March 29, 2026 update: RGFN Rule 17 layout cleanup pass (20 violations fixed)
+
+### Scope and objective
+- Task targeted **RGFN only** (`rgfn_game/**`), not Neon Void root gameplay code.
+- Goal was to remove the reported Rule 17 comma-layout violations by applying compact one-line initializers where allowed by line-length budget.
+
+### What was fixed
+- All currently reported RGFN Rule 17 warnings were addressed in one formatting-only pass (no behavior changes intended).
+- Affected areas:
+  - player persistence inventory restore payload object,
+  - village dialogue compact refusal/uncertain response objects,
+  - village life crossroads point array,
+  - village population palette arrays,
+  - world map display config and several compact object initializer sites,
+  - world map renderer hex-color parse return object,
+  - battle splash modal element return object,
+  - grid-map cell/dimension return objects,
+  - state-machine callback container object.
+
+### Verification commands and outcomes
+- `npm run lint:ts:rgfn` ✅
+  - ESLint warnings for `style-guide/rule17-comma-layout` are now cleared for `rgfn_game`.
+  - Style-guide audit still reports historical Rule 2/3/16 backlog; that audit is informational and unrelated to this Rule 17 task.
+- `npm run build:rgfn` ✅
+  - TypeScript compile for RGFN completed successfully.
+- `node --test rgfn_game/test/**/*.test.js` ⚠️
+  - Multiple pre-existing test failures remain due to missing compiled artifacts in `rgfn_game/dist` imports (not introduced by this formatting pass), especially missing `dist/config/balanceConfig.js` and certain dist entity modules required by specific test files.
+- `npm test` ⚠️
+  - Monorepo-wide tests fail for additional pre-existing reasons outside RGFN formatting scope (missing EVA/RGFN dist modules and several unrelated root-suite assertion/type errors).
+
+### Useful follow-up notes
+- If strict CI requires green `node --test rgfn_game/test/**/*.test.js`, ensure all dist dependencies expected by tests are actually produced by the current build graph (notably `rgfn_game/dist/config/balanceConfig.js` and `rgfn_game/dist/entities/Player.js` for tests that import those files directly).
+- Consider adding a pre-test guard script that verifies required dist entrypoints and prints actionable build hints before test execution.
+
 ## March 28, 2026 update (follow-up): World Map panel vanished when sibling panel toggled due in-flow draggable layout
 
 ### New issue after prior fix

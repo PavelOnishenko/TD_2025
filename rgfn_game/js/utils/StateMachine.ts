@@ -20,11 +20,7 @@ export default class StateMachine {
     }
 
     addState(name: string, callbacks: StateMachineCallbacks = {}): this {
-        this.states.set(name, {
-            enter: callbacks.enter ?? null,
-            update: callbacks.update ?? null,
-            exit: callbacks.exit ?? null,
-        });
+        this.states.set(name, { enter: callbacks.enter ?? null, update: callbacks.update ?? null, exit: callbacks.exit ?? null });
         return this;
     }
 

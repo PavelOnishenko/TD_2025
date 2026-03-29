@@ -179,51 +179,23 @@ export default class VillagePopulation {
 
 
     private getSkinPalette(): string[] {
-        return [
-            theme.ui.panelHighlight,
-            theme.ui.primaryAccent,
-            theme.ui.secondaryAccent,
-            theme.worldMap.terrain.desert,
-        ];
+        return [theme.ui.panelHighlight, theme.ui.primaryAccent, theme.ui.secondaryAccent, theme.worldMap.terrain.desert];
     }
 
     private getHairPalette(): string[] {
-        return [
-            theme.worldMap.terrain.forest,
-            theme.worldMap.terrain.mountain,
-            theme.ui.primaryBg,
-            theme.ui.secondaryBg,
-            theme.ui.secondaryAccent,
-        ];
+        return [theme.worldMap.terrain.forest, theme.worldMap.terrain.mountain, theme.ui.primaryBg, theme.ui.secondaryBg, theme.ui.secondaryAccent];
     }
 
     private getShirtPalette(): string[] {
-        return [
-            theme.entities.player.body,
-            theme.worldMap.terrain.water,
-            theme.worldMap.terrain.grass,
-            theme.ui.secondaryAccent,
-            theme.ui.primaryAccent,
-        ];
+        return [theme.entities.player.body, theme.worldMap.terrain.water, theme.worldMap.terrain.grass, theme.ui.secondaryAccent, theme.ui.primaryAccent];
     }
 
     private getPantsPalette(): string[] {
-        return [
-            theme.ui.primaryBg,
-            theme.ui.secondaryBg,
-            theme.worldMap.terrain.mountain,
-            theme.worldMap.terrain.forest,
-        ];
+        return [theme.ui.primaryBg, theme.ui.secondaryBg, theme.worldMap.terrain.mountain, theme.worldMap.terrain.forest];
     }
 
     private getHatPalette(): string[] {
-        return [
-            theme.ui.secondaryAccent,
-            theme.worldMap.terrain.water,
-            theme.worldMap.terrain.forest,
-            theme.worldMap.terrain.desert,
-            theme.ui.primaryAccent,
-        ];
+        return [theme.ui.secondaryAccent, theme.worldMap.terrain.water, theme.worldMap.terrain.forest, theme.worldMap.terrain.desert, theme.ui.primaryAccent];
     }
 
     private pickActivity(): VillageActivityType {

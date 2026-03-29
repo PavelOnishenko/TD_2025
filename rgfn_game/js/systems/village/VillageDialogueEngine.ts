@@ -104,11 +104,7 @@ export default class VillageDialogueEngine {
 
     public buildPersonLocationAnswer(npc: VillageNpcProfile, hint: PersonDirectionHint): VillageDialogueOutcome {
         if (npc.disposition === 'silent') {
-            return {
-                speech: `"I keep names to myself."`,
-                tone: `${npc.name} glances around and refuses to continue.`,
-                truthfulness: 'refusal',
-            };
+            return { speech: `"I keep names to myself."`, tone: `${npc.name} glances around and refuses to continue.`, truthfulness: 'refusal' };
         }
 
         const hasReliableInfo = Math.random() < VillageDialogueEngine.PERSON_DIRECTION_KNOWLEDGE_CHANCE;
@@ -129,11 +125,7 @@ export default class VillageDialogueEngine {
                 };
             }
 
-            return {
-                speech: `"Never met ${hint.personName}. Could be a false trail."`,
-                tone: `${npc.name} shrugs with visible uncertainty.`,
-                truthfulness: 'refusal',
-            };
+            return { speech: `"Never met ${hint.personName}. Could be a false trail."`, tone: `${npc.name} shrugs with visible uncertainty.`, truthfulness: 'refusal' };
         }
 
         if (npc.disposition === 'truthful') {
