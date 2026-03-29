@@ -29,6 +29,14 @@ test('WorldMap starts the player in a random traversable cell and exposes pixel 
   assert.notDeepEqual(state.playerGridPos, { col: 50, row: 50 });
 }));
 
+test('WorldMap generation excludes mountain and desert terrain types', () => withMockedRandom([0.37], () => {
+  const worldMap = new WorldMap(60, 45, 20);
+  const terrainTypes = Array.from(worldMap.terrainData.values()).map((terrain) => terrain.type);
+
+  assert.equal(terrainTypes.includes('mountain'), false);
+  assert.equal(terrainTypes.includes('desert'), false);
+}));
+
 test('WorldMap generates villages before placing the player into the world', () => withMockedRandom([0.11], () => {
   const worldMap = new WorldMap(40, 30, 20);
   const state = worldMap.getState();
