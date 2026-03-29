@@ -110,9 +110,7 @@ export default class Skeleton extends DamageableEntity {
         return this.applyIncomingDamage(damageAfterArmor);
     }
 
-    public takeMagicDamage(amount: number): boolean {
-        return this.applyIncomingDamage(Math.max(0, amount));
-    }
+    public takeMagicDamage = (amount: number): boolean => this.applyIncomingDamage(Math.max(0, amount));
 
     public applyCurse(armorReduction: number, duration: number): void {
         this.monsterStatusEffects.applyCurse(armorReduction, duration);
@@ -122,37 +120,21 @@ export default class Skeleton extends DamageableEntity {
         this.monsterStatusEffects.applySlow(duration);
     }
 
-    public shouldSkipTurnFromSlow(): boolean {
-        return this.monsterStatusEffects.shouldSkipTurnFromSlow();
-    }
+    public shouldSkipTurnFromSlow = (): boolean => this.monsterStatusEffects.shouldSkipTurnFromSlow();
 
-    public getDirectionalCombatBuffSnapshot(): CombatBuffSnapshot {
-        return this.monsterStatusEffects.getDirectionalCombatBuffSnapshot();
-    }
+    public getDirectionalCombatBuffSnapshot = (): CombatBuffSnapshot => this.monsterStatusEffects.getDirectionalCombatBuffSnapshot();
 
-    public applyDirectionalCombatRewards(rewards: CombatStatusState): string[] {
-        return this.monsterStatusEffects.applyDirectionalCombatRewards(rewards, this.name);
-    }
+    public applyDirectionalCombatRewards = (rewards: CombatStatusState): string[] => this.monsterStatusEffects.applyDirectionalCombatRewards(rewards, this.name);
 
-    public consumeDirectionalAttackBonuses(): string[] {
-        return this.monsterStatusEffects.consumeDirectionalAttackBonuses(this.name);
-    }
+    public consumeDirectionalAttackBonuses = (): string[] => this.monsterStatusEffects.consumeDirectionalAttackBonuses(this.name);
 
-    public expireDirectionalBonusesWithoutAttack(): string[] {
-        return this.monsterStatusEffects.expireDirectionalBonusesWithoutAttack(this.name);
-    }
+    public expireDirectionalBonusesWithoutAttack = (): string[] => this.monsterStatusEffects.expireDirectionalBonusesWithoutAttack(this.name);
 
-    public consumeTurnEffects(): string[] {
-        return this.monsterStatusEffects.consumeTurnEffects(this.name);
-    }
+    public consumeTurnEffects = (): string[] => this.monsterStatusEffects.consumeTurnEffects(this.name);
 
-    public getSkillRecord(): CreatureSkills {
-        return normalizeCreatureSkills(this.skills);
-    }
+    public getSkillRecord = (): CreatureSkills => normalizeCreatureSkills(this.skills);
 
-    public getBaseStatsRecord(): CreatureBaseStats {
-        return cloneBaseStats(this.baseStats);
-    }
+    public getBaseStatsRecord = (): CreatureBaseStats => cloneBaseStats(this.baseStats);
 
     public draw(ctx: CanvasRenderingContext2D, _viewport?: any): void {
         this.monsterVisualRenderer.drawEntity(ctx, this.name, this.x, this.y, this.width, this.height);
@@ -164,17 +146,14 @@ export default class Skeleton extends DamageableEntity {
         return MonsterMutationEngine.shouldAvoidHit(behaviorChance, this.avoidChance);
     }
 
-    public getAttackDamage(): number {
-        return MonsterMutationEngine.getAttackDamage(this.damage, this.behavior.doubleDamageChance ?? 0);
-    }
+    public getAttackDamage = (): number => MonsterMutationEngine.getAttackDamage(this.damage, this.behavior.doubleDamageChance ?? 0);
 
-    public shouldPassEncounter(): boolean {
-        return MonsterMutationEngine.shouldPassEncounter(this.behavior.passEncounterChance ?? 0);
-    }
+    public shouldPassEncounter = (): boolean => MonsterMutationEngine.shouldPassEncounter(this.behavior.passEncounterChance ?? 0);
 
-    public onDamagedByPlayer(isMelee: boolean): { retaliationDamage: number; logs: string[] } {
-        return MonsterMutationEngine.onDamagedByPlayer(this.name, this.mutations, isMelee);
-    }
+    public onDamagedByPlayer = (
+        isMelee: boolean,
+    ): { retaliationDamage: number; logs: string[] } =>
+        MonsterMutationEngine.onDamagedByPlayer(this.name, this.mutations, isMelee);
 
     private applyIncomingDamage(amount: number): boolean {
         const died = super.takeDamage(amount);

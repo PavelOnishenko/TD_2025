@@ -46,9 +46,7 @@ export class MonsterMutationEngine {
         return baseDamage;
     }
 
-    public static shouldPassEncounter(passEncounterChance: number): boolean {
-        return passEncounterChance > 0 && Math.random() < passEncounterChance;
-    }
+    public static shouldPassEncounter = (passEncounterChance: number): boolean => passEncounterChance > 0 && Math.random() < passEncounterChance;
 
     public static onDamagedByPlayer(name: string, mutations: MonsterMutationTrait[], isMelee: boolean): { retaliationDamage: number; logs: string[] } {
         const logs: string[] = [];

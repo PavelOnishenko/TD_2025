@@ -21,9 +21,12 @@ export function normalizeCreatureSkills(skills?: Partial<Record<CreatureSkill, n
     return normalized;
 }
 
-export function cloneBaseStats(baseStats: CreatureBaseStats): CreatureBaseStats {
-    return { hp: baseStats.hp, damage: baseStats.damage, armor: baseStats.armor, mana: baseStats.mana };
-}
+export const cloneBaseStats = (baseStats: CreatureBaseStats): CreatureBaseStats => ({
+    hp: baseStats.hp,
+    damage: baseStats.damage,
+    armor: baseStats.armor,
+    mana: baseStats.mana,
+});
 
 export function deriveCreatureStats(baseStats: CreatureBaseStats, skills: CreatureSkills): CreatureDerivedStats {
     const maxHp = baseStats.hp + (skills.vitality * balanceConfig.stats.vitalityToHp);

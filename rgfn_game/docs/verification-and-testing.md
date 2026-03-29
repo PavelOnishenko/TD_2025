@@ -1,3 +1,39 @@
+## March 29, 2026 update: Arrow-function-style warning cleanup in core RGFN gameplay files
+
+### Scope completed in this pass
+- Resolved the specific `style-guide/arrow-function-style` warnings reported for:
+  - `js/Game.ts`
+  - `js/config/creatureStats.ts`
+  - `js/entities/Skeleton.ts`
+  - `js/entities/Wanderer.ts`
+  - `js/entities/monster/MonsterMutationEngine.ts`
+  - `js/entities/monster/MonsterStatusEffects.ts`
+  - `js/entities/player/core/PlayerBase.ts`
+
+### Implementation notes
+- Converted single-return method bodies to concise arrow function style where requested by lint output.
+- For class members, used arrow-property syntax (`name = (...) => ...`) to satisfy the local style-guide rule consistently.
+- Preserved behavior:
+  - no algorithm changes,
+  - no changes to mutation math, combat math, or save/load payload shape,
+  - only function form / formatting changes.
+- Follow-up formatting pass addressed:
+  - indentation shifts introduced by method-to-property conversion,
+  - max-line-length splits on long concise-return lines.
+
+### Verification commands and outcomes
+- `npx eslint rgfn_game/js/Game.ts rgfn_game/js/config/creatureStats.ts rgfn_game/js/entities/Skeleton.ts rgfn_game/js/entities/Wanderer.ts rgfn_game/js/entities/monster/MonsterMutationEngine.ts rgfn_game/js/entities/monster/MonsterStatusEffects.ts rgfn_game/js/entities/player/core/PlayerBase.ts --ext .ts` ✅
+  - No lint warnings remain in the explicitly requested files.
+- `npm run lint:ts:rgfn` ⚠️
+  - Targeted files are clean.
+  - Repo still contains many pre-existing arrow-style warnings in unrelated RGFN files (outside this request scope).
+- `npm test` ⚠️
+  - Fails due to pre-existing monorepo test-environment issues (missing `dist` imports in EVA/RGFN tests) and unrelated root gameplay test failures.
+
+### Useful follow-up if full green CI is required
+- If the team wants global arrow-style cleanup, run an incremental per-folder remediation to avoid mega-diffs.
+- If `npm test` should be green locally, add/verify pre-test build steps that materialize expected `dist/**` JS entrypoints for both `eva_game` and `rgfn_game`.
+
 ## March 29, 2026 update: Rule 17 now covers multiline function parameter lists
 
 ### What changed

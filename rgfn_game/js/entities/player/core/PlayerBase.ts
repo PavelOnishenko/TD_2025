@@ -104,7 +104,7 @@ export default class PlayerBase extends DamageableEntity {
         return super.takeDamage(damageAfterArmor);
     }
 
-    public takeMagicDamage(amount: number): boolean { return super.takeDamage(Math.max(0, amount)); }
+    public takeMagicDamage = (amount: number): boolean => super.takeDamage(Math.max(0, amount));
 
     public updateStats(): void {
         const previousMaxMana = this.maxMana;
@@ -133,15 +133,11 @@ export default class PlayerBase extends DamageableEntity {
         this.damage = main + off;
     }
 
-    public getBaseStatsRecord(): CreatureBaseStats {
-        return cloneBaseStats(balanceConfig.creatureArchetypes.human.baseStats);
-    }
+    public getBaseStatsRecord = (): CreatureBaseStats => cloneBaseStats(balanceConfig.creatureArchetypes.human.baseStats);
 
-    public getInventoryCapacity(): number { return this.getInventoryCapacityForStrength(this.strength); }
+    public getInventoryCapacity = (): number => this.getInventoryCapacityForStrength(this.strength);
     public restoreMana(amount: number): void { if (amount > 0) {this.mana = Math.min(this.maxMana, this.mana + amount);} }
-    public canEquipItem(item: Item): boolean {
-        return this.agility >= (item.requirements.agility ?? 0) && this.strength >= (item.requirements.strength ?? 0);
-    }
+    public canEquipItem = (item: Item): boolean => this.agility >= (item.requirements.agility ?? 0) && this.strength >= (item.requirements.strength ?? 0);
 
     private initializePrimaryStats(startingSkillAllocation: Partial<Record<PlayerStat, number>> | null): void {
         this.vitality = balanceConfig.player.initialVitality;
@@ -179,7 +175,5 @@ export default class PlayerBase extends DamageableEntity {
         return normalized;
     }
 
-    private static generateRandomName(): string {
-        return RANDOM_NAME_POOL[Math.floor(Math.random() * RANDOM_NAME_POOL.length)];
-    }
+    private static generateRandomName = (): string => RANDOM_NAME_POOL[Math.floor(Math.random() * RANDOM_NAME_POOL.length)];
 }
