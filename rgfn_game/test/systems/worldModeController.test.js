@@ -1,4 +1,3 @@
-```js
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
@@ -23,6 +22,7 @@ function createWorldMapMock({ onVillage = false } = {}) {
     isPlayerOnVillage: () => onVillage,
     getCurrentNamedLocation: () => null,
     getCurrentTerrain: () => ({ type: 'grass' }),
+    isPlayerOnRoad: () => false,
   };
 }
 
@@ -39,6 +39,7 @@ function createController({
     startedBattle: 0,
     questEncounterChecks: 0,
     fatigueAdded: 0,
+    lastFatigueAmount: 0,
     fatigueRecovered: 0,
   };
 
@@ -70,7 +71,7 @@ function createController({
       y: 0,
       mana: 5,
       restoreMana: () => {},
-      addTravelFatigue: () => { calls.fatigueAdded += 1; },
+      addTravelFatigue: (amount = 1) => { calls.fatigueAdded += 1; calls.lastFatigueAmount = amount; },
       recoverFatigue: () => {
         calls.fatigueRecovered += 1;
         return 10;
@@ -116,15 +117,52 @@ test('WorldModeController Space action enters village from world mode', () => {
   assert.equal(calls.enteredVillage, 1);
 });
 
-test('WorldModeController adds fatigue when player successfully moves on world map', () => {
+test('WorldModeController uses standard travel time on roads', () => {
   const { controller, calls } = createController({
     pressed: ['moveUp'],
     moveResult: { moved: true, isPreviouslyDiscovered: false },
+    worldMapOverrides: {
+      isPlayerOnRoad: () => true,
+      getCurrentTerrain: () => ({ type: 'forest' }),
+    },
   });
 
   controller.updateWorldMode();
 
   assert.equal(calls.fatigueAdded, 1);
+  assert.equal(calls.lastFatigueAmount, 1);
+});
+
+test('WorldModeController makes off-road grassland travel 2x slower', () => {
+  const { controller, calls } = createController({
+    pressed: ['moveUp'],
+    moveResult: { moved: true, isPreviouslyDiscovered: false },
+    worldMapOverrides: {
+      isPlayerOnRoad: () => false,
+      getCurrentTerrain: () => ({ type: 'grass' }),
+    },
+  });
+
+  controller.updateWorldMode();
+
+  assert.equal(calls.fatigueAdded, 1);
+  assert.equal(calls.lastFatigueAmount, 2);
+});
+
+test('WorldModeController makes off-road forest travel 4x slower', () => {
+  const { controller, calls } = createController({
+    pressed: ['moveUp'],
+    moveResult: { moved: true, isPreviouslyDiscovered: false },
+    worldMapOverrides: {
+      isPlayerOnRoad: () => false,
+      getCurrentTerrain: () => ({ type: 'forest' }),
+    },
+  });
+
+  controller.updateWorldMode();
+
+  assert.equal(calls.fatigueAdded, 1);
+  assert.equal(calls.lastFatigueAmount, 4);
 });
 
 test('WorldModeController camp sleep recovers fatigue outside villages', () => {
@@ -179,4 +217,3 @@ test('WorldModeController blocks quest monster encounters when monster random en
   assert.equal(calls.questEncounterChecks, 0);
   assert.equal(calls.startedBattle, 0);
 });
-```

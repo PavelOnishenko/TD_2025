@@ -937,3 +937,37 @@ So tests asserting fixed literal HP values (for example zombie `7`) will fail wh
 ### Notes
 - This fix intentionally treats quest-generated monster packs as part of the same Monster encounter category exposed in Developer Console.
 - Item/traveler random encounter toggles are unaffected.
+
+## March 28, 2026 update: road-aware travel time on world map
+
+### Request
+- Travel on **roads** should use baseline per-cell world travel time (`theme.worldMap.cellTravelMinutes`).
+- Travel **off-road** should be slower:
+  - **Grassland:** 2x slower.
+  - **Forest:** 4x slower.
+
+### Implementation details
+- Added road-presence API to `WorldMap`:
+  - `isRoadAt(col, row)` for generic road-cell checks.
+  - `isPlayerOnRoad()` for current player tile checks.
+- Updated `WorldModeController` movement handling:
+  - On each successful move, fatigue gain now uses a terrain/road multiplier (as a proxy for travel time cost).
+  - Multiplier rules:
+    - `1x` when `isPlayerOnRoad()` is true.
+    - `4x` when off-road on `forest`.
+    - `2x` when off-road on `grass`.
+    - `1x` fallback for other terrain types.
+
+### Why fatigue was used
+- RGFN currently models travel burden through fatigue growth (derived from `cellTravelMinutes`) rather than a separate explicit world-clock increment on each step.
+- Because of this, scaling fatigue per step is the most direct way to make movement effectively consume more/less in-game travel time under current systems.
+
+### Added/updated tests
+- `worldModeController.test.js` now verifies:
+  1. Road movement keeps standard cost (`1x`) even on forest tiles.
+  2. Off-road grass movement uses `2x` multiplier.
+  3. Off-road forest movement uses `4x` multiplier.
+
+### Notes for future extension
+- If/when a dedicated world clock is introduced, this same multiplier function can be reused to scale minute increments directly (not only fatigue).
+- Consider surfacing the active travel multiplier in HUD/log for player readability (e.g., "Off-road forest: 4x travel time").
