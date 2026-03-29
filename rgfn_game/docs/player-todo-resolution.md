@@ -55,3 +55,23 @@ During refactor, the main style-guide pressure points were:
   - `PlayerCombatState`: directional bonus consume/expire behavior
   - `PlayerPersistence`: numeric coercion + inventory restoration compatibility
 - Consider replacing inheritance with composed domain services later if runtime construction constraints allow.
+
+## 2026-03-29: PlayerInventory TODO Sweep
+
+The TODO backlog in `rgfn_game/js/entities/player/PlayerInventory.ts` was fully cleared with behavior-preserving refactors:
+
+- Converted simple getter/query utilities to class-field arrow functions to align method style consistently.
+- Replaced inline equipment-clearing logic in `removeItemAt` with `clearRemovedItemFromEquipment` to keep mutating responsibilities isolated and reduce repeated hook triggers.
+- Split `equipWeaponToSlot` branch-heavy logic into:
+  - `equipTwoHandedWeapon`
+  - `equipOneHandedWeapon`
+  This keeps each helper focused and makes slot rules easier to test.
+- Introduced explicit `InventoryState` and `RestoreInventoryStateArgs` types to remove long inline object signatures and improve API readability.
+- Updated `restoreState` to use a named object argument (instead of a long positional parameter list), which also makes call sites less error-prone.
+- Updated `PlayerPersistence.restoreState` to call the new object-form inventory restore API.
+
+### Why This Matters
+
+- Fewer long methods reduce regression risk when changing equip logic.
+- Named restore arguments prevent ordering bugs in save/load code.
+- Isolated helpers make it easier to add unit tests around two-handed/offhand edge cases.

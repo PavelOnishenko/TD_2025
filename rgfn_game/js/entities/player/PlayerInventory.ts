@@ -1,5 +1,3 @@
-// todo this file is too long per Style_Guide. Extract functionality to new classes. Adhere strictly to style_guide.
-
 import Item from '../Item.js';
 
 type PlayerInventoryHooks = {
@@ -8,6 +6,21 @@ type PlayerInventoryHooks = {
     onManaPotionUsed: () => void;
     canEquip: (item: Item) => boolean;
     getInventoryCapacity: () => number;
+};
+
+type InventoryState = {
+    inventoryItemIds: string[];
+    equippedWeaponId: string | null;
+    equippedOffhandWeaponId: string | null;
+    equippedArmorId: string | null;
+};
+
+type RestoreInventoryStateArgs = {
+    itemIds: string[];
+    equippedWeaponId: string | null;
+    equippedArmorId: string | null;
+    itemFactory: (id: string) => Item | null;
+    equippedOffhandWeaponId?: string | null;
 };
 
 export default class PlayerInventory {
@@ -52,54 +65,36 @@ export default class PlayerInventory {
         return true;
     }
 
-    // todo arrow
-    public getItems(): Item[] {
+    public getItems = (): Item[] => {
         return [...this.inventory];
-    }
+    };
 
-    // todo arrow
-    public getHealingPotionCount(): number {
+    public getHealingPotionCount = (): number => {
         return this.inventory.filter((item) => item.id === 'healingPotion').length;
-    }
+    };
 
-    // todo arrow
-    public getManaPotionCount(): number {
+    public getManaPotionCount = (): number => {
         return this.inventory.filter((item) => item.id === 'manaPotion').length;
-    }
+    };
 
-    // todo arrow
-    public removeHealingPotion(): boolean {
+    public removeHealingPotion = (): boolean => {
         return this.removePotionById('healingPotion');
-    }
+    };
 
-    // todo arrow
-    public removeManaPotion(): boolean {
+    public removeManaPotion = (): boolean => {
         return this.removePotionById('manaPotion');
-    }
+    };
 
-    // todo this func is too long. Fix per Style_guide
     public removeItemAt(index: number): Item | null {
         if (index < 0 || index >= this.inventory.length) {
             return null;
         }
 
         const [removedItem] = this.inventory.splice(index, 1);
-
-        if (this.equippedMainWeapon === removedItem) {
-            this.equippedMainWeapon = null;
+        const equipmentChanged = this.clearRemovedItemFromEquipment(removedItem);
+        if (equipmentChanged) {
             this.hooks.onEquipmentChanged();
         }
-
-        if (this.equippedOffhandWeapon === removedItem) {
-            this.equippedOffhandWeapon = null;
-            this.hooks.onEquipmentChanged();
-        }
-
-        if (this.equippedArmor === removedItem) {
-            this.equippedArmor = null;
-            this.hooks.onEquipmentChanged();
-        }
-
         return removedItem;
     }
 
@@ -139,35 +134,29 @@ export default class PlayerInventory {
         return armor;
     }
 
-    // todo arrow
-    public getAttackRange(): number {
+    public getAttackRange = (): number => {
         return Math.max(this.equippedMainWeapon?.attackRange ?? 1, this.equippedOffhandWeapon?.attackRange ?? 1);
-    }
+    };
 
-    // todo arrow
-    public hasWeapon(): boolean {
+    public hasWeapon = (): boolean => {
         return this.equippedMainWeapon !== null || this.equippedOffhandWeapon !== null;
-    }
+    };
 
-    // todo arrow
-    public getEquippedWeapon(): Item | null {
+    public getEquippedWeapon = (): Item | null => {
         return this.equippedMainWeapon;
-    }
+    };
 
-    // todo arrow
-    public getEquippedMainWeapon(): Item | null {
+    public getEquippedMainWeapon = (): Item | null => {
         return this.equippedMainWeapon;
-    }
+    };
 
-    // todo arrow
-    public getEquippedOffhandWeapon(): Item | null {
+    public getEquippedOffhandWeapon = (): Item | null => {
         return this.equippedOffhandWeapon;
-    }
+    };
 
-    // todo arrow
-    public getEquippedArmor(): Item | null {
+    public getEquippedArmor = (): Item | null => {
         return this.equippedArmor;
-    }
+    };
 
     public setEquippedWeapon(weapon: Item | null): void {
         this.moveEquippedItemsToInventory([this.equippedMainWeapon, this.equippedOffhandWeapon], [weapon]);
@@ -186,7 +175,6 @@ export default class PlayerInventory {
         this.hooks.onEquipmentChanged();
     }
 
-    // todo this func is too long. Extract parts to new funcs, adhere strict to style_Guide.
     public equipWeaponToSlot(weapon: Item, slot: 'main' | 'offhand'): void {
         const previousMainWeapon = this.equippedMainWeapon;
         const previousOffhandWeapon = this.equippedOffhandWeapon;
@@ -194,26 +182,15 @@ export default class PlayerInventory {
         this.removeItemFromInventory(weapon);
 
         if (weapon.handsRequired === 2) {
-            this.equippedMainWeapon = weapon;
-            this.equippedOffhandWeapon = null;
-            this.moveEquippedItemsToInventory([previousMainWeapon, previousOffhandWeapon], [this.equippedMainWeapon, this.equippedOffhandWeapon]);
-            this.hooks.onEquipmentChanged();
-            return;
-        }
-
-        if (slot === 'main') {
-            this.equippedMainWeapon = weapon;
-            if (this.equippedOffhandWeapon === weapon) {
-                this.equippedOffhandWeapon = null;
-            }
+            this.equipTwoHandedWeapon(weapon);
         } else {
-            this.equippedOffhandWeapon = weapon;
-            if (this.equippedMainWeapon?.handsRequired === 2 || this.equippedMainWeapon === weapon) {
-                this.equippedMainWeapon = null;
-            }
+            this.equipOneHandedWeapon(weapon, slot);
         }
 
-        this.moveEquippedItemsToInventory([previousMainWeapon, previousOffhandWeapon], [this.equippedMainWeapon, this.equippedOffhandWeapon]);
+        this.moveEquippedItemsToInventory(
+            [previousMainWeapon, previousOffhandWeapon],
+            [this.equippedMainWeapon, this.equippedOffhandWeapon],
+        );
         this.hooks.onEquipmentChanged();
     }
 
@@ -224,14 +201,13 @@ export default class PlayerInventory {
         this.hooks.onEquipmentChanged();
     }
 
-    // todo rule 17 here! It should apply to parameters lists too, yes! Mark this as needed in docs.
-    public restoreState(
-        itemIds: string[],
-        equippedWeaponId: string | null,
-        equippedArmorId: string | null,
-        itemFactory: (id: string) => Item | null,
-        equippedOffhandWeaponId?: string | null,
-    ): void {
+    public restoreState({
+        itemIds,
+        equippedWeaponId,
+        equippedArmorId,
+        itemFactory,
+        equippedOffhandWeaponId,
+    }: RestoreInventoryStateArgs): void {
         this.inventory.length = 0;
         for (const itemId of itemIds) {
             const item = itemFactory(itemId);
@@ -249,15 +225,14 @@ export default class PlayerInventory {
         this.hooks.onEquipmentChanged();
     }
 
-    // todo this should be arrow func with members in curly braces formatted in 2 lines.
-    public getState(): { inventoryItemIds: string[]; equippedWeaponId: string | null; equippedOffhandWeaponId: string | null; equippedArmorId: string | null } {
+    public getState = (): InventoryState => {
         return {
             inventoryItemIds: this.inventory.map((item) => item.id),
             equippedWeaponId: this.equippedMainWeapon?.id ?? null,
             equippedOffhandWeaponId: this.equippedOffhandWeapon?.id ?? null,
             equippedArmorId: this.equippedArmor?.id ?? null,
         };
-    }
+    };
 
     private removePotionById(id: 'healingPotion' | 'manaPotion'): boolean {
         const potionIndex = this.findPotionIndex(id);
@@ -269,9 +244,49 @@ export default class PlayerInventory {
         return true;
     }
 
-    // todo arrow
-    private findPotionIndex(id: 'healingPotion' | 'manaPotion'): number {
+    private findPotionIndex = (id: 'healingPotion' | 'manaPotion'): number => {
         return this.inventory.findIndex((item) => item.id === id);
+    };
+
+    private clearRemovedItemFromEquipment(removedItem: Item): boolean {
+        let equipmentChanged = false;
+
+        if (this.equippedMainWeapon === removedItem) {
+            this.equippedMainWeapon = null;
+            equipmentChanged = true;
+        }
+
+        if (this.equippedOffhandWeapon === removedItem) {
+            this.equippedOffhandWeapon = null;
+            equipmentChanged = true;
+        }
+
+        if (this.equippedArmor === removedItem) {
+            this.equippedArmor = null;
+            equipmentChanged = true;
+        }
+
+        return equipmentChanged;
+    }
+
+    private equipTwoHandedWeapon(weapon: Item): void {
+        this.equippedMainWeapon = weapon;
+        this.equippedOffhandWeapon = null;
+    }
+
+    private equipOneHandedWeapon(weapon: Item, slot: 'main' | 'offhand'): void {
+        if (slot === 'main') {
+            this.equippedMainWeapon = weapon;
+            if (this.equippedOffhandWeapon === weapon) {
+                this.equippedOffhandWeapon = null;
+            }
+            return;
+        }
+
+        this.equippedOffhandWeapon = weapon;
+        if (this.equippedMainWeapon?.handsRequired === 2 || this.equippedMainWeapon === weapon) {
+            this.equippedMainWeapon = null;
+        }
     }
 
     private removeItemFromInventory(item: Item | null): void {
