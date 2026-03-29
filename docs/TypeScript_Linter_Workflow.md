@@ -118,12 +118,19 @@ This setup gives:
 - transparent audit visibility for structural debt;
 - a repeatable policy that can be tightened over time.
 
-## Practical TODO-resolution note (RGFN creature config)
+## Practical Rule 17 note (collection/object initialization)
 
-When touching `rgfn_game/js/config/creatureTypes.ts`, prefer:
+For `docs/Style_Guide.txt` Rule 17, always minimize LOC while staying within Rule 1 max line length (170 chars).
 
-- Arrow function form for short pure factory helpers (example: `createZeroSkills`).
-- Explicit multi-line object literal returns for stat/skill maps, with one property per line for readability and easier future diffs.
-- Stable property ordering for skill collections (`vitality`, `toughness`, `strength`, `agility`, `connection`, `intelligence`) so downstream formatting and comparisons stay predictable.
+Use this priority order for collection/object initialization:
 
-This keeps the file aligned with the repository linting + style-guide workflow while preserving clear domain intent in config objects.
+1. **Single-line form (preferred):** keep all members on one line with braces when line length allows.
+2. **Two-brace-lines form:** if one line is too long, keep members on one internal line between opening/closing brace lines.
+3. **Two-member-lines form:** if still too long, split members across two internal lines.
+4. **One-member-per-line form:** only when required by max length/readability constraints.
+
+Applied example for `rgfn_game/js/config/creatureTypes.ts`:
+
+- `createZeroSkills` should remain a compact single-line object return because it fits within Rule 1.
+
+This section intentionally mirrors Rule 17 so future edits consistently choose the minimum-line acceptable form first.

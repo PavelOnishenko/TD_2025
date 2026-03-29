@@ -33,11 +33,4 @@ export type CreatureDerivedStats = {
 
 export const CREATURE_SKILLS: CreatureSkill[] = ['vitality', 'toughness', 'strength', 'agility', 'connection', 'intelligence'];
 
-export const createZeroSkills = (): CreatureSkills => ({
-    vitality: 0,
-    toughness: 0,
-    strength: 0,
-    agility: 0,
-    connection: 0,
-    intelligence: 0,
-});
+export const createZeroSkills = (): CreatureSkills => ({ vitality: 0, toughness: 0, strength: 0, agility: 0, connection: 0, intelligence: 0 });
