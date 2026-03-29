@@ -5,7 +5,7 @@ import Skeleton from '../../../entities/Skeleton.js';
 import { BattleSplash } from '../../../ui/BattleSplash.js';
 import BattleMap from '../../combat/BattleMap.js';
 import TurnManager from '../../combat/TurnManager.js';
-import Player from '../../../entities/Player.js';
+import Player from '../../../entities/player/Player.js';
 import BattlePlayerActionController from '../BattlePlayerActionController.js';
 import BattleCommandController from '../BattleCommandController.js';
 import BattleTurnController from '../BattleTurnController.js';

@@ -1,4 +1,4 @@
-﻿import Player from '../../../entities/Player.js';
+﻿import Player from '../../../entities/player/Player.js';
 import BattleUiController from '../../BattleUiController.js';
 import HudController from '../../HudController.js';
 import Skeleton from '../../../entities/Skeleton.js';

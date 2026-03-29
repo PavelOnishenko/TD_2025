@@ -1,7 +1,7 @@
 import { balanceConfig } from '../../config/balance/balanceConfig.js';
 import { deriveArchetypeStats, formatCreatureSkills } from '../../config/creatureStats.js';
 import { CreatureBaseStats, CreatureSkills } from '../../config/creatureTypes.js';
-import Player from '../../entities/Player.js';
+import Player from '../../entities/player/Player.js';
 import Wanderer from '../../entities/Wanderer.js';
 import WorldMap from '../world/WorldMap.js';
 

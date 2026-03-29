@@ -58,7 +58,9 @@ export default class PlayerCombatState extends PlayerProgression {
 
     public applyDirectionalCombatRewards(rewards: CombatStatusState): string[] {
         const events: string[] = [];
-        if (rewards.blockAdvantage) { this.blockAdvantage = true; events.push(`${this.name} gains Block Advantage for the next turn. If the next turn is not an attack, it expires.`); }
+        if (rewards.blockAdvantage) { 
+            this.blockAdvantage = true; events.push(`${this.name} gains Block Advantage for the next turn. If the next turn is not an attack, it expires.`); 
+        }
         if (rewards.successfulDodgeMultiplier !== null) {
             this.successfulDodgeMultiplier = rewards.successfulDodgeMultiplier;
             events.push(`${this.name} gains a successful dodge damage multiplier for the next attack (x${rewards.successfulDodgeMultiplier.toFixed(2)}).`);
@@ -69,14 +71,18 @@ export default class PlayerCombatState extends PlayerProgression {
     public consumeDirectionalAttackBonuses(): string[] {
         const events: string[] = [];
         if (this.blockAdvantage) { this.blockAdvantage = false; events.push(`${this.name}'s Block Advantage is consumed by this attack.`); }
-        if (this.successfulDodgeMultiplier !== null) { this.successfulDodgeMultiplier = null; events.push(`${this.name}'s successful dodge damage multiplier is consumed by this attack.`); }
+        if (this.successfulDodgeMultiplier !== null) { 
+            this.successfulDodgeMultiplier = null; events.push(`${this.name}'s successful dodge damage multiplier is consumed by this attack.`); 
+        }
         return events;
     }
 
     public expireDirectionalBonusesWithoutAttack(): string[] {
         const events: string[] = [];
         if (this.blockAdvantage) { this.blockAdvantage = false; events.push(`${this.name}'s Block Advantage expires because no attack was used this turn.`); }
-        if (this.successfulDodgeMultiplier !== null) { this.successfulDodgeMultiplier = null; events.push(`${this.name}'s successful dodge damage multiplier expires because no attack was used this turn.`); }
+        if (this.successfulDodgeMultiplier !== null) { 
+            this.successfulDodgeMultiplier = null; events.push(`${this.name}'s successful dodge damage multiplier expires because no attack was used this turn.`); 
+        }
         return events;
     }
 
@@ -86,9 +92,13 @@ export default class PlayerCombatState extends PlayerProgression {
     }
 
     public consumePlayerTurnEffects(): string[] {
-        if (this.rageTurns <= 0) {return [];}
+        if (this.rageTurns <= 0) {
+            return [];
+        }
         this.rageTurns -= 1;
-        if (this.rageTurns > 0) {return [];}
+        if (this.rageTurns > 0) {
+            return [];
+        }
         this.rageMultiplier = 1;
         return ['Rage fades.'];
     }

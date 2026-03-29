@@ -14,7 +14,7 @@ import VillageLifeRenderer from './systems/village/VillageLifeRenderer.js';
 import HudController from './systems/HudController.js';
 import BattleUiController from './systems/BattleUiController.js';
 import WorldModeController from './systems/WorldModeController.js';
-import Player from './entities/Player.js';
+import Player from './entities/player/Player.js';
 import Skeleton, { MonsterMutationTrait } from './entities/Skeleton.js';
 import { BattleSplash } from './ui/BattleSplash.js';
 import { balanceConfig } from './config/balance/balanceConfig.js';

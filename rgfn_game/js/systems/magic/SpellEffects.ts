@@ -1,4 +1,4 @@
-import Player from '../../entities/Player.js';
+import Player from '../../entities/player/Player.js';
 import Skeleton from '../../entities/Skeleton.js';
 import { SpellContext, SpellEffect, SpellEffectResult } from './MagicTypes.js';
 
