@@ -226,10 +226,7 @@ export default class QuestProgressTracker {
         }
 
         const objectiveData = node.objectiveData ?? {};
-        const monsterData = objectiveData.monster ?? {
-            targetName: objectiveMonster,
-            requiredKills: 1,
-        };
+        const monsterData = objectiveData.monster ?? { targetName: objectiveMonster, requiredKills: 1 };
 
         const currentKills = Math.max(0, (monsterData as { currentKills?: number }).currentKills ?? 0);
         const requiredKills = Math.max(1, monsterData.requiredKills ?? 1);
@@ -269,12 +266,7 @@ export default class QuestProgressTracker {
             return;
         }
 
-        objectives.push({
-            targetName,
-            villageName: node.objectiveData?.monster?.villageName,
-            remainingKills,
-            mutations: node.objectiveData?.monster?.mutations ?? [],
-        });
+        objectives.push({ targetName, villageName: node.objectiveData?.monster?.villageName, remainingKills, mutations: node.objectiveData?.monster?.mutations ?? [] });
     }
 
     private recomputeCompletion(node: QuestNode): boolean {

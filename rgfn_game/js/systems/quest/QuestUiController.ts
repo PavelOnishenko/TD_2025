@@ -267,13 +267,7 @@ export default class QuestUiController {
             return feedback;
         }
 
-        const feedback = {
-            textContent: '',
-            className: 'quest-feedback',
-            classList: {
-                toggle() { /* noop in tests */ },
-            },
-        } as unknown as HTMLElement;
+        const feedback = { textContent: '', className: 'quest-feedback', classList: { toggle() { /* noop in tests */ } } } as unknown as HTMLElement;
 
         return feedback;
     }

@@ -12,13 +12,7 @@ export default class MagicSystem {
 
     constructor(player: Player) {
         this.player = player;
-        this.spellLevels = {
-            fireball: 0,
-            curse: 0,
-            slow: 0,
-            rage: 0,
-            'arcane-lance': 0,
-        };
+        this.spellLevels = { fireball: 0, curse: 0, slow: 0, rage: 0, 'arcane-lance': 0 };
     }
 
     public getSpellLevels(): Record<BaseSpellId, number> {

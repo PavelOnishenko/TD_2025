@@ -426,12 +426,7 @@ export default class VillageActionsController {
     }
 
     public updateButtons(): void {
-        const buyButtons = [
-            this.villageUI.buyOffer1Btn,
-            this.villageUI.buyOffer2Btn,
-            this.villageUI.buyOffer3Btn,
-            this.villageUI.buyOffer4Btn,
-        ];
+        const buyButtons = [this.villageUI.buyOffer1Btn, this.villageUI.buyOffer2Btn, this.villageUI.buyOffer3Btn, this.villageUI.buyOffer4Btn];
 
         buyButtons.forEach((button, index) => {
             const offer = this.currentOffers[index];
@@ -592,10 +587,7 @@ export default class VillageActionsController {
             };
         }
 
-        return {
-            personName,
-            exists: false,
-        };
+        return { personName, exists: false };
     }
 
     private findFirstPayableOption(deal: VillageBarterDeal): BarterPaymentOption | null {

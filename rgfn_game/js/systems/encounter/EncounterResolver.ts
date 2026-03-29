@@ -151,10 +151,7 @@ export default class EncounterResolver {
             );
         }
 
-        const configMap: Record<string, EnemyConfig> = {
-            ninja: balanceConfig.enemies.ninja,
-            darkKnight: balanceConfig.enemies.darkKnight,
-        };
+        const configMap: Record<string, EnemyConfig> = { ninja: balanceConfig.enemies.ninja, darkKnight: balanceConfig.enemies.darkKnight };
 
         const config = configMap[encounterType] ?? balanceConfig.enemies.skeleton;
         return [new Skeleton(0, 0, config)];
