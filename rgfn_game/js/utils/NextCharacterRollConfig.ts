@@ -10,14 +10,7 @@ export function getPlayerStats(): PlayerStat[] {
 }
 
 export function createEmptyNextCharacterRollAllocation(): NextCharacterRollAllocation {
-    return {
-        vitality: 0,
-        toughness: 0,
-        strength: 0,
-        agility: 0,
-        connection: 0,
-        intelligence: 0,
-    };
+    return { vitality: 0, toughness: 0, strength: 0, agility: 0, connection: 0, intelligence: 0 };
 }
 
 export function normalizeNextCharacterRollAllocation(value: Partial<Record<PlayerStat, unknown>> | null | undefined): NextCharacterRollAllocation {

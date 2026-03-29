@@ -16,11 +16,7 @@ export class MagicDamageEffect implements SpellEffect {
             context.target.takeMagicDamage(totalDamage);
         }
 
-        return {
-            type: this.type,
-            amount: totalDamage,
-            ignoredArmor: true,
-        };
+        return { type: this.type, amount: totalDamage, ignoredArmor: true };
     }
 }
 
@@ -37,11 +33,7 @@ export class CurseArmorBreakEffect implements SpellEffect {
             context.target.applyCurse(amount, duration);
         }
 
-        return {
-            type: this.type,
-            amount,
-            duration,
-        };
+        return { type: this.type, amount, duration };
     }
 }
 
@@ -57,10 +49,7 @@ export class SlowEffect implements SpellEffect {
             context.target.applySlow(duration);
         }
 
-        return {
-            type: this.type,
-            duration,
-        };
+        return { type: this.type, duration };
     }
 }
 
@@ -77,10 +66,6 @@ export class RageEffect implements SpellEffect {
             context.target.applyRage(duration, multiplier);
         }
 
-        return {
-            type: this.type,
-            duration,
-            multiplier,
-        };
+        return { type: this.type, duration, multiplier };
     }
 }

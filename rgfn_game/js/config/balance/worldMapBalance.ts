@@ -1,10 +1,6 @@
 export const worldMapBalance = {
     dimensions: { columns: 100, rows: 100 },
-    villages: {
-        minCount: 6,
-        densityPerCell: 0.012,
-        creationRateMultiplier: 1 / 3,
-    },
+    villages: { minCount: 6, densityPerCell: 0.012, creationRateMultiplier: 1 / 3 },
     visibilityRadius: 3,
     terrainWeights: { grass: 0.4, forest: 0.52, water: 0.08 },
     forestCoverage: { min: 0.3, max: 0.6 },
