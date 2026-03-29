@@ -32,15 +32,7 @@ export default class GridMap {
     }
 
     createCell(col: number, row: number): GridCell {
-        return {
-            col,
-            row,
-            x: this.offsetX + (col * this.cellSize),
-            y: this.offsetY + (row * this.cellSize),
-            width: this.cellSize,
-            height: this.cellSize,
-            data: {},
-        };
+        return { col, row, x: this.offsetX + (col * this.cellSize), y: this.offsetY + (row * this.cellSize), width: this.cellSize, height: this.cellSize, data: {} };
     }
 
 
@@ -140,11 +132,6 @@ export default class GridMap {
     }
 
     getDimensions(): { columns: number; rows: number; width: number; height: number } {
-        return {
-            columns: this.columns,
-            rows: this.rows,
-            width: this.columns * this.cellSize,
-            height: this.rows * this.cellSize,
-        };
+        return { columns: this.columns, rows: this.rows, width: this.columns * this.cellSize, height: this.rows * this.cellSize };
     }
 }

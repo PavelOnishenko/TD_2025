@@ -93,12 +93,7 @@ export default class VillageLifeRenderer {
             spots.push({ x: nearDoor.x, y: nearDoor.y });
         });
 
-        const crossroads = [
-            this.projectIso(-1.1, 1.1, 0),
-            this.projectIso(0.4, 0.6, 0),
-            this.projectIso(1.2, 2.1, 0),
-            this.projectIso(-2.1, 2.0, 0),
-        ];
+        const crossroads = [this.projectIso(-1.1, 1.1, 0), this.projectIso(0.4, 0.6, 0), this.projectIso(1.2, 2.1, 0), this.projectIso(-2.1, 2.0, 0)];
         crossroads.forEach((spot) => spots.push({ x: spot.x, y: spot.y }));
         return spots;
     }

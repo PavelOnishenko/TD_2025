@@ -22,10 +22,7 @@ export type WorldVillageDirectionHint = {
 
 const FOG_STATE = { UNKNOWN: 'unknown' as FogState, DISCOVERED: 'discovered' as FogState, HIDDEN: 'hidden' as FogState };
 
-const DEFAULT_MAP_DISPLAY_CONFIG: MapDisplayConfig = {
-    everythingDiscovered: false,
-    fogOfWar: true,
-};
+const DEFAULT_MAP_DISPLAY_CONFIG: MapDisplayConfig = { everythingDiscovered: false, fogOfWar: true };
 
 type NamedLocation = {
     name: string;
@@ -345,10 +342,7 @@ export default class WorldMap {
                 const moistureBias = climate.moisture * 0.32;
                 const eastWestBias = Math.abs(direction.col) > 0 ? randomTurn * turnRate : (1 - turnRate);
                 const score = downhillBias + moistureBias + eastWestBias;
-                return {
-                    position: { col: nextCol, row: nextRow },
-                    score,
-                };
+                return { position: { col: nextCol, row: nextRow }, score };
             })
             .filter((entry): entry is { position: GridPosition; score: number } => entry !== null)
             .sort((left, right) => right.score - left.score);
@@ -896,12 +890,7 @@ export default class WorldMap {
 
         const dx = position.col - this.playerGridPos.col;
         const dy = position.row - this.playerGridPos.row;
-        return {
-            settlementName,
-            exists: true,
-            direction: this.resolveDirection(dx, dy),
-            distanceCells: Math.round(Math.sqrt((dx * dx) + (dy * dy))),
-        };
+        return { settlementName, exists: true, direction: this.resolveDirection(dx, dy), distanceCells: Math.round(Math.sqrt((dx * dx) + (dy * dy))) };
     }
 
     public getAllVillageNames(): string[] {
@@ -976,10 +965,7 @@ export default class WorldMap {
                         this.getFogState(col, row),
                         terrain,
                         detailLevel === 'full' && terrain ? this.getTerrainNeighbors(col, row, terrain.type) : undefined,
-                        {
-                            showFogOverlay: this.mapDisplayConfig.fogOfWar,
-                            detailLevel,
-                        },
+                        { showFogOverlay: this.mapDisplayConfig.fogOfWar, detailLevel },
                     );
                 }
             }
@@ -1085,11 +1071,7 @@ export default class WorldMap {
         const links = new Map<string, { from: GridPosition; to: GridPosition }>();
         villages.forEach((village, index) => {
             const neighbors = villages
-                .map((candidate, candidateIndex) => ({
-                    candidate,
-                    candidateIndex,
-                    distance: Math.hypot(candidate.col - village.col, candidate.row - village.row),
-                }))
+                .map((candidate, candidateIndex) => ({ candidate, candidateIndex, distance: Math.hypot(candidate.col - village.col, candidate.row - village.row) }))
                 .filter((item) => item.candidateIndex !== index)
                 .sort((a, b) => a.distance - b.distance)
                 .slice(0, 2);
@@ -1557,15 +1539,7 @@ export default class WorldMap {
                     const terrain = this.getTerrain(col, row);
                     this.renderer.drawCell(
                         cacheCtx,
-                        {
-                            col,
-                            row,
-                            x: col * cellSize,
-                            y: row * cellSize,
-                            width: cellSize,
-                            height: cellSize,
-                            data: {},
-                        },
+                        { col, row, x: col * cellSize, y: row * cellSize, width: cellSize, height: cellSize, data: {} },
                         FOG_STATE.DISCOVERED,
                         terrain,
                         undefined,

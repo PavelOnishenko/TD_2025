@@ -125,12 +125,6 @@ export class BattleSplashView {
         overlay.appendChild(modal);
         document.body.appendChild(overlay);
 
-        return {
-            overlay,
-            modal,
-            title,
-            subtitle,
-            decorativeBorder
-        };
+        return { overlay, modal, title, subtitle, decorativeBorder };
     }
 }

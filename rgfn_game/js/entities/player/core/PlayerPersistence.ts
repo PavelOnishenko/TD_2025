@@ -61,13 +61,7 @@ export default class PlayerPersistence extends PlayerInventoryAndRender {
         const equippedWeaponId = typeof state.equippedWeaponId === 'string' ? state.equippedWeaponId : null;
         const equippedOffhandWeaponId = typeof state.equippedOffhandWeaponId === 'string' ? state.equippedOffhandWeaponId : null;
         const equippedArmorId = typeof state.equippedArmorId === 'string' ? state.equippedArmorId : null;
-        this.inventorySystem.restoreState({
-            itemIds: inventoryItemIds,
-            equippedWeaponId,
-            equippedArmorId,
-            itemFactory: createItemById,
-            equippedOffhandWeaponId,
-        });
+        this.inventorySystem.restoreState({ itemIds: inventoryItemIds, equippedWeaponId, equippedArmorId, itemFactory: createItemById, equippedOffhandWeaponId });
 
         this.updateStats();
         this.hp = Math.max(0, Math.min(this.maxHp, this.toNumber(state.hp, this.hp)));
