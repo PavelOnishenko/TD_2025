@@ -584,11 +584,9 @@ export default class WorldMapRenderer {
         }
     }
 
-    private createTerrainPath(cell: GridCell, _neighbors?: TerrainNeighbors): Path2D {
-        // Always fill the full cell. This removes anti-aliased seams and decorative ribbons
-        // that can appear as bright/yellow border lines on some zoom levels.
-        return this.createCellRectPath(cell);
-    }
+    // Always fill the full cell. This removes anti-aliased seams and decorative ribbons
+    // that can appear as bright/yellow border lines on some zoom levels.
+    private createTerrainPath = (cell: GridCell, _neighbors?: TerrainNeighbors): Path2D => this.createCellRectPath(cell);
 
     private createCellRectPath(cell: GridCell): Path2D {
         const path = new Path2D();

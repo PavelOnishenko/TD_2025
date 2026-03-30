@@ -5,13 +5,16 @@ export type NextCharacterRollAllocation = Record<PlayerStat, number>;
 
 export const NEXT_CHARACTER_ROLL_STORAGE_KEY = 'rgfn_next_character_roll_v1';
 
-export function getPlayerStats(): PlayerStat[] {
-    return [...PLAYER_STATS];
-}
+export const getPlayerStats = (): PlayerStat[] => [...PLAYER_STATS];
 
-export function createEmptyNextCharacterRollAllocation(): NextCharacterRollAllocation {
-    return { vitality: 0, toughness: 0, strength: 0, agility: 0, connection: 0, intelligence: 0 };
-}
+export const createEmptyNextCharacterRollAllocation = (): NextCharacterRollAllocation => ({
+    vitality: 0,
+    toughness: 0,
+    strength: 0,
+    agility: 0,
+    connection: 0,
+    intelligence: 0,
+});
 
 export function normalizeNextCharacterRollAllocation(value: Partial<Record<PlayerStat, unknown>> | null | undefined): NextCharacterRollAllocation {
     const normalized = createEmptyNextCharacterRollAllocation();
@@ -25,9 +28,7 @@ export function normalizeNextCharacterRollAllocation(value: Partial<Record<Playe
     return normalized;
 }
 
-export function getNextCharacterRollAllocationTotal(allocation: NextCharacterRollAllocation): number {
-    return PLAYER_STATS.reduce((total, stat) => total + allocation[stat], 0);
-}
+export const getNextCharacterRollAllocationTotal = (allocation: NextCharacterRollAllocation): number => PLAYER_STATS.reduce((total, stat) => total + allocation[stat], 0);
 
 export function summarizeNextCharacterRollAllocation(allocation: NextCharacterRollAllocation): string {
     const parts = PLAYER_STATS
