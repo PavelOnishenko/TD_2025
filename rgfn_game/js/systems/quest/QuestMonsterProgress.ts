@@ -62,11 +62,6 @@ export class QuestMonsterProgress {
             return;
         }
 
-        objectives.push({
-            targetName,
-            villageName: node.objectiveData?.monster?.villageName,
-            remainingKills,
-            mutations: node.objectiveData?.monster?.mutations ?? [],
-        });
+        objectives.push({ targetName, villageName: node.objectiveData?.monster?.villageName, remainingKills, mutations: node.objectiveData?.monster?.mutations ?? [] });
     }
 }

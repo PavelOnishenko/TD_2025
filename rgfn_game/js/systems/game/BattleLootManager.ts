@@ -52,9 +52,9 @@ export default class BattleLootManager {
         callbacks.onUpdateHUD();
     }
 
-    public clearPendingLoot(): void {
+    public clearPendingLoot = (): void => {
         this.pendingLoot = [];
-    }
+    };
 
     private collectLoot(target: Skeleton, callbacks: LootCallbacks): void {
         const loot: Item[] = [];

@@ -125,11 +125,17 @@ export class BattleTerrainPainter {
         }
     }
 
-    private makePalette(base: string, baseMixColor: string, baseRatio: number, shadeMixColor: string, shadeRatio: number, detailColor: string, detailAlpha: number): TerrainPalette {
-        return {
-            base: BattleMapPainterUtils.mixColors(base, baseMixColor, baseRatio),
-            shade: BattleMapPainterUtils.mixColors(base, shadeMixColor, shadeRatio),
-            detail: BattleMapPainterUtils.withAlpha(detailColor, detailAlpha),
-        };
-    }
+    private makePalette = (
+        base: string,
+        baseMixColor: string,
+        baseRatio: number,
+        shadeMixColor: string,
+        shadeRatio: number,
+        detailColor: string,
+        detailAlpha: number,
+    ): TerrainPalette => ({
+        base: BattleMapPainterUtils.mixColors(base, baseMixColor, baseRatio),
+        shade: BattleMapPainterUtils.mixColors(base, shadeMixColor, shadeRatio),
+        detail: BattleMapPainterUtils.withAlpha(detailColor, detailAlpha),
+    });
 }

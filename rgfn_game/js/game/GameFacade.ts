@@ -124,7 +124,7 @@ export class GameFacade implements GameFacadeStateAccess {
     public gameOver(): void { this.lifecycle.gameOver(); }
     public startNewCharacter(): void { this.lifecycle.startNewCharacter(); }
     public onGodSkillsBoost(): void { this.lifecycle.onGodSkillsBoost(); }
-    public onQuestLocationClick(locationName: string): boolean { return this.lifecycle.onQuestLocationClick(locationName); }
+    public onQuestLocationClick = (locationName: string): boolean => this.lifecycle.onQuestLocationClick(locationName);
     public onVillageBarterCompleted(trader: string, item: string, village: string): void { this.lifecycle.onVillageBarterCompleted(trader, item, village); }
     public onMonsterKilled(monsterName: string): void { this.lifecycle.onMonsterKilled(monsterName); }
 
@@ -134,7 +134,9 @@ export class GameFacade implements GameFacadeStateAccess {
     } | null => this.questRuntime.tryCreateQuestMonsterEncounter(this.worldMap);
 
     public onVillageEntered(_worldMap: WorldMap, _villageCoordinator: GameVillageCoordinator): void { this.lifecycle.onVillageEntered(); }
-    public showVillageEntryPrompt(worldUI: WorldUI, villageName: string, anchor: { x: number; y: number }): void { this.worldInteractionCoordinator.showVillageEntryPrompt(worldUI, villageName, anchor); }
+    public showVillageEntryPrompt(worldUI: WorldUI, villageName: string, anchor: { x: number; y: number }): void {
+        this.worldInteractionCoordinator.showVillageEntryPrompt(worldUI, villageName, anchor);
+    }
     public hideVillageEntryPrompt(worldUI: WorldUI): void { this.worldInteractionCoordinator.hideVillageEntryPrompt(worldUI); }
     public handleCanvasMove(event: MouseEvent): void { this.worldInteractionCoordinator.handleCanvasMove(event); }
     public handleCanvasLeave(): void { this.worldInteractionCoordinator.handleCanvasLeave(); }

@@ -9,12 +9,7 @@ export default class GameUiDevStatBinder {
     private developerEventController: DeveloperEventController;
     private callbacks: GameUiEventCallbacks;
 
-    constructor(
-        hudElements: HudElements,
-        developerUI: DeveloperUI,
-        developerEventController: DeveloperEventController,
-        callbacks: GameUiEventCallbacks,
-    ) {
+    constructor(hudElements: HudElements, developerUI: DeveloperUI, developerEventController: DeveloperEventController, callbacks: GameUiEventCallbacks) {
         this.hudElements = hudElements;
         this.developerUI = developerUI;
         this.developerEventController = developerEventController;

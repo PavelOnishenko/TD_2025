@@ -46,19 +46,17 @@ export default class GameUiHudPanelController {
         });
     }
 
-    private getPanelConfigs(): PanelConfig[] {
-        return [
-            { key: 'stats', title: 'Stats', element: this.hudElements.statsPanel },
-            { key: 'skills', title: 'Skills', element: this.hudElements.skillsPanel },
-            { key: 'inventory', title: 'Inventory', element: this.hudElements.inventoryPanel },
-            { key: 'magic', title: 'Magic', element: this.hudElements.magicPanel },
-            { key: 'quests', title: 'Quests', element: this.hudElements.questsPanel },
-            { key: 'lore', title: 'Lore', element: this.hudElements.lorePanel },
-            { key: 'selected', title: 'Selected', element: this.hudElements.selectedPanel },
-            { key: 'worldMap', title: 'World Map', element: this.hudElements.worldMapPanel },
-            { key: 'log', title: 'Log', element: this.hudElements.logPanel },
-        ];
-    }
+    private getPanelConfigs = (): PanelConfig[] => [
+        { key: 'stats', title: 'Stats', element: this.hudElements.statsPanel },
+        { key: 'skills', title: 'Skills', element: this.hudElements.skillsPanel },
+        { key: 'inventory', title: 'Inventory', element: this.hudElements.inventoryPanel },
+        { key: 'magic', title: 'Magic', element: this.hudElements.magicPanel },
+        { key: 'quests', title: 'Quests', element: this.hudElements.questsPanel },
+        { key: 'lore', title: 'Lore', element: this.hudElements.lorePanel },
+        { key: 'selected', title: 'Selected', element: this.hudElements.selectedPanel },
+        { key: 'worldMap', title: 'World Map', element: this.hudElements.worldMapPanel },
+        { key: 'log', title: 'Log', element: this.hudElements.logPanel },
+    ];
 
     private decorateHudPanelWindow(panelKey: HudPanelToggle, title: string, panel: HTMLElement, panelIndex: number): void {
         if (panel.querySelector('.panel-window-header')) {

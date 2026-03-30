@@ -32,8 +32,12 @@ export class DirectionalCombatExchangeResolver {
         const summaryLogs = [
             `${params.actorName} chooses ${getMoveLabel(params.actorMove)} while ${params.opponentName} chooses ${getMoveLabel(params.opponentMove)}.`,
         ];
-        const actorDamageData = isAttackMove(params.actorMove) ? this.getAttackDamage(params.actorBaseDamage, params.actorBuffs) : { damage: 0, logs: [] as string[] };
-        const opponentDamageData = isAttackMove(params.opponentMove) ? this.getAttackDamage(params.opponentBaseDamage, params.opponentBuffs) : { damage: 0, logs: [] as string[] };
+        const actorDamageData = isAttackMove(params.actorMove)
+            ? this.getAttackDamage(params.actorBaseDamage, params.actorBuffs)
+            : { damage: 0, logs: [] as string[] };
+        const opponentDamageData = isAttackMove(params.opponentMove)
+            ? this.getAttackDamage(params.opponentBaseDamage, params.opponentBuffs)
+            : { damage: 0, logs: [] as string[] };
         actor.logs.push(...actorDamageData.logs);
         opponent.logs.push(...opponentDamageData.logs);
 
@@ -47,9 +51,7 @@ export class DirectionalCombatExchangeResolver {
         return { actor, opponent, actorRewards, opponentRewards, summaryLogs };
     }
 
-    private createNoDamageResolution(move: CombatMove): MoveResolution {
-        return { move, isAttack: isAttackMove(move), damageDealt: 0, logs: [] };
-    }
+    private createNoDamageResolution = (move: CombatMove): MoveResolution => ({ move, isAttack: isAttackMove(move), damageDealt: 0, logs: [] });
 
     private getAttackDamage(baseDamage: number, buffs: CombatBuffSnapshot): { damage: number; logs: string[] } {
         let damage = baseDamage;

@@ -48,13 +48,7 @@ export default class GameBattleCoordinator {
         this.stateMachine = stateMachine;
         this.turnManager = deps.turnManager;
         this.controllers = controllers;
-        this.runtimeFlow = new GameBattleRuntimeFlow({
-            stateMachine,
-            ...deps,
-            callbacks,
-            controllers,
-            onStartBattle: () => this.startBattle(),
-        });
+        this.runtimeFlow = new GameBattleRuntimeFlow({ stateMachine, ...deps, callbacks, controllers, onStartBattle: () => this.startBattle() });
     }
 
     public enterBattleMode(enemies: Skeleton[], terrainType: TerrainType = 'grass'): void {
