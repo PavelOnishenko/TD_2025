@@ -15,7 +15,15 @@ export default class GameQuestRuntime {
         questGenerator: QuestGenerator,
         questUiController: QuestUiController,
         getSavedQuest: () => QuestNode | null,
-        onContractsReady: (contracts: Array<{ traderName: string; itemName: string; sourceVillage?: string; destinationVillage?: string; contractType: 'barter' | 'deliver' }>) => void,
+        onContractsReady: (
+            contracts: Array<{
+                traderName: string;
+                itemName: string;
+                sourceVillage?: string;
+                destinationVillage?: string;
+                contractType: 'barter' | 'deliver';
+            }>,
+        ) => void,
         worldMap: WorldMap,
     ): Promise<void> {
         const savedQuest = getSavedQuest();
