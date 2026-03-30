@@ -1,138 +1,32 @@
 import Player from '../entities/player/Player.js';
-import Item from '../entities/Item.js';
-import { balanceConfig } from '../config/balance/balanceConfig.js';
 import MagicSystem from './magic/MagicSystem.js';
-import { calculateBowDamageBonus, calculateMeleeDamageBonus } from '../config/levelConfig.js';
 import LoreBookController from './lore/LoreBookController.js';
-import { SelectedCellInfo, SelectedWorldCellInfo } from '../types/game.js';
-
-type PlayerStat = 'vitality' | 'toughness' | 'strength' | 'agility' | 'connection' | 'intelligence';
-type PendingSkillAllocations = Record<PlayerStat, number>;
-
-type HudElements = {
-    usePotionBtn: HTMLButtonElement;
-    useManaPotionBtn: HTMLButtonElement;
-    playerLevel: HTMLElement;
-    playerName: HTMLElement;
-    playerXp: HTMLElement;
-    playerXpNext: HTMLElement;
-    playerHp: HTMLElement;
-    playerMaxHp: HTMLElement;
-    playerMana: HTMLElement;
-    playerMaxMana: HTMLElement;
-    playerDmg: HTMLElement;
-    playerDmgFormula: HTMLElement;
-    playerArmor: HTMLElement;
-    playerDodge: HTMLElement;
-    playerDodgeFormula: HTMLElement;
-    playerWeapon: HTMLElement;
-    playerGold: HTMLElement;
-    playerFatigue: HTMLElement;
-    playerFatigueState: HTMLElement;
-    skillPoints: HTMLElement;
-    magicPoints: HTMLElement;
-    magicPanelPoints: HTMLElement;
-    statVitality: HTMLElement;
-    statToughness: HTMLElement;
-    statStrength: HTMLElement;
-    statAgility: HTMLElement;
-    statConnection: HTMLElement;
-    statIntelligence: HTMLElement;
-    addVitalityBtn: HTMLButtonElement;
-    subVitalityBtn: HTMLButtonElement;
-    addToughnessBtn: HTMLButtonElement;
-    subToughnessBtn: HTMLButtonElement;
-    addStrengthBtn: HTMLButtonElement;
-    subStrengthBtn: HTMLButtonElement;
-    addAgilityBtn: HTMLButtonElement;
-    subAgilityBtn: HTMLButtonElement;
-    addConnectionBtn: HTMLButtonElement;
-    subConnectionBtn: HTMLButtonElement;
-    addIntelligenceBtn: HTMLButtonElement;
-    subIntelligenceBtn: HTMLButtonElement;
-    saveSkillsBtn: HTMLButtonElement;
-    godSkillsBtn: HTMLButtonElement;
-    upgradeFireballBtn: HTMLButtonElement;
-    upgradeCurseBtn: HTMLButtonElement;
-    upgradeSlowBtn: HTMLButtonElement;
-    upgradeRageBtn: HTMLButtonElement;
-    upgradeArcaneLanceBtn: HTMLButtonElement;
-    spellLevelFireball: HTMLElement;
-    spellLevelCurse: HTMLElement;
-    spellLevelSlow: HTMLElement;
-    spellLevelRage: HTMLElement;
-    spellLevelArcaneLance: HTMLElement;
-    spellDetailsFireball: HTMLElement;
-    spellDetailsCurse: HTMLElement;
-    spellDetailsSlow: HTMLElement;
-    spellDetailsRage: HTMLElement;
-    spellDetailsArcaneLance: HTMLElement;
-    inventoryCount: HTMLElement;
-    inventoryCapacity: HTMLElement;
-    inventoryCapacityHint: HTMLElement;
-    undoLastDropBtn: HTMLButtonElement;
-    inventoryGrid: HTMLElement;
-    weaponSlotMain: HTMLButtonElement;
-    weaponSlotOff: HTMLButtonElement;
-    armorSlot: HTMLButtonElement;
-    statsPanel: HTMLElement;
-    skillsPanel: HTMLElement;
-    inventoryPanel: HTMLElement;
-    magicPanel: HTMLElement;
-    questsPanel: HTMLElement;
-    selectedPanel: HTMLElement;
-    lorePanel: HTMLElement;
-    worldMapPanel: HTMLElement;
-    logPanel: HTMLElement;
-    questsBody: HTMLElement;
-    loreBody: HTMLElement;
-    selectedCellEmpty: HTMLElement;
-    selectedCellDetails: HTMLElement;
-    selectedCellCoords: HTMLElement;
-    selectedCellTerrain: HTMLElement;
-    selectedCellVisibility: HTMLElement;
-    selectedCellTraversable: HTMLElement;
-    selectedCellVillage: HTMLElement;
-    selectedCellVillageName: HTMLElement;
-    selectedCellVillageStatus: HTMLElement;
-    toggleStatsPanelBtn: HTMLButtonElement;
-    toggleSkillsPanelBtn: HTMLButtonElement;
-    toggleInventoryPanelBtn: HTMLButtonElement;
-    toggleMagicPanelBtn: HTMLButtonElement;
-    toggleQuestsPanelBtn: HTMLButtonElement;
-    toggleLorePanelBtn: HTMLButtonElement;
-    toggleSelectedPanelBtn: HTMLButtonElement;
-    toggleWorldMapPanelBtn: HTMLButtonElement;
-    toggleLogPanelBtn: HTMLButtonElement;
-};
-
-
-type HudPanel = 'stats' | 'skills' | 'inventory' | 'magic' | 'quests' | 'lore' | 'selected' | 'worldMap' | 'log';
-
-type BattleUiHudElements = {
-    usePotionBtn: HTMLButtonElement;
-    useManaPotionBtn: HTMLButtonElement;
-    attackRangeText: HTMLElement;
-    spellFireballBtn: HTMLButtonElement;
-    spellCurseBtn: HTMLButtonElement;
-    spellSlowBtn: HTMLButtonElement;
-    spellRageBtn: HTMLButtonElement;
-    spellArcaneLanceBtn: HTMLButtonElement;
-};
-
-type BattleEquipmentActionHandler = (actionDescription: string) => boolean;
+import HudEquipmentController from './hud/HudEquipmentController.js';
+import HudInventoryController from './hud/HudInventoryController.js';
+import HudMagicController from './hud/HudMagicController.js';
+import HudPanelStateController from './hud/HudPanelStateController.js';
+import HudSelectionInfoController from './hud/HudSelectionInfoController.js';
+import {
+    BattleEquipmentActionHandler,
+    BattleUiHudElements,
+    HudElements,
+    HudPanel,
+    PendingSkillAllocations,
+} from './hud/HudTypes.js';
+import { SelectedCellInfo } from '../types/game.js';
 
 export default class HudController {
-    private player: Player;
-    private hudElements: HudElements;
-    private battleUI: BattleUiHudElements;
-    private magicSystem: MagicSystem;
-    private gameLog: HTMLElement;
-    private loreBookController: LoreBookController;
-    private draggedInventoryIndex: number | null = null;
-    private lastDroppedItem: Item | null = null;
+    private readonly player: Player;
+    private readonly hudElements: HudElements;
+    private readonly battleUI: BattleUiHudElements;
+    private readonly loreBookController: LoreBookController;
     private pendingSkillAllocations: PendingSkillAllocations = { vitality: 0, toughness: 0, strength: 0, agility: 0, connection: 0, intelligence: 0 };
-    private onBattleEquipmentAction: BattleEquipmentActionHandler | null;
+    private draggedInventoryIndex: number | null = null;
+    private readonly inventoryController: HudInventoryController;
+    private readonly equipmentController: HudEquipmentController;
+    private readonly magicController: HudMagicController;
+    private readonly panelStateController: HudPanelStateController;
+    private readonly selectionInfoController: HudSelectionInfoController;
 
     constructor(
         player: Player,
@@ -146,12 +40,40 @@ export default class HudController {
         this.player = player;
         this.hudElements = hudElements;
         this.battleUI = battleUI;
-        this.magicSystem = magicSystem;
-        this.gameLog = gameLog;
         this.loreBookController = loreBookController;
-        this.onBattleEquipmentAction = onBattleEquipmentAction ?? null;
-        this.bindEquipmentSlotEvents();
-        this.bindInventoryRecoveryEvents();
+
+        const addLog = (message: string, type: string = 'system'): void => {
+            const div = document.createElement('div');
+            div.textContent = message;
+            div.classList.add(`${type}-action`);
+            gameLog.appendChild(div);
+            gameLog.scrollTop = gameLog.scrollHeight;
+        };
+
+        this.inventoryController = new HudInventoryController(
+            this.player,
+            this.hudElements,
+            (item) => this.equipmentController.handleEquipFromInventory(item),
+            () => this.updateHUD(),
+            (message) => addLog(message),
+            () => this.draggedInventoryIndex,
+            (index) => { this.draggedInventoryIndex = index; },
+        );
+        this.equipmentController = new HudEquipmentController(
+            this.player,
+            this.hudElements,
+            onBattleEquipmentAction ?? null,
+            () => this.inventoryController.getDraggedInventoryItem(),
+            () => { this.draggedInventoryIndex = null; },
+            () => this.updateHUD(),
+            (message) => addLog(message),
+        );
+        this.magicController = new HudMagicController(this.player, this.hudElements, this.battleUI, magicSystem);
+        this.panelStateController = new HudPanelStateController(this.hudElements);
+        this.selectionInfoController = new HudSelectionInfoController(this.hudElements);
+
+        this.equipmentController.bindEquipmentSlotEvents();
+        this.inventoryController.bindInventoryRecoveryEvents();
     }
 
     public setPendingSkillAllocations = (pendingSkillAllocations: PendingSkillAllocations): void => {
@@ -159,6 +81,30 @@ export default class HudController {
     };
 
     public updateHUD(): void {
+        this.updateCoreStats();
+        this.magicController.renderSpellLevelsAndDetails();
+        this.equipmentController.renderEquipmentSlots();
+        this.inventoryController.renderInventoryAndMeta();
+        this.updatePotionButtonsAndRange();
+        this.loreBookController.render();
+        this.updateStatButtons();
+        this.magicController.updateSpellButtons();
+        this.panelStateController.updateToggleButtons();
+    }
+
+    public togglePanel(panel: HudPanel): void {
+        this.panelStateController.togglePanel(panel);
+    }
+
+    public updateSelectedCellInfo(selectedCell: SelectedCellInfo | null): void {
+        this.selectionInfoController.updateSelectedCellInfo(selectedCell);
+    }
+
+    private updateCoreStats(): void {
+        const pending = this.pendingSkillAllocations;
+        const pendingTotal = Object.values(pending).reduce((total, value) => total + value, 0);
+        const remainingSkillPoints = this.player.skillPoints - pendingTotal;
+
         this.hudElements.playerLevel.textContent = String(this.player.level);
         this.hudElements.playerName.textContent = this.player.name;
         this.hudElements.playerXp.textContent = String(this.player.xp);
@@ -172,42 +118,22 @@ export default class HudController {
         this.hudElements.playerArmor.textContent = String(this.player.armor);
         this.hudElements.playerDodge.textContent = `${(this.player.avoidChance * 100).toFixed(1)}%`;
         this.hudElements.playerDodgeFormula.textContent = this.player.getAvoidFormulaText();
-        const pendingTotal = Object.values(this.pendingSkillAllocations).reduce((total, value) => total + value, 0);
-        const remainingSkillPoints = this.player.skillPoints - pendingTotal;
-
         this.hudElements.skillPoints.textContent = String(remainingSkillPoints);
         this.hudElements.magicPoints.textContent = String(this.player.magicPoints);
         this.hudElements.magicPanelPoints.textContent = String(this.player.magicPoints);
-        this.hudElements.statVitality.textContent = String(this.player.vitality + this.pendingSkillAllocations.vitality);
-        this.hudElements.statToughness.textContent = String(this.player.toughness + this.pendingSkillAllocations.toughness);
-        this.hudElements.statStrength.textContent = String(this.player.strength + this.pendingSkillAllocations.strength);
-        this.hudElements.statAgility.textContent = String(this.player.agility + this.pendingSkillAllocations.agility);
-        this.hudElements.statConnection.textContent = String(this.player.connection + this.pendingSkillAllocations.connection);
-        this.hudElements.statIntelligence.textContent = String(this.player.intelligence + this.pendingSkillAllocations.intelligence);
-
-        const spellLevels = this.magicSystem.getSpellLevels();
-        this.hudElements.spellLevelFireball.textContent = String(spellLevels.fireball);
-        this.hudElements.spellLevelCurse.textContent = String(spellLevels.curse);
-        this.hudElements.spellLevelSlow.textContent = String(spellLevels.slow);
-        this.hudElements.spellLevelRage.textContent = String(spellLevels.rage);
-        this.hudElements.spellLevelArcaneLance.textContent = String(spellLevels['arcane-lance']);
-        this.renderSpellDetails(spellLevels);
-
+        this.hudElements.statVitality.textContent = String(this.player.vitality + pending.vitality);
+        this.hudElements.statToughness.textContent = String(this.player.toughness + pending.toughness);
+        this.hudElements.statStrength.textContent = String(this.player.strength + pending.strength);
+        this.hudElements.statAgility.textContent = String(this.player.agility + pending.agility);
+        this.hudElements.statConnection.textContent = String(this.player.connection + pending.connection);
+        this.hudElements.statIntelligence.textContent = String(this.player.intelligence + pending.intelligence);
         this.hudElements.playerWeapon.textContent = this.player.equippedWeapon ? this.player.equippedWeapon.name : 'None';
         this.hudElements.playerGold.textContent = String(this.player.gold);
         this.hudElements.playerFatigue.textContent = `${Math.round(this.player.fatigue)}/${this.player.getMaxFatigue()} (${this.player.getFatiguePercent().toFixed(0)}%)`;
         this.hudElements.playerFatigueState.textContent = this.player.getFatigueStateLabel();
+    }
 
-        this.renderEquipmentSlots();
-
-        const inventory = this.player.getInventory();
-        const inventoryCapacity = this.player.getInventoryCapacity();
-        this.hudElements.inventoryCount.textContent = String(inventory.length);
-        this.hudElements.inventoryCapacity.textContent = String(inventoryCapacity);
-        this.hudElements.inventoryCapacityHint.textContent = this.getInventoryCapacityHintText();
-        this.hudElements.undoLastDropBtn.disabled = this.lastDroppedItem === null;
-        this.renderInventory(inventory, inventoryCapacity);
-
+    private updatePotionButtonsAndRange(): void {
         const hasHpPotion = this.player.getHealingPotionCount() > 0;
         const hasManaPotion = this.player.getManaPotionCount() > 0;
         this.hudElements.usePotionBtn.disabled = !hasHpPotion;
@@ -217,434 +143,27 @@ export default class HudController {
 
         const attackRange = this.player.getAttackRange();
         this.battleUI.attackRangeText.textContent = attackRange === 1 ? 'Attack when adjacent (1 tile)' : `Attack from ${attackRange} tiles away`;
-
-        this.loreBookController.render();
-        this.updateStatButtons(remainingSkillPoints);
-        this.updateSpellButtons();
-        this.updateToggleButtons();
     }
 
-    public togglePanel(panel: HudPanel): void {
-        const panelMap: Record<HudPanel, HTMLElement> = {
-            stats: this.hudElements.statsPanel,
-            skills: this.hudElements.skillsPanel,
-            inventory: this.hudElements.inventoryPanel,
-            magic: this.hudElements.magicPanel,
-            quests: this.hudElements.questsPanel,
-            lore: this.hudElements.lorePanel,
-            selected: this.hudElements.selectedPanel,
-            worldMap: this.hudElements.worldMapPanel,
-            log: this.hudElements.logPanel,
-        };
-
-        panelMap[panel].classList.toggle('hidden');
-        this.updateToggleButtons();
-    }
-
-    public updateSelectedCellInfo(selectedCell: SelectedCellInfo | null): void {
-        const hasSelectedCell = Boolean(selectedCell);
-        this.hudElements.selectedCellEmpty.classList.toggle('hidden', hasSelectedCell);
-        this.hudElements.selectedCellDetails.classList.toggle('hidden', !hasSelectedCell);
-
-        if (!selectedCell) {
-            return;
-        }
-
-        this.hudElements.selectedCellCoords.textContent = `${selectedCell.col}, ${selectedCell.row}`;
-
-        if (selectedCell.mode === 'battle') {
-            const occupantLabel = selectedCell.occupantType
-                ? `${selectedCell.occupantType === 'player' ? 'Player' : 'Enemy'}`
-                : 'None';
-            const hpLabel = selectedCell.occupantHp !== null && selectedCell.occupantMaxHp !== null
-                ? `${selectedCell.occupantHp}/${selectedCell.occupantMaxHp}`
-                : '—';
-            this.hudElements.selectedCellTerrain.textContent = selectedCell.obstacleName
-                ? `${this.formatTerrainLabel(selectedCell.terrainType)} (${selectedCell.obstacleName})`
-                : this.formatTerrainLabel(selectedCell.terrainType);
-            this.hudElements.selectedCellVisibility.textContent = 'Battle map';
-            this.hudElements.selectedCellTraversable.textContent = selectedCell.isTraversable ? 'Walkable' : 'Blocked';
-            this.hudElements.selectedCellVillage.textContent = occupantLabel;
-            this.hudElements.selectedCellVillageName.textContent = selectedCell.occupantName ?? '—';
-            this.hudElements.selectedCellVillageStatus.textContent = `HP ${hpLabel}`;
-            return;
-        }
-
-        const terrainIsKnown = selectedCell.isVisible || selectedCell.fogState !== 'unknown';
-        const villageDetailsKnown = terrainIsKnown && selectedCell.isVillage;
-        this.hudElements.selectedCellTerrain.textContent = terrainIsKnown ? this.formatTerrainLabel(selectedCell.terrainType) : 'Unknown';
-        this.hudElements.selectedCellVisibility.textContent = this.formatVisibilityLabel(selectedCell);
-        this.hudElements.selectedCellTraversable.textContent = terrainIsKnown ? (selectedCell.isTraversable ? 'Walkable' : 'Blocked') : 'Unknown';
-        this.hudElements.selectedCellVillage.textContent = terrainIsKnown ? (selectedCell.isVillage ? 'Yes' : 'No') : 'Unknown';
-        this.hudElements.selectedCellVillageName.textContent = terrainIsKnown ? (selectedCell.villageName ?? '—') : 'Unknown';
-        this.hudElements.selectedCellVillageStatus.textContent = villageDetailsKnown ? this.formatVillageStatusLabel(selectedCell.villageStatus) : (terrainIsKnown ? '—' : 'Unknown');
-    }
-
-    private bindEquipmentSlotEvents(): void {
-        this.hudElements.weaponSlotMain.addEventListener('click', () => {
-            if (this.player.equippedWeapon) {
-                if (!this.requestBattleEquipmentAction(`You start unequipping ${this.player.equippedWeapon.name}.`)) {
-                    return;
-                }
-                this.player.unequipWeapon();
-                this.updateHUD();
-            }
-        });
-
-        this.hudElements.weaponSlotMain.addEventListener('dragover', (event) => {
-            event.preventDefault();
-        });
-        this.hudElements.weaponSlotMain.addEventListener('drop', (event) => {
-            event.preventDefault();
-            this.handleDropOnEquipmentSlot('main');
-        });
-
-        this.hudElements.weaponSlotOff.addEventListener('click', () => {
-            if (this.player.equippedOffhandWeapon) {
-                if (!this.requestBattleEquipmentAction(`You start unequipping ${this.player.equippedOffhandWeapon.name}.`)) {
-                    return;
-                }
-                this.player.unequipOffhandWeapon();
-                this.updateHUD();
-            }
-        });
-
-        this.hudElements.weaponSlotOff.addEventListener('dragover', (event) => {
-            event.preventDefault();
-        });
-        this.hudElements.weaponSlotOff.addEventListener('drop', (event) => {
-            event.preventDefault();
-            this.handleDropOnEquipmentSlot('offhand');
-        });
-
-        this.hudElements.armorSlot.addEventListener('click', () => {
-            if (this.player.equippedArmor) {
-                if (!this.requestBattleEquipmentAction(`You start removing ${this.player.equippedArmor.name}.`)) {
-                    return;
-                }
-                this.player.unequipArmor();
-                this.updateHUD();
-            }
-        });
-
-        this.hudElements.armorSlot.addEventListener('dragover', (event) => {
-            event.preventDefault();
-        });
-        this.hudElements.armorSlot.addEventListener('drop', (event) => {
-            event.preventDefault();
-            this.handleDropOnEquipmentSlot('armor');
-        });
-    }
-
-    private renderEquipmentSlots(): void {
-        const mainWeapon = this.player.equippedMainWeapon;
-        const offhandWeapon = this.player.equippedOffhandWeapon;
-        const armor = this.player.equippedArmor;
-
-        this.hudElements.weaponSlotMain.classList.remove('equipment-slot-main-equipped', 'equipment-slot-off-equipped');
-        this.hudElements.weaponSlotOff.classList.remove('equipment-slot-main-equipped', 'equipment-slot-off-equipped');
-
-        if (!mainWeapon && !offhandWeapon) {
-            this.renderEquipmentSlotContent(this.hudElements.weaponSlotMain, 'Main Hand', 'Fist');
-            this.renderEquipmentSlotContent(this.hudElements.weaponSlotOff, 'Off Hand', 'Fist');
-        } else if (mainWeapon?.handsRequired === 2) {
-            this.renderEquipmentSlotContent(this.hudElements.weaponSlotMain, 'Main Hand', mainWeapon.name, mainWeapon.spriteClass);
-            this.renderEquipmentSlotContent(this.hudElements.weaponSlotOff, 'Off Hand', mainWeapon.name, mainWeapon.spriteClass);
-            this.hudElements.weaponSlotMain.classList.add('equipment-slot-main-equipped');
-            this.hudElements.weaponSlotOff.classList.add('equipment-slot-main-equipped');
-        } else {
-            this.renderEquipmentSlotContent(this.hudElements.weaponSlotMain, 'Main Hand', mainWeapon ? mainWeapon.name : 'Fist', mainWeapon?.spriteClass);
-            this.renderEquipmentSlotContent(this.hudElements.weaponSlotOff, 'Off Hand', offhandWeapon ? offhandWeapon.name : 'Fist', offhandWeapon?.spriteClass);
-            if (mainWeapon) {
-                this.hudElements.weaponSlotMain.classList.add('equipment-slot-main-equipped');
-            }
-            if (offhandWeapon) {
-                this.hudElements.weaponSlotOff.classList.add('equipment-slot-off-equipped');
-            }
-        }
-
-        this.renderEquipmentSlotContent(this.hudElements.armorSlot, 'Armor', armor ? armor.name : 'Empty', armor?.spriteClass);
-    }
-
-    private renderInventory(inventory: Item[], inventoryCapacity: number): void {
-        this.hudElements.inventoryGrid.innerHTML = '';
-
-        for (let index = 0; index < inventoryCapacity; index++) {
-            const slot = document.createElement('button');
-            slot.type = 'button';
-            slot.className = 'inventory-slot';
-            slot.setAttribute('draggable', 'false');
-
-            const item = inventory[index];
-            if (item) {
-                slot.title = this.buildInventoryTooltip(item);
-                slot.draggable = item.type === 'weapon' || item.type === 'armor';
-                slot.addEventListener('dragstart', () => {
-                    this.draggedInventoryIndex = index;
-                    slot.classList.add('inventory-slot-dragging');
-                });
-                slot.addEventListener('dragend', () => {
-                    this.draggedInventoryIndex = null;
-                    slot.classList.remove('inventory-slot-dragging');
-                });
-                slot.addEventListener('mouseenter', () => slot.classList.add('inventory-slot-hovered'));
-                slot.addEventListener('mouseleave', () => slot.classList.remove('inventory-slot-hovered'));
-                slot.addEventListener('contextmenu', (event) => {
-                    event.preventDefault();
-                    this.handleDropFromInventory(index);
-                });
-
-                const sprite = document.createElement('div');
-                sprite.className = `item-sprite ${item.spriteClass}`;
-                slot.appendChild(sprite);
-
-                const name = document.createElement('span');
-                name.className = 'inventory-slot-name';
-                name.textContent = item.name;
-                slot.appendChild(name);
-
-                if (item.type === 'weapon' || item.type === 'armor') {
-                    slot.addEventListener('click', () => this.handleEquipFromInventory(item, slot));
-                }
-            } else {
-                slot.classList.add('empty');
-                slot.disabled = true;
-            }
-
-            this.hudElements.inventoryGrid.appendChild(slot);
-        }
-    }
-
-
-    private getInventoryCapacityHintText(): string {
-        const baseSlots = balanceConfig.player.baseInventorySlots;
-        const strengthStep = balanceConfig.player.strengthPerInventorySlot;
-        return `${baseSlots} base slots, +1 slot every ${strengthStep} STR`;
-    }
-
-    private renderEquipmentSlotContent(slot: HTMLButtonElement, label: string, value: string, spriteClass?: string): void {
-        slot.innerHTML = '';
-
-        if (spriteClass) {
-            const sprite = document.createElement('span');
-            sprite.className = `item-sprite equipment-item-sprite ${spriteClass}`;
-            slot.appendChild(sprite);
-        }
-
-        const text = document.createElement('span');
-        text.className = 'equipment-slot-label';
-        text.textContent = `${label}: ${value}`;
-        slot.appendChild(text);
-    }
-
-    private handleEquipFromInventory(item: Item, slotElement: HTMLButtonElement): void {
-        if (!this.player.canEquipItem(item)) {
-            this.triggerEquipRequirementsFeedback(item, slotElement);
-            return;
-        }
-
-        if (!this.requestBattleEquipmentAction(`You begin equipping ${item.name}.`)) {
-            return;
-        }
-
-        if (item.type === 'weapon') {
-            this.player.equippedWeapon = item;
-        } else if (item.type === 'armor') {
-            this.player.equippedArmor = item;
-        }
-
-        this.updateHUD();
-    }
-
-    private handleDropOnEquipmentSlot(slot: 'main' | 'offhand' | 'armor'): void {
-        if (this.draggedInventoryIndex === null) {
-            return;
-        }
-
-        const inventory = this.player.getInventory();
-        const item = inventory[this.draggedInventoryIndex];
-        if (!item) {
-            this.draggedInventoryIndex = null;
-            return;
-        }
-
-        if (!this.player.canEquipItem(item)) {
-            this.addLog(`Cannot equip ${item.name}. Requirements are not met.`, 'system');
-            this.draggedInventoryIndex = null;
-            return;
-        }
-
-        if (!this.requestBattleEquipmentAction(`You begin equipping ${item.name}.`)) {
-            this.draggedInventoryIndex = null;
-            return;
-        }
-
-        if (slot === 'armor') {
-            if (item.type === 'armor') {
-                this.player.equippedArmor = item;
-            }
-        } else if (item.type === 'weapon') {
-            this.player.equipWeaponToSlot(item, slot);
-        }
-
-        this.draggedInventoryIndex = null;
-        this.updateHUD();
-    }
-
-    private requestBattleEquipmentAction(actionDescription: string): boolean {
-        if (!this.onBattleEquipmentAction) {
-            return true;
-        }
-
-        return this.onBattleEquipmentAction(actionDescription);
-    }
-
-    private handleDropFromInventory(index: number): void {
-        const droppedItem = this.player.removeInventoryItemAt(index);
-        if (!droppedItem) {
-            return;
-        }
-
-        this.lastDroppedItem = droppedItem;
-        this.addLog(`You dropped ${droppedItem.name}. Click Recover Last Dropped Item to undo.`, 'system');
-        this.updateHUD();
-    }
-
-    private bindInventoryRecoveryEvents(): void {
-        this.hudElements.undoLastDropBtn.addEventListener('click', () => {
-            if (!this.lastDroppedItem) {
-                return;
-            }
-
-            const itemToRecover = this.lastDroppedItem;
-            const recovered = this.player.addItemToInventory(itemToRecover);
-            if (!recovered) {
-                this.addLog(`Cannot recover ${itemToRecover.name}: inventory is full.`, 'system');
-                this.updateHUD();
-                return;
-            }
-
-            this.lastDroppedItem = null;
-            this.addLog(`Recovered ${itemToRecover.name}.`, 'system');
-            this.updateHUD();
-        });
-    }
-
-    private triggerEquipRequirementsFeedback(item: Item, slotElement: HTMLButtonElement): void {
-        slotElement.classList.remove('inventory-slot-failed');
-        void slotElement.offsetWidth;
-        slotElement.classList.add('inventory-slot-failed');
-
-        const requirements = this.getRequirementEntries(item);
-        const details = requirements
-            .map(({ label, required, current }) => {
-                const missing = Math.max(0, required - current);
-                return `${label}: required ${required}, have ${current}, lack ${missing}`;
-            })
-            .join(' | ');
-
-        this.addLog(`Cannot equip ${item.name}. ${details}`, 'system');
-    }
-
-    private addLog(message: string, type: string = 'system'): void {
-        const div = document.createElement('div');
-        div.textContent = message;
-        div.classList.add(`${type}-action`);
-        this.gameLog.appendChild(div);
-        this.gameLog.scrollTop = this.gameLog.scrollHeight;
-    }
-
-    private buildInventoryTooltip(item: Item): string {
-        const lines = [`${item.name} — right-click to drop`];
-        if (item.type === 'weapon' || item.type === 'armor') {
-            lines[0] = `${item.name} — click to equip • right-click to drop`;
-        }
-        const requirements = this.getRequirementEntries(item);
-
-        if (requirements.length > 0) {
-            const requirementText = requirements
-                .map(({ label, required, current }) => `${label} ${current}/${required}`)
-                .join(', ');
-            lines.push(`Requirements: ${requirementText}`);
-        }
-
-        if (item.type === 'weapon') {
-            lines.push(`Damage if requirements met: ${this.calculateWeaponDamageAtRequirements(item)}`);
-        }
-
-        return lines.join('\n');
-    }
-
-    private calculateWeaponDamageAtRequirements(item: Item): number {
-        const requiredStrength = item.requirements.strength ?? 0;
-        const requiredAgility = item.requirements.agility ?? 0;
-        const effectiveStrength = Math.max(this.player.strength, requiredStrength);
-        const effectiveAgility = Math.max(this.player.agility, requiredAgility);
-        const statBonus = item.isRanged
-            ? calculateBowDamageBonus(effectiveStrength, effectiveAgility)
-            : calculateMeleeDamageBonus(effectiveStrength, effectiveAgility);
-        const offHandDamage = item.handsRequired === 1 ? balanceConfig.combat.fistDamagePerHand : 0;
-        return item.damageBonus + offHandDamage + statBonus;
-    }
-
-    private getRequirementEntries(item: Item): Array<{ label: 'AGI' | 'STR'; required: number; current: number }> {
-        const requiredAgility = item.requirements.agility ?? 0;
-        const requiredStrength = item.requirements.strength ?? 0;
-        const entries: Array<{ label: 'AGI' | 'STR'; required: number; current: number }> = [];
-
-        if (requiredAgility > 0) {
-            entries.push({ label: 'AGI', required: requiredAgility, current: this.player.agility });
-        }
-
-        if (requiredStrength > 0) {
-            entries.push({ label: 'STR', required: requiredStrength, current: this.player.strength });
-        }
-
-        return entries;
-    }
-
-
-    private renderSpellDetails(spellLevels: ReturnType<MagicSystem['getSpellLevels']>): void {
-        const fireballLevel = Math.max(1, spellLevels.fireball || 1);
-        const curseLevel = Math.max(1, spellLevels.curse || 1);
-        const slowLevel = Math.max(1, spellLevels.slow || 1);
-        const rageLevel = Math.max(1, spellLevels.rage || 1);
-        const arcaneLanceLevel = Math.max(1, spellLevels['arcane-lance'] || 1);
-
-        const fireballDamage = 4 + 2 * (fireballLevel - 1);
-        const curseDamage = 2 + (curseLevel - 1);
-        const curseArmorReduction = 1 + (curseLevel - 1);
-        const curseTurns = 2 + (curseLevel - 1);
-        const slowTurns = 1 + (slowLevel - 1);
-        const rageTurns = 2 + (rageLevel - 1);
-        const rageMultiplier = 1.25 + 0.15 * (rageLevel - 1);
-        const arcaneLanceDamage = 3 + 2 * (arcaneLanceLevel - 1);
-
-        this.hudElements.spellDetailsFireball.textContent = `Mana ${fireballLevel === 1 ? 3 : 5} • Magic damage ${fireballDamage} (ignores armor)`;
-        this.hudElements.spellDetailsCurse.textContent = `Mana ${curseLevel === 1 ? 3 : 5} • Magic damage ${curseDamage} • Armor -${curseArmorReduction} for ${curseTurns} turns`;
-        this.hudElements.spellDetailsSlow.textContent = `Mana ${slowLevel === 1 ? 2 : 4} • Target skips ${slowTurns} turn(s)`;
-        this.hudElements.spellDetailsRage.textContent = `Mana ${rageLevel === 1 ? 2 : 4} • x${rageMultiplier.toFixed(2)} power for ${rageTurns} turns`;
-        this.hudElements.spellDetailsArcaneLance.textContent = `Mana ${arcaneLanceLevel === 1 ? 2 : 4} • Magic damage ${arcaneLanceDamage} (ignores armor)`;
-    }
-
-    private updateStatButtons(remainingSkillPoints: number): void {
+    private updateStatButtons(): void {
+        const pending = this.pendingSkillAllocations;
+        const pendingTotal = Object.values(pending).reduce((total, value) => total + value, 0);
+        const remainingSkillPoints = this.player.skillPoints - pendingTotal;
         const hasRemainingSkillPoints = remainingSkillPoints > 0;
+
         this.hudElements.addVitalityBtn.disabled = !hasRemainingSkillPoints;
         this.hudElements.addToughnessBtn.disabled = !hasRemainingSkillPoints;
         this.hudElements.addStrengthBtn.disabled = !hasRemainingSkillPoints;
         this.hudElements.addAgilityBtn.disabled = !hasRemainingSkillPoints;
         this.hudElements.addConnectionBtn.disabled = !hasRemainingSkillPoints;
         this.hudElements.addIntelligenceBtn.disabled = !hasRemainingSkillPoints;
-
-        this.hudElements.subVitalityBtn.disabled = this.pendingSkillAllocations.vitality <= 0;
-        this.hudElements.subToughnessBtn.disabled = this.pendingSkillAllocations.toughness <= 0;
-        this.hudElements.subStrengthBtn.disabled = this.pendingSkillAllocations.strength <= 0;
-        this.hudElements.subAgilityBtn.disabled = this.pendingSkillAllocations.agility <= 0;
-        this.hudElements.subConnectionBtn.disabled = this.pendingSkillAllocations.connection <= 0;
-        this.hudElements.subIntelligenceBtn.disabled = this.pendingSkillAllocations.intelligence <= 0;
-
-        const hasPendingChanges = Object.values(this.pendingSkillAllocations).some((value) => value > 0);
-        this.hudElements.saveSkillsBtn.disabled = !hasPendingChanges;
+        this.hudElements.subVitalityBtn.disabled = pending.vitality <= 0;
+        this.hudElements.subToughnessBtn.disabled = pending.toughness <= 0;
+        this.hudElements.subStrengthBtn.disabled = pending.strength <= 0;
+        this.hudElements.subAgilityBtn.disabled = pending.agility <= 0;
+        this.hudElements.subConnectionBtn.disabled = pending.connection <= 0;
+        this.hudElements.subIntelligenceBtn.disabled = pending.intelligence <= 0;
+        this.hudElements.saveSkillsBtn.disabled = !Object.values(pending).some((value) => value > 0);
 
         const hasMagicPoints = this.player.magicPoints > 0;
         this.hudElements.upgradeFireballBtn.disabled = !hasMagicPoints;
@@ -652,59 +171,5 @@ export default class HudController {
         this.hudElements.upgradeSlowBtn.disabled = !hasMagicPoints;
         this.hudElements.upgradeRageBtn.disabled = !hasMagicPoints;
         this.hudElements.upgradeArcaneLanceBtn.disabled = !hasMagicPoints;
-    }
-
-    private updateToggleButtons(): void {
-        this.hudElements.toggleStatsPanelBtn.classList.toggle('active', !this.hudElements.statsPanel.classList.contains('hidden'));
-        this.hudElements.toggleSkillsPanelBtn.classList.toggle('active', !this.hudElements.skillsPanel.classList.contains('hidden'));
-        this.hudElements.toggleInventoryPanelBtn.classList.toggle('active', !this.hudElements.inventoryPanel.classList.contains('hidden'));
-        this.hudElements.toggleMagicPanelBtn.classList.toggle('active', !this.hudElements.magicPanel.classList.contains('hidden'));
-        this.hudElements.toggleQuestsPanelBtn.classList.toggle('active', !this.hudElements.questsPanel.classList.contains('hidden'));
-        this.hudElements.toggleLorePanelBtn.classList.toggle('active', !this.hudElements.lorePanel.classList.contains('hidden'));
-        this.hudElements.toggleSelectedPanelBtn.classList.toggle('active', !this.hudElements.selectedPanel.classList.contains('hidden'));
-        this.hudElements.toggleWorldMapPanelBtn.classList.toggle('active', !this.hudElements.worldMapPanel.classList.contains('hidden'));
-        this.hudElements.toggleLogPanelBtn.classList.toggle('active', !this.hudElements.logPanel.classList.contains('hidden'));
-    }
-
-    private updateSpellButtons(): void {
-        const availableSpells = this.magicSystem.getAvailableSpells();
-        const manaBySpell = new Map(availableSpells.map((spell) => [spell.id.split('-lvl-')[0], spell.manaCost]));
-        this.battleUI.spellFireballBtn.disabled = !this.player.canSpendMana(manaBySpell.get('fireball') ?? 999);
-        this.battleUI.spellCurseBtn.disabled = !this.player.canSpendMana(manaBySpell.get('curse') ?? 999);
-        this.battleUI.spellSlowBtn.disabled = !this.player.canSpendMana(manaBySpell.get('slow') ?? 999);
-        this.battleUI.spellRageBtn.disabled = !this.player.canSpendMana(manaBySpell.get('rage') ?? 999);
-        this.battleUI.spellArcaneLanceBtn.disabled = !this.player.canSpendMana(manaBySpell.get('arcane-lance') ?? 999);
-    }
-
-    private formatVillageStatusLabel(status: SelectedWorldCellInfo['villageStatus']): string {
-        if (status === 'current') {
-            return 'Current location';
-        }
-
-        if (status === 'mapped') {
-            return 'Mapped village';
-        }
-
-        return '—';
-    }
-
-    private formatTerrainLabel(terrainType: SelectedWorldCellInfo['terrainType']): string {
-        if (terrainType === 'mountain') {
-            return 'Hills';
-        }
-
-        return terrainType.charAt(0).toUpperCase() + terrainType.slice(1);
-    }
-
-    private formatVisibilityLabel(selectedCell: SelectedWorldCellInfo): string {
-        if (selectedCell.isVisible) {
-            return 'Visible now';
-        }
-
-        if (selectedCell.fogState === 'hidden') {
-            return 'Explored, not visible';
-        }
-
-        return 'Unexplored';
     }
 }
