@@ -132,6 +132,10 @@ export default class BattleCommandController {
         this.lootManager.resolvePendingLoot(this.player, this.callbacks);
     }
 
+    public collectLoot(target: Skeleton): void {
+        this.lootManager.collectLoot(target, this.callbacks);
+    }
+
     public clearPendingLoot = (): void => {
         this.lootManager.clearPendingLoot();
     };
