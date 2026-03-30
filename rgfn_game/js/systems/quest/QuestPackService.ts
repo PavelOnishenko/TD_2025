@@ -1,37 +1,15 @@
-import { LOCAL_PATTERNS } from './QuestPatterns.js';
 import { DefaultQuestRandom, QuestRandom } from './QuestRandom.js';
 import { GeneratedName, PackSourceType, QuestNameDomain } from './QuestTypes.js';
-import { theme } from '../../config/ThemeConfig.js';
+import { ASSET_PATHS, AssetMap, DOMAINS, FetchLike, PackSource } from './QuestPackTypes.js';
+import { QuestNameWordTargetSelector } from './QuestNameWordTargetSelector.js';
+import { QuestPackSourceFactory } from './QuestPackSourceFactory.js';
 
-type FetchLike = (input: string) => Promise<{ text(): Promise<string>; json(): Promise<unknown> }>;
-type AssetMap = Record<string, string[]>;
-type PackSource = { type: PackSourceType; domain: QuestNameDomain; available: boolean; generate(limit: number): Promise<string[]> };
 type QuestPackServiceDeps = {
     fetchImpl?: FetchLike;
     random?: QuestRandom;
     fileReader?: (path: string) => Promise<string>;
     locationNamesProvider?: () => string[] | Promise<string[]>;
 };
-
-type CountryRecord = { name?: { common?: string }; capital?: string[]; region?: string; subregion?: string };
-type RandomUserResponse = { results: Array<{ name: { first: string; last: string } }> };
-type LengthWeightMap = Partial<Record<1 | 2 | 3 | 4, number>>;
-
-const ASSET_PATHS = {
-    ADJECTIVE: '../../../data/quest-packs/common/adjectives.txt',
-    NOUN: '../../../data/quest-packs/common/nouns.txt',
-    PREPOSITION: '../../../data/quest-packs/common/prepositions.txt',
-    WEAPON: '../../../data/quest-packs/common/weapons.txt',
-    GIVEN: '../../../data/quest-packs/people/given.txt',
-    FAMILY: '../../../data/quest-packs/people/family.txt',
-    ROLE: '../../../data/quest-packs/people/trader_roles.txt',
-    SPECIES: '../../../data/quest-packs/monsters/species.txt',
-} as const;
-
-const PLACE_URL = 'https://restcountries.com/v3.1/all?fields=name,capital,region,subregion';
-const NAME_URL = 'https://randomuser.me/api/?inc=name&noinfo&results=1';
-const ECHO_SYLLABLES = ['va', 'lor', 'quin', 'esh', 'dra', 'morn', 'lys', 'tor', 'zen', 'ka'];
-const DOMAINS: QuestNameDomain[] = ['location', 'artifact', 'character', 'monster', 'mainQuest'];
 
 export default class QuestPackService {
     private readonly fetchImpl: FetchLike;
@@ -40,6 +18,7 @@ export default class QuestPackService {
     private readonly locationNamesProvider: () => string[] | Promise<string[]>;
     private readonly assets: AssetMap = {};
     private readonly sources: PackSource[] = [];
+    private readonly targetSelector: QuestNameWordTargetSelector;
     private initialized = false;
 
     constructor(deps: QuestPackServiceDeps = {}) {
@@ -47,6 +26,7 @@ export default class QuestPackService {
         this.random = deps.random ?? new DefaultQuestRandom();
         this.fileReader = deps.fileReader ?? ((path) => this.readTextAsset(path));
         this.locationNamesProvider = deps.locationNamesProvider ?? (() => []);
+        this.targetSelector = new QuestNameWordTargetSelector(this.random);
     }
 
     public async initialize(): Promise<void> {
@@ -61,17 +41,30 @@ export default class QuestPackService {
 
     public async generateName(domain: QuestNameDomain, maxWords: number): Promise<GeneratedName> {
         await this.initialize();
-        if (domain === 'location') {
-            const villageSource = this.sources.find((source) => source.domain === 'location' && source.type === 'map-village' && source.available);
-            if (villageSource) {
-                const villageName = (await villageSource.generate(maxWords))[0];
-                if (villageName) {
-                    return { text: this.titleCase([villageName]), domain, sourceTypes: [villageSource.type] };
-                }
-            }
+        const locationName = await this.tryMapVillageName(domain, maxWords);
+        if (locationName) {
+            return locationName;
         }
+        const target = this.targetSelector.pickWordTarget(domain, maxWords);
+        return this.generateFromSources(domain, target);
+    }
 
-        const target = this.pickWordTarget(domain, maxWords);
+    private async tryMapVillageName(domain: QuestNameDomain, maxWords: number): Promise<GeneratedName | null> {
+        if (domain !== 'location') {
+            return null;
+        }
+        const villageSource = this.sources.find((source) => source.domain === 'location' && source.type === 'map-village' && source.available);
+        if (!villageSource) {
+            return null;
+        }
+        const villageName = (await villageSource.generate(maxWords))[0];
+        if (!villageName) {
+            return null;
+        }
+        return { text: this.titleCase([villageName]), domain, sourceTypes: [villageSource.type] };
+    }
+
+    private async generateFromSources(domain: QuestNameDomain, target: number): Promise<GeneratedName> {
         const words: string[] = [];
         const sourceTypes: PackSourceType[] = [];
         while (words.length < target) {
@@ -83,42 +76,6 @@ export default class QuestPackService {
         return { text: this.titleCase(words), domain, sourceTypes };
     }
 
-    private pickWordTarget(domain: QuestNameDomain, maxWords: number): number {
-        const cap = Math.max(1, maxWords);
-        const configuredWeights = theme.quest.nameGeneration.wordLengthWeightsByDomain[domain] as LengthWeightMap | undefined;
-        const weightedTargets = this.resolveLengthWeights(configuredWeights, cap);
-
-        const totalWeight = weightedTargets.reduce((sum, entry) => sum + entry.weight, 0);
-        let roll = this.random.nextInt(1, totalWeight);
-        for (const entry of weightedTargets) {
-            roll -= entry.weight;
-            if (roll <= 0) {
-                return entry.words;
-            }
-        }
-
-        return Math.min(2, cap);
-    }
-
-    private resolveLengthWeights(weights: LengthWeightMap | undefined, cap: number): Array<{ words: number; weight: number }> {
-        if (!weights) {
-            return [{ words: 1, weight: 1 }];
-        }
-
-        const entries = (Object.entries(weights) as Array<[string, number]>)
-            .map(([length, weight]) => ({ words: Number(length), weight }))
-            .filter((entry) => Number.isInteger(entry.words)
-                && entry.words >= 1
-                && entry.words <= cap
-                && entry.weight > 0);
-
-        if (entries.length > 0) {
-            return entries;
-        }
-
-        return [{ words: 1, weight: 1 }];
-    }
-
     private async loadAssets(): Promise<void> {
         for (const [key, path] of Object.entries(ASSET_PATHS)) {
             this.assets[key] = this.wordList(await this.fileReader(path));
@@ -126,26 +83,28 @@ export default class QuestPackService {
     }
 
     private createSources(): void {
+        const sourceFactory = new QuestPackSourceFactory({
+            fetchImpl: this.fetchImpl,
+            random: this.random,
+            assets: this.assets,
+            locationNamesProvider: this.locationNamesProvider,
+        });
         for (const domain of DOMAINS) {
-            this.sources.push(this.localSource(domain));
-            this.sources.push(this.echoSource(domain));
+            this.sources.push(sourceFactory.createLocalSource(domain));
+            this.sources.push(sourceFactory.createEchoSource(domain));
         }
-        this.sources.push(this.mapVillageSource());
-        this.sources.push(this.locationSource());
-        this.sources.push(this.nameSource('character'));
-        this.sources.push(this.nameSource('monster'));
+        this.sources.push(sourceFactory.createMapVillageSource());
+        this.sources.push(sourceFactory.createLocationSource());
+        this.sources.push(sourceFactory.createNameSource('character'));
+        this.sources.push(sourceFactory.createNameSource('monster'));
     }
 
     private async probeSources(): Promise<void> {
         for (const source of this.sources) {
             if (source.type === 'map-village') {
-                source.available = (await this.locationNamesProvider())
-                    .map((name) => name.trim())
-                    .filter(Boolean)
-                    .length > 0;
+                source.available = (await this.locationNamesProvider()).map((name) => name.trim()).filter(Boolean).length > 0;
                 continue;
             }
-
             source.available = !source.type.startsWith('remote') || await this.isAvailable(source);
         }
     }
@@ -158,55 +117,16 @@ export default class QuestPackService {
         }
     }
 
-    private pickSource = (domain: QuestNameDomain): PackSource => this.random.pick(this.sources.filter((source) => source.domain === domain && source.available));
-
-    private localSource = (domain: QuestNameDomain): PackSource => ({ type: 'local-pattern', domain, available: true, generate: (limit) => this.localPack(domain, limit) });
-
-    private async localPack(domain: QuestNameDomain, limit: number): Promise<string[]> {
-        const options = LOCAL_PATTERNS.filter((item) => item.domain === domain && item.tokens.length <= limit);
-        const pattern = this.random.pick(options);
-        return pattern.tokens.map((token) => this.random.pick(this.assets[token]));
-    }
-
-
-    private mapVillageSource = (): PackSource => ({ type: 'map-village', domain: 'location', available: true, generate: () => this.mapVillagePack() });
-
-    private async mapVillagePack(): Promise<string[]> {
-        const villageNames = (await this.locationNamesProvider())
-            .map((name) => name.trim())
-            .filter(Boolean);
-        if (villageNames.length === 0) {
-            return [];
-        }
-        const selected = this.random.pick(villageNames);
-        return selected ? [selected] : [];
-    }
-
-    private locationSource = (): PackSource => ({ type: 'remote-location', domain: 'location', available: false, generate: () => this.fetchLocationPack() });
-
-    private async fetchLocationPack(): Promise<string[]> {
-        const response = await this.fetchImpl(PLACE_URL);
-        const sample = this.random.pick(await response.json() as CountryRecord[]);
-        const choices = [sample.name?.common, sample.capital?.[0], sample.subregion, sample.region].filter(Boolean) as string[];
-        return this.wordList(this.random.pick(choices)).slice(0, 3);
-    }
-
-    private nameSource = (domain: QuestNameDomain): PackSource => ({ type: 'remote-name', domain, available: false, generate: (limit) => this.fetchName(limit) });
-
-    private async fetchName(limit: number): Promise<string[]> {
-        const response = await this.fetchImpl(NAME_URL);
-        const data = await response.json() as RandomUserResponse;
-        const name = data.results[0].name;
-        return [name.first, name.last].map((part) => part.toLowerCase()).slice(0, limit);
-    }
-
-    private echoSource = (domain: QuestNameDomain): PackSource => ({ type: 'echo', domain, available: true, generate: (limit) => Promise.resolve(this.echoPack(limit)) });
-
-    private echoPack = (limit: number): string[] => Array.from({ length: Math.max(1, limit) }, () => `${this.random.pick(ECHO_SYLLABLES)}${this.random.pick(ECHO_SYLLABLES)}`);
+    private pickSource = (domain: QuestNameDomain): PackSource => this.random.pick(
+        this.sources.filter((source) => source.domain === domain && source.available),
+    );
 
     private titleCase = (words: string[]): string => words.map((word) => this.capitalizeWord(word)).join(' ');
 
-    private capitalizeWord = (word: string): string => word.split('-').map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join('-');
+    private capitalizeWord = (word: string): string => word
+        .split('-')
+        .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+        .join('-');
 
     private wordList = (text: string): string[] => text.split(/\s+/).map((word) => word.trim()).filter(Boolean);
 
