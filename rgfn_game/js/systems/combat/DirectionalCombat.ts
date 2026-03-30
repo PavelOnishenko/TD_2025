@@ -68,6 +68,4 @@ export function getMoveLabel(move: CombatMove): string {
     }
 }
 
-export function resolveDirectionalCombatExchange(params: ExchangeParams): ExchangeResolution {
-    return exchangeResolver.resolve(params);
-}
+export const resolveDirectionalCombatExchange = (params: ExchangeParams): ExchangeResolution => exchangeResolver.resolve(params);

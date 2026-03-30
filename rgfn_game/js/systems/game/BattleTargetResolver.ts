@@ -15,9 +15,7 @@ export default class BattleTargetResolver {
         this.getSelectedEnemy = getSelectedEnemy;
     }
 
-    public resolveAttackTarget(enemies: Skeleton[]): Skeleton | null {
-        return this.resolveRangedTarget(enemies, this.player.getAttackRange());
-    }
+    public resolveAttackTarget = (enemies: Skeleton[]): Skeleton | null => this.resolveRangedTarget(enemies, this.player.getAttackRange());
 
     public resolveSpellTarget(spellId: BaseSpellId, enemies: Skeleton[]): Skeleton | null {
         const spellRange = spellId === 'slow' ? balanceConfig.combat.spellRanges.slow : this.player.getAttackRange();

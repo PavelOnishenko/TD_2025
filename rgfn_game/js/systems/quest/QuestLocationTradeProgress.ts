@@ -9,12 +9,7 @@ export class QuestLocationTradeProgress {
         return locationChanged || deliveryChanged;
     }
 
-    public markBarterAndPickupObjectives(
-        node: QuestNode,
-        normalizedTrader: string,
-        normalizedItem: string,
-        normalizedVillage: string,
-    ): boolean {
+    public markBarterAndPickupObjectives(node: QuestNode, normalizedTrader: string, normalizedItem: string, normalizedVillage: string): boolean {
         const barterChanged = this.markBarterObjectives(node, normalizedTrader, normalizedItem);
         const pickupChanged = this.markDeliverPickupObjectives(node, normalizedTrader, normalizedItem, normalizedVillage);
         return barterChanged || pickupChanged;
@@ -46,12 +41,7 @@ export class QuestLocationTradeProgress {
         return true;
     }
 
-    private markDeliverPickupObjectives(
-        node: QuestNode,
-        normalizedTrader: string,
-        normalizedItem: string,
-        normalizedVillage: string,
-    ): boolean {
+    private markDeliverPickupObjectives(node: QuestNode, normalizedTrader: string, normalizedItem: string, normalizedVillage: string): boolean {
         let changed = false;
 
         for (const child of node.children) {

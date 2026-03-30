@@ -104,12 +104,10 @@ export default class BattleMapObstacleGenerator {
         return candidates;
     }
 
-    private allEnemiesHaveMeleeLane(playerSpawn: GridPosition, enemySpawns: GridPosition[]): boolean {
-        return enemySpawns.every((spawn) => CARDINAL_STEPS
-            .map((step) => ({ col: spawn.col + step.col, row: spawn.row + step.row }))
-            .filter((candidate) => this.grid.isValidPosition(candidate.col, candidate.row) && !this.isObstacle(candidate.col, candidate.row))
-            .some((candidate) => this.pathExists(playerSpawn, candidate)));
-    }
+    private allEnemiesHaveMeleeLane = (playerSpawn: GridPosition, enemySpawns: GridPosition[]): boolean => enemySpawns.every((spawn) => CARDINAL_STEPS
+        .map((step) => ({ col: spawn.col + step.col, row: spawn.row + step.row }))
+        .filter((candidate) => this.grid.isValidPosition(candidate.col, candidate.row) && !this.isObstacle(candidate.col, candidate.row))
+        .some((candidate) => this.pathExists(playerSpawn, candidate)));
 
     private pathExists(start: GridPosition, end: GridPosition): boolean {
         const queue: GridPosition[] = [start];
@@ -171,9 +169,8 @@ export default class BattleMapObstacleGenerator {
         return visited.size === walkableCells.length;
     }
 
-    private countAdjacentObstacles(col: number, row: number): number {
-        return CARDINAL_STEPS.reduce((count, step) => count + (this.isObstacle(col + step.col, row + step.row) ? 1 : 0), 0);
-    }
+    private countAdjacentObstacles = (col: number, row: number): number =>
+        CARDINAL_STEPS.reduce((count, step) => count + (this.isObstacle(col + step.col, row + step.row) ? 1 : 0), 0);
 
     private isObstacle = (col: number, row: number): boolean => this.obstacles.has(this.getCellKey(col, row));
 

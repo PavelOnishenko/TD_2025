@@ -61,7 +61,7 @@ export default class BattleUiActionAvailability {
         hasEnemySpellTarget: boolean;
         hasEnemySlowTarget: boolean;
         manaBySpell: Map<string, number>;
-    } {
+        } {
         const hasAttackTarget = this.targeting.hasEnemyInAttackRange(this.player.getAttackRange());
         const hasDirectionalTarget = this.targeting.hasEnemyInDirectionalRange();
 
@@ -82,13 +82,9 @@ export default class BattleUiActionAvailability {
         return new Map(availableSpells.map((spell) => [spell.id.split('-lvl-')[0], spell.manaCost]));
     }
 
-    private canCast(spellId: 'fireball' | 'curse' | 'slow' | 'rage' | 'arcane-lance', manaBySpell: Map<string, number>): boolean {
-        return this.player.canSpendMana(manaBySpell.get(spellId) ?? Number.POSITIVE_INFINITY);
-    }
+    private canCast = (spellId: 'fireball' | 'curse' | 'slow' | 'rage' | 'arcane-lance', manaBySpell: Map<string, number>): boolean => this.player.canSpendMana(manaBySpell.get(spellId) ?? Number.POSITIVE_INFINITY);
 
-    private getSpellRange(spellId: 'slow'): number {
-        return balanceConfig.combat.spellRanges[spellId] ?? this.player.getAttackRange();
-    }
+    private getSpellRange = (spellId: 'slow'): number => balanceConfig.combat.spellRanges[spellId] ?? this.player.getAttackRange();
 
     private setActionVisible(button: HTMLButtonElement, visible: boolean): void {
         button.classList.toggle('hidden', !visible);

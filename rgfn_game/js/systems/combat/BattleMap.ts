@@ -95,9 +95,7 @@ export default class BattleMap {
         this.selectedGridPos = null;
     };
 
-    public getSelectedCellInfo(): SelectedBattleCellInfo | null {
-        return BattleMapSelectionInfo.build(this.selectedGridPos, this.entities, this.obstacles, this.terrainType);
-    }
+    public getSelectedCellInfo = (): SelectedBattleCellInfo | null => BattleMapSelectionInfo.build(this.selectedGridPos, this.entities, this.obstacles, this.terrainType);
 
     public isEntityOnEdge(entity: CombatEntity): boolean {
         const col = entity.gridCol;
@@ -121,10 +119,7 @@ export default class BattleMap {
         const spacing = 2;
         const formationWidth = Math.max(1, ((clampedCount - 1) * spacing) + 1);
         const startCol = Math.max(1, Math.floor((this.grid.columns - formationWidth) / 2));
-        return Array.from({ length: clampedCount }, (_, index) => ({
-            col: Math.min(this.grid.columns - 2, startCol + (index * spacing)),
-            row: 1,
-        }));
+        return Array.from({ length: clampedCount }, (_, index) => ({ col: Math.min(this.grid.columns - 2, startCol + (index * spacing)), row: 1 }));
     }
 
     private placeEntity(entity: CombatEntity, col: number, row: number): void {

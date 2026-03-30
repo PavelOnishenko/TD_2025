@@ -97,9 +97,9 @@ export default class GameBattleRuntimeFlow {
         this.deps.battleMap.clearSelectedCell();
     }
 
-    public setTurnTransitioning(turnTransitioning: boolean): void {
+    public setTurnTransitioning = (turnTransitioning: boolean): void => {
         this.turnTransitioning = turnTransitioning;
-    }
+    };
 
     public isTurnTransitioning = (): boolean => this.turnTransitioning;
 
