@@ -284,6 +284,24 @@ Focused manual QA:
 4. Resize `Quests` vertically with 2-4 other panels open:
    - resizing should continue smoothly and no longer "hard-stop" from stack coupling.
 
+### Quests hardening fallback (March 30, 2026)
+
+Follow-up from additional QA reports showed `Quests` could still behave differently in some sessions (unexpected downward jump + renewed vertical squeeze) while `Log` remained stable.
+
+To harden against any runtime class-decoration mismatch, `#quests-panel` now also explicitly carries the floating-window geometry contract at ID level:
+
+- `position: fixed`
+- `top: 0`
+- `left: 0`
+- `transform: translate(var(--panel-offset-x), var(--panel-offset-y))`
+
+This keeps Quests anchored to the same coordinate model as other draggable windows even if `.draggable-panel` class decoration is not applied as expected in edge flows.
+
+Practical intent:
+
+- Prevent re-coupling of Quests to overlay stack layout.
+- Keep resize behavior stable when opening additional panels (`Stats`, `Skills`, etc.).
+
 ### Important exception
 
 `World Map` sidebar and `Log` keep scroll constraints by design because they can contain intentionally long content and controls with high update frequency.

@@ -378,6 +378,10 @@ h1 {
 }
 
 #quests-panel {
+    position: fixed;
+    top: 0;
+    left: 0;
+    transform: translate(var(--panel-offset-x, 0px), var(--panel-offset-y, 0px));
     max-width: calc(100vw - 32px);
     max-inline-size: calc(100vw - 32px);
     max-height: none;
