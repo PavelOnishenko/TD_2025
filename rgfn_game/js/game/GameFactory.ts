@@ -35,25 +35,21 @@ import { GameFacade } from './GameFacade.js';
 import GameRuntimeUiBinder from './runtime/GameRuntimeUiBinder.js';
 import GameRuntimeStateMachineFactory from './runtime/GameRuntimeStateMachineFactory.js';
 
-function createPlayer(hasSavedGame: boolean): Player {
-    return new Player(0, 0, {
-        startingSkillAllocation: hasSavedGame
-            ? null
-            : consumeNextCharacterRollAllocation(balanceConfig.player.initialRandomAllocatedSkillPoints ?? 0),
-    });
-}
+const createPlayer = (hasSavedGame: boolean): Player => new Player(0, 0, {
+    startingSkillAllocation: hasSavedGame
+        ? null
+        : consumeNextCharacterRollAllocation(balanceConfig.player.initialRandomAllocatedSkillPoints ?? 0),
+});
 
-function createQuestUiController(game: GameFacade, ui: ReturnType<GameUiFactory['create']>): QuestUiController {
-    return new QuestUiController(
-        ui.hudElements.questsTitle,
-        ui.hudElements.questsKnownOnlyToggle,
-        ui.hudElements.questsBody,
-        ui.hudElements.questIntroModal,
-        ui.hudElements.questIntroBody,
-        ui.hudElements.questIntroCloseBtn,
-        { onLocationClick: (locationName: string) => game.onQuestLocationClick(locationName) },
-    );
-}
+const createQuestUiController = (game: GameFacade, ui: ReturnType<GameUiFactory['create']>): QuestUiController => new QuestUiController(
+    ui.hudElements.questsTitle,
+    ui.hudElements.questsKnownOnlyToggle,
+    ui.hudElements.questsBody,
+    ui.hudElements.questIntroModal,
+    ui.hudElements.questIntroBody,
+    ui.hudElements.questIntroCloseBtn,
+    { onLocationClick: (locationName: string) => game.onQuestLocationClick(locationName) },
+);
 
 function createBattleControllers(
     game: GameFacade,
@@ -70,31 +66,76 @@ function createBattleControllers(
     battleTurnController: BattleTurnController;
 } {
     const battlePlayerActionController = createBattlePlayerActionController(game, turnManager, battleUiController, player, hudCoordinator);
-    const battleCommandController = createBattleCommandController(game, stateMachine, player, battleMap, turnManager, magicSystem, hudCoordinator, battlePlayerActionController);
+    const battleCommandController = createBattleCommandController(
+        game,
+        stateMachine,
+        player,
+        battleMap,
+        turnManager,
+        magicSystem,
+        hudCoordinator,
+        battlePlayerActionController,
+    );
     const battleTurnController = createBattleTurnController(game, battleMap, turnManager, player, hudCoordinator);
     return { battlePlayerActionController, battleCommandController, battleTurnController };
 }
 
-function createBattlePlayerActionController(
-    game: GameFacade, turnManager: TurnManager, battleUiController: BattleUiController, player: Player, hudCoordinator: GameHudCoordinator,
-): BattlePlayerActionController {
-    return new BattlePlayerActionController(turnManager, battleUiController, player, { onAddBattleLog: (m, t = 'system') => hudCoordinator.addBattleLog(m, t), onEnableBattleButtons: (enabled) => hudCoordinator.enableBattleButtons(enabled), onProcessTurn: () => game.battleCoordinator.processTurn(), onPlayerTurnTransitionStart: () => game.battleCoordinator.onPlayerTurnTransitionStart() });
-}
+const createBattlePlayerActionController = (
+    game: GameFacade,
+    turnManager: TurnManager,
+    battleUiController: BattleUiController,
+    player: Player,
+    hudCoordinator: GameHudCoordinator,
+): BattlePlayerActionController => new BattlePlayerActionController(turnManager, battleUiController, player, {
+    onAddBattleLog: (m, t = 'system') => hudCoordinator.addBattleLog(m, t),
+    onEnableBattleButtons: (enabled) => hudCoordinator.enableBattleButtons(enabled),
+    onProcessTurn: () => game.battleCoordinator.processTurn(),
+    onPlayerTurnTransitionStart: () => game.battleCoordinator.onPlayerTurnTransitionStart(),
+});
 
-function createBattleCommandController(
-    game: GameFacade, stateMachine: ReturnType<typeof GameRuntimeStateMachineFactory.create>, player: Player, battleMap: BattleMap, turnManager: TurnManager, magicSystem: MagicSystem, hudCoordinator: GameHudCoordinator, battlePlayerActionController: BattlePlayerActionController,
-): BattleCommandController {
-    return new BattleCommandController(stateMachine, player, battleMap, turnManager, magicSystem, { onUpdateHUD: () => hudCoordinator.updateHUD(), onAddBattleLog: (m, t = 'system') => hudCoordinator.addBattleLog(m, t), onEnableBattleButtons: (enabled) => hudCoordinator.enableBattleButtons(enabled), onProcessTurn: () => game.battleCoordinator.processTurn(), onEndBattle: (result) => game.battleCoordinator.endBattle(result), onPlayerTurnTransitionStart: () => game.battleCoordinator.onPlayerTurnTransitionStart(), onPlayerTurnReady: () => game.battleCoordinator.onPlayerTurnReady(), getSelectedEnemy: () => battlePlayerActionController.getSelectedEnemy(), setSelectedEnemy: (enemy: Skeleton | null) => battlePlayerActionController.setSelectedEnemy(enemy), onEnemyDefeated: (enemy: Skeleton) => game.onMonsterKilled(enemy.name) });
-}
+const createBattleCommandController = (
+    game: GameFacade,
+    stateMachine: ReturnType<typeof GameRuntimeStateMachineFactory.create>,
+    player: Player,
+    battleMap: BattleMap,
+    turnManager: TurnManager,
+    magicSystem: MagicSystem,
+    hudCoordinator: GameHudCoordinator,
+    battlePlayerActionController: BattlePlayerActionController,
+): BattleCommandController => new BattleCommandController(stateMachine, player, battleMap, turnManager, magicSystem, {
+    onUpdateHUD: () => hudCoordinator.updateHUD(),
+    onAddBattleLog: (m, t = 'system') => hudCoordinator.addBattleLog(m, t),
+    onEnableBattleButtons: (enabled) => hudCoordinator.enableBattleButtons(enabled),
+    onProcessTurn: () => game.battleCoordinator.processTurn(),
+    onEndBattle: (result) => game.battleCoordinator.endBattle(result),
+    onPlayerTurnTransitionStart: () => game.battleCoordinator.onPlayerTurnTransitionStart(),
+    onPlayerTurnReady: () => game.battleCoordinator.onPlayerTurnReady(),
+    getSelectedEnemy: () => battlePlayerActionController.getSelectedEnemy(),
+    setSelectedEnemy: (enemy: Skeleton | null) => battlePlayerActionController.setSelectedEnemy(enemy),
+    onEnemyDefeated: (enemy: Skeleton) => game.onMonsterKilled(enemy.name),
+});
 
-function createBattleTurnController(
-    game: GameFacade, battleMap: BattleMap, turnManager: TurnManager, player: Player, hudCoordinator: GameHudCoordinator,
-): BattleTurnController {
-    return new BattleTurnController(battleMap, turnManager, player, { onAddBattleLog: (m, t = 'system') => hudCoordinator.addBattleLog(m, t), onUpdateHUD: () => hudCoordinator.updateHUD(), onEnableBattleButtons: (enabled) => hudCoordinator.enableBattleButtons(enabled), onBattleEnd: (result) => game.battleCoordinator.endBattle(result), onPlayerTurnReady: () => game.battleCoordinator.onPlayerTurnReady() });
-}
+const createBattleTurnController = (
+    game: GameFacade,
+    battleMap: BattleMap,
+    turnManager: TurnManager,
+    player: Player,
+    hudCoordinator: GameHudCoordinator,
+): BattleTurnController => new BattleTurnController(battleMap, turnManager, player, {
+    onAddBattleLog: (m, t = 'system') => hudCoordinator.addBattleLog(m, t),
+    onUpdateHUD: () => hudCoordinator.updateHUD(),
+    onEnableBattleButtons: (enabled) => hudCoordinator.enableBattleButtons(enabled),
+    onBattleEnd: (result) => game.battleCoordinator.endBattle(result),
+    onPlayerTurnReady: () => game.battleCoordinator.onPlayerTurnReady(),
+});
 
 function createVillageAndState(game: GameFacade, ui: ReturnType<GameUiFactory['create']>, player: Player, worldMap: WorldMap, villageLifeRenderer: VillageLifeRenderer, hudCoordinator: GameHudCoordinator) {
-    const villageActionsController = new VillageActionsController(player, ui.villageUI, ui.gameLogUI.log, { onUpdateHUD: () => hudCoordinator.updateHUD(), onLeaveVillage: () => game.stateMachine.transition(MODES.WORLD_MAP), getVillageDirectionHint: (name: string) => worldMap.getVillageDirectionHintFromPlayer(name), onVillageBarterCompleted: (trader, item, village) => game.onVillageBarterCompleted(trader, item, village) });
+    const villageActionsController = new VillageActionsController(player, ui.villageUI, ui.gameLogUI.log, {
+        onUpdateHUD: () => hudCoordinator.updateHUD(),
+        onLeaveVillage: () => game.stateMachine.transition(MODES.WORLD_MAP),
+        getVillageDirectionHint: (name: string) => worldMap.getVillageDirectionHintFromPlayer(name),
+        onVillageBarterCompleted: (trader, item, village) => game.onVillageBarterCompleted(trader, item, village),
+    });
     const villageCoordinator = new GameVillageCoordinator(ui.hudElements, ui.battleUI, ui.villageUI, ui.worldUI, villageLifeRenderer, villageActionsController);
     const stateMachine = GameRuntimeStateMachineFactory.create(game, ui, worldMap, villageCoordinator);
     return { villageActionsController, villageCoordinator, stateMachine };
@@ -111,13 +152,59 @@ function createRuntimeBase(hasSavedGame: boolean, worldColumns: number, worldRow
     return { player, worldMap, battleMap, turnManager, encounterSystem, villageLifeRenderer, ui };
 }
 
-function createBattleCoordinator(game: GameFacade, stateMachine: ReturnType<typeof GameRuntimeStateMachineFactory.create>, player: Player, battleMap: BattleMap, turnManager: TurnManager, ui: ReturnType<GameUiFactory['create']>, hudCoordinator: GameHudCoordinator, battlePlayerActionController: BattlePlayerActionController, battleCommandController: BattleCommandController, battleTurnController: BattleTurnController): GameBattleCoordinator {
-    return new GameBattleCoordinator(game.input, stateMachine, { player, battleMap, turnManager, battleSplash: new BattleSplash(), hudElements: ui.hudElements, battleUI: ui.battleUI, villageUI: ui.villageUI, worldUI: ui.worldUI }, { battlePlayerActionController, battleCommandController, battleTurnController }, { onClearBattleLog: () => hudCoordinator.clearBattleLog(), onAddBattleLog: (m, t = 'system') => hudCoordinator.addBattleLog(m, t), onUpdateHUD: () => hudCoordinator.updateHUD(), onDescribeEncounter: (enemies) => hudCoordinator.describeEncounter(enemies), onGameOver: () => game.gameOver() });
-}
+const createBattleCoordinator = (
+    game: GameFacade,
+    stateMachine: ReturnType<typeof GameRuntimeStateMachineFactory.create>,
+    player: Player,
+    battleMap: BattleMap,
+    turnManager: TurnManager,
+    ui: ReturnType<GameUiFactory['create']>,
+    hudCoordinator: GameHudCoordinator,
+    battlePlayerActionController: BattlePlayerActionController,
+    battleCommandController: BattleCommandController,
+    battleTurnController: BattleTurnController,
+): GameBattleCoordinator => new GameBattleCoordinator(
+    game.input,
+    stateMachine,
+    {
+        player,
+        battleMap,
+        turnManager,
+        battleSplash: new BattleSplash(),
+        hudElements: ui.hudElements,
+        battleUI: ui.battleUI,
+        villageUI: ui.villageUI,
+        worldUI: ui.worldUI,
+    },
+    { battlePlayerActionController, battleCommandController, battleTurnController },
+    {
+        onClearBattleLog: () => hudCoordinator.clearBattleLog(),
+        onAddBattleLog: (m, t = 'system') => hudCoordinator.addBattleLog(m, t),
+        onUpdateHUD: () => hudCoordinator.updateHUD(),
+        onDescribeEncounter: (enemies) => hudCoordinator.describeEncounter(enemies),
+        onGameOver: () => game.gameOver(),
+    },
+);
 
-function createWorldModeControllerRuntime(game: GameFacade, player: Player, worldMap: WorldMap, encounterSystem: EncounterSystem, stateMachine: ReturnType<typeof GameRuntimeStateMachineFactory.create>, ui: ReturnType<GameUiFactory['create']>, hudCoordinator: GameHudCoordinator, loreBookController: LoreBookController): WorldModeController {
-    return new WorldModeController(game.input, player, worldMap, encounterSystem, new ItemDiscoverySplash(), { onEnterVillage: () => stateMachine.transition(MODES.VILLAGE), onRequestVillageEntryPrompt: (name, anchor) => game.showVillageEntryPrompt(ui.worldUI, name, anchor), onCloseVillageEntryPrompt: () => game.hideVillageEntryPrompt(ui.worldUI), onStartBattle: (enemies: Skeleton[], terrainType: TerrainType) => stateMachine.transition(MODES.BATTLE, { enemies, terrainType }), onAddBattleLog: (m, t = 'system') => hudCoordinator.addBattleLog(m, t), onUpdateHUD: () => hudCoordinator.updateHUD(), onRememberTraveler: (traveler, disposition) => loreBookController.rememberTraveler(traveler, disposition), getQuestBattleEncounter: () => game.tryCreateQuestMonsterEncounter() });
-}
+const createWorldModeControllerRuntime = (
+    game: GameFacade,
+    player: Player,
+    worldMap: WorldMap,
+    encounterSystem: EncounterSystem,
+    stateMachine: ReturnType<typeof GameRuntimeStateMachineFactory.create>,
+    ui: ReturnType<GameUiFactory['create']>,
+    hudCoordinator: GameHudCoordinator,
+    loreBookController: LoreBookController,
+): WorldModeController => new WorldModeController(game.input, player, worldMap, encounterSystem, new ItemDiscoverySplash(), {
+    onEnterVillage: () => stateMachine.transition(MODES.VILLAGE),
+    onRequestVillageEntryPrompt: (name, anchor) => game.showVillageEntryPrompt(ui.worldUI, name, anchor),
+    onCloseVillageEntryPrompt: () => game.hideVillageEntryPrompt(ui.worldUI),
+    onStartBattle: (enemies: Skeleton[], terrainType: TerrainType) => stateMachine.transition(MODES.BATTLE, { enemies, terrainType }),
+    onAddBattleLog: (m, t = 'system') => hudCoordinator.addBattleLog(m, t),
+    onUpdateHUD: () => hudCoordinator.updateHUD(),
+    onRememberTraveler: (traveler, disposition) => loreBookController.rememberTraveler(traveler, disposition),
+    getQuestBattleEncounter: () => game.tryCreateQuestMonsterEncounter(),
+});
 
 export function createGameRuntime(
     game: GameFacade,
@@ -127,7 +214,12 @@ export function createGameRuntime(
     worldRows: number,
     worldCellSize: number,
 ): void {
-    const { player, worldMap, battleMap, turnManager, encounterSystem, villageLifeRenderer, ui } = createRuntimeBase(hasSavedGame, worldColumns, worldRows, worldCellSize);
+    const { player, worldMap, battleMap, turnManager, encounterSystem, villageLifeRenderer, ui } = createRuntimeBase(
+        hasSavedGame,
+        worldColumns,
+        worldRows,
+        worldCellSize,
+    );
     const questGenerator = new QuestGenerator({ packService: new QuestPackService({ locationNamesProvider: () => worldMap.getAllVillageNames() }) });
     const questUiController = createQuestUiController(game, ui);
     const loreBookController = new LoreBookController({ loreBody: ui.hudElements.loreBody }, player, worldMap);
@@ -160,7 +252,18 @@ export function createGameRuntime(
         battleUiController,
     );
     battleCommandControllerRef = battleCommandController;
-    const battleCoordinator = createBattleCoordinator(game, stateMachine, player, battleMap, turnManager, ui, hudCoordinator, battlePlayerActionController, battleCommandController, battleTurnController);
+    const battleCoordinator = createBattleCoordinator(
+        game,
+        stateMachine,
+        player,
+        battleMap,
+        turnManager,
+        ui,
+        hudCoordinator,
+        battlePlayerActionController,
+        battleCommandController,
+        battleTurnController,
+    );
     const worldModeController = createWorldModeControllerRuntime(game, player, worldMap, encounterSystem, stateMachine, ui, hudCoordinator, loreBookController);
     const renderRouter = new GameRenderRouter({
         canvas: game.canvas,

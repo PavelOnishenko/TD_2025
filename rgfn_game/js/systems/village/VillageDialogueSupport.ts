@@ -60,18 +60,14 @@ export class VillageNpcFactory {
         return Array.from({ length: rosterSize }, (_, index) => this.createNpc(villageName, index));
     }
 
-    private createNpc(villageName: string, index: number): VillageNpcProfile {
-        return {
-            id: `${villageName.toLowerCase()}-${index}`,
-            name: this.pick(this.names),
-            role: this.pick(this.roles),
-            look: this.pick(this.looks),
-            speechStyle: this.pick(this.speechStyles),
-            disposition: this.pick(this.dispositions),
-        };
-    }
+    private createNpc = (villageName: string, index: number): VillageNpcProfile => ({
+        id: `${villageName.toLowerCase()}-${index}`,
+        name: this.pick(this.names),
+        role: this.pick(this.roles),
+        look: this.pick(this.looks),
+        speechStyle: this.pick(this.speechStyles),
+        disposition: this.pick(this.dispositions),
+    });
 
-    private pick<T>(items: readonly T[]): T {
-        return items[Math.floor(Math.random() * items.length)];
-    }
+    private pick = <T>(items: readonly T[]): T => items[Math.floor(Math.random() * items.length)];
 }

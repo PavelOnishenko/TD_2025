@@ -29,13 +29,7 @@ export default class WorldMapTerrainModeling extends WorldMapCore {
         return climates;
     }
 
-    private assignTerrainDataFromClimate(
-        climates: ClimateCell[],
-        columns: number,
-        lakeCells: Set<string>,
-        riverCells: Set<string>,
-        forestThreshold: number,
-    ): void {
+    private assignTerrainDataFromClimate(climates: ClimateCell[], columns: number, lakeCells: Set<string>, riverCells: Set<string>, forestThreshold: number): void {
         this.terrainData.clear();
         this.terrainByIndex = new Array(columns * this.grid.rows);
         climates.forEach((climate) => {
@@ -70,21 +64,21 @@ export default class WorldMapTerrainModeling extends WorldMapCore {
             elevation: measurements.elevation,
             moisture: measurements.moisture,
             heat: measurements.heat,
-            forestSuitability: (weights.forest * 1.4) + (measurements.moisture * 0.9) + (noise.forest * 0.55) + (measurements.temperateBand * 0.22),
-            grassSuitability: (weights.grass * 1.2) + ((1 - Math.abs(measurements.moisture - 0.52)) * 0.58) + (measurements.temperateBand * 0.22) + ((1 - measurements.elevation) * 0.1),
+            forestSuitability: (weights.forest * 1.4) + (measurements.moisture * 0.9) + (noise.forest * 0.55)
+                + (measurements.temperateBand * 0.22),
+            grassSuitability: (weights.grass * 1.2) + ((1 - Math.abs(measurements.moisture - 0.52)) * 0.58)
+                + (measurements.temperateBand * 0.22) + ((1 - measurements.elevation) * 0.1),
             inlandWaterSuitability: (weights.water * 1.35) + (measurements.waterLowlands * 1.1) + (noise.water * 0.3),
         };
     }
 
-    private createClimateNoise(nx: number, ny: number): { elevation: number; moisture: number; heat: number; forest: number; water: number } {
-        return {
-            elevation: this.fractalNoise(nx * 1.4, ny * 1.4, 4, 0.52, 2.05),
-            moisture: this.fractalNoise((nx + 17.2) * 1.72, (ny - 5.4) * 1.72, 4, 0.56, 2.1),
-            heat: this.fractalNoise((nx - 8.1) * 1.28, (ny + 13.7) * 1.28, 3, 0.5, 2.15),
-            forest: this.fractalNoise((nx + 3.4) * 2.15, (ny + 7.9) * 2.15, 3, 0.58, 2.0),
-            water: this.fractalNoise((nx + 11.8) * 2.4, (ny - 6.6) * 2.4, 2, 0.6, 2.0),
-        };
-    }
+    private createClimateNoise = (nx: number, ny: number): { elevation: number; moisture: number; heat: number; forest: number; water: number } => ({
+        elevation: this.fractalNoise(nx * 1.4, ny * 1.4, 4, 0.52, 2.05),
+        moisture: this.fractalNoise((nx + 17.2) * 1.72, (ny - 5.4) * 1.72, 4, 0.56, 2.1),
+        heat: this.fractalNoise((nx - 8.1) * 1.28, (ny + 13.7) * 1.28, 3, 0.5, 2.15),
+        forest: this.fractalNoise((nx + 3.4) * 2.15, (ny + 7.9) * 2.15, 3, 0.58, 2.0),
+        water: this.fractalNoise((nx + 11.8) * 2.4, (ny - 6.6) * 2.4, 2, 0.6, 2.0),
+    });
 
     private createClimateMeasurements(
         noise: { elevation: number; moisture: number; heat: number; forest: number; water: number },
@@ -171,9 +165,7 @@ export default class WorldMapTerrainModeling extends WorldMapCore {
         }
     }
 
-    private isInsideLakeEdge(
-        centerCol: number, centerRow: number, x: number, y: number, radius: number, jitter: number, attempt: number,
-    ): boolean {
+    private isInsideLakeEdge(centerCol: number, centerRow: number, x: number, y: number, radius: number, jitter: number, attempt: number): boolean {
         const dx = x - centerCol;
         const dy = y - centerRow;
         const distance = Math.sqrt((dx * dx) + (dy * dy));

@@ -99,44 +99,42 @@ export default class VillageActionsController {
         this.barterService.getVillageContractHints(villageName).forEach((hint) => this.addLog(`Rumor update: ${hint}`, 'system-message'));
     }
 
-    private createVillageUiPresenter(player: Player, villageUI: VillageUI, gameLog: HTMLElement): VillageUiPresenter {
-        return new VillageUiPresenter({
-            player,
-            villageUI,
-            gameLog,
-            onSelectNpc: (index) => this.handleSelectNpc(index),
-            getOffers: () => this.stockService.getCurrentOffers(),
-            getSelectedNpc: () => this.getSelectedNpc(),
-            getSellPrice: (item) => this.stockService.getSellPrice(item),
-            isInnkeeper: (role) => this.isInnkeeper(role),
-        });
-    }
+    private createVillageUiPresenter = (player: Player, villageUI: VillageUI, gameLog: HTMLElement): VillageUiPresenter => new VillageUiPresenter({
+        player,
+        villageUI,
+        gameLog,
+        onSelectNpc: (index) => this.handleSelectNpc(index),
+        getOffers: () => this.stockService.getCurrentOffers(),
+        getSelectedNpc: () => this.getSelectedNpc(),
+        getSellPrice: (item) => this.stockService.getSellPrice(item),
+        isInnkeeper: (role) => this.isInnkeeper(role),
+    });
 
-    private createTradeInteraction(player: Player, callbacks: VillageActionsCallbacks): VillageTradeInteractionService {
-        return new VillageTradeInteractionService({
-            player,
-            callbacks,
-            stockService: this.stockService,
-            getSelectedNpc: () => this.getSelectedNpc(),
-            addLog: (message, type) => this.addLog(message, type),
-            updateButtons: () => this.updateButtons(),
-        });
-    }
+    private createTradeInteraction = (player: Player, callbacks: VillageActionsCallbacks): VillageTradeInteractionService => new VillageTradeInteractionService({
+        player,
+        callbacks,
+        stockService: this.stockService,
+        getSelectedNpc: () => this.getSelectedNpc(),
+        addLog: (message, type) => this.addLog(message, type),
+        updateButtons: () => this.updateButtons(),
+    });
 
-    private createDialogueInteraction(player: Player, villageUI: VillageUI, callbacks: VillageActionsCallbacks): VillageDialogueInteractionService {
-        return new VillageDialogueInteractionService({
-            player,
-            villageUI,
-            callbacks,
-            dialogueEngine: this.dialogueEngine,
-            barterService: this.barterService,
-            getCurrentVillageName: () => this.currentVillageName,
-            getSelectedNpc: () => this.getSelectedNpc(),
-            addLog: (message, type) => this.addLog(message, type),
-            describeDistance: (distanceCells) => this.describeDistance(distanceCells),
-            updateButtons: () => this.updateButtons(),
-        });
-    }
+    private createDialogueInteraction = (
+        player: Player,
+        villageUI: VillageUI,
+        callbacks: VillageActionsCallbacks,
+    ): VillageDialogueInteractionService => new VillageDialogueInteractionService({
+        player,
+        villageUI,
+        callbacks,
+        dialogueEngine: this.dialogueEngine,
+        barterService: this.barterService,
+        getCurrentVillageName: () => this.currentVillageName,
+        getSelectedNpc: () => this.getSelectedNpc(),
+        addLog: (message, type) => this.addLog(message, type),
+        describeDistance: (distanceCells) => this.describeDistance(distanceCells),
+        updateButtons: () => this.updateButtons(),
+    });
 
     private refreshNpcUi(): void {
         this.uiPresenter.renderNpcButtons(this.npcRoster, this.selectedNpcId);

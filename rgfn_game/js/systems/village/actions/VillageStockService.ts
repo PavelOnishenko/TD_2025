@@ -14,17 +14,11 @@ export default class VillageStockService {
         }));
     }
 
-    public getCurrentOffers(): VillageOffer[] {
-        return this.currentOffers;
-    }
+    public getCurrentOffers = (): VillageOffer[] => this.currentOffers;
 
-    public getOffer(index: number): VillageOffer | undefined {
-        return this.currentOffers[index];
-    }
+    public getOffer = (index: number): VillageOffer | undefined => this.currentOffers[index];
 
-    public getSellPrice(item: Item): number {
-        return Math.max(1, Math.ceil(item.goldValue * 0.5));
-    }
+    public getSellPrice = (item: Item): number => Math.max(1, Math.ceil(item.goldValue * 0.5));
 
     private pickOne = <T>(array: T[]): T => array[Math.floor(Math.random() * array.length)];
 

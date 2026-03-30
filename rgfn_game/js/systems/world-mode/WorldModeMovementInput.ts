@@ -86,11 +86,7 @@ export default class WorldModeMovementInput {
         return null;
     }
 
-    public isActionPressed(action: string): boolean {
-        return this.input.wasActionPressed(action);
-    }
+    public isActionPressed = (action: string): boolean => this.input.wasActionPressed(action);
 
-    private wasMoveTriggered(action: string): boolean {
-        return this.input.wasActionPressed(action);
-    }
+    private wasMoveTriggered = (action: string): boolean => this.input.wasActionPressed(action);
 }

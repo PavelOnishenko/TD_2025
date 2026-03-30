@@ -111,20 +111,14 @@ export default class Skeleton extends DamageableEntity {
         return { config, archetypeId, baseStats, skills };
     }
 
-    private resolveArchetype(archetypeId: keyof typeof balanceConfig.creatureArchetypes) {
-        return balanceConfig.creatureArchetypes[archetypeId] ?? balanceConfig.creatureArchetypes.skeleton;
-    }
+    private resolveArchetype = (archetypeId: keyof typeof balanceConfig.creatureArchetypes) =>
+        balanceConfig.creatureArchetypes[archetypeId] ?? balanceConfig.creatureArchetypes.skeleton;
 
-    private mergeBaseStats(baseStats: CreatureBaseStats, overrides?: Partial<CreatureBaseStats>): CreatureBaseStats {
-        return { ...cloneBaseStats(baseStats), ...(overrides ?? {}) };
-    }
+    private mergeBaseStats = (baseStats: CreatureBaseStats, overrides?: Partial<CreatureBaseStats>): CreatureBaseStats =>
+        ({ ...cloneBaseStats(baseStats), ...(overrides ?? {}) });
 
-    private mergeSkills(
-        skills: Partial<Record<CreatureSkill, number>>,
-        overrides?: Partial<Record<CreatureSkill, number>>,
-    ): CreatureSkills {
-        return normalizeCreatureSkills({ ...skills, ...(overrides ?? {}) });
-    }
+    private mergeSkills = (skills: Partial<Record<CreatureSkill, number>>, overrides?: Partial<Record<CreatureSkill, number>>): CreatureSkills =>
+        normalizeCreatureSkills({ ...skills, ...(overrides ?? {}) });
 
     private assignDerivedCombatStats(derivedStats: ReturnType<typeof deriveCreatureStats>): void {
         this.damage = derivedStats.physicalDamage;

@@ -43,13 +43,7 @@ export default class BattleMapNavigation {
         return bestTarget?.path[1] ?? null;
     }
 
-    private collectCandidateTargets(
-        candidateTargets: CandidateTarget[],
-        source: GridPosition,
-        target: GridPosition,
-        entity: CombatEntity,
-        desiredRange: number,
-    ): void {
+    private collectCandidateTargets(candidateTargets: CandidateTarget[], source: GridPosition, target: GridPosition, entity: CombatEntity, desiredRange: number): void {
         this.grid.forEachCell((_cell, col, row) => this.tryAddCandidateTarget(candidateTargets, source, target, entity, desiredRange, col, row));
     }
 
@@ -74,9 +68,8 @@ export default class BattleMapNavigation {
         }
     }
 
-    private isBeyondDesiredRange(target: GridPosition, desiredRange: number, col: number, row: number): boolean {
-        return Math.abs(target.col - col) + Math.abs(target.row - row) > desiredRange;
-    }
+    private isBeyondDesiredRange = (target: GridPosition, desiredRange: number, col: number, row: number): boolean =>
+        Math.abs(target.col - col) + Math.abs(target.row - row) > desiredRange;
 
     private pickBestCandidateTarget(candidateTargets: CandidateTarget[], target: GridPosition): CandidateTarget | null {
         if (candidateTargets.length === 0) {
