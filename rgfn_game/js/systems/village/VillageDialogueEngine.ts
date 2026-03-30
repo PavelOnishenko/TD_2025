@@ -1,3 +1,5 @@
+import { VillageDirectionService, VillageNpcFactory } from './VillageDialogueSupport.js';
+
 export type CompassDirection = 'north' | 'north-east' | 'east' | 'south-east' | 'south' | 'south-west' | 'west' | 'north-west';
 
 export type VillageDirectionHint = {
@@ -32,74 +34,24 @@ export type VillageDialogueOutcome = {
     truthfulness: 'truth' | 'imprecise' | 'lie' | 'refusal' | 'random';
 };
 
-const DIRECTIONS: CompassDirection[] = ['north', 'north-east', 'east', 'south-east', 'south', 'south-west', 'west', 'north-west'];
-
 export default class VillageDialogueEngine {
     private static readonly PERSON_DIRECTION_KNOWLEDGE_CHANCE = 0.26;
 
+    private readonly directionService = new VillageDirectionService();
+    private readonly npcFactory = new VillageNpcFactory();
+
     public createNpcRoster(villageName: string): VillageNpcProfile[] {
-        const rosterSize = 3 + Math.floor(Math.random() * 3);
-        return Array.from({ length: rosterSize }, (_, index) => this.createNpc(villageName, index));
+        return this.npcFactory.createNpcRoster(villageName);
     }
 
     public buildLocationAnswer(npc: VillageNpcProfile, hint: VillageDirectionHint): VillageDialogueOutcome {
         if (npc.disposition === 'silent') {
             return { speech: `"I don't discuss roads with strangers."`, tone: `${npc.name} folds their arms and avoids eye contact.`, truthfulness: 'refusal' };
         }
-
         if (!hint.exists) {
-            if (npc.disposition === 'liar' || npc.disposition === 'malicious') {
-                return {
-                    speech: `"Of course I know it. Go ${this.randomDirection()} until nightfall."`,
-                    tone: `${npc.name} speaks with suspicious confidence.`,
-                    truthfulness: 'lie',
-                };
-            }
-
-            return {
-                speech: `"Never heard of ${hint.settlementName}. Maybe try another village."`,
-                tone: `${npc.name} shrugs apologetically.`,
-                truthfulness: npc.disposition === 'random' ? 'random' : 'refusal',
-            };
+            return this.buildUnknownVillageAnswer(npc, hint);
         }
-
-        if (npc.disposition === 'truthful') {
-            return {
-                speech: `"${hint.settlementName}? Head ${hint.direction}. It's about ${this.distanceText(hint.distanceCells ?? 0)} away."`,
-                tone: `${npc.name} answers clearly and points on the horizon.`,
-                truthfulness: 'truth',
-            };
-        }
-
-        if (npc.disposition === 'imprecise') {
-            return {
-                speech: `"I think it's ${this.nearbyDirection(hint.direction!)}... maybe ${this.impreciseDistance(hint.distanceCells ?? 0)} from here."`,
-                tone: `${npc.name} scratches their chin, unsure but trying to help.`,
-                truthfulness: 'imprecise',
-            };
-        }
-
-        if (npc.disposition === 'liar') {
-            return {
-                speech: `"Easy. Just go ${this.oppositeDirection(hint.direction!)} and you cannot miss it."`,
-                tone: `${npc.name} smiles too quickly.`,
-                truthfulness: 'lie',
-            };
-        }
-
-        if (npc.disposition === 'malicious') {
-            return {
-                speech: `"Take the ${this.oppositeDirection(hint.direction!)} road to the old ruins. ${hint.settlementName} should be behind them."`,
-                tone: `${npc.name} lowers their voice and gives a predatory grin.`,
-                truthfulness: 'lie',
-            };
-        }
-
-        return {
-            speech: `"Hmm... try ${this.randomDirection()}. I have a feeling."`,
-            tone: `${npc.name} waves vaguely without checking the sky.`,
-            truthfulness: 'random',
-        };
+        return this.buildKnownVillageAnswer(npc, hint);
     }
 
     public buildPersonLocationAnswer(npc: VillageNpcProfile, hint: PersonDirectionHint): VillageDialogueOutcome {
@@ -117,94 +69,116 @@ export default class VillageDialogueEngine {
         }
 
         if (!hint.exists) {
-            if (npc.disposition === 'liar' || npc.disposition === 'malicious') {
-                return {
-                    speech: `"${hint.personName}? Yes, absolutely. Go ${this.randomDirection()} and ask the first camp you see."`,
-                    tone: `${npc.name} answers too quickly for comfort.`,
-                    truthfulness: 'lie',
-                };
-            }
-
-            return { speech: `"Never met ${hint.personName}. Could be a false trail."`, tone: `${npc.name} shrugs with visible uncertainty.`, truthfulness: 'refusal' };
+            return this.buildUnknownPersonAnswer(npc, hint);
         }
+        return this.buildKnownPersonAnswer(npc, hint);
+    }
 
-        if (npc.disposition === 'truthful') {
-            return {
-                speech: `"${hint.personName} stays in ${hint.villageName}. Travel ${hint.direction} for about ${this.distanceText(hint.distanceCells ?? 0)}."`,
-                tone: `${npc.name} answers quietly and points along the road.`,
-                truthfulness: 'truth',
-            };
-        }
-
-        if (npc.disposition === 'imprecise') {
-            return {
-                speech: `"I think ${hint.personName} is around ${hint.villageName}, maybe ${this.nearbyDirection(hint.direction!)} from here."`,
-                tone: `${npc.name} tries to help but does not sound certain.`,
-                truthfulness: 'imprecise',
-            };
-        }
-
+    private buildUnknownVillageAnswer(npc: VillageNpcProfile, hint: VillageDirectionHint): VillageDialogueOutcome {
         if (npc.disposition === 'liar' || npc.disposition === 'malicious') {
             return {
-                speech: `"${hint.personName} is easy to find. Take the ${this.oppositeDirection(hint.direction!)} track and don't stop."`,
-                tone: `${npc.name} smiles in a way that feels wrong.`,
+                speech: `"Of course I know it. Go ${this.directionService.randomDirection()} until nightfall."`,
+                tone: `${npc.name} speaks with suspicious confidence.`,
                 truthfulness: 'lie',
             };
         }
-
         return {
-            speech: `"Could be ${this.randomDirection()}. Ask again when you reach the next market."`,
+            speech: `"Never heard of ${hint.settlementName}. Maybe try another village."`,
+            tone: `${npc.name} shrugs apologetically.`,
+            truthfulness: npc.disposition === 'random' ? 'random' : 'refusal',
+        };
+    }
+
+    private buildKnownVillageAnswer(npc: VillageNpcProfile, hint: VillageDirectionHint): VillageDialogueOutcome {
+        if (npc.disposition === 'truthful') {
+            return this.truthfulVillageAnswer(npc, hint);
+        }
+        if (npc.disposition === 'imprecise') {
+            return this.impreciseVillageAnswer(npc, hint);
+        }
+        if (npc.disposition === 'liar' || npc.disposition === 'malicious') {
+            return this.deceptiveVillageAnswer(npc, hint);
+        }
+        return {
+            speech: `"Hmm... try ${this.directionService.randomDirection()}. I have a feeling."`,
+            tone: `${npc.name} waves vaguely without checking the sky.`,
+            truthfulness: 'random',
+        };
+    }
+
+    private buildUnknownPersonAnswer(npc: VillageNpcProfile, hint: PersonDirectionHint): VillageDialogueOutcome {
+        if (npc.disposition === 'liar' || npc.disposition === 'malicious') {
+            return {
+                speech: `"${hint.personName}? Yes, absolutely. Go ${this.directionService.randomDirection()} and ask the first camp you see."`,
+                tone: `${npc.name} answers too quickly for comfort.`,
+                truthfulness: 'lie',
+            };
+        }
+        return { speech: `"Never met ${hint.personName}. Could be a false trail."`, tone: `${npc.name} shrugs with visible uncertainty.`, truthfulness: 'refusal' };
+    }
+
+    private buildKnownPersonAnswer(npc: VillageNpcProfile, hint: PersonDirectionHint): VillageDialogueOutcome {
+        if (npc.disposition === 'truthful') {
+            return this.truthfulPersonAnswer(npc, hint);
+        }
+        if (npc.disposition === 'imprecise') {
+            return this.imprecisePersonAnswer(npc, hint);
+        }
+        if (npc.disposition === 'liar' || npc.disposition === 'malicious') {
+            return this.deceptivePersonAnswer(npc, hint);
+        }
+        return {
+            speech: `"Could be ${this.directionService.randomDirection()}. Ask again when you reach the next market."`,
             tone: `${npc.name} gives you a vague hand-wave.`,
             truthfulness: 'random',
         };
     }
 
-    public randomDirection = (): CompassDirection => DIRECTIONS[Math.floor(Math.random() * DIRECTIONS.length)];
-
-    private createNpc(villageName: string, index: number): VillageNpcProfile {
-        const names = ['Mara', 'Iven', 'Tor', 'Selene', 'Garr', 'Nira', 'Bram', 'Talia', 'Daren', 'Ysolde'];
-        const roles = ['Trader', 'Hunter', 'Miller', 'Guard', 'Herbalist', 'Carpenter', 'Innkeeper'];
-        const looks = [
-            'scarred face, travel cloak, muddy boots',
-            'sunburnt skin, braided hair, patched vest',
-            'silver earrings, clean gloves, observant eyes',
-            'broad shoulders, old armor, calm expression',
-            'ink-stained fingers, satchel of notes, tired smile',
-        ];
-        const speechStyles = ['calm and measured', 'fast and nervous', 'warm and direct', 'cold and formal', 'playful but evasive'];
-        const dispositions: NpcDisposition[] = ['truthful', 'imprecise', 'liar', 'silent', 'malicious', 'random'];
-
+    private truthfulVillageAnswer(npc: VillageNpcProfile, hint: VillageDirectionHint): VillageDialogueOutcome {
         return {
-            id: `${villageName.toLowerCase()}-${index}`,
-            name: names[Math.floor(Math.random() * names.length)],
-            role: roles[Math.floor(Math.random() * roles.length)],
-            look: looks[Math.floor(Math.random() * looks.length)],
-            speechStyle: speechStyles[Math.floor(Math.random() * speechStyles.length)],
-            disposition: dispositions[Math.floor(Math.random() * dispositions.length)],
+            speech: `"${hint.settlementName}? Head ${hint.direction}. It's about ${this.directionService.distanceText(hint.distanceCells ?? 0)} away."`,
+            tone: `${npc.name} answers clearly and points on the horizon.`,
+            truthfulness: 'truth',
         };
     }
 
-    private oppositeDirection(direction: CompassDirection): CompassDirection {
-        const idx = DIRECTIONS.indexOf(direction);
-        return DIRECTIONS[(idx + 4) % DIRECTIONS.length];
+    private impreciseVillageAnswer(npc: VillageNpcProfile, hint: VillageDirectionHint): VillageDialogueOutcome {
+        return {
+            speech: `"I think it's ${this.directionService.nearbyDirection(hint.direction!)}... maybe ${this.directionService.impreciseDistance(hint.distanceCells ?? 0)} from here."`,
+            tone: `${npc.name} scratches their chin, unsure but trying to help.`,
+            truthfulness: 'imprecise',
+        };
     }
 
-    private nearbyDirection(direction: CompassDirection): CompassDirection {
-        const idx = DIRECTIONS.indexOf(direction);
-        const shift = Math.random() < 0.5 ? -1 : 1;
-        return DIRECTIONS[(idx + shift + DIRECTIONS.length) % DIRECTIONS.length];
+    private deceptiveVillageAnswer(npc: VillageNpcProfile, hint: VillageDirectionHint): VillageDialogueOutcome {
+        return {
+            speech: `"Easy. Just go ${this.directionService.oppositeDirection(hint.direction!)} and you cannot miss it."`,
+            tone: npc.disposition === 'malicious' ? `${npc.name} lowers their voice and gives a predatory grin.` : `${npc.name} smiles too quickly.`,
+            truthfulness: 'lie',
+        };
     }
 
-    private distanceText(distanceCells: number): string {
-        if (distanceCells <= 4) {return 'a short walk';}
-        if (distanceCells <= 12) {return 'half a day';}
-        if (distanceCells <= 24) {return 'about a day';}
-        return 'several days';
+    private truthfulPersonAnswer(npc: VillageNpcProfile, hint: PersonDirectionHint): VillageDialogueOutcome {
+        return {
+            speech: `"${hint.personName} stays in ${hint.villageName}. Travel ${hint.direction} for about ${this.directionService.distanceText(hint.distanceCells ?? 0)}."`,
+            tone: `${npc.name} answers quietly and points along the road.`,
+            truthfulness: 'truth',
+        };
     }
 
-    private impreciseDistance(distanceCells: number): string {
-        if (distanceCells <= 8) {return 'nearby';}
-        if (distanceCells <= 18) {return 'not too far';}
-        return 'far from here';
+    private imprecisePersonAnswer(npc: VillageNpcProfile, hint: PersonDirectionHint): VillageDialogueOutcome {
+        return {
+            speech: `"I think ${hint.personName} is around ${hint.villageName}, maybe ${this.directionService.nearbyDirection(hint.direction!)} from here."`,
+            tone: `${npc.name} tries to help but does not sound certain.`,
+            truthfulness: 'imprecise',
+        };
+    }
+
+    private deceptivePersonAnswer(npc: VillageNpcProfile, hint: PersonDirectionHint): VillageDialogueOutcome {
+        return {
+            speech: `"${hint.personName} is easy to find. Take the ${this.directionService.oppositeDirection(hint.direction!)} track and don't stop."`,
+            tone: `${npc.name} smiles in a way that feels wrong.`,
+            truthfulness: 'lie',
+        };
     }
 }
