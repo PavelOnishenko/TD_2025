@@ -49,11 +49,7 @@ export default class BattleMapSelectionInfo {
         return occupant.constructor?.name ?? null;
     }
 
-    private static formatObstacleName(kind: BattleObstacleKind): string {
-        return kind.charAt(0).toUpperCase() + kind.slice(1);
-    }
+    private static formatObstacleName = (kind: BattleObstacleKind): string => kind.charAt(0).toUpperCase() + kind.slice(1);
 
-    private static getCellKey(col: number, row: number): string {
-        return `${col},${row}`;
-    }
+    private static getCellKey = (col: number, row: number): string => `${col},${row}`;
 }

@@ -20,9 +20,7 @@ export default class QuestProgressTracker {
         this.completion.recomputeCompletion(this.root);
     }
 
-    public recordLocationEntry(locationName: string): boolean {
-        return this.recordLocationEntryWithInventory(locationName, []);
-    }
+    public recordLocationEntry = (locationName: string): boolean => this.recordLocationEntryWithInventory(locationName, []);
 
     public recordLocationEntryWithInventory(locationName: string, carriedItems: string[]): boolean {
         const normalizedLocation = locationName.trim().toLocaleLowerCase();
