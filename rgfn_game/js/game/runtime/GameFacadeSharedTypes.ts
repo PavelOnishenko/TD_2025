@@ -1,0 +1,37 @@
+import type GameLoop from '../../../../engine/core/GameLoop.js';
+import type Renderer from '../../../../engine/core/Renderer.js';
+import type InputManager from '../../../../engine/systems/InputManager.js';
+import type StateMachine from '../../utils/StateMachine.js';
+import type GameRenderRouter from '../../systems/game/runtime/GameRenderRouter.js';
+import type GameVillageCoordinator from '../../systems/game/runtime/GameVillageCoordinator.js';
+import type GameHudCoordinator from '../../systems/game/runtime/GameHudCoordinator.js';
+import type GameBattleCoordinator from '../../systems/game/runtime/GameBattleCoordinator.js';
+import type WorldModeController from '../../systems/WorldModeController.js';
+import type WorldMap from '../../systems/world/WorldMap.js';
+import type BattleMap from '../../systems/combat/BattleMap.js';
+import type Player from '../../entities/player/Player.js';
+import type MagicSystem from '../../systems/magic/MagicSystem.js';
+import type GameQuestRuntime from '../runtime/GameQuestRuntime.js';
+import type GamePersistenceRuntime from '../runtime/GamePersistenceRuntime.js';
+import type GameWorldInteractionRuntime from '../runtime/GameWorldInteractionRuntime.js';
+
+export type GameFacadeStateAccess = {
+    canvas: HTMLCanvasElement;
+    saveKey: string;
+    renderer: Renderer;
+    input: InputManager;
+    loop: GameLoop;
+    stateMachine: StateMachine;
+    renderRouter: GameRenderRouter;
+    villageCoordinator: GameVillageCoordinator;
+    hudCoordinator: GameHudCoordinator;
+    battleCoordinator: GameBattleCoordinator;
+    worldModeController: WorldModeController;
+    worldMap: WorldMap;
+    battleMap: BattleMap;
+    player: Player;
+    magicSystem: MagicSystem;
+    questRuntime: GameQuestRuntime;
+    persistenceRuntime: GamePersistenceRuntime;
+    worldInteractionRuntime: GameWorldInteractionRuntime;
+};
