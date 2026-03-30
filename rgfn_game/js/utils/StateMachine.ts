@@ -66,11 +66,7 @@ export default class StateMachine {
         }
     }
 
-    getCurrentState(): string | null {
-        return this.currentState;
-    }
+    readonly getCurrentState = (): string | null => this.currentState;
 
-    isInState(stateName: string): boolean {
-        return this.currentState === stateName;
-    }
+    readonly isInState = (stateName: string): boolean => this.currentState === stateName;
 }
