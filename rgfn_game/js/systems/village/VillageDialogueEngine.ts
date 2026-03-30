@@ -139,8 +139,9 @@ export default class VillageDialogueEngine {
     });
 
     private impreciseVillageAnswer = (npc: VillageNpcProfile, hint: VillageDirectionHint): VillageDialogueOutcome => ({
-        speech: `"I think it's ${this.directionService.nearbyDirection(hint.direction!)}... maybe `
-            + `${this.directionService.impreciseDistance(hint.distanceCells ?? 0)} from here."`,
+        speech: `"I think it's ${this.directionService.nearbyDirection(hint.direction!)}... maybe ${
+            this.directionService.impreciseDistance(hint.distanceCells ?? 0)
+        } from here."`,
         tone: `${npc.name} scratches their chin, unsure but trying to help.`,
         truthfulness: 'imprecise',
     });
@@ -154,7 +155,9 @@ export default class VillageDialogueEngine {
     });
 
     private truthfulPersonAnswer = (npc: VillageNpcProfile, hint: PersonDirectionHint): VillageDialogueOutcome => ({
-        speech: `"${hint.personName} stays in ${hint.villageName}. Travel ${hint.direction} for about ${this.directionService.distanceText(hint.distanceCells ?? 0)}."`,
+        speech: `"${hint.personName} stays in ${hint.villageName}. Travel ${hint.direction} for about ${this.directionService.distanceText(
+            hint.distanceCells ?? 0,
+        )}."`,
         tone: `${npc.name} answers quietly and points along the road.`,
         truthfulness: 'truth',
     });

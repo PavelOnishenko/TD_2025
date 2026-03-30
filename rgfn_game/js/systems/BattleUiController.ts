@@ -24,10 +24,8 @@ export default class BattleUiController {
         return this.targeting.updateEnemyDisplay(selectedEnemy);
     }
 
-    public handleMovementOrSelection = (
-        direction: Direction,
-        selectedEnemy: Skeleton | null,
-    ): SelectionResult => this.targeting.handleMovementOrSelection(direction, selectedEnemy);
+    public handleMovementOrSelection = (direction: Direction, selectedEnemy: Skeleton | null): SelectionResult =>
+        this.targeting.handleMovementOrSelection(direction, selectedEnemy);
 
     public selectEnemyFromCanvasClick = (event: MouseEvent, canvas: HTMLCanvasElement): Skeleton | null => this.targeting.selectEnemyFromCanvasClick(event, canvas);
 
