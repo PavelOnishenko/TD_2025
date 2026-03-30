@@ -1,4 +1,4 @@
-import type { CompassDirection, NpcDisposition, VillageNpcProfile } from './VillageDialogueEngine';
+import type { CompassDirection, NpcDisposition, VillageNpcProfile } from './VillageDialogueEngine.js';
 
 const DIRECTIONS: CompassDirection[] = ['north', 'north-east', 'east', 'south-east', 'south', 'south-west', 'west', 'north-west'];
 

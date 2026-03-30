@@ -1,4 +1,4 @@
-import { VillageDirectionService, VillageNpcFactory } from './VillageDialogueSupport';
+import { VillageDirectionService, VillageNpcFactory } from './VillageDialogueSupport.js';
 
 export type CompassDirection = 'north' | 'north-east' | 'east' | 'south-east' | 'south' | 'south-west' | 'west' | 'north-west';
 
