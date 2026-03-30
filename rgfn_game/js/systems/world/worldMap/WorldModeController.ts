@@ -1,12 +1,24 @@
-import InputManager from '../../../engine/systems/InputManager.js';
-import WorldMap from './world/WorldMap.js';
-import EncounterSystem from './encounter/EncounterSystem.js';
-import Player from '../entities/player/Player.js';
-import { ItemDiscoverySplash } from '../ui/ItemDiscoverySplash.js';
-import WorldModeMovementInput from './world-mode/WorldModeMovementInput.js';
-import WorldModeVillagePromptController from './world-mode/WorldModeVillagePromptController.js';
-import WorldModeTravelEncounterController from './world-mode/WorldModeTravelEncounterController.js';
-import { WorldModeCallbacks } from './world-mode/WorldModeTypes.js';
+import InputManager from '../../../../../engine/systems/InputManager.js';
+import WorldMap from './WorldMap.js';
+import EncounterSystem from '../../encounter/EncounterSystem.js';
+import Player from '../../../entities/player/Player.js';
+import Skeleton from '../../../entities/Skeleton.js';
+import Item from '../../../entities/Item.js';
+import Wanderer from '../../../entities/Wanderer.js';
+import { ItemDiscoverySplash } from '../../../ui/ItemDiscoverySplash.js';
+import { Direction, TerrainType } from '../../../types/game.js';
+import { balanceConfig } from '../../../config/balance/balanceConfig.js';
+
+type WorldModeCallbacks = {
+    onEnterVillage: () => void;
+    onRequestVillageEntryPrompt: (villageName: string, anchor: { x: number; y: number }) => void;
+    onCloseVillageEntryPrompt: () => void;
+    onStartBattle: (enemies: Skeleton[], terrainType: TerrainType) => void;
+    onAddBattleLog: (message: string, type?: string) => void;
+    onUpdateHUD: () => void;
+    onRememberTraveler: (traveler: Wanderer, disposition: 'hostile' | 'peaceful') => void;
+    getQuestBattleEncounter: () => { enemies: Skeleton[]; hint?: string } | null;
+};
 
 export default class WorldModeController {
     private player: Player;
