@@ -17,7 +17,13 @@ export default class GamePersistenceRuntime {
     public constructor(private readonly saveKey: string) {}
 
     public saveGameIfChanged(worldMap: WorldMap, player: Player, magicSystem: MagicSystem, activeQuest: QuestNode | null): void {
-        const snapshot = JSON.stringify({ version: 1, worldMap: worldMap.getState(), player: player.getState(), spellLevels: magicSystem.getSpellLevels(), quest: activeQuest } as GameSaveState);
+        const snapshot = JSON.stringify({
+            version: 1,
+            worldMap: worldMap.getState(),
+            player: player.getState(),
+            spellLevels: magicSystem.getSpellLevels(),
+            quest: activeQuest,
+        } as GameSaveState);
         if (snapshot === this.lastSavedSnapshot) {
             return;
         }

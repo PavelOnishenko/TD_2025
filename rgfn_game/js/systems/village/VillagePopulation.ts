@@ -98,9 +98,7 @@ export default class VillagePopulation {
         this.persistActiveVillageSnapshot();
     }
 
-    public getVillagers(): VillageVillager[] {
-        return this.villagers;
-    }
+    public getVillagers = (): VillageVillager[] => this.villagers;
 
 
     private persistActiveVillageSnapshot(): void {
@@ -178,29 +176,35 @@ export default class VillagePopulation {
     }
 
 
-    private getSkinPalette(): string[] {
-        return [theme.ui.panelHighlight, theme.ui.primaryAccent, theme.ui.secondaryAccent, theme.worldMap.terrain.desert];
-    }
+    private getSkinPalette = (): string[] => [theme.ui.panelHighlight, theme.ui.primaryAccent, theme.ui.secondaryAccent, theme.worldMap.terrain.desert];
 
-    private getHairPalette(): string[] {
-        return [theme.worldMap.terrain.forest, theme.worldMap.terrain.mountain, theme.ui.primaryBg, theme.ui.secondaryBg, theme.ui.secondaryAccent];
-    }
+    private getHairPalette = (): string[] => [
+        theme.worldMap.terrain.forest,
+        theme.worldMap.terrain.mountain,
+        theme.ui.primaryBg,
+        theme.ui.secondaryBg,
+        theme.ui.secondaryAccent,
+    ];
 
-    private getShirtPalette(): string[] {
-        return [theme.entities.player.body, theme.worldMap.terrain.water, theme.worldMap.terrain.grass, theme.ui.secondaryAccent, theme.ui.primaryAccent];
-    }
+    private getShirtPalette = (): string[] => [
+        theme.entities.player.body,
+        theme.worldMap.terrain.water,
+        theme.worldMap.terrain.grass,
+        theme.ui.secondaryAccent,
+        theme.ui.primaryAccent,
+    ];
 
-    private getPantsPalette(): string[] {
-        return [theme.ui.primaryBg, theme.ui.secondaryBg, theme.worldMap.terrain.mountain, theme.worldMap.terrain.forest];
-    }
+    private getPantsPalette = (): string[] => [theme.ui.primaryBg, theme.ui.secondaryBg, theme.worldMap.terrain.mountain, theme.worldMap.terrain.forest];
 
-    private getHatPalette(): string[] {
-        return [theme.ui.secondaryAccent, theme.worldMap.terrain.water, theme.worldMap.terrain.forest, theme.worldMap.terrain.desert, theme.ui.primaryAccent];
-    }
+    private getHatPalette = (): string[] => [
+        theme.ui.secondaryAccent,
+        theme.worldMap.terrain.water,
+        theme.worldMap.terrain.forest,
+        theme.worldMap.terrain.desert,
+        theme.ui.primaryAccent,
+    ];
 
-    private pickActivity(): VillageActivityType {
-        return this.pickFrom(VillagePopulation.ACTIVITIES);
-    }
+    private pickActivity = (): VillageActivityType => this.pickFrom(VillagePopulation.ACTIVITIES);
 
     private pickDifferentSpot(spotIndex: number): number {
         let nextSpot = Math.floor(Math.random() * this.spots.length);
@@ -211,7 +215,5 @@ export default class VillagePopulation {
         return nextSpot;
     }
 
-    private pickFrom<T>(array: T[]): T {
-        return array[Math.floor(Math.random() * array.length)];
-    }
+    private pickFrom = <T>(array: T[]): T => array[Math.floor(Math.random() * array.length)];
 }
