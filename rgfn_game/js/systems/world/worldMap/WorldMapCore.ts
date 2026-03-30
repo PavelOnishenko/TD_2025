@@ -88,6 +88,10 @@ export default class WorldMapCore {
 
     constructor(columns: number, rows: number, cellSize: number) {
         this.grid = new GridMap(columns, rows, cellSize);
+        this.initializeCoreState(columns, rows, cellSize);
+    }
+
+    private initializeCoreState(columns: number, rows: number, cellSize: number): void {
         this.playerGridPos = { col: 0, row: 0 };
         this.fogStates = new Map();
         this.terrainData = new Map();

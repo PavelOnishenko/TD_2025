@@ -55,26 +55,30 @@ export default class WorldMapFocusAndFogOverlay extends WorldMapPersistenceAndSe
     ): void {
         for (let row = bounds.startRow; row <= bounds.endRow; row += 1) {
             for (let col = bounds.startCol; col <= bounds.endCol; col += 1) {
-                const fogState = this.getFogState(col, row);
-                if (fogState === FOG_STATE.DISCOVERED) {
-                    continue;
-                }
-
-                const cell = this.grid.cells[this.getCellIndex(col, row)];
-                if (!cell) {
-                    continue;
-                }
-
-                this.renderer.drawCell(
-                    ctx,
-                    cell,
-                    fogState,
-                    fogState === FOG_STATE.HIDDEN ? this.getTerrain(col, row) : undefined,
-                    undefined,
-                    { showFogOverlay: this.mapDisplayConfig.fogOfWar, detailLevel },
-                );
+                this.drawFogCell(ctx, col, row, detailLevel);
             }
         }
+    }
+
+    private drawFogCell(ctx: CanvasRenderingContext2D, col: number, row: number, detailLevel: 'low' | 'medium'): void {
+        const fogState = this.getFogState(col, row);
+        if (fogState === FOG_STATE.DISCOVERED) {
+            return;
+        }
+
+        const cell = this.grid.cells[this.getCellIndex(col, row)];
+        if (!cell) {
+            return;
+        }
+
+        this.renderer.drawCell(
+            ctx,
+            cell,
+            fogState,
+            fogState === FOG_STATE.HIDDEN ? this.getTerrain(col, row) : undefined,
+            undefined,
+            { showFogOverlay: this.mapDisplayConfig.fogOfWar, detailLevel },
+        );
     }
 
 }
