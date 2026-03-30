@@ -2,7 +2,6 @@ import InputManager from '../../../../../engine/systems/InputManager.js';
 import StateMachine from '../../../utils/StateMachine.js';
 import { Direction, TerrainType } from '../../../types/game.js';
 import Skeleton from '../../../entities/Skeleton.js';
-import { BattleSplash } from '../../../ui/BattleSplash.js';
 import BattleMap from '../../combat/BattleMap.js';
 import TurnManager from '../../combat/TurnManager.js';
 import Player from '../../../entities/player/Player.js';
@@ -13,14 +12,8 @@ import { BattleUI, HudElements, VillageUI, WorldUI } from '../GameUiTypes.js';
 import { MODES } from './GameModeStateMachine.js';
 import { BaseSpellId } from '../../magic/MagicSystem.js';
 import { CombatMove } from '../../combat/DirectionalCombat.js';
-
-type Callbacks = {
-    onClearBattleLog: () => void;
-    onAddBattleLog: (message: string, type?: string) => void;
-    onUpdateHUD: () => void;
-    onDescribeEncounter: (enemies: Skeleton[]) => string;
-    onGameOver: () => void;
-};
+import GameBattleRuntimeFlow, { GameBattleRuntimeCallbacks } from './GameBattleRuntimeFlow.js';
+import { BattleSplash } from '../../../ui/BattleSplash.js';
 
 type Controllers = {
     battlePlayerActionController: BattlePlayerActionController;
@@ -31,19 +24,9 @@ type Controllers = {
 export default class GameBattleCoordinator {
     private readonly input: InputManager;
     private readonly stateMachine: StateMachine;
-    private readonly player: Player;
-    private readonly battleMap: BattleMap;
     private readonly turnManager: TurnManager;
-    private readonly battleSplash: BattleSplash;
-    private readonly hudElements: HudElements;
-    private readonly battleUI: BattleUI;
-    private readonly villageUI: VillageUI;
-    private readonly worldUI: WorldUI;
-    private readonly callbacks: Callbacks;
     private readonly controllers: Controllers;
-    private turnTransitioning = false;
-    private currentEnemies: Skeleton[] = [];
-    private currentTerrainType: TerrainType = 'grass';
+    private readonly runtimeFlow: GameBattleRuntimeFlow;
 
     constructor(
         input: InputManager,
@@ -59,45 +42,34 @@ export default class GameBattleCoordinator {
             worldUI: WorldUI;
         },
         controllers: Controllers,
-        callbacks: Callbacks,
+        callbacks: GameBattleRuntimeCallbacks,
     ) {
         this.input = input;
         this.stateMachine = stateMachine;
-        this.player = deps.player;
-        this.battleMap = deps.battleMap;
         this.turnManager = deps.turnManager;
-        this.battleSplash = deps.battleSplash;
-        this.hudElements = deps.hudElements;
-        this.battleUI = deps.battleUI;
-        this.villageUI = deps.villageUI;
-        this.worldUI = deps.worldUI;
         this.controllers = controllers;
-        this.callbacks = callbacks;
+        this.runtimeFlow = new GameBattleRuntimeFlow({
+            stateMachine,
+            ...deps,
+            callbacks,
+            controllers,
+            onStartBattle: () => this.startBattle(),
+        });
     }
 
     public enterBattleMode(enemies: Skeleton[], terrainType: TerrainType = 'grass'): void {
-        this.turnTransitioning = true;
-        this.hudElements.modeIndicator.textContent = 'Battle!';
-        this.worldUI.sidebar.classList.add('hidden');
-        this.battleUI.sidebar.classList.remove('hidden');
-        this.villageUI.sidebar.classList.add('hidden');
-        this.controllers.battleCommandController.clearPendingLoot();
-        this.currentEnemies = enemies;
-        this.currentTerrainType = terrainType;
-        this.controllers.battlePlayerActionController.setSelectedEnemy(null);
-        this.battleMap.clearSelectedCell();
-        this.battleSplash.showBattleStart(enemies.length, () => this.startBattle(enemies));
+        this.runtimeFlow.enterBattleMode(enemies, terrainType);
     }
 
     public updateBattleMode(): void {
-        if (this.turnTransitioning) {
+        if (this.runtimeFlow.isTurnTransitioning()) {
             return;
         }
         this.controllers.battlePlayerActionController.updateBattleMode(() => this.getPressedDirection());
     }
 
     public handleCanvasClick(event: MouseEvent, canvas: HTMLCanvasElement): void {
-        if (!this.stateMachine.isInState(MODES.BATTLE) || this.turnTransitioning) {
+        if (!this.stateMachine.isInState(MODES.BATTLE) || this.runtimeFlow.isTurnTransitioning()) {
             return;
         }
         this.controllers.battlePlayerActionController.handleCanvasClick(event, canvas);
@@ -108,101 +80,78 @@ export default class GameBattleCoordinator {
     }
 
     public handleAttack(): void {
-        if (this.turnTransitioning) {
+        if (this.runtimeFlow.isTurnTransitioning()) {
             return;
         }
         this.controllers.battleCommandController.handleAttack();
     }
 
     public handleDirectionalCombatMove(move: CombatMove): void {
-        if (this.turnTransitioning) {
+        if (this.runtimeFlow.isTurnTransitioning()) {
             return;
         }
         this.controllers.battleCommandController.handleDirectionalCombatMove(move);
     }
 
-
     public handleCastSpell(spellId: BaseSpellId): void {
-        if (this.turnTransitioning) {
+        if (this.runtimeFlow.isTurnTransitioning()) {
             return;
         }
         this.controllers.battleCommandController.handleCastSpell(spellId);
     }
 
     public handleFlee(): void {
-        if (this.turnTransitioning) {
+        if (this.runtimeFlow.isTurnTransitioning()) {
             return;
         }
         this.controllers.battleCommandController.handleFlee();
     }
 
     public handleWait(): void {
-        if (this.turnTransitioning) {
+        if (this.runtimeFlow.isTurnTransitioning()) {
             return;
         }
         this.controllers.battleCommandController.handleWait();
     }
 
     public handleUseManaPotion(fromBattleControls: boolean): void {
-        if (this.turnTransitioning && this.stateMachine.isInState(MODES.BATTLE)) {
+        if (this.runtimeFlow.isTurnTransitioning() && this.stateMachine.isInState(MODES.BATTLE)) {
             return;
         }
         this.controllers.battleCommandController.handleUseManaPotion(fromBattleControls);
     }
 
     public handleUsePotion(fromBattleControls: boolean): void {
-        if (this.turnTransitioning && this.stateMachine.isInState(MODES.BATTLE)) {
+        if (this.runtimeFlow.isTurnTransitioning() && this.stateMachine.isInState(MODES.BATTLE)) {
             return;
         }
         this.controllers.battleCommandController.handleUsePotion(fromBattleControls);
     }
 
     public onPlayerTurnTransitionStart = (): void => {
-        this.turnTransitioning = true;
+        this.runtimeFlow.setTurnTransitioning(true);
     };
 
     public onPlayerTurnReady(): void {
-        this.turnTransitioning = false;
+        this.runtimeFlow.setTurnTransitioning(false);
         this.turnManager.waitingForPlayer = true;
         this.controllers.battlePlayerActionController.updateBattleUI();
     }
 
     public endBattle(result: 'victory' | 'defeat' | 'fled'): void {
-        this.turnTransitioning = true;
-        if (result === 'fled') {
-            this.controllers.battleCommandController.clearPendingLoot();
-            this.stateMachine.transition(MODES.WORLD_MAP);
-            return;
-        }
-        if (result === 'defeat') {
-            this.controllers.battleCommandController.clearPendingLoot();
-            this.callbacks.onAddBattleLog('Game Over!', 'system');
-            this.battleSplash.showBattleEnd('defeat', () => this.callbacks.onGameOver());
-            return;
-        }
-        this.controllers.battleCommandController.resolvePendingLoot();
-        this.callbacks.onAddBattleLog('Victory!', 'system');
-        this.battleSplash.showBattleEnd('victory', () => this.stateMachine.transition(MODES.WORLD_MAP));
+        this.runtimeFlow.endBattle(result);
     }
 
     public exitBattleMode(): void {
-        this.turnTransitioning = false;
-        this.currentEnemies = [];
-        this.currentTerrainType = 'grass';
-        this.battleMap.clearSelectedCell();
+        this.runtimeFlow.exitBattleMode();
     }
 
-    public getCurrentEnemies = (): Skeleton[] => this.currentEnemies;
+    public getCurrentEnemies = (): Skeleton[] => this.runtimeFlow.getCurrentEnemies();
 
     public getSelectedEnemy = (): Skeleton | null => this.controllers.battlePlayerActionController.getSelectedEnemy();
 
-    private startBattle(enemies: Skeleton[]): void {
-        this.battleMap.setup(this.player, this.currentEnemies, this.currentTerrainType);
-        this.turnManager.initializeTurns([this.player, ...this.currentEnemies]);
-        this.turnTransitioning = false;
-        this.callbacks.onClearBattleLog();
-        this.callbacks.onAddBattleLog(`Encountered ${this.callbacks.onDescribeEncounter(enemies)}!`, 'system');
-        this.callbacks.onUpdateHUD();
+    private startBattle(): void {
+        this.runtimeFlow.startBattle();
         this.processTurn();
     }
 
