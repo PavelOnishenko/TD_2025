@@ -1,6 +1,6 @@
-import GridMap from '../../utils/GridMap.js';
-import { FogState, TerrainData, GridCell, TerrainNeighbors, TerrainType } from '../../types/game.js';
-import { theme } from '../../config/ThemeConfig.js';
+import GridMap from '../../../utils/GridMap.js';
+import { FogState, TerrainData, GridCell, TerrainNeighbors, TerrainType } from '../../../types/game.js';
+import { theme } from '../../../config/ThemeConfig.js';
 
 export default class WorldMapRenderer {
     public drawVillageRoadPath(ctx: CanvasRenderingContext2D, points: Array<{ x: number; y: number }>, alpha: number): void {

@@ -1,5 +1,7 @@
 // @ts-nocheck
 import WorldMapNoiseAndVisibility from './WorldMapNoiseAndVisibility.js';
+import { theme } from '../../../config/ThemeConfig.js';
+import { FOG_STATE } from './WorldMapCore.js';
 export default class WorldMapMovementAndViewport extends WorldMapNoiseAndVisibility {
     private getTerrainNeighbors(col: number, row: number, terrainType: TerrainType): TerrainNeighbors {
         const isSameVisibleTerrain = (targetCol: number, targetRow: number): boolean => {

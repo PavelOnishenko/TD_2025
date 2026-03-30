@@ -1,5 +1,6 @@
 // @ts-nocheck
 import WorldMapPersistenceAndSelection from './WorldMapPersistenceAndSelection.js';
+import { FOG_STATE } from './WorldMapCore.js';
 export default class WorldMapFocusAndFogOverlay extends WorldMapPersistenceAndSelection {
     private findNamedLocationPosition(): GridPosition | null {
         const dims = this.grid.getDimensions();

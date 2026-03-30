@@ -1,5 +1,7 @@
 // @ts-nocheck
 import WorldMapWaterAndSettlements from './WorldMapWaterAndSettlements.js';
+import { balanceConfig } from '../../../config/balance/balanceConfig.js';
+import { FOG_STATE } from './WorldMapCore.js';
 export default class WorldMapNoiseAndVisibility extends WorldMapWaterAndSettlements {
     private generateTerrainPattern(type: TerrainType, seed: number): TerrainData['pattern'] {
         const random = this.seededRandom(seed * 1.77);

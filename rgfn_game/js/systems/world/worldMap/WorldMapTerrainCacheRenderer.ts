@@ -1,5 +1,6 @@
 // @ts-nocheck
 import WorldMapFocusAndFogOverlay from './WorldMapFocusAndFogOverlay.js';
+import { FOG_STATE } from './WorldMapCore.js';
 export default class WorldMapTerrainCacheRenderer extends WorldMapFocusAndFogOverlay {
     private drawTerrainLayerFromCache(
         ctx: CanvasRenderingContext2D,

@@ -1,5 +1,6 @@
 // @ts-nocheck
 import WorldMapNamedLocationAndVillageOverlays from './WorldMapNamedLocationAndVillageOverlays.js';
+import { FOG_STATE } from './WorldMapCore.js';
 export default class WorldMapRoadNetwork extends WorldMapNamedLocationAndVillageOverlays {
     private buildVillageRoadLinks(villages: GridPosition[]): Array<{ from: GridPosition; to: GridPosition }> {
         const links = new Map<string, { from: GridPosition; to: GridPosition }>();

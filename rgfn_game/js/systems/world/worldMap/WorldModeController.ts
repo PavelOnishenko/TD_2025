@@ -1,13 +1,13 @@
-import InputManager from '../../../engine/systems/InputManager.js';
-import WorldMap from './world/WorldMap.js';
-import EncounterSystem from './encounter/EncounterSystem.js';
-import Player from '../entities/player/Player.js';
-import Skeleton from '../entities/Skeleton.js';
-import Item from '../entities/Item.js';
-import Wanderer from '../entities/Wanderer.js';
-import { ItemDiscoverySplash } from '../ui/ItemDiscoverySplash.js';
-import { Direction, TerrainType } from '../types/game.js';
-import { balanceConfig } from '../config/balance/balanceConfig.js';
+import InputManager from '../../../../../engine/systems/InputManager.js';
+import WorldMap from './WorldMap.js';
+import EncounterSystem from '../../encounter/EncounterSystem.js';
+import Player from '../../../entities/player/Player.js';
+import Skeleton from '../../../entities/Skeleton.js';
+import Item from '../../../entities/Item.js';
+import Wanderer from '../../../entities/Wanderer.js';
+import { ItemDiscoverySplash } from '../../../ui/ItemDiscoverySplash.js';
+import { Direction, TerrainType } from '../../../types/game.js';
+import { balanceConfig } from '../../../config/balance/balanceConfig.js';
 
 type WorldModeCallbacks = {
     onEnterVillage: () => void;

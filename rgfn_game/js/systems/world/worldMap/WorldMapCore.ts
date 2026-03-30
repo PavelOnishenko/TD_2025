@@ -1,10 +1,10 @@
 // @ts-nocheck
-import GridMap from '../../utils/GridMap.js';
+import GridMap from '../../../utils/GridMap.js';
 import { FogState, MapDisplayConfig, TerrainData, GridPosition, Direction, GridCell, TerrainNeighbors, TerrainType, SelectedWorldCellInfo } from '../../types/game.js';
-import { theme } from '../../config/ThemeConfig.js';
-import WorldMapRenderer from './WorldMapRenderer.js';
-import { balanceConfig } from '../../config/balance/balanceConfig.js';
-import { generateVillageName } from './VillageNameGenerator.js';
+import { theme } from '../../../config/ThemeConfig.js';
+import WorldMapRenderer from './WorldMapRenderer.js'; 
+import { balanceConfig } from '../../../config/balance/balanceConfig.js';
+import { generateVillageName } from '../VillageNameGenerator.js';
 
 export type KnownVillage = {
     name: string;
@@ -21,7 +21,7 @@ export type WorldVillageDirectionHint = {
     distanceCells?: number;
 };
 
-const FOG_STATE = { UNKNOWN: 'unknown' as FogState, DISCOVERED: 'discovered' as FogState, HIDDEN: 'hidden' as FogState };
+export const FOG_STATE = { UNKNOWN: 'unknown' as FogState, DISCOVERED: 'discovered' as FogState, HIDDEN: 'hidden' as FogState };
 
 const DEFAULT_MAP_DISPLAY_CONFIG: MapDisplayConfig = { everythingDiscovered: false, fogOfWar: true };
 
@@ -109,11 +109,18 @@ export default class WorldMapCore {
         this.terrainLayerCaches = {};
         this.fogRevision = 0;
         this.terrainRevision = 0;
+    }
+
+    protected initializeWorldMap(): void {
         this.initializeFogOfWar();
         this.generateWorld();
         this.visitedCells.add(this.getCellKey(this.playerGridPos.col, this.playerGridPos.row));
         this.refreshVisibility();
         this.centerViewportOnCell(this.playerGridPos.col, this.playerGridPos.row);
+    }
+
+    private createWorldSeed(): number {
+        return Math.floor(Math.random() * 0x7fffffff);
     }
 
     private initializeFogOfWar(): void {

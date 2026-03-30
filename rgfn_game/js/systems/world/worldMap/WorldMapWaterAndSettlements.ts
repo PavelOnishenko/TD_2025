@@ -1,5 +1,7 @@
 // @ts-nocheck
 import WorldMapTerrainModeling from './WorldMapTerrainModeling.js';
+import { theme } from '../../../config/ThemeConfig.js';
+import { balanceConfig } from '../../../config/balance/balanceConfig.js';
 export default class WorldMapWaterAndSettlements extends WorldMapTerrainModeling {
     private generateRiverCells(climateByKey: Map<string, ClimateCell>, columns: number, rows: number): Set<string> {
         const riverConfig = balanceConfig.worldMap.rivers ?? { count: 5, maxLengthFactor: 0.72, turnRate: 0.34, width: 1 };

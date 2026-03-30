@@ -1,5 +1,6 @@
 // @ts-nocheck
 import WorldMapVillageNavigationAndRender from './WorldMapVillageNavigationAndRender.js';
+import { FOG_STATE } from './WorldMapCore.js';
 export default class WorldMapNamedLocationAndVillageOverlays extends WorldMapVillageNavigationAndRender {
     public registerNamedLocation(name: string): void {
         if (this.namedLocations.has(name)) {

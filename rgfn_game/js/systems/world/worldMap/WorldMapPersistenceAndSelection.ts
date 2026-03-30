@@ -1,5 +1,7 @@
 // @ts-nocheck
 import WorldMapRoadNetwork from './WorldMapRoadNetwork.js';
+import { theme } from '../../../config/ThemeConfig.js';
+import { FOG_STATE } from './WorldMapCore.js';
 export default class WorldMapPersistenceAndSelection extends WorldMapRoadNetwork {
     public getState = (): Record<string, unknown> => ({
         worldSeed: this.worldSeed,

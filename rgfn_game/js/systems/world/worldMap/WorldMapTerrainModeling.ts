@@ -1,5 +1,6 @@
 // @ts-nocheck
 import WorldMapCore from './WorldMapCore.js';
+import { balanceConfig } from '../../../config/balance/balanceConfig.js';
 export default class WorldMapTerrainModeling extends WorldMapCore {
     private generateTerrain(): void {
         this.terrainRevision += 1;

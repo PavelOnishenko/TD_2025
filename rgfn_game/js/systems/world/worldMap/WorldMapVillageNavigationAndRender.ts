@@ -1,5 +1,8 @@
 // @ts-nocheck
 import WorldMapMovementAndViewport from './WorldMapMovementAndViewport.js';
+import { theme } from '../../../config/ThemeConfig.js';
+import { generateVillageName } from '../VillageNameGenerator.js';
+import { FOG_STATE } from './WorldMapCore.js';
 export default class WorldMapVillageNavigationAndRender extends WorldMapMovementAndViewport {
     private clampViewport(): void {
         const mapWidth = this.grid.columns * this.grid.cellSize;
