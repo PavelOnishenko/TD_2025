@@ -8,6 +8,7 @@ type PathOptions = {
     ignoreEntity?: CombatEntity | null;
     allowDestinationOccupied?: boolean;
 };
+type CandidateTarget = { goal: GridPosition; path: GridPosition[] };
 
 export default class BattleMapNavigation {
     private readonly grid: GridMap;
@@ -36,26 +37,48 @@ export default class BattleMapNavigation {
     }
 
     public findNextStepTowardRange(source: GridPosition, target: GridPosition, entity: CombatEntity, desiredRange: number): GridPosition | null {
-        const candidateTargets: Array<{ goal: GridPosition; path: GridPosition[] }> = [];
-        this.grid.forEachCell((_cell, col, row) => {
-            if (this.isObstacle(col, row)) {
-                return;
-            }
+        const candidateTargets: CandidateTarget[] = [];
+        this.collectCandidateTargets(candidateTargets, source, target, entity, desiredRange);
+        const bestTarget = this.pickBestCandidateTarget(candidateTargets, target);
+        return bestTarget?.path[1] ?? null;
+    }
 
-            const distanceToTarget = Math.abs(target.col - col) + Math.abs(target.row - row);
-            if (distanceToTarget > desiredRange) {
-                return;
-            }
-            if ((col !== source.col || row !== source.row) && this.isOccupiedByLivingEntity(entity, col, row)) {
-                return;
-            }
+    private collectCandidateTargets(
+        candidateTargets: CandidateTarget[],
+        source: GridPosition,
+        target: GridPosition,
+        entity: CombatEntity,
+        desiredRange: number,
+    ): void {
+        this.grid.forEachCell((_cell, col, row) => this.tryAddCandidateTarget(candidateTargets, source, target, entity, desiredRange, col, row));
+    }
 
-            const path = this.findPath(source, { col, row }, { ignoreEntity: entity, allowDestinationOccupied: false });
-            if (path && path.length > 1) {
-                candidateTargets.push({ goal: { col, row }, path });
-            }
-        });
+    private tryAddCandidateTarget(
+        candidateTargets: CandidateTarget[],
+        source: GridPosition,
+        target: GridPosition,
+        entity: CombatEntity,
+        desiredRange: number,
+        col: number,
+        row: number,
+    ): void {
+        if (this.isObstacle(col, row) || this.isBeyondDesiredRange(target, desiredRange, col, row)) {
+            return;
+        }
+        if ((col !== source.col || row !== source.row) && this.isOccupiedByLivingEntity(entity, col, row)) {
+            return;
+        }
+        const path = this.findPath(source, { col, row }, { ignoreEntity: entity, allowDestinationOccupied: false });
+        if (path && path.length > 1) {
+            candidateTargets.push({ goal: { col, row }, path });
+        }
+    }
 
+    private isBeyondDesiredRange(target: GridPosition, desiredRange: number, col: number, row: number): boolean {
+        return Math.abs(target.col - col) + Math.abs(target.row - row) > desiredRange;
+    }
+
+    private pickBestCandidateTarget(candidateTargets: CandidateTarget[], target: GridPosition): CandidateTarget | null {
         if (candidateTargets.length === 0) {
             return null;
         }
@@ -68,8 +91,7 @@ export default class BattleMapNavigation {
             const rightDistance = Math.abs(right.goal.col - target.col) + Math.abs(right.goal.row - target.row);
             return leftDistance - rightDistance;
         });
-
-        return candidateTargets[0].path[1] ?? null;
+        return candidateTargets[0] ?? null;
     }
 
     public getPathDistance(start: GridPosition, end: GridPosition, options: PathOptions): number | null {
@@ -92,37 +114,37 @@ export default class BattleMapNavigation {
             if (current.col === end.col && current.row === end.row) {
                 return this.reconstructPath(cameFrom, current);
             }
-
-            CARDINAL_STEPS.forEach((step) => {
-                const nextCol = current.col + step.col;
-                const nextRow = current.row + step.row;
-                const nextKey = this.getCellKey(nextCol, nextRow);
-                if (visited.has(nextKey) || !this.grid.isValidPosition(nextCol, nextRow)) {
-                    return;
-                }
-
-                const destinationCell = nextCol === end.col && nextRow === end.row;
-                const blockedByEntity = this.entitiesProvider().some((candidate) => {
-                    if (candidate === options.ignoreEntity || candidate.isDead()) {
-                        return false;
-                    }
-                    if (options.allowDestinationOccupied && destinationCell) {
-                        return false;
-                    }
-                    return candidate.gridCol === nextCol && candidate.gridRow === nextRow;
-                });
-
-                if (this.isObstacle(nextCol, nextRow) || blockedByEntity) {
-                    return;
-                }
-
-                visited.add(nextKey);
-                cameFrom.set(nextKey, this.getCellKey(current.col, current.row));
-                queue.push({ col: nextCol, row: nextRow });
-            });
+            this.expandPathFrontier(current, end, options, visited, cameFrom, queue);
         }
 
         return null;
+    }
+
+    private expandPathFrontier(
+        current: GridPosition, end: GridPosition, options: PathOptions, visited: Set<string>, cameFrom: Map<string, string | null>, queue: GridPosition[],
+    ): void {
+        CARDINAL_STEPS.forEach((step) => {
+            const nextCol = current.col + step.col;
+            const nextRow = current.row + step.row;
+            const nextKey = this.getCellKey(nextCol, nextRow);
+            if (visited.has(nextKey) || !this.grid.isValidPosition(nextCol, nextRow) || this.isBlockedPathCell(nextCol, nextRow, end, options)) {
+                return;
+            }
+            visited.add(nextKey);
+            cameFrom.set(nextKey, this.getCellKey(current.col, current.row));
+            queue.push({ col: nextCol, row: nextRow });
+        });
+    }
+
+    private isBlockedPathCell(nextCol: number, nextRow: number, end: GridPosition, options: PathOptions): boolean {
+        const destinationCell = nextCol === end.col && nextRow === end.row;
+        const blockedByEntity = this.entitiesProvider().some((candidate) => {
+            if (candidate === options.ignoreEntity || candidate.isDead() || (options.allowDestinationOccupied && destinationCell)) {
+                return false;
+            }
+            return candidate.gridCol === nextCol && candidate.gridRow === nextRow;
+        });
+        return this.isObstacle(nextCol, nextRow) || blockedByEntity;
     }
 
     private reconstructPath(cameFrom: Map<string, string | null>, end: GridPosition): GridPosition[] {

@@ -34,6 +34,13 @@ export interface EnemyConfig {
     mutations?: MonsterMutationTrait[];
 }
 
+type SkeletonInitialization = {
+    config: EnemyConfig;
+    archetypeId: keyof typeof balanceConfig.creatureArchetypes;
+    baseStats: CreatureBaseStats;
+    skills: CreatureSkills;
+};
+
 const DamageableEntity = withDamageable(Entity);
 
 export default class Skeleton extends DamageableEntity {
@@ -77,11 +84,7 @@ export default class Skeleton extends DamageableEntity {
 
     constructor(x: number, y: number, enemyConfig?: EnemyConfig) {
         super(x, y);
-        const config: EnemyConfig = enemyConfig ?? balanceConfig.enemies.skeleton;
-        const archetypeId = config.archetypeId ?? 'skeleton';
-        const archetype = balanceConfig.creatureArchetypes[archetypeId] ?? balanceConfig.creatureArchetypes.skeleton;
-        const baseStats = { ...cloneBaseStats(archetype.baseStats), ...(config.baseStats ?? {}) };
-        const skills = normalizeCreatureSkills({ ...archetype.skills, ...(config.skills ?? {}) });
+        const { config, archetypeId, baseStats, skills } = this.buildInitialization(enemyConfig);
         const derivedStats = deriveCreatureStats(baseStats, skills);
         this.width = config.width;
         this.height = config.height;
@@ -91,18 +94,50 @@ export default class Skeleton extends DamageableEntity {
         this.archetypeId = archetypeId;
         this.baseStats = baseStats;
         this.skills = skills;
+        this.assignDerivedCombatStats(derivedStats);
+        this.mutations = [...(config.mutations ?? [])];
+        MonsterMutationEngine.applyMutations(this);
+        this.monsterStatusEffects = new MonsterStatusEffects();
+        this.monsterVisualRenderer = new MonsterVisualRenderer();
+        this.initializeHp(derivedStats.maxHp);
+    }
+
+    private buildInitialization(enemyConfig?: EnemyConfig): SkeletonInitialization {
+        const config: EnemyConfig = enemyConfig ?? balanceConfig.enemies.skeleton;
+        const archetypeId = config.archetypeId ?? 'skeleton';
+        const archetype = this.resolveArchetype(archetypeId);
+        const baseStats = this.mergeBaseStats(archetype.baseStats, config.baseStats);
+        const skills = this.mergeSkills(archetype.skills, config.skills);
+        return { config, archetypeId, baseStats, skills };
+    }
+
+    private resolveArchetype(archetypeId: keyof typeof balanceConfig.creatureArchetypes) {
+        return balanceConfig.creatureArchetypes[archetypeId] ?? balanceConfig.creatureArchetypes.skeleton;
+    }
+
+    private mergeBaseStats(baseStats: CreatureBaseStats, overrides?: Partial<CreatureBaseStats>): CreatureBaseStats {
+        return { ...cloneBaseStats(baseStats), ...(overrides ?? {}) };
+    }
+
+    private mergeSkills(
+        skills: Partial<Record<CreatureSkill, number>>,
+        overrides?: Partial<Record<CreatureSkill, number>>,
+    ): CreatureSkills {
+        return normalizeCreatureSkills({ ...skills, ...(overrides ?? {}) });
+    }
+
+    private assignDerivedCombatStats(derivedStats: ReturnType<typeof deriveCreatureStats>): void {
         this.damage = derivedStats.physicalDamage;
         this.armor = derivedStats.armor;
         this.avoidChance = derivedStats.avoidChance;
         this.maxMana = derivedStats.maxMana;
         this.magicPoints = derivedStats.magicPoints;
         this.mana = derivedStats.maxMana;
-        this.mutations = [...(config.mutations ?? [])];
-        MonsterMutationEngine.applyMutations(this);
-        this.monsterStatusEffects = new MonsterStatusEffects();
-        this.monsterVisualRenderer = new MonsterVisualRenderer();
+    }
+
+    private initializeHp(maxHp: number): void {
         const hpMultiplier = Math.max(0, balanceConfig.enemies.hpMultiplier ?? 1);
-        (this as any).initDamageable(Math.round(derivedStats.maxHp * hpMultiplier));
+        (this as any).initDamageable(Math.round(maxHp * hpMultiplier));
     }
 
     public takeDamage(amount: number): boolean {

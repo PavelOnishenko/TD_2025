@@ -77,30 +77,36 @@ const GAME_THEME: Theme = {
 // Export the fixed theme
 export const theme = GAME_THEME;
 
+function applyCssProperties(root: HTMLElement, properties: Record<string, string>): void {
+    Object.entries(properties).forEach(([property, value]) => root.style.setProperty(property, value));
+}
+
+const THEME_CSS_PROPERTIES: Record<string, string> = {
+    '--color-primary-bg': theme.ui.primaryBg,
+    '--color-secondary-bg': theme.ui.secondaryBg,
+    '--color-canvas-bg': theme.ui.canvasBg,
+    '--color-primary-accent': theme.ui.primaryAccent,
+    '--color-secondary-accent': theme.ui.secondaryAccent,
+    '--color-enemy': theme.ui.enemyColor,
+    '--color-warning': theme.ui.warningColor,
+    '--color-disabled': theme.ui.disabledColor,
+    '--color-system-message': theme.ui.systemMessageColor,
+    '--color-text-primary': theme.ui.textPrimary,
+    '--color-text-muted': theme.ui.textMuted,
+    '--color-panel-shadow': theme.ui.panelShadow,
+    '--color-panel-highlight': theme.ui.panelHighlight,
+    '--color-location-name': theme.ui.locationNameColor,
+    '--color-item-name': theme.ui.itemNameColor,
+    '--color-person-name': theme.ui.personNameColor,
+    '--world-map-width': `${theme.worldMap.viewportSize.width}px`,
+    '--world-map-height': `${theme.worldMap.viewportSize.height}px`,
+};
+
 /**
  * Apply theme colors to CSS custom properties
  * Call this once on game initialization
  */
 export function applyThemeToCSS(): void {
     const root = document.documentElement;
-
-    // UI colors
-    root.style.setProperty('--color-primary-bg', theme.ui.primaryBg);
-    root.style.setProperty('--color-secondary-bg', theme.ui.secondaryBg);
-    root.style.setProperty('--color-canvas-bg', theme.ui.canvasBg);
-    root.style.setProperty('--color-primary-accent', theme.ui.primaryAccent);
-    root.style.setProperty('--color-secondary-accent', theme.ui.secondaryAccent);
-    root.style.setProperty('--color-enemy', theme.ui.enemyColor);
-    root.style.setProperty('--color-warning', theme.ui.warningColor);
-    root.style.setProperty('--color-disabled', theme.ui.disabledColor);
-    root.style.setProperty('--color-system-message', theme.ui.systemMessageColor);
-    root.style.setProperty('--color-text-primary', theme.ui.textPrimary);
-    root.style.setProperty('--color-text-muted', theme.ui.textMuted);
-    root.style.setProperty('--color-panel-shadow', theme.ui.panelShadow);
-    root.style.setProperty('--color-panel-highlight', theme.ui.panelHighlight);
-    root.style.setProperty('--color-location-name', theme.ui.locationNameColor);
-    root.style.setProperty('--color-item-name', theme.ui.itemNameColor);
-    root.style.setProperty('--color-person-name', theme.ui.personNameColor);
-    root.style.setProperty('--world-map-width', `${theme.worldMap.viewportSize.width}px`);
-    root.style.setProperty('--world-map-height', `${theme.worldMap.viewportSize.height}px`);
+    applyCssProperties(root, THEME_CSS_PROPERTIES);
 }

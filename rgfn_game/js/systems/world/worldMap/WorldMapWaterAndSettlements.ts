@@ -17,36 +17,57 @@ export default class WorldMapWaterAndSettlements extends WorldMapTerrainModeling
         const usedSources = new Set<string>();
 
         for (let riverIndex = 0; riverIndex < riverCount; riverIndex += 1) {
-            const source = sourceCandidates.find((candidate) => !usedSources.has(this.getCellKey(candidate.col, candidate.row)));
+            const source = this.pickUnusedRiverSource(sourceCandidates, usedSources);
             if (!source) {
                 break;
             }
-
-            usedSources.add(this.getCellKey(source.col, source.row));
-            let current = { col: source.col, row: source.row };
-
-            for (let step = 0; step < maxLength; step += 1) {
-                this.addWaterBrush(riverCells, current.col, current.row, riverWidth);
-
-                const next = this.pickNextRiverStep(current.col, current.row, climateByKey, turnRate, riverIndex, step);
-                if (!next) {
-                    break;
-                }
-
-                current = next;
-                const climate = climateByKey.get(this.getCellKey(current.col, current.row));
-                if (!climate) {
-                    break;
-                }
-
-                if (current.col <= 0 || current.row <= 0 || current.col >= columns - 1 || current.row >= rows - 1 || climate.elevation <= 0.34) {
-                    this.addWaterBrush(riverCells, current.col, current.row, riverWidth + 1);
-                    break;
-                }
-            }
+            this.traceRiverFromSource(riverCells, source, climateByKey, { maxLength, turnRate, riverIndex, riverWidth, columns, rows });
         }
 
         return riverCells;
+    }
+
+    private pickUnusedRiverSource(candidates: ClimateCell[], usedSources: Set<string>): ClimateCell | null {
+        const source = candidates.find((candidate) => !usedSources.has(this.getCellKey(candidate.col, candidate.row)));
+        if (!source) {
+            return null;
+        }
+        usedSources.add(this.getCellKey(source.col, source.row));
+        return source;
+    }
+
+    private traceRiverFromSource(
+        riverCells: Set<string>,
+        source: ClimateCell,
+        climateByKey: Map<string, ClimateCell>,
+        options: { maxLength: number; turnRate: number; riverIndex: number; riverWidth: number; columns: number; rows: number },
+    ): void {
+        let current = { col: source.col, row: source.row };
+        for (let step = 0; step < options.maxLength; step += 1) {
+            this.addWaterBrush(riverCells, current.col, current.row, options.riverWidth);
+            const next = this.pickNextRiverStep(current.col, current.row, climateByKey, options.turnRate, options.riverIndex, step);
+            if (!next) {
+                break;
+            }
+            current = next;
+            if (this.shouldStopRiverAtPosition(current, climateByKey, options.columns, options.rows)) {
+                this.addWaterBrush(riverCells, current.col, current.row, options.riverWidth + 1);
+                break;
+            }
+        }
+    }
+
+    private shouldStopRiverAtPosition(
+        current: GridPosition,
+        climateByKey: Map<string, ClimateCell>,
+        columns: number,
+        rows: number,
+    ): boolean {
+        const climate = climateByKey.get(this.getCellKey(current.col, current.row));
+        if (!climate) {
+            return true;
+        }
+        return current.col <= 0 || current.row <= 0 || current.col >= columns - 1 || current.row >= rows - 1 || climate.elevation <= 0.34;
     }
 
     private pickNextRiverStep(
@@ -135,37 +156,49 @@ export default class WorldMapWaterAndSettlements extends WorldMapTerrainModeling
 
     private generateVillages(): void {
         const dims = this.grid.getDimensions();
-        const baseVillageCount = Math.max(
-            balanceConfig.worldMap.villages.minCount,
-            Math.floor((dims.columns * dims.rows) * balanceConfig.worldMap.villages.densityPerCell),
-        );
-        const villageCount = Math.max(1, Math.floor(baseVillageCount * (balanceConfig.worldMap.villages.creationRateMultiplier ?? 1)));
+        const villageCount = this.getVillageTargetCount(dims.columns, dims.rows);
         this.villages.clear();
         this.villageIndexSet.clear();
 
         for (let attempt = 0; this.villages.size < villageCount && attempt < dims.columns * dims.rows * 8; attempt += 1) {
             const col = this.seededInt(dims.columns, this.seededValue('village-col', attempt));
             const row = this.seededInt(dims.rows, this.seededValue('village-row', attempt));
-            const terrain = this.getTerrain(col, row);
-
-            if (!terrain || terrain.type === 'water' || terrain.type === 'mountain' || terrain.type === 'desert') {
+            if (!this.isVillageTerrainCandidate(col, row)) {
                 continue;
             }
-            const nearestVillageDistance = Array.from(this.villages).reduce((closest, key) => {
-                const [vColText, vRowText] = key.split(',');
-                const vCol = Number(vColText);
-                const vRow = Number(vRowText);
-                return Math.min(closest, Math.abs(vCol - col) + Math.abs(vRow - row));
-            }, Number.POSITIVE_INFINITY);
-
-            if (nearestVillageDistance < 6) {
+            if (this.getNearestVillageDistance(col, row) < 6) {
                 continue;
             }
-
-            const key = this.getCellKey(col, row);
-            this.villages.add(key);
-            this.villageIndexSet.add(this.getCellIndex(col, row));
+            this.addVillage(col, row);
         }
+    }
+
+    private getVillageTargetCount(columns: number, rows: number): number {
+        const baseVillageCount = Math.max(
+            balanceConfig.worldMap.villages.minCount,
+            Math.floor((columns * rows) * balanceConfig.worldMap.villages.densityPerCell),
+        );
+        return Math.max(1, Math.floor(baseVillageCount * (balanceConfig.worldMap.villages.creationRateMultiplier ?? 1)));
+    }
+
+    private isVillageTerrainCandidate(col: number, row: number): boolean {
+        const terrain = this.getTerrain(col, row);
+        return !!terrain && terrain.type !== 'water' && terrain.type !== 'mountain' && terrain.type !== 'desert';
+    }
+
+    private getNearestVillageDistance(col: number, row: number): number {
+        return Array.from(this.villages).reduce((closest, key) => {
+            const [vColText, vRowText] = key.split(',');
+            const vCol = Number(vColText);
+            const vRow = Number(vRowText);
+            return Math.min(closest, Math.abs(vCol - col) + Math.abs(vRow - row));
+        }, Number.POSITIVE_INFINITY);
+    }
+
+    private addVillage(col: number, row: number): void {
+        const key = this.getCellKey(col, row);
+        this.villages.add(key);
+        this.villageIndexSet.add(this.getCellIndex(col, row));
     }
 
     private getTerrainColor = (type: TerrainType): string => theme.worldMap.terrain[type];

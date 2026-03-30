@@ -1,6 +1,5 @@
 import GridMap from '../../../utils/GridMap.js';
 import { FogState, TerrainData, GridCell, TerrainNeighbors, TerrainType } from '../../../types/game.js';
-import { theme } from '../../../config/ThemeConfig.js';
 import WorldMapCellRenderer from '../WorldMapCellRenderer.js';
 import WorldMapColorUtils from '../WorldMapColorUtils.js';
 import WorldMapFeatureRenderer from '../WorldMapFeatureRenderer.js';

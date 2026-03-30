@@ -3,11 +3,9 @@ import WorldMap from './WorldMap.js';
 import EncounterSystem from '../../encounter/EncounterSystem.js';
 import Player from '../../../entities/player/Player.js';
 import Skeleton from '../../../entities/Skeleton.js';
-import Item from '../../../entities/Item.js';
 import Wanderer from '../../../entities/Wanderer.js';
 import { ItemDiscoverySplash } from '../../../ui/ItemDiscoverySplash.js';
-import { Direction, TerrainType } from '../../../types/game.js';
-import { balanceConfig } from '../../../config/balance/balanceConfig.js';
+import { TerrainType } from '../../../types/game.js';
 import WorldModeMovementInput from '../../world-mode/WorldModeMovementInput.js';
 import WorldModeVillagePromptController from '../../world-mode/WorldModeVillagePromptController.js';
 import WorldModeTravelEncounterController from '../../world-mode/WorldModeTravelEncounterController.js';
@@ -88,13 +86,9 @@ export default class WorldModeController {
         this.player.y = py;
     }
 
-    public tryEnterVillageAtCurrentPosition(): boolean {
-        return this.villagePromptController.tryEnterVillageAtCurrentPosition();
-    }
+    public readonly tryEnterVillageAtCurrentPosition = (): boolean => this.villagePromptController.tryEnterVillageAtCurrentPosition();
 
-    public confirmVillageEntryFromPrompt(): boolean {
-        return this.villagePromptController.confirmVillageEntryFromPrompt();
-    }
+    public readonly confirmVillageEntryFromPrompt = (): boolean => this.villagePromptController.confirmVillageEntryFromPrompt();
 
     public dismissVillageEntryPrompt(): void {
         this.villagePromptController.dismissVillageEntryPrompt();
