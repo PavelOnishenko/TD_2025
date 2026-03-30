@@ -1,5 +1,5 @@
 import StateMachine from '../../utils/StateMachine.js';
-import WorldMap from '../../systems/world/WorldMap.js';
+import WorldMap from '../../systems/world/worldMap/WorldMap.js';
 import Skeleton from '../../entities/Skeleton.js';
 import { TerrainType } from '../../types/game.js';
 import GameModeStateMachine from '../../systems/game/runtime/GameModeStateMachine.js';

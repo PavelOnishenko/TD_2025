@@ -3,7 +3,7 @@ import GameBattleCoordinator from '../../systems/game/runtime/GameBattleCoordina
 import GameHudCoordinator from '../../systems/game/runtime/GameHudCoordinator.js';
 import GameUiEventBinder from '../../systems/game/GameUiEventBinder.js';
 import GameVillageCoordinator from '../../systems/game/runtime/GameVillageCoordinator.js';
-import WorldModeController from '../../systems/WorldModeController.js';
+import WorldModeController from '../../systems/world/worldMap/WorldModeController.js';
 import VillageActionsController from '../../systems/village/VillageActionsController.js';
 import DeveloperEventController from '../../systems/encounter/DeveloperEventController.js';
 import { CombatMove } from '../../systems/combat/DirectionalCombat.js';

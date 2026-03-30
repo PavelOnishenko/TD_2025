@@ -1,9 +1,9 @@
 import BattleMap from '../../systems/combat/BattleMap.js';
-import WorldMap from '../../systems/world/WorldMap.js';
+import WorldMap from '../../systems/world/worldMap/WorldMap.js';
 import Player from '../../entities/player/Player.js';
 import GameModeStateMachine, { MODES } from '../../systems/game/runtime/GameModeStateMachine.js';
 import GameHudCoordinator from '../../systems/game/runtime/GameHudCoordinator.js';
-import WorldModeController from '../../systems/WorldModeController.js';
+import WorldModeController from '../../systems/world/worldMap/WorldModeController.js';
 import { WorldUI } from '../../systems/game/GameUiTypes.js';
 
 export default class GameWorldInteractionRuntime {

@@ -6,8 +6,8 @@ import type GameRenderRouter from '../../systems/game/runtime/GameRenderRouter.j
 import type GameVillageCoordinator from '../../systems/game/runtime/GameVillageCoordinator.js';
 import type GameHudCoordinator from '../../systems/game/runtime/GameHudCoordinator.js';
 import type GameBattleCoordinator from '../../systems/game/runtime/GameBattleCoordinator.js';
-import type WorldModeController from '../../systems/WorldModeController.js';
-import type WorldMap from '../../systems/world/WorldMap.js';
+import type WorldModeController from '../../systems/world/worldMap/WorldModeController.js';
+import type WorldMap from '../../systems/world/worldMap/WorldMap.js';
 import type BattleMap from '../../systems/combat/BattleMap.js';
 import type Player from '../../entities/player/Player.js';
 import type MagicSystem from '../../systems/magic/MagicSystem.js';

@@ -3,7 +3,7 @@ import { deriveArchetypeStats, formatCreatureSkills } from '../../config/creatur
 import { CreatureBaseStats, CreatureSkills } from '../../config/creatureTypes.js';
 import Player from '../../entities/player/Player.js';
 import Wanderer from '../../entities/Wanderer.js';
-import WorldMap from '../world/WorldMap.js';
+import WorldMap from '../world/worldMap/WorldMap.js';
 
 type LoreBookElements = {
     loreBody: HTMLElement;
