@@ -1,4 +1,4 @@
-import { HudElements } from '../GameUiTypes.js';
+import { HudElements } from '../ui/GameUiTypes.js';
 
 export class GameHudElementsFactory {
     public create = (): HudElements => ({

@@ -4,7 +4,7 @@ import { theme } from '../../config/ThemeConfig.js';
 import BattleMapView, { BattleObstacle } from './BattleMapView.js';
 import BattleMapNavigation from './BattleMapNavigation.js';
 import BattleMapObstacleGenerator from './BattleMapObstacleGenerator.js';
-import BattleMapSelectionInfo from './BattleMapSelectionInfo.js';
+import BattleMapSelectionInfo from './map/BattleMapSelectionInfo.js';
 
 export default class BattleMap {
     private readonly grid: GridMap;

@@ -1,4 +1,4 @@
-import type { WorldUI } from '../../systems/game/GameUiTypes.js';
+import type { WorldUI } from '../../systems/game/ui/GameUiTypes.js';
 import type { GameFacadeStateAccess } from './GameFacadeSharedTypes.js';
 
 export default class GameFacadeWorldInteractionCoordinator {

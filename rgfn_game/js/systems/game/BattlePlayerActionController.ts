@@ -1,5 +1,5 @@
 import TurnManager from '../combat/TurnManager.js';
-import BattleUiController from '../BattleUiController.js';
+import BattleUiController from '../controllers/BattleUiController.js';
 import Skeleton from '../../entities/Skeleton.js';
 import timingConfig from '../../config/timingConfig.js';
 import { Direction } from '../../types/game.js';

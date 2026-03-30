@@ -1,5 +1,5 @@
 import Player from '../../entities/player/Player.js';
-import MagicSystem from '../magic/MagicSystem.js';
+import MagicSystem from '../controllers/magic/MagicSystem.js';
 import { BattleUiHudElements, HudElements } from './HudTypes.js';
 
 export default class HudMagicController {

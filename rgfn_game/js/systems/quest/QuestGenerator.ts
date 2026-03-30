@@ -1,6 +1,6 @@
-import QuestLeafFactory from './QuestLeafFactory.js';
-import QuestPackService from './QuestPackService.js';
-import { DefaultQuestRandom, QuestRandom } from './QuestRandom.js';
+import QuestLeafFactory from './generation/QuestLeafFactory.js';
+import QuestPackService from './generation/QuestPackService.js';
+import { DefaultQuestRandom, QuestRandom } from './generation/QuestRandom.js';
 import { QuestNode } from './QuestTypes.js';
 import { theme } from '../../config/ThemeConfig.js';
 

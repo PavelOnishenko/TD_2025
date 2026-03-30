@@ -5,7 +5,7 @@ import GameInputSetup from '../systems/game/GameInputSetup.js';
 import { applyThemeToCSS, theme } from '../config/ThemeConfig.js';
 import { balanceConfig } from '../config/balance/balanceConfig.js';
 import StateMachine from '../utils/StateMachine.js';
-import { BattleUI, DeveloperUI, GameLogUI, HudElements, VillageUI, WorldUI } from '../systems/game/GameUiTypes.js';
+import { BattleUI, DeveloperUI, GameLogUI, HudElements, VillageUI, WorldUI } from '../systems/game/ui/GameUiTypes.js';
 import GameRenderRouter from '../systems/game/runtime/GameRenderRouter.js';
 import GameVillageCoordinator from '../systems/game/runtime/GameVillageCoordinator.js';
 import GameHudCoordinator from '../systems/game/runtime/GameHudCoordinator.js';
@@ -15,7 +15,7 @@ import VillageActionsController from '../systems/village/VillageActionsControlle
 import WorldMap from '../systems/world/worldMap/WorldMap.js';
 import BattleMap from '../systems/combat/BattleMap.js';
 import Player from '../entities/player/Player.js';
-import MagicSystem from '../systems/magic/MagicSystem.js';
+import MagicSystem from '../systems/controllers/magic/MagicSystem.js';
 import DeveloperEventController from '../systems/encounter/DeveloperEventController.js';
 import QuestGenerator from '../systems/quest/QuestGenerator.js';
 import QuestUiController from '../systems/quest/QuestUiController.js';

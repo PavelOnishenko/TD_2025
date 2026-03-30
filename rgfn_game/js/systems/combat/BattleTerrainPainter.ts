@@ -1,6 +1,6 @@
 import { GridCell, TerrainType } from '../../types/game.js';
 import { theme } from '../../config/ThemeConfig.js';
-import { BattleMapPainterUtils } from './BattleMapPainterUtils.js';
+import { BattleMapPainterUtils } from './map/BattleMapPainterUtils.js';
 
 export type TerrainPalette = {
     base: string;

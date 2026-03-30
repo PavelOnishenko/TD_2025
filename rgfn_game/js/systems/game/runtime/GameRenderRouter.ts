@@ -5,7 +5,7 @@ import Player from '../../../entities/player/Player.js';
 import Skeleton from '../../../entities/Skeleton.js';
 import TurnManager from '../../combat/TurnManager.js';
 import VillageEnvironmentRenderer from '../../village/VillageEnvironmentRenderer.js';
-import VillageLifeRenderer from '../../village/VillageLifeRenderer.js';
+import VillageLifeRenderer from '../../village/life/VillageLifeRenderer.js';
 import { theme } from '../../../config/ThemeConfig.js';
 
 type RenderDependencies = {

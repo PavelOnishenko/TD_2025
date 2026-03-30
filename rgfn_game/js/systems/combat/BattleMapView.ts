@@ -3,7 +3,7 @@ import { CombatEntity, GridCell, GridPosition, TerrainType } from '../../types/g
 import { theme } from '../../config/ThemeConfig.js';
 import { BattleObstacle, BattleObstacleKind, BattleObstaclePainter } from './BattleObstaclePainter.js';
 import { BattleTerrainPainter } from './BattleTerrainPainter.js';
-import { BattleMapPainterUtils } from './BattleMapPainterUtils.js';
+import { BattleMapPainterUtils } from './map/BattleMapPainterUtils.js';
 
 export type { BattleObstacle, BattleObstacleKind };
 

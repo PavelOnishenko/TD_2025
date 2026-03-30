@@ -1,7 +1,7 @@
 import GridMap from '../../utils/GridMap.js';
 import { GridCell, TerrainType } from '../../types/game.js';
 import { theme } from '../../config/ThemeConfig.js';
-import { BattleMapPainterUtils } from './BattleMapPainterUtils.js';
+import { BattleMapPainterUtils } from './map/BattleMapPainterUtils.js';
 import { BattleTerrainPainter } from './BattleTerrainPainter.js';
 
 export type BattleObstacleKind = 'tree' | 'bush' | 'stump' | 'rock' | 'pillar' | 'cactus' | 'bones' | 'reed' | 'stone' | 'driftwood';

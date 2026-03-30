@@ -1,6 +1,6 @@
 import WorldMap from '../../systems/world/worldMap/WorldMap.js';
 import Player from '../../entities/player/Player.js';
-import MagicSystem from '../../systems/magic/MagicSystem.js';
+import MagicSystem from '../../systems/controllers/magic/MagicSystem.js';
 import { QuestNode } from '../../systems/quest/QuestTypes.js';
 
 export type GameSaveState = {

@@ -1,4 +1,4 @@
-import { DeveloperUI } from '../GameUiTypes.js';
+import { DeveloperUI } from '../ui/GameUiTypes.js';
 
 export class GameDeveloperUiFactory {
     public create = (): DeveloperUI => ({

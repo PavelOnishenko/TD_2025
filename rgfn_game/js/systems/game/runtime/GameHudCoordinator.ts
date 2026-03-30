@@ -1,8 +1,8 @@
 import Player from '../../../entities/player/Player.js';
-import BattleUiController from '../../BattleUiController.js';
-import HudController from '../../HudController.js';
+import BattleUiController from '../../controllers/BattleUiController.js';
+import HudController from '../../controllers/HudController.js';
 import Skeleton from '../../../entities/Skeleton.js';
-import MagicSystem, { BaseSpellId } from '../../magic/MagicSystem.js';
+import MagicSystem, { BaseSpellId } from '../../controllers/magic/MagicSystem.js';
 import { SelectedCellInfo } from '../../../types/game.js';
 
 type PlayerStat = 'vitality' | 'toughness' | 'strength' | 'agility' | 'connection' | 'intelligence';
