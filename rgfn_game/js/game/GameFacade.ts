@@ -19,11 +19,13 @@ import MagicSystem from '../systems/magic/MagicSystem.js';
 import DeveloperEventController from '../systems/encounter/DeveloperEventController.js';
 import QuestGenerator from '../systems/quest/QuestGenerator.js';
 import QuestUiController from '../systems/quest/QuestUiController.js';
-import { MODES } from '../systems/game/runtime/GameModeStateMachine.js';
 import GameQuestRuntime from './runtime/GameQuestRuntime.js';
 import GamePersistenceRuntime from './runtime/GamePersistenceRuntime.js';
 import GameWorldInteractionRuntime from './runtime/GameWorldInteractionRuntime.js';
+import GameFacadeLifecycleCoordinator from './runtime/GameFacadeLifecycleCoordinator.js';
+import GameFacadeWorldInteractionCoordinator from './runtime/GameFacadeWorldInteractionCoordinator.js';
 import { createGameRuntime } from './GameFactory.js';
+import type { GameFacadeStateAccess } from './runtime/GameFacadeSharedTypes.js';
 
 export type UIBundle = {
     hudElements: HudElements;
@@ -34,13 +36,32 @@ export type UIBundle = {
     developerUI: DeveloperUI;
 };
 
+export type GameRuntimeAssignment = {
+    player: Player;
+    worldMap: WorldMap;
+    battleMap: BattleMap;
+    magicSystem: MagicSystem;
+    ui: UIBundle;
+    questGenerator: QuestGenerator;
+    questUiController: QuestUiController;
+    stateMachine: StateMachine;
+    renderRouter: GameRenderRouter;
+    villageCoordinator: GameVillageCoordinator;
+    villageActionsController: VillageActionsController;
+    worldModeController: WorldModeController;
+    hudCoordinator: GameHudCoordinator;
+    battleCoordinator: GameBattleCoordinator;
+    devController: DeveloperEventController;
+};
+
 const SAVE_KEY = 'rgfn_game_save_v1';
 const WORLD_MAP_COLUMNS = balanceConfig.worldMap.dimensions.columns ?? theme.worldMap.gridDimensions.columns;
 const WORLD_MAP_ROWS = balanceConfig.worldMap.dimensions.rows ?? theme.worldMap.gridDimensions.rows;
 const WORLD_MAP_CELL_SIZE = theme.worldMap.cellSize.default;
 
-export class GameFacade {
+export class GameFacade implements GameFacadeStateAccess {
     public readonly canvas: HTMLCanvasElement;
+    public readonly saveKey = SAVE_KEY;
     public readonly renderer: Renderer;
     public readonly input: InputManager;
     public readonly loop: GameLoop;
@@ -55,9 +76,11 @@ export class GameFacade {
     public battleMap!: BattleMap;
     public player!: Player;
     public magicSystem!: MagicSystem;
-    private readonly questRuntime = new GameQuestRuntime();
-    private readonly persistenceRuntime = new GamePersistenceRuntime(SAVE_KEY);
-    private readonly worldInteractionRuntime = new GameWorldInteractionRuntime();
+    public readonly questRuntime = new GameQuestRuntime();
+    public readonly persistenceRuntime = new GamePersistenceRuntime(SAVE_KEY);
+    public readonly worldInteractionRuntime = new GameWorldInteractionRuntime();
+    private readonly lifecycle = new GameFacadeLifecycleCoordinator(this);
+    private readonly worldInteractionCoordinator = new GameFacadeWorldInteractionCoordinator(this);
     private devController: DeveloperEventController | null = null;
 
     public constructor(canvas: HTMLCanvasElement) {
@@ -65,44 +88,14 @@ export class GameFacade {
         this.renderer = new Renderer(canvas);
         this.input = new InputManager();
         this.loop = new GameLoop((dt: number) => this.update(dt), () => this.render());
-        createGameRuntime(
-            this,
-            canvas,
-            Boolean(window.localStorage.getItem(SAVE_KEY)),
-            WORLD_MAP_COLUMNS,
-            WORLD_MAP_ROWS,
-            WORLD_MAP_CELL_SIZE,
-        );
+        createGameRuntime(this, canvas, Boolean(window.localStorage.getItem(SAVE_KEY)), WORLD_MAP_COLUMNS, WORLD_MAP_ROWS, WORLD_MAP_CELL_SIZE);
         new GameInputSetup(this.input, { onToggleDeveloperModal: () => this.devController?.toggleModal() }).configure();
-        window.addEventListener('resize', () => this.handleResize());
-        this.handleResize();
-        if (!window.localStorage.getItem(SAVE_KEY)) {
-            this.worldMap.centerOnPlayer();
-        }
+        window.addEventListener('resize', this.lifecycle.handleResize);
+        this.lifecycle.handleResize();
         applyThemeToCSS();
-        this.syncPlayerToWorldMap();
-        this.persistenceRuntime.loadGame(this.worldMap, this.player, this.magicSystem);
-        this.refreshHud();
-        this.persistenceRuntime.saveGameIfChanged(this.worldMap, this.player, this.magicSystem, this.questRuntime.activeQuest);
     }
 
-    public assignRuntime(runtime: {
-        player: Player;
-        worldMap: WorldMap;
-        battleMap: BattleMap;
-        magicSystem: MagicSystem;
-        ui: UIBundle;
-        questGenerator: QuestGenerator;
-        questUiController: QuestUiController;
-        stateMachine: StateMachine;
-        renderRouter: GameRenderRouter;
-        villageCoordinator: GameVillageCoordinator;
-        villageActionsController: VillageActionsController;
-        worldModeController: WorldModeController;
-        hudCoordinator: GameHudCoordinator;
-        battleCoordinator: GameBattleCoordinator;
-        devController: DeveloperEventController;
-    }): void {
+    public assignRuntime(runtime: GameRuntimeAssignment): void {
         this.player = runtime.player;
         this.worldMap = runtime.worldMap;
         this.battleMap = runtime.battleMap;
@@ -122,208 +115,35 @@ export class GameFacade {
             (contracts) => this.villageActionsController.configureQuestBarterContracts(contracts),
             this.worldMap,
         );
+        this.lifecycle.initializeAfterRuntimeAssignment();
     }
 
-    public start(): void {
-        this.handleResize();
-        this.refreshHud();
-        this.loop.start();
-    }
-
-    public update(_deltaTime: number): void {
-        this.stateMachine.update(_deltaTime);
-        this.input.update();
-        this.persistenceRuntime.saveGameIfChanged(
-            this.worldMap,
-            this.player,
-            this.magicSystem,
-            this.questRuntime.activeQuest,
-        );
-    }
-
-    public render(): void {
-        this.renderer.beginFrame();
-        if (this.stateMachine.isInState(MODES.WORLD_MAP)) {
-            this.renderRouter.renderWorldMode();
-        }
-        if (this.stateMachine.isInState(MODES.VILLAGE)) {
-            this.renderRouter.renderVillageMode();
-        }
-        if (this.stateMachine.isInState(MODES.BATTLE)) {
-            this.renderRouter.renderBattleMode(
-                this.battleCoordinator.getCurrentEnemies(),
-                this.battleCoordinator.getSelectedEnemy(),
-            );
-        }
-        this.renderer.endFrame();
-    }
-
-    public gameOver(): void {
-        this.loop.stop();
-        alert('Game Over! A new character will be created.');
-        this.startNewCharacter();
-    }
-
-    public startNewCharacter(): void {
-        window.localStorage.removeItem(SAVE_KEY);
-        window.location.reload();
-    }
-
-    public onGodSkillsBoost(): void {
-        this.hudCoordinator.handleGodSkillsBoost();
-        this.persistenceRuntime.saveGameIfChanged(
-            this.worldMap,
-            this.player,
-            this.magicSystem,
-            this.questRuntime.activeQuest,
-        );
-    }
-
-    public onQuestLocationClick(locationName: string): boolean {
-        const shown = this.worldMap.revealNamedLocation(locationName);
-        if (shown) {
-            this.stateMachine.transition(MODES.WORLD_MAP);
-        }
-        return shown;
-    }
-
-    public onVillageBarterCompleted(trader: string, item: string, village: string): void {
-        const status = this.questRuntime.recordBarterCompletion(trader, item, village);
-        if (status === 'updated') {
-            this.hudCoordinator.addBattleLog(
-                `Quest tracker: barter objective completed (${trader} -> ${item}).`,
-                'system',
-            );
-        }
-        if (status === 'no-objective') {
-            this.hudCoordinator.addBattleLog(
-                `Quest tracker: barter registered (${trader} -> ${item}), but no active objective matched.`,
-                'system-message',
-            );
-        }
-    }
-
-    public onMonsterKilled(monsterName: string): void {
-        if (this.questRuntime.recordMonsterKill(monsterName)) {
-            this.hudCoordinator.addBattleLog(`Quest tracker: eliminated ${monsterName}.`, 'system');
-        }
-    }
+    public start(): void { this.lifecycle.start(); }
+    public update(deltaTime: number): void { this.lifecycle.update(deltaTime); }
+    public render(): void { this.lifecycle.render(); }
+    public gameOver(): void { this.lifecycle.gameOver(); }
+    public startNewCharacter(): void { this.lifecycle.startNewCharacter(); }
+    public onGodSkillsBoost(): void { this.lifecycle.onGodSkillsBoost(); }
+    public onQuestLocationClick(locationName: string): boolean { return this.lifecycle.onQuestLocationClick(locationName); }
+    public onVillageBarterCompleted(trader: string, item: string, village: string): void { this.lifecycle.onVillageBarterCompleted(trader, item, village); }
+    public onMonsterKilled(monsterName: string): void { this.lifecycle.onMonsterKilled(monsterName); }
 
     public tryCreateQuestMonsterEncounter = (): {
         enemies: import('../entities/Skeleton.js').default[];
         hint?: string;
     } | null => this.questRuntime.tryCreateQuestMonsterEncounter(this.worldMap);
 
-    public onVillageEntered(worldMap: WorldMap, villageCoordinator: GameVillageCoordinator): void {
-        this.questRuntime.recordLocationEntry(
-            worldMap.getVillageNameAtPlayerPosition(),
-            this.player.getInventory().map((item) => item.name),
-        );
-        villageCoordinator.enterVillageMode(
-            this.canvas.width,
-            this.canvas.height,
-            worldMap.getVillageNameAtPlayerPosition(),
-        );
-    }
-
-    public showVillageEntryPrompt(worldUI: WorldUI, villageName: string, anchor: { x: number; y: number }): void {
-        this.worldInteractionRuntime.showWorldVillageEntryPrompt(worldUI, villageName, anchor, this.canvas);
-    }
-
-    public hideVillageEntryPrompt(worldUI: WorldUI): void {
-        this.worldInteractionRuntime.hideWorldVillageEntryPrompt(worldUI);
-    }
-
-    public handleCanvasMove(event: MouseEvent): void {
-        this.worldInteractionRuntime.handleCanvasMove(
-            event,
-            this.canvas,
-            this.stateMachine as never,
-            this.worldMap,
-            this.battleMap,
-            this.hudCoordinator,
-            this.player,
-        );
-    }
-
-    public handleCanvasLeave(): void {
-        this.worldInteractionRuntime.handleCanvasLeave(
-            this.stateMachine as never,
-            this.worldMap,
-            this.battleMap,
-            this.hudCoordinator,
-        );
-    }
-
-    public handleWorldMapWheel(event: WheelEvent): void {
-        this.worldInteractionRuntime.handleWorldMapWheel(
-            event,
-            this.stateMachine as never,
-            this.worldMap,
-            this.player,
-        );
-    }
-
-    public handleWorldMapMiddleDragStart(event: MouseEvent): void {
-        this.worldInteractionRuntime.handleWorldMapMiddleDragStart(event, this.stateMachine as never);
-    }
-
-    public handleWorldMapKeyboardZoom(direction: 'in' | 'out'): void {
-        this.worldInteractionRuntime.handleWorldMapKeyboardZoom(
-            direction,
-            this.stateMachine as never,
-            this.worldMap,
-            this.player,
-        );
-    }
-
-    public centerWorldMapOnPlayer(): void {
-        this.worldInteractionRuntime.centerWorldMapOnPlayer(this.stateMachine as never, this.worldMap, this.player);
-    }
-
-    public tryEnterVillageFromWorldMap(): void {
-        this.worldInteractionRuntime.tryEnterVillageFromWorldMap(
-            this.stateMachine as never,
-            this.worldModeController,
-            this.hudCoordinator,
-        );
-    }
-
-    public confirmWorldVillageEntry(): void {
-        this.worldInteractionRuntime.confirmWorldVillageEntry(
-            this.stateMachine as never,
-            this.worldModeController,
-            this.hudCoordinator,
-        );
-    }
-
-    private handleResize(): void {
-        const rect = this.canvas.getBoundingClientRect();
-        const width = Math.max(160, Math.floor(rect.width));
-        const height = Math.max(160, Math.floor(rect.height));
-        if (width !== this.canvas.width || height !== this.canvas.height) {
-            this.canvas.width = width;
-            this.canvas.height = height;
-        }
-        if (this.worldMap && this.battleMap) {
-            this.worldMap.resizeToCanvas(width, height);
-            this.battleMap.resizeToCanvas(width, height);
-            this.syncPlayerToWorldMap();
-        }
-    }
-
-    private refreshHud(): void {
-        if (this.hudCoordinator) {
-            this.hudCoordinator.updateHUD();
-            this.hudCoordinator.updateSelectedCell(this.worldMap.getSelectedCellInfo());
-        }
-    }
-
-    private syncPlayerToWorldMap(): void {
-        const [x, y] = this.worldMap.getPlayerPixelPosition();
-        this.player.x = x;
-        this.player.y = y;
-    }
+    public onVillageEntered(_worldMap: WorldMap, _villageCoordinator: GameVillageCoordinator): void { this.lifecycle.onVillageEntered(); }
+    public showVillageEntryPrompt(worldUI: WorldUI, villageName: string, anchor: { x: number; y: number }): void { this.worldInteractionCoordinator.showVillageEntryPrompt(worldUI, villageName, anchor); }
+    public hideVillageEntryPrompt(worldUI: WorldUI): void { this.worldInteractionCoordinator.hideVillageEntryPrompt(worldUI); }
+    public handleCanvasMove(event: MouseEvent): void { this.worldInteractionCoordinator.handleCanvasMove(event); }
+    public handleCanvasLeave(): void { this.worldInteractionCoordinator.handleCanvasLeave(); }
+    public handleWorldMapWheel(event: WheelEvent): void { this.worldInteractionCoordinator.handleWorldMapWheel(event); }
+    public handleWorldMapMiddleDragStart(event: MouseEvent): void { this.worldInteractionCoordinator.handleWorldMapMiddleDragStart(event); }
+    public handleWorldMapKeyboardZoom(direction: 'in' | 'out'): void { this.worldInteractionCoordinator.handleWorldMapKeyboardZoom(direction); }
+    public centerWorldMapOnPlayer(): void { this.worldInteractionCoordinator.centerWorldMapOnPlayer(); }
+    public tryEnterVillageFromWorldMap(): void { this.worldInteractionCoordinator.tryEnterVillageFromWorldMap(); }
+    public confirmWorldVillageEntry(): void { this.worldInteractionCoordinator.confirmWorldVillageEntry(); }
 }
 
 export default GameFacade;
