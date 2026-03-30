@@ -1,4 +1,4 @@
-export type ItemId = 'bow' | 'healingPotion' | 'manaPotion';
+export type ItemId = 'bow_t1' | 'healingPotion' | 'manaPotion';
 
 export type EquipmentHands = 1 | 2;
 
