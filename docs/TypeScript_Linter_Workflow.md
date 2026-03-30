@@ -13,6 +13,14 @@ Mandatory expectation for every change:
 5. Run tests.
 6. Only then prepare code for review.
 
+
+## Non-negotiable pre-result reminder
+
+Before sharing task results, always run lint + style audit + tests and keep iterating until clean.
+
+- Use `docs/Agent_PrePR_Checklist.md` as the short operational checklist.
+- For RGFN style-audit tasks, expected clean state is zero violations for Rule 2/3/16 and `none` in all three "Top ..." sections.
+
 ## Commands
 
 ```bash
