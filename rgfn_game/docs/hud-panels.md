@@ -248,6 +248,42 @@ Quick manual QA:
 3. Grab bottom-right resize handle and increase height repeatedly.
 4. Confirm panel keeps expanding instead of stopping near the previous `100dvh - 32px` limit.
 
+## Quests panel parity fix: remove stack-coupling side effects (March 29, 2026, follow-up)
+
+Additional user-reported behavior after the first resize-cap patch:
+
+- If `Quests` was open and another panel was toggled on, `Quests` could appear to "disappear".
+- After closing the other panel, `Quests` reappeared in the same place.
+- Vertical stretching still felt constrained in multi-window setups.
+
+Root cause (layout coupling):
+
+- Draggable HUD windows were still using `position: absolute` inside overlay stack containers.
+- That made window geometry indirectly dependent on parent stack layout and containing-block sizing.
+- In practice this can produce overlap/hide illusions and resize limits tied to container bounds, especially when many panels are simultaneously visible.
+
+Fix applied:
+
+- Switched `.draggable-panel` to `position: fixed` (desktop flow).
+- Kept existing transform-based drag model and per-panel offsets (`--panel-offset-x`, `--panel-offset-y`), so drag UX remains unchanged.
+- Kept mobile fallback (`max-width: 920px`) where panels return to normal static flow for readability.
+
+Why this improves parity:
+
+- `Quests` now follows the exact same floating-window mechanics as other draggable panels without parent-stack geometry side effects.
+- Opening/closing sibling panels no longer reinterprets `Quests` positioning through stack layout.
+- Manual resize behavior is now constrained by viewport mechanics only, not by overlay-stack container box calculations.
+
+Focused manual QA:
+
+1. Open `Quests`, drag it somewhere non-default.
+2. Open `Stats` and `Inventory` while `Quests` stays open:
+   - `Quests` should remain visible (unless intentionally covered by z-order overlap).
+3. Close `Stats` / `Inventory`:
+   - `Quests` should stay at its dragged position.
+4. Resize `Quests` vertically with 2-4 other panels open:
+   - resizing should continue smoothly and no longer "hard-stop" from stack coupling.
+
 ### Important exception
 
 `World Map` sidebar and `Log` keep scroll constraints by design because they can contain intentionally long content and controls with high update frequency.
