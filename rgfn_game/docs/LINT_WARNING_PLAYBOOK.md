@@ -34,3 +34,17 @@ From repository root:
 
 - Add a dedicated script that builds required dist outputs before `node --test`.
 - Consider adding a focused `test:rgfn` script that excludes unrelated suites when iterating on RGFN-only changes.
+
+## 2026-03-30 remediation notes
+
+- `js/game/GameFactory.ts` exceeded both file-length and function-length guidance.
+- The fix extracted construction helpers into `js/game/GameFactoryHelpers.ts` so the top-level factory file stays orchestration-focused and below rule thresholds.
+- `createGameRuntime` was reduced to a short coordinator function by moving binding/assignment details into a dedicated helper.
+- Root folder child-count warning was resolved by moving this playbook from `rgfn_game/LINT_WARNING_PLAYBOOK.md` to `rgfn_game/docs/LINT_WARNING_PLAYBOOK.md`, reducing root-level clutter.
+
+### Practical refactor template for future factory files
+
+1. Keep the file with the public factory entrypoint (`createXRuntime`) to wiring only.
+2. Move verbose callback bags and object construction to a `*Helpers.ts` module.
+3. Add narrowly scoped helper functions (`bindAndAssignX`) when one function starts mixing setup and registration responsibilities.
+4. Track non-code style-guide warnings (like folder child limits) by relocating standalone docs to existing docs folders.
