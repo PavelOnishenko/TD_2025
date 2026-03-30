@@ -562,7 +562,10 @@ export default class WorldMap {
         return storedFogState;
     }
 
-    private getTerrain = (col: number, row: number): TerrainData | undefined => this.terrainData.get(this.getCellKey(col, row)) ?? this.terrainByIndex[this.getCellIndex(col, row)];
+    private getTerrain = (col: number, row: number): TerrainData | undefined => (
+        this.terrainData.get(this.getCellKey(col, row))
+        ?? this.terrainByIndex[this.getCellIndex(col, row)]
+    );
 
     public isCellVisible(col: number, row: number): boolean {
         if (!this.grid.isValidPosition(col, row)) {
@@ -1172,7 +1175,10 @@ export default class WorldMap {
         return segments;
     }
 
-    private gridPointToCanvas = (point: VillageRoadPoint): VillageRoadPoint => ({ x: this.grid.offsetX + (point.x * this.grid.cellSize), y: this.grid.offsetY + (point.y * this.grid.cellSize) });
+    private gridPointToCanvas = (point: VillageRoadPoint): VillageRoadPoint => ({
+        x: this.grid.offsetX + (point.x * this.grid.cellSize),
+        y: this.grid.offsetY + (point.y * this.grid.cellSize),
+    });
 
     private isRoadLinkWithinBounds(link: VillageRoadLink, bounds: { startCol: number; endCol: number; startRow: number; endRow: number }): boolean {
         const minCol = Math.min(link.from.col, link.to.col, Math.floor(link.control1.x), Math.floor(link.control2.x));
@@ -1406,7 +1412,11 @@ export default class WorldMap {
         return null;
     }
 
-    private namedLocationsHasCell = (key: string): boolean => Array.from(this.namedLocations.values()).some((location) => this.getCellKey(location.position.col, location.position.row) === key);
+    private namedLocationsHasCell = (key: string): boolean => (
+        Array.from(this.namedLocations.values()).some(
+            (location) => this.getCellKey(location.position.col, location.position.row) === key,
+        )
+    );
 
     private isDiscovered = (col: number, row: number): boolean => this.getFogState(col, row) !== FOG_STATE.UNKNOWN;
 

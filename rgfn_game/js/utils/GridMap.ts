@@ -131,5 +131,10 @@ export default class GridMap {
         });
     }
 
-    getDimensions = (): { columns: number; rows: number; width: number; height: number } => ({ columns: this.columns, rows: this.rows, width: this.columns * this.cellSize, height: this.rows * this.cellSize });
+    getDimensions = (): { columns: number; rows: number; width: number; height: number } => ({
+        columns: this.columns,
+        rows: this.rows,
+        width: this.columns * this.cellSize,
+        height: this.rows * this.cellSize,
+    });
 }
