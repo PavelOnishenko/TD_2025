@@ -1,4 +1,3 @@
-import StateMachine from '../utils/StateMachine.js';
 import WorldMap from '../systems/world/WorldMap.js';
 import BattleMap from '../systems/combat/BattleMap.js';
 import TurnManager from '../systems/combat/TurnManager.js';
@@ -16,12 +15,10 @@ import Skeleton from '../entities/Skeleton.js';
 import { BattleSplash } from '../ui/BattleSplash.js';
 import { ItemDiscoverySplash } from '../ui/ItemDiscoverySplash.js';
 import GameUiFactory from '../systems/game/GameUiFactory.js';
-import GameUiEventBinder from '../systems/game/GameUiEventBinder.js';
 import BattleTurnController from '../systems/game/BattleTurnController.js';
 import BattlePlayerActionController from '../systems/game/BattlePlayerActionController.js';
 import BattleCommandController from '../systems/game/BattleCommandController.js';
-import { UIBundle } from './GameFacade.js';
-import GameModeStateMachine, { MODES } from '../systems/game/runtime/GameModeStateMachine.js';
+import { MODES } from '../systems/game/runtime/GameModeStateMachine.js';
 import GameRenderRouter from '../systems/game/runtime/GameRenderRouter.js';
 import GameVillageCoordinator from '../systems/game/runtime/GameVillageCoordinator.js';
 import GameHudCoordinator from '../systems/game/runtime/GameHudCoordinator.js';
@@ -34,8 +31,9 @@ import QuestUiController from '../systems/quest/QuestUiController.js';
 import { TerrainType } from '../types/game.js';
 import { balanceConfig } from '../config/balance/balanceConfig.js';
 import { consumeNextCharacterRollAllocation } from '../utils/NextCharacterRollConfig.js';
-import { CombatMove } from '../systems/combat/DirectionalCombat.js';
 import { GameFacade } from './GameFacade.js';
+import GameRuntimeUiBinder from './runtime/GameRuntimeUiBinder.js';
+import GameRuntimeStateMachineFactory from './runtime/GameRuntimeStateMachineFactory.js';
 
 export function createGameRuntime(
     game: GameFacade,
@@ -93,7 +91,7 @@ export function createGameRuntime(
         onVillageBarterCompleted: (trader, item, village) => game.onVillageBarterCompleted(trader, item, village),
     });
     const villageCoordinator = new GameVillageCoordinator(ui.hudElements, ui.battleUI, ui.villageUI, ui.worldUI, villageLifeRenderer, villageActionsController);
-    const stateMachine = createStateMachine(game, ui, worldMap, villageCoordinator);
+    const stateMachine = GameRuntimeStateMachineFactory.create(game, ui, worldMap, villageCoordinator);
     const battlePlayerActionController = new BattlePlayerActionController(turnManager, battleUiController, player, {
         onAddBattleLog: (m, t = 'system') => hudCoordinator.addBattleLog(m, t),
         onEnableBattleButtons: (enabled) => hudCoordinator.enableBattleButtons(enabled),
@@ -177,46 +175,7 @@ export function createGameRuntime(
         getMapDisplayConfig: () => worldMap.getMapDisplayConfig(),
         setMapDisplayConfig: (config) => worldMap.setMapDisplayConfig(config),
     });
-    new GameUiEventBinder(
-        canvas,
-        ui.hudElements,
-        ui.worldUI,
-        ui.battleUI,
-        ui.villageUI,
-        ui.developerUI,
-        villageActionsController,
-        devController,
-        {
-            onAttack: () => battleCoordinator.handleAttack(),
-            onDirectionalCombatMove: (move: CombatMove) => battleCoordinator.handleDirectionalCombatMove(move),
-            onFlee: () => battleCoordinator.handleFlee(),
-            onWait: () => battleCoordinator.handleWait(),
-            onUsePotionFromBattle: () => battleCoordinator.handleUsePotion(true),
-            onUseManaPotionFromBattle: () => battleCoordinator.handleUseManaPotion(true),
-            onUsePotionFromHud: () => battleCoordinator.handleUsePotion(false),
-            onUseManaPotionFromHud: () => battleCoordinator.handleUseManaPotion(false),
-            onUsePotionFromWorld: () => battleCoordinator.handleUsePotion(false),
-            onEnterVillageFromWorld: () => game.tryEnterVillageFromWorldMap(),
-            onConfirmVillageEntryPrompt: () => game.confirmWorldVillageEntry(),
-            onDismissVillageEntryPrompt: () => worldModeController.dismissVillageEntryPrompt(),
-            onCampSleepFromWorld: () => worldModeController.handleCampSleep(),
-            onNewCharacter: () => game.startNewCharacter(),
-            onAddStat: (stat) => hudCoordinator.handleAddStat(stat),
-            onRemoveStat: (stat) => hudCoordinator.handleRemoveStat(stat),
-            onSaveSkillChanges: () => hudCoordinator.handleSaveSkillChanges(),
-            onGodSkillsBoost: () => game.onGodSkillsBoost(),
-            onCastSpell: (id) => battleCoordinator.handleCastSpell(id),
-            onUpgradeSpell: (id) => hudCoordinator.handleUpgradeSpell(id),
-            onCanvasClick: (event) => battleCoordinator.handleCanvasClick(event, canvas),
-            onCanvasMove: (event) => game.handleCanvasMove(event),
-            onCanvasLeave: () => game.handleCanvasLeave(),
-            onWorldMapWheel: (event) => game.handleWorldMapWheel(event),
-            onWorldMapMiddleDragStart: (event) => game.handleWorldMapMiddleDragStart(event),
-            onWorldMapKeyboardZoom: (direction) => game.handleWorldMapKeyboardZoom(direction),
-            onCenterWorldMapOnPlayer: () => game.centerWorldMapOnPlayer(),
-            onTogglePanel: (panel) => hudCoordinator.togglePanel(panel),
-        },
-    ).bind(() => villageCoordinator.getVillageName());
+    new GameRuntimeUiBinder(game, canvas, ui, villageActionsController, devController, villageCoordinator, battleCoordinator, worldModeController, hudCoordinator).bind();
     game.assignRuntime({
         player,
         worldMap,
@@ -235,14 +194,3 @@ export function createGameRuntime(
         devController,
     });
 }
-
-const createStateMachine = (game: GameFacade, ui: UIBundle, worldMap: WorldMap, villageCoordinator: GameVillageCoordinator): StateMachine =>
-    new GameModeStateMachine<{ enemies: Skeleton[]; terrainType: TerrainType }>({
-        onEnterWorld: () => game.worldModeController.enterWorldMode(ui.hudElements.modeIndicator, ui.worldUI.sidebar, ui.battleUI.sidebar, ui.villageUI.sidebar),
-        onUpdateWorld: () => game.worldModeController.updateWorldMode(),
-        onEnterBattle: (battleData) => game.battleCoordinator.enterBattleMode(battleData.enemies, battleData.terrainType),
-        onUpdateBattle: () => game.battleCoordinator.updateBattleMode(),
-        onExitBattle: () => game.battleCoordinator.exitBattleMode(),
-        onEnterVillage: () => game.onVillageEntered(worldMap, villageCoordinator),
-        onExitVillage: () => villageCoordinator.exitVillageMode(),
-    }).create();
