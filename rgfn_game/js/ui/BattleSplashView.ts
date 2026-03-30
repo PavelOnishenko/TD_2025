@@ -98,9 +98,7 @@ export class BattleSplashView {
         this.elements.overlay.removeEventListener('click', this.onOverlayClickBound);
     }
 
-    isVisible(): boolean {
-        return this.elements.overlay.style.display !== 'none';
-    }
+    isVisible = (): boolean => this.elements.overlay.style.display !== 'none';
 
     private createUI(): BattleSplashElements {
         const overlay = document.createElement('div');
