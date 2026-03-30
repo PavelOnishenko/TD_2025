@@ -1,4 +1,4 @@
-import WorldMap from '../systems/world/WorldMap.js';
+import WorldMap from '../systems/world/worldMap/WorldMap.js';
 import BattleMap from '../systems/combat/BattleMap.js';
 import TurnManager from '../systems/combat/TurnManager.js';
 import EncounterSystem from '../systems/encounter/EncounterSystem.js';
@@ -9,7 +9,7 @@ import VillageEnvironmentRenderer from '../systems/village/VillageEnvironmentRen
 import VillageLifeRenderer from '../systems/village/VillageLifeRenderer.js';
 import HudController from '../systems/HudController.js';
 import BattleUiController from '../systems/BattleUiController.js';
-import WorldModeController from '../systems/WorldModeController.js';
+import WorldModeController from '../systems/world/worldMap/WorldModeController.js';
 import Player from '../entities/player/Player.js';
 import Skeleton from '../entities/Skeleton.js';
 import { BattleSplash } from '../ui/BattleSplash.js';
