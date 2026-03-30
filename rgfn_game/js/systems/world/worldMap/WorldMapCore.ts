@@ -1,10 +1,7 @@
 // @ts-nocheck
 import GridMap from '../../../utils/GridMap.js';
-import { FogState, MapDisplayConfig, TerrainData, GridPosition, Direction, GridCell, TerrainNeighbors, TerrainType, SelectedWorldCellInfo } from '../../types/game.js';
-import { theme } from '../../../config/ThemeConfig.js';
-import WorldMapRenderer from './WorldMapRenderer.js'; 
-import { balanceConfig } from '../../../config/balance/balanceConfig.js';
-import { generateVillageName } from '../VillageNameGenerator.js';
+import { FogState, MapDisplayConfig, TerrainData, GridPosition, GridCell, TerrainType } from '../../types/game.js';
+import WorldMapRenderer from './WorldMapRenderer.js';
 
 export type KnownVillage = {
     name: string;
@@ -41,18 +38,6 @@ type VillageRoadLink = {
     to: GridPosition;
     control1: VillageRoadPoint;
     control2: VillageRoadPoint;
-};
-
-type ClimateCell = {
-    col: number;
-    row: number;
-    seed: number;
-    elevation: number;
-    moisture: number;
-    heat: number;
-    forestSuitability: number;
-    grassSuitability: number;
-    inlandWaterSuitability: number;
 };
 
 type TerrainLayerCache = {
@@ -119,9 +104,7 @@ export default class WorldMapCore {
         this.centerViewportOnCell(this.playerGridPos.col, this.playerGridPos.row);
     }
 
-    private createWorldSeed(): number {
-        return Math.floor(Math.random() * 0x7fffffff);
-    }
+    private readonly createWorldSeed = (): number => Math.floor(Math.random() * 0x7fffffff);
 
     private initializeFogOfWar(): void {
         this.fogStatesByIndex = new Array(this.grid.columns * this.grid.rows).fill(FOG_STATE.UNKNOWN);

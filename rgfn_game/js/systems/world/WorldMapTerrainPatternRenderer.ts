@@ -11,23 +11,45 @@ export default class WorldMapTerrainPatternRenderer {
         ctx.fillStyle = textureColor;
         ctx.lineWidth = 1;
 
-        if (pattern === 'dots') return this.drawDotsPattern(ctx, cell, brightness);
-        if (pattern === 'lines') return this.drawLinesPattern(ctx, cell, brightness);
-        if (pattern === 'cross') return this.drawCrossPattern(ctx, cell, brightness);
-        if (pattern === 'waves') return this.drawWavePattern(ctx, cell, brightness, seed);
-        if (pattern === 'dunes') return this.drawDunePattern(ctx, cell, brightness);
-        if (pattern === 'groves') return this.drawGrovesPattern(ctx, cell, brightness, seed);
-        if (pattern === 'ridges') this.drawRidgesPattern(ctx, cell, brightness);
+        if (pattern === 'dots') {
+            return this.drawDotsPattern(ctx, cell, brightness);
+        }
+        if (pattern === 'lines') {
+            return this.drawLinesPattern(ctx, cell, brightness);
+        }
+        if (pattern === 'cross') {
+            return this.drawCrossPattern(ctx, cell, brightness);
+        }
+        if (pattern === 'waves') {
+            return this.drawWavePattern(ctx, cell, brightness, seed);
+        }
+        if (pattern === 'dunes') {
+            return this.drawDunePattern(ctx, cell, brightness);
+        }
+        if (pattern === 'groves') {
+            return this.drawGrovesPattern(ctx, cell, brightness, seed);
+        }
+        if (pattern === 'ridges') {
+            this.drawRidgesPattern(ctx, cell, brightness);
+        }
     }
 
     public drawTerrainIcon(ctx: CanvasRenderingContext2D, cell: GridCell, type: TerrainType, brightness: number): void {
         const centerX = cell.x + cell.width / 2;
         const centerY = cell.y + cell.height / 2;
         ctx.fillStyle = this.colorUtils.withAlpha(theme.ui.primaryAccent, 0.18 * brightness);
-        if (type === 'mountain') return this.drawMountain(ctx, centerX, centerY, cell.width);
-        if (type === 'forest') return this.drawForest(ctx, centerX, centerY, cell.width);
-        if (type === 'water') return this.drawWater(ctx, centerX, centerY, cell.width);
-        if (type === 'desert') this.drawDesert(ctx, centerX, centerY, cell.width);
+        if (type === 'mountain') {
+            return this.drawMountain(ctx, centerX, centerY, cell.width);
+        }
+        if (type === 'forest') {
+            return this.drawForest(ctx, centerX, centerY, cell.width);
+        }
+        if (type === 'water') {
+            return this.drawWater(ctx, centerX, centerY, cell.width);
+        }
+        if (type === 'desert') {
+            this.drawDesert(ctx, centerX, centerY, cell.width);
+        }
     }
 
     private drawDotsPattern(ctx: CanvasRenderingContext2D, cell: GridCell, brightness: number): void {

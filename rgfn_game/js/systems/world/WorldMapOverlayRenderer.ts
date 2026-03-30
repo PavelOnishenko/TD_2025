@@ -5,10 +5,7 @@ import WorldMapColorUtils from './WorldMapColorUtils.js';
 import WorldMapGeometryUtils from './WorldMapGeometryUtils.js';
 
 export default class WorldMapOverlayRenderer {
-    public constructor(
-        private readonly colorUtils: WorldMapColorUtils,
-        private readonly geometryUtils: WorldMapGeometryUtils,
-    ) {}
+    public constructor(private readonly colorUtils: WorldMapColorUtils, private readonly geometryUtils: WorldMapGeometryUtils) {}
 
     public drawBackground(ctx: CanvasRenderingContext2D, width: number, height: number): void {
         const gradient = ctx.createLinearGradient(0, 0, 0, height);
@@ -49,7 +46,13 @@ export default class WorldMapOverlayRenderer {
     }
 
     public drawPlayerMarker(ctx: CanvasRenderingContext2D, cell: GridCell): void {
-        const path = this.geometryUtils.createRoundedRectPath(cell.x + 3, cell.y + 3, cell.width - 6, cell.height - 6, Math.max(6, cell.width * 0.18));
+        const path = this.geometryUtils.createRoundedRectPath(
+            cell.x + 3,
+            cell.y + 3,
+            cell.width - 6,
+            cell.height - 6,
+            Math.max(6, cell.width * 0.18),
+        );
         ctx.save();
         ctx.fillStyle = this.colorUtils.withAlpha(theme.worldMap.playerMarker, 0.16);
         ctx.fill(path);
@@ -90,7 +93,13 @@ export default class WorldMapOverlayRenderer {
 
     public drawNamedLocationFocus(ctx: CanvasRenderingContext2D, cell: GridCell, label: string): void {
         const inset = Math.max(3, cell.width * 0.08);
-        const path = this.geometryUtils.createRoundedRectPath(cell.x + inset, cell.y + inset, cell.width - (inset * 2), cell.height - (inset * 2), Math.max(5, cell.width * 0.16));
+        const path = this.geometryUtils.createRoundedRectPath(
+            cell.x + inset,
+            cell.y + inset,
+            cell.width - (inset * 2),
+            cell.height - (inset * 2),
+            Math.max(5, cell.width * 0.16),
+        );
         ctx.save();
         ctx.strokeStyle = this.colorUtils.withAlpha(theme.ui.locationNameColor, 0.95);
         ctx.lineWidth = 3;
@@ -118,7 +127,13 @@ export default class WorldMapOverlayRenderer {
 
     public drawCursorMarker(ctx: CanvasRenderingContext2D, cell: GridCell, isVisible: boolean): void {
         const inset = Math.max(2, cell.width * 0.08);
-        const path = this.geometryUtils.createRoundedRectPath(cell.x + inset, cell.y + inset, cell.width - (inset * 2), cell.height - (inset * 2), Math.max(5, cell.width * 0.18));
+        const path = this.geometryUtils.createRoundedRectPath(
+            cell.x + inset,
+            cell.y + inset,
+            cell.width - (inset * 2),
+            cell.height - (inset * 2),
+            Math.max(5, cell.width * 0.18),
+        );
         ctx.save();
         ctx.strokeStyle = this.colorUtils.withAlpha(theme.ui.warningColor, isVisible ? 0.95 : 0.7);
         ctx.lineWidth = Math.max(2, cell.width * 0.08);
