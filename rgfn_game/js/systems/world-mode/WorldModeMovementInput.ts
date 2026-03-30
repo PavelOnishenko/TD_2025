@@ -1,6 +1,6 @@
 import InputManager from '../../../../engine/systems/InputManager.js';
 import { Direction } from '../../types/game.js';
-import WorldMap from '../world/WorldMap.js';
+import WorldMap from '../world/worldMap/WorldMap.js';
 
 export default class WorldModeMovementInput {
     private input: InputManager;

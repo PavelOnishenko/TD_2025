@@ -8,6 +8,9 @@ import Wanderer from '../../../entities/Wanderer.js';
 import { ItemDiscoverySplash } from '../../../ui/ItemDiscoverySplash.js';
 import { Direction, TerrainType } from '../../../types/game.js';
 import { balanceConfig } from '../../../config/balance/balanceConfig.js';
+import WorldModeMovementInput from '../../world-mode/WorldModeMovementInput.js';
+import WorldModeVillagePromptController from '../../world-mode/WorldModeVillagePromptController.js';
+import WorldModeTravelEncounterController from '../../world-mode/WorldModeTravelEncounterController.js';
 
 type WorldModeCallbacks = {
     onEnterVillage: () => void;

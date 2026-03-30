@@ -61,6 +61,7 @@ export default class Enemy extends Entity {
 
     constructor(x: number, y: number, color: string = '#ff6b6b') {
         super(x, y);
+        const config = balanceConfig.enemy;
         
         this.width = config.width;
         this.height = config.height;

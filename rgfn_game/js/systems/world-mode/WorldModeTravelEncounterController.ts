@@ -4,7 +4,7 @@ import Wanderer from '../../entities/Wanderer.js';
 import { ItemDiscoverySplash } from '../../ui/ItemDiscoverySplash.js';
 import { balanceConfig } from '../../config/balance/balanceConfig.js';
 import EncounterSystem from '../encounter/EncounterSystem.js';
-import WorldMap from '../world/WorldMap.js';
+import WorldMap from '../world/worldMap/WorldMap.js';
 import WorldModeVillagePromptController from './WorldModeVillagePromptController.js';
 import { WorldModeCallbacks } from './WorldModeTypes.js';
 

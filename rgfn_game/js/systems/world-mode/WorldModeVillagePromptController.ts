@@ -1,4 +1,4 @@
-import WorldMap from '../world/WorldMap.js';
+import WorldMap from '../world/worldMap/WorldMap.js';
 import { WorldModeCallbacks } from './WorldModeTypes.js';
 
 export default class WorldModeVillagePromptController {
