@@ -1,121 +1,20 @@
-import { BattleUI, DeveloperUI, GameLogUI, GameUiBundle, HudElements, VillageUI, WorldUI } from './GameUiTypes.js';
+import { BattleUI, GameLogUI, GameUiBundle, VillageUI, WorldUI } from './GameUiTypes.js';
 import { balanceConfig } from '../../config/balance/balanceConfig.js';
 import { CombatMove } from '../combat/DirectionalCombat.js';
+import { GameHudElementsFactory } from './runtime/GameHudElementsFactory.js';
+import { GameDeveloperUiFactory } from './runtime/GameDeveloperUiFactory.js';
 
 export default class GameUiFactory {
+    private readonly hudElementsFactory = new GameHudElementsFactory();
+    private readonly developerUiFactory = new GameDeveloperUiFactory();
+
     public create = (): GameUiBundle => ({
-        hudElements: this.createHudElements(),
+        hudElements: this.hudElementsFactory.create(),
         worldUI: this.createWorldUi(),
         battleUI: this.createBattleUi(),
         villageUI: this.createVillageUi(),
         gameLogUI: this.createGameLogUi(),
-        developerUI: this.createDeveloperUi(),
-    });
-
-    private createHudElements = (): HudElements => ({
-        hudMenuToggleBtn: document.getElementById('hud-menu-toggle-btn')! as HTMLButtonElement,
-        hudMenuPanel: document.getElementById('hud-menu-panel')!,
-        modeIndicator: document.getElementById('mode-indicator')!,
-        usePotionBtn: document.getElementById('use-potion-btn')! as HTMLButtonElement,
-        useManaPotionBtn: document.getElementById('use-mana-potion-btn')! as HTMLButtonElement,
-        newCharacterBtn: document.getElementById('new-character-btn')! as HTMLButtonElement,
-        playerLevel: document.getElementById('player-level')!,
-        playerName: document.getElementById('player-name')!,
-        playerXp: document.getElementById('player-xp')!,
-        playerXpNext: document.getElementById('player-xp-next')!,
-        playerHp: document.getElementById('player-hp')!,
-        playerMaxHp: document.getElementById('player-max-hp')!,
-        playerMana: document.getElementById('player-mana')!,
-        playerMaxMana: document.getElementById('player-max-mana')!,
-        playerDmg: document.getElementById('player-dmg')!,
-        playerDmgFormula: document.getElementById('player-dmg-formula')!,
-        playerArmor: document.getElementById('player-armor')!,
-        playerDodge: document.getElementById('player-dodge')!,
-        playerDodgeFormula: document.getElementById('player-dodge-formula')!,
-        playerWeapon: document.getElementById('player-weapon')!,
-        playerGold: document.getElementById('player-gold')!,
-        playerFatigue: document.getElementById('player-fatigue')!,
-        playerFatigueState: document.getElementById('player-fatigue-state')!,
-        skillPoints: document.getElementById('skill-points')!,
-        magicPoints: document.getElementById('magic-points')!,
-        magicPanelPoints: document.getElementById('magic-panel-points')!,
-        statVitality: document.getElementById('stat-vitality')!,
-        statToughness: document.getElementById('stat-toughness')!,
-        statStrength: document.getElementById('stat-strength')!,
-        statAgility: document.getElementById('stat-agility')!,
-        statConnection: document.getElementById('stat-connection')!,
-        statIntelligence: document.getElementById('stat-intelligence')!,
-        addVitalityBtn: document.getElementById('add-vitality-btn')! as HTMLButtonElement,
-        subVitalityBtn: document.getElementById('sub-vitality-btn')! as HTMLButtonElement,
-        addToughnessBtn: document.getElementById('add-toughness-btn')! as HTMLButtonElement,
-        subToughnessBtn: document.getElementById('sub-toughness-btn')! as HTMLButtonElement,
-        addStrengthBtn: document.getElementById('add-strength-btn')! as HTMLButtonElement,
-        subStrengthBtn: document.getElementById('sub-strength-btn')! as HTMLButtonElement,
-        addAgilityBtn: document.getElementById('add-agility-btn')! as HTMLButtonElement,
-        subAgilityBtn: document.getElementById('sub-agility-btn')! as HTMLButtonElement,
-        addConnectionBtn: document.getElementById('add-connection-btn')! as HTMLButtonElement,
-        subConnectionBtn: document.getElementById('sub-connection-btn')! as HTMLButtonElement,
-        addIntelligenceBtn: document.getElementById('add-intelligence-btn')! as HTMLButtonElement,
-        subIntelligenceBtn: document.getElementById('sub-intelligence-btn')! as HTMLButtonElement,
-        saveSkillsBtn: document.getElementById('save-skills-btn')! as HTMLButtonElement,
-        godSkillsBtn: document.getElementById('god-skills-btn')! as HTMLButtonElement,
-        upgradeFireballBtn: document.getElementById('upgrade-fireball-btn')! as HTMLButtonElement,
-        upgradeCurseBtn: document.getElementById('upgrade-curse-btn')! as HTMLButtonElement,
-        upgradeSlowBtn: document.getElementById('upgrade-slow-btn')! as HTMLButtonElement,
-        upgradeRageBtn: document.getElementById('upgrade-rage-btn')! as HTMLButtonElement,
-        upgradeArcaneLanceBtn: document.getElementById('upgrade-arcane-lance-btn')! as HTMLButtonElement,
-        spellLevelFireball: document.getElementById('spell-level-fireball')!,
-        spellLevelCurse: document.getElementById('spell-level-curse')!,
-        spellLevelSlow: document.getElementById('spell-level-slow')!,
-        spellLevelRage: document.getElementById('spell-level-rage')!,
-        spellLevelArcaneLance: document.getElementById('spell-level-arcane-lance')!,
-        spellDetailsFireball: document.getElementById('spell-details-fireball')!,
-        spellDetailsCurse: document.getElementById('spell-details-curse')!,
-        spellDetailsSlow: document.getElementById('spell-details-slow')!,
-        spellDetailsRage: document.getElementById('spell-details-rage')!,
-        spellDetailsArcaneLance: document.getElementById('spell-details-arcane-lance')!,
-        inventoryCount: document.getElementById('inventory-count')!,
-        inventoryCapacity: document.getElementById('inventory-capacity')!,
-        inventoryCapacityHint: document.getElementById('inventory-capacity-hint')!,
-        undoLastDropBtn: document.getElementById('undo-last-drop-btn')! as HTMLButtonElement,
-        inventoryGrid: document.getElementById('inventory-grid')!,
-        weaponSlotMain: document.getElementById('weapon-slot-main')! as HTMLButtonElement,
-        weaponSlotOff: document.getElementById('weapon-slot-off')! as HTMLButtonElement,
-        armorSlot: document.getElementById('armor-slot')! as HTMLButtonElement,
-        statsPanel: document.getElementById('stats-panel')!,
-        skillsPanel: document.getElementById('skills-panel')!,
-        inventoryPanel: document.getElementById('inventory-panel')!,
-        magicPanel: document.getElementById('magic-panel')!,
-        questsPanel: document.getElementById('quests-panel')!,
-        selectedPanel: document.getElementById('selected-panel')!,
-        lorePanel: document.getElementById('lore-panel')!,
-        worldMapPanel: document.getElementById('world-sidebar')!,
-        logPanel: document.getElementById('game-log-container')!,
-        questsTitle: document.getElementById('quests-title')!,
-        questsKnownOnlyToggle: document.getElementById('quests-known-only-toggle')! as HTMLInputElement,
-        questsBody: document.getElementById('quests-body')!,
-        loreBody: document.getElementById('lore-body')!,
-        selectedCellEmpty: document.getElementById('selected-cell-empty')!,
-        selectedCellDetails: document.getElementById('selected-cell-details')!,
-        selectedCellCoords: document.getElementById('selected-cell-coords')!,
-        selectedCellTerrain: document.getElementById('selected-cell-terrain')!,
-        selectedCellVisibility: document.getElementById('selected-cell-visibility')!,
-        selectedCellTraversable: document.getElementById('selected-cell-traversable')!,
-        selectedCellVillage: document.getElementById('selected-cell-village')!,
-        selectedCellVillageName: document.getElementById('selected-cell-village-name')!,
-        selectedCellVillageStatus: document.getElementById('selected-cell-village-status')!,
-        toggleStatsPanelBtn: document.getElementById('toggle-stats-panel-btn')! as HTMLButtonElement,
-        toggleSkillsPanelBtn: document.getElementById('toggle-skills-panel-btn')! as HTMLButtonElement,
-        toggleInventoryPanelBtn: document.getElementById('toggle-inventory-panel-btn')! as HTMLButtonElement,
-        toggleMagicPanelBtn: document.getElementById('toggle-magic-panel-btn')! as HTMLButtonElement,
-        toggleQuestsPanelBtn: document.getElementById('toggle-quests-panel-btn')! as HTMLButtonElement,
-        toggleLorePanelBtn: document.getElementById('toggle-lore-panel-btn')! as HTMLButtonElement,
-        toggleSelectedPanelBtn: document.getElementById('toggle-selected-panel-btn')! as HTMLButtonElement,
-        toggleWorldMapPanelBtn: document.getElementById('toggle-world-map-panel-btn')! as HTMLButtonElement,
-        toggleLogPanelBtn: document.getElementById('toggle-log-panel-btn')! as HTMLButtonElement,
-        questIntroModal: document.getElementById('quest-intro-modal')!,
-        questIntroBody: document.getElementById('quest-intro-body')!,
-        questIntroCloseBtn: document.getElementById('quest-intro-close-btn')! as HTMLButtonElement,
+        developerUI: this.developerUiFactory.create(),
     });
 
     private createBattleUi(): BattleUI {
@@ -198,9 +97,7 @@ export default class GameUiFactory {
         const logElement = document.getElementById('game-log')!;
         this.setupAutoScrollingGameLog(logElement);
 
-        return {
-            log: logElement,
-        };
+        return { log: logElement };
     }
 
     private setupAutoScrollingGameLog(logElement: HTMLElement): void {
@@ -220,45 +117,4 @@ export default class GameUiFactory {
         observer.observe(logElement, { childList: true });
         scrollToLatest();
     }
-
-    private createDeveloperUi = (): DeveloperUI => ({
-        modal: document.getElementById('dev-events-modal')!,
-        closeBtn: document.getElementById('dev-events-close-btn')! as HTMLButtonElement,
-        eventType: document.getElementById('dev-event-type')! as HTMLSelectElement,
-        queueList: document.getElementById('dev-events-queue')!,
-        addBtn: document.getElementById('dev-event-add-btn')! as HTMLButtonElement,
-        clearBtn: document.getElementById('dev-event-clear-btn')! as HTMLButtonElement,
-        encounterTypeSummary: document.getElementById('dev-encounter-types-summary')!,
-        enableAllEncountersBtn: document.getElementById('dev-encounter-types-enable-all-btn')! as HTMLButtonElement,
-        disableAllEncountersBtn: document.getElementById('dev-encounter-types-disable-all-btn')! as HTMLButtonElement,
-        encounterTypeToggles: {
-            monster: document.getElementById('dev-encounter-type-monster')! as HTMLInputElement,
-            item: document.getElementById('dev-encounter-type-item')! as HTMLInputElement,
-            traveler: document.getElementById('dev-encounter-type-traveler')! as HTMLInputElement,
-        },
-        nextRollOpenBtn: document.getElementById('dev-next-roll-open-btn')! as HTMLButtonElement,
-        nextRollSummary: document.getElementById('dev-next-roll-summary')!,
-        nextRollModal: document.getElementById('dev-next-roll-modal')!,
-        nextRollCloseBtn: document.getElementById('dev-next-roll-close-btn')! as HTMLButtonElement,
-        nextRollTotal: document.getElementById('dev-next-roll-total')!,
-        nextRollStatus: document.getElementById('dev-next-roll-status')!,
-        nextRollSaveBtn: document.getElementById('dev-next-roll-save-btn')! as HTMLButtonElement,
-        nextRollClearBtn: document.getElementById('dev-next-roll-clear-btn')! as HTMLButtonElement,
-        nextRollInputs: {
-            vitality: document.getElementById('dev-next-roll-vitality')! as HTMLInputElement,
-            toughness: document.getElementById('dev-next-roll-toughness')! as HTMLInputElement,
-            strength: document.getElementById('dev-next-roll-strength')! as HTMLInputElement,
-            agility: document.getElementById('dev-next-roll-agility')! as HTMLInputElement,
-            connection: document.getElementById('dev-next-roll-connection')! as HTMLInputElement,
-            intelligence: document.getElementById('dev-next-roll-intelligence')! as HTMLInputElement,
-        },
-        randomModeSelect: document.getElementById('dev-random-mode')! as HTMLSelectElement,
-        randomSeedInput: document.getElementById('dev-random-seed')! as HTMLInputElement,
-        randomSummary: document.getElementById('dev-random-summary')!,
-        randomStatus: document.getElementById('dev-random-status')!,
-        randomApplyBtn: document.getElementById('dev-random-apply-btn')! as HTMLButtonElement,
-        everythingDiscoveredToggle: document.getElementById('dev-map-display-everything-discovered')! as HTMLInputElement,
-        fogOfWarToggle: document.getElementById('dev-map-display-fog-of-war')! as HTMLInputElement,
-    });
 }
-
