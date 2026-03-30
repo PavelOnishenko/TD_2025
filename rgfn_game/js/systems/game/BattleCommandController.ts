@@ -5,7 +5,7 @@ import Player from '../../entities/player/Player.js';
 import Skeleton from '../../entities/Skeleton.js';
 import timingConfig from '../../config/timingConfig.js';
 import { balanceConfig } from '../../config/balance/balanceConfig.js';
-import MagicSystem, { BaseSpellId } from '../magic/MagicSystem.js';
+import MagicSystem, { BaseSpellId } from '../controllers/magic/MagicSystem.js';
 import { CombatMove, getMoveLabel } from '../combat/DirectionalCombat.js';
 import BattleTargetResolver from './BattleTargetResolver.js';
 import BattleLootManager from './BattleLootManager.js';

@@ -1,4 +1,4 @@
-import WorldMapTerrainCacheRenderer from './WorldMapTerrainCacheRenderer.js';
+import WorldMapTerrainCacheRenderer from './layers/WorldMapTerrainCacheRenderer.js';
 export { KnownVillage, WorldVillageDirectionHint } from './WorldMapCore.js';
 
 export default class WorldMap extends WorldMapTerrainCacheRenderer {

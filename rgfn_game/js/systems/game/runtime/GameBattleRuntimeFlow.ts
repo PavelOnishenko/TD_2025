@@ -7,7 +7,7 @@ import TurnManager from '../../combat/TurnManager.js';
 import Player from '../../../entities/player/Player.js';
 import BattlePlayerActionController from '../BattlePlayerActionController.js';
 import BattleCommandController from '../BattleCommandController.js';
-import { HudElements, BattleUI, VillageUI, WorldUI } from '../GameUiTypes.js';
+import { HudElements, BattleUI, VillageUI, WorldUI } from '../ui/GameUiTypes.js';
 import { MODES } from './GameModeStateMachine.js';
 
 export type GameBattleRuntimeCallbacks = {

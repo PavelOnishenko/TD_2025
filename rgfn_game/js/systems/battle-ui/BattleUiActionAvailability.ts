@@ -1,7 +1,7 @@
 import BattleMap from '../combat/BattleMap.js';
 import Player from '../../entities/player/Player.js';
 import { balanceConfig } from '../../config/balance/balanceConfig.js';
-import MagicSystem from '../magic/MagicSystem.js';
+import MagicSystem from '../controllers/magic/MagicSystem.js';
 import { BattleUI } from './BattleUiTypes.js';
 import BattleUiTargeting from './BattleUiTargeting.js';
 

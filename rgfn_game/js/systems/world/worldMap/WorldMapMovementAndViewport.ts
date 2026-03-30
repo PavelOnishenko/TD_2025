@@ -1,5 +1,5 @@
 // @ts-nocheck
-import WorldMapNoiseAndVisibility from './WorldMapNoiseAndVisibility.js';
+import WorldMapNoiseAndVisibility from './layers/WorldMapNoiseAndVisibility.js';
 import { theme } from '../../../config/ThemeConfig.js';
 import { FOG_STATE } from './WorldMapCore.js';
 export default class WorldMapMovementAndViewport extends WorldMapNoiseAndVisibility {

@@ -10,7 +10,7 @@ import type WorldModeController from '../../systems/world/worldMap/WorldModeCont
 import type WorldMap from '../../systems/world/worldMap/WorldMap.js';
 import type BattleMap from '../../systems/combat/BattleMap.js';
 import type Player from '../../entities/player/Player.js';
-import type MagicSystem from '../../systems/magic/MagicSystem.js';
+import type MagicSystem from '../../systems/controllers/magic/MagicSystem.js';
 import type GameQuestRuntime from '../runtime/GameQuestRuntime.js';
 import type GamePersistenceRuntime from '../runtime/GamePersistenceRuntime.js';
 import type GameWorldInteractionRuntime from '../runtime/GameWorldInteractionRuntime.js';

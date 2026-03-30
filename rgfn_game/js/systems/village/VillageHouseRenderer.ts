@@ -1,5 +1,5 @@
 import { theme } from '../../config/ThemeConfig.js';
-import { IsoPoint, VillageHouse } from './VillageLifeTypes.js';
+import { IsoPoint, VillageHouse } from './life/VillageLifeTypes.js';
 
 export default class VillageHouseRenderer {
     private static readonly OUTLINE_COLOR = '#1d1b22';

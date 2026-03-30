@@ -2,7 +2,7 @@ import BattleMap from '../combat/BattleMap.js';
 import Player from '../../entities/player/Player.js';
 import Skeleton from '../../entities/Skeleton.js';
 import { balanceConfig } from '../../config/balance/balanceConfig.js';
-import { BaseSpellId } from '../magic/MagicSystem.js';
+import { BaseSpellId } from '../controllers/magic/MagicSystem.js';
 
 export default class BattleTargetResolver {
     private player: Player;

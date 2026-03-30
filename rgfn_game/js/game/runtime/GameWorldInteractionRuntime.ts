@@ -4,7 +4,7 @@ import Player from '../../entities/player/Player.js';
 import GameModeStateMachine, { MODES } from '../../systems/game/runtime/GameModeStateMachine.js';
 import GameHudCoordinator from '../../systems/game/runtime/GameHudCoordinator.js';
 import WorldModeController from '../../systems/world/worldMap/WorldModeController.js';
-import { WorldUI } from '../../systems/game/GameUiTypes.js';
+import { WorldUI } from '../../systems/game/ui/GameUiTypes.js';
 
 export default class GameWorldInteractionRuntime {
     private isWorldMapMiddleDragActive = false;
