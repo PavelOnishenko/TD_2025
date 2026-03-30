@@ -66,7 +66,5 @@ export default class WorldModeVillagePromptController {
         this.callbacks.onRequestVillageEntryPrompt(villageName, { x, y });
     }
 
-    public isPromptOpen(): boolean {
-        return this.isVillagePromptOpen;
-    }
+    public isPromptOpen = (): boolean => this.isVillagePromptOpen;
 }

@@ -57,12 +57,7 @@ export default class WorldMapWaterAndSettlements extends WorldMapTerrainModeling
         }
     }
 
-    private shouldStopRiverAtPosition(
-        current: GridPosition,
-        climateByKey: Map<string, ClimateCell>,
-        columns: number,
-        rows: number,
-    ): boolean {
+    private shouldStopRiverAtPosition(current: GridPosition, climateByKey: Map<string, ClimateCell>, columns: number, rows: number): boolean {
         const climate = climateByKey.get(this.getCellKey(current.col, current.row));
         if (!climate) {
             return true;
@@ -186,14 +181,12 @@ export default class WorldMapWaterAndSettlements extends WorldMapTerrainModeling
         return !!terrain && terrain.type !== 'water' && terrain.type !== 'mountain' && terrain.type !== 'desert';
     }
 
-    private getNearestVillageDistance(col: number, row: number): number {
-        return Array.from(this.villages).reduce((closest, key) => {
-            const [vColText, vRowText] = key.split(',');
-            const vCol = Number(vColText);
-            const vRow = Number(vRowText);
-            return Math.min(closest, Math.abs(vCol - col) + Math.abs(vRow - row));
-        }, Number.POSITIVE_INFINITY);
-    }
+    private getNearestVillageDistance = (col: number, row: number): number => Array.from(this.villages).reduce((closest, key) => {
+        const [vColText, vRowText] = key.split(',');
+        const vCol = Number(vColText);
+        const vRow = Number(vRowText);
+        return Math.min(closest, Math.abs(vCol - col) + Math.abs(vRow - row));
+    }, Number.POSITIVE_INFINITY);
 
     private addVillage(col: number, row: number): void {
         const key = this.getCellKey(col, row);

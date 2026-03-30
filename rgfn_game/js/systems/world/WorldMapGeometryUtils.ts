@@ -3,9 +3,7 @@ import { GridCell, TerrainNeighbors } from '../../types/game.js';
 export default class WorldMapGeometryUtils {
     // Always fill the full cell. This removes anti-aliased seams and decorative ribbons
     // that can appear as bright/yellow border lines on some zoom levels.
-    public createTerrainPath(cell: GridCell, _neighbors?: TerrainNeighbors): Path2D {
-        return this.createCellRectPath(cell);
-    }
+    public createTerrainPath = (cell: GridCell, _neighbors?: TerrainNeighbors): Path2D => this.createCellRectPath(cell);
 
     public createCellRectPath(cell: GridCell): Path2D {
         const path = new Path2D();
@@ -41,20 +39,36 @@ export default class WorldMapGeometryUtils {
         const ribbon = new Path2D();
         const cornerPoints = {
             northWest: {
-                start: [x + (width * 0.48), y + (height * 0.26)], tip: [x + (width * 0.08), y + (height * 0.08)], end: [x + (width * 0.26), y + (height * 0.48)],
-                leftControl: [x + (width * 0.24), y + (height * 0.18)], rightControl: [x + (width * 0.18), y + (height * 0.24)], centerControl: [x + (width * 0.38), y + (height * 0.38)],
+                start: [x + (width * 0.48), y + (height * 0.26)],
+                tip: [x + (width * 0.08), y + (height * 0.08)],
+                end: [x + (width * 0.26), y + (height * 0.48)],
+                leftControl: [x + (width * 0.24), y + (height * 0.18)],
+                rightControl: [x + (width * 0.18), y + (height * 0.24)],
+                centerControl: [x + (width * 0.38), y + (height * 0.38)],
             },
             northEast: {
-                start: [x + (width * 0.52), y + (height * 0.26)], tip: [x + (width * 0.92), y + (height * 0.08)], end: [x + (width * 0.74), y + (height * 0.48)],
-                leftControl: [x + (width * 0.76), y + (height * 0.18)], rightControl: [x + (width * 0.82), y + (height * 0.24)], centerControl: [x + (width * 0.62), y + (height * 0.38)],
+                start: [x + (width * 0.52), y + (height * 0.26)],
+                tip: [x + (width * 0.92), y + (height * 0.08)],
+                end: [x + (width * 0.74), y + (height * 0.48)],
+                leftControl: [x + (width * 0.76), y + (height * 0.18)],
+                rightControl: [x + (width * 0.82), y + (height * 0.24)],
+                centerControl: [x + (width * 0.62), y + (height * 0.38)],
             },
             southWest: {
-                start: [x + (width * 0.26), y + (height * 0.52)], tip: [x + (width * 0.08), y + (height * 0.92)], end: [x + (width * 0.48), y + (height * 0.74)],
-                leftControl: [x + (width * 0.18), y + (height * 0.76)], rightControl: [x + (width * 0.24), y + (height * 0.82)], centerControl: [x + (width * 0.38), y + (height * 0.62)],
+                start: [x + (width * 0.26), y + (height * 0.52)],
+                tip: [x + (width * 0.08), y + (height * 0.92)],
+                end: [x + (width * 0.48), y + (height * 0.74)],
+                leftControl: [x + (width * 0.18), y + (height * 0.76)],
+                rightControl: [x + (width * 0.24), y + (height * 0.82)],
+                centerControl: [x + (width * 0.38), y + (height * 0.62)],
             },
             southEast: {
-                start: [x + (width * 0.74), y + (height * 0.52)], tip: [x + (width * 0.92), y + (height * 0.92)], end: [x + (width * 0.52), y + (height * 0.74)],
-                leftControl: [x + (width * 0.82), y + (height * 0.76)], rightControl: [x + (width * 0.76), y + (height * 0.82)], centerControl: [x + (width * 0.62), y + (height * 0.62)],
+                start: [x + (width * 0.74), y + (height * 0.52)],
+                tip: [x + (width * 0.92), y + (height * 0.92)],
+                end: [x + (width * 0.52), y + (height * 0.74)],
+                leftControl: [x + (width * 0.82), y + (height * 0.76)],
+                rightControl: [x + (width * 0.76), y + (height * 0.82)],
+                centerControl: [x + (width * 0.62), y + (height * 0.62)],
             },
         }[corner];
 

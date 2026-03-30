@@ -38,16 +38,12 @@ export default class VillageBarterService {
             }
         });
     }
-    public getVillageContractTraders(villageName: string): string[] {
-        return Array.from(this.questBarterContracts.entries())
-            .filter(([contractId]) => this.barterContractVillageById.get(contractId) === villageName)
-            .map(([, contract]) => contract.traderName);
-    }
-    public getVillageContractHints(villageName: string): string[] {
-        return Array.from(this.questBarterContracts.entries())
-            .filter(([contractId]) => this.barterContractVillageById.get(contractId) === villageName)
-            .map(([, contract]) => this.toHint(contract));
-    }
+    public getVillageContractTraders = (villageName: string): string[] => Array.from(this.questBarterContracts.entries())
+        .filter(([contractId]) => this.barterContractVillageById.get(contractId) === villageName)
+        .map(([, contract]) => contract.traderName);
+    public getVillageContractHints = (villageName: string): string[] => Array.from(this.questBarterContracts.entries())
+        .filter(([contractId]) => this.barterContractVillageById.get(contractId) === villageName)
+        .map(([, contract]) => this.toHint(contract));
     public getBarterDealForNpc(villageName: string, npcName: string): VillageBarterDeal | null {
         const deals = this.getOrCreateVillageBarterDeals(villageName);
         return deals.find((deal) => deal.traderName.toLocaleLowerCase() === npcName.toLocaleLowerCase()) ?? null;
@@ -73,9 +69,8 @@ export default class VillageBarterService {
             distanceCells: villageHint.distanceCells,
         };
     }
-    public findFirstPayableOption(player: Player, deal: VillageBarterDeal): BarterPaymentOption | null {
-        return deal.paymentOptions.find((option) => this.canPay(player, option)) ?? null;
-    }
+    public findFirstPayableOption = (player: Player, deal: VillageBarterDeal): BarterPaymentOption | null =>
+        deal.paymentOptions.find((option) => this.canPay(player, option)) ?? null;
     public consumeBarterItemCosts(player: Player, itemCosts: BarterItemCost[]): void {
         itemCosts.forEach((itemCost) => {
             let remaining = itemCost.quantity;

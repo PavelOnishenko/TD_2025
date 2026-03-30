@@ -77,12 +77,7 @@ export default class VillageUiPresenter {
     }
 
     private updateBuyButtons(): void {
-        const buyButtons = [
-            this.deps.villageUI.buyOffer1Btn,
-            this.deps.villageUI.buyOffer2Btn,
-            this.deps.villageUI.buyOffer3Btn,
-            this.deps.villageUI.buyOffer4Btn,
-        ];
+        const buyButtons = [this.deps.villageUI.buyOffer1Btn, this.deps.villageUI.buyOffer2Btn, this.deps.villageUI.buyOffer3Btn, this.deps.villageUI.buyOffer4Btn];
 
         buyButtons.forEach((button, index) => {
             const offer = this.deps.getOffers()[index];

@@ -44,9 +44,7 @@ export default class WorldMapTerrainCacheRenderer extends WorldMapFocusAndFogOve
         return true;
     }
 
-    private supportsTerrainLayerCaching(ctx: CanvasRenderingContext2D): boolean {
-        return typeof document !== 'undefined' && typeof (ctx as CanvasRenderingContext2D & { drawImage?: unknown }).drawImage === 'function';
-    }
+    private supportsTerrainLayerCaching = (ctx: CanvasRenderingContext2D): boolean => typeof document !== 'undefined' && typeof (ctx as CanvasRenderingContext2D & { drawImage?: unknown }).drawImage === 'function';
 
     private shouldRebuildTerrainLayerCache(detailLevel: 'low' | 'medium', cellSize: number): boolean {
         const existing = this.terrainLayerCaches[detailLevel];

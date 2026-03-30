@@ -20,8 +20,8 @@ export default class WorldMapCellRenderer {
         options: { showFogOverlay?: boolean; detailLevel?: 'full' | 'medium' | 'low' } = {},
     ): void {
         const detailLevel = options.detailLevel ?? 'full';
-        if (fogState === 'unknown') return this.drawUnknownCell(ctx, cell, detailLevel);
-        if (!terrain) return;
+        if (fogState === 'unknown') {return this.drawUnknownCell(ctx, cell, detailLevel);}
+        if (!terrain) {return;}
 
         const brightness = fogState === 'discovered' ? 1 : terrain.type === 'water' ? 0.84 : 0.72;
         if (detailLevel === 'low') {
@@ -30,7 +30,7 @@ export default class WorldMapCellRenderer {
 
         const path = this.geometryUtils.createTerrainPath(cell, neighbors);
         this.drawTerrain(ctx, cell, terrain, brightness, path, detailLevel);
-        if (fogState === 'hidden' && options.showFogOverlay !== false) this.drawHiddenOverlay(ctx, path, terrain.type);
+        if (fogState === 'hidden' && options.showFogOverlay !== false) {this.drawHiddenOverlay(ctx, path, terrain.type);}
     }
 
     private drawUnknownCell(ctx: CanvasRenderingContext2D, cell: GridCell, detailLevel: 'full' | 'medium' | 'low'): void {

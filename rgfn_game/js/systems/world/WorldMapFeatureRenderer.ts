@@ -4,13 +4,10 @@ import WorldMapColorUtils from './WorldMapColorUtils.js';
 import WorldMapGeometryUtils from './WorldMapGeometryUtils.js';
 
 export default class WorldMapFeatureRenderer {
-    public constructor(
-        private readonly colorUtils: WorldMapColorUtils,
-        private readonly geometryUtils: WorldMapGeometryUtils,
-    ) {}
+    public constructor(private readonly colorUtils: WorldMapColorUtils, private readonly geometryUtils: WorldMapGeometryUtils) {}
 
     public drawVillageRoadPath(ctx: CanvasRenderingContext2D, points: Array<{ x: number; y: number }>, alpha: number): void {
-        if (points.length < 2) return;
+        if (points.length < 2) {return;}
         const clampedAlpha = Math.max(0.3, Math.min(1, alpha));
         ctx.save();
         ctx.lineCap = 'round';
@@ -43,10 +40,10 @@ export default class WorldMapFeatureRenderer {
         ctx.strokeStyle = this.colorUtils.withAlpha(theme.ui.primaryBg, options.emphasized ? 0.95 : 0.72);
         ctx.lineWidth = 1.4;
         const size = Math.max(5, cell.width * 0.17);
-        if (terrainType === 'forest') this.drawNamedLocationGrove(ctx, centerX, centerY, size);
-        else if (terrainType === 'desert') this.drawNamedLocationCairn(ctx, centerX, centerY, size);
-        else this.drawNamedLocationObelisk(ctx, centerX, centerY, size);
-        if (options.showLabel) this.drawNamedLocationLabel(ctx, cell, label, alpha);
+        if (terrainType === 'forest') {this.drawNamedLocationGrove(ctx, centerX, centerY, size);}
+        else if (terrainType === 'desert') {this.drawNamedLocationCairn(ctx, centerX, centerY, size);}
+        else {this.drawNamedLocationObelisk(ctx, centerX, centerY, size);}
+        if (options.showLabel) {this.drawNamedLocationLabel(ctx, cell, label, alpha);}
         ctx.restore();
     }
 
@@ -76,7 +73,7 @@ export default class WorldMapFeatureRenderer {
 
     private traceSmoothPath(ctx: CanvasRenderingContext2D, points: Array<{ x: number; y: number }>): void {
         ctx.moveTo(points[0].x, points[0].y);
-        if (points.length === 2) return ctx.lineTo(points[1].x, points[1].y);
+        if (points.length === 2) {return ctx.lineTo(points[1].x, points[1].y);}
         for (let index = 1; index < points.length - 1; index += 1) {
             const current = points[index];
             const next = points[index + 1];

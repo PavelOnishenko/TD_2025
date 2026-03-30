@@ -47,16 +47,9 @@ export default class VillageVillagerMotion {
         return this.alignAlongPath(aligned, from, to, now);
     }
 
-    private shouldPauseAtSpot(): boolean {
-        return Math.random() < 0.62;
-    }
+    private shouldPauseAtSpot = (): boolean => Math.random() < 0.62;
 
-    private startTravel(
-        villager: VillageVillager,
-        now: number,
-        pickDifferentSpot: PickDifferentSpot,
-        onSpotVisited: (spotIndex: number, now: number) => void,
-    ): void {
+    private startTravel(villager: VillageVillager, now: number, pickDifferentSpot: PickDifferentSpot, onSpotVisited: (spotIndex: number, now: number) => void): void {
         villager.toSpot = pickDifferentSpot(villager.fromSpot);
         villager.travelStart = now;
         villager.travelDuration = 5 + Math.random() * 4;
@@ -87,12 +80,7 @@ export default class VillageVillagerMotion {
         villager.y = from.y + (to.y - from.y) * smoothProgress;
     }
 
-    private finishTravel(
-        villager: VillageVillager,
-        now: number,
-        pickActivity: PickActivity,
-        onSpotVisited: (spotIndex: number, now: number) => void,
-    ): void {
+    private finishTravel(villager: VillageVillager, now: number, pickActivity: PickActivity, onSpotVisited: (spotIndex: number, now: number) => void): void {
         villager.fromSpot = villager.toSpot;
         villager.toSpot = villager.fromSpot;
         villager.travelStart = now;
@@ -106,11 +94,7 @@ export default class VillageVillagerMotion {
     private alignAlongPath(villager: VillageVillager, from: VillageSpot, to: VillageSpot, now: number): VillageVillager {
         const travelProgress = Math.max(0, Math.min(1, (now - villager.travelStart) / Math.max(0.01, villager.travelDuration)));
         const smoothProgress = this.smoothStep(travelProgress);
-        return {
-            ...villager,
-            x: from.x + (to.x - from.x) * smoothProgress,
-            y: from.y + (to.y - from.y) * smoothProgress,
-        };
+        return { ...villager, x: from.x + (to.x - from.x) * smoothProgress, y: from.y + (to.y - from.y) * smoothProgress };
     }
 
     private clampSpotIndex(spotIndex: number, spotsLength: number): number {
@@ -125,7 +109,5 @@ export default class VillageVillagerMotion {
         return spotIndex;
     }
 
-    private smoothStep(value: number): number {
-        return value * value * (3 - 2 * value);
-    }
+    private smoothStep = (value: number): number => value * value * (3 - 2 * value);
 }

@@ -7,10 +7,7 @@ export default class VillageHouseRenderer {
     private readonly mixColors: (a: string, b: string, ratio: number) => string;
     private readonly projectIso: (x: number, y: number, z: number) => IsoPoint;
 
-    constructor(
-        mixColors: (a: string, b: string, ratio: number) => string,
-        projectIso: (x: number, y: number, z: number) => IsoPoint,
-    ) {
+    constructor(mixColors: (a: string, b: string, ratio: number) => string, projectIso: (x: number, y: number, z: number) => IsoPoint) {
         this.mixColors = mixColors;
         this.projectIso = projectIso;
     }
@@ -63,7 +60,11 @@ export default class VillageHouseRenderer {
             leftTop: this.projectIso(doorCenterX - doorHalf, doorBottomY, doorHeight),
         };
 
-        this.fillPolygon(ctx, [door.leftBottom, door.rightBottom, door.rightTop, door.leftTop], this.mixColors(theme.ui.primaryBg, theme.worldMap.terrain.mountain, 0.35));
+        this.fillPolygon(
+            ctx,
+            [door.leftBottom, door.rightBottom, door.rightTop, door.leftTop],
+            this.mixColors(theme.ui.primaryBg, theme.worldMap.terrain.mountain, 0.35),
+        );
 
         const hinge = door.leftBottom;
         const openRad = (Math.PI / 2) * house.doorOpenAmount;
