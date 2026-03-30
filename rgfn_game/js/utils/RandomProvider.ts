@@ -104,13 +104,9 @@ class RandomProvider {
         return this.getSettings();
     }
 
-    public getSettings(): RandomProviderSettings {
-        return { mode: this.mode, pseudoSeed: this.pseudoSeed, activeSeed: this.activeSeed };
-    }
+    public readonly getSettings = (): RandomProviderSettings => ({ mode: this.mode, pseudoSeed: this.pseudoSeed, activeSeed: this.activeSeed });
 
-    public nextFloat(): number {
-        return this.generator();
-    }
+    public readonly nextFloat = (): number => this.generator();
 
     public nextInt(min: number, max: number): number {
         const lower = Math.ceil(Math.min(min, max));
@@ -143,14 +139,8 @@ export function initializeGameRandomProvider(): RandomProviderSettings {
     return randomProvider.getSettings();
 }
 
-export function configureGameRandomProvider(mode: RandomProviderMode, pseudoSeed: string): RandomProviderSettings {
-    return randomProvider.configure(mode, pseudoSeed);
-}
+export const configureGameRandomProvider = (mode: RandomProviderMode, pseudoSeed: string): RandomProviderSettings => randomProvider.configure(mode, pseudoSeed);
 
-export function getGameRandomProviderSettings(): RandomProviderSettings {
-    return randomProvider.getSettings();
-}
+export const getGameRandomProviderSettings = (): RandomProviderSettings => randomProvider.getSettings();
 
-export function getNormalizedPseudoRandomSeed(seed: string): string {
-    return normalizePseudoSeed(seed);
-}
+export const getNormalizedPseudoRandomSeed = (seed: string): string => normalizePseudoSeed(seed);
