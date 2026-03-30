@@ -125,9 +125,6 @@ const generatedWeapons: ItemData[] = WEAPON_VARIANTS.flatMap((variant) => (
     })
 ));
 
-// todo is this needed? Dead code check. We destroy dead code. If it's needed, can it be processed normally instead like all other weapons? Do it.
-export const BOW_ITEM: ItemData = {...generatedWeapons.find((item) => item.id === 'bow_t1')!, id: 'bow', name: 'Bow', };
-
 export const HEALING_POTION_ITEM: ItemData = {
     id: 'healingPotion', name: 'Healing Potion', description: 'A restorative potion that heals 5 HP when used', type: 'consumable', goldValue: 4, 
     spriteClass: 'potion-sprite',
@@ -138,8 +135,7 @@ export const MANA_POTION_ITEM: ItemData = { id: 'manaPotion', name: 'Mana Potion
 export const ITEM_LIBRARY: ItemData[] = [
     HEALING_POTION_ITEM,
     MANA_POTION_ITEM,
-    BOW_ITEM,
-    ...generatedWeapons.filter((item) => item.id !== 'bow_t1'),
+    ...generatedWeapons,
     ...ARMOR_VARIANTS.map((armor) => ({
         id: armor.id, name: armor.name, description: armor.description, type: 'armor' as const, effects: armor.effects, goldValue: armor.goldValue,
         findWeight: armor.findWeight, spriteClass: armor.spriteClass,

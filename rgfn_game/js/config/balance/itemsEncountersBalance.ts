@@ -18,7 +18,7 @@ export const itemBalance = {
         { id: 'twoHandedSword_t2', weight: 5 },
         { id: 'twoHandedSword_t3', weight: 5 },
         { id: 'twoHandedSword_t4', weight: 5 },
-        { id: 'bow', weight: 3 },
+        { id: 'bow_t1', weight: 3 },
         { id: 'bow_t2', weight: 3 },
         { id: 'bow_t3', weight: 3 },
         { id: 'bow_t4', weight: 3 },
