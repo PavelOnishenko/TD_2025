@@ -5,15 +5,9 @@ export interface QuestRandom {
 }
 
 export class DefaultQuestRandom implements QuestRandom {
-    public nextInt(min: number, max: number): number {
-        return Math.floor(Math.random() * (max - min + 1)) + min;
-    }
+    public nextInt = (min: number, max: number): number => Math.floor(Math.random() * (max - min + 1)) + min;
 
-    public nextBool(chance: number): boolean {
-        return Math.random() < chance;
-    }
+    public nextBool = (chance: number): boolean => Math.random() < chance;
 
-    public pick<T>(items: T[]): T {
-        return items[this.nextInt(0, items.length - 1)];
-    }
+    public pick = <T>(items: T[]): T => items[this.nextInt(0, items.length - 1)];
 }

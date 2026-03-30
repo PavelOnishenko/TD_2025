@@ -164,3 +164,17 @@ Applied example for `rgfn_game/js/config/creatureTypes.ts`:
 - `createZeroSkills` should remain a compact single-line object return because it fits within Rule 1.
 
 This section intentionally mirrors Rule 17 so future edits consistently choose the minimum-line acceptable form first.
+
+
+## Arrow-function-style cleanup playbook (Rule: `style-guide/arrow-function-style`)
+
+When lint reports _"has a single return/assignment statement; prefer an arrow function when possible"_, apply this sequence:
+
+1. Convert trivial class methods to class-field arrows when they only proxy a value or perform one assignment.
+   - Example pattern: `public getX = (): X => this.x;`
+   - Example pattern: `public setX = (x: X): void => { this.x = x; };`
+2. If an arrow already exists but only returns, prefer concise expression style (`=> expression`) without braces.
+3. Re-run scoped lint (`npm run lint:ts:rgfn`) and TypeScript build (`npm run build:rgfn`) to catch syntax regressions from mechanical conversions.
+4. For touched files, do not leave arrow-style warnings behind unless there is a documented blocker.
+
+This approach keeps callback binding safe (`this` preserved), satisfies the style guide, and avoids rework during review.

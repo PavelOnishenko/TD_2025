@@ -19,13 +19,9 @@ export default class PlayerInventory {
         return true;
     }
 
-    public useHealingPotion(): boolean {
-        return this.usePotionById('healingPotion', this.hooks.onHealingPotionUsed);
-    }
+    public useHealingPotion = (): boolean => this.usePotionById('healingPotion', this.hooks.onHealingPotionUsed);
 
-    public useManaPotion(): boolean {
-        return this.usePotionById('manaPotion', this.hooks.onManaPotionUsed);
-    }
+    public useManaPotion = (): boolean => this.usePotionById('manaPotion', this.hooks.onManaPotionUsed);
 
     public getItems = (): Item[] => [...this.inventory];
     public getHealingPotionCount = (): number => this.countPotionById('healingPotion');
@@ -141,9 +137,7 @@ export default class PlayerInventory {
         return true;
     }
 
-    private countPotionById(id: PotionItemId): number {
-        return this.inventory.filter((item) => item.id === id).length;
-    }
+    private countPotionById = (id: PotionItemId): number => this.inventory.filter((item) => item.id === id).length;
 
     private removePotionById(id: PotionItemId): boolean {
         const potionIndex = this.findPotionIndex(id);
@@ -154,9 +148,7 @@ export default class PlayerInventory {
         return true;
     }
 
-    private findPotionIndex(id: PotionItemId): number {
-        return this.inventory.findIndex((item) => item.id === id);
-    }
+    private findPotionIndex = (id: PotionItemId): number => this.inventory.findIndex((item) => item.id === id);
 
     private removeItemFromInventory(item: Item | null): void {
         if (!item) {

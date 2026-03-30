@@ -27,9 +27,7 @@ class BuiltSpell implements Spell {
         this.effects = config.effects;
     }
 
-    public cast(context: SpellContext) {
-        return this.effects.map((effect) => effect.apply(context));
-    }
+    public cast = (context: SpellContext) => this.effects.map((effect) => effect.apply(context));
 }
 
 export class SpellBuilder {

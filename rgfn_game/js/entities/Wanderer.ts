@@ -81,14 +81,12 @@ export default class Wanderer extends Skeleton {
             this.armorAbsorbedHp += absorbed;
         }
 
-        return super.takeMagicDamage(finalDamage);
+        return this.takeMagicDamage(finalDamage);
     }
 
     public getSkillRecord = (): CreatureSkills => normalizeCreatureSkills(this.skills);
 
-    private static rollLevel(): number {
-        return Math.random() < 0.9 ? randomInt(1, 9) : randomInt(10, 20);
-    }
+    private static rollLevel = (): number => (Math.random() < 0.9 ? randomInt(1, 9) : randomInt(10, 20));
 
     private static rollInventory(level: number): Item[] {
         const rolls = ITEM_ROLLS_BY_LEVEL[Math.min(ITEM_ROLLS_BY_LEVEL.length - 1, level - 1)] ?? 3;
@@ -151,13 +149,15 @@ export default class Wanderer extends Skeleton {
         return this.equippedWeapon.damageBonus + weaponStatBonus + offhandDamage;
     }
 
-    private pickBestWeapon(items: Item[]): Item | null {
-        return items.length === 0 ? null : items.reduce((best, current) => current.damageBonus > best.damageBonus ? current : best);
-    }
+    private pickBestWeapon = (items: Item[]): Item | null => (
+        items.length === 0 ? null : items.reduce((best, current) => (current.damageBonus > best.damageBonus ? current : best))
+    );
 
-    private pickBestArmor(items: Item[]): Item | null {
-        return items.length === 0 ? null : items.reduce((best, current) => this.getArmorScore(current) > this.getArmorScore(best) ? current : best);
-    }
+    private pickBestArmor = (items: Item[]): Item | null => (
+        items.length === 0
+            ? null
+            : items.reduce((best, current) => (this.getArmorScore(current) > this.getArmorScore(best) ? current : best))
+    );
 
     private getArmorScore(item: Item): number {
         const flat = item.effects.flatArmor ?? 0;

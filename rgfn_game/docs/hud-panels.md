@@ -219,6 +219,89 @@ To match the new draggable-window workflow, **HUD content panels no longer auto-
 
 This keeps panel size/content natural and avoids the old "single-column fallback" scrollbar tuning that is no longer needed for desktop draggable windows.
 
+## Quests panel resize cap fix (March 29, 2026)
+
+Issue observed in RGFN desktop HUD:
+
+- When many draggable windows were opened, the **Quests** window could stop growing vertically during manual corner-resize.
+- UX felt like an artificial hard limit, even though players expected free-form resize while arranging overlapping panels.
+
+What was changed:
+
+- Removed viewport clamp on `#quests-panel`:
+  - `max-height: calc(100dvh - 32px)` → `max-height: none`
+  - `max-block-size: calc(100dvh - 32px)` → `max-block-size: none`
+- Kept safety constraints that still matter:
+  - `min-height: 220px`
+  - `min-width: 260px`
+  - `resize: both`
+
+Practical result:
+
+- Quests window now continues stretching vertically beyond old viewport-capped maximum.
+- Large quest trees remain easier to inspect when several HUD windows are open and stacked.
+
+Quick manual QA:
+
+1. Open 3-5 HUD windows (`Stats`, `Inventory`, `Log`, `Quests`, etc.).
+2. Drag `Quests` panel to a non-top position.
+3. Grab bottom-right resize handle and increase height repeatedly.
+4. Confirm panel keeps expanding instead of stopping near the previous `100dvh - 32px` limit.
+
+## Quests panel parity fix: remove stack-coupling side effects (March 29, 2026, follow-up)
+
+Additional user-reported behavior after the first resize-cap patch:
+
+- If `Quests` was open and another panel was toggled on, `Quests` could appear to "disappear".
+- After closing the other panel, `Quests` reappeared in the same place.
+- Vertical stretching still felt constrained in multi-window setups.
+
+Root cause (layout coupling):
+
+- Draggable HUD windows were still using `position: absolute` inside overlay stack containers.
+- That made window geometry indirectly dependent on parent stack layout and containing-block sizing.
+- In practice this can produce overlap/hide illusions and resize limits tied to container bounds, especially when many panels are simultaneously visible.
+
+Fix applied:
+
+- Switched `.draggable-panel` to `position: fixed` (desktop flow).
+- Kept existing transform-based drag model and per-panel offsets (`--panel-offset-x`, `--panel-offset-y`), so drag UX remains unchanged.
+- Kept mobile fallback (`max-width: 920px`) where panels return to normal static flow for readability.
+
+Why this improves parity:
+
+- `Quests` now follows the exact same floating-window mechanics as other draggable panels without parent-stack geometry side effects.
+- Opening/closing sibling panels no longer reinterprets `Quests` positioning through stack layout.
+- Manual resize behavior is now constrained by viewport mechanics only, not by overlay-stack container box calculations.
+
+Focused manual QA:
+
+1. Open `Quests`, drag it somewhere non-default.
+2. Open `Stats` and `Inventory` while `Quests` stays open:
+   - `Quests` should remain visible (unless intentionally covered by z-order overlap).
+3. Close `Stats` / `Inventory`:
+   - `Quests` should stay at its dragged position.
+4. Resize `Quests` vertically with 2-4 other panels open:
+   - resizing should continue smoothly and no longer "hard-stop" from stack coupling.
+
+### Quests hardening fallback (March 30, 2026)
+
+Follow-up from additional QA reports showed `Quests` could still behave differently in some sessions (unexpected downward jump + renewed vertical squeeze) while `Log` remained stable.
+
+To harden against any runtime class-decoration mismatch, `#quests-panel` now also explicitly carries the floating-window geometry contract at ID level:
+
+- `position: fixed`
+- `top: 0`
+- `left: 0`
+- `transform: translate(var(--panel-offset-x), var(--panel-offset-y))`
+
+This keeps Quests anchored to the same coordinate model as other draggable windows even if `.draggable-panel` class decoration is not applied as expected in edge flows.
+
+Practical intent:
+
+- Prevent re-coupling of Quests to overlay stack layout.
+- Keep resize behavior stable when opening additional panels (`Stats`, `Skills`, etc.).
+
 ### Important exception
 
 `World Map` sidebar and `Log` keep scroll constraints by design because they can contain intentionally long content and controls with high update frequency.

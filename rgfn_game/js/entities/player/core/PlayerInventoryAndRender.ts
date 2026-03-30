@@ -10,21 +10,21 @@ export default class PlayerInventoryAndRender extends PlayerCombatState {
     public set equippedWeapon(weapon: Item | null) { this.inventorySystem.setEquippedWeapon(weapon); }
     public set equippedOffhandWeapon(weapon: Item | null) { this.inventorySystem.setEquippedOffhandWeapon(weapon); }
 
-    public addItemToInventory(item: Item): boolean { return this.inventorySystem.addItem(item); }
-    public useHealingPotion(): boolean { return this.inventorySystem.useHealingPotion(); }
-    public getInventory(): Item[] { return this.inventorySystem.getItems(); }
-    public getHealingPotionCount(): number { return this.inventorySystem.getHealingPotionCount(); }
-    public getManaPotionCount(): number { return this.inventorySystem.getManaPotionCount(); }
-    public useManaPotion(): boolean { return this.inventorySystem.useManaPotion(); }
-    public removeHealingPotionFromInventory(): boolean { return this.inventorySystem.removeHealingPotion(); }
-    public removeManaPotionFromInventory(): boolean { return this.inventorySystem.removeManaPotion(); }
-    public removeInventoryItemAt(index: number): Item | null { return this.inventorySystem.removeItemAt(index); }
-    public unequipWeapon(): Item | null { return this.inventorySystem.unequipWeapon(); }
-    public unequipOffhandWeapon(): Item | null { return this.inventorySystem.unequipOffhandWeapon(); }
+    public addItemToInventory = (item: Item): boolean => this.inventorySystem.addItem(item);
+    public useHealingPotion = (): boolean => this.inventorySystem.useHealingPotion();
+    public getInventory = (): Item[] => this.inventorySystem.getItems();
+    public getHealingPotionCount = (): number => this.inventorySystem.getHealingPotionCount();
+    public getManaPotionCount = (): number => this.inventorySystem.getManaPotionCount();
+    public useManaPotion = (): boolean => this.inventorySystem.useManaPotion();
+    public removeHealingPotionFromInventory = (): boolean => this.inventorySystem.removeHealingPotion();
+    public removeManaPotionFromInventory = (): boolean => this.inventorySystem.removeManaPotion();
+    public removeInventoryItemAt = (index: number): Item | null => this.inventorySystem.removeItemAt(index);
+    public unequipWeapon = (): Item | null => this.inventorySystem.unequipWeapon();
+    public unequipOffhandWeapon = (): Item | null => this.inventorySystem.unequipOffhandWeapon();
     public equipWeaponToSlot(weapon: Item, slot: 'main' | 'offhand'): void { this.inventorySystem.equipWeaponToSlot(weapon, slot); }
-    public unequipArmor(): Item | null { return this.inventorySystem.unequipArmor(); }
-    public getAttackRange(): number { return this.inventorySystem.getAttackRange(); }
-    public hasWeapon(): boolean { return this.inventorySystem.hasWeapon(); }
+    public unequipArmor = (): Item | null => this.inventorySystem.unequipArmor();
+    public getAttackRange = (): number => this.inventorySystem.getAttackRange();
+    public hasWeapon = (): boolean => this.inventorySystem.hasWeapon();
 
     public getAvoidFormulaText(): string {
         const scale = balanceConfig.stats.avoidChanceScale;
@@ -52,14 +52,12 @@ export default class PlayerInventoryAndRender extends PlayerCombatState {
 
     public draw(ctx: CanvasRenderingContext2D, _viewport?: any): void { this.renderer.draw(ctx, this); }
 
-    public getSkillRecord(): CreatureSkills {
-        return normalizeCreatureSkills({
-            vitality: this.vitality,
-            toughness: this.toughness,
-            strength: this.strength,
-            agility: this.agility,
-            connection: this.connection,
-            intelligence: this.intelligence,
-        });
-    }
+    public getSkillRecord = (): CreatureSkills => normalizeCreatureSkills({
+        vitality: this.vitality,
+        toughness: this.toughness,
+        strength: this.strength,
+        agility: this.agility,
+        connection: this.connection,
+        intelligence: this.intelligence,
+    });
 }

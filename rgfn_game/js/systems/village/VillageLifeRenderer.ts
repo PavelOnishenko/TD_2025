@@ -80,9 +80,7 @@ export default class VillageLifeRenderer {
         this.villagePopulation.getVillagers().forEach((villager) => this.drawVillageVillager(ctx, villager, time));
     }
 
-    public getVillageName(): string {
-        return this.currentVillageName;
-    }
+    public getVillageName = (): string => this.currentVillageName;
 
     private buildVillageSpots(): VillageSpot[] {
         const spots: VillageSpot[] = [];
@@ -98,31 +96,29 @@ export default class VillageLifeRenderer {
         return spots;
     }
 
-    private getRoofVariants(): string[] {
-        return [
-            theme.ui.secondaryAccent,
-            this.mixColors(theme.ui.secondaryAccent, theme.ui.primaryAccent, 0.2),
-            this.mixColors(theme.ui.secondaryAccent, theme.worldMap.terrain.desert, 0.28),
-            this.mixColors(theme.ui.secondaryAccent, theme.worldMap.terrain.forest, 0.3),
-            this.mixColors(theme.ui.secondaryAccent, theme.worldMap.terrain.mountain, 0.2),
-        ];
-    }
+    private getRoofVariants = (): string[] => [
+        theme.ui.secondaryAccent,
+        this.mixColors(theme.ui.secondaryAccent, theme.ui.primaryAccent, 0.2),
+        this.mixColors(theme.ui.secondaryAccent, theme.worldMap.terrain.desert, 0.28),
+        this.mixColors(theme.ui.secondaryAccent, theme.worldMap.terrain.forest, 0.3),
+        this.mixColors(theme.ui.secondaryAccent, theme.worldMap.terrain.mountain, 0.2),
+    ];
 
-    private createVillageHouse(config: VillageHouseConfig): VillageHouse {
-        return {
-            worldX: config.gridX,
-            worldY: config.gridY,
-            footprintWidth: config.footprintWidth,
-            footprintDepth: config.footprintDepth,
-            wallHeight: config.wallHeight,
-            roofHeight: config.roofHeight,
-            roofColor: config.isShop ? this.mixColors(config.roofColor, theme.ui.primaryAccent, 0.2) : config.roofColor,
-            doorOpenAmount: 0,
-            doorTargetOpenAmount: 0,
-            doorStateUntil: 0,
-            isShop: Boolean(config.isShop),
-        };
-    }
+    private createVillageHouse = (config: VillageHouseConfig): VillageHouse => ({
+        worldX: config.gridX,
+        worldY: config.gridY,
+        footprintWidth: config.footprintWidth,
+        footprintDepth: config.footprintDepth,
+        wallHeight: config.wallHeight,
+        roofHeight: config.roofHeight,
+        roofColor: config.isShop
+            ? this.mixColors(config.roofColor, theme.ui.primaryAccent, 0.2)
+            : config.roofColor,
+        doorOpenAmount: 0,
+        doorTargetOpenAmount: 0,
+        doorStateUntil: 0,
+        isShop: Boolean(config.isShop),
+    });
 
     private updateHouseDoors(now: number): void {
         this.villageHouses.forEach((house) => {
@@ -226,12 +222,10 @@ export default class VillageLifeRenderer {
         ctx.restore();
     }
 
-    private projectIso(x: number, y: number, z: number): { x: number; y: number } {
-        return {
-            x: this.isoOriginX + (x - y) * VillageLifeRenderer.ISO_COS * this.isoScale,
-            y: this.isoOriginY + (x + y) * VillageLifeRenderer.ISO_SIN * this.isoScale - z * this.isoScale,
-        };
-    }
+    private projectIso = (x: number, y: number, z: number): { x: number; y: number } => ({
+        x: this.isoOriginX + (x - y) * VillageLifeRenderer.ISO_COS * this.isoScale,
+        y: this.isoOriginY + (x + y) * VillageLifeRenderer.ISO_SIN * this.isoScale - z * this.isoScale,
+    });
 
     private fillPolygon(ctx: CanvasRenderingContext2D, points: Array<{ x: number; y: number }>, fillStyle: string): void {
         if (points.length < 3) {
@@ -249,9 +243,7 @@ export default class VillageLifeRenderer {
         ctx.stroke();
     }
 
-    private generateVillageName(): string {
-        return generateVillageName(Math.floor(Math.random() * 0x7fffffff));
-    }
+    private generateVillageName = (): string => generateVillageName(Math.floor(Math.random() * 0x7fffffff));
 
     private mixColors(colorA: string, colorB: string, ratio: number): string {
         const blend = Math.max(0, Math.min(1, ratio));

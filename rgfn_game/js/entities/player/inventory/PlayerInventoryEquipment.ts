@@ -13,13 +13,9 @@ export default class PlayerInventoryEquipment {
     private equippedOffhandWeapon: Item | null = null;
     private equippedArmor: Item | null = null;
 
-    public getAttackRange = (): number => {
-        return Math.max(this.equippedMainWeapon?.attackRange ?? 1, this.equippedOffhandWeapon?.attackRange ?? 1);
-    };
+    public getAttackRange = (): number => Math.max(this.equippedMainWeapon?.attackRange ?? 1, this.equippedOffhandWeapon?.attackRange ?? 1);
 
-    public hasWeapon = (): boolean => {
-        return this.equippedMainWeapon !== null || this.equippedOffhandWeapon !== null;
-    };
+    public hasWeapon = (): boolean => this.equippedMainWeapon !== null || this.equippedOffhandWeapon !== null;
 
     public getEquippedWeapon = (): Item | null => this.equippedMainWeapon;
     public getEquippedMainWeapon = (): Item | null => this.equippedMainWeapon;
@@ -86,9 +82,9 @@ export default class PlayerInventoryEquipment {
         }
     }
 
-    public setEquippedOffhandWeapon(weapon: Item | null): void {
+    public setEquippedOffhandWeapon = (weapon: Item | null): void => {
         this.equippedOffhandWeapon = weapon;
-    }
+    };
 
     public equipWeaponToSlot(weapon: Item, slot: WeaponSlot): void {
         if (weapon.handsRequired === 2) {
@@ -111,9 +107,9 @@ export default class PlayerInventoryEquipment {
         }
     }
 
-    public setEquippedArmor(armor: Item | null): void {
+    public setEquippedArmor = (armor: Item | null): void => {
         this.equippedArmor = armor;
-    }
+    };
 
     public restoreFromFactory(
         equippedWeaponId: string | null,
@@ -129,11 +125,9 @@ export default class PlayerInventoryEquipment {
         this.equippedArmor = equippedArmorId ? itemFactory(equippedArmorId) : null;
     }
 
-    public getEquippedItemIds(): EquippedItemIds {
-        return {
-            equippedWeaponId: this.equippedMainWeapon?.id ?? null,
-            equippedOffhandWeaponId: this.equippedOffhandWeapon?.id ?? null,
-            equippedArmorId: this.equippedArmor?.id ?? null,
-        };
-    }
+    public getEquippedItemIds = (): EquippedItemIds => ({
+        equippedWeaponId: this.equippedMainWeapon?.id ?? null,
+        equippedOffhandWeaponId: this.equippedOffhandWeapon?.id ?? null,
+        equippedArmorId: this.equippedArmor?.id ?? null,
+    });
 }

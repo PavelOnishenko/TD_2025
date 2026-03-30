@@ -159,9 +159,7 @@ export default class VillageDialogueEngine {
         };
     }
 
-    public randomDirection(): CompassDirection {
-        return DIRECTIONS[Math.floor(Math.random() * DIRECTIONS.length)];
-    }
+    public randomDirection = (): CompassDirection => DIRECTIONS[Math.floor(Math.random() * DIRECTIONS.length)];
 
     private createNpc(villageName: string, index: number): VillageNpcProfile {
         const names = ['Mara', 'Iven', 'Tor', 'Selene', 'Garr', 'Nira', 'Bram', 'Talia', 'Daren', 'Ysolde'];

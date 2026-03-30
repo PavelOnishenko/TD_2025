@@ -53,7 +53,9 @@ export default class StickFigure {
         });
     }
 
-    public static getPoseFromImportedAnimation(keyframes: ImportedKeyframe[], meta: ImportedAnimationMeta, progress: number): StickFigurePose {
-        return EngineStickFigure.getPoseFromImportedAnimation(keyframes, meta, progress) as StickFigurePose;
-    }
+    public static readonly getPoseFromImportedAnimation = (
+        keyframes: ImportedKeyframe[],
+        meta: ImportedAnimationMeta,
+        progress: number
+    ): StickFigurePose => EngineStickFigure.getPoseFromImportedAnimation(keyframes, meta, progress) as StickFigurePose;
 }
