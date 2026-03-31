@@ -1,4 +1,4 @@
-import { GridPosition } from '../../../types/game.js';
+import { GridPosition } from '../../../../types/game.js';
 
 type RoadPoint = { x: number; y: number };
 type FerryRoutePair = { from: GridPosition; to: GridPosition; waterCells: number };
