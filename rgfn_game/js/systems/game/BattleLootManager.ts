@@ -15,10 +15,6 @@ type LootCallbacks = {
 export default class BattleLootManager {
     private pendingLoot: Item[] = [];
 
-    public collectLoot(target: Skeleton, callbacks: LootCallbacks): void {
-        this.collectLootInternal(target, callbacks);
-    }
-
     public handleKillRewards(target: Skeleton, player: Player, callbacks: LootCallbacks): void {
         callbacks.onAddBattleLog(`${target.name} defeated!`, 'system');
         callbacks.onEnemyDefeated?.(target);
@@ -32,7 +28,7 @@ export default class BattleLootManager {
             }
         }
 
-        this.collectLootInternal(target, callbacks);
+        this.collectLoot(target, callbacks);
         if (callbacks.getSelectedEnemy() === target) {
             callbacks.setSelectedEnemy(null);
         }
@@ -60,7 +56,7 @@ export default class BattleLootManager {
         this.pendingLoot = [];
     };
 
-    private collectLootInternal(target: Skeleton, callbacks: LootCallbacks): void {
+    private collectLoot(target: Skeleton, callbacks: LootCallbacks): void {
         const loot: Item[] = [];
         const lootable = target as Skeleton & { getLootItems?: () => Item[] };
 

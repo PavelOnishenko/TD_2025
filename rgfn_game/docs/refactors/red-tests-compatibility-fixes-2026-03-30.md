@@ -1,50 +1,56 @@
-# RGFN Red Test Fixes — Compatibility Adapters (2026-03-30)
+# RGFN Red Test Fixes — Test Import Realignment (2026-03-30)
 
-## Why tests were red
+## Context
 
-The RGFN test suite expected legacy import paths in `dist/` that no longer existed after folder regrouping/refactors (e.g. `dist/entities/Player.js`, `dist/config/balanceConfig.js`, `dist/systems/world/WorldMap.js`).
+The earlier fix introduced compatibility adapter files to preserve legacy import paths.
 
-Result: many tests failed before logic execution with `ERR_MODULE_NOT_FOUND`.
+That approach was removed per review feedback. The codebase now keeps the refactored runtime layout, and tests were updated to import from the canonical compiled `dist` paths directly.
 
-## What was done
+## What changed
 
-### 1) Added compatibility adapter modules (legacy path shims)
+### 1) Tests now import canonical dist paths
 
-Small TypeScript bridge files were added so legacy imports continue to work while preserving current folder layout:
+Key updates:
 
-- `js/config/balanceConfig.ts` -> re-exports `js/config/balance/balanceConfig.ts`
-- `js/entities/Player.ts` -> re-exports `js/entities/player/Player.ts`
-- `js/systems/quest/QuestLeafFactory.ts` -> re-exports `js/systems/quest/generation/QuestLeafFactory.ts`
-- `js/systems/quest/QuestPackService.ts` -> re-exports `js/systems/quest/generation/QuestPackService.ts`
-- `js/systems/world/WorldMap.ts` -> re-exports `js/systems/world/worldMap/WorldMap.ts`
-- `js/systems/world/WorldMapRenderer.ts` -> re-exports `js/systems/world/worldMap/WorldMapRenderer.ts`
-- `js/systems/WorldModeController.ts` -> re-exports `js/systems/world/worldMap/WorldModeController.ts`
-- `js/systems/magic/MagicSystem.ts` -> re-exports `js/systems/controllers/magic/MagicSystem.ts`
+- `dist/config/balanceConfig.js` -> `dist/config/balance/balanceConfig.js`
+- `dist/entities/Player.js` -> `dist/entities/player/Player.js`
+- `dist/systems/magic/MagicSystem.js` -> `dist/systems/controllers/magic/MagicSystem.js`
+- `dist/systems/quest/QuestLeafFactory.js` -> `dist/systems/quest/generation/QuestLeafFactory.js`
+- `dist/systems/quest/QuestPackService.js` -> `dist/systems/quest/generation/QuestPackService.js`
+- `dist/systems/world/WorldMap.js` -> `dist/systems/world/worldMap/WorldMap.js`
+- `dist/systems/world/WorldMapRenderer.js` -> `dist/systems/world/worldMap/WorldMapRenderer.js`
+- `dist/systems/WorldModeController.js` -> `dist/systems/world/worldMap/WorldModeController.js`
 
-### 2) Added test helper compatibility path
+### 2) Scenario helper imports now use the real helper location
 
-- Added `test/systems/helpers/testUtils.js` that re-exports from `test/helpers/testUtils.js`.
+Scenario tests were changed to import helper utilities from `test/helpers/testUtils.js` using correct relative paths (no compatibility helper file under `test/systems/helpers/`).
 
-This resolves a scenario test importing `../helpers/testUtils.js` relative to `test/systems/scenarios`.
+### 3) Scenario tests align with current controller APIs
 
-### 3) Restored compatibility methods expected by tests
+- `battleCommandController` scenarios now trigger loot flow via `handleTargetDefeated` + `resolvePendingLoot` instead of relying on a removed compatibility `collectLoot` surface.
+- `villageActionsController` scenario reads person-direction hints through `barterService.getPersonDirectionHint(...)` instead of a removed compatibility method.
 
-- `VillageActionsController` regained `getPersonDirectionHint(personName)` as a private compatibility proxy to `VillageBarterService.getPersonDirectionHint(...)`.
-- `BattleLootManager` now exposes a public `collectLoot(...)` wrapper (internally unchanged behavior).
-- `BattleCommandController` now exposes `collectLoot(target)` and forwards to `BattleLootManager`, matching legacy controller API expected by tests.
+## Removed from prior attempt
 
-## Behavior policy reinforced
+The following temporary compatibility files were deleted:
 
-- Keep refactored internals, but preserve thin compatibility surfaces for legacy/dist import paths and widely used controller methods.
-- Avoid changing game behavior when fixing test infrastructure breakages.
-- Prefer adapter modules over deep rewrites when failures are pure path/API drift.
+- `js/config/balanceConfig.ts`
+- `js/entities/Player.ts`
+- `js/systems/WorldModeController.ts`
+- `js/systems/magic/MagicSystem.ts`
+- `js/systems/quest/QuestLeafFactory.ts`
+- `js/systems/quest/QuestPackService.ts`
+- `js/systems/world/WorldMap.ts`
+- `js/systems/world/WorldMapRenderer.ts`
+- `test/systems/helpers/testUtils.js`
+
+And temporary compatibility methods added in runtime classes were reverted.
 
 ## Verification
 
-- Build + full RGFN tests run green:
-  - `npm run build:rgfn`
-  - `node --test $(find rgfn_game/test -name '*.test.js' | sort)`
+- `npm run build:rgfn`
+- `node --test $(find rgfn_game/test -name '*.test.js' | sort)`
 
-## Follow-up recommendation
+## Practical takeaway
 
-When future folder reorganizations happen, add/update adapter files in the same PR and run the full RGFN suite to avoid widespread red tests from import-path drift.
+When source folders are reorganized, prefer updating tests to canonical import paths (runtime truth) rather than adding adapter files—unless backward compatibility is explicitly required by production consumers.

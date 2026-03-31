@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import Player from '../../dist/entities/Player.js';
+import Player from '../../dist/entities/player/Player.js';
 import Item from '../../dist/entities/Item.js';
-import { balanceConfig } from '../../dist/config/balanceConfig.js';
+import { balanceConfig } from '../../dist/config/balance/balanceConfig.js';
 import { levelConfig } from '../../dist/config/levelConfig.js';
 import { createEmptyNextCharacterRollAllocation } from '../../dist/utils/NextCharacterRollConfig.js';
 

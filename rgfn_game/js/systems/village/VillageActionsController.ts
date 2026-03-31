@@ -183,10 +183,6 @@ export default class VillageActionsController {
         return normalized.includes('innkeeper') || normalized.includes('tavern') || normalized.includes('host');
     }
 
-    private getPersonDirectionHint(personName: string) {
-        return this.barterService.getPersonDirectionHint(personName, this.callbacks.getVillageDirectionHint);
-    }
-
     private describeDistance(distanceCells: number): string {
         if (distanceCells <= 4) {
             return 'close by';
