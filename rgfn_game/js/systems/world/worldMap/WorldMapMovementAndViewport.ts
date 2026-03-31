@@ -89,6 +89,24 @@ export default class WorldMapMovementAndViewport extends WorldMapNoiseAndVisibil
         return { moved: false, isPreviouslyDiscovered: false };
     }
 
+    public movePlayerToCell(col: number, row: number): boolean {
+        if (!this.grid.isValidPosition(col, row)) {
+            return false;
+        }
+
+        const destinationTerrain = this.getTerrain(col, row);
+        if (destinationTerrain?.type === 'water') {
+            return false;
+        }
+
+        const destinationKey = this.getCellKey(col, row);
+        this.playerGridPos = { col, row };
+        this.visitedCells.add(destinationKey);
+        this.refreshVisibility();
+        this.ensureCellIsVisible(col, row);
+        return true;
+    }
+
     public resizeToCanvas(canvasWidth: number, canvasHeight: number): void {
         this.canvasWidth = Math.max(1, Math.floor(canvasWidth));
         this.canvasHeight = Math.max(1, Math.floor(canvasHeight));

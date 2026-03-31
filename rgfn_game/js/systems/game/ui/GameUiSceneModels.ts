@@ -31,6 +31,12 @@ export class WorldUiModel {
     public villageEntryTitle!: HTMLElement;
     public villageEntryEnterBtn!: HTMLButtonElement;
     public villageEntryPassBtn!: HTMLButtonElement;
+    public ferryPopup!: HTMLElement;
+    public ferryTitle!: HTMLElement;
+    public ferryDestinationSelect!: HTMLSelectElement;
+    public ferryPrice!: HTMLElement;
+    public ferryConfirmBtn!: HTMLButtonElement;
+    public ferryCancelBtn!: HTMLButtonElement;
 }
 
 export type WorldUI = WorldUiModel;

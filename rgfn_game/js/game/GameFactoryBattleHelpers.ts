@@ -116,6 +116,8 @@ export const createWorldModeControllerRuntime = (
     onEnterVillage: () => stateMachine.transition(MODES.VILLAGE),
     onRequestVillageEntryPrompt: (name, anchor) => game.showVillageEntryPrompt(ui.worldUI, name, anchor),
     onCloseVillageEntryPrompt: () => game.hideVillageEntryPrompt(ui.worldUI),
+    onRequestFerryPrompt: (routes, anchor) => game.showFerryPrompt(ui.worldUI, routes, anchor),
+    onCloseFerryPrompt: () => game.hideFerryPrompt(ui.worldUI),
     onStartBattle: (enemies: Skeleton[], terrainType: TerrainType) => stateMachine.transition(MODES.BATTLE, { enemies, terrainType }),
     onAddBattleLog: (m, t = 'system') => hudCoordinator.addBattleLog(m, t),
     onUpdateHUD: () => hudCoordinator.updateHUD(),

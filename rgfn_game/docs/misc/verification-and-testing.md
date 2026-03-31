@@ -1109,3 +1109,43 @@ This prints:
 - RGFN-only LOC by language,
 - engine-only LOC by language,
 - combined totals with language percentages.
+
+## March 31, 2026 update: ferry dock menu + route-specific destination selection
+
+### Implemented behavior
+- Added a world-map ferry popup at dock tiles (non-water cells adjacent to water) with:
+  - destination dropdown,
+  - dynamic gold fare text,
+  - explicit confirm/cancel controls (`✔` / `✖`).
+- Destination list now includes only villages reachable by water routes from the **current dock tile**.
+- Fare now scales by water-path length (`max(1, round(length * 0.75))`).
+- Successful ferry travel writes narration lines to log (payment + crossing summary).
+- Insufficient gold now blocks travel with a clear log message.
+
+### Technical details
+- Route discovery is computed from dock adjacency + water-only shortest path BFS.
+- Destinations are restricted to village docks only (village tiles adjacent to water).
+- World interaction flow now attempts village prompt first, then ferry prompt fallback when using world enter action.
+
+### Verification commands run
+- `npm run build:rgfn` ✅ passed.
+- `node --test rgfn_game/test/**/*.test.js` ⚠️ partially failed due existing baseline dist-path/import mismatches in test files (for example `rgfn_game/dist/config/balanceConfig.js`, `rgfn_game/dist/entities/Player.js`, and several quest/world dist paths).
+
+### Notes
+- This change does not alter existing village entry prompt behavior.
+- Ferry popup follows the same anchored world-popup style as village entry prompts.
+
+## March 31, 2026 update (ferry follow-up): Space/Enter key now opens ferry prompt on docks
+
+### Issue discovered
+- Ferry prompt wiring worked through world UI/runtime callback flow, but keyboard action path (`enterVillage` in `WorldModeController.updateWorldMode`) only attempted village entry.
+- Player-visible effect: pressing Space on dock could fail to show ferry menu.
+
+### Fix
+- `WorldModeController.updateWorldMode()` now handles `enterVillage` as:
+  1. try village prompt,
+  2. if not applicable, try ferry prompt.
+
+### Verification
+- `npm run build:rgfn` ✅
+- `node --test rgfn_game/test/**/*.test.js` ⚠️ still hits pre-existing dist import baseline failures unrelated to this keyboard routing fix.

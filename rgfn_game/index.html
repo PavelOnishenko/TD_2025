@@ -46,6 +46,16 @@
                             <button id="world-village-entry-pass-btn" class="action-btn" type="button">Pass by</button>
                         </div>
                     </div>
+                    <div id="world-ferry-popup" class="world-village-entry-popup world-ferry-popup hidden" role="dialog" aria-live="polite" aria-label="Ferry route prompt">
+                        <p id="world-ferry-title" class="world-village-entry-title">Ferry dock</p>
+                        <label for="world-ferry-destination-select" class="world-ferry-label">Destination</label>
+                        <select id="world-ferry-destination-select" class="village-sell-select world-ferry-select"></select>
+                        <p id="world-ferry-price" class="world-ferry-price">Price: -</p>
+                        <div class="world-village-entry-actions">
+                            <button id="world-ferry-confirm-btn" class="action-btn" type="button" aria-label="Confirm ferry travel">✔</button>
+                            <button id="world-ferry-cancel-btn" class="action-btn" type="button" aria-label="Cancel ferry travel">✖</button>
+                        </div>
+                    </div>
                 </div>
                 <div id="left-overlay-stack" class="overlay-stack">
                     <div id="stats-panel" class="hud-section stats overlay-panel hidden">

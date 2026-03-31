@@ -1,6 +1,12 @@
 // @ts-nocheck
 import WorldMapNamedLocationAndVillageOverlays from './layers/WorldMapNamedLocationAndVillageOverlays.js';
 import { FOG_STATE } from './WorldMapCore.js';
+type FerryRouteOption = {
+    destinationVillage: string;
+    destinationDock: GridPosition;
+    waterPathLength: number;
+    priceGold: number;
+};
 export default class WorldMapRoadNetwork extends WorldMapNamedLocationAndVillageOverlays {
     private buildVillageRoadLinks(villages: GridPosition[]): Array<{ from: GridPosition; to: GridPosition }> {
         const links = new Map<string, { from: GridPosition; to: GridPosition }>();
@@ -69,6 +75,118 @@ export default class WorldMapRoadNetwork extends WorldMapNamedLocationAndVillage
             this.markRoadCellsForLink(link);
             return link;
         });
+    }
+
+    private getAdjacentWaterCells(col: number, row: number): GridPosition[] {
+        const cardinalOffsets = [{ col: 0, row: -1 }, { col: 0, row: 1 }, { col: -1, row: 0 }, { col: 1, row: 0 }];
+        return cardinalOffsets
+            .map((offset) => ({ col: col + offset.col, row: row + offset.row }))
+            .filter((position) => this.grid.isValidPosition(position.col, position.row))
+            .filter((position) => this.getTerrain(position.col, position.row)?.type === 'water');
+    }
+
+    private getVillageDockPositions(): GridPosition[] {
+        return Array.from(this.villages.values())
+            .map((key) => {
+                const [colText, rowText] = key.split(',');
+                return { col: Number(colText), row: Number(rowText) };
+            })
+            .filter((position) => this.getAdjacentWaterCells(position.col, position.row).length > 0);
+    }
+
+    private getWaterPathLengthBetweenDocks(sourceDock: GridPosition, destinationDock: GridPosition): number | null {
+        const startWaterCells = this.getAdjacentWaterCells(sourceDock.col, sourceDock.row);
+        const targetWaterCells = this.getAdjacentWaterCells(destinationDock.col, destinationDock.row);
+        if (startWaterCells.length === 0 || targetWaterCells.length === 0) {
+            return null;
+        }
+
+        const targetKeys = new Set(targetWaterCells.map((cell) => this.getCellKey(cell.col, cell.row)));
+        const queue: Array<{ col: number; row: number; distance: number }> = startWaterCells.map((cell) => ({ ...cell, distance: 1 }));
+        const visited = new Set(queue.map((cell) => this.getCellKey(cell.col, cell.row)));
+        const cardinalOffsets = [{ col: 0, row: -1 }, { col: 0, row: 1 }, { col: -1, row: 0 }, { col: 1, row: 0 }];
+
+        while (queue.length > 0) {
+            const current = queue.shift()!;
+            const currentKey = this.getCellKey(current.col, current.row);
+            if (targetKeys.has(currentKey)) {
+                return current.distance;
+            }
+
+            cardinalOffsets.forEach((offset) => {
+                const nextCol = current.col + offset.col;
+                const nextRow = current.row + offset.row;
+                if (!this.grid.isValidPosition(nextCol, nextRow)) {
+                    return;
+                }
+                if (this.getTerrain(nextCol, nextRow)?.type !== 'water') {
+                    return;
+                }
+                const nextKey = this.getCellKey(nextCol, nextRow);
+                if (visited.has(nextKey)) {
+                    return;
+                }
+                visited.add(nextKey);
+                queue.push({ col: nextCol, row: nextRow, distance: current.distance + 1 });
+            });
+        }
+
+        return null;
+    }
+
+    private computeFerryPrice(pathLength: number): number {
+        return Math.max(1, Math.round(pathLength * 0.75));
+    }
+
+    public isPlayerOnFerryDock(): boolean {
+        const terrain = this.getTerrain(this.playerGridPos.col, this.playerGridPos.row);
+        if (!terrain || terrain.type === 'water') {
+            return false;
+        }
+        return this.getAdjacentWaterCells(this.playerGridPos.col, this.playerGridPos.row).length > 0;
+    }
+
+    public getFerryRoutesAtPlayerDock(): FerryRouteOption[] {
+        if (!this.isPlayerOnFerryDock()) {
+            return [];
+        }
+
+        const sourceDock = { col: this.playerGridPos.col, row: this.playerGridPos.row };
+        const routes = this.getVillageDockPositions()
+            .filter((dock) => dock.col !== sourceDock.col || dock.row !== sourceDock.row)
+            .map((dock) => {
+                const waterPathLength = this.getWaterPathLengthBetweenDocks(sourceDock, dock);
+                if (!waterPathLength) {
+                    return null;
+                }
+                return {
+                    destinationVillage: this.getVillageName(dock.col, dock.row),
+                    destinationDock: dock,
+                    waterPathLength,
+                    priceGold: this.computeFerryPrice(waterPathLength),
+                };
+            })
+            .filter((route): route is FerryRouteOption => route !== null)
+            .sort((left, right) => {
+                if (left.priceGold === right.priceGold) {
+                    return left.destinationVillage.localeCompare(right.destinationVillage);
+                }
+                return left.priceGold - right.priceGold;
+            });
+
+        return routes;
+    }
+
+    public travelByFerryToDock(destinationDock: GridPosition): boolean {
+        const moved = this.movePlayerToCell(destinationDock.col, destinationDock.row);
+        if (!moved) {
+            return false;
+        }
+
+        const destinationKey = this.getCellKey(destinationDock.col, destinationDock.row);
+        this.visitedCells.add(destinationKey);
+        this.centerOnPlayer();
+        return true;
     }
 
     private markRoadCellsForLink(link: VillageRoadLink): void {

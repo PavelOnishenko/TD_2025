@@ -16,6 +16,18 @@ export default class GameFacadeWorldInteractionCoordinator {
         this.state.worldInteractionRuntime.hideWorldVillageEntryPrompt(worldUI);
     }
 
+    public showFerryPrompt(
+        worldUI: WorldUI,
+        routes: Array<{ destinationVillage: string; destinationDock: { col: number; row: number }; waterPathLength: number; priceGold: number }>,
+        anchor: { x: number; y: number },
+    ): void {
+        this.state.worldInteractionRuntime.showWorldFerryPrompt(worldUI, routes, anchor, this.state.canvas);
+    }
+
+    public hideFerryPrompt(worldUI: WorldUI): void {
+        this.state.worldInteractionRuntime.hideWorldFerryPrompt(worldUI);
+    }
+
     public handleCanvasMove(event: MouseEvent): void {
         this.state.worldInteractionRuntime.handleCanvasMove(
             event,
@@ -81,5 +93,23 @@ export default class GameFacadeWorldInteractionCoordinator {
             this.state.worldModeController,
             this.state.hudCoordinator,
         );
+    }
+
+    public confirmWorldFerryTravel(): void {
+        const selectedRouteIndex = this.state.worldInteractionRuntime.getSelectedFerryRouteIndex();
+        const ok = this.state.worldModeController.confirmFerryTravel(selectedRouteIndex);
+        if (!ok) {
+            this.state.hudCoordinator.addBattleLog('Ferry travel was not completed.', 'system');
+        }
+    }
+
+    public dismissWorldFerryPrompt(): void {
+        this.state.worldModeController.dismissFerryPrompt();
+    }
+
+    public selectWorldFerryRoute(worldUI: WorldUI, routeIndex: number): void {
+        this.state.worldInteractionRuntime.setSelectedFerryRouteIndex(routeIndex);
+        const routes = this.state.worldMap.getFerryRoutesAtPlayerDock();
+        this.state.worldInteractionRuntime.updateWorldFerryPrice(worldUI, routes, routeIndex);
     }
 }
