@@ -24,7 +24,7 @@ declare module '../../engine/core/Renderer.js' {
 
 declare module '../../engine/systems/InputManager.js' {
     export default class InputManager {
-        constructor();
+        constructor(options?: { enableRepeatPress?: boolean });
         mapAction(actionName: string, keys: string[]): void;
         handleKeyDown(event: KeyboardEvent): void;
         handleKeyUp(event: KeyboardEvent): void;

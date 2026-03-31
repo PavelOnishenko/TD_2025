@@ -67,7 +67,7 @@ export class InputManager {
     actions: Map<string, string[]>;
     axes: Map<string, { negative: string[]; positive: string[] }>;
 
-    constructor();
+    constructor(options?: { enableRepeatPress?: boolean });
     handleKeyDown(event: KeyboardEvent): void;
     handleKeyUp(event: KeyboardEvent): void;
     isKeyDown(code: string): boolean;

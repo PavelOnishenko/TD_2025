@@ -1120,16 +1120,20 @@ This prints:
 - RGFN world movement polling (`wasActionPressed`) therefore only saw the initial keydown frame and did not receive additional held-key pulses.
 
 ### Implementation
-- Updated `engine/systems/InputManager.js` keydown handling:
-  - keep first non-repeat keydown behavior unchanged,
-  - treat repeat keydowns as per-frame press pulses when that key is currently down (`keysPressed.add(code)`).
-- This preserves `isActionActive`/`isKeyDown` semantics while allowing held-key actions to retrigger naturally via OS/browser key-repeat.
+- Updated `engine/systems/InputManager.js` with **backward-compatible opt-in repeat mode**:
+  - default behavior remains unchanged (`KeyboardEvent.repeat` does not retrigger `wasPressed`),
+  - new constructor option `enableRepeatPress: true` enables repeat keydowns as per-frame press pulses when key is held.
+- Enabled the option only in RGFN bootstrap (`new InputManager({ enableRepeatPress: true })`), so other games keep old behavior.
+- This preserves `isActionActive`/`isKeyDown` semantics and isolates the behavior change to RGFN.
 
 ### Test coverage added
 - Updated `test/engine/systems/InputManager.test.js`:
-  - replaced old “ignore repeat events” expectation,
-  - now asserts repeat events generate a fresh `wasPressed` pulse after `update()`.
+  - explicit default-mode test confirms repeat events are still ignored,
+  - repeat-enabled test confirms a fresh `wasPressed` pulse after `update()`.
 
 ### Notes
 - Behavior is intentionally based on native browser key-repeat cadence (user OS settings), not fixed in-game timers.
-- This change improves held-key responsiveness for any system that reads action edge events (`wasActionPressed`) without forcing frame-by-frame movement speed.
+- Change scope is isolated to RGFN by constructor option; EVA and other engine consumers remain behavior-stable unless they opt in.
+- Validation snapshot (March 31, 2026 refresh):
+  - `node --test test/engine/systems/InputManager.test.js` → pass (34/34).
+  - `node --test rgfn_game/test/**/*.test.js` → 119/120 pass; one unrelated failure in world-map render test due mock canvas missing `ctx.rect`.

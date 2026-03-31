@@ -1,5 +1,6 @@
 export default class InputManager {
-    constructor() {
+    constructor(options = {}) {
+        this.enableRepeatPress = options.enableRepeatPress === true;
         this.keys = new Map();
         this.keysPressed = new Set();
         this.keysReleased = new Set();
@@ -13,10 +14,10 @@ export default class InputManager {
             return;
         }
 
-        // Browser key-repeat should produce repeatable "pressed this frame" pulses
-        // while the key remains held, so movement/actions can continue naturally.
         if (event?.repeat) {
-            if (this.keys.get(code)) {
+            // Backward-compatible default: repeated keydown does not retrigger "pressed this frame".
+            // Opt-in behavior for games that want held-key repeats through wasPressed/wasActionPressed.
+            if (this.enableRepeatPress && this.keys.get(code)) {
                 this.keysPressed.add(code);
             }
             return;

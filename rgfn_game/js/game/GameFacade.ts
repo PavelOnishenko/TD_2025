@@ -86,7 +86,7 @@ export class GameFacade implements GameFacadeStateAccess {
     public constructor(canvas: HTMLCanvasElement) {
         this.canvas = canvas;
         this.renderer = new Renderer(canvas);
-        this.input = new InputManager();
+        this.input = new InputManager({ enableRepeatPress: true });
         this.loop = new GameLoop((dt: number) => this.update(dt), () => this.render());
         createGameRuntime(this, canvas, Boolean(window.localStorage.getItem(SAVE_KEY)), WORLD_MAP_COLUMNS, WORLD_MAP_ROWS, WORLD_MAP_CELL_SIZE);
         new GameInputSetup(this.input, { onToggleDeveloperModal: () => this.devController?.toggleModal() }).configure();
