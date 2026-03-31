@@ -209,13 +209,16 @@ test('reset clears all key states', () => {
     assert.equal(input.isKeyDown('KeyB'), false);
 });
 
-test('handleKeyDown ignores repeat events', () => {
+test('handleKeyDown uses repeat events as press pulses while key is held', () => {
     const input = new InputManager();
     input.handleKeyDown({ code: 'KeyA', repeat: false });
     const firstPress = input.wasPressed('KeyA');
+    input.update();
     input.handleKeyDown({ code: 'KeyA', repeat: true });
+    const repeatedPress = input.wasPressed('KeyA');
 
     assert.equal(firstPress, true);
+    assert.equal(repeatedPress, true);
     assert.equal(input.isKeyDown('KeyA'), true);
 });
 

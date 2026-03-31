@@ -9,7 +9,16 @@ export default class InputManager {
 
     handleKeyDown(event) {
         const code = event?.code;
-        if (!code || event?.repeat) {
+        if (!code) {
+            return;
+        }
+
+        // Browser key-repeat should produce repeatable "pressed this frame" pulses
+        // while the key remains held, so movement/actions can continue naturally.
+        if (event?.repeat) {
+            if (this.keys.get(code)) {
+                this.keysPressed.add(code);
+            }
             return;
         }
 

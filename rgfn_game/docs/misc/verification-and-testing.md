@@ -1109,3 +1109,27 @@ This prints:
 - RGFN-only LOC by language,
 - engine-only LOC by language,
 - combined totals with language percentages.
+
+## March 31, 2026 update: held movement keys now continue movement in RGFN
+
+### Request
+- Holding movement keys (`W/A/S/D` or arrows) should keep moving continuously until key release.
+
+### Root cause
+- `InputManager.handleKeyDown` ignored browser `KeyboardEvent.repeat` events.
+- RGFN world movement polling (`wasActionPressed`) therefore only saw the initial keydown frame and did not receive additional held-key pulses.
+
+### Implementation
+- Updated `engine/systems/InputManager.js` keydown handling:
+  - keep first non-repeat keydown behavior unchanged,
+  - treat repeat keydowns as per-frame press pulses when that key is currently down (`keysPressed.add(code)`).
+- This preserves `isActionActive`/`isKeyDown` semantics while allowing held-key actions to retrigger naturally via OS/browser key-repeat.
+
+### Test coverage added
+- Updated `test/engine/systems/InputManager.test.js`:
+  - replaced old “ignore repeat events” expectation,
+  - now asserts repeat events generate a fresh `wasPressed` pulse after `update()`.
+
+### Notes
+- Behavior is intentionally based on native browser key-repeat cadence (user OS settings), not fixed in-game timers.
+- This change improves held-key responsiveness for any system that reads action edge events (`wasActionPressed`) without forcing frame-by-frame movement speed.
