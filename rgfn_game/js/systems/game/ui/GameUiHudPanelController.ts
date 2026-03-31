@@ -34,6 +34,7 @@ export default class GameUiHudPanelController {
         this.hudElements.toggleInventoryPanelBtn.addEventListener('click', () => this.handlePanelToggle('inventory'));
         this.hudElements.toggleMagicPanelBtn.addEventListener('click', () => this.handlePanelToggle('magic'));
         this.hudElements.toggleQuestsPanelBtn.addEventListener('click', () => this.handlePanelToggle('quests'));
+        this.hudElements.toggleGroupPanelBtn.addEventListener('click', () => this.handlePanelToggle('group'));
         this.hudElements.toggleLorePanelBtn.addEventListener('click', () => this.handlePanelToggle('lore'));
         this.hudElements.toggleSelectedPanelBtn.addEventListener('click', () => this.handlePanelToggle('selected'));
         this.hudElements.toggleWorldMapPanelBtn.addEventListener('click', () => this.handlePanelToggle('worldMap'));
@@ -52,6 +53,7 @@ export default class GameUiHudPanelController {
         { key: 'inventory', title: 'Inventory', element: this.hudElements.inventoryPanel },
         { key: 'magic', title: 'Magic', element: this.hudElements.magicPanel },
         { key: 'quests', title: 'Quests', element: this.hudElements.questsPanel },
+        { key: 'group', title: 'Group', element: this.hudElements.groupPanel },
         { key: 'lore', title: 'Lore', element: this.hudElements.lorePanel },
         { key: 'selected', title: 'Selected', element: this.hudElements.selectedPanel },
         { key: 'worldMap', title: 'World Map', element: this.hudElements.worldMapPanel },

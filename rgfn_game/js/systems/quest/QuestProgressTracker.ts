@@ -90,6 +90,11 @@ export default class QuestProgressTracker {
         return true;
     }
 
+
+    public recomputeCompletion(): void {
+        this.completion.recomputeCompletion(this.root);
+    }
+
     public getActiveMonsterObjectives(): ActiveMonsterObjective[] {
         const knownNodes = collectKnownQuestNodes(this.root);
         const objectives: ActiveMonsterObjective[] = [];

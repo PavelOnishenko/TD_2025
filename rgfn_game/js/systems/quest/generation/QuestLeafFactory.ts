@@ -152,14 +152,22 @@ export default class QuestLeafFactory {
 
     private async createEscortNode(id: string): Promise<QuestNode> {
         const character = await this.generateName('character');
-        const destination = await this.generateName('location');
+        const source = await this.generateName('location');
+        const destination = await this.resolveDestination(source);
         return this.contentBuilder.node(
             id,
             `Escort ${character.text}`,
-            `Guide ${character.text} through danger and reach ${destination.text}.`,
-            `Arrive at ${destination.text} with ${character.text} alive.`,
+            `Find ${character.text} in ${source.text}, ask them to join your group, then escort them safely to ${destination.text}.`,
+            `Recruit ${character.text} in ${source.text}, then arrive at ${destination.text} while ${character.text} is alive and still in your group.`,
             'escort',
-            this.contentBuilder.entities(character, destination),
+            this.contentBuilder.entities(character, source, destination),
+            {
+                escort: {
+                    personName: character.text,
+                    sourceVillage: source.text,
+                    destinationVillage: destination.text,
+                },
+            },
         );
     }
 

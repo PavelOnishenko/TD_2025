@@ -23,6 +23,7 @@
                     <button id="toggle-inventory-panel-btn" class="action-btn" type="button">Inventory</button>
                     <button id="toggle-magic-panel-btn" class="action-btn" type="button">Magic</button>
                     <button id="toggle-quests-panel-btn" class="action-btn" type="button">Quests</button>
+                    <button id="toggle-group-panel-btn" class="action-btn" type="button">Group</button>
                     <button id="toggle-lore-panel-btn" class="action-btn" type="button">Lore</button>
                     <button id="toggle-selected-panel-btn" class="action-btn" type="button">Selected</button>
                     <button id="toggle-world-map-panel-btn" class="action-btn" type="button">World Map</button>
@@ -173,6 +174,10 @@
                         </label>
                         <div id="quests-body" class="quests-body"></div>
                     </div>
+                    <div id="group-panel" class="hud-section stats overlay-panel hidden">
+                        <div class="stat">Group</div>
+                        <div id="group-body" class="quests-body">No companions are traveling with you.</div>
+                    </div>
                     <div id="lore-panel" class="hud-section stats overlay-panel hidden">
                         <div class="stat">Lore Book</div>
                         <div id="lore-body" class="lore-body"></div>
@@ -291,6 +296,7 @@
                     <button id="village-ask-person-btn" class="action-btn">Ask about person</button>
                     <button id="village-ask-barter-btn" class="action-btn">Ask about barter</button>
                     <button id="village-confirm-barter-btn" class="action-btn">I have what you need, let's do our barter</button>
+                    <button id="village-recruit-escort-btn" class="action-btn">Join my group</button>
                 </div>
             </div>
         </div>

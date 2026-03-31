@@ -43,12 +43,16 @@ export default class GameHudCoordinator {
     public describeEncounter = (enemies: Skeleton[]): string => this.battleUiController.describeEncounter(enemies);
 
 
-    public togglePanel(panel: 'stats' | 'skills' | 'inventory' | 'magic' | 'quests' | 'lore' | 'selected' | 'worldMap' | 'log'): void {
+    public togglePanel(panel: 'stats' | 'skills' | 'inventory' | 'magic' | 'quests' | 'group' | 'lore' | 'selected' | 'worldMap' | 'log'): void {
         this.hudController.togglePanel(panel);
     }
 
     public updateSelectedCell(selectedCell: SelectedCellInfo | null): void {
         this.hudController.updateSelectedCellInfo(selectedCell);
+    }
+
+    public updateGroupPanel(lines: string[]): void {
+        this.hudController.updateGroupPanel(lines);
     }
 
     public handleAddStat(stat: PlayerStat): void {

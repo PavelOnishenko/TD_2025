@@ -26,6 +26,7 @@ export type VillageUI = {
     askPersonBtn: HTMLButtonElement;
     askBarterBtn: HTMLButtonElement;
     barterNowBtn: HTMLButtonElement;
+    recruitEscortBtn: HTMLButtonElement;
 };
 
 export type VillageActionsCallbacks = {
@@ -33,6 +34,13 @@ export type VillageActionsCallbacks = {
     onLeaveVillage: () => void;
     getVillageDirectionHint: (settlementName: string) => VillageDirectionHint;
     onVillageBarterCompleted: (traderName: string, itemName: string, villageName: string) => void;
+    onTryRecruitEscort: (personName: string, villageName: string) => 'joined' | 'inactive' | 'already-joined' | 'not-available';
+};
+
+export type QuestEscortContract = {
+    personName: string;
+    sourceVillage: string;
+    destinationVillage: string;
 };
 
 export type QuestBarterContract = {

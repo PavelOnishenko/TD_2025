@@ -75,11 +75,13 @@ export class HudElementsModel {
     public questsPanel!: HTMLElement;
     public selectedPanel!: HTMLElement;
     public lorePanel!: HTMLElement;
+    public groupPanel!: HTMLElement;
     public worldMapPanel!: HTMLElement;
     public logPanel!: HTMLElement;
     public questsTitle!: HTMLElement;
     public questsKnownOnlyToggle!: HTMLInputElement;
     public questsBody!: HTMLElement;
+    public groupBody!: HTMLElement;
     public loreBody!: HTMLElement;
     public selectedCellEmpty!: HTMLElement;
     public selectedCellDetails!: HTMLElement;
@@ -95,6 +97,7 @@ export class HudElementsModel {
     public toggleInventoryPanelBtn!: HTMLButtonElement;
     public toggleMagicPanelBtn!: HTMLButtonElement;
     public toggleQuestsPanelBtn!: HTMLButtonElement;
+    public toggleGroupPanelBtn!: HTMLButtonElement;
     public toggleLorePanelBtn!: HTMLButtonElement;
     public toggleSelectedPanelBtn!: HTMLButtonElement;
     public toggleWorldMapPanelBtn!: HTMLButtonElement;

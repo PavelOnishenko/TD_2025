@@ -100,6 +100,20 @@ export default class HudController {
         this.selectionInfoController.updateSelectedCellInfo(selectedCell);
     }
 
+    public updateGroupPanel(lines: string[]): void {
+        this.hudElements.groupBody.innerHTML = '';
+        if (lines.length === 0) {
+            this.hudElements.groupBody.textContent = 'No companions are traveling with you.';
+            return;
+        }
+        lines.forEach((line) => {
+            const row = document.createElement('div');
+            row.className = 'stat';
+            row.textContent = line;
+            this.hudElements.groupBody.appendChild(row);
+        });
+    }
+
     private updateCoreStats(): void {
         const pending = this.pendingSkillAllocations;
         const pendingTotal = Object.values(pending).reduce((total, value) => total + value, 0);

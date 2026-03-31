@@ -1,11 +1,22 @@
 import QuestProgressTracker from '../../systems/quest/QuestProgressTracker.js';
-import { QuestNode } from '../../systems/quest/QuestTypes.js';
+import { EscortObjectiveData, QuestNode } from '../../systems/quest/QuestTypes.js';
 import QuestUiController from '../../systems/quest/ui/QuestUiController.js';
 import QuestGenerator from '../../systems/quest/QuestGenerator.js';
 import WorldMap from '../../systems/world/worldMap/WorldMap.js';
 import Skeleton, { MonsterMutationTrait } from '../../entities/Skeleton.js';
 import { balanceConfig } from '../../config/balance/balanceConfig.js';
 import { getDeveloperModeConfig } from '../../utils/DeveloperModeConfig.js';
+
+type QuestContractsReadyPayload = {
+    barterContracts: Array<{
+        traderName: string;
+        itemName: string;
+        sourceVillage?: string;
+        destinationVillage?: string;
+        contractType: 'barter' | 'deliver';
+    }>;
+    escortContracts: Array<{ personName: string; sourceVillage: string; destinationVillage: string }>;
+};
 
 export default class GameQuestRuntime {
     public activeQuest: QuestNode | null = null;
@@ -16,15 +27,7 @@ export default class GameQuestRuntime {
         questGenerator: QuestGenerator,
         questUiController: QuestUiController,
         getSavedQuest: () => QuestNode | null,
-        onContractsReady: (
-            contracts: Array<{
-                traderName: string;
-                itemName: string;
-                sourceVillage?: string;
-                destinationVillage?: string;
-                contractType: 'barter' | 'deliver';
-            }>,
-        ) => void,
+        onContractsReady: (payload: QuestContractsReadyPayload) => void,
         worldMap: WorldMap,
     ): Promise<void> {
         const savedQuest = getSavedQuest();
@@ -32,7 +35,10 @@ export default class GameQuestRuntime {
         this.activeQuest = quest;
         this.questUiController = questUiController;
         this.questProgressTracker = new QuestProgressTracker(quest);
-        onContractsReady(this.collectBarterContracts(quest));
+        onContractsReady({
+            barterContracts: this.collectBarterContracts(quest),
+            escortContracts: this.collectEscortContracts(quest),
+        });
         this.registerQuestLocations(worldMap, quest);
         questUiController.renderQuest(quest);
         if (!savedQuest && getDeveloperModeConfig().questIntroEnabled) {
@@ -44,11 +50,108 @@ export default class GameQuestRuntime {
         if (!this.questProgressTracker || !this.questUiController || !this.activeQuest) {
             return false;
         }
-        if (!this.questProgressTracker.recordLocationEntryWithInventory(locationName, carriedItemNames)) {
+        const locationChanged = this.questProgressTracker.recordLocationEntryWithInventory(locationName, carriedItemNames);
+        const escortChanged = this.resolveEscortArrival(locationName);
+        if (!locationChanged && !escortChanged) {
             return false;
         }
         this.questUiController.renderQuest(this.activeQuest);
         return true;
+    }
+
+    public recruitEscort(personName: string, villageName: string): 'joined' | 'inactive' | 'already-joined' | 'not-available' {
+        if (!this.activeQuest || !this.questUiController) {
+            return 'inactive';
+        }
+
+        const normalizedPerson = personName.trim().toLocaleLowerCase();
+        const normalizedVillage = villageName.trim().toLocaleLowerCase();
+        if (!normalizedPerson || !normalizedVillage) {
+            return 'not-available';
+        }
+
+        let result: 'joined' | 'already-joined' | 'not-available' = 'not-available';
+        let didJoin = false;
+        this.visitQuestNodes(this.activeQuest, (node) => {
+            if (node.objectiveType !== 'escort' || node.children.length > 0 || node.isCompleted) {
+                return;
+            }
+            const escort = node.objectiveData?.escort;
+            if (!escort || escort.isDead) {
+                return;
+            }
+            if (escort.personName.trim().toLocaleLowerCase() !== normalizedPerson) {
+                return;
+            }
+            if (escort.sourceVillage.trim().toLocaleLowerCase() !== normalizedVillage) {
+                return;
+            }
+            if (escort.hasJoined) {
+                result = 'already-joined';
+                return;
+            }
+            escort.hasJoined = true;
+            result = 'joined';
+            didJoin = true;
+        });
+
+        if (didJoin) {
+            this.questProgressTracker?.recomputeCompletion();
+            this.questUiController.renderQuest(this.activeQuest);
+        }
+        return result;
+    }
+
+    public getGroupMembers(): Array<{ name: string; hp: number; maxHp: number; status: 'following' | 'dead' }> {
+        if (!this.activeQuest) {
+            return [];
+        }
+
+        const members: Array<{ name: string; hp: number; maxHp: number; status: 'following' | 'dead' }> = [];
+        this.visitQuestNodes(this.activeQuest, (node) => {
+            if (node.objectiveType !== 'escort' || node.children.length > 0 || node.isCompleted) {
+                return;
+            }
+            const escort = node.objectiveData?.escort;
+            if (!escort?.hasJoined) {
+                return;
+            }
+            members.push({
+                name: escort.personName,
+                hp: this.getEscortCurrentHp(escort),
+                maxHp: this.getEscortMaxHp(escort),
+                status: escort.isDead ? 'dead' : 'following',
+            });
+        });
+        return members;
+    }
+
+    public applyEscortBattleDamage(enemyName: string, damage: number): { applied: boolean; targetName?: string; died?: boolean } {
+        if (!this.activeQuest || damage <= 0) {
+            return { applied: false };
+        }
+
+        const joinedEscorts: EscortObjectiveData[] = [];
+        this.visitQuestNodes(this.activeQuest, (node) => {
+            if (node.objectiveType === 'escort' && node.children.length === 0 && !node.isCompleted && node.objectiveData?.escort?.hasJoined && !node.objectiveData.escort.isDead) {
+                joinedEscorts.push(node.objectiveData.escort);
+            }
+        });
+        if (joinedEscorts.length === 0) {
+            return { applied: false };
+        }
+
+        const target = joinedEscorts[Math.floor(Math.random() * joinedEscorts.length)]!;
+        const nextHp = Math.max(0, this.getEscortCurrentHp(target) - damage);
+        this.setEscortCurrentHp(target, nextHp);
+        const died = nextHp <= 0;
+        if (died) {
+            target.isDead = true;
+            target.hasJoined = false;
+        }
+        this.questProgressTracker?.recomputeCompletion();
+        this.questUiController?.renderQuest(this.activeQuest);
+        return { applied: true, targetName: target.personName, died };
     }
 
     public recordBarterCompletion(traderName: string, itemName: string, villageName: string): 'updated' | 'no-objective' | 'inactive' {
@@ -97,6 +200,33 @@ export default class GameQuestRuntime {
         return null;
     }
 
+    private resolveEscortArrival(locationName: string): boolean {
+        if (!this.activeQuest) {
+            return false;
+        }
+        const normalizedLocation = locationName.trim().toLocaleLowerCase();
+        let changed = false;
+        this.visitQuestNodes(this.activeQuest, (node) => {
+            if (node.objectiveType !== 'escort' || node.children.length > 0 || node.isCompleted) {
+                return;
+            }
+            const escort = node.objectiveData?.escort;
+            if (!escort || escort.isDead || !escort.hasJoined) {
+                return;
+            }
+            if (escort.destinationVillage.trim().toLocaleLowerCase() !== normalizedLocation) {
+                return;
+            }
+            node.isCompleted = true;
+            escort.hasJoined = false;
+            changed = true;
+        });
+        if (changed) {
+            this.questProgressTracker?.recomputeCompletion();
+        }
+        return changed;
+    }
+
     private registerQuestLocations(worldMap: WorldMap, quest: QuestNode): void {
         for (const entity of quest.entities) {
             if (entity.type === 'location') {
@@ -127,4 +257,36 @@ export default class GameQuestRuntime {
         visit(quest);
         return contracts;
     }
+
+    private collectEscortContracts(quest: QuestNode): Array<{ personName: string; sourceVillage: string; destinationVillage: string }> {
+        const contracts: Array<{ personName: string; sourceVillage: string; destinationVillage: string }> = [];
+        this.visitQuestNodes(quest, (node) => {
+            if (node.objectiveType !== 'escort' || node.children.length > 0 || !node.objectiveData?.escort) {
+                return;
+            }
+            const escort = node.objectiveData.escort;
+            contracts.push({ personName: escort.personName, sourceVillage: escort.sourceVillage, destinationVillage: escort.destinationVillage });
+        });
+        return contracts;
+    }
+
+    private visitQuestNodes(node: QuestNode, visitor: (node: QuestNode) => void): void {
+        visitor(node);
+        node.children.forEach((child) => this.visitQuestNodes(child, visitor));
+    }
+
+    private getEscortCurrentHp(escort: EscortObjectiveData): number {
+        const metadata = escort as EscortObjectiveData & { currentHp?: number };
+        if (typeof metadata.currentHp === 'number') {
+            return metadata.currentHp;
+        }
+        return this.getEscortMaxHp(escort);
+    }
+
+    private setEscortCurrentHp(escort: EscortObjectiveData, hp: number): void {
+        const metadata = escort as EscortObjectiveData & { currentHp?: number };
+        metadata.currentHp = Math.max(0, hp);
+    }
+
+    private getEscortMaxHp = (_escort: EscortObjectiveData): number => 6;
 }

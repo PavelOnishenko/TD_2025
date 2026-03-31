@@ -68,6 +68,7 @@ export const createBattleTurnController = (
     onEnableBattleButtons: (enabled) => hudCoordinator.enableBattleButtons(enabled),
     onBattleEnd: (result) => game.battleCoordinator.endBattle(result),
     onPlayerTurnReady: () => game.battleCoordinator.onPlayerTurnReady(),
+    onTryApplyEscortDamage: (enemyName, damage) => game.questRuntime.applyEscortBattleDamage(enemyName, damage),
 });
 
 export const createBattleCoordinator = (

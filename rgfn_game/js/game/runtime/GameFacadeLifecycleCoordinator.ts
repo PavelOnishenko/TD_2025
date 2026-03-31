@@ -21,6 +21,7 @@ export default class GameFacadeLifecycleCoordinator {
             this.state.hudCoordinator.handleGodSkillsBoost();
         }
         this.refreshHud();
+        this.refreshGroupPanel();
         this.state.persistenceRuntime.saveGameIfChanged(
             this.state.worldMap,
             this.state.player,
@@ -111,15 +112,29 @@ export default class GameFacadeLifecycleCoordinator {
         }
     }
 
+    public onTryRecruitEscort(personName: string, villageName: string): 'joined' | 'inactive' | 'already-joined' | 'not-available' {
+        const status = this.state.questRuntime.recruitEscort(personName, villageName);
+        if (status === 'joined') {
+            this.state.hudCoordinator.addBattleLog(`Quest tracker: ${personName} joined your group in ${villageName}.`, 'system');
+            this.refreshGroupPanel();
+        }
+        return status;
+    }
+
     public onVillageEntered(): void {
-        this.state.questRuntime.recordLocationEntry(
-            this.state.worldMap.getVillageNameAtPlayerPosition(),
+        const villageName = this.state.worldMap.getVillageNameAtPlayerPosition();
+        const questChanged = this.state.questRuntime.recordLocationEntry(
+            villageName,
             this.state.player.getInventory().map((item) => item.name),
         );
+        if (questChanged) {
+            this.state.hudCoordinator.addBattleLog(`Quest tracker: objectives updated at ${villageName}.`, 'system');
+        }
+        this.refreshGroupPanel();
         this.state.villageCoordinator.enterVillageMode(
             this.state.canvas.width,
             this.state.canvas.height,
-            this.state.worldMap.getVillageNameAtPlayerPosition(),
+            villageName,
         );
     }
 
@@ -138,6 +153,12 @@ export default class GameFacadeLifecycleCoordinator {
         this.state.battleMap.resizeToCanvas(width, height);
         this.syncPlayerToWorldMap();
     };
+
+    private refreshGroupPanel(): void {
+        const members = this.state.questRuntime.getGroupMembers();
+        const lines = members.map((member) => `${member.name} — HP ${member.hp}/${member.maxHp} (${member.status})`);
+        this.state.hudCoordinator.updateGroupPanel(lines);
+    }
 
     private refreshHud(): void {
         if (!this.state.hudCoordinator) {
