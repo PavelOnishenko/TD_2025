@@ -1,5 +1,37 @@
 # Quest progress tracking notes
 
+## March 30, 2026 update: strict runtime gating for unknown quest objectives
+
+- We now use a single "known objective frontier" model not only in UI, but also in runtime logic:
+  - objectives above/equal to the current known cutoff are considered **known/current**,
+  - deeper objectives remain **unknown/future** until the frontier advances.
+- Practical effect: quest-specific runtime influences are blocked for unknown nodes.
+
+### What is now blocked until objective becomes known
+
+- Quest monster progression:
+  - kills no longer increment hidden future hunt/eliminate objectives.
+- Quest monster encounter spawning:
+  - hidden hunt/eliminate objectives no longer inject quest-mutant ambushes into world travel.
+- Location/trade progression for future leaves:
+  - entering villages or trading with NPCs no longer pre-completes future hidden objectives.
+
+### Technical implementation notes
+
+- Added shared quest-knowledge helpers:
+  - `collectQuestPreorderNodes(...)`
+  - `resolveKnownQuestCutoffIndex(...)`
+  - `collectKnownQuestNodes(...)`
+- `QuestUiMarkupBuilder` now reuses the same cutoff helper as runtime systems.
+- `QuestProgressTracker` computes current known node-set per event and only allows updates for nodes in that set.
+- `QuestMonsterProgress` and `QuestLocationTradeProgress` now receive an explicit `isObjectiveKnown(node)` guard for mutation-safe, testable gating.
+
+### Why this matters
+
+- Eliminates "spoiler encounters" (e.g., special quest mutants appearing before the player has learned that objective).
+- Keeps quest world state coherent with the "Show only known/current quests" model.
+- Prevents accidental future-objective completion from unrelated exploration/actions.
+
 ## March 28, 2026 update: alternate "known/current only" quest panel mode
 
 - The Quests HUD panel now supports a second display mode controlled by a checkbox:

@@ -1,4 +1,5 @@
 import { QuestLocationTradeProgress } from './QuestLocationTradeProgress.js';
+import { collectKnownQuestNodes } from './QuestKnowledge.js';
 import { ActiveMonsterObjective, QuestMonsterProgress } from './QuestMonsterProgress.js';
 import { QuestTraversalCompletion } from './QuestTraversalCompletion.js';
 import { QuestNode } from './QuestTypes.js';
@@ -34,7 +35,13 @@ export default class QuestProgressTracker {
                 .filter(Boolean),
         );
 
-        const changed = this.locationTradeProgress.markLocationAndDeliveryObjectives(this.root, normalizedLocation, carried);
+        const knownNodes = collectKnownQuestNodes(this.root);
+        const changed = this.locationTradeProgress.markLocationAndDeliveryObjectives(
+            this.root,
+            normalizedLocation,
+            carried,
+            (node) => knownNodes.has(node),
+        );
         if (!changed) {
             return false;
         }
@@ -51,11 +58,13 @@ export default class QuestProgressTracker {
             return false;
         }
 
+        const knownNodes = collectKnownQuestNodes(this.root);
         const changed = this.locationTradeProgress.markBarterAndPickupObjectives(
             this.root,
             normalizedTrader,
             normalizedItem,
             normalizedVillage,
+            (node) => knownNodes.has(node),
         );
         if (!changed) {
             return false;
@@ -71,7 +80,8 @@ export default class QuestProgressTracker {
             return false;
         }
 
-        const changed = this.monsterProgress.markMonsterKillObjectives(this.root, normalizedMonsterName);
+        const knownNodes = collectKnownQuestNodes(this.root);
+        const changed = this.monsterProgress.markMonsterKillObjectives(this.root, normalizedMonsterName, (node) => knownNodes.has(node));
         if (!changed) {
             return false;
         }
@@ -81,8 +91,9 @@ export default class QuestProgressTracker {
     }
 
     public getActiveMonsterObjectives(): ActiveMonsterObjective[] {
+        const knownNodes = collectKnownQuestNodes(this.root);
         const objectives: ActiveMonsterObjective[] = [];
-        this.monsterProgress.collectActiveMonsterObjectives(this.root, objectives);
+        this.monsterProgress.collectActiveMonsterObjectives(this.root, objectives, (node) => knownNodes.has(node));
         return objectives;
     }
 }
