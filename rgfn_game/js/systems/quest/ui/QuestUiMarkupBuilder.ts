@@ -1,5 +1,5 @@
-import { QuestNode } from './QuestTypes.js';
-import { collectQuestPreorderNodes, resolveKnownQuestCutoffIndex } from './QuestKnowledge.js';
+import { QuestNode } from '../QuestTypes.js';
+import { collectQuestPreorderNodes, resolveKnownQuestCutoffIndex } from '../QuestKnowledge.js';
 
 const DEFAULT_DESCRIPTION = 'Complete every branch of this quest tree to prove your character can end the darkness over the region.';
 const DEFAULT_CONDITION = 'All child objectives are completed.';

@@ -1,6 +1,6 @@
 import QuestProgressTracker from '../../systems/quest/QuestProgressTracker.js';
 import { QuestNode } from '../../systems/quest/QuestTypes.js';
-import QuestUiController from '../../systems/quest/QuestUiController.js';
+import QuestUiController from '../../systems/quest/ui/QuestUiController.js';
 import QuestGenerator from '../../systems/quest/QuestGenerator.js';
 import WorldMap from '../../systems/world/worldMap/WorldMap.js';
 import Skeleton, { MonsterMutationTrait } from '../../entities/Skeleton.js';

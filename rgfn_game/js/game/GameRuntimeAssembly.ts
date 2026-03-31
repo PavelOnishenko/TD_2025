@@ -9,7 +9,7 @@ import LoreBookController from '../systems/controllers/lore/LoreBookController.j
 import MagicSystem from '../systems/controllers/magic/MagicSystem.js';
 import QuestGenerator from '../systems/quest/QuestGenerator.js';
 import QuestPackService from '../systems/quest/generation/QuestPackService.js';
-import QuestUiController from '../systems/quest/QuestUiController.js';
+import QuestUiController from '../systems/quest/ui/QuestUiController.js';
 import GameRenderRouter from '../systems/game/runtime/GameRenderRouter.js';
 import BattleCommandController from '../systems/game/BattleCommandController.js';
 import GameRuntimeUiBinder from './runtime/GameRuntimeUiBinder.js';

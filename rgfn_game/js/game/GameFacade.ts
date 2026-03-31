@@ -18,7 +18,7 @@ import Player from '../entities/player/Player.js';
 import MagicSystem from '../systems/controllers/magic/MagicSystem.js';
 import DeveloperEventController from '../systems/encounter/DeveloperEventController.js';
 import QuestGenerator from '../systems/quest/QuestGenerator.js';
-import QuestUiController from '../systems/quest/QuestUiController.js';
+import QuestUiController from '../systems/quest/ui/QuestUiController.js';
 import GameQuestRuntime from './runtime/GameQuestRuntime.js';
 import GamePersistenceRuntime from './runtime/GamePersistenceRuntime.js';
 import GameWorldInteractionRuntime from './runtime/GameWorldInteractionRuntime.js';

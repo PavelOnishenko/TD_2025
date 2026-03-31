@@ -1,4 +1,4 @@
-import { QuestNode } from './QuestTypes.js';
+import { QuestNode } from '../QuestTypes.js';
 import QuestUiMarkupBuilder from './QuestUiMarkupBuilder.js';
 import QuestUiFeedbackPresenter from './QuestUiFeedbackPresenter.js';
 

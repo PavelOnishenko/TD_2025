@@ -72,3 +72,37 @@ All TypeScript imports were updated to match moved files. The RGFN TypeScript bu
 
 - Rule 3 / Rule 2 warnings remain in a few RGFN files and were not addressed in this folder-only pass.
 - If desired, a follow-up can normalize test import paths for moved RGFN test files to reduce missing-module noise.
+
+## Incremental update (2026-03-31): quest UI subfolder split
+
+### Problem observed
+
+A fresh style-guide audit for `rgfn_game` reported a single Rule 16 violation:
+
+- `js/systems/quest` had **11 immediate children** (limit is 10).
+
+### Change applied
+
+To reduce direct child count without changing runtime behavior, quest UI files were grouped into a dedicated subfolder:
+
+- `js/systems/quest/QuestUiController.ts` -> `js/systems/quest/ui/QuestUiController.ts`
+- `js/systems/quest/QuestUiMarkupBuilder.ts` -> `js/systems/quest/ui/QuestUiMarkupBuilder.ts`
+- `js/systems/quest/QuestUiFeedbackPresenter.ts` -> `js/systems/quest/ui/QuestUiFeedbackPresenter.ts`
+
+Import paths in game runtime assembly/facade files were updated to point to the new `quest/ui` location.
+
+### Why this grouping
+
+- Keeps all quest UI presentation concerns together.
+- Leaves generation/progression logic at `js/systems/quest/*` root.
+- Drops `js/systems/quest` immediate children from 11 to 9.
+
+### Validation notes
+
+- `npm run build:rgfn` passes after path updates.
+- `npm run lint:ts:rgfn` passes, and Rule 16 reports 0 violations for `rgfn_game`.
+- Root `npm test` still has baseline failures unrelated to this quest folder move (missing `dist` modules in multiple test suites and existing projectile/wave assertions).
+
+### Practical follow-up for future moves
+
+If a folder approaches Rule 16 limits again, prefer domain subfolders (`ui`, `runtime`, `data`, `helpers`) before introducing deeper nesting. This keeps imports predictable while satisfying child-count constraints.
