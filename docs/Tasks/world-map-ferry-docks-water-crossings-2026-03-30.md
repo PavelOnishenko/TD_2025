@@ -29,3 +29,35 @@
 - Add ferry interaction prompt (choose destination when multiple routes exist).
 - Add ticket pricing and NPC boatman economy hooks.
 - Add persistent world time HUD and explicit time-skipping effects for ferry/sleep/village services.
+
+
+## March 31, 2026 follow-up: visible ferry corridors over water
+
+### Problem
+- After the original ferry-dock rollout, roads crossing water disappeared completely in the visual layer.
+- Result: players could see two dock markers but not the route between them, which made ferry connectivity unclear.
+
+### Change
+- Water-crossing road fragments are now rendered as a dedicated **dashed corridor** between dock endpoints.
+- Land road fragments keep the existing solid gold style.
+- Dashed ferry corridor style uses a cool blue tint to separate it from regular overland roads while preserving map readability.
+
+### Technical notes
+- Road sampling still comes from the same deterministic curved village-road link path; no path topology changes were introduced.
+- Visibility rules remain fog-aware: unknown cells do not render either land or ferry corridor road fragments.
+- Segment style switches dynamically while iterating sampled points:
+  - `land` on non-water terrain
+  - `waterCrossing` on water terrain
+- Rendering now dispatches to separate draw functions for these two segment styles.
+
+### Updated implementation files
+- `rgfn_game/js/systems/world/worldMap/WorldMapRoadNetwork.ts`
+- `rgfn_game/js/systems/world/worldMap/layers/WorldMapNamedLocationAndVillageOverlays.ts`
+- `rgfn_game/js/systems/world/worldMap/WorldMapRenderer.ts`
+- `rgfn_game/js/systems/world/WorldMapFeatureRenderer.ts`
+
+### Quick verification checklist
+1. Generate/restore a world where a village road crosses water.
+2. Discover both docks and at least one water tile on the crossing.
+3. Confirm a dashed line is visible between docks over water and solid line remains on land.
+4. Confirm dock interaction/ferry prompt behavior is unchanged.

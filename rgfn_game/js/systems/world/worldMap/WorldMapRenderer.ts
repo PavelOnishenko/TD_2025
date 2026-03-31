@@ -25,6 +25,10 @@ export default class WorldMapRenderer {
         this.featureRenderer.drawVillageRoadPath(ctx, points, alpha);
     }
 
+    public drawWaterCrossingRoadPath(ctx: CanvasRenderingContext2D, points: Array<{ x: number; y: number }>, alpha: number): void {
+        this.featureRenderer.drawWaterCrossingRoadPath(ctx, points, alpha);
+    }
+
     public drawNamedLocation(
         ctx: CanvasRenderingContext2D,
         cell: GridCell,

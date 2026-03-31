@@ -72,6 +72,10 @@ export default class WorldMapNamedLocationAndVillageOverlays extends WorldMapVil
             }
             const visibleSegments = this.buildVisibleRoadSegments(link);
             visibleSegments.forEach((segment) => {
+                if (segment.style === 'waterCrossing') {
+                    this.renderer.drawWaterCrossingRoadPath(ctx, segment.points, segment.alpha);
+                    return;
+                }
                 this.renderer.drawVillageRoadPath(ctx, segment.points, segment.alpha);
             });
         });

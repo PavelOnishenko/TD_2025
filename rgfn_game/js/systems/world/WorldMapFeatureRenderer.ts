@@ -25,6 +25,23 @@ export default class WorldMapFeatureRenderer {
         ctx.restore();
     }
 
+
+    public drawWaterCrossingRoadPath(ctx: CanvasRenderingContext2D, points: Array<{ x: number; y: number }>, alpha: number): void {
+        if (points.length < 2) {return;}
+        const clampedAlpha = Math.max(0.3, Math.min(1, alpha));
+        ctx.save();
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.strokeStyle = this.colorUtils.withAlpha('#8fd4ff', 0.62 * clampedAlpha);
+        ctx.lineWidth = 1.4;
+        ctx.setLineDash([6, 5]);
+        ctx.beginPath();
+        this.traceSmoothPath(ctx, points);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.restore();
+    }
+
     public drawNamedLocation(
         ctx: CanvasRenderingContext2D,
         cell: GridCell,
