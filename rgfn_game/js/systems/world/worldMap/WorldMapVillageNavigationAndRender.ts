@@ -39,28 +39,34 @@ export default class WorldMapVillageNavigationAndRender extends WorldMapMovement
     }
 
     public getPlayerPixelPosition = (): [number, number] => this.grid.gridToPixel(this.playerGridPos.col, this.playerGridPos.row);
-
-
     public isRoadAt(col: number, row: number): boolean {
-        if (!this.grid.isValidPosition(col, row)) {
-            return false;
-        }
+        if (!this.grid.isValidPosition(col, row)) {return false;}
         return this.roadIndexSet.has(this.getCellIndex(col, row));
     }
 
     public isPlayerOnRoad = (): boolean => this.isRoadAt(this.playerGridPos.col, this.playerGridPos.row);
-    public getCurrentTerrain = (): TerrainData => this.getTerrain(this.playerGridPos.col, this.playerGridPos.row) ?? {
-        type: 'grass',
-        color: theme.worldMap.terrain.grass,
-        pattern: 'plain',
-        elevation: 0.5,
-        moisture: 0.5,
-        heat: 0.5,
-        seed: 0,
-    };
+    public isFerryDockAt(col: number, row: number): boolean {
+        if (!this.grid.isValidPosition(col, row)) {return false;}
+        return this.ferryDockIndexSet.has(this.getCellIndex(col, row));
+    }
+    public isPlayerOnFerryDock = (): boolean => this.isFerryDockAt(this.playerGridPos.col, this.playerGridPos.row);
+
+    public tryUseFerryAtPlayerPosition(): { traveled: boolean; from?: GridPosition; to?: GridPosition; waterCells?: number } {
+        const from = { col: this.playerGridPos.col, row: this.playerGridPos.row };
+        const routes = this.ferryDockRoutesByIndex.get(this.getCellIndex(from.col, from.row)) ?? [];
+        if (routes.length === 0) {return { traveled: false };}
+        const route = routes[0];
+        const destinationKey = this.getCellKey(route.to.col, route.to.row);
+        this.playerGridPos = { col: route.to.col, row: route.to.row };
+        this.visitedCells.add(destinationKey);
+        this.refreshVisibility();
+        this.ensureCellIsVisible(route.to.col, route.to.row);
+        return { traveled: true, from, to: route.to, waterCells: route.waterCells };
+    }
+
+    public getCurrentTerrain = (): TerrainData => this.getTerrain(this.playerGridPos.col, this.playerGridPos.row) ?? { type: 'grass', color: theme.worldMap.terrain.grass, pattern: 'plain', elevation: 0.5, moisture: 0.5, heat: 0.5, seed: 0 };
 
     public getVillageNameAtPlayerPosition = (): string => this.getVillageName(this.playerGridPos.col, this.playerGridPos.row);
-
     public getKnownVillages = (): KnownVillage[] => Array.from(this.villages.values())
         .map((key) => {
             const [colText, rowText] = key.split(',');
@@ -75,7 +81,6 @@ export default class WorldMapVillageNavigationAndRender extends WorldMapMovement
         })
         .filter((entry): entry is KnownVillage => entry !== null)
         .sort((left, right) => left.name.localeCompare(right.name));
-
 
     public getVillageDirectionHintFromPlayer(rawSettlementName: string): WorldVillageDirectionHint {
         const settlementName = rawSettlementName.trim();
@@ -119,15 +124,8 @@ export default class WorldMapVillageNavigationAndRender extends WorldMapMovement
         const visibleColumns = Math.max(0, bounds.endCol - bounds.startCol + 1);
         const visibleRows = Math.max(0, bounds.endRow - bounds.startRow + 1);
         const visibleCellCount = visibleColumns * visibleRows;
-
-        if (this.grid.cellSize <= 10 || (!this.mapDisplayConfig.fogOfWar && visibleCellCount >= 2500)) {
-            return 'low';
-        }
-
-        if (this.grid.cellSize <= 14 || visibleCellCount >= 1400) {
-            return 'medium';
-        }
-
+        if (this.grid.cellSize <= 10 || (!this.mapDisplayConfig.fogOfWar && visibleCellCount >= 2500)) {return 'low';}
+        if (this.grid.cellSize <= 14 || visibleCellCount >= 1400) {return 'medium';}
         return 'full';
     }
 
@@ -170,6 +168,7 @@ export default class WorldMapVillageNavigationAndRender extends WorldMapMovement
             this.renderer.drawGrid(ctx, this.grid, this.canvasWidth, this.canvasHeight);
         }
         this.drawVillageRoads(ctx, bounds);
+        this.drawFerryDocks(ctx, bounds);
         this.drawVillages(ctx, bounds);
         this.drawNamedLocations(ctx, bounds);
         this.drawNamedLocationFocus(ctx);

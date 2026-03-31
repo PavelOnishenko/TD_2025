@@ -36,6 +36,9 @@ export default class WorldModeTravelEncounterController {
         this.player.addTravelFatigue(this.getTravelMinutesMultiplier());
         this.player.restoreMana(1);
         this.callbacks.onUpdateHUD();
+        if (this.tryResolveFerryTravel()) {
+            return;
+        }
 
         const namedLocation = this.worldMap.getCurrentNamedLocation();
         if (namedLocation) {
@@ -76,6 +79,17 @@ export default class WorldModeTravelEncounterController {
         }
     }
 
+    private tryResolveFerryTravel(): boolean {
+        const ferry = this.worldMap.tryUseFerryAtPlayerPosition();
+        if (!ferry.traveled || !ferry.from || !ferry.to) {return false;}
+        const ferryMinutes = Math.max(1, (ferry.waterCells ?? 1) * 2);
+        this.player.addTravelFatigue(Math.max(1, Math.round(ferryMinutes / 2)));
+        this.callbacks.onAddBattleLog(`You hire a boatman at the dock and cross in about ${ferryMinutes} min.`, 'system');
+        this.callbacks.onUpdateHUD();
+        this.villagePromptController.syncVillagePromptWithPlayerPosition();
+        return true;
+    }
+
     public handleCampSleep(): void {
         if (this.worldMap.isPlayerOnVillage()) {
             this.callbacks.onAddBattleLog('You are at a village. Rent a room from an innkeeper for safer sleep.', 'system');
@@ -104,35 +118,19 @@ export default class WorldModeTravelEncounterController {
     }
 
     private resolveQuestEncounter(): boolean {
-        if (!this.encounterSystem.isEncounterTypeEnabled('monster')) {
-            return false;
-        }
-
+        if (!this.encounterSystem.isEncounterTypeEnabled('monster')) {return false;}
         const questEncounter = this.callbacks.getQuestBattleEncounter();
-        if (!questEncounter) {
-            return false;
-        }
-
-        if (questEncounter.hint) {
-            this.callbacks.onAddBattleLog(questEncounter.hint, 'system-message');
-        }
+        if (!questEncounter) {return false;}
+        if (questEncounter.hint) {this.callbacks.onAddBattleLog(questEncounter.hint, 'system-message');}
         this.callbacks.onStartBattle(questEncounter.enemies, this.worldMap.getCurrentTerrain().type);
         return true;
     }
 
     private getTravelMinutesMultiplier(): number {
-        if (this.worldMap.isPlayerOnRoad()) {
-            return 1;
-        }
-
+        if (this.worldMap.isPlayerOnRoad()) {return 1;}
         const terrain = this.worldMap.getCurrentTerrain().type;
-        if (terrain === 'forest') {
-            return 4;
-        }
-        if (terrain === 'grass') {
-            return 2;
-        }
-
+        if (terrain === 'forest') {return 4;}
+        if (terrain === 'grass') {return 2;}
         return 1;
     }
 
@@ -157,11 +155,7 @@ export default class WorldModeTravelEncounterController {
 
     private tryBarter(traveler: Wanderer): void {
         const stock = traveler.getLootItems().filter((item) => item.type !== 'consumable');
-        if (stock.length === 0) {
-            this.callbacks.onAddBattleLog('The wanderer has nothing to barter.', 'system');
-            return;
-        }
-
+        if (stock.length === 0) { this.callbacks.onAddBattleLog('The wanderer has nothing to barter.', 'system'); return; }
         const offer = stock[Math.floor(Math.random() * stock.length)];
         const price = Math.max(1, Math.floor(offer.goldValue * 0.7));
         if (this.player.gold < price) {

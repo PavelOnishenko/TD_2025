@@ -71,6 +71,22 @@ export default class WorldMapFeatureRenderer {
         ctx.fillRect(x - (3 * villageScale), y + (3 * villageScale), 6 * villageScale, 8 * villageScale);
     }
 
+    public drawFerryDock(ctx: CanvasRenderingContext2D, x: number, y: number, glow: number): void {
+        ctx.save();
+        ctx.strokeStyle = this.colorUtils.withAlpha('#f8db66', 0.85 * glow);
+        ctx.fillStyle = this.colorUtils.withAlpha(theme.ui.primaryBg, 0.78);
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.rect(x - 5, y + 2, 10, 5);
+        ctx.fill();
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(x, y + 1, 2.2, 0, Math.PI * 2);
+        ctx.fillStyle = this.colorUtils.withAlpha('#f7d969', 0.95);
+        ctx.fill();
+        ctx.restore();
+    }
+
     private traceSmoothPath(ctx: CanvasRenderingContext2D, points: Array<{ x: number; y: number }>): void {
         ctx.moveTo(points[0].x, points[0].y);
         if (points.length === 2) {return ctx.lineTo(points[1].x, points[1].y);}

@@ -77,4 +77,16 @@ export default class WorldMapNamedLocationAndVillageOverlays extends WorldMapVil
         });
     }
 
+    private drawFerryDocks(ctx: CanvasRenderingContext2D, bounds: { startCol: number; endCol: number; startRow: number; endRow: number }): void {
+        this.ferryDockIndexSet.forEach((index) => {
+            const col = index % this.grid.columns;
+            const row = Math.floor(index / this.grid.columns);
+            if (col < bounds.startCol || col > bounds.endCol || row < bounds.startRow || row > bounds.endRow) {return;}
+            if (this.getFogState(col, row) === FOG_STATE.UNKNOWN) {return;}
+            const cell = this.grid.getCellAt(col, row);
+            if (!cell) {return;}
+            this.renderer.drawFerryDock(ctx, cell.x + (cell.width / 2), cell.y + (cell.height / 2), 0.9);
+        });
+    }
+
 }
