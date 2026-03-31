@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import WorldMap from '../../dist/systems/world/WorldMap.js';
-import { balanceConfig } from '../../dist/config/balanceConfig.js';
+import WorldMap from '../../dist/systems/world/worldMap/WorldMap.js';
+import { balanceConfig } from '../../dist/config/balance/balanceConfig.js';
 import { theme } from '../../dist/config/ThemeConfig.js';
 import { createMockCanvasContext, withMockedRandom, withPatchedProperty } from '../helpers/testUtils.js';
 

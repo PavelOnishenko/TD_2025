@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import WorldMapRenderer from '../../../dist/systems/world/WorldMapRenderer.js';
+import WorldMapRenderer from '../../../dist/systems/world/worldMap/WorldMapRenderer.js';
 import { theme } from '../../../dist/config/ThemeConfig.js';
-import { createMockCanvasContext } from '../helpers/testUtils.js';
+import { createMockCanvasContext } from '../../helpers/testUtils.js';
 
 test('WorldMapRenderer draws named location landmarks and labels for discovered quest locations', () => {
   const originalPath2D = globalThis.Path2D;

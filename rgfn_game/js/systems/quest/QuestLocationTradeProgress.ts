@@ -3,26 +3,37 @@ import { QuestNode } from './QuestTypes.js';
 const LOCATION_OBJECTIVES = new Set(['travel', 'scout']);
 
 export class QuestLocationTradeProgress {
-    public markLocationAndDeliveryObjectives(node: QuestNode, normalizedLocation: string, carriedItems: Set<string>): boolean {
-        const locationChanged = this.markLocationObjectives(node, normalizedLocation);
-        const deliveryChanged = this.markDeliverObjectives(node, normalizedLocation, carriedItems);
+    public markLocationAndDeliveryObjectives(
+        node: QuestNode,
+        normalizedLocation: string,
+        carriedItems: Set<string>,
+        isObjectiveKnown: (node: QuestNode) => boolean,
+    ): boolean {
+        const locationChanged = this.markLocationObjectives(node, normalizedLocation, isObjectiveKnown);
+        const deliveryChanged = this.markDeliverObjectives(node, normalizedLocation, carriedItems, isObjectiveKnown);
         return locationChanged || deliveryChanged;
     }
 
-    public markBarterAndPickupObjectives(node: QuestNode, normalizedTrader: string, normalizedItem: string, normalizedVillage: string): boolean {
-        const barterChanged = this.markBarterObjectives(node, normalizedTrader, normalizedItem);
-        const pickupChanged = this.markDeliverPickupObjectives(node, normalizedTrader, normalizedItem, normalizedVillage);
+    public markBarterAndPickupObjectives(
+        node: QuestNode,
+        normalizedTrader: string,
+        normalizedItem: string,
+        normalizedVillage: string,
+        isObjectiveKnown: (node: QuestNode) => boolean,
+    ): boolean {
+        const barterChanged = this.markBarterObjectives(node, normalizedTrader, normalizedItem, isObjectiveKnown);
+        const pickupChanged = this.markDeliverPickupObjectives(node, normalizedTrader, normalizedItem, normalizedVillage, isObjectiveKnown);
         return barterChanged || pickupChanged;
     }
 
-    private markDeliverObjectives(node: QuestNode, normalizedLocation: string, carriedItems: Set<string>): boolean {
+    private markDeliverObjectives(node: QuestNode, normalizedLocation: string, carriedItems: Set<string>, isObjectiveKnown: (node: QuestNode) => boolean): boolean {
         let changed = false;
 
         for (const child of node.children) {
-            changed = this.markDeliverObjectives(child, normalizedLocation, carriedItems) || changed;
+            changed = this.markDeliverObjectives(child, normalizedLocation, carriedItems, isObjectiveKnown) || changed;
         }
 
-        if (node.objectiveType !== 'deliver' || node.children.length > 0 || node.isCompleted) {
+        if (node.objectiveType !== 'deliver' || node.children.length > 0 || node.isCompleted || !isObjectiveKnown(node)) {
             return changed;
         }
 
@@ -41,14 +52,20 @@ export class QuestLocationTradeProgress {
         return true;
     }
 
-    private markDeliverPickupObjectives(node: QuestNode, normalizedTrader: string, normalizedItem: string, normalizedVillage: string): boolean {
+    private markDeliverPickupObjectives(
+        node: QuestNode,
+        normalizedTrader: string,
+        normalizedItem: string,
+        normalizedVillage: string,
+        isObjectiveKnown: (node: QuestNode) => boolean,
+    ): boolean {
         let changed = false;
 
         for (const child of node.children) {
-            changed = this.markDeliverPickupObjectives(child, normalizedTrader, normalizedItem, normalizedVillage) || changed;
+            changed = this.markDeliverPickupObjectives(child, normalizedTrader, normalizedItem, normalizedVillage, isObjectiveKnown) || changed;
         }
 
-        if (node.objectiveType !== 'deliver' || node.children.length > 0) {
+        if (node.objectiveType !== 'deliver' || node.children.length > 0 || !isObjectiveKnown(node)) {
             return changed;
         }
 
@@ -68,14 +85,14 @@ export class QuestLocationTradeProgress {
         return true;
     }
 
-    private markLocationObjectives(node: QuestNode, normalizedLocation: string): boolean {
+    private markLocationObjectives(node: QuestNode, normalizedLocation: string, isObjectiveKnown: (node: QuestNode) => boolean): boolean {
         let changed = false;
 
         for (const child of node.children) {
-            changed = this.markLocationObjectives(child, normalizedLocation) || changed;
+            changed = this.markLocationObjectives(child, normalizedLocation, isObjectiveKnown) || changed;
         }
 
-        if (!LOCATION_OBJECTIVES.has(node.objectiveType) || node.children.length > 0) {
+        if (!LOCATION_OBJECTIVES.has(node.objectiveType) || node.children.length > 0 || !isObjectiveKnown(node)) {
             return changed;
         }
 
@@ -88,14 +105,14 @@ export class QuestLocationTradeProgress {
         return true;
     }
 
-    private markBarterObjectives(node: QuestNode, normalizedTrader: string, normalizedItem: string): boolean {
+    private markBarterObjectives(node: QuestNode, normalizedTrader: string, normalizedItem: string, isObjectiveKnown: (node: QuestNode) => boolean): boolean {
         let changed = false;
 
         for (const child of node.children) {
-            changed = this.markBarterObjectives(child, normalizedTrader, normalizedItem) || changed;
+            changed = this.markBarterObjectives(child, normalizedTrader, normalizedItem, isObjectiveKnown) || changed;
         }
 
-        if (node.objectiveType !== 'barter' || node.children.length > 0 || node.isCompleted) {
+        if (node.objectiveType !== 'barter' || node.children.length > 0 || node.isCompleted || !isObjectiveKnown(node)) {
             return changed;
         }
 

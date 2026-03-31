@@ -40,6 +40,12 @@ type VillageRoadLink = {
     control2: VillageRoadPoint;
 };
 
+type FerryDockRoute = {
+    from: GridPosition;
+    to: GridPosition;
+    waterCells: number;
+};
+
 type TerrainLayerCache = {
     canvas: HTMLCanvasElement;
     cellSize: number;
@@ -67,6 +73,8 @@ export default class WorldMapCore {
     private villageIndexSet: Set<number>;
     private roadIndexSet: Set<number>;
     private villageRoadLinks: VillageRoadLink[];
+    private ferryDockIndexSet: Set<number>;
+    private ferryDockRoutesByIndex: Map<number, FerryDockRoute[]>;
     private terrainLayerCaches: Partial<Record<'low' | 'medium', TerrainLayerCache>>;
     private fogRevision: number;
     private terrainRevision: number;
@@ -95,6 +103,8 @@ export default class WorldMapCore {
         this.villageIndexSet = new Set<number>();
         this.roadIndexSet = new Set<number>();
         this.villageRoadLinks = [];
+        this.ferryDockIndexSet = new Set<number>();
+        this.ferryDockRoutesByIndex = new Map<number, FerryDockRoute[]>();
         this.terrainLayerCaches = {};
         this.fogRevision = 0;
         this.terrainRevision = 0;

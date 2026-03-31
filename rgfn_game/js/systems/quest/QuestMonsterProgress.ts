@@ -8,14 +8,14 @@ export type ActiveMonsterObjective = {
 };
 
 export class QuestMonsterProgress {
-    public markMonsterKillObjectives(node: QuestNode, normalizedMonsterName: string): boolean {
+    public markMonsterKillObjectives(node: QuestNode, normalizedMonsterName: string, isObjectiveKnown: (node: QuestNode) => boolean): boolean {
         let changed = false;
 
         for (const child of node.children) {
-            changed = this.markMonsterKillObjectives(child, normalizedMonsterName) || changed;
+            changed = this.markMonsterKillObjectives(child, normalizedMonsterName, isObjectiveKnown) || changed;
         }
 
-        if ((node.objectiveType !== 'eliminate' && node.objectiveType !== 'hunt') || node.children.length > 0 || node.isCompleted) {
+        if ((node.objectiveType !== 'eliminate' && node.objectiveType !== 'hunt') || node.children.length > 0 || node.isCompleted || !isObjectiveKnown(node)) {
             return changed;
         }
 
@@ -41,10 +41,10 @@ export class QuestMonsterProgress {
         return true;
     }
 
-    public collectActiveMonsterObjectives(node: QuestNode, objectives: ActiveMonsterObjective[]): void {
-        node.children.forEach((child) => this.collectActiveMonsterObjectives(child, objectives));
+    public collectActiveMonsterObjectives(node: QuestNode, objectives: ActiveMonsterObjective[], isObjectiveKnown: (node: QuestNode) => boolean): void {
+        node.children.forEach((child) => this.collectActiveMonsterObjectives(child, objectives, isObjectiveKnown));
 
-        if ((node.objectiveType !== 'eliminate' && node.objectiveType !== 'hunt') || node.children.length > 0 || node.isCompleted) {
+        if ((node.objectiveType !== 'eliminate' && node.objectiveType !== 'hunt') || node.children.length > 0 || node.isCompleted || !isObjectiveKnown(node)) {
             return;
         }
 

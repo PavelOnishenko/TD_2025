@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 
 import Skeleton from '../../dist/entities/Skeleton.js';
 import Wanderer from '../../dist/entities/Wanderer.js';
-import { balanceConfig } from '../../dist/config/balanceConfig.js';
+import { balanceConfig } from '../../dist/config/balance/balanceConfig.js';
 import { deriveCreatureStats } from '../../dist/config/creatureStats.js';
 
 test('Enemy archetypes derive resulting stats from base stats plus shared skills', () => {
