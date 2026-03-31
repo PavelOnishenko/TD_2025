@@ -19,6 +19,7 @@ import BattleUiController from '../systems/controllers/BattleUiController.js';
 import { TerrainType } from '../types/game.js';
 import { GameFacade } from './GameFacade.js';
 import { RuntimeStateMachine, RuntimeUi } from './GameFactoryHelpers.js';
+import { FerryRouteOption } from '../systems/world-mode/WorldModeFerryPromptController.js';
 
 export const createBattlePlayerActionController = (
     game: GameFacade,
@@ -116,6 +117,8 @@ export const createWorldModeControllerRuntime = (
     onEnterVillage: () => stateMachine.transition(MODES.VILLAGE),
     onRequestVillageEntryPrompt: (name, anchor) => game.showVillageEntryPrompt(ui.worldUI, name, anchor),
     onCloseVillageEntryPrompt: () => game.hideVillageEntryPrompt(ui.worldUI),
+    onRequestFerryPrompt: (options: FerryRouteOption[], selectedRouteIndex: number, anchor) => game.showFerryPrompt(ui.worldUI, options, selectedRouteIndex, anchor),
+    onCloseFerryPrompt: () => game.hideFerryPrompt(ui.worldUI),
     onStartBattle: (enemies: Skeleton[], terrainType: TerrainType) => stateMachine.transition(MODES.BATTLE, { enemies, terrainType }),
     onAddBattleLog: (m, t = 'system') => hudCoordinator.addBattleLog(m, t),
     onUpdateHUD: () => hudCoordinator.updateHUD(),

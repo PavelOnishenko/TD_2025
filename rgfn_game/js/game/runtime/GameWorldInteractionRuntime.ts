@@ -5,6 +5,7 @@ import GameModeStateMachine, { MODES } from '../../systems/game/runtime/GameMode
 import GameHudCoordinator from '../../systems/game/runtime/GameHudCoordinator.js';
 import WorldModeController from '../../systems/world/worldMap/WorldModeController.js';
 import { WorldUI } from '../../systems/game/ui/GameUiTypes.js';
+import type { FerryRouteOption } from '../../systems/world-mode/WorldModeFerryPromptController.js';
 
 export default class GameWorldInteractionRuntime {
     private isWorldMapMiddleDragActive = false;
@@ -123,6 +124,35 @@ export default class GameWorldInteractionRuntime {
 
     public hideWorldVillageEntryPrompt(worldUI: WorldUI): void {
         worldUI.villageEntryPopup.classList.add('hidden');
+    }
+
+    public showWorldFerryPrompt(worldUI: WorldUI, options: FerryRouteOption[], selectedRouteIndex: number, anchor: { x: number; y: number }, canvas: HTMLCanvasElement): void {
+        const clampedSelectedIndex = Math.max(0, Math.min(selectedRouteIndex, options.length - 1));
+        worldUI.ferryRouteSelect.innerHTML = '';
+        options.forEach((option, index) => {
+            const element = document.createElement('option');
+            element.value = String(index);
+            element.textContent = `${option.destinationName} (${option.waterCells} water cells)`;
+            worldUI.ferryRouteSelect.appendChild(element);
+        });
+        worldUI.ferryRouteSelect.selectedIndex = clampedSelectedIndex;
+
+        const selectedOption = options[clampedSelectedIndex];
+        const selectedPrice = selectedOption ? selectedOption.priceGold : 0;
+        worldUI.ferryPrice.textContent = `${selectedPrice}g`;
+        worldUI.ferryTitle.textContent = options.length > 1 ? 'Ferry routes available' : 'Ferry crossing';
+
+        const width = worldUI.ferryPopup.offsetWidth || 230;
+        const height = worldUI.ferryPopup.offsetHeight || 140;
+        const left = Math.max(14, Math.min(Math.max(14, canvas.width - width - 14), anchor.x - (width / 2)));
+        const top = Math.max(14, Math.min(Math.max(14, canvas.height - height - 14), anchor.y - height - 16));
+        worldUI.ferryPopup.style.left = `${left}px`;
+        worldUI.ferryPopup.style.top = `${top}px`;
+        worldUI.ferryPopup.classList.remove('hidden');
+    }
+
+    public hideWorldFerryPrompt(worldUI: WorldUI): void {
+        worldUI.ferryPopup.classList.add('hidden');
     }
 
     private syncPlayerPixelPosition(worldMap: WorldMap, player: Player): void {

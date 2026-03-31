@@ -236,6 +236,33 @@ h1 {
     flex: 1 1 auto;
 }
 
+.world-ferry-popup {
+    min-width: 220px;
+}
+
+.world-ferry-label {
+    display: block;
+    font-size: 12px;
+    margin-bottom: 4px;
+    color: var(--color-text-muted);
+}
+
+.world-ferry-route-select {
+    width: 100%;
+    padding: 6px;
+    border-radius: 6px;
+    border: 1px solid var(--color-secondary-accent);
+    background: color-mix(in srgb, var(--color-panel-highlight) 88%, transparent);
+    color: var(--color-text-primary);
+    margin-bottom: 8px;
+}
+
+.world-ferry-price {
+    margin: 0 0 10px;
+    font-size: 13px;
+    color: var(--color-primary-accent);
+}
+
 #game-canvas {
     display: block;
     border: 0;

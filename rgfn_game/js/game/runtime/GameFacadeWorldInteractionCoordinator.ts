@@ -1,5 +1,6 @@
 import type { WorldUI } from '../../systems/game/ui/GameUiTypes.js';
 import type { GameFacadeStateAccess } from './GameFacadeSharedTypes.js';
+import type { FerryRouteOption } from '../../systems/world-mode/WorldModeFerryPromptController.js';
 
 export default class GameFacadeWorldInteractionCoordinator {
     private readonly state: GameFacadeStateAccess;
@@ -14,6 +15,14 @@ export default class GameFacadeWorldInteractionCoordinator {
 
     public hideVillageEntryPrompt(worldUI: WorldUI): void {
         this.state.worldInteractionRuntime.hideWorldVillageEntryPrompt(worldUI);
+    }
+
+    public showFerryPrompt(worldUI: WorldUI, options: FerryRouteOption[], selectedRouteIndex: number, anchor: { x: number; y: number }): void {
+        this.state.worldInteractionRuntime.showWorldFerryPrompt(worldUI, options, selectedRouteIndex, anchor, this.state.canvas);
+    }
+
+    public hideFerryPrompt(worldUI: WorldUI): void {
+        this.state.worldInteractionRuntime.hideWorldFerryPrompt(worldUI);
     }
 
     public handleCanvasMove(event: MouseEvent): void {
