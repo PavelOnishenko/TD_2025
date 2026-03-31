@@ -1,5 +1,6 @@
 export default class InputManager {
-    constructor() {
+    constructor(options = {}) {
+        this.enableRepeatPress = options.enableRepeatPress === true;
         this.keys = new Map();
         this.keysPressed = new Set();
         this.keysReleased = new Set();
@@ -9,7 +10,16 @@ export default class InputManager {
 
     handleKeyDown(event) {
         const code = event?.code;
-        if (!code || event?.repeat) {
+        if (!code) {
+            return;
+        }
+
+        if (event?.repeat) {
+            // Backward-compatible default: repeated keydown does not retrigger "pressed this frame".
+            // Opt-in behavior for games that want held-key repeats through wasPressed/wasActionPressed.
+            if (this.enableRepeatPress && this.keys.get(code)) {
+                this.keysPressed.add(code);
+            }
             return;
         }
 

@@ -69,7 +69,7 @@ export interface InputAction {
 }
 
 export declare class InputManager {
-    constructor();
+    constructor(options?: { enableRepeatPress?: boolean });
     mapAction(actionName: string, keys: string[]): void;
     mapAxis(axisName: string, negativeKeys: string[], positiveKeys: string[]): void;
     handleKeyDown(event: KeyboardEvent): void;

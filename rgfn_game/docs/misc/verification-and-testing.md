@@ -1109,3 +1109,31 @@ This prints:
 - RGFN-only LOC by language,
 - engine-only LOC by language,
 - combined totals with language percentages.
+
+## March 31, 2026 update: held movement keys now continue movement in RGFN
+
+### Request
+- Holding movement keys (`W/A/S/D` or arrows) should keep moving continuously until key release.
+
+### Root cause
+- `InputManager.handleKeyDown` ignored browser `KeyboardEvent.repeat` events.
+- RGFN world movement polling (`wasActionPressed`) therefore only saw the initial keydown frame and did not receive additional held-key pulses.
+
+### Implementation
+- Updated `engine/systems/InputManager.js` with **backward-compatible opt-in repeat mode**:
+  - default behavior remains unchanged (`KeyboardEvent.repeat` does not retrigger `wasPressed`),
+  - new constructor option `enableRepeatPress: true` enables repeat keydowns as per-frame press pulses when key is held.
+- Enabled the option only in RGFN bootstrap (`new InputManager({ enableRepeatPress: true })`), so other games keep old behavior.
+- This preserves `isActionActive`/`isKeyDown` semantics and isolates the behavior change to RGFN.
+
+### Test coverage added
+- Updated `test/engine/systems/InputManager.test.js`:
+  - explicit default-mode test confirms repeat events are still ignored,
+  - repeat-enabled test confirms a fresh `wasPressed` pulse after `update()`.
+
+### Notes
+- Behavior is intentionally based on native browser key-repeat cadence (user OS settings), not fixed in-game timers.
+- Change scope is isolated to RGFN by constructor option; EVA and other engine consumers remain behavior-stable unless they opt in.
+- Validation snapshot (March 31, 2026 refresh):
+  - `node --test test/engine/systems/InputManager.test.js` → pass (34/34).
+  - `node --test rgfn_game/test/**/*.test.js` → 119/120 pass; one unrelated failure in world-map render test due mock canvas missing `ctx.rect`.
