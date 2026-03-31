@@ -1174,3 +1174,37 @@ This prints:
 - Validation snapshot (March 31, 2026 refresh):
   - `node --test test/engine/systems/InputManager.test.js` → pass (34/34).
   - `node --test rgfn_game/test/**/*.test.js` → 119/120 pass; one unrelated failure in world-map render test due mock canvas missing `ctx.rect`.
+
+
+## March 31, 2026 update: ferry-connected water road segments are now dashed and visible
+
+### Reported issue
+- Water-crossing road parts were not drawn at all after ferry dock integration.
+- Players could see ferry docks but lacked a visual connection line between paired docks.
+
+### Implementation summary
+- World-map road segmentation now keeps two render styles instead of skipping water samples:
+  - `land` segments: existing solid overland road style.
+  - `waterCrossing` segments: dashed blue-tinted line style over water.
+- Fog behavior remains unchanged: unknown tiles still suppress segment rendering.
+
+### Code touchpoints
+- `js/systems/world/worldMap/WorldMapRoadNetwork.ts`
+  - `buildVisibleRoadSegments(...)` now emits segment metadata (`style`) and allows water samples to produce drawable segments.
+- `js/systems/world/worldMap/layers/WorldMapNamedLocationAndVillageOverlays.ts`
+  - draw pass now dispatches by segment style to solid vs dashed renderer calls.
+- `js/systems/world/worldMap/WorldMapRenderer.ts`
+  - added `drawWaterCrossingRoadPath(...)` forwarding API.
+- `js/systems/world/WorldMapFeatureRenderer.ts`
+  - added dashed-path drawer (`setLineDash([6, 5])`) for water-crossing corridors.
+
+### Why this is safe
+- No ferry route pairing logic changes (`detectFerryRoutePairs` path unchanged).
+- No traversal changes: player still cannot walk onto water and ferry travel remains dock-driven.
+- No village-link graph changes: only visual segmentation/rendering behavior changed.
+
+### Suggested regression checks
+1. Render a map with a known water crossing and verify dashed segment appears exactly across water region.
+2. Verify land portions of the same road remain solid.
+3. Verify hidden/unknown fog tiles do not render any road segment artifacts.
+4. Verify ferry prompt and travel still function from both docks.

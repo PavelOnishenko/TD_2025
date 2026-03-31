@@ -105,10 +105,17 @@ export default class WorldMapRoadNetwork extends WorldMapNamedLocationAndVillage
         };
     }
 
-    private buildVisibleRoadSegments(link: VillageRoadLink): Array<{ points: VillageRoadPoint[]; alpha: number }> {
-        const segments: Array<{ points: VillageRoadPoint[]; alpha: number }> = [];
+    private buildVisibleRoadSegments(link: VillageRoadLink): Array<{ points: VillageRoadPoint[]; alpha: number; style: 'land' | 'waterCrossing' }> {
+        const segments: Array<{ points: VillageRoadPoint[]; alpha: number; style: 'land' | 'waterCrossing' }> = [];
         const samples = Math.max(26, Math.ceil(this.getRoadLinkDistance(link) * 7));
         let active: VillageRoadPoint[] = [];
+        let activeStyle: 'land' | 'waterCrossing' | null = null;
+
+        const flushSegment = (): void => {
+            if (active.length < 2 || !activeStyle) {return;}
+            segments.push({ points: active, alpha: activeStyle === 'land' ? 0.9 : 0.88, style: activeStyle });
+            active = [];
+        };
 
         for (let index = 0; index <= samples; index += 1) {
             const gridPoint = this.sampleRoadLinkPoint(link, index / samples);
@@ -117,17 +124,21 @@ export default class WorldMapRoadNetwork extends WorldMapNamedLocationAndVillage
             const hasRoad = this.grid.isValidPosition(col, row) && this.roadIndexSet.has(this.getCellIndex(col, row));
             const fogState = hasRoad ? this.getFogState(col, row) : FOG_STATE.UNKNOWN;
             const terrainType = this.getTerrain(col, row)?.type ?? 'grass';
-            if (fogState === FOG_STATE.UNKNOWN || terrainType === 'water') {
-                if (active.length >= 2) {segments.push({ points: active, alpha: 0.9 });}
-                active = [];
+            if (fogState === FOG_STATE.UNKNOWN) {
+                flushSegment();
+                activeStyle = null;
                 continue;
             }
 
-            const pixel = this.gridPointToCanvas(gridPoint);
-            active.push(pixel);
+            const pointStyle: 'land' | 'waterCrossing' = terrainType === 'water' ? 'waterCrossing' : 'land';
+            if (activeStyle && activeStyle !== pointStyle) {
+                flushSegment();
+            }
+            activeStyle = pointStyle;
+            active.push(this.gridPointToCanvas(gridPoint));
         }
 
-        if (active.length >= 2) {segments.push({ points: active, alpha: 0.9 });}
+        flushSegment();
         return segments;
     }
 
