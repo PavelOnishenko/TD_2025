@@ -17,6 +17,7 @@ export type DeveloperUI = {
     randomSummary: HTMLElement;
     randomStatus: HTMLElement;
     randomApplyBtn: HTMLButtonElement;
+    developerModeToggle: HTMLInputElement;
     everythingDiscoveredToggle: HTMLInputElement;
     fogOfWarToggle: HTMLInputElement;
 };

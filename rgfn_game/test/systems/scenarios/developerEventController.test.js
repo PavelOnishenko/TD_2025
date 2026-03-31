@@ -58,6 +58,7 @@ function createDeveloperUi() {
     randomSummary: { textContent: '' },
     randomStatus: { textContent: '', classList: createClassList() },
     randomApplyBtn: {},
+    developerModeToggle: { checked: false },
     everythingDiscoveredToggle: { checked: false },
     fogOfWarToggle: { checked: true },
   };
@@ -141,4 +142,22 @@ test('DeveloperEventController applies pseudo-random settings from the dev conso
   assert.match(developerUI.randomSummary.textContent, /repeatable-run/);
   assert.match(developerUI.randomStatus.textContent, /Use New Character to replay/i);
   assert.equal(logs.at(-1), '[DEV] Random provider set to pseudo random (seed: repeatable-run).');
+});
+
+test('DeveloperEventController applies persistent developer mode presets', () => {
+  const logs = [];
+  const encounterSystem = new EncounterSystem(1);
+  const developerUI = createDeveloperUi();
+  const controller = createController(logs, encounterSystem, developerUI);
+
+  controller.handleDeveloperModeToggle(true);
+
+  assert.equal(developerUI.developerModeToggle.checked, true);
+  assert.equal(developerUI.everythingDiscoveredToggle.checked, true);
+  assert.deepEqual(encounterSystem.getEncounterTypeStates(), {
+    monster: false,
+    item: false,
+    traveler: false,
+  });
+  assert.equal(logs.at(-1), '[DEV] Persistent developer mode enabled.');
 });
