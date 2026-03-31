@@ -27,6 +27,7 @@ export class DeveloperUiModel {
     public randomSummary!: HTMLElement;
     public randomStatus!: HTMLElement;
     public randomApplyBtn!: HTMLButtonElement;
+    public developerModeToggle!: HTMLInputElement;
     public everythingDiscoveredToggle!: HTMLInputElement;
     public fogOfWarToggle!: HTMLInputElement;
 }

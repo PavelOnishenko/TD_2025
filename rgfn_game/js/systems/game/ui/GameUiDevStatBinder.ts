@@ -33,6 +33,7 @@ export default class GameUiDevStatBinder {
         this.developerUI.randomModeSelect.addEventListener('change', () => this.developerEventController.handleRandomSettingsInputChanged());
         this.developerUI.randomSeedInput.addEventListener('input', () => this.developerEventController.handleRandomSettingsInputChanged());
         this.developerUI.randomApplyBtn.addEventListener('click', () => this.developerEventController.handleRandomSettingsApply());
+        this.developerUI.developerModeToggle.addEventListener('change', () => this.developerEventController.handleDeveloperModeToggle(this.developerUI.developerModeToggle.checked));
         this.developerUI.everythingDiscoveredToggle.addEventListener('change', () => this.handleMapDisplayToggle('everythingDiscovered'));
         this.developerUI.fogOfWarToggle.addEventListener('change', () => this.handleMapDisplayToggle('fogOfWar'));
         Object.values(this.developerUI.nextRollInputs).forEach((input) => {

@@ -5,6 +5,7 @@ import QuestGenerator from '../../systems/quest/QuestGenerator.js';
 import WorldMap from '../../systems/world/worldMap/WorldMap.js';
 import Skeleton, { MonsterMutationTrait } from '../../entities/Skeleton.js';
 import { balanceConfig } from '../../config/balance/balanceConfig.js';
+import { getDeveloperModeConfig } from '../../utils/DeveloperModeConfig.js';
 
 export default class GameQuestRuntime {
     public activeQuest: QuestNode | null = null;
@@ -34,7 +35,7 @@ export default class GameQuestRuntime {
         onContractsReady(this.collectBarterContracts(quest));
         this.registerQuestLocations(worldMap, quest);
         questUiController.renderQuest(quest);
-        if (!savedQuest) {
+        if (!savedQuest && getDeveloperModeConfig().questIntroEnabled) {
             questUiController.showIntro();
         }
     }

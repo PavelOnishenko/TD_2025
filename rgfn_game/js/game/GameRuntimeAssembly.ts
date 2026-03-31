@@ -192,6 +192,7 @@ export function buildGameRuntime(
         runtime.villageActionsController,
         runtime.villageCoordinator,
     );
+    devController.applyDeveloperModeOnStartup();
     bindRuntimeUi(game, canvas, runtimeBase.ui, runtime, devController);
     assignRuntime(game, runtimeBase, runtime, devController);
 }

@@ -4,6 +4,7 @@ import DeveloperEncounterControls from './DeveloperEncounterControls.js';
 import DeveloperNextCharacterRollControls from './DeveloperNextCharacterRollControls.js';
 import DeveloperRandomAndMapControls from './DeveloperRandomAndMapControls.js';
 import { DeveloperCallbacks, DeveloperUI, ENCOUNTER_LABELS } from './DeveloperEventTypes.js';
+import { getDeveloperModeConfig, setDeveloperModeEnabled } from '../../utils/DeveloperModeConfig.js';
 
 export default class DeveloperEventController {
     private developerUI: DeveloperUI;
@@ -37,6 +38,36 @@ export default class DeveloperEventController {
         this.nextCharacterRollControls.renderNextCharacterRollSummary();
         this.randomAndMapControls.renderRandomProviderControls();
         this.randomAndMapControls.renderMapDisplayControls();
+        this.developerUI.developerModeToggle.checked = getDeveloperModeConfig().enabled;
+    }
+
+    public applyDeveloperModeOnStartup(): void {
+        this.applyDeveloperMode(getDeveloperModeConfig(), false);
+    }
+
+    public handleDeveloperModeToggle(enabled: boolean): void {
+        const config = setDeveloperModeEnabled(enabled);
+        this.applyDeveloperMode(config, true);
+    }
+
+    private applyDeveloperMode(
+        config: ReturnType<typeof getDeveloperModeConfig>,
+        logChanges: boolean,
+    ): void {
+        this.developerUI.developerModeToggle.checked = config.enabled;
+        this.encounterSystem.setEncounterTypeEnabled('monster', config.encounterTypes.monster);
+        this.encounterSystem.setEncounterTypeEnabled('item', config.encounterTypes.item);
+        this.encounterSystem.setEncounterTypeEnabled('traveler', config.encounterTypes.traveler);
+        this.callbacks.setMapDisplayConfig({
+            everythingDiscovered: config.everythingDiscovered,
+            fogOfWar: config.fogOfWar,
+        });
+        this.encounterControls.renderEncounterTypeControls();
+        this.randomAndMapControls.renderMapDisplayControls();
+
+        if (logChanges) {
+            this.callbacks.addVillageLog(`[DEV] Persistent developer mode ${config.enabled ? 'enabled' : 'disabled'}.`, 'system');
+        }
     }
 
     public handleQueueAdd(): void {

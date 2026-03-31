@@ -1,5 +1,6 @@
 import { MODES } from '../../systems/game/runtime/GameModeStateMachine.js';
 import type { GameFacadeStateAccess } from './GameFacadeSharedTypes.js';
+import { getDeveloperModeConfig } from '../../utils/DeveloperModeConfig.js';
 
 export default class GameFacadeLifecycleCoordinator {
     private readonly state: GameFacadeStateAccess;
@@ -9,11 +10,16 @@ export default class GameFacadeLifecycleCoordinator {
     }
 
     public initializeAfterRuntimeAssignment(): void {
-        if (!window.localStorage.getItem(this.state.saveKey)) {
+        const hasSavedGame = Boolean(window.localStorage.getItem(this.state.saveKey));
+        if (!hasSavedGame) {
             this.state.worldMap.centerOnPlayer();
         }
         this.syncPlayerToWorldMap();
         this.state.persistenceRuntime.loadGame(this.state.worldMap, this.state.player, this.state.magicSystem);
+        const developerMode = getDeveloperModeConfig();
+        if (!hasSavedGame && developerMode.enabled && developerMode.autoGodBoostOnCharacterCreation) {
+            this.state.hudCoordinator.handleGodSkillsBoost();
+        }
         this.refreshHud();
         this.state.persistenceRuntime.saveGameIfChanged(
             this.state.worldMap,

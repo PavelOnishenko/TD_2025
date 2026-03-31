@@ -1031,6 +1031,43 @@ So tests asserting fixed literal HP values (for example zombie `7`) will fail wh
 - This fix intentionally treats quest-generated monster packs as part of the same Monster encounter category exposed in Developer Console.
 - Item/traveler random encounter toggles are unaffected.
 
+## March 31, 2026 update: persistent developer mode presets (localStorage)
+
+### What changed
+- Developer Console now has **Enable persistent developer mode** (`#dev-mode-enabled`).
+- The switch persists in browser `localStorage` key `rgfn_developer_mode_v1`.
+- When enabled, runtime now auto-applies these defaults every load:
+  - **Everything discovered = ON**
+  - **Fog of war = ON** (unchanged from standard default)
+  - **Random encounters = OFF** for Monster/Item/Traveler
+  - **Quest intro modal = OFF** on fresh character creation
+  - **GOD +20 ALL** is automatically applied once for each brand-new character.
+- When disabled, defaults are restored to normal gameplay baseline:
+  - everything discovered off,
+  - fog of war on,
+  - all random encounter types on,
+  - quest intro enabled,
+  - no auto-GOD boost.
+
+### Runtime behavior details
+- Presets are applied at startup before player interaction, so developer UI checkboxes and active systems stay aligned from the first frame.
+- Opening the Developer Console re-renders controls from live runtime state, so toggles accurately reflect the active preset.
+- New-character GOD boost only runs when there is no save snapshot (`rgfn_save_v1` absent), preventing repeated boosts on normal reloads of an existing run.
+
+### Verification checklist
+1. Open Developer Console (`~`) and enable persistent developer mode.
+2. Confirm UI immediately shows:
+   - encounter toggles unchecked,
+   - everything discovered checked.
+3. Click **New Character**.
+4. After reload, verify:
+   - character stats include one GOD +20 application,
+   - quest intro modal does not auto-open,
+   - random encounters remain disabled,
+   - everything discovered remains enabled.
+5. Reload browser tab without touching settings and confirm the same persisted state.
+6. Disable persistent developer mode and verify defaults revert immediately and on next reload.
+
 ## March 28, 2026 update: road-aware travel time on world map
 
 ### Request

@@ -37,6 +37,7 @@ export class GameDeveloperUiFactory {
         randomSummary: document.getElementById('dev-random-summary')!,
         randomStatus: document.getElementById('dev-random-status')!,
         randomApplyBtn: document.getElementById('dev-random-apply-btn')! as HTMLButtonElement,
+        developerModeToggle: document.getElementById('dev-mode-enabled')! as HTMLInputElement,
         everythingDiscoveredToggle: document.getElementById('dev-map-display-everything-discovered')! as HTMLInputElement,
         fogOfWarToggle: document.getElementById('dev-map-display-fog-of-war')! as HTMLInputElement,
     });
