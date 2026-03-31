@@ -96,6 +96,7 @@ export default class GameUiFactory {
         askPersonBtn: document.getElementById('village-ask-person-btn')! as HTMLButtonElement,
         askBarterBtn: document.getElementById('village-ask-barter-btn')! as HTMLButtonElement,
         barterNowBtn: document.getElementById('village-confirm-barter-btn')! as HTMLButtonElement,
+        recruitEscortBtn: document.getElementById('village-recruit-escort-btn')! as HTMLButtonElement,
         leaveBtn: document.getElementById('village-leave-btn')! as HTMLButtonElement,
     });
 

@@ -120,6 +120,7 @@ export default class GameUiPrimaryEventBinder {
         this.villageUI.askPersonBtn.addEventListener('click', () => this.villageActionsController.handleAskAboutPerson());
         this.villageUI.askBarterBtn.addEventListener('click', () => this.villageActionsController.handleAskAboutBarter());
         this.villageUI.barterNowBtn.addEventListener('click', () => this.villageActionsController.handleConfirmBarter());
+        this.villageUI.recruitEscortBtn.addEventListener('click', () => this.villageActionsController.handleRecruitEscort());
         this.villageUI.sleepRoomBtn.addEventListener('click', () => this.villageActionsController.handleSleepInRoom());
         this.villageUI.leaveBtn.addEventListener('click', () => this.villageActionsController.handleLeave());
     }

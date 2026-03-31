@@ -5,7 +5,7 @@ import VillageStockService from './actions/VillageStockService.js';
 import VillageUiPresenter from './actions/VillageUiPresenter.js';
 import VillageTradeInteractionService from './actions/VillageTradeInteractionService.js';
 import VillageDialogueInteractionService from './actions/VillageDialogueInteractionService.js';
-import { QuestBarterContract, VillageActionsCallbacks, VillageUI } from './actions/VillageActionsTypes.js';
+import { QuestBarterContract, QuestEscortContract, VillageActionsCallbacks, VillageUI } from './actions/VillageActionsTypes.js';
 
 export default class VillageActionsController {
     private readonly villageUI: VillageUI;
@@ -20,6 +20,7 @@ export default class VillageActionsController {
     private npcRoster: VillageNpcProfile[] = [];
     private villageNpcRosters: Map<string, VillageNpcProfile[]> = new Map();
     private selectedNpcId: string | null = null;
+    private escortContracts: QuestEscortContract[] = [];
 
     constructor(player: Player, villageUI: VillageUI, gameLog: HTMLElement, callbacks: VillageActionsCallbacks) {
         this.villageUI = villageUI;
@@ -41,6 +42,7 @@ export default class VillageActionsController {
     }
 
     public configureQuestBarterContracts(contracts: QuestBarterContract[]): void { this.barterService.configureQuestBarterContracts(contracts); }
+    public configureQuestEscortContracts(contracts: QuestEscortContract[]): void { this.escortContracts = contracts; }
     public exitVillage(): void { this.villageUI.sidebar.classList.add('hidden'); this.closeDialogueWindow(); }
     public handleEnter(villageName: string): void {
         this.addLog(`You enter ${villageName} market square.`, 'system');
@@ -81,6 +83,23 @@ export default class VillageActionsController {
     public handleAskAboutPerson(): void { this.dialogueInteraction.handleAskAboutPerson(); }
     public handleAskAboutBarter(): void { this.dialogueInteraction.handleAskAboutBarter(); }
     public handleConfirmBarter(): void { this.dialogueInteraction.handleConfirmBarter(); }
+    public handleRecruitEscort(): void {
+        const npc = this.getSelectedNpc();
+        if (!npc) {
+            this.addLog('Choose an NPC first before inviting anyone to your group.', 'system');
+            return;
+        }
+        const status = this.callbacks.onTryRecruitEscort(npc.name, this.currentVillageName);
+        if (status === 'joined') {
+            this.addLog(`${npc.name} agrees to travel with you. Escort objective updated.`, 'system');
+            return;
+        }
+        if (status === 'already-joined') {
+            this.addLog(`${npc.name} is already traveling with you.`, 'system-message');
+            return;
+        }
+        this.addLog(`${npc.name} has no escort contract to join from this village.`, 'system-message');
+    }
     public handleLeave(): void { this.addLog('You leave the village.', 'system'); this.callbacks.onLeaveVillage(); }
     public addLog(message: string, type: string = 'system'): void { this.uiPresenter.addLog(message, type); }
     public updateButtons(): void { this.uiPresenter.updateButtons(); }
@@ -150,8 +169,27 @@ export default class VillageActionsController {
 
         const roster = this.dialogueEngine.createNpcRoster(villageName);
         this.barterService.getVillageContractTraders(villageName).forEach((traderName) => this.appendTraderIfMissing(roster, villageName, traderName));
+        this.escortContracts
+            .filter((contract) => contract.sourceVillage.trim().toLocaleLowerCase() === villageName.trim().toLocaleLowerCase())
+            .forEach((contract) => this.appendEscortIfMissing(roster, villageName, contract));
         this.villageNpcRosters.set(villageName, roster);
         return roster;
+    }
+
+    private appendEscortIfMissing(roster: VillageNpcProfile[], villageName: string, contract: QuestEscortContract): void {
+        const exists = roster.some((npc) => npc.name.toLocaleLowerCase() === contract.personName.toLocaleLowerCase());
+        if (exists) {
+            return;
+        }
+
+        roster.unshift({
+            id: `${villageName.toLowerCase()}-${contract.personName.toLocaleLowerCase()}-escort`,
+            name: contract.personName,
+            role: `Escort to ${contract.destinationVillage}`,
+            look: 'travel cloak, packed satchel, alert posture',
+            speechStyle: 'focused and practical',
+            disposition: 'truthful',
+        });
     }
 
     private appendTraderIfMissing(roster: VillageNpcProfile[], villageName: string, traderName: string): void {

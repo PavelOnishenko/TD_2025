@@ -11,6 +11,7 @@ type BattleTurnControllerCallbacks = {
     onEnableBattleButtons: (enabled: boolean) => void;
     onBattleEnd: (result: 'victory' | 'defeat') => void;
     onPlayerTurnReady: () => void;
+    onTryApplyEscortDamage?: (enemyName: string, damage: number) => { applied: boolean; targetName?: string; died?: boolean };
 };
 
 export default class BattleTurnController {
@@ -128,6 +129,16 @@ export default class BattleTurnController {
         }
 
         const damageBeforeArmor = enemy.getAttackDamage();
+        const escortResult = this.callbacks.onTryApplyEscortDamage?.(enemy.name, damageBeforeArmor) ?? { applied: false };
+        if (escortResult.applied) {
+            this.callbacks.onAddBattleLog(`${enemy.name} strikes ${escortResult.targetName} for ${damageBeforeArmor} damage!`, 'enemy');
+            if (escortResult.died) {
+                this.callbacks.onAddBattleLog(`${escortResult.targetName} falls in battle. Escort objective failed.`, 'system');
+            }
+            this.callbacks.onUpdateHUD();
+            return;
+        }
+
         const damageAfterArmor = damageBeforeArmor <= 0 ? 0 : Math.max(balanceConfig.combat.minDamageAfterArmor, damageBeforeArmor - this.player.armor);
         this.player.takeDamage(damageBeforeArmor);
 

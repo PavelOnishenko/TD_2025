@@ -14,6 +14,7 @@ export default class HudPanelStateController {
             inventory: this.hudElements.inventoryPanel,
             magic: this.hudElements.magicPanel,
             quests: this.hudElements.questsPanel,
+            group: this.hudElements.groupPanel,
             lore: this.hudElements.lorePanel,
             selected: this.hudElements.selectedPanel,
             worldMap: this.hudElements.worldMapPanel,
@@ -30,6 +31,7 @@ export default class HudPanelStateController {
         this.hudElements.toggleInventoryPanelBtn.classList.toggle('active', !this.hudElements.inventoryPanel.classList.contains('hidden'));
         this.hudElements.toggleMagicPanelBtn.classList.toggle('active', !this.hudElements.magicPanel.classList.contains('hidden'));
         this.hudElements.toggleQuestsPanelBtn.classList.toggle('active', !this.hudElements.questsPanel.classList.contains('hidden'));
+        this.hudElements.toggleGroupPanelBtn.classList.toggle('active', !this.hudElements.groupPanel.classList.contains('hidden'));
         this.hudElements.toggleLorePanelBtn.classList.toggle('active', !this.hudElements.lorePanel.classList.contains('hidden'));
         this.hudElements.toggleSelectedPanelBtn.classList.toggle('active', !this.hudElements.selectedPanel.classList.contains('hidden'));
         this.hudElements.toggleWorldMapPanelBtn.classList.toggle('active', !this.hudElements.worldMapPanel.classList.contains('hidden'));

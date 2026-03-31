@@ -62,7 +62,16 @@ export type MonsterObjectiveData = {
     mutatedFrom?: string;
 };
 
+export type EscortObjectiveData = {
+    personName: string;
+    sourceVillage: string;
+    destinationVillage: string;
+    hasJoined?: boolean;
+    isDead?: boolean;
+};
+
 export type QuestObjectiveData = {
     deliver?: DeliverObjectiveData;
     monster?: MonsterObjectiveData;
+    escort?: EscortObjectiveData;
 };
