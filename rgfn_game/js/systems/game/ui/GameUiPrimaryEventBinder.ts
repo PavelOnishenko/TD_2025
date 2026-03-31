@@ -90,6 +90,11 @@ export default class GameUiPrimaryEventBinder {
         this.hudElements.newCharacterBtn.addEventListener('click', () => this.callbacks.onNewCharacter());
         this.worldUI.usePotionBtn.addEventListener('click', () => this.callbacks.onUsePotionFromWorld());
         this.worldUI.enterVillageBtn.addEventListener('click', () => this.callbacks.onEnterVillageFromWorld());
+        this.worldUI.ferryConfirmBtn.addEventListener('click', () => this.callbacks.onConfirmFerryTravel());
+        this.worldUI.ferryCancelBtn.addEventListener('click', () => this.callbacks.onDismissFerryPrompt());
+        this.worldUI.ferryDestinationSelect.addEventListener('change', () => {
+            this.callbacks.onSelectFerryDestination(this.worldUI.ferryDestinationSelect.selectedIndex);
+        });
         this.worldUI.campSleepBtn.addEventListener('click', () => this.callbacks.onCampSleepFromWorld());
         this.worldUI.centerOnCharacterBtn.addEventListener('click', () => this.callbacks.onCenterWorldMapOnPlayer());
         this.worldUI.villageEntryEnterBtn.addEventListener('click', () => this.callbacks.onConfirmVillageEntryPrompt());

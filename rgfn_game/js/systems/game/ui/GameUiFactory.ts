@@ -60,6 +60,12 @@ export default class GameUiFactory {
         villageEntryTitle: document.getElementById('world-village-entry-title')!,
         villageEntryEnterBtn: document.getElementById('world-village-entry-enter-btn')! as HTMLButtonElement,
         villageEntryPassBtn: document.getElementById('world-village-entry-pass-btn')! as HTMLButtonElement,
+        ferryPopup: document.getElementById('world-ferry-popup')!,
+        ferryTitle: document.getElementById('world-ferry-title')!,
+        ferryDestinationSelect: document.getElementById('world-ferry-destination-select')! as HTMLSelectElement,
+        ferryPrice: document.getElementById('world-ferry-price')!,
+        ferryConfirmBtn: document.getElementById('world-ferry-confirm-btn')! as HTMLButtonElement,
+        ferryCancelBtn: document.getElementById('world-ferry-cancel-btn')! as HTMLButtonElement,
     });
 
     private createVillageUi = (): VillageUI => ({

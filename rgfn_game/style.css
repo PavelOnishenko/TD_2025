@@ -236,6 +236,28 @@ h1 {
     flex: 1 1 auto;
 }
 
+.world-ferry-popup {
+    min-width: 240px;
+}
+
+.world-ferry-label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 12px;
+    color: var(--color-text-primary);
+}
+
+.world-ferry-select {
+    width: 100%;
+    margin-bottom: 8px;
+}
+
+.world-ferry-price {
+    margin: 0 0 8px;
+    font-size: 12px;
+    color: var(--color-primary-accent);
+}
+
 #game-canvas {
     display: block;
     border: 0;

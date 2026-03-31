@@ -14,6 +14,8 @@ type WorldModeCallbacks = {
     onEnterVillage: () => void;
     onRequestVillageEntryPrompt: (villageName: string, anchor: { x: number; y: number }) => void;
     onCloseVillageEntryPrompt: () => void;
+    onRequestFerryPrompt: (routes: Array<{ destinationVillage: string; destinationDock: { col: number; row: number }; waterPathLength: number; priceGold: number }>, anchor: { x: number; y: number }) => void;
+    onCloseFerryPrompt: () => void;
     onStartBattle: (enemies: Skeleton[], terrainType: TerrainType) => void;
     onAddBattleLog: (message: string, type?: string) => void;
     onUpdateHUD: () => void;
@@ -28,6 +30,7 @@ export default class WorldModeController {
     private movementInput: WorldModeMovementInput;
     private villagePromptController: WorldModeVillagePromptController;
     private travelEncounterController: WorldModeTravelEncounterController;
+    private isFerryPromptOpen = false;
 
     constructor(
         input: InputManager,
@@ -54,6 +57,7 @@ export default class WorldModeController {
 
     public enterWorldMode(hudModeIndicator: HTMLElement, worldSidebar: HTMLElement, battleSidebar: HTMLElement, villageSidebar: HTMLElement): void {
         this.villagePromptController.closeVillageEntryPrompt();
+        this.dismissFerryPrompt();
         hudModeIndicator.textContent = 'World Map';
         worldSidebar.classList.add('hidden');
         battleSidebar.classList.add('hidden');
@@ -68,8 +72,13 @@ export default class WorldModeController {
     public updateWorldMode(): void {
         this.movementInput.handleMapViewportInput();
         this.villagePromptController.syncVillagePromptWithPlayerPosition();
+        this.syncFerryPromptWithPlayerPosition();
 
         if (this.movementInput.isActionPressed('enterVillage') && this.tryEnterVillageAtCurrentPosition()) {
+            return;
+        }
+
+        if (this.isFerryPromptOpen) {
             return;
         }
 
@@ -88,13 +97,82 @@ export default class WorldModeController {
 
     public readonly tryEnterVillageAtCurrentPosition = (): boolean => this.villagePromptController.tryEnterVillageAtCurrentPosition();
 
+    public tryOpenFerryPromptAtCurrentPosition(): boolean {
+        if (!this.worldMap.isPlayerOnFerryDock()) {
+            return false;
+        }
+
+        const routes = this.worldMap.getFerryRoutesAtPlayerDock();
+        if (routes.length === 0) {
+            return false;
+        }
+        const [x, y] = this.worldMap.getPlayerPixelPosition();
+        this.isFerryPromptOpen = true;
+        this.callbacks.onRequestFerryPrompt(routes, { x, y });
+        return true;
+    }
+
     public readonly confirmVillageEntryFromPrompt = (): boolean => this.villagePromptController.confirmVillageEntryFromPrompt();
 
     public dismissVillageEntryPrompt(): void {
         this.villagePromptController.dismissVillageEntryPrompt();
     }
 
+    public dismissFerryPrompt(): void {
+        if (!this.isFerryPromptOpen) {
+            return;
+        }
+        this.isFerryPromptOpen = false;
+        this.callbacks.onCloseFerryPrompt();
+    }
+
+    public confirmFerryTravel(routeIndex: number): boolean {
+        const routes = this.worldMap.getFerryRoutesAtPlayerDock();
+        const route = routes[routeIndex];
+        if (!route) {
+            this.dismissFerryPrompt();
+            return false;
+        }
+
+        if (this.player.gold < route.priceGold) {
+            this.callbacks.onAddBattleLog(`Not enough gold for ferry fare (${route.priceGold} needed).`, 'system');
+            return false;
+        }
+
+        this.player.gold -= route.priceGold;
+        const moved = this.worldMap.travelByFerryToDock(route.destinationDock);
+        if (!moved) {
+            this.callbacks.onAddBattleLog('The ferryman refuses: this route is unavailable right now.', 'system');
+            return false;
+        }
+
+        this.dismissFerryPrompt();
+        this.callbacks.onAddBattleLog(`You pay ${route.priceGold} gold and board the ferry to ${route.destinationVillage}.`, 'system');
+        this.callbacks.onAddBattleLog(`After crossing ${route.waterPathLength} water cells, you dock near ${route.destinationVillage}.`, 'system-message');
+        this.callbacks.onUpdateHUD();
+        return true;
+    }
+
     public handleCampSleep(): void {
         this.travelEncounterController.handleCampSleep();
+    }
+
+    private syncFerryPromptWithPlayerPosition(): void {
+        if (!this.isFerryPromptOpen) {
+            return;
+        }
+
+        if (!this.worldMap.isPlayerOnFerryDock()) {
+            this.dismissFerryPrompt();
+            return;
+        }
+
+        const routes = this.worldMap.getFerryRoutesAtPlayerDock();
+        if (routes.length === 0) {
+            this.dismissFerryPrompt();
+            return;
+        }
+        const [x, y] = this.worldMap.getPlayerPixelPosition();
+        this.callbacks.onRequestFerryPrompt(routes, { x, y });
     }
 }

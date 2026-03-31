@@ -9,6 +9,7 @@ import { WorldUI } from '../../systems/game/ui/GameUiTypes.js';
 export default class GameWorldInteractionRuntime {
     private isWorldMapMiddleDragActive = false;
     private worldMapDragPointer = { x: 0, y: 0 };
+    private selectedFerryRouteIndex = 0;
 
     public handleCanvasMove(event: MouseEvent, canvas: HTMLCanvasElement, stateMachine: ReturnType<GameModeStateMachine<unknown>['create']>, worldMap: WorldMap, battleMap: BattleMap, hudCoordinator: GameHudCoordinator, player: Player): void {
         if (this.isWorldMapMiddleDragActive && stateMachine.isInState(MODES.WORLD_MAP)) {
@@ -96,7 +97,9 @@ export default class GameWorldInteractionRuntime {
             return;
         }
         if (!worldModeController.tryEnterVillageAtCurrentPosition()) {
-            hudCoordinator.addBattleLog('Stand on a village tile to enter it.', 'system');
+            if (!worldModeController.tryOpenFerryPromptAtCurrentPosition()) {
+                hudCoordinator.addBattleLog('Stand on a village tile to enter it, or on a dock to use a ferry.', 'system');
+            }
         }
     }
 
@@ -121,8 +124,64 @@ export default class GameWorldInteractionRuntime {
         worldUI.villageEntryPopup.classList.remove('hidden');
     }
 
+    public showWorldFerryPrompt(
+        worldUI: WorldUI,
+        routes: Array<{ destinationVillage: string; destinationDock: { col: number; row: number }; waterPathLength: number; priceGold: number }>,
+        anchor: { x: number; y: number },
+        canvas: HTMLCanvasElement,
+    ): void {
+        if (routes.length === 0) {
+            this.hideWorldFerryPrompt(worldUI);
+            return;
+        }
+
+        this.selectedFerryRouteIndex = Math.max(0, Math.min(this.selectedFerryRouteIndex, routes.length - 1));
+        worldUI.ferryTitle.textContent = `Ferry dock (${routes.length} route${routes.length === 1 ? '' : 's'})`;
+        worldUI.ferryDestinationSelect.innerHTML = '';
+        routes.forEach((route, index) => {
+            const option = document.createElement('option');
+            option.value = String(index);
+            option.textContent = `${route.destinationVillage} (${route.waterPathLength} water cells)`;
+            worldUI.ferryDestinationSelect.appendChild(option);
+        });
+        worldUI.ferryDestinationSelect.selectedIndex = this.selectedFerryRouteIndex;
+        this.updateWorldFerryPrice(worldUI, routes, this.selectedFerryRouteIndex);
+
+        const width = worldUI.ferryPopup.offsetWidth || 250;
+        const height = worldUI.ferryPopup.offsetHeight || 132;
+        const left = Math.max(14, Math.min(Math.max(14, canvas.width - width - 14), anchor.x - (width / 2)));
+        const top = Math.max(14, Math.min(Math.max(14, canvas.height - height - 14), anchor.y - height - 16));
+        worldUI.ferryPopup.style.left = `${left}px`;
+        worldUI.ferryPopup.style.top = `${top}px`;
+        worldUI.ferryPopup.classList.remove('hidden');
+    }
+
     public hideWorldVillageEntryPrompt(worldUI: WorldUI): void {
         worldUI.villageEntryPopup.classList.add('hidden');
+    }
+
+    public hideWorldFerryPrompt(worldUI: WorldUI): void {
+        worldUI.ferryPopup.classList.add('hidden');
+        worldUI.ferryDestinationSelect.innerHTML = '';
+        worldUI.ferryPrice.textContent = 'Price: -';
+        this.selectedFerryRouteIndex = 0;
+    }
+
+    public setSelectedFerryRouteIndex(index: number): void {
+        this.selectedFerryRouteIndex = Math.max(0, index);
+    }
+
+    public getSelectedFerryRouteIndex(): number {
+        return this.selectedFerryRouteIndex;
+    }
+
+    public updateWorldFerryPrice(
+        worldUI: WorldUI,
+        routes: Array<{ destinationVillage: string; destinationDock: { col: number; row: number }; waterPathLength: number; priceGold: number }>,
+        index: number,
+    ): void {
+        const selectedRoute = routes[index];
+        worldUI.ferryPrice.textContent = selectedRoute ? `Price: ${selectedRoute.priceGold} gold` : 'Price: -';
     }
 
     private syncPlayerPixelPosition(worldMap: WorldMap, player: Player): void {

@@ -28,6 +28,10 @@ export type GameUiEventCallbacks = {
     onEnterVillageFromWorld: () => void;
     onConfirmVillageEntryPrompt: () => void;
     onDismissVillageEntryPrompt: () => void;
+    onOpenFerryFromWorld: () => void;
+    onConfirmFerryTravel: () => void;
+    onDismissFerryPrompt: () => void;
+    onSelectFerryDestination: (routeIndex: number) => void;
     onCampSleepFromWorld: () => void;
     onTogglePanel: (panel: HudPanelToggle) => void;
 };

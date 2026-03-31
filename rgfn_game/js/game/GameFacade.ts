@@ -75,6 +75,7 @@ export class GameFacade implements GameFacadeStateAccess {
     public worldMap!: WorldMap;
     public battleMap!: BattleMap;
     public player!: Player;
+    public ui!: UIBundle;
     public magicSystem!: MagicSystem;
     public readonly questRuntime = new GameQuestRuntime();
     public readonly persistenceRuntime = new GamePersistenceRuntime(SAVE_KEY);
@@ -99,6 +100,7 @@ export class GameFacade implements GameFacadeStateAccess {
         this.player = runtime.player;
         this.worldMap = runtime.worldMap;
         this.battleMap = runtime.battleMap;
+        this.ui = runtime.ui;
         this.magicSystem = runtime.magicSystem;
         this.stateMachine = runtime.stateMachine;
         this.renderRouter = runtime.renderRouter;
@@ -138,6 +140,12 @@ export class GameFacade implements GameFacadeStateAccess {
         this.worldInteractionCoordinator.showVillageEntryPrompt(worldUI, villageName, anchor);
     }
     public hideVillageEntryPrompt(worldUI: WorldUI): void { this.worldInteractionCoordinator.hideVillageEntryPrompt(worldUI); }
+    public showFerryPrompt(
+        worldUI: WorldUI,
+        routes: Array<{ destinationVillage: string; destinationDock: { col: number; row: number }; waterPathLength: number; priceGold: number }>,
+        anchor: { x: number; y: number },
+    ): void { this.worldInteractionCoordinator.showFerryPrompt(worldUI, routes, anchor); }
+    public hideFerryPrompt(worldUI: WorldUI): void { this.worldInteractionCoordinator.hideFerryPrompt(worldUI); }
     public handleCanvasMove(event: MouseEvent): void { this.worldInteractionCoordinator.handleCanvasMove(event); }
     public handleCanvasLeave(): void { this.worldInteractionCoordinator.handleCanvasLeave(); }
     public handleWorldMapWheel(event: WheelEvent): void { this.worldInteractionCoordinator.handleWorldMapWheel(event); }
@@ -146,6 +154,9 @@ export class GameFacade implements GameFacadeStateAccess {
     public centerWorldMapOnPlayer(): void { this.worldInteractionCoordinator.centerWorldMapOnPlayer(); }
     public tryEnterVillageFromWorldMap(): void { this.worldInteractionCoordinator.tryEnterVillageFromWorldMap(); }
     public confirmWorldVillageEntry(): void { this.worldInteractionCoordinator.confirmWorldVillageEntry(); }
+    public confirmWorldFerryTravel(): void { this.worldInteractionCoordinator.confirmWorldFerryTravel(); }
+    public dismissWorldFerryPrompt(): void { this.worldInteractionCoordinator.dismissWorldFerryPrompt(); }
+    public selectWorldFerryRoute(routeIndex: number): void { this.worldInteractionCoordinator.selectWorldFerryRoute(this.ui.worldUI, routeIndex); }
 }
 
 export default GameFacade;
