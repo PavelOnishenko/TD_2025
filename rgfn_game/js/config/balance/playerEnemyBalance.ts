@@ -12,6 +12,7 @@ export const playerBalance = {
     initialConnection: 0,
     initialIntelligence: 0,
     initialSkillPoints: 500,
+    initialGold: 500,
     initialRandomAllocatedSkillPoints: 5,
     width: 32,
     height: 32,
