@@ -24,15 +24,8 @@ export default class GameRuntimeUiBinder {
 
     public bind(): void {
         new GameUiEventBinder(
-            this.canvas,
-            this.ui.hudElements,
-            this.ui.worldUI,
-            this.ui.battleUI,
-            this.ui.villageUI,
-            this.ui.developerUI,
-            this.villageActionsController,
-            this.devController,
-            this.createHandlers(),
+            this.canvas, this.ui.hudElements, this.ui.worldUI, this.ui.battleUI, this.ui.villageUI, this.ui.developerUI,this.villageActionsController,
+            this.devController, this.createHandlers(),
         ).bind(() => this.villageCoordinator.getVillageName());
     }
 
