@@ -161,13 +161,7 @@ export default class QuestLeafFactory {
             `Recruit ${character.text} in ${source.text}, then arrive at ${destination.text} while ${character.text} is alive and still in your group.`,
             'escort',
             this.contentBuilder.entities(character, source, destination),
-            {
-                escort: {
-                    personName: character.text,
-                    sourceVillage: source.text,
-                    destinationVillage: destination.text,
-                },
-            },
+            { escort: { personName: character.text, sourceVillage: source.text, destinationVillage: destination.text } },
         );
     }
 
