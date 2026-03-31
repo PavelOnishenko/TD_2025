@@ -4,6 +4,7 @@ Purpose: a lightweight, repeatable checklist to keep new feature work aligned wi
 
 Primary reference:
 - `rgfn_game/docs/refactors/rgfn-architecture-assessment-and-migration-plan-2026-03-30.md`
+- `rgfn_game/docs/refactors/rgfn-expandable-content-architecture-vision-2026-03-31.md` (content-heavy category expansion contracts and registry model)
 
 ---
 
@@ -122,3 +123,15 @@ For every substantial feature PR, add one short “architecture note” bullet i
 - what future refactor it enables
 
 This keeps architecture knowledge cumulative and discoverable.
+
+---
+
+## 9) Content-heavy category checklist (for RGFN expansion work)
+
+When the change touches monsters, quest templates, encounters, items, locations, spells, stats/skills, terrain, HUD panels, factions, acts, or battle map objects:
+
+- Define/update a category contract (`I*Definition` / `I*Template`) before adding more concrete entries.
+- Ensure the category has registry-level lookup and validation.
+- Avoid adding new hardcoded unions/if-else chains in orchestration code unless covered by an explicit migration exception.
+- Add/update authoring notes in `docs/` so future content additions avoid rediscovering pitfalls.
+- Prefer additive adapter migration from legacy paths over in-place rewrites.
