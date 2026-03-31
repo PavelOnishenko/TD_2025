@@ -5,10 +5,14 @@ import BattleCommandController from '../../../dist/systems/game/BattleCommandCon
 import Skeleton from '../../../dist/entities/Skeleton.js';
 import Wanderer from '../../../dist/entities/Wanderer.js';
 import Item from '../../../dist/entities/Item.js';
-import { balanceConfig } from '../../../dist/config/balanceConfig.js';
+import { balanceConfig } from '../../../dist/config/balance/balanceConfig.js';
 
 function createController(logs, lootedNames) {
   const player = {
+    level: 1,
+    addXp() {
+      return false;
+    },
     addItemToInventory(item) {
       lootedNames.push(item.name);
       return true;
@@ -49,7 +53,7 @@ test('BattleCommandController gives random drop for monsters based on balance co
   Math.random = () => 0;
 
   const skeleton = new Skeleton(0, 0, balanceConfig.enemies.skeleton);
-  controller.collectLoot(skeleton);
+  controller['handleTargetDefeated'](skeleton);
   controller.resolvePendingLoot();
 
   Math.random = originalRandom;
@@ -74,7 +78,7 @@ test('BattleCommandController loots all human inventory without adding random mo
   balanceConfig.items.monsterDropChance = 1;
 
   const wanderer = new Wanderer(2, inventory);
-  controller.collectLoot(wanderer);
+  controller['handleTargetDefeated'](wanderer);
   controller.resolvePendingLoot();
 
   balanceConfig.items.monsterDropChance = originalChance;

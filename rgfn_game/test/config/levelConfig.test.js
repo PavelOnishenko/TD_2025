@@ -10,7 +10,7 @@ import {
   calculateTotalMeleeDamage,
   levelConfig,
 } from '../../dist/config/levelConfig.js';
-import { balanceConfig } from '../../dist/config/balanceConfig.js';
+import { balanceConfig } from '../../dist/config/balance/balanceConfig.js';
 
 test('getXpForLevel handles boundaries and valid level', () => {
   assert.equal(getXpForLevel(1), 0);

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import WorldModeController from '../../../dist/systems/WorldModeController.js';
+import WorldModeController from '../../../dist/systems/world/worldMap/WorldModeController.js';
 
 function createInputMock({ pressed = [], active = [] } = {}) {
   const pressedSet = new Set(pressed);

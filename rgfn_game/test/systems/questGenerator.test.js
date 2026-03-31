@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import QuestGenerator from '../../dist/systems/quest/QuestGenerator.js';
-import QuestLeafFactory from '../../dist/systems/quest/QuestLeafFactory.js';
+import QuestLeafFactory from '../../dist/systems/quest/generation/QuestLeafFactory.js';
 import { FakeQuestPackService, ScriptedQuestRandom } from '../helpers/questTestDoubles.js';
 
 function createNames() {
