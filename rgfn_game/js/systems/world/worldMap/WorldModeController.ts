@@ -7,6 +7,7 @@ import Wanderer from '../../../entities/Wanderer.js';
 import { ItemDiscoverySplash } from '../../../ui/ItemDiscoverySplash.js';
 import { TerrainType } from '../../../types/game.js';
 import WorldModeMovementInput from '../../world-mode/WorldModeMovementInput.js';
+import WorldModeFerryPromptController from '../../world-mode/WorldModeFerryPromptController.js';
 import WorldModeVillagePromptController from '../../world-mode/WorldModeVillagePromptController.js';
 import WorldModeTravelEncounterController from '../../world-mode/WorldModeTravelEncounterController.js';
 
@@ -14,6 +15,8 @@ type WorldModeCallbacks = {
     onEnterVillage: () => void;
     onRequestVillageEntryPrompt: (villageName: string, anchor: { x: number; y: number }) => void;
     onCloseVillageEntryPrompt: () => void;
+    onRequestFerryPrompt: (options: import('../../world-mode/WorldModeFerryPromptController.js').FerryRouteOption[], selectedRouteIndex: number, anchor: { x: number; y: number }) => void;
+    onCloseFerryPrompt: () => void;
     onStartBattle: (enemies: Skeleton[], terrainType: TerrainType) => void;
     onAddBattleLog: (message: string, type?: string) => void;
     onUpdateHUD: () => void;
@@ -27,6 +30,7 @@ export default class WorldModeController {
     private callbacks: WorldModeCallbacks;
     private movementInput: WorldModeMovementInput;
     private villagePromptController: WorldModeVillagePromptController;
+    private ferryPromptController: WorldModeFerryPromptController;
     private travelEncounterController: WorldModeTravelEncounterController;
 
     constructor(
@@ -42,6 +46,7 @@ export default class WorldModeController {
         this.worldMap = worldMap;
         this.movementInput = new WorldModeMovementInput(input, worldMap);
         this.villagePromptController = new WorldModeVillagePromptController(worldMap, callbacks);
+        this.ferryPromptController = new WorldModeFerryPromptController(worldMap, callbacks);
         this.travelEncounterController = new WorldModeTravelEncounterController(
             player,
             worldMap,
@@ -49,11 +54,13 @@ export default class WorldModeController {
             itemDiscoverySplash,
             callbacks,
             this.villagePromptController,
+            this.ferryPromptController,
         );
     }
 
     public enterWorldMode(hudModeIndicator: HTMLElement, worldSidebar: HTMLElement, battleSidebar: HTMLElement, villageSidebar: HTMLElement): void {
         this.villagePromptController.closeVillageEntryPrompt();
+        this.ferryPromptController.dismissFerryPrompt();
         hudModeIndicator.textContent = 'World Map';
         worldSidebar.classList.add('hidden');
         battleSidebar.classList.add('hidden');
@@ -68,6 +75,7 @@ export default class WorldModeController {
     public updateWorldMode(): void {
         this.movementInput.handleMapViewportInput();
         this.villagePromptController.syncVillagePromptWithPlayerPosition();
+        this.ferryPromptController.syncFerryPromptWithPlayerPosition();
 
         if (this.movementInput.isActionPressed('enterVillage') && this.tryEnterVillageAtCurrentPosition()) {
             return;
@@ -96,5 +104,17 @@ export default class WorldModeController {
 
     public handleCampSleep(): void {
         this.travelEncounterController.handleCampSleep();
+    }
+
+    public confirmFerryTravelFromPrompt(): void {
+        this.travelEncounterController.confirmFerryTravel();
+    }
+
+    public dismissFerryPrompt(): void {
+        this.ferryPromptController.dismissFerryPrompt();
+    }
+
+    public setFerryPromptRouteIndex(index: number): void {
+        this.ferryPromptController.setSelectedRouteIndex(index);
     }
 }

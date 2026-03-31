@@ -51,17 +51,34 @@ export default class WorldMapVillageNavigationAndRender extends WorldMapMovement
     }
     public isPlayerOnFerryDock = (): boolean => this.isFerryDockAt(this.playerGridPos.col, this.playerGridPos.row);
 
-    public tryUseFerryAtPlayerPosition(): { traveled: boolean; from?: GridPosition; to?: GridPosition; waterCells?: number } {
+    public getFerryRoutesAtPlayerPosition(): Array<{ from: GridPosition; to: GridPosition; waterCells: number }> {
         const from = { col: this.playerGridPos.col, row: this.playerGridPos.row };
         const routes = this.ferryDockRoutesByIndex.get(this.getCellIndex(from.col, from.row)) ?? [];
+        return routes.map((route) => ({ from, to: route.to, waterCells: route.waterCells }));
+    }
+
+    public travelByFerryAtPlayerPosition(routeIndex: number): { traveled: boolean; from?: GridPosition; to?: GridPosition; waterCells?: number } {
+        const routes = this.getFerryRoutesAtPlayerPosition();
         if (routes.length === 0) {return { traveled: false };}
-        const route = routes[0];
+        const route = routes[Math.max(0, Math.min(routeIndex, routes.length - 1))];
+        if (!route) {return { traveled: false };}
         const destinationKey = this.getCellKey(route.to.col, route.to.row);
         this.playerGridPos = { col: route.to.col, row: route.to.row };
         this.visitedCells.add(destinationKey);
         this.refreshVisibility();
         this.ensureCellIsVisible(route.to.col, route.to.row);
-        return { traveled: true, from, to: route.to, waterCells: route.waterCells };
+        return { traveled: true, from: route.from, to: route.to, waterCells: route.waterCells };
+    }
+
+    public getSettlementNameAt(col: number, row: number): string {
+        if (this.villageIndexSet.has(this.getCellIndex(col, row))) {
+            return this.getVillageName(col, row);
+        }
+        const namedLocation = Array.from(this.namedLocations.values()).find((location) => location.position.col === col && location.position.row === row);
+        if (namedLocation) {
+            return namedLocation.name;
+        }
+        return `Dock (${col}, ${row})`;
     }
 
     public getCurrentTerrain = (): TerrainData => this.getTerrain(this.playerGridPos.col, this.playerGridPos.row) ?? { type: 'grass', color: theme.worldMap.terrain.grass, pattern: 'plain', elevation: 0.5, moisture: 0.5, heat: 0.5, seed: 0 };

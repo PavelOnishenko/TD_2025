@@ -5,6 +5,7 @@ import { ItemDiscoverySplash } from '../../ui/ItemDiscoverySplash.js';
 import { balanceConfig } from '../../config/balance/balanceConfig.js';
 import EncounterSystem from '../encounter/EncounterSystem.js';
 import WorldMap from '../world/worldMap/WorldMap.js';
+import WorldModeFerryPromptController from './WorldModeFerryPromptController.js';
 import WorldModeVillagePromptController from './WorldModeVillagePromptController.js';
 import { WorldModeCallbacks } from './WorldModeTypes.js';
 
@@ -15,6 +16,7 @@ export default class WorldModeTravelEncounterController {
     private itemDiscoverySplash: ItemDiscoverySplash;
     private callbacks: WorldModeCallbacks;
     private villagePromptController: WorldModeVillagePromptController;
+    private ferryPromptController: WorldModeFerryPromptController;
 
     constructor(
         player: Player,
@@ -23,6 +25,7 @@ export default class WorldModeTravelEncounterController {
         itemDiscoverySplash: ItemDiscoverySplash,
         callbacks: WorldModeCallbacks,
         villagePromptController: WorldModeVillagePromptController,
+        ferryPromptController: WorldModeFerryPromptController,
     ) {
         this.player = player;
         this.worldMap = worldMap;
@@ -30,13 +33,14 @@ export default class WorldModeTravelEncounterController {
         this.itemDiscoverySplash = itemDiscoverySplash;
         this.callbacks = callbacks;
         this.villagePromptController = villagePromptController;
+        this.ferryPromptController = ferryPromptController;
     }
 
     public onPlayerMoved(isPreviouslyDiscovered: boolean): void {
         this.player.addTravelFatigue(this.getTravelMinutesMultiplier());
         this.player.restoreMana(1);
         this.callbacks.onUpdateHUD();
-        if (this.tryResolveFerryTravel()) {
+        if (this.ferryPromptController.tryOpenFerryPromptAtCurrentPosition()) {
             return;
         }
 
@@ -79,15 +83,31 @@ export default class WorldModeTravelEncounterController {
         }
     }
 
-    private tryResolveFerryTravel(): boolean {
-        const ferry = this.worldMap.tryUseFerryAtPlayerPosition();
-        if (!ferry.traveled || !ferry.from || !ferry.to) {return false;}
-        const ferryMinutes = Math.max(1, (ferry.waterCells ?? 1) * 2);
+    public confirmFerryTravel(): void {
+        const selectedOption = this.ferryPromptController.getSelectedOption();
+        if (!selectedOption) {
+            this.callbacks.onAddBattleLog('No ferry route available from this dock.', 'system');
+            return;
+        }
+
+        const result = this.ferryPromptController.confirmFerryTravelAtCurrentSelection(this.player.gold);
+        if (!result.traveled) {
+            if (result.reason === 'cannot_afford') {
+                this.callbacks.onAddBattleLog(`Not enough gold for ferry fare (${selectedOption.priceGold}g required).`, 'system');
+                return;
+            }
+            this.callbacks.onAddBattleLog('You are no longer standing on a valid ferry dock.', 'system');
+            return;
+        }
+
+        this.player.gold -= selectedOption.priceGold;
+        const ferryMinutes = Math.max(1, selectedOption.waterCells * 2);
         this.player.addTravelFatigue(Math.max(1, Math.round(ferryMinutes / 2)));
-        this.callbacks.onAddBattleLog(`You hire a boatman at the dock and cross in about ${ferryMinutes} min.`, 'system');
+        this.callbacks.onAddBattleLog(`You pay ${selectedOption.priceGold}g to the ferryman.`, 'system');
+        this.callbacks.onAddBattleLog(`The ferry departs and reaches ${selectedOption.destinationName} in about ${ferryMinutes} min.`, 'system');
         this.callbacks.onUpdateHUD();
         this.villagePromptController.syncVillagePromptWithPlayerPosition();
-        return true;
+        this.ferryPromptController.syncFerryPromptWithPlayerPosition();
     }
 
     public handleCampSleep(): void {

@@ -25,6 +25,9 @@ function createWorldMapMock({ onVillage = false } = {}) {
     getCurrentNamedLocation: () => null,
     getCurrentTerrain: () => ({ type: 'grass' }),
     isPlayerOnRoad: () => false,
+    getFerryRoutesAtPlayerPosition: () => [],
+    getSettlementNameAt: () => 'Dock',
+    travelByFerryAtPlayerPosition: () => ({ traveled: true }),
   };
 }
 
@@ -41,6 +44,8 @@ function createController({
     requestedVillagePrompt: 0,
     closedVillagePrompt: 0,
     startedBattle: 0,
+    requestedFerryPrompt: 0,
+    closedFerryPrompt: 0,
     questEncounterChecks: 0,
     fatigueAdded: 0,
     lastFatigueAmount: 0,
@@ -60,6 +65,8 @@ function createController({
     onEnterVillage: () => { calls.enteredVillage += 1; },
     onRequestVillageEntryPrompt: () => { calls.requestedVillagePrompt += 1; },
     onCloseVillageEntryPrompt: () => { calls.closedVillagePrompt += 1; },
+    onRequestFerryPrompt: () => { calls.requestedFerryPrompt += 1; },
+    onCloseFerryPrompt: () => { calls.closedFerryPrompt += 1; },
     onStartBattle: () => { calls.startedBattle += 1; },
     onAddBattleLog: () => {},
     onUpdateHUD: () => {},
@@ -76,6 +83,7 @@ function createController({
     {
       x: 0,
       y: 0,
+      gold: 100,
       mana: 5,
       restoreMana: () => {},
       addTravelFatigue: (amount = 1) => { calls.fatigueAdded += 1; calls.lastFatigueAmount = amount; },
@@ -144,6 +152,47 @@ test('WorldModeController opens village prompt immediately when stepping onto vi
   assert.equal(calls.requestedVillagePrompt, 1);
   assert.equal(calls.questEncounterChecks, 0);
   assert.equal(calls.startedBattle, 0);
+});
+
+test('WorldModeController opens ferry prompt immediately when stepping onto a ferry dock and does not auto-travel', () => {
+  const travelCalls = { count: 0 };
+  const { controller, calls } = createController({
+    pressed: ['moveUp'],
+    worldMapOverrides: {
+      movePlayer: () => ({ moved: true, isPreviouslyDiscovered: false }),
+      getFerryRoutesAtPlayerPosition: () => [{ to: { col: 4, row: 9 }, waterCells: 6 }],
+      travelByFerryAtPlayerPosition: () => { travelCalls.count += 1; return { traveled: true }; },
+    },
+  });
+
+  controller.updateWorldMode();
+
+  assert.equal(calls.requestedFerryPrompt, 1);
+  assert.equal(travelCalls.count, 0);
+  assert.equal(calls.questEncounterChecks, 0);
+});
+
+test('WorldModeController confirms ferry travel from popup and closes prompt', () => {
+  const travelCalls = { count: 0 };
+  const { controller, calls } = createController({
+    pressed: ['moveUp'],
+    worldMapOverrides: {
+      movePlayer: () => ({ moved: true, isPreviouslyDiscovered: false }),
+      getFerryRoutesAtPlayerPosition: () => [{ to: { col: 4, row: 9 }, waterCells: 6 }],
+      travelByFerryAtPlayerPosition: () => { travelCalls.count += 1; return { traveled: true }; },
+      getPlayerPixelPosition: () => [30, 40],
+    },
+    callbacksOverrides: {
+      onUpdateHUD: () => {},
+    },
+  });
+
+  controller.updateWorldMode();
+  controller.confirmFerryTravelFromPrompt();
+
+  assert.equal(calls.requestedFerryPrompt >= 1, true);
+  assert.equal(calls.closedFerryPrompt, 1);
+  assert.equal(travelCalls.count, 1);
 });
 
 test('WorldModeController confirms village entry from popup only while still on village tile', () => {

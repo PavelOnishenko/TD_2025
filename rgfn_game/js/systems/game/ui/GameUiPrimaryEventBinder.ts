@@ -94,6 +94,9 @@ export default class GameUiPrimaryEventBinder {
         this.worldUI.centerOnCharacterBtn.addEventListener('click', () => this.callbacks.onCenterWorldMapOnPlayer());
         this.worldUI.villageEntryEnterBtn.addEventListener('click', () => this.callbacks.onConfirmVillageEntryPrompt());
         this.worldUI.villageEntryPassBtn.addEventListener('click', () => this.callbacks.onDismissVillageEntryPrompt());
+        this.worldUI.ferryRouteSelect.addEventListener('change', () => this.callbacks.onFerryRouteSelectionChanged(this.worldUI.ferryRouteSelect.selectedIndex));
+        this.worldUI.ferryConfirmBtn.addEventListener('click', () => this.callbacks.onConfirmFerryTravelPrompt());
+        this.worldUI.ferryCancelBtn.addEventListener('click', () => this.callbacks.onDismissFerryTravelPrompt());
     }
 
     private bindVillageEvents(villageNameProvider: () => string): void {

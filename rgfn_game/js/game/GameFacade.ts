@@ -26,6 +26,7 @@ import GameFacadeLifecycleCoordinator from './runtime/GameFacadeLifecycleCoordin
 import GameFacadeWorldInteractionCoordinator from './runtime/GameFacadeWorldInteractionCoordinator.js';
 import { createGameRuntime } from './GameFactory.js';
 import type { GameFacadeStateAccess } from './runtime/GameFacadeSharedTypes.js';
+import { FerryRouteOption } from '../systems/world-mode/WorldModeFerryPromptController.js';
 
 export type UIBundle = {
     hudElements: HudElements;
@@ -138,6 +139,10 @@ export class GameFacade implements GameFacadeStateAccess {
         this.worldInteractionCoordinator.showVillageEntryPrompt(worldUI, villageName, anchor);
     }
     public hideVillageEntryPrompt(worldUI: WorldUI): void { this.worldInteractionCoordinator.hideVillageEntryPrompt(worldUI); }
+    public showFerryPrompt(worldUI: WorldUI, options: FerryRouteOption[], selectedRouteIndex: number, anchor: { x: number; y: number }): void {
+        this.worldInteractionCoordinator.showFerryPrompt(worldUI, options, selectedRouteIndex, anchor);
+    }
+    public hideFerryPrompt(worldUI: WorldUI): void { this.worldInteractionCoordinator.hideFerryPrompt(worldUI); }
     public handleCanvasMove(event: MouseEvent): void { this.worldInteractionCoordinator.handleCanvasMove(event); }
     public handleCanvasLeave(): void { this.worldInteractionCoordinator.handleCanvasLeave(); }
     public handleWorldMapWheel(event: WheelEvent): void { this.worldInteractionCoordinator.handleWorldMapWheel(event); }
