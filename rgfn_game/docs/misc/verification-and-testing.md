@@ -1,3 +1,33 @@
+## March 31, 2026 update (follow-up): Rule 17 parameter-list compactness now ignores outer declaration context
+
+### Feedback addressed
+- Team clarified the target behavior is about **multiline parameter-list shape** itself (8-line signatures that can be one line), not comma-spacing micro-optimization.
+- Example provided: `buildGameRuntime(...)` style signatures should warn under Rule 17 when the list itself fits in one line.
+
+### Root cause
+- Rule 17 parameter-list compactness check was using full declaration context width:
+  - declaration prefix before `(` (e.g. `export function name`),
+  - declaration suffix after `)` (e.g. `: void {`).
+- This could suppress warnings for parameter lists that are compactable in one line, simply because surrounding declaration tokens pushed computed width over 170.
+
+### What changed
+- In `js/rule17CommaLayout.mjs`, `projectedSingleLineLength` now branches by list kind:
+  - **parameter list**: uses compact list width only (`compactCandidate.length`),
+  - other comma-separated initializers: keep existing full-context projection behavior.
+- Restored normal comma-space normalization in compact projection to avoid introducing an unrelated style shift.
+
+### Why this is useful
+- Makes parameter-list Rule 17 enforcement match the requested "same as curly-braces compactness intent" for list formatting decisions.
+- Eliminates false negatives where multiline signatures remain unflagged despite compactable parameter lists.
+- Keeps behavior targeted so object/array initializer logic is unchanged.
+
+### Verification commands and outcomes
+- `npx eslint rgfn_game/js/game/GameRuntimeAssembly.ts` ✅
+  - Emits Rule 17 warning for `buildGameRuntime(...)` multiline parameter list.
+- `npm run lint:ts:rgfn` ✅
+- `npm test` ⚠️
+  - Still fails due to pre-existing monorepo missing-`dist` and unrelated legacy test failures.
+
 ## March 29, 2026 update: Arrow-function-style warning cleanup in core RGFN gameplay files
 
 ### Scope completed in this pass

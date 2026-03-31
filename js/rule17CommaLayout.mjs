@@ -109,7 +109,9 @@ function checkRule17Layout(node, context) {
     const endLineText = lines[endLine - 1] || '';
     const prefixLength = lineStartText.slice(0, openingToken.loc.start.column).length;
     const suffixLength = endLineText.slice(closingToken.loc.end.column).length;
-    const projectedSingleLineLength = prefixLength + compactCandidate.length + suffixLength;
+    const projectedSingleLineLength = details.kind === 'parameter list'
+        ? compactCandidate.length
+        : prefixLength + compactCandidate.length + suffixLength;
 
     if (projectedSingleLineLength <= MAX_LINE_LENGTH) {
         context.report({
