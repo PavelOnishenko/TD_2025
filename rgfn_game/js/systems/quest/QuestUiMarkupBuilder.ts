@@ -1,4 +1,5 @@
 import { QuestNode } from './QuestTypes.js';
+import { collectQuestPreorderNodes, resolveKnownQuestCutoffIndex } from './QuestKnowledge.js';
 
 const DEFAULT_DESCRIPTION = 'Complete every branch of this quest tree to prove your character can end the darkness over the region.';
 const DEFAULT_CONDITION = 'All child objectives are completed.';
@@ -19,8 +20,7 @@ export default class QuestUiMarkupBuilder {
     }
 
     public buildQuestTreeMarkup(quest: QuestNode): string {
-        const preorderNodes: QuestNode[] = [];
-        this.collectPreorderNodes(quest, preorderNodes);
+        const preorderNodes = collectQuestPreorderNodes(quest);
         const maxVisiblePreorderIndex = this.resolveKnownQuestCutoff(preorderNodes);
         return this.buildQuestTreeMarkupNode(quest, 0, preorderNodes, maxVisiblePreorderIndex) ?? '';
     }
@@ -55,25 +55,11 @@ export default class QuestUiMarkupBuilder {
         return questPreorderIndex >= 0 && questPreorderIndex <= maxVisiblePreorderIndex;
     }
 
-    private collectPreorderNodes(quest: QuestNode, nodes: QuestNode[]): void {
-        nodes.push(quest);
-        quest.children.forEach((child) => this.collectPreorderNodes(child, nodes));
-    }
-
     private resolveKnownQuestCutoff(preorderNodes: QuestNode[]): number {
         if (!this.isKnownOnlyEnabled()) {
             return preorderNodes.length - 1;
         }
-
-        const firstIncompleteLeafIndex = preorderNodes.findIndex((node) => !node.isCompleted && node.children.length === 0);
-        if (firstIncompleteLeafIndex >= 0) {
-            return firstIncompleteLeafIndex;
-        }
-        const firstIncompleteIndex = preorderNodes.findIndex((node) => !node.isCompleted);
-        if (firstIncompleteIndex >= 0) {
-            return firstIncompleteIndex;
-        }
-        return preorderNodes.length - 1;
+        return resolveKnownQuestCutoffIndex(preorderNodes);
     }
 
     private nodeMarkup = (quest: QuestNode): string => `${this.titleMarkup(quest)}${this.descriptionMarkup(quest)}${this.conditionMarkup(quest)}`;
