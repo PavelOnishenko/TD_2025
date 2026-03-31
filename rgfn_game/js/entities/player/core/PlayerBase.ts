@@ -75,7 +75,7 @@ export default class PlayerBase extends DamageableEntity {
         this.renderer = new PlayerRenderer();
         this.updateStats();
         this.mana = this.maxMana;
-        this.gold = Math.floor(Math.random() * 6);
+        this.gold = Math.max(0, Math.floor(balanceConfig.player.initialGold ?? 0));
         this.xpToNextLevel = getXpForLevel(2);
         this.initDamageable(this.maxHp);
     }

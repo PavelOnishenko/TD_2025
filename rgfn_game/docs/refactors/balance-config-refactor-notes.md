@@ -43,3 +43,15 @@
 2. Update all call sites (`Quest*` systems + `WorldMap`).
 3. Run lints/tests.
 4. Confirm no remaining TODO markers in `balanceConfig.ts`.
+
+## Economy baseline update (March 31, 2026)
+
+- Added `balanceConfig.player.initialGold` in `js/config/balance/playerEnemyBalance.ts`.
+- New player creation now reads startup gold from balance config (`PlayerBase`) instead of randomizing between 0 and 5.
+- Current configured value is `500` gold.
+
+### Why this is useful
+
+- Economy tuning can now be done from one balance surface without touching entity logic.
+- Test stability improved: player startup gold is deterministic and directly assertable.
+- Future scenarios (e.g. “hardcore starts”, “rich merchant starts”) can switch this value via config-only changes.
