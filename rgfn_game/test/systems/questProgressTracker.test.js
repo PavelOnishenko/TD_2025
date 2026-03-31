@@ -89,6 +89,22 @@ function createQuest() {
   };
 }
 
+function unlockBarterObjective(tracker, quest) {
+  tracker.recordLocationEntry('Oakcross');
+  quest.children[1].isCompleted = true;
+}
+
+function unlockCourierObjective(tracker, quest) {
+  unlockBarterObjective(tracker, quest);
+  tracker.recordBarterCompletion('Olive', 'Kator Kaesh', 'Oakcross');
+}
+
+function unlockMonsterObjective(tracker, quest) {
+  unlockCourierObjective(tracker, quest);
+  tracker.recordBarterCompletion('Olive', 'Lorlys Eshva Zendra', 'Oakcross');
+  tracker.recordLocationEntryWithInventory('Stonemeadow', ['Lorlys Eshva Zendra']);
+}
+
 test('QuestProgressTracker marks location-based travel objectives as complete when entering the village', () => {
   const quest = createQuest();
   const tracker = new QuestProgressTracker(quest);
@@ -119,10 +135,13 @@ test('QuestProgressTracker marks barter objectives complete only when trader and
   const quest = createQuest();
   const tracker = new QuestProgressTracker(quest);
 
+  const beforeKnown = tracker.recordBarterCompletion('Olive', 'Kator Kaesh', 'Oakcross');
+  unlockBarterObjective(tracker, quest);
   const wrongItem = tracker.recordBarterCompletion('Olive', 'Other Artifact', 'Oakcross');
   const correctDeal = tracker.recordBarterCompletion('Olive', 'Kator Kaesh', 'Oakcross');
   const duplicate = tracker.recordBarterCompletion('Olive', 'Kator Kaesh', 'Oakcross');
 
+  assert.equal(beforeKnown, false);
   assert.equal(wrongItem, false);
   assert.equal(correctDeal, true);
   assert.equal(duplicate, false);
@@ -133,11 +152,14 @@ test('QuestProgressTracker completes courier objectives only after pickup from t
   const quest = createQuest();
   const tracker = new QuestProgressTracker(quest);
 
+  const earlyPickupAttempt = tracker.recordBarterCompletion('Olive', 'Lorlys Eshva Zendra', 'Oakcross');
+  unlockCourierObjective(tracker, quest);
   const wrongVillagePickup = tracker.recordBarterCompletion('Olive', 'Lorlys Eshva Zendra', 'Fog Chapel');
   const rightPickup = tracker.recordBarterCompletion('Olive', 'Lorlys Eshva Zendra', 'Oakcross');
   const arrivalWithoutItem = tracker.recordLocationEntryWithInventory('Stonemeadow', []);
   const arrivalWithItem = tracker.recordLocationEntryWithInventory('Stonemeadow', ['Lorlys Eshva Zendra']);
 
+  assert.equal(earlyPickupAttempt, false);
   assert.equal(wrongVillagePickup, false);
   assert.equal(rightPickup, true);
   assert.equal(arrivalWithoutItem, false);
@@ -149,10 +171,13 @@ test('QuestProgressTracker tracks monster kill counts and active purge objective
   const quest = createQuest();
   const tracker = new QuestProgressTracker(quest);
 
+  const earlyKill = tracker.recordMonsterKill('torka kaquin');
+  unlockMonsterObjective(tracker, quest);
   const firstKill = tracker.recordMonsterKill('torka kaquin');
   const active = tracker.getActiveMonsterObjectives();
   const secondKill = tracker.recordMonsterKill('Torka Kaquin');
 
+  assert.equal(earlyKill, false);
   assert.equal(firstKill, true);
   assert.equal(active.length, 1);
   assert.equal(active[0].targetName, 'Torka Kaquin');

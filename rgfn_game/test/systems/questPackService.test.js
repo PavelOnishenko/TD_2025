@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import QuestPackService from '../../dist/systems/quest/QuestPackService.js';
+import QuestPackService from '../../dist/systems/quest/generation/QuestPackService.js';
 import { createFetchStub, ScriptedQuestRandom } from '../helpers/questTestDoubles.js';
 
 const FILES = {

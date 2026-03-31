@@ -1,6 +1,7 @@
 // @ts-nocheck
 import WorldMapNamedLocationAndVillageOverlays from './layers/WorldMapNamedLocationAndVillageOverlays.js';
 import { FOG_STATE } from './WorldMapCore.js';
+import { buildSamplePoints, detectFerryRoutePairs } from './layers/WorldMapFerryRouteUtils.js';
 type FerryRouteOption = {
     destinationVillage: string;
     destinationDock: GridPosition;
@@ -16,7 +17,6 @@ export default class WorldMapRoadNetwork extends WorldMapNamedLocationAndVillage
                 .filter((item) => item.candidateIndex !== index)
                 .sort((a, b) => a.distance - b.distance)
                 .slice(0, 2);
-
             neighbors.forEach(({ candidate }) => {
                 const first = this.getCellIndex(village.col, village.row);
                 const second = this.getCellIndex(candidate.col, candidate.row);
@@ -42,13 +42,9 @@ export default class WorldMapRoadNetwork extends WorldMapNamedLocationAndVillage
 
         const pairSeed = this.hashSeed((from.col + 1) * 911, (from.row + 1) * 353, (to.col + 1) * 719, (to.row + 1) * 197);
         const curveDirection = this.seededRandom(pairSeed) > 0.5 ? 1 : -1;
-        const bendStrength = Math.max(0.55, Math.min(distance * 0.26, 1.8));
-        const bendNoise = 0.8 + (this.seededRandom(pairSeed * 1.37) * 0.5);
-        const bend = bendStrength * bendNoise * curveDirection;
-
+        const bend = Math.max(0.55, Math.min(distance * 0.26, 1.8)) * (0.8 + (this.seededRandom(pairSeed * 1.37) * 0.5)) * curveDirection;
         const control1 = { x: fromCenter.x + (dx * 0.33) + (normalX * bend), y: fromCenter.y + (dy * 0.33) + (normalY * bend) };
         const control2 = { x: fromCenter.x + (dx * 0.66) + (normalX * bend * 0.85), y: fromCenter.y + (dy * 0.66) + (normalY * bend * 0.85) };
-
         return { control1, control2 };
     }
 
@@ -63,16 +59,15 @@ export default class WorldMapRoadNetwork extends WorldMapNamedLocationAndVillage
             .filter((value): value is GridPosition => value !== null);
 
         this.roadIndexSet.clear();
-        if (villages.length < 2) {
-            this.villageRoadLinks = [];
-            return;
-        }
-
+        this.ferryDockIndexSet.clear();
+        this.ferryDockRoutesByIndex.clear();
+        if (villages.length < 2) { this.villageRoadLinks = []; return; }
         const links = this.buildVillageRoadLinks(villages);
         this.villageRoadLinks = links.map(({ from, to }) => {
             const controls = this.buildVillageRoadControls(from, to);
             const link: VillageRoadLink = { from, to, control1: controls.control1, control2: controls.control2 };
             this.markRoadCellsForLink(link);
+            this.registerFerryDockRoutesForLink(link);
             return link;
         });
     }
@@ -207,9 +202,7 @@ export default class WorldMapRoadNetwork extends WorldMapNamedLocationAndVillage
     private markRoadCell(gridX: number, gridY: number): void {
         const col = Math.floor(gridX);
         const row = Math.floor(gridY);
-        if (!this.grid.isValidPosition(col, row)) {
-            return;
-        }
+        if (!this.grid.isValidPosition(col, row)) {return;}
         this.roadIndexSet.add(this.getCellIndex(col, row));
     }
 
@@ -218,9 +211,7 @@ export default class WorldMapRoadNetwork extends WorldMapNamedLocationAndVillage
         const to = this.getGridCenterPoint(link.to.col, link.to.row);
         const midpoint = { x: (from.x + to.x) * 0.5, y: (from.y + to.y) * 0.5 };
 
-        if (t <= 0.5) {
-            return this.quadraticPoint(from, link.control1, midpoint, t * 2);
-        }
+        if (t <= 0.5) {return this.quadraticPoint(from, link.control1, midpoint, t * 2);}
         return this.quadraticPoint(midpoint, link.control2, to, (t - 0.5) * 2);
     }
 
@@ -243,10 +234,9 @@ export default class WorldMapRoadNetwork extends WorldMapNamedLocationAndVillage
             const row = Math.floor(gridPoint.y);
             const hasRoad = this.grid.isValidPosition(col, row) && this.roadIndexSet.has(this.getCellIndex(col, row));
             const fogState = hasRoad ? this.getFogState(col, row) : FOG_STATE.UNKNOWN;
-            if (fogState === FOG_STATE.UNKNOWN) {
-                if (active.length >= 2) {
-                    segments.push({ points: active, alpha: 0.9 });
-                }
+            const terrainType = this.getTerrain(col, row)?.type ?? 'grass';
+            if (fogState === FOG_STATE.UNKNOWN || terrainType === 'water') {
+                if (active.length >= 2) {segments.push({ points: active, alpha: 0.9 });}
                 active = [];
                 continue;
             }
@@ -255,9 +245,7 @@ export default class WorldMapRoadNetwork extends WorldMapNamedLocationAndVillage
             active.push(pixel);
         }
 
-        if (active.length >= 2) {
-            segments.push({ points: active, alpha: 0.9 });
-        }
+        if (active.length >= 2) {segments.push({ points: active, alpha: 0.9 });}
         return segments;
     }
 
@@ -281,20 +269,11 @@ export default class WorldMapRoadNetwork extends WorldMapNamedLocationAndVillage
     private drawNamedLocations(ctx: CanvasRenderingContext2D, bounds: { startCol: number; endCol: number; startRow: number; endRow: number }): void {
         this.namedLocations.forEach((location) => {
             const { col, row } = location.position;
-            if (col < bounds.startCol || col > bounds.endCol || row < bounds.startRow || row > bounds.endRow) {
-                return;
-            }
-
+            if (col < bounds.startCol || col > bounds.endCol || row < bounds.startRow || row > bounds.endRow) {return;}
             const fogState = this.getFogState(col, row);
-            if (fogState === FOG_STATE.UNKNOWN) {
-                return;
-            }
-
+            if (fogState === FOG_STATE.UNKNOWN) {return;}
             const cell = this.grid.getCellAt(col, row);
-            if (!cell) {
-                return;
-            }
-
+            if (!cell) {return;}
             const isFocused = location.name === this.focusedLocationName;
             const isCurrent = this.playerGridPos.col === col && this.playerGridPos.row === row;
             this.renderer.drawNamedLocation(ctx, cell, location.name, location.terrainType, {
@@ -302,6 +281,28 @@ export default class WorldMapRoadNetwork extends WorldMapNamedLocationAndVillage
                 showLabel: isFocused || isCurrent,
             });
         });
+    }
+
+    private registerFerryDockRoutesForLink(link: VillageRoadLink): void {
+        const samples = Math.max(30, Math.ceil(this.getRoadLinkDistance(link) * 8));
+        const points = buildSamplePoints(samples, (t) => this.sampleRoadLinkPoint(link, t));
+        const pairs = detectFerryRoutePairs(points, (pos) => this.grid.isValidPosition(pos.col, pos.row) && this.getTerrain(pos.col, pos.row)?.type === 'water');
+        pairs.forEach((pair) => {
+            if (!this.grid.isValidPosition(pair.from.col, pair.from.row) || !this.grid.isValidPosition(pair.to.col, pair.to.row)) {return;}
+            if (this.getTerrain(pair.from.col, pair.from.row)?.type === 'water' || this.getTerrain(pair.to.col, pair.to.row)?.type === 'water') {return;}
+            this.pushFerryRoute(pair.from, pair.to, pair.waterCells);
+            this.pushFerryRoute(pair.to, pair.from, pair.waterCells);
+            this.ferryDockIndexSet.add(this.getCellIndex(pair.from.col, pair.from.row));
+            this.ferryDockIndexSet.add(this.getCellIndex(pair.to.col, pair.to.row));
+        });
+    }
+
+    private pushFerryRoute(from: GridPosition, to: GridPosition, waterCells: number): void {
+        const fromIndex = this.getCellIndex(from.col, from.row);
+        const existing = this.ferryDockRoutesByIndex.get(fromIndex) ?? [];
+        if (existing.some((route) => route.to.col === to.col && route.to.row === to.row)) {return;}
+        existing.push({ from, to, waterCells });
+        this.ferryDockRoutesByIndex.set(fromIndex, existing);
     }
 
 }

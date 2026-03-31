@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import VillagePopulation from '../../../dist/systems/village/VillagePopulation.js';
-import { withMockedRandom } from '../helpers/testUtils.js';
+import { withMockedRandom } from '../../helpers/testUtils.js';
 
 const SPOTS = [
   { x: 100, y: 200 },

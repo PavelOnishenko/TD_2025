@@ -58,6 +58,10 @@ export default class WorldMapRenderer {
         this.featureRenderer.drawVillage(ctx, x, y, glow);
     }
 
+    public drawFerryDock(ctx: CanvasRenderingContext2D, x: number, y: number, glow: number): void {
+        this.featureRenderer.drawFerryDock(ctx, x, y, glow);
+    }
+
     public drawPlayerMarker(ctx: CanvasRenderingContext2D, cell: GridCell): void {
         this.overlayRenderer.drawPlayerMarker(ctx, cell);
     }

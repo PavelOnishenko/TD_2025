@@ -208,7 +208,7 @@ test('VillageActionsController binds dynamically generated barter trader names w
   controller.enterVillage('Mossbrook');
   const names = controller['npcRoster'].map((npc) => npc.name);
   assert.equal(names.includes('Veyra'), true);
-  const hint = controller['getPersonDirectionHint']('Veyra');
+  const hint = controller['barterService'].getPersonDirectionHint('Veyra', controller['callbacks'].getVillageDirectionHint);
   assert.equal(hint.exists, true);
   assert.equal(hint.villageName, 'Mossbrook');
 }));
