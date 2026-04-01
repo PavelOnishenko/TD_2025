@@ -1,10 +1,11 @@
 import Player from '../../../entities/player/Player.js';
 import Skeleton from '../../../entities/Skeleton.js';
 import { Spell } from './MagicTypes.js';
+import { getBaseSpellIds } from './spells/SpellRegistry.js';
+import { BaseSpellId } from './spells/SpellDefinition.js';
 import { createSpellBook } from './SpellBook.js';
 
-const BASE_SPELL_IDS = ['fireball', 'curse', 'slow', 'rage', 'arcane-lance'] as const;
-type BaseSpellId = typeof BASE_SPELL_IDS[number];
+const BASE_SPELL_IDS = getBaseSpellIds();
 
 export default class MagicSystem {
     private readonly player: Player;
@@ -12,7 +13,10 @@ export default class MagicSystem {
 
     constructor(player: Player) {
         this.player = player;
-        this.spellLevels = { fireball: 0, curse: 0, slow: 0, rage: 0, 'arcane-lance': 0 };
+        this.spellLevels = BASE_SPELL_IDS.reduce(
+            (levels, baseId) => ({ ...levels, [baseId]: 0 }),
+            {} as Record<BaseSpellId, number>,
+        );
     }
 
     public getSpellLevels = (): Record<BaseSpellId, number> => ({ ...this.spellLevels });
