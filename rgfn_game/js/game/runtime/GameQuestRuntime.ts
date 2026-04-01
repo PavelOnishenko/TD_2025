@@ -35,10 +35,7 @@ export default class GameQuestRuntime {
         this.activeQuest = quest;
         this.questUiController = questUiController;
         this.questProgressTracker = new QuestProgressTracker(quest);
-        onContractsReady({
-            barterContracts: this.collectBarterContracts(quest),
-            escortContracts: this.collectEscortContracts(quest),
-        });
+        onContractsReady({ barterContracts: this.collectBarterContracts(quest), escortContracts: this.collectEscortContracts(quest) });
         this.registerQuestLocations(worldMap, quest);
         questUiController.renderQuest(quest);
         if (!savedQuest && getDeveloperModeConfig().questIntroEnabled) {

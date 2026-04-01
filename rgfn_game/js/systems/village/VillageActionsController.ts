@@ -42,7 +42,7 @@ export default class VillageActionsController {
     }
 
     public configureQuestBarterContracts(contracts: QuestBarterContract[]): void { this.barterService.configureQuestBarterContracts(contracts); }
-    public configureQuestEscortContracts(contracts: QuestEscortContract[]): void { this.escortContracts = contracts; }
+    public configureQuestEscortContracts = (contracts: QuestEscortContract[]): void => { this.escortContracts = contracts; };
     public exitVillage(): void { this.villageUI.sidebar.classList.add('hidden'); this.closeDialogueWindow(); }
     public handleEnter(villageName: string): void {
         this.addLog(`You enter ${villageName} market square.`, 'system');

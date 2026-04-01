@@ -50,18 +50,12 @@ export default class DeveloperEventController {
         this.applyDeveloperMode(config, true);
     }
 
-    private applyDeveloperMode(
-        config: ReturnType<typeof getDeveloperModeConfig>,
-        logChanges: boolean,
-    ): void {
+    private applyDeveloperMode(config: ReturnType<typeof getDeveloperModeConfig>, logChanges: boolean): void {
         this.developerUI.developerModeToggle.checked = config.enabled;
         this.encounterSystem.setEncounterTypeEnabled('monster', config.encounterTypes.monster);
         this.encounterSystem.setEncounterTypeEnabled('item', config.encounterTypes.item);
         this.encounterSystem.setEncounterTypeEnabled('traveler', config.encounterTypes.traveler);
-        this.callbacks.setMapDisplayConfig({
-            everythingDiscovered: config.everythingDiscovered,
-            fogOfWar: config.fogOfWar,
-        });
+        this.callbacks.setMapDisplayConfig({ everythingDiscovered: config.everythingDiscovered, fogOfWar: config.fogOfWar });
         this.encounterControls.renderEncounterTypeControls();
         this.randomAndMapControls.renderMapDisplayControls();
 

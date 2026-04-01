@@ -126,7 +126,13 @@ export default class GameWorldInteractionRuntime {
         worldUI.villageEntryPopup.classList.add('hidden');
     }
 
-    public showWorldFerryPrompt(worldUI: WorldUI, options: FerryRouteOption[], selectedRouteIndex: number, anchor: { x: number; y: number }, canvas: HTMLCanvasElement): void {
+    public showWorldFerryPrompt(
+        worldUI: WorldUI,
+        options: FerryRouteOption[],
+        selectedRouteIndex: number,
+        anchor: { x: number; y: number },
+        canvas: HTMLCanvasElement,
+    ): void {
         const clampedSelectedIndex = Math.max(0, Math.min(selectedRouteIndex, options.length - 1));
         worldUI.ferryRouteSelect.innerHTML = '';
         options.forEach((option, index) => {

@@ -112,11 +112,7 @@ export default class WorldModeFerryPromptController {
         }));
     }
 
-    private getValidSelectedIndex(options: FerryRouteOption[]): number {
-        return Math.max(0, Math.min(this.selectedRouteIndex, options.length - 1));
-    }
+    private getValidSelectedIndex = (options: FerryRouteOption[]): number => Math.max(0, Math.min(this.selectedRouteIndex, options.length - 1));
 
-    private computeFerryPrice(waterCells: number): number {
-        return Math.max(1, Math.round(waterCells * 2));
-    }
+    private computeFerryPrice = (waterCells: number): number => Math.max(1, Math.round(waterCells * 2));
 }
