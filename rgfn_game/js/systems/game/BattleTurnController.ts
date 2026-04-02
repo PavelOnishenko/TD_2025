@@ -102,22 +102,7 @@ export default class BattleTurnController {
     }
 
     private performEnemyAttack(enemy: Skeleton): void {
-        const caster = enemy as Skeleton & {
-            canUseMagic?: () => boolean;
-            getMagicManaCost?: () => number;
-            getMagicDamage?: () => number;
-            spendMana?: (amount: number) => void;
-        };
-        if (caster.canUseMagic && caster.canUseMagic() && Math.random() < 0.35) {
-            enemy.expireDirectionalBonusesWithoutAttack().forEach((message) => this.callbacks.onAddBattleLog(message, 'system'));
-            const magicDamage = caster.getMagicDamage ? caster.getMagicDamage() : enemy.damage;
-            const manaCost = caster.getMagicManaCost ? caster.getMagicManaCost() : 0;
-            if (caster.spendMana) {
-                caster.spendMana(manaCost);
-            }
-            this.player.takeMagicDamage(magicDamage);
-            this.callbacks.onAddBattleLog(`${enemy.name} casts a spell for ${magicDamage} damage!`, 'enemy');
-            this.callbacks.onUpdateHUD();
+        if (this.tryPerformEnemyMagicAttack(enemy)) {
             return;
         }
 
@@ -153,5 +138,25 @@ export default class BattleTurnController {
         }
 
         this.callbacks.onUpdateHUD();
+    }
+
+    private tryPerformEnemyMagicAttack(enemy: Skeleton): boolean {
+        const caster = enemy as Skeleton & {
+            canUseMagic?: () => boolean;
+            getMagicManaCost?: () => number;
+            getMagicDamage?: () => number;
+            spendMana?: (amount: number) => void;
+        };
+        if (!caster.canUseMagic || !caster.canUseMagic() || Math.random() >= 0.35) {
+            return false;
+        }
+        enemy.expireDirectionalBonusesWithoutAttack().forEach((message) => this.callbacks.onAddBattleLog(message, 'system'));
+        const magicDamage = caster.getMagicDamage ? caster.getMagicDamage() : enemy.damage;
+        const manaCost = caster.getMagicManaCost ? caster.getMagicManaCost() : 0;
+        caster.spendMana?.(manaCost);
+        this.player.takeMagicDamage(magicDamage);
+        this.callbacks.onAddBattleLog(`${enemy.name} casts a spell for ${magicDamage} damage!`, 'enemy');
+        this.callbacks.onUpdateHUD();
+        return true;
     }
 }

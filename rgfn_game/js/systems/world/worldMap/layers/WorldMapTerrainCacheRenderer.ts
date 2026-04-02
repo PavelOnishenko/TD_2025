@@ -7,22 +7,28 @@ export default class WorldMapTerrainCacheRenderer extends WorldMapFocusAndFogOve
         bounds: { startCol: number; endCol: number; startRow: number; endRow: number },
         detailLevel: 'low' | 'medium',
     ): boolean {
-        if (!this.supportsTerrainLayerCaching(ctx)) {
-            return false;
-        }
+        const activeCache = this.getOrCreateTerrainCache(ctx, detailLevel);
+        if (!activeCache) {return false;}
+        this.drawTerrainCacheSlice(ctx, activeCache.canvas, bounds, this.grid.cellSize);
+        return true;
+    }
 
+    private getOrCreateTerrainCache(ctx: CanvasRenderingContext2D, detailLevel: 'low' | 'medium'): { canvas: HTMLCanvasElement } | null {
+        if (!this.supportsTerrainLayerCaching(ctx)) {return null;}
         const cellSize = this.grid.cellSize;
-        if (this.shouldRebuildTerrainLayerCache(detailLevel, cellSize)) {
-            if (!this.rebuildTerrainLayerCache(detailLevel, cellSize)) {
-                return false;
-            }
+        if (this.shouldRebuildTerrainLayerCache(detailLevel, cellSize) && !this.rebuildTerrainLayerCache(detailLevel, cellSize)) {
+            return null;
         }
-
         const activeCache = this.terrainLayerCaches[detailLevel];
-        if (!activeCache) {
-            return false;
-        }
+        return activeCache ?? null;
+    }
 
+    private drawTerrainCacheSlice(
+        ctx: CanvasRenderingContext2D,
+        cacheCanvas: HTMLCanvasElement,
+        bounds: { startCol: number; endCol: number; startRow: number; endRow: number },
+        cellSize: number,
+    ): void {
         const sourceX = bounds.startCol * cellSize;
         const sourceY = bounds.startRow * cellSize;
         const sourceWidth = Math.max(1, (bounds.endCol - bounds.startCol + 1) * cellSize);
@@ -30,18 +36,7 @@ export default class WorldMapTerrainCacheRenderer extends WorldMapFocusAndFogOve
         const destinationX = this.grid.offsetX + sourceX;
         const destinationY = this.grid.offsetY + sourceY;
 
-        ctx.drawImage(
-            activeCache.canvas,
-            sourceX,
-            sourceY,
-            sourceWidth,
-            sourceHeight,
-            destinationX,
-            destinationY,
-            sourceWidth,
-            sourceHeight,
-        );
-        return true;
+        ctx.drawImage(cacheCanvas, sourceX, sourceY, sourceWidth, sourceHeight, destinationX, destinationY, sourceWidth, sourceHeight);
     }
 
     private supportsTerrainLayerCaching = (ctx: CanvasRenderingContext2D): boolean => typeof document !== 'undefined' && typeof (ctx as CanvasRenderingContext2D & { drawImage?: unknown }).drawImage === 'function';

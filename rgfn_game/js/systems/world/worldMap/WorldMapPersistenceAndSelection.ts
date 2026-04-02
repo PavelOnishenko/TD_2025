@@ -17,90 +17,92 @@ export default class WorldMapPersistenceAndSelection extends WorldMapRoadNetwork
     });
 
     public restoreState(state: Record<string, unknown>): void {
-        if (typeof state.worldSeed === 'number' && Number.isFinite(state.worldSeed)) {
-            const nextWorldSeed = Math.floor(Math.abs(state.worldSeed));
-            if (nextWorldSeed !== this.worldSeed) {
-                this.worldSeed = nextWorldSeed;
-                this.generateWorld();
-            }
-        }
+        this.restoreWorldSeed(state.worldSeed);
+        this.restorePlayerPosition(state.playerGridPos as { col?: unknown; row?: unknown } | undefined);
+        this.restoreFogStateEntries(state.fogStates);
+        this.restoreVillageEntries(state.villages);
+        this.restoreLocationFeatures(state.locationFeatures);
+        this.restoreVisitedCells(state.visitedCells);
+        this.restoreViewport(state.viewport as { cellSize?: unknown; offsetX?: unknown; offsetY?: unknown } | undefined);
+        this.refreshVisibility();
+    }
 
-        const playerGridPos = state.playerGridPos as { col?: unknown; row?: unknown } | undefined;
-        if (playerGridPos && typeof playerGridPos.col === 'number' && typeof playerGridPos.row === 'number' && this.grid.isValidPosition(playerGridPos.col, playerGridPos.row)) {
+    private restoreWorldSeed(worldSeed: unknown): void {
+        if (typeof worldSeed !== 'number' || !Number.isFinite(worldSeed)) {return;}
+        const nextWorldSeed = Math.floor(Math.abs(worldSeed));
+        if (nextWorldSeed !== this.worldSeed) {
+            this.worldSeed = nextWorldSeed;
+            this.generateWorld();
+        }
+    }
+
+    private restorePlayerPosition(playerGridPos?: { col?: unknown; row?: unknown }): void {
+        if (!playerGridPos || typeof playerGridPos.col !== 'number' || typeof playerGridPos.row !== 'number') {return;}
+        if (this.grid.isValidPosition(playerGridPos.col, playerGridPos.row)) {
             this.playerGridPos = { col: playerGridPos.col, row: playerGridPos.row };
         }
+    }
 
-        if (Array.isArray(state.fogStates)) {
-            this.fogStates = new Map(
-                state.fogStates.filter((entry): entry is [string, FogState] => Array.isArray(entry)
-                    && entry.length === 2
-                    && typeof entry[0] === 'string'
-                    && (entry[1] === FOG_STATE.UNKNOWN || entry[1] === FOG_STATE.HIDDEN || entry[1] === FOG_STATE.DISCOVERED)),
-            );
-            this.fogStatesByIndex = new Array(this.grid.columns * this.grid.rows).fill(FOG_STATE.UNKNOWN);
-            this.fogStates.forEach((value, key) => {
-                const [colText, rowText] = key.split(',');
-                const col = Number(colText);
-                const row = Number(rowText);
-                if (this.grid.isValidPosition(col, row)) {
-                    this.fogStatesByIndex[this.getCellIndex(col, row)] = value;
-                }
-            });
-        }
+    private restoreFogStateEntries(entries: unknown): void {
+        if (!Array.isArray(entries)) {return;}
+        this.fogStates = new Map(entries.filter((entry): entry is [string, FogState] => Array.isArray(entry)
+            && entry.length === 2
+            && typeof entry[0] === 'string'
+            && (entry[1] === FOG_STATE.UNKNOWN || entry[1] === FOG_STATE.HIDDEN || entry[1] === FOG_STATE.DISCOVERED)));
+        this.fogStatesByIndex = new Array(this.grid.columns * this.grid.rows).fill(FOG_STATE.UNKNOWN);
+        this.fogStates.forEach((value, key) => {
+            const [colText, rowText] = key.split(',');
+            const col = Number(colText);
+            const row = Number(rowText);
+            if (this.grid.isValidPosition(col, row)) {this.fogStatesByIndex[this.getCellIndex(col, row)] = value;}
+        });
+    }
 
-        if (Array.isArray(state.villages)) {
-            this.villages = new Set(state.villages.filter((entry): entry is string => typeof entry === 'string'));
-            this.villageIndexSet = new Set<number>();
-            this.villages.forEach((key) => {
-                const [colText, rowText] = key.split(',');
-                const col = Number(colText);
-                const row = Number(rowText);
-                if (this.grid.isValidPosition(col, row)) {
-                    this.villageIndexSet.add(this.getCellIndex(col, row));
-                }
-            });
-        }
+    private restoreVillageEntries(entries: unknown): void {
+        if (!Array.isArray(entries)) {return;}
+        this.villages = new Set(entries.filter((entry): entry is string => typeof entry === 'string'));
+        this.villageIndexSet = new Set<number>();
+        this.villages.forEach((key) => {
+            const [colText, rowText] = key.split(',');
+            const col = Number(colText);
+            const row = Number(rowText);
+            if (this.grid.isValidPosition(col, row)) {this.villageIndexSet.add(this.getCellIndex(col, row));}
+        });
+    }
+
+    private restoreLocationFeatures(entries: unknown): void {
         this.clearAllLocationFeatures();
-        this.villageIndexSet.forEach((index) => {
+        this.villageIndexSet.forEach((index) => this.addLocationFeatureAt(index % this.grid.columns, Math.floor(index / this.grid.columns), 'village'));
+        this.generateVillageRoadNetwork();
+        if (!Array.isArray(entries)) {return;}
+        entries.forEach((entry) => {
+            if (!entry || typeof entry !== 'object') {return;}
+            const index = Number((entry as { index?: unknown }).index);
+            const featureIds = (entry as { featureIds?: unknown }).featureIds;
+            if (!Number.isInteger(index) || index < 0 || index >= this.grid.columns * this.grid.rows || !Array.isArray(featureIds)) {return;}
             const col = index % this.grid.columns;
             const row = Math.floor(index / this.grid.columns);
-            this.addLocationFeatureAt(col, row, 'village');
+            featureIds.filter((featureId): featureId is 'village' | 'ferry-dock' => featureId === 'village' || featureId === 'ferry-dock')
+                .forEach((featureId) => this.addLocationFeatureAt(col, row, featureId));
         });
-        this.generateVillageRoadNetwork();
-        if (Array.isArray(state.locationFeatures)) {
-            state.locationFeatures.forEach((entry) => {
-                if (!entry || typeof entry !== 'object') {
-                    return;
-                }
-                const index = Number((entry as { index?: unknown }).index);
-                const featureIds = (entry as { featureIds?: unknown }).featureIds;
-                if (!Number.isInteger(index) || index < 0 || index >= this.grid.columns * this.grid.rows || !Array.isArray(featureIds)) {
-                    return;
-                }
-                const col = index % this.grid.columns;
-                const row = Math.floor(index / this.grid.columns);
-                featureIds
-                    .filter((featureId): featureId is 'village' | 'ferry-dock' => featureId === 'village' || featureId === 'ferry-dock')
-                    .forEach((featureId) => this.addLocationFeatureAt(col, row, featureId));
-            });
-        }
+    }
 
-        if (Array.isArray(state.visitedCells)) {
-            this.visitedCells = new Set(state.visitedCells.filter((entry): entry is string => typeof entry === 'string'));
-        } else {
-            this.visitedCells = new Set([this.getCellKey(this.playerGridPos.col, this.playerGridPos.row)]);
+    private restoreVisitedCells(visitedCells: unknown): void {
+        if (Array.isArray(visitedCells)) {
+            this.visitedCells = new Set(visitedCells.filter((entry): entry is string => typeof entry === 'string'));
+            return;
         }
+        this.visitedCells = new Set([this.getCellKey(this.playerGridPos.col, this.playerGridPos.row)]);
+    }
 
-        const viewport = state.viewport as { cellSize?: unknown; offsetX?: unknown; offsetY?: unknown } | undefined;
+    private restoreViewport(viewport?: { cellSize?: unknown; offsetX?: unknown; offsetY?: unknown }): void {
         if (viewport && typeof viewport.cellSize === 'number' && typeof viewport.offsetX === 'number' && typeof viewport.offsetY === 'number') {
             const clampedCellSize = Math.max(theme.worldMap.cellSize.min, Math.min(theme.worldMap.cellSize.max, viewport.cellSize));
             this.grid.updateLayout(clampedCellSize, viewport.offsetX, viewport.offsetY);
             this.clampViewport();
-        } else {
-            this.centerViewportOnCell(this.playerGridPos.col, this.playerGridPos.row);
+            return;
         }
-
-        this.refreshVisibility();
+        this.centerViewportOnCell(this.playerGridPos.col, this.playerGridPos.row);
     }
 
     public getMapDisplayConfig = (): MapDisplayConfig => ({ ...this.mapDisplayConfig });

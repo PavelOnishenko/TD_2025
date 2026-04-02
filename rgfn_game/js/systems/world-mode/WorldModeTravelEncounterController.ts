@@ -40,32 +40,27 @@ export default class WorldModeTravelEncounterController {
         this.player.addTravelFatigue(this.getTravelMinutesMultiplier());
         this.player.restoreMana(1);
         this.callbacks.onUpdateHUD();
-        if (this.ferryPromptController.tryOpenFerryPromptAtCurrentPosition()) {
-            return;
-        }
+        if (this.handleArrivalPrompts()) {return;}
+        this.encounterSystem.onPlayerMove();
+        if (this.resolveQuestEncounter() || !this.encounterSystem.checkEncounter(isPreviouslyDiscovered)) {return;}
+        this.handleEncounterResult(this.encounterSystem.generateEncounter(!isPreviouslyDiscovered));
+    }
 
+    private handleArrivalPrompts(): boolean {
+        if (this.ferryPromptController.tryOpenFerryPromptAtCurrentPosition()) {return true;}
         const namedLocation = this.worldMap.getCurrentNamedLocation();
         if (namedLocation) {
             this.callbacks.onAddBattleLog(`You arrive at ${namedLocation}.`, 'system');
         }
-
         if (this.worldMap.isPlayerOnVillage()) {
             this.villagePromptController.openVillageEntryPrompt();
-            return;
+            return true;
         }
-
         this.villagePromptController.syncVillagePromptWithPlayerPosition();
-        this.encounterSystem.onPlayerMove();
-        const questEncounter = this.resolveQuestEncounter();
-        if (questEncounter) {
-            return;
-        }
+        return false;
+    }
 
-        if (!this.encounterSystem.checkEncounter(isPreviouslyDiscovered)) {
-            return;
-        }
-
-        const encounter = this.encounterSystem.generateEncounter(!isPreviouslyDiscovered);
+    private handleEncounterResult(encounter: ReturnType<EncounterSystem['generateEncounter']>): void {
         if (encounter.type === 'battle') {
             this.callbacks.onStartBattle(encounter.enemies, this.worldMap.getCurrentTerrain().type);
             return;

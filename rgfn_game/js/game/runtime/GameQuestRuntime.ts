@@ -70,17 +70,8 @@ export default class GameQuestRuntime {
         let result: 'joined' | 'already-joined' | 'not-available' = 'not-available';
         let didJoin = false;
         this.visitQuestNodes(this.activeQuest, (node) => {
-            if (node.objectiveType !== 'escort' || node.children.length > 0 || node.isCompleted) {
-                return;
-            }
-            const escort = node.objectiveData?.escort;
-            if (!escort || escort.isDead) {
-                return;
-            }
-            if (escort.personName.trim().toLocaleLowerCase() !== normalizedPerson) {
-                return;
-            }
-            if (escort.sourceVillage.trim().toLocaleLowerCase() !== normalizedVillage) {
+            const escort = this.getRecruitableEscort(node);
+            if (!escort || !this.matchesEscortRecruitTarget(escort, normalizedPerson, normalizedVillage)) {
                 return;
             }
             if (escort.hasJoined) {
@@ -97,6 +88,19 @@ export default class GameQuestRuntime {
             this.questUiController.renderQuest(this.activeQuest);
         }
         return result;
+    }
+
+    private getRecruitableEscort(node: QuestNode): EscortObjectiveData | null {
+        if (node.objectiveType !== 'escort' || node.children.length > 0 || node.isCompleted) {
+            return null;
+        }
+        const escort = node.objectiveData?.escort;
+        return escort && !escort.isDead ? escort : null;
+    }
+
+    private matchesEscortRecruitTarget(escort: EscortObjectiveData, normalizedPerson: string, normalizedVillage: string): boolean {
+        return escort.personName.trim().toLocaleLowerCase() === normalizedPerson
+            && escort.sourceVillage.trim().toLocaleLowerCase() === normalizedVillage;
     }
 
     public getGroupMembers(): Array<{ name: string; hp: number; maxHp: number; status: 'following' | 'dead' }> {
