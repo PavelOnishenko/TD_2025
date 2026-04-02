@@ -19,7 +19,7 @@ Mandatory expectation for every change:
 Before sharing task results, always run lint + style audit + tests and keep iterating until clean.
 
 - Use `docs/Agent_PrePR_Checklist.md` as the short operational checklist.
-- For RGFN style-audit tasks, expected clean state is zero violations for Rule 2/3/16 and `none` in all three "Top ..." sections.
+- For RGFN style-audit tasks, expected clean state is: no Rule 16 backlog entries (or explicitly accepted backlog), while Rule 2/3 issues are now visible directly in ESLint output.
 
 ## Commands
 
@@ -37,19 +37,16 @@ What each command does:
 
 - `npm run lint:ts` — runs ESLint for all `.ts` files in the repository.
 - `npm run lint:ts:fix` — same as above, but auto-fixes supported issues.
-- `npm run lint:ts:rgfn` — runs ESLint only for TypeScript files inside `rgfn_game/`, then prints style-guide audit sections for `rgfn_game/` scope.
+- `npm run lint:ts:rgfn` — runs ESLint only for TypeScript files inside `rgfn_game/`, then prints style-guide audit output for Rule 16 in `rgfn_game/` scope.
 - `npm run lint:ts:rgfn:fix` — same as above, but auto-fixes supported issues first.
-- `npm run style-guide:audit` — informational audit for style-guide rules that are hard to fully auto-enforce.
-- `npm run style-guide:audit:rgfn` — same audit report but scoped to `rgfn_game/` only.
+- `npm run style-guide:audit` — informational audit for Rule 16 folder-size backlog tracking.
+- `npm run style-guide:audit:rgfn` — same Rule 16 audit report but scoped to `rgfn_game/` only.
 - `npm run check:ts-style` — runs lint + audit in one command.
 
 ## Choosing the right lint scope
 
 - **RGFN-only task (`rgfn_game/`)**: run `npm run lint:ts:rgfn` (or `npm run lint:ts:rgfn:fix`).
-  - This command includes style-guide sections in output:
-    - `Top files over limit`
-    - `Top files with long functions (first samples)`
-    - `Top folders over children limit`
+  - This command includes the Rule 16 folder section (`Top folders over children limit`).
 - **Cross-game/shared task** (e.g. `engine/`, root config/scripts, or multiple games): run `npm run lint:ts`.
 
 This keeps RGFN work fast while still preserving full-repository checks when changes can impact other games.
@@ -87,13 +84,22 @@ The style guide contains both objective and subjective rules.
 
 Warnings are visible for all TypeScript files so they can be fixed incrementally. For touched code, warnings should be treated as actionable and fixed whenever practical.
 
+### Enforced as lint warnings/errors (length thresholds)
+
+1. **Rule 2 (function/method length)**:
+   - warning at **20-39** lines
+   - error at **40+** lines
+2. **Rule 3 (file length)**:
+   - warning at **200-399** lines
+   - error at **400+** lines
+
+These are now regular ESLint diagnostics (`style-guide/function-length-*`, `style-guide/file-length-*`) and no longer hidden in audit-only output.
+
 ### Audited (informational report)
 
-1. **Rule 2**: named functions <= 20 LOC.
-2. **Rule 3**: files <= 200 LOC.
-3. **Rule 16**: <= 10 immediate children per folder.
+1. **Rule 16**: <= 10 immediate children per folder.
 
-These are tracked by `npm run style-guide:audit` so the team can gradually reduce technical debt while keeping active delivery speed.
+Rule 16 remains tracked by `npm run style-guide:audit` so the team can gradually reduce structural folder backlog while keeping active delivery speed.
 
 ### Manual/code-review rules (cannot be reliably auto-verified)
 
