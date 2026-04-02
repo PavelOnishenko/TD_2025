@@ -78,7 +78,11 @@ export default class QuestPackService {
 
     private async loadAssets(): Promise<void> {
         for (const [key, path] of Object.entries(ASSET_PATHS)) {
-            this.assets[key] = this.wordList(await this.fileReader(path));
+            const words = this.wordList(await this.fileReader(path));
+            if (words.length === 0) {
+                throw new Error(`Quest pack asset "${key}" at "${path}" did not contain any usable words.`);
+            }
+            this.assets[key] = words;
         }
     }
 
@@ -128,7 +132,10 @@ export default class QuestPackService {
         .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
         .join('-');
 
-    private wordList = (text: string): string[] => text.split(/\s+/).map((word) => word.trim()).filter(Boolean);
+    private wordList = (text: string): string[] => text
+        .split(/\s+/)
+        .map((word) => word.trim())
+        .filter((word) => /^[a-z][a-z'-]*$/i.test(word));
 
     private async readTextAsset(path: string): Promise<string> {
         const url = new URL(path, import.meta.url);

@@ -1,5 +1,32 @@
 # RGFN Quest Generation Methodology
 
+## April 2, 2026 reliability hotfix: sanitize quest-pack asset tokens + correct dist-relative paths
+
+### Symptom that was fixed
+- Some generated names for NPCs, locations, and quest items occasionally contained:
+  - raw HTML snippets (for example `<pre>Cannot`),
+  - stray transport/debug fragments (for example `Lang="en"> GET`),
+  - absolute/relative filesystem-like paths.
+
+### Root causes
+1. **Local quest-pack path depth was off by one directory** for runtime `import.meta.url` resolution.
+   - Source file: `js/systems/quest/generation/QuestPackTypes.ts`
+   - Old paths used `../../../data/...` from `js/systems/quest/generation`, which does not climb back to project root.
+   - Correct paths are `../../../../data/...`.
+2. **Asset tokenization accepted any whitespace token**, including HTML/error-page text when content loading returned non-word payloads.
+
+### Fix implemented
+- Updated every `ASSET_PATHS` entry from `../../../data/...` to `../../../../data/...`.
+- Hardened `QuestPackService.wordList()` to keep only lexical tokens matching:
+  - `^[a-z][a-z'-]*$` (case-insensitive).
+- Added a load-time guard:
+  - if a quest-pack asset yields zero usable tokens after sanitization, initialization throws a clear error with asset key + path.
+
+### Why this improves stability
+- Prevents malformed payloads from being silently converted into generated entity names.
+- Fails fast when asset resolution breaks instead of emitting corrupted quest strings into UI.
+- Keeps valid fantasy-style tokens (letters with optional apostrophes/hyphens) while dropping markup and path fragments.
+
 ## Goal
 Create a **central main quest** for each character that defines whether that run is considered "game completed".
 The main quest is shown:

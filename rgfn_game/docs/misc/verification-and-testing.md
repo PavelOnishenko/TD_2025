@@ -1,3 +1,33 @@
+## April 2, 2026 update: quest text corruption fix (`<pre>Cannot`, `Lang="en"> GET`, leaked paths)
+
+### Reported runtime symptoms
+- Quest text intermittently rendered corrupted names containing HTML fragments and path-like strings.
+- Example classes observed in UI:
+  - `<pre>Cannot ...`
+  - `Lang="en"> GET`
+  - `/rgfn_game/dist/data/...`
+
+### Root-cause summary
+- Quest pack local data files were referenced with a wrong relative depth in `ASSET_PATHS`.
+- Asset token parsing accepted arbitrary whitespace tokens (including error payload text), allowing malformed content to leak into generated names.
+
+### Applied fix
+- Corrected quest-pack local asset paths in:
+  - `js/systems/quest/generation/QuestPackTypes.ts`
+  - `../../../data/...` ➜ `../../../../data/...`
+- Added strict lexical token filtering in:
+  - `js/systems/quest/generation/QuestPackService.ts`
+- Added guard that throws when sanitized asset data is empty, preventing silent bad-name generation.
+- Added regression coverage in:
+  - `test/systems/questPackService.test.js`
+  - New test: ignores HTML/error payload tokens in local asset files.
+
+### Commands run
+- `npm run build:rgfn` ✅
+- `node --test rgfn_game/test/systems/questPackService.test.js` ✅
+- `node --test rgfn_game/test/**/*.test.js` ⚠️
+  - One pre-existing failure remains in `rgfn_game/test/entities/skeleton.test.js` (`Skeleton behavior checks...`), unrelated to this quest-pack fix.
+
 ## March 29, 2026 update: Arrow-function-style warning cleanup in core RGFN gameplay files
 
 ### Scope completed in this pass
