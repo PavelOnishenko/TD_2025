@@ -306,6 +306,7 @@ test('WorldMap exposes selected cell info from mouse position after viewport tra
     isVillage: false,
     villageName: null,
     villageStatus: null,
+    locationFeatureIds: [],
     isTraversable: worldMap.getCurrentTerrain().type !== 'water',
   });
 });
@@ -463,4 +464,39 @@ test('WorldMap exposes village names and anchors matching quest locations to vil
 
   assert.equal(worldMap.getCurrentNamedLocation(), villageName);
   assert.equal(worldMap.revealNamedLocation(villageName), true);
+}));
+
+test('WorldMap stores multiple location features per cell and surfaces them in selected cell info', () => withMockedRandom([0.11], () => {
+  const worldMap = new WorldMap(40, 30, 20);
+  const villageIndex = Array.from(worldMap.villageIndexSet.values())[0];
+  assert.ok(typeof villageIndex === 'number');
+
+  const col = villageIndex % worldMap.grid.columns;
+  const row = Math.floor(villageIndex / worldMap.grid.columns);
+  worldMap.addLocationFeatureAt(col, row, 'ferry-dock');
+
+  const cellSize = worldMap.grid.cellSize;
+  const pixelX = worldMap.grid.offsetX + (col * cellSize) + (cellSize / 2);
+  const pixelY = worldMap.grid.offsetY + (row * cellSize) + (cellSize / 2);
+  worldMap.updateSelectedCellFromPixel(pixelX, pixelY);
+  const selected = worldMap.getSelectedCellInfo();
+
+  assert.ok(selected);
+  assert.equal(selected.mode, 'world');
+  assert.deepEqual(new Set(selected.locationFeatureIds), new Set(['village', 'ferry-dock']));
+}));
+
+test('WorldMap persists location feature occupancy in save state', () => withMockedRandom([0.11], () => {
+  const worldMap = new WorldMap(40, 30, 20);
+  const villageIndex = Array.from(worldMap.villageIndexSet.values())[0];
+  const col = villageIndex % worldMap.grid.columns;
+  const row = Math.floor(villageIndex / worldMap.grid.columns);
+  worldMap.addLocationFeatureAt(col, row, 'ferry-dock');
+
+  const saved = worldMap.getState();
+  const restored = new WorldMap(40, 30, 20);
+  restored.restoreState(saved);
+
+  const restoredFeatures = restored.getLocationFeatureIdsAt(col, row);
+  assert.deepEqual(new Set(restoredFeatures), new Set(['village', 'ferry-dock']));
 }));

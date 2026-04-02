@@ -1,6 +1,7 @@
 // @ts-nocheck
 import WorldMapVillageNavigationAndRender from '../WorldMapVillageNavigationAndRender.js';
 import { FOG_STATE } from '../WorldMapCore.js';
+import { getLocationFeatureDefinitions } from '../locationFeatures/LocationFeatureRegistry.js';
 export default class WorldMapNamedLocationAndVillageOverlays extends WorldMapVillageNavigationAndRender {
     public registerNamedLocation(name: string): void {
         if (this.namedLocations.has(name)) {
@@ -41,27 +42,21 @@ export default class WorldMapNamedLocationAndVillageOverlays extends WorldMapVil
         return null;
     }
 
-    private drawVillages(ctx: CanvasRenderingContext2D, bounds: { startCol: number; endCol: number; startRow: number; endRow: number }): void {
-        this.villages.forEach((key) => {
-            const [colText, rowText] = key.split(',');
-            const col = Number(colText);
-            const row = Number(rowText);
-            if (col < bounds.startCol || col > bounds.endCol || row < bounds.startRow || row > bounds.endRow) {
-                return;
-            }
-
-            const fogState = this.getFogState(col, row);
-            if (fogState === FOG_STATE.UNKNOWN) {
-                return;
-            }
-            const cell = this.grid.getCellAt(col, row);
-            if (!cell) {
-                return;
-            }
-            const x = cell.x + cell.width / 2;
-            const y = cell.y + cell.height / 2;
-            const villageGlow = fogState === FOG_STATE.DISCOVERED ? 0.95 : 0.82;
-            this.renderer.drawVillage(ctx, x, y, villageGlow);
+    private drawLocationFeatures(ctx: CanvasRenderingContext2D, bounds: { startCol: number; endCol: number; startRow: number; endRow: number }): void {
+        getLocationFeatureDefinitions().forEach((featureDefinition) => {
+            this.getLocationFeatureCells(featureDefinition.id).forEach((index) => {
+                const col = index % this.grid.columns;
+                const row = Math.floor(index / this.grid.columns);
+                if (col < bounds.startCol || col > bounds.endCol || row < bounds.startRow || row > bounds.endRow) {return;}
+                if (this.getFogState(col, row) === FOG_STATE.UNKNOWN) {return;}
+                const cell = this.grid.getCellAt(col, row);
+                if (!cell) {return;}
+                featureDefinition.render(
+                    ctx,
+                    this.renderer,
+                    { x: cell.x + (cell.width / 2), y: cell.y + (cell.height / 2) },
+                );
+            });
         });
     }
 
@@ -78,18 +73,6 @@ export default class WorldMapNamedLocationAndVillageOverlays extends WorldMapVil
                 }
                 this.renderer.drawVillageRoadPath(ctx, segment.points, segment.alpha);
             });
-        });
-    }
-
-    private drawFerryDocks(ctx: CanvasRenderingContext2D, bounds: { startCol: number; endCol: number; startRow: number; endRow: number }): void {
-        this.ferryDockIndexSet.forEach((index) => {
-            const col = index % this.grid.columns;
-            const row = Math.floor(index / this.grid.columns);
-            if (col < bounds.startCol || col > bounds.endCol || row < bounds.startRow || row > bounds.endRow) {return;}
-            if (this.getFogState(col, row) === FOG_STATE.UNKNOWN) {return;}
-            const cell = this.grid.getCellAt(col, row);
-            if (!cell) {return;}
-            this.renderer.drawFerryDock(ctx, cell.x + (cell.width / 2), cell.y + (cell.height / 2), 0.9);
         });
     }
 

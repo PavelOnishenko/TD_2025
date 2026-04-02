@@ -61,6 +61,7 @@ export interface SelectedWorldCellInfo {
     isVillage: boolean;
     villageName: string | null;
     villageStatus: 'current' | 'mapped' | null;
+    locationFeatureIds: Array<'village' | 'ferry-dock'>;
     isTraversable: boolean;
 }
 

@@ -8,6 +8,10 @@ export default class WorldMapPersistenceAndSelection extends WorldMapRoadNetwork
         playerGridPos: { ...this.playerGridPos },
         fogStates: Array.from(this.fogStates.entries()),
         villages: Array.from(this.villages.values()),
+        locationFeatures: Array.from(this.locationFeatureIndexMap.entries()).map(([index, featureSet]) => ({
+            index,
+            featureIds: Array.from(featureSet.values()),
+        })),
         visitedCells: Array.from(this.visitedCells.values()),
         viewport: { cellSize: this.grid.cellSize, offsetX: this.grid.offsetX, offsetY: this.grid.offsetY },
     });
@@ -56,7 +60,30 @@ export default class WorldMapPersistenceAndSelection extends WorldMapRoadNetwork
                 }
             });
         }
+        this.clearAllLocationFeatures();
+        this.villageIndexSet.forEach((index) => {
+            const col = index % this.grid.columns;
+            const row = Math.floor(index / this.grid.columns);
+            this.addLocationFeatureAt(col, row, 'village');
+        });
         this.generateVillageRoadNetwork();
+        if (Array.isArray(state.locationFeatures)) {
+            state.locationFeatures.forEach((entry) => {
+                if (!entry || typeof entry !== 'object') {
+                    return;
+                }
+                const index = Number((entry as { index?: unknown }).index);
+                const featureIds = (entry as { featureIds?: unknown }).featureIds;
+                if (!Number.isInteger(index) || index < 0 || index >= this.grid.columns * this.grid.rows || !Array.isArray(featureIds)) {
+                    return;
+                }
+                const col = index % this.grid.columns;
+                const row = Math.floor(index / this.grid.columns);
+                featureIds
+                    .filter((featureId): featureId is 'village' | 'ferry-dock' => featureId === 'village' || featureId === 'ferry-dock')
+                    .forEach((featureId) => this.addLocationFeatureAt(col, row, featureId));
+            });
+        }
 
         if (Array.isArray(state.visitedCells)) {
             this.visitedCells = new Set(state.visitedCells.filter((entry): entry is string => typeof entry === 'string'));
@@ -114,7 +141,8 @@ export default class WorldMapPersistenceAndSelection extends WorldMapRoadNetwork
             return null;
         }
 
-        const isVillage = this.villageIndexSet.has(this.getCellIndex(this.selectedGridPos.col, this.selectedGridPos.row));
+        const isVillage = this.hasLocationFeatureAt(this.selectedGridPos.col, this.selectedGridPos.row, 'village');
+        const locationFeatureIds = this.getLocationFeatureIdsAt(this.selectedGridPos.col, this.selectedGridPos.row);
         const isCurrentVillage = isVillage
             && this.selectedGridPos.col === this.playerGridPos.col
             && this.selectedGridPos.row === this.playerGridPos.row;
@@ -129,6 +157,7 @@ export default class WorldMapPersistenceAndSelection extends WorldMapRoadNetwork
             isVillage,
             villageName: isVillage ? this.getVillageName(this.selectedGridPos.col, this.selectedGridPos.row) : null,
             villageStatus: isVillage ? (isCurrentVillage ? 'current' : 'mapped') : null,
+            locationFeatureIds,
             isTraversable: terrain.type !== 'water',
         };
     }
