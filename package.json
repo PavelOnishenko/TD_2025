@@ -8,6 +8,7 @@
     "watch": "tsc --watch",
     "clean": "rm -rf dist",
     "build:rgfn": "tsc -p rgfn_game/tsconfig.json",
+    "test:rgfn": "npm run build:rgfn && node --test rgfn_game/test/**/*.test.js",
     "watch:rgfn": "tsc -p rgfn_game/tsconfig.json --watch",
     "build:eva": "tsc -p eva_game/tsconfig.json",
     "watch:eva": "tsc -p eva_game/tsconfig.json --watch",

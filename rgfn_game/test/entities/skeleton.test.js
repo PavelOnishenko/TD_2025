@@ -29,6 +29,7 @@ test('Skeleton initializes from config and deactivates on death', () => {
 test('Skeleton behavior checks follow configured avoid/damage/pass semantics', () => {
   const ninjaAlwaysAvoids = createEnemyWithBehavior(balanceConfig.enemies.ninja, { avoidHitChance: 1 });
   const ninjaNeverAvoids = createEnemyWithBehavior(balanceConfig.enemies.ninja, { avoidHitChance: 0 });
+  ninjaNeverAvoids.avoidChance = 0;
 
   const knightAlwaysCrits = createEnemyWithBehavior(balanceConfig.enemies.darkKnight, { doubleDamageChance: 1 });
   const knightNeverCrits = createEnemyWithBehavior(balanceConfig.enemies.darkKnight, { doubleDamageChance: 0 });
