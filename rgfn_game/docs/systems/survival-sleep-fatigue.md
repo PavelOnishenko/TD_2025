@@ -29,6 +29,10 @@ So roughly one full “hard but normal” travel day maps to filling the fatigue
 - `wildSleepAmbushChance`
 - `wildSleepAmbushHpLoss`
 - `wildSleepAmbushManaLoss`
+- `doctorHealCostGold`
+- `innMealCostGold`
+- `innMealHpRecovery`
+- `innMealManaRecovery`
 - `innRoomCostGold`
 
 ### Player stat additions
@@ -59,10 +63,25 @@ Fatigue is also saved/restored in save-state snapshots.
 
 This models unsafe sleep outside settled places.
 
-#### 2) Village inn sleep (safe)
+#### 2) Village services (paid recovery only)
+
+- Free village waiting recovery has been removed.
+- Village sustain now requires explicit paid actions:
+  - **Doctor treatment (4g)**:
+    - pays `doctorHealCostGold`,
+    - restores HP to full,
+    - does not restore mana/fatigue.
+  - **Inn meal (2g)**:
+    - pays `innMealCostGold`,
+    - restores `innMealHpRecovery` HP,
+    - restores `innMealManaRecovery` mana.
+
+This prevents free spam-healing in villages and makes gold management part of survival.
+
+#### 3) Village inn sleep (safe)
 
 - NPC role pool now includes `Innkeeper`.
-- New village action button: **Sleep in room**.
+- Village action button: **Sleep in room**.
 - Only enabled when an innkeeper-like NPC is selected.
 - Effects:
   - pay `innRoomCostGold`
