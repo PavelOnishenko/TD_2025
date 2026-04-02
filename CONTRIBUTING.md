@@ -24,6 +24,16 @@ npm run lint:ts:rgfn:fix
 
 `npm run lint:ts:rgfn` now runs:
 1) ESLint for `rgfn_game/**/*.ts`, and
-2) style-guide audit report for `rgfn_game/` only (`Top files over limit`, `Top files with long functions`, `Top folders over children limit`).
+2) style-guide audit report for `rgfn_game/` only (Rule 16 folder-child backlog).
+
+Important Rule 2/3 behavior change (enforced by ESLint, not audit-only):
+- File length:
+  - **warning** for **200-399** lines
+  - **error** for **400+** lines
+- Function/method length:
+  - **warning** for **20-39** lines
+  - **error** for **40+** lines
+
+These now show as regular ESLint warnings/errors in the main lint output.
 
 Use full-repository lint (`npm run lint:ts`) when your changes affect shared code (for example `engine/`, root-level scripts/config, or multiple games). Use `npm run style-guide:audit` for repository-wide audit output, or `npm run style-guide:audit:rgfn` for RGFN-only audit output.
