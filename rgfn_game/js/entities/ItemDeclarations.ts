@@ -1,6 +1,8 @@
-export type ItemId = 'bow_t1' | 'healingPotion' | 'manaPotion';
+export type ItemId = string;
 
 export type EquipmentHands = 1 | 2;
+
+export type ItemType = 'weapon' | 'armor' | 'consumable' | 'quest' | 'misc';
 
 export interface ItemRequirements {
     agility?: number;
@@ -17,7 +19,7 @@ export interface ItemData {
     id: string;
     name: string;
     description: string;
-    type: 'weapon' | 'armor' | 'consumable';
+    type: ItemType;
     attackRange?: number;
     handsRequired?: EquipmentHands;
     damageBonus?: number;
