@@ -58,46 +58,9 @@ export default class LoreBookController {
         const playerSkills = this.player.getSkillRecord();
         const playerBaseStats = this.player.getBaseStatsRecord();
         const villages = this.worldMap.getKnownVillages();
-        const archetypeMarkup = Object.values(balanceConfig.creatureArchetypes)
-            .map((archetype) => {
-                const derived = deriveArchetypeStats(archetype);
-                return `
-                    <article class="lore-entry">
-                        <h4>${this.escapeHtml(archetype.name)} <span class="lore-tag">${this.escapeHtml(archetype.category)}</span></h4>
-                        <p>${this.escapeHtml(archetype.description)}</p>
-                        <p><strong>Base stats:</strong> HP ${archetype.baseStats.hp}, DMG ${archetype.baseStats.damage}, ARM ${archetype.baseStats.armor}, Mana ${archetype.baseStats.mana}</p>
-                        <p><strong>Skills:</strong> ${this.escapeHtml(formatCreatureSkills(archetype.skills))}</p>
-                        <p><strong>Resulting stats:</strong> HP ${derived.maxHp}, DMG ${derived.physicalDamage}, ARM ${derived.armor}, Dodge ${(derived.avoidChance * 100).toFixed(1)}%, Mana ${derived.maxMana}, Magic ${derived.magicPoints}</p>
-                        ${archetype.notes?.length ? `<ul>${archetype.notes.map((note) => `<li>${this.escapeHtml(note)}</li>`).join('')}</ul>` : ''}
-                    </article>
-                `;
-            })
-            .join('');
-
-        const travelerMarkup = Array.from(this.knownTravelers.values())
-            .sort((left, right) => left.name.localeCompare(right.name) || left.level - right.level)
-            .map((traveler) => `
-                <article class="lore-entry">
-                    <h4>${this.escapeHtml(traveler.name)} <span class="lore-tag">wanderer Lv.${traveler.level}</span></h4>
-                    <p><strong>Disposition:</strong> ${this.escapeHtml(traveler.disposition)}</p>
-                    <p><strong>Base stats:</strong> HP ${traveler.baseStats.hp}, DMG ${traveler.baseStats.damage}, ARM ${traveler.baseStats.armor}, Mana ${traveler.baseStats.mana}</p>
-                    <p><strong>Skills:</strong> ${this.escapeHtml(formatCreatureSkills(traveler.skills))}</p>
-                    <p><strong>Resulting stats:</strong> HP ${traveler.maxHp}, DMG ${traveler.damage}, ARM ${traveler.armor}, Mana ${traveler.maxMana}, Magic ${traveler.magicPoints}</p>
-                    <p>${this.escapeHtml(traveler.encounterDescription)}</p>
-                </article>
-            `)
-            .join('') || '<p class="lore-empty">No wanderers recorded yet.</p>';
-
-        const villageMarkup = villages.length > 0
-            ? villages.map((village) => `
-                <article class="lore-entry">
-                    <h4>${this.escapeHtml(village.name)}</h4>
-                    <p><strong>Location:</strong> (${village.col}, ${village.row})</p>
-                    <p><strong>Terrain:</strong> ${this.escapeHtml(village.terrain)}</p>
-                    <p><strong>Status:</strong> ${this.escapeHtml(village.status)}</p>
-                </article>
-            `).join('')
-            : '<p class="lore-empty">No villages discovered yet.</p>';
+        const archetypeMarkup = this.buildArchetypeMarkup();
+        const travelerMarkup = this.buildTravelerMarkup();
+        const villageMarkup = this.buildVillageMarkup(villages);
 
         this.elements.loreBody.innerHTML = `
             <section class="lore-section">
@@ -123,6 +86,54 @@ export default class LoreBookController {
                 ${archetypeMarkup}
             </section>
         `;
+    }
+
+    private buildArchetypeMarkup(): string {
+        return Object.values(balanceConfig.creatureArchetypes)
+            .map((archetype) => {
+                const derived = deriveArchetypeStats(archetype);
+                return `
+                    <article class="lore-entry">
+                        <h4>${this.escapeHtml(archetype.name)} <span class="lore-tag">${this.escapeHtml(archetype.category)}</span></h4>
+                        <p>${this.escapeHtml(archetype.description)}</p>
+                        <p><strong>Base stats:</strong> HP ${archetype.baseStats.hp}, DMG ${archetype.baseStats.damage}, ARM ${archetype.baseStats.armor}, Mana ${archetype.baseStats.mana}</p>
+                        <p><strong>Skills:</strong> ${this.escapeHtml(formatCreatureSkills(archetype.skills))}</p>
+                        <p><strong>Resulting stats:</strong> HP ${derived.maxHp}, DMG ${derived.physicalDamage}, ARM ${derived.armor}, Dodge ${(derived.avoidChance * 100).toFixed(1)}%, Mana ${derived.maxMana}, Magic ${derived.magicPoints}</p>
+                        ${archetype.notes?.length ? `<ul>${archetype.notes.map((note) => `<li>${this.escapeHtml(note)}</li>`).join('')}</ul>` : ''}
+                    </article>
+                `;
+            })
+            .join('');
+    }
+
+    private buildTravelerMarkup(): string {
+        return Array.from(this.knownTravelers.values())
+            .sort((left, right) => left.name.localeCompare(right.name) || left.level - right.level)
+            .map((traveler) => `
+                <article class="lore-entry">
+                    <h4>${this.escapeHtml(traveler.name)} <span class="lore-tag">wanderer Lv.${traveler.level}</span></h4>
+                    <p><strong>Disposition:</strong> ${this.escapeHtml(traveler.disposition)}</p>
+                    <p><strong>Base stats:</strong> HP ${traveler.baseStats.hp}, DMG ${traveler.baseStats.damage}, ARM ${traveler.baseStats.armor}, Mana ${traveler.baseStats.mana}</p>
+                    <p><strong>Skills:</strong> ${this.escapeHtml(formatCreatureSkills(traveler.skills))}</p>
+                    <p><strong>Resulting stats:</strong> HP ${traveler.maxHp}, DMG ${traveler.damage}, ARM ${traveler.armor}, Mana ${traveler.maxMana}, Magic ${traveler.magicPoints}</p>
+                    <p>${this.escapeHtml(traveler.encounterDescription)}</p>
+                </article>
+            `)
+            .join('') || '<p class="lore-empty">No wanderers recorded yet.</p>';
+    }
+
+    private buildVillageMarkup(villages: ReturnType<WorldMap['getKnownVillages']>): string {
+        if (villages.length === 0) {
+            return '<p class="lore-empty">No villages discovered yet.</p>';
+        }
+        return villages.map((village) => `
+            <article class="lore-entry">
+                <h4>${this.escapeHtml(village.name)}</h4>
+                <p><strong>Location:</strong> (${village.col}, ${village.row})</p>
+                <p><strong>Terrain:</strong> ${this.escapeHtml(village.terrain)}</p>
+                <p><strong>Status:</strong> ${this.escapeHtml(village.status)}</p>
+            </article>
+        `).join('');
     }
 
     private escapeHtml = (value: string): string => value

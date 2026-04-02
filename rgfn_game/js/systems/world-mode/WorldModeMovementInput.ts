@@ -32,43 +32,8 @@ export default class WorldModeMovementInput {
         const leftPressed = this.wasMoveTriggered('moveLeft');
         const rightPressed = this.wasMoveTriggered('moveRight');
 
-        if (upPressed && leftPressed) {
-            return 'upLeft';
-        }
-        if (upPressed && rightPressed) {
-            return 'upRight';
-        }
-        if (downPressed && leftPressed) {
-            return 'downLeft';
-        }
-        if (downPressed && rightPressed) {
-            return 'downRight';
-        }
-
-        if (upPressed && this.input.isActionActive('moveLeft')) {
-            return 'upLeft';
-        }
-        if (upPressed && this.input.isActionActive('moveRight')) {
-            return 'upRight';
-        }
-        if (downPressed && this.input.isActionActive('moveLeft')) {
-            return 'downLeft';
-        }
-        if (downPressed && this.input.isActionActive('moveRight')) {
-            return 'downRight';
-        }
-        if (leftPressed && this.input.isActionActive('moveUp')) {
-            return 'upLeft';
-        }
-        if (leftPressed && this.input.isActionActive('moveDown')) {
-            return 'downLeft';
-        }
-        if (rightPressed && this.input.isActionActive('moveUp')) {
-            return 'upRight';
-        }
-        if (rightPressed && this.input.isActionActive('moveDown')) {
-            return 'downRight';
-        }
+        const diagonal = this.getPendingDiagonalMove(upPressed, downPressed, leftPressed, rightPressed);
+        if (diagonal) {return diagonal;}
 
         if (upPressed) {
             return 'up';
@@ -83,6 +48,22 @@ export default class WorldModeMovementInput {
             return 'right';
         }
 
+        return null;
+    }
+
+    private getPendingDiagonalMove(upPressed: boolean, downPressed: boolean, leftPressed: boolean, rightPressed: boolean): Direction | null {
+        if (upPressed && leftPressed) {return 'upLeft';}
+        if (upPressed && rightPressed) {return 'upRight';}
+        if (downPressed && leftPressed) {return 'downLeft';}
+        if (downPressed && rightPressed) {return 'downRight';}
+        if (upPressed && this.input.isActionActive('moveLeft')) {return 'upLeft';}
+        if (upPressed && this.input.isActionActive('moveRight')) {return 'upRight';}
+        if (downPressed && this.input.isActionActive('moveLeft')) {return 'downLeft';}
+        if (downPressed && this.input.isActionActive('moveRight')) {return 'downRight';}
+        if (leftPressed && this.input.isActionActive('moveUp')) {return 'upLeft';}
+        if (leftPressed && this.input.isActionActive('moveDown')) {return 'downLeft';}
+        if (rightPressed && this.input.isActionActive('moveUp')) {return 'upRight';}
+        if (rightPressed && this.input.isActionActive('moveDown')) {return 'downRight';}
         return null;
     }
 

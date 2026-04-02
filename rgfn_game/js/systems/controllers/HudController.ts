@@ -41,16 +41,29 @@ export default class HudController {
         this.hudElements = hudElements;
         this.battleUI = battleUI;
         this.loreBookController = loreBookController;
+        const addLog = this.createLogAppender(gameLog);
+        this.inventoryController = this.createInventoryController(addLog);
+        this.equipmentController = this.createEquipmentController(onBattleEquipmentAction, addLog);
+        this.magicController = new HudMagicController(this.player, this.hudElements, this.battleUI, magicSystem);
+        this.panelStateController = new HudPanelStateController(this.hudElements);
+        this.selectionInfoController = new HudSelectionInfoController(this.hudElements);
 
-        const addLog = (message: string, type: string = 'system'): void => {
+        this.equipmentController.bindEquipmentSlotEvents();
+        this.inventoryController.bindInventoryRecoveryEvents();
+    }
+
+    private createLogAppender(gameLog: HTMLElement): (message: string, type?: string) => void {
+        return (message: string, type: string = 'system'): void => {
             const div = document.createElement('div');
             div.textContent = message;
             div.classList.add(`${type}-action`);
             gameLog.appendChild(div);
             gameLog.scrollTop = gameLog.scrollHeight;
         };
+    }
 
-        this.inventoryController = new HudInventoryController(
+    private createInventoryController(addLog: (message: string, type?: string) => void): HudInventoryController {
+        return new HudInventoryController(
             this.player,
             this.hudElements,
             (item) => this.equipmentController.handleEquipFromInventory(item),
@@ -59,7 +72,13 @@ export default class HudController {
             () => this.draggedInventoryIndex,
             (index) => { this.draggedInventoryIndex = index; },
         );
-        this.equipmentController = new HudEquipmentController(
+    }
+
+    private createEquipmentController(
+        onBattleEquipmentAction: BattleEquipmentActionHandler | undefined,
+        addLog: (message: string, type?: string) => void,
+    ): HudEquipmentController {
+        return new HudEquipmentController(
             this.player,
             this.hudElements,
             onBattleEquipmentAction ?? null,
@@ -68,12 +87,6 @@ export default class HudController {
             () => this.updateHUD(),
             (message) => addLog(message),
         );
-        this.magicController = new HudMagicController(this.player, this.hudElements, this.battleUI, magicSystem);
-        this.panelStateController = new HudPanelStateController(this.hudElements);
-        this.selectionInfoController = new HudSelectionInfoController(this.hudElements);
-
-        this.equipmentController.bindEquipmentSlotEvents();
-        this.inventoryController.bindInventoryRecoveryEvents();
     }
 
     public setPendingSkillAllocations = (pendingSkillAllocations: PendingSkillAllocations): void => {

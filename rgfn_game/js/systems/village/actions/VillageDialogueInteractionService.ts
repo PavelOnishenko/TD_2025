@@ -106,39 +106,43 @@ export default class VillageDialogueInteractionService {
             this.deps.addLog('Choose an NPC before trying to execute barter.', 'system');
             return;
         }
+        const deal = this.getActiveBarterDeal(selectedNpc.name);
+        if (!deal) {return;}
+        this.executeBarterWithNpc(selectedNpc.name, deal);
+    }
 
-        const deal = this.deps.barterService.getBarterDealForNpc(this.deps.getCurrentVillageName(), selectedNpc.name);
+    private getActiveBarterDeal(npcName: string): ReturnType<VillageBarterService['getBarterDealForNpc']> {
+        const deal = this.deps.barterService.getBarterDealForNpc(this.deps.getCurrentVillageName(), npcName);
         if (!deal) {
-            this.deps.addLog(`${selectedNpc.name} has no barter contract for you.`, 'system');
-            return;
+            this.deps.addLog(`${npcName} has no barter contract for you.`, 'system');
+            return null;
         }
-
         if (deal.isCompleted) {
-            this.deps.addLog(`${selectedNpc.name} reminds you that this barter is already fulfilled.`, 'system');
-            return;
+            this.deps.addLog(`${npcName} reminds you that this barter is already fulfilled.`, 'system');
+            return null;
         }
+        return deal;
+    }
 
+    private executeBarterWithNpc(npcName: string, deal: NonNullable<ReturnType<VillageBarterService['getBarterDealForNpc']>>): void {
         this.deps.addLog('You declare: "I have what you need, let\'s do our barter."', 'player');
         const payableOption = this.deps.barterService.findFirstPayableOption(this.deps.player, deal);
         if (!payableOption) {
             this.deps.addLog('Barter failed. You do not satisfy any payment option yet.', 'system');
-            this.deps.barterService.buildBarterVerificationTrace(this.deps.player, deal)
-                .forEach((line) => this.deps.addLog(line, 'system-message'));
+            this.deps.barterService.buildBarterVerificationTrace(this.deps.player, deal).forEach((line) => this.deps.addLog(line, 'system-message'));
             return;
         }
-
         if (!this.deps.player.addItemToInventory(deal.rewardItem)) {
             this.deps.addLog(`Inventory full. ${deal.rewardItem.name} cannot be received. Free a slot and try again.`, 'system');
             return;
         }
-
         this.deps.player.gold -= payableOption.goldCost;
         this.deps.barterService.consumeBarterItemCosts(this.deps.player, payableOption.itemCosts);
         deal.isCompleted = true;
         this.deps.addLog(`Barter accepted via "${payableOption.label}".`, 'system-message');
-        this.deps.addLog(`You hand over ${payableOption.goldCost}g and agreed tribute. ${selectedNpc.name} gives you ${deal.rewardItem.name}.`, 'system');
+        this.deps.addLog(`You hand over ${payableOption.goldCost}g and agreed tribute. ${npcName} gives you ${deal.rewardItem.name}.`, 'system');
         this.deps.addLog(`Quest-item transfer complete: ${deal.rewardItem.name} is now in your inventory.`, 'system-message');
-        this.deps.callbacks.onVillageBarterCompleted(selectedNpc.name, deal.rewardItem.name, this.deps.getCurrentVillageName());
+        this.deps.callbacks.onVillageBarterCompleted(npcName, deal.rewardItem.name, this.deps.getCurrentVillageName());
         this.deps.callbacks.onUpdateHUD();
         this.deps.updateButtons();
     }

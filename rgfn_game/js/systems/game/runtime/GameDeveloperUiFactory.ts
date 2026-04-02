@@ -11,11 +11,7 @@ export class GameDeveloperUiFactory {
         encounterTypeSummary: document.getElementById('dev-encounter-types-summary')!,
         enableAllEncountersBtn: document.getElementById('dev-encounter-types-enable-all-btn')! as HTMLButtonElement,
         disableAllEncountersBtn: document.getElementById('dev-encounter-types-disable-all-btn')! as HTMLButtonElement,
-        encounterTypeToggles: {
-            monster: document.getElementById('dev-encounter-type-monster')! as HTMLInputElement,
-            item: document.getElementById('dev-encounter-type-item')! as HTMLInputElement,
-            traveler: document.getElementById('dev-encounter-type-traveler')! as HTMLInputElement,
-        },
+        encounterTypeToggles: this.createEncounterTypeToggles(),
         nextRollOpenBtn: document.getElementById('dev-next-roll-open-btn')! as HTMLButtonElement,
         nextRollSummary: document.getElementById('dev-next-roll-summary')!,
         nextRollModal: document.getElementById('dev-next-roll-modal')!,
@@ -24,14 +20,7 @@ export class GameDeveloperUiFactory {
         nextRollStatus: document.getElementById('dev-next-roll-status')!,
         nextRollSaveBtn: document.getElementById('dev-next-roll-save-btn')! as HTMLButtonElement,
         nextRollClearBtn: document.getElementById('dev-next-roll-clear-btn')! as HTMLButtonElement,
-        nextRollInputs: {
-            vitality: document.getElementById('dev-next-roll-vitality')! as HTMLInputElement,
-            toughness: document.getElementById('dev-next-roll-toughness')! as HTMLInputElement,
-            strength: document.getElementById('dev-next-roll-strength')! as HTMLInputElement,
-            agility: document.getElementById('dev-next-roll-agility')! as HTMLInputElement,
-            connection: document.getElementById('dev-next-roll-connection')! as HTMLInputElement,
-            intelligence: document.getElementById('dev-next-roll-intelligence')! as HTMLInputElement,
-        },
+        nextRollInputs: this.createNextRollInputs(),
         randomModeSelect: document.getElementById('dev-random-mode')! as HTMLSelectElement,
         randomSeedInput: document.getElementById('dev-random-seed')! as HTMLInputElement,
         randomSummary: document.getElementById('dev-random-summary')!,
@@ -41,4 +30,23 @@ export class GameDeveloperUiFactory {
         everythingDiscoveredToggle: document.getElementById('dev-map-display-everything-discovered')! as HTMLInputElement,
         fogOfWarToggle: document.getElementById('dev-map-display-fog-of-war')! as HTMLInputElement,
     });
+
+    private createEncounterTypeToggles(): DeveloperUI['encounterTypeToggles'] {
+        return {
+            monster: document.getElementById('dev-encounter-type-monster')! as HTMLInputElement,
+            item: document.getElementById('dev-encounter-type-item')! as HTMLInputElement,
+            traveler: document.getElementById('dev-encounter-type-traveler')! as HTMLInputElement,
+        };
+    }
+
+    private createNextRollInputs(): DeveloperUI['nextRollInputs'] {
+        return {
+            vitality: document.getElementById('dev-next-roll-vitality')! as HTMLInputElement,
+            toughness: document.getElementById('dev-next-roll-toughness')! as HTMLInputElement,
+            strength: document.getElementById('dev-next-roll-strength')! as HTMLInputElement,
+            agility: document.getElementById('dev-next-roll-agility')! as HTMLInputElement,
+            connection: document.getElementById('dev-next-roll-connection')! as HTMLInputElement,
+            intelligence: document.getElementById('dev-next-roll-intelligence')! as HTMLInputElement,
+        };
+    }
 }

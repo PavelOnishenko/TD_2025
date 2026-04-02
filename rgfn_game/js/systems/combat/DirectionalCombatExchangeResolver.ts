@@ -87,24 +87,33 @@ export class DirectionalCombatExchangeResolver {
         }
 
         if (relation === 'adjacent') {
-            actor.damageDealt = Math.round(actorDamage * (params.actorBuffs.hasBlockAdvantage ? 1 : balanceConfig.combat.adjacentAttackDamagePenalty));
-            opponent.damageDealt = Math.round(opponentDamage * (params.opponentBuffs.hasBlockAdvantage ? 1 : balanceConfig.combat.adjacentAttackDamagePenalty));
-            summaryLogs.push('The attacks were adjacent lanes, so both hits are reduced unless Block Advantage removes the penalty.');
-            summaryLogs.push(
-                params.actorBuffs.hasBlockAdvantage
-                    ? `${params.actorName}'s Block Advantage upgrades the adjacent attack to full damage.`
-                    : `${params.actorName}'s damage is reduced by adjacentAttackDamagePenalty (${balanceConfig.combat.adjacentAttackDamagePenalty}).`,
-            );
-            summaryLogs.push(
-                params.opponentBuffs.hasBlockAdvantage
-                    ? `${params.opponentName}'s Block Advantage upgrades the adjacent attack to full damage.`
-                    : `${params.opponentName}'s damage is reduced by adjacentAttackDamagePenalty (${balanceConfig.combat.adjacentAttackDamagePenalty}).`,
-            );
+            this.applyAdjacentAttackResolution(params, actor, opponent, actorDamage, opponentDamage, summaryLogs);
             return true;
         }
 
         summaryLogs.push('The attacks came from opposite lanes, so both attacks miss.');
         return true;
+    }
+
+    private applyAdjacentAttackResolution(
+        params: ExchangeParams,
+        actor: MoveResolution,
+        opponent: MoveResolution,
+        actorDamage: number,
+        opponentDamage: number,
+        summaryLogs: string[],
+    ): void {
+        actor.damageDealt = Math.round(actorDamage * (params.actorBuffs.hasBlockAdvantage ? 1 : balanceConfig.combat.adjacentAttackDamagePenalty));
+        opponent.damageDealt = Math.round(opponentDamage * (params.opponentBuffs.hasBlockAdvantage ? 1 : balanceConfig.combat.adjacentAttackDamagePenalty));
+        summaryLogs.push('The attacks were adjacent lanes, so both hits are reduced unless Block Advantage removes the penalty.');
+        this.appendAdjacentAttackLog(summaryLogs, params.actorName, params.actorBuffs.hasBlockAdvantage);
+        this.appendAdjacentAttackLog(summaryLogs, params.opponentName, params.opponentBuffs.hasBlockAdvantage);
+    }
+
+    private appendAdjacentAttackLog(summaryLogs: string[], actorName: string, hasBlockAdvantage: boolean): void {
+        summaryLogs.push(hasBlockAdvantage
+            ? `${actorName}'s Block Advantage upgrades the adjacent attack to full damage.`
+            : `${actorName}'s damage is reduced by adjacentAttackDamagePenalty (${balanceConfig.combat.adjacentAttackDamagePenalty}).`);
     }
 
     private resolveAttackVsBlock(

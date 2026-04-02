@@ -37,40 +37,7 @@ export default class WorldMapGeometryUtils {
 
     public createDiagonalRibbonPath(x: number, y: number, width: number, height: number, corner: 'northWest' | 'northEast' | 'southWest' | 'southEast'): Path2D {
         const ribbon = new Path2D();
-        const cornerPoints = {
-            northWest: {
-                start: [x + (width * 0.48), y + (height * 0.26)],
-                tip: [x + (width * 0.08), y + (height * 0.08)],
-                end: [x + (width * 0.26), y + (height * 0.48)],
-                leftControl: [x + (width * 0.24), y + (height * 0.18)],
-                rightControl: [x + (width * 0.18), y + (height * 0.24)],
-                centerControl: [x + (width * 0.38), y + (height * 0.38)],
-            },
-            northEast: {
-                start: [x + (width * 0.52), y + (height * 0.26)],
-                tip: [x + (width * 0.92), y + (height * 0.08)],
-                end: [x + (width * 0.74), y + (height * 0.48)],
-                leftControl: [x + (width * 0.76), y + (height * 0.18)],
-                rightControl: [x + (width * 0.82), y + (height * 0.24)],
-                centerControl: [x + (width * 0.62), y + (height * 0.38)],
-            },
-            southWest: {
-                start: [x + (width * 0.26), y + (height * 0.52)],
-                tip: [x + (width * 0.08), y + (height * 0.92)],
-                end: [x + (width * 0.48), y + (height * 0.74)],
-                leftControl: [x + (width * 0.18), y + (height * 0.76)],
-                rightControl: [x + (width * 0.24), y + (height * 0.82)],
-                centerControl: [x + (width * 0.38), y + (height * 0.62)],
-            },
-            southEast: {
-                start: [x + (width * 0.74), y + (height * 0.52)],
-                tip: [x + (width * 0.92), y + (height * 0.92)],
-                end: [x + (width * 0.52), y + (height * 0.74)],
-                leftControl: [x + (width * 0.82), y + (height * 0.76)],
-                rightControl: [x + (width * 0.76), y + (height * 0.82)],
-                centerControl: [x + (width * 0.62), y + (height * 0.62)],
-            },
-        }[corner];
+        const cornerPoints = this.getRibbonCornerPoints(x, y, width, height)[corner];
 
         ribbon.moveTo(cornerPoints.start[0], cornerPoints.start[1]);
         ribbon.quadraticCurveTo(cornerPoints.leftControl[0], cornerPoints.leftControl[1], cornerPoints.tip[0], cornerPoints.tip[1]);
@@ -78,5 +45,14 @@ export default class WorldMapGeometryUtils {
         ribbon.quadraticCurveTo(cornerPoints.centerControl[0], cornerPoints.centerControl[1], cornerPoints.start[0], cornerPoints.start[1]);
         ribbon.closePath();
         return ribbon;
+    }
+
+    private getRibbonCornerPoints(x: number, y: number, width: number, height: number): Record<'northWest' | 'northEast' | 'southWest' | 'southEast', Record<'start' | 'tip' | 'end' | 'leftControl' | 'rightControl' | 'centerControl', [number, number]>> {
+        return {
+            northWest: { start: [x + (width * 0.48), y + (height * 0.26)], tip: [x + (width * 0.08), y + (height * 0.08)], end: [x + (width * 0.26), y + (height * 0.48)], leftControl: [x + (width * 0.24), y + (height * 0.18)], rightControl: [x + (width * 0.18), y + (height * 0.24)], centerControl: [x + (width * 0.38), y + (height * 0.38)] },
+            northEast: { start: [x + (width * 0.52), y + (height * 0.26)], tip: [x + (width * 0.92), y + (height * 0.08)], end: [x + (width * 0.74), y + (height * 0.48)], leftControl: [x + (width * 0.76), y + (height * 0.18)], rightControl: [x + (width * 0.82), y + (height * 0.24)], centerControl: [x + (width * 0.62), y + (height * 0.38)] },
+            southWest: { start: [x + (width * 0.26), y + (height * 0.52)], tip: [x + (width * 0.08), y + (height * 0.92)], end: [x + (width * 0.48), y + (height * 0.74)], leftControl: [x + (width * 0.18), y + (height * 0.76)], rightControl: [x + (width * 0.24), y + (height * 0.82)], centerControl: [x + (width * 0.38), y + (height * 0.62)] },
+            southEast: { start: [x + (width * 0.74), y + (height * 0.52)], tip: [x + (width * 0.92), y + (height * 0.92)], end: [x + (width * 0.52), y + (height * 0.74)], leftControl: [x + (width * 0.82), y + (height * 0.76)], rightControl: [x + (width * 0.76), y + (height * 0.82)], centerControl: [x + (width * 0.62), y + (height * 0.62)] },
+        };
     }
 }

@@ -150,53 +150,49 @@ export default class WorldMapVillageNavigationAndRender extends WorldMapMovement
         this.renderer.drawBackground(ctx, this.canvasWidth, this.canvasHeight);
         const bounds = this.getVisibleBounds();
         const detailLevel = this.getRenderDetailLevel(bounds);
-        // Keep terrain seamless and avoid decorative tabletop-like cell borders.
-        const drawGrid = false;
-        const shouldUseTerrainCache = detailLevel === 'low' || detailLevel === 'medium';
-
-        const terrainRenderedFromCache = shouldUseTerrainCache
-            && this.drawTerrainLayerFromCache(ctx, bounds, detailLevel);
-
-        if (!terrainRenderedFromCache) {
-            for (let row = bounds.startRow; row <= bounds.endRow; row += 1) {
-                for (let col = bounds.startCol; col <= bounds.endCol; col += 1) {
-                    const cell = this.grid.cells[this.getCellIndex(col, row)];
-                    const terrain = this.getTerrain(col, row);
-                    if (!cell) {
-                        continue;
-                    }
-
-                    this.renderer.drawCell(
-                        ctx,
-                        cell,
-                        this.getFogState(col, row),
-                        terrain,
-                        detailLevel === 'full' && terrain ? this.getTerrainNeighbors(col, row, terrain.type) : undefined,
-                        { showFogOverlay: this.mapDisplayConfig.fogOfWar, detailLevel },
-                    );
-                }
-            }
-        }
-        if (terrainRenderedFromCache) {
-            this.drawFogOverlayForVisibleCells(ctx, bounds, detailLevel);
-        }
-
-        if (drawGrid) {
-            this.renderer.drawGrid(ctx, this.grid, this.canvasWidth, this.canvasHeight);
-        }
+        this.drawTerrainLayer(ctx, bounds, detailLevel);
         this.drawVillageRoads(ctx, bounds);
         this.drawLocationFeatures(ctx, bounds);
         this.drawNamedLocations(ctx, bounds);
         this.drawNamedLocationFocus(ctx);
-        const playerCell = this.grid.getCellAt(this.playerGridPos.col, this.playerGridPos.row);
-        if (playerCell) {
-            this.renderer.drawPlayerMarker(ctx, playerCell);
-        }
-        const selectedCell = this.selectedGridPos ? this.grid.getCellAt(this.selectedGridPos.col, this.selectedGridPos.row) : null;
-        if (selectedCell) {
-            this.renderer.drawCursorMarker(ctx, selectedCell, this.isCellVisible(selectedCell.col, selectedCell.row));
-        }
+        this.drawMarkers(ctx);
         this.renderer.drawScaleLegend(ctx, this.grid, `${theme.worldMap.cellTravelMinutes} min walk / cell`, this.canvasWidth, this.canvasHeight);
+    }
+
+    private drawTerrainLayer(
+        ctx: CanvasRenderingContext2D,
+        bounds: { startCol: number; endCol: number; startRow: number; endRow: number },
+        detailLevel: 'full' | 'medium' | 'low',
+    ): void {
+        const shouldUseTerrainCache = detailLevel === 'low' || detailLevel === 'medium';
+        const terrainRenderedFromCache = shouldUseTerrainCache && this.drawTerrainLayerFromCache(ctx, bounds, detailLevel);
+        if (!terrainRenderedFromCache) {
+            this.drawTerrainCells(ctx, bounds, detailLevel);
+            return;
+        }
+        this.drawFogOverlayForVisibleCells(ctx, bounds, detailLevel);
+    }
+
+    private drawTerrainCells(ctx: CanvasRenderingContext2D, bounds: { startCol: number; endCol: number; startRow: number; endRow: number }, detailLevel: 'full' | 'medium' | 'low'): void {
+        for (let row = bounds.startRow; row <= bounds.endRow; row += 1) {
+            for (let col = bounds.startCol; col <= bounds.endCol; col += 1) {
+                const cell = this.grid.cells[this.getCellIndex(col, row)];
+                const terrain = this.getTerrain(col, row);
+                if (!cell) {continue;}
+                this.renderer.drawCell(
+                    ctx, cell, this.getFogState(col, row), terrain,
+                    detailLevel === 'full' && terrain ? this.getTerrainNeighbors(col, row, terrain.type) : undefined,
+                    { showFogOverlay: this.mapDisplayConfig.fogOfWar, detailLevel },
+                );
+            }
+        }
+    }
+
+    private drawMarkers(ctx: CanvasRenderingContext2D): void {
+        const playerCell = this.grid.getCellAt(this.playerGridPos.col, this.playerGridPos.row);
+        if (playerCell) {this.renderer.drawPlayerMarker(ctx, playerCell);}
+        const selectedCell = this.selectedGridPos ? this.grid.getCellAt(this.selectedGridPos.col, this.selectedGridPos.row) : null;
+        if (selectedCell) {this.renderer.drawCursorMarker(ctx, selectedCell, this.isCellVisible(selectedCell.col, selectedCell.row));}
     }
 
 }

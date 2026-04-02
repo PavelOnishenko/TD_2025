@@ -24,47 +24,52 @@ export class ItemDiscoverySplash {
      * Creates the overlay UI structure
      */
     private createUI(): void {
-        // Create overlay container
-        const overlay = document.createElement('div');
-        overlay.className = 'item-discovery-overlay';
-        overlay.style.display = 'none';
-
-        // Create modal content
-        const modal = document.createElement('div');
-        modal.className = 'item-discovery-modal';
-
-        // Decorative border element
-        const decorativeBorder = document.createElement('div');
-        decorativeBorder.className = 'item-discovery-border';
-
-        // Title element
-        const title = document.createElement('h1');
-        title.className = 'item-discovery-title';
-        title.textContent = '🎁 ITEM DISCOVERED! 🎁';
-
-        // Item name element
-        const itemName = document.createElement('h2');
-        itemName.className = 'item-discovery-name';
-
-        // Item description element
-        const itemDescription = document.createElement('p');
-        itemDescription.className = 'item-discovery-description';
-
-        // Assemble structure
+        const overlay = this.createOverlay();
+        const modal = this.createModal();
+        const decorativeBorder = this.createDiv('item-discovery-border');
+        const title = this.createTitle();
+        const itemName = this.createHeading('h2', 'item-discovery-name');
+        const itemDescription = this.createHeading('p', 'item-discovery-description');
         modal.appendChild(decorativeBorder);
         modal.appendChild(title);
         modal.appendChild(itemName);
         modal.appendChild(itemDescription);
         overlay.appendChild(modal);
         document.body.appendChild(overlay);
-
-        // Store references
         this.overlay = overlay;
         this.modal = modal;
         this.title = title;
         this.itemName = itemName;
         this.itemDescription = itemDescription;
         this.decorativeBorder = decorativeBorder;
+    }
+
+    private createOverlay(): HTMLDivElement {
+        const overlay = this.createDiv('item-discovery-overlay');
+        overlay.style.display = 'none';
+        return overlay;
+    }
+
+    private createModal(): HTMLDivElement {
+        return this.createDiv('item-discovery-modal');
+    }
+
+    private createTitle(): HTMLHeadingElement {
+        const title = this.createHeading('h1', 'item-discovery-title');
+        title.textContent = '🎁 ITEM DISCOVERED! 🎁';
+        return title;
+    }
+
+    private createDiv(className: string): HTMLDivElement {
+        const element = document.createElement('div');
+        element.className = className;
+        return element;
+    }
+
+    private createHeading<K extends keyof HTMLElementTagNameMap>(tag: K, className: string): HTMLElementTagNameMap[K] {
+        const element = document.createElement(tag);
+        element.className = className;
+        return element;
     }
 
     /**
