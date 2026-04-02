@@ -20,14 +20,14 @@ export type RandomUserResponse = { results: Array<{ name: { first: string; last:
 export type LengthWeightMap = Partial<Record<1 | 2 | 3 | 4, number>>;
 
 export const ASSET_PATHS = {
-    ADJECTIVE: '../../../data/quest-packs/common/adjectives.txt',
-    NOUN: '../../../data/quest-packs/common/nouns.txt',
-    PREPOSITION: '../../../data/quest-packs/common/prepositions.txt',
-    WEAPON: '../../../data/quest-packs/common/weapons.txt',
-    GIVEN: '../../../data/quest-packs/people/given.txt',
-    FAMILY: '../../../data/quest-packs/people/family.txt',
-    ROLE: '../../../data/quest-packs/people/trader_roles.txt',
-    SPECIES: '../../../data/quest-packs/monsters/species.txt',
+    ADJECTIVE: '../../../../data/quest-packs/common/adjectives.txt',
+    NOUN: '../../../../data/quest-packs/common/nouns.txt',
+    PREPOSITION: '../../../../data/quest-packs/common/prepositions.txt',
+    WEAPON: '../../../../data/quest-packs/common/weapons.txt',
+    GIVEN: '../../../../data/quest-packs/people/given.txt',
+    FAMILY: '../../../../data/quest-packs/people/family.txt',
+    ROLE: '../../../../data/quest-packs/people/trader_roles.txt',
+    SPECIES: '../../../../data/quest-packs/monsters/species.txt',
 } as const;
 
 export const PLACE_URL = 'https://restcountries.com/v3.1/all?fields=name,capital,region,subregion';

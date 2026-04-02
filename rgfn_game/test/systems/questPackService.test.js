@@ -118,3 +118,27 @@ test('QuestPackService applies configured weighted word lengths so 4-word names 
   assert.equal(result.text.split(' ').length, 4);
   assert.equal(result.sourceTypes.every(type => type === 'local-pattern'), true);
 });
+
+test('QuestPackService ignores HTML/error payload tokens in local asset files', async () => {
+  const random = new ScriptedQuestRandom({
+    ints: [95],
+    picks: ['local-pattern', ['ROLE'], 'courier'],
+  });
+  const fetchImpl = createFetchStub({
+    'restcountries.com': new Error('offline'),
+    'randomuser.me': new Error('offline'),
+  });
+  const fileReader = async (path) => {
+    if (path.includes('trader_roles')) {
+      return '<pre>Cannot\\nAcquire <pre>Cannot from /rgfn_game/dist/data/quest-Packs/people/given.txt</pre> courier';
+    }
+    return createFileReader()(path);
+  };
+  const service = new QuestPackService({ fetchImpl, random, fileReader });
+
+  const result = await service.generateName('character', 1);
+
+  assert.equal(result.text, 'Courier');
+  assert.equal(result.text.includes('Cannot'), false);
+  assert.equal(result.text.includes('rgfn_game'), false);
+});
