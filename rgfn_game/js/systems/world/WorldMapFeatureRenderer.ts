@@ -93,10 +93,8 @@ export default class WorldMapFeatureRenderer {
         ctx.strokeStyle = this.colorUtils.withAlpha('#f8db66', 0.85 * glow);
         ctx.fillStyle = this.colorUtils.withAlpha(theme.ui.primaryBg, 0.78);
         ctx.lineWidth = 1.2;
-        ctx.beginPath();
-        ctx.rect(x - 5, y + 2, 10, 5);
-        ctx.fill();
-        ctx.stroke();
+        ctx.fillRect(x - 5, y + 2, 10, 5);
+        ctx.strokeRect(x - 5, y + 2, 10, 5);
         ctx.beginPath();
         ctx.arc(x, y + 1, 2.2, 0, Math.PI * 2);
         ctx.fillStyle = this.colorUtils.withAlpha('#f7d969', 0.95);

@@ -154,6 +154,7 @@ export default class WorldMapWaterAndSettlements extends WorldMapTerrainModeling
         const villageCount = this.getVillageTargetCount(dims.columns, dims.rows);
         this.villages.clear();
         this.villageIndexSet.clear();
+        this.clearLocationFeaturesById('village');
 
         for (let attempt = 0; this.villages.size < villageCount && attempt < dims.columns * dims.rows * 8; attempt += 1) {
             const col = this.seededInt(dims.columns, this.seededValue('village-col', attempt));
@@ -192,6 +193,7 @@ export default class WorldMapWaterAndSettlements extends WorldMapTerrainModeling
         const key = this.getCellKey(col, row);
         this.villages.add(key);
         this.villageIndexSet.add(this.getCellIndex(col, row));
+        this.addLocationFeatureAt(col, row, 'village');
     }
 
     private getTerrainColor = (type: TerrainType): string => theme.worldMap.terrain[type];

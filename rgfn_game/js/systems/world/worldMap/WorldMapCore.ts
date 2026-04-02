@@ -2,6 +2,7 @@
 import GridMap from '../../../utils/GridMap.js';
 import { FogState, MapDisplayConfig, TerrainData, GridPosition, GridCell, TerrainType } from '../../types/game.js';
 import WorldMapRenderer from './WorldMapRenderer.js';
+import { LocationFeatureId } from './locationFeatures/LocationFeatureDefinition.js';
 
 export type KnownVillage = {
     name: string;
@@ -75,6 +76,7 @@ export default class WorldMapCore {
     private villageRoadLinks: VillageRoadLink[];
     private ferryDockIndexSet: Set<number>;
     private ferryDockRoutesByIndex: Map<number, FerryDockRoute[]>;
+    private locationFeatureIndexMap: Map<number, Set<LocationFeatureId>>;
     private terrainLayerCaches: Partial<Record<'low' | 'medium', TerrainLayerCache>>;
     private fogRevision: number;
     private terrainRevision: number;
@@ -105,6 +107,7 @@ export default class WorldMapCore {
         this.villageRoadLinks = [];
         this.ferryDockIndexSet = new Set<number>();
         this.ferryDockRoutesByIndex = new Map<number, FerryDockRoute[]>();
+        this.locationFeatureIndexMap = new Map<number, Set<LocationFeatureId>>();
         this.terrainLayerCaches = {};
         this.fogRevision = 0;
         this.terrainRevision = 0;
@@ -132,6 +135,58 @@ export default class WorldMapCore {
         this.generateVillages();
         this.generateVillageRoadNetwork();
         this.pickRandomPlayerStart();
+    }
+
+    protected clearLocationFeaturesById(featureId: LocationFeatureId): void {
+        this.locationFeatureIndexMap.forEach((features, index) => {
+            if (!features.has(featureId)) {
+                return;
+            }
+            features.delete(featureId);
+            if (features.size === 0) {
+                this.locationFeatureIndexMap.delete(index);
+            } else {
+                this.locationFeatureIndexMap.set(index, features);
+            }
+        });
+    }
+
+    protected clearAllLocationFeatures(): void {
+        this.locationFeatureIndexMap.clear();
+    }
+
+    protected addLocationFeatureAt(col: number, row: number, featureId: LocationFeatureId): void {
+        if (!this.grid.isValidPosition(col, row)) {
+            return;
+        }
+        const index = this.getCellIndex(col, row);
+        const features = this.locationFeatureIndexMap.get(index) ?? new Set<LocationFeatureId>();
+        features.add(featureId);
+        this.locationFeatureIndexMap.set(index, features);
+    }
+
+    protected hasLocationFeatureAt(col: number, row: number, featureId: LocationFeatureId): boolean {
+        if (!this.grid.isValidPosition(col, row)) {
+            return false;
+        }
+        return this.locationFeatureIndexMap.get(this.getCellIndex(col, row))?.has(featureId) ?? false;
+    }
+
+    protected getLocationFeatureCells(featureId: LocationFeatureId): number[] {
+        const indexes: number[] = [];
+        this.locationFeatureIndexMap.forEach((features, index) => {
+            if (features.has(featureId)) {
+                indexes.push(index);
+            }
+        });
+        return indexes;
+    }
+
+    protected getLocationFeatureIdsAt(col: number, row: number): LocationFeatureId[] {
+        if (!this.grid.isValidPosition(col, row)) {
+            return [];
+        }
+        return Array.from(this.locationFeatureIndexMap.get(this.getCellIndex(col, row)) ?? []);
     }
 
 }

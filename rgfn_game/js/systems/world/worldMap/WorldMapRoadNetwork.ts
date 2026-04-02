@@ -55,6 +55,7 @@ export default class WorldMapRoadNetwork extends WorldMapNamedLocationAndVillage
         this.roadIndexSet.clear();
         this.ferryDockIndexSet.clear();
         this.ferryDockRoutesByIndex.clear();
+        this.clearLocationFeaturesById('ferry-dock');
         if (villages.length < 2) { this.villageRoadLinks = []; return; }
         const links = this.buildVillageRoadLinks(villages);
         this.villageRoadLinks = links.map(({ from, to }) => {
@@ -187,6 +188,8 @@ export default class WorldMapRoadNetwork extends WorldMapNamedLocationAndVillage
             this.pushFerryRoute(pair.to, pair.from, pair.waterCells);
             this.ferryDockIndexSet.add(this.getCellIndex(pair.from.col, pair.from.row));
             this.ferryDockIndexSet.add(this.getCellIndex(pair.to.col, pair.to.row));
+            this.addLocationFeatureAt(pair.from.col, pair.from.row, 'ferry-dock');
+            this.addLocationFeatureAt(pair.to.col, pair.to.row, 'ferry-dock');
         });
     }
 

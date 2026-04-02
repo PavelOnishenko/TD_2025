@@ -46,8 +46,7 @@ export default class WorldMapVillageNavigationAndRender extends WorldMapMovement
 
     public isPlayerOnRoad = (): boolean => this.isRoadAt(this.playerGridPos.col, this.playerGridPos.row);
     public isFerryDockAt(col: number, row: number): boolean {
-        if (!this.grid.isValidPosition(col, row)) {return false;}
-        return this.ferryDockIndexSet.has(this.getCellIndex(col, row));
+        return this.hasLocationFeatureAt(col, row, 'ferry-dock');
     }
     public isPlayerOnFerryDock = (): boolean => this.isFerryDockAt(this.playerGridPos.col, this.playerGridPos.row);
 
@@ -123,12 +122,13 @@ export default class WorldMapVillageNavigationAndRender extends WorldMapMovement
         return generateVillageName(seed);
     }
 
-    public isPlayerOnVillage = (): boolean => this.villageIndexSet.has(this.getCellIndex(this.playerGridPos.col, this.playerGridPos.row));
+    public isPlayerOnVillage = (): boolean => this.hasLocationFeatureAt(this.playerGridPos.col, this.playerGridPos.row, 'village');
 
     public markVillageAtPlayerPosition(): void {
         const key = this.getCellKey(this.playerGridPos.col, this.playerGridPos.row);
         this.villages.add(key);
         this.villageIndexSet.add(this.getCellIndex(this.playerGridPos.col, this.playerGridPos.row));
+        this.addLocationFeatureAt(this.playerGridPos.col, this.playerGridPos.row, 'village');
     }
 
     public isPlayerOnEdge(): boolean {
@@ -185,8 +185,7 @@ export default class WorldMapVillageNavigationAndRender extends WorldMapMovement
             this.renderer.drawGrid(ctx, this.grid, this.canvasWidth, this.canvasHeight);
         }
         this.drawVillageRoads(ctx, bounds);
-        this.drawFerryDocks(ctx, bounds);
-        this.drawVillages(ctx, bounds);
+        this.drawLocationFeatures(ctx, bounds);
         this.drawNamedLocations(ctx, bounds);
         this.drawNamedLocationFocus(ctx);
         const playerCell = this.grid.getCellAt(this.playerGridPos.col, this.playerGridPos.row);
