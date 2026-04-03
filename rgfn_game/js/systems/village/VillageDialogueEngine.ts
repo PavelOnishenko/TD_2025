@@ -26,6 +26,7 @@ export type VillageNpcProfile = {
     look: string;
     speechStyle: string;
     disposition: NpcDisposition;
+    settlementKnowledgeRadiusCells?: number;
 };
 
 export type VillageDialogueOutcome = {
@@ -70,6 +71,83 @@ export default class VillageDialogueEngine {
             return this.buildUnknownPersonAnswer(npc, hint);
         }
         return this.buildKnownPersonAnswer(npc, hint);
+    }
+
+    public buildNearbySettlementsAnswer(
+        npc: VillageNpcProfile,
+        knownSettlements: VillageDirectionHint[],
+        currentVillageName: string,
+    ): VillageDialogueOutcome {
+        if (npc.disposition === 'silent') {
+            return {
+                speech: '"I do not list roads and villages for every passerby."',
+                tone: `${npc.name} turns away and pretends to study the weather.`,
+                truthfulness: 'refusal',
+            };
+        }
+
+        const knowledgeRadius = npc.settlementKnowledgeRadiusCells ?? 20;
+        const nearbyKnown = knownSettlements
+            .filter((hint) => hint.exists && hint.settlementName !== currentVillageName && (hint.distanceCells ?? Number.MAX_SAFE_INTEGER) <= knowledgeRadius)
+            .sort((left, right) => (left.distanceCells ?? Number.MAX_SAFE_INTEGER) - (right.distanceCells ?? Number.MAX_SAFE_INTEGER));
+
+        if (nearbyKnown.length === 0 && npc.disposition !== 'liar' && npc.disposition !== 'malicious' && npc.disposition !== 'random') {
+            return {
+                speech: `"From what I know, nothing notable lies close enough to call a proper settlement. My road knowledge fades beyond about ${this.directionService.distanceText(
+                    knowledgeRadius,
+                )} from here."`,
+                tone: `${npc.name} speaks thoughtfully, but cannot provide concrete names.`,
+                truthfulness: 'refusal',
+            };
+        }
+
+        if (npc.disposition === 'truthful') {
+            const statements = nearbyKnown.slice(0, 4)
+                .map((hint) => `${hint.settlementName} lies ${hint.direction}, roughly ${this.directionService.distanceText(hint.distanceCells ?? 0)}`)
+                .join('; ');
+            return {
+                speech: statements.length > 0
+                    ? `"Nearby? Listen carefully: ${statements}. That's what I can vouch for."`
+                    : '"Nothing nearby that I can honestly name."',
+                tone: `${npc.name} gives a structured, map-like answer and counts points on their fingers.`,
+                truthfulness: 'truth',
+            };
+        }
+
+        if (npc.disposition === 'imprecise') {
+            const statements = nearbyKnown.slice(0, 3)
+                .map((hint) => `${hint.settlementName} should be ${this.directionService.nearbyDirection(hint.direction!)}, maybe ${this.directionService.impreciseDistance(hint.distanceCells ?? 0)}`)
+                .join('; ');
+            return {
+                speech: statements.length > 0
+                    ? `"I can try to recall: ${statements}. If the roads split, ask again in the next hamlet."`
+                    : '"I heard of places around here, but the paths blur together in my memory."',
+                tone: `${npc.name} speaks in long uncertain fragments, trying to be useful.`,
+                truthfulness: 'imprecise',
+            };
+        }
+
+        if (npc.disposition === 'liar' || npc.disposition === 'malicious') {
+            const deceptiveBase = nearbyKnown.length > 0 ? nearbyKnown : knownSettlements.filter((hint) => hint.exists);
+            const statements = deceptiveBase.slice(0, 3)
+                .map((hint) => `${hint.settlementName} is ${this.directionService.oppositeDirection(hint.direction!)} and only ${this.directionService.impreciseDistance(hint.distanceCells ?? 0)}`)
+                .join('; ');
+            return {
+                speech: statements.length > 0
+                    ? `"Plenty. ${statements}. Follow my advice and you'll 'arrive quickly'."`
+                    : `"Easy question. Just march ${this.directionService.randomDirection()} until dusk and you'll hit three villages in a row."`,
+                tone: npc.disposition === 'malicious'
+                    ? `${npc.name} leans in with a crooked grin, clearly enjoying your uncertainty.`
+                    : `${npc.name} answers with theatrical confidence.`,
+                truthfulness: 'lie',
+            };
+        }
+
+        return {
+            speech: `"Let's see... maybe ${this.directionService.randomDirection()} for one village, then ${this.directionService.randomDirection()} for another. Roads move in my head."`,
+            tone: `${npc.name} rambles at length without ever settling on a reliable route.`,
+            truthfulness: 'random',
+        };
     }
 
     private buildUnknownVillageAnswer(npc: VillageNpcProfile, hint: VillageDirectionHint): VillageDialogueOutcome {

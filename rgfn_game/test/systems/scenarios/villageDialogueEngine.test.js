@@ -68,3 +68,27 @@ test('VillageDialogueEngine silent NPC refuses to answer', () => {
 
   assert.equal(result.truthfulness, 'refusal');
 });
+
+test('VillageDialogueEngine nearby settlements answer respects NPC knowledge radius', () => {
+  const engine = new VillageDialogueEngine();
+  const result = engine.buildNearbySettlementsAnswer(
+    {
+      id: 'npc-4',
+      name: 'Bram',
+      role: 'Hunter',
+      look: 'travel cloak',
+      speechStyle: 'warm and direct',
+      disposition: 'truthful',
+      settlementKnowledgeRadiusCells: 8,
+    },
+    [
+      { settlementName: 'Farwatch', exists: true, direction: 'east', distanceCells: 6 },
+      { settlementName: 'Longford', exists: true, direction: 'south', distanceCells: 20 },
+    ],
+    'Mossbrook',
+  );
+
+  assert.equal(result.truthfulness, 'truth');
+  assert.match(result.speech, /Farwatch/i);
+  assert.doesNotMatch(result.speech, /Longford/i);
+});

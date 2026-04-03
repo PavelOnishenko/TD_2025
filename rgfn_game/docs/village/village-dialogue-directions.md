@@ -101,3 +101,44 @@ Village rumors now support asking about **people**, not only settlements.
   - NPC answer with truthfulness label,
   - tonal line,
   - journal note when a truthful direction is received.
+
+## New: "Какие знаете окрестные поселения?" dialogue branch
+
+Village dialogue now includes a dedicated button: **Ask about nearby settlements**.
+
+### Player flow
+1. Enter a village and pick an NPC from the rumors list.
+2. Open dialogue.
+3. Click **Ask about nearby settlements**.
+4. The player line is logged as: `Какие знаете окрестные поселения?`
+
+### NPC knowledge radius model
+- Every generated NPC now has its own `settlementKnowledgeRadiusCells` (randomized per NPC).
+- Radius represents practical local awareness from the current village:
+  - some villagers only know very local roads;
+  - some know broader regional travel routes.
+- Nearby-settlement answers use only settlements whose distance from the player is within this NPC radius.
+
+### Behavior outcomes (same personality model, longer narrative replies)
+- **truthful**:
+  - lists multiple nearby settlements;
+  - includes direction and rough travel time wording.
+- **imprecise**:
+  - gives partial/approximate directional data;
+  - can shift direction toward nearby compass sectors.
+- **liar / malicious**:
+  - can deliberately invert directions;
+  - may provide confident but misleading route chains.
+- **silent**:
+  - refuses to share any route list.
+- **random**:
+  - produces noisy, low-reliability travel chatter.
+
+### Data source used for this branch
+- Candidate settlement names come from known/discovered settlement list callbacks.
+- For each candidate, the same map hint API is used (`getVillageDirectionHint`), then dialogue filters by NPC radius and disposition.
+
+### Why this helps gameplay
+- Adds a richer semi-text investigation loop: one question can reveal several leads.
+- Makes NPC choice matter more (personality + knowledge radius).
+- Encourages cross-checking rumors before committing long travel.

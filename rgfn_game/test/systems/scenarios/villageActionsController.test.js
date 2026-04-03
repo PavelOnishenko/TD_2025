@@ -62,6 +62,7 @@ function createVillageUi() {
     npcTitle: createElement(),
     askVillageInput: createElement('select'),
     askVillageBtn: createElement('button'),
+    askNearbySettlementsBtn: createElement('button'),
     askPersonInput: createElement('select'),
     askPersonBtn: createElement('button'),
     askBarterBtn: createElement('button'),
@@ -300,4 +301,29 @@ test('VillageActionsController allows safe room sleep only with innkeeper select
 
   assert.equal(recovered > 0, true);
   assert.equal(player.gold < 20, true);
+}));
+
+test('VillageActionsController asks NPC about nearby settlements via dialogue engine', () => withDocumentStub(() => {
+  const villageUI = createVillageUi();
+  const gameLog = createElement();
+  const controller = new VillageActionsController(createPlayerStub(), villageUI, gameLog, {
+    onUpdateHUD: () => {},
+    onLeaveVillage: () => {},
+    getVillageDirectionHint: (settlementName) => ({ settlementName, exists: true, direction: 'north', distanceCells: 7 }),
+    getKnownSettlementNames: () => ['Mossbrook', 'Farwatch'],
+    onVillageBarterCompleted: () => {},
+  });
+
+  controller['dialogueEngine'] = {
+    createNpcRoster: () => [{ id: 'moss-0', name: 'Mara', role: 'Trader', look: 'cloak', speechStyle: 'calm', disposition: 'truthful' }],
+    buildLocationAnswer: () => ({ speech: '', tone: '', truthfulness: 'truth' }),
+    buildPersonLocationAnswer: () => ({ speech: '', tone: '', truthfulness: 'truth' }),
+    buildNearbySettlementsAnswer: () => ({ speech: 'Nearby list.', tone: 'Confident tone.', truthfulness: 'truth' }),
+  };
+
+  controller.enterVillage('Mossbrook');
+  controller.handleSelectNpc(0);
+  controller.handleAskAboutNearbySettlements();
+
+  assert.equal(gameLog.children.some((child) => child.textContent.includes('Nearby list.')), true);
 }));

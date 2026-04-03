@@ -90,6 +90,7 @@ export default class VillageActionsController {
     }
 
     public handleAskAboutSettlement(): void { this.dialogueInteraction.handleAskAboutSettlement(); }
+    public handleAskAboutNearbySettlements(): void { this.dialogueInteraction.handleAskAboutNearbySettlements(); }
     public handleAskAboutPerson(): void { this.dialogueInteraction.handleAskAboutPerson(); }
     public handleAskAboutBarter(): void { this.dialogueInteraction.handleAskAboutBarter(); }
     public handleConfirmBarter(): void { this.dialogueInteraction.handleConfirmBarter(); }
