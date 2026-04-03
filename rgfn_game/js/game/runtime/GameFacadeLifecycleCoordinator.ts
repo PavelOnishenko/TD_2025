@@ -27,6 +27,7 @@ export default class GameFacadeLifecycleCoordinator {
             this.state.player,
             this.state.magicSystem,
             this.state.questRuntime.activeQuest,
+            this.state.gameTime?.getState(),
         );
     }
 
@@ -44,6 +45,7 @@ export default class GameFacadeLifecycleCoordinator {
             this.state.player,
             this.state.magicSystem,
             this.state.questRuntime.activeQuest,
+            this.state.gameTime?.getState(),
         );
     }
 
@@ -82,6 +84,7 @@ export default class GameFacadeLifecycleCoordinator {
             this.state.player,
             this.state.magicSystem,
             this.state.questRuntime.activeQuest,
+            this.state.gameTime?.getState(),
         );
     }
 

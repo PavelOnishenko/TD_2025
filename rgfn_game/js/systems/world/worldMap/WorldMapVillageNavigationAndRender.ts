@@ -154,9 +154,19 @@ export default class WorldMapVillageNavigationAndRender extends WorldMapMovement
         this.drawVillageRoads(ctx, bounds);
         this.drawLocationFeatures(ctx, bounds);
         this.drawNamedLocations(ctx, bounds);
+        this.drawDayNightTint(ctx);
         this.drawNamedLocationFocus(ctx);
         this.drawMarkers(ctx);
         this.renderer.drawScaleLegend(ctx, this.grid, `${theme.worldMap.cellTravelMinutes} min walk / cell`, this.canvasWidth, this.canvasHeight);
+    }
+
+    private drawDayNightTint(ctx: CanvasRenderingContext2D): void {
+        const darkness = Math.max(0, 1 - this.daylightFactor);
+        if (darkness <= 0.01) {return;}
+        ctx.save();
+        ctx.fillStyle = `rgba(14, 20, 36, ${Math.min(0.62, darkness * 0.7).toFixed(3)})`;
+        ctx.fillRect(0, 0, this.canvasWidth, this.canvasHeight);
+        ctx.restore();
     }
 
     private drawTerrainLayer(

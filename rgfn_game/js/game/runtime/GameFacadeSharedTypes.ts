@@ -14,6 +14,7 @@ import type MagicSystem from '../../systems/controllers/magic/MagicSystem.js';
 import type GameQuestRuntime from '../runtime/GameQuestRuntime.js';
 import type GamePersistenceRuntime from '../runtime/GamePersistenceRuntime.js';
 import type GameWorldInteractionRuntime from '../runtime/GameWorldInteractionRuntime.js';
+import type GameTimeRuntime from '../../systems/time/GameTimeRuntime.js';
 
 export type GameFacadeStateAccess = {
     canvas: HTMLCanvasElement;
@@ -34,4 +35,5 @@ export type GameFacadeStateAccess = {
     questRuntime: GameQuestRuntime;
     persistenceRuntime: GamePersistenceRuntime;
     worldInteractionRuntime: GameWorldInteractionRuntime;
+    gameTime: GameTimeRuntime;
 };

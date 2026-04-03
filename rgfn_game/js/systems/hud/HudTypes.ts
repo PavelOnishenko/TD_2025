@@ -22,6 +22,8 @@ export type HudElements = {
     playerDodgeFormula: HTMLElement;
     playerWeapon: HTMLElement;
     playerGold: HTMLElement;
+    playerClock: HTMLElement;
+    playerDate: HTMLElement;
     playerFatigue: HTMLElement;
     playerFatigueState: HTMLElement;
     skillPoints: HTMLElement;

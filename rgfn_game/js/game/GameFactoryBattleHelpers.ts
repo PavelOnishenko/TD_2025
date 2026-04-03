@@ -123,6 +123,7 @@ export const createWorldModeControllerRuntime = (
     onStartBattle: (enemies: Skeleton[], terrainType: TerrainType) => stateMachine.transition(MODES.BATTLE, { enemies, terrainType }),
     onAddBattleLog: (m, t = 'system') => hudCoordinator.addBattleLog(m, t),
     onUpdateHUD: () => hudCoordinator.updateHUD(),
+    onAdvanceTime: (minutes, fatigueScale) => game.advanceTime(minutes, fatigueScale),
     onRememberTraveler: (traveler, disposition) => loreBookController.rememberTraveler(traveler, disposition),
     getQuestBattleEncounter: () => game.tryCreateQuestMonsterEncounter(),
 });
