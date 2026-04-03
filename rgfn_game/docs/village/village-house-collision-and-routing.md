@@ -84,3 +84,13 @@ Implementation: `VillageLifeRenderer.render` draw order.
   - initial spawn pause reduced to roughly `0.5..2.0s`.
 
 This yields more frequent walking cycles while keeping leg movement visually calm.
+
+## Follow-up: constant walking speed (2026-04-03)
+
+Per feedback, villager movement interpolation is now strictly linear per route segment.
+
+- Removed smoothstep easing from runtime movement interpolation.
+- Removed smoothstep easing from snapshot re-alignment interpolation.
+- Result: no acceleration/deceleration within a segment; feet advance at constant speed from one waypoint to the next.
+
+Implementation: `VillageVillagerMotion.advanceTravel` and `VillageVillagerMotion.alignAlongPath`.

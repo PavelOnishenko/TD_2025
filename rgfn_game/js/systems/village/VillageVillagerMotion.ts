@@ -102,9 +102,9 @@ export default class VillageVillagerMotion {
         }
 
         villager.isWalking = true;
-        const smoothProgress = this.smoothStep(travelProgress);
-        villager.x = from.x + (to.x - from.x) * smoothProgress;
-        villager.y = from.y + (to.y - from.y) * smoothProgress;
+        const linearProgress = Math.max(0, Math.min(1, travelProgress));
+        villager.x = from.x + (to.x - from.x) * linearProgress;
+        villager.y = from.y + (to.y - from.y) * linearProgress;
     }
 
     private finishTravel(villager: VillageVillager, now: number, pickActivity: PickActivity, onSpotVisited: (spotIndex: number, now: number) => void): void {
@@ -131,9 +131,8 @@ export default class VillageVillagerMotion {
     }
 
     private alignAlongPath(villager: VillageVillager, from: VillageSpot, to: VillageSpot, now: number): VillageVillager {
-        const travelProgress = Math.max(0, Math.min(1, (now - villager.travelStart) / Math.max(0.01, villager.travelDuration)));
-        const smoothProgress = this.smoothStep(travelProgress);
-        return { ...villager, x: from.x + (to.x - from.x) * smoothProgress, y: from.y + (to.y - from.y) * smoothProgress };
+        const linearProgress = Math.max(0, Math.min(1, (now - villager.travelStart) / Math.max(0.01, villager.travelDuration)));
+        return { ...villager, x: from.x + (to.x - from.x) * linearProgress, y: from.y + (to.y - from.y) * linearProgress };
     }
 
     private clampSpotIndex(spotIndex: number, spotsLength: number): number {
@@ -148,5 +147,4 @@ export default class VillageVillagerMotion {
         return spotIndex;
     }
 
-    private smoothStep = (value: number): number => value * value * (3 - 2 * value);
 }
