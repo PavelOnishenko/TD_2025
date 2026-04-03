@@ -27,6 +27,8 @@ export default class VillageVillagerFactory {
             propSwingOffset: Math.random() * Math.PI * 2,
             armSwingOffset: Math.random() * Math.PI * 2,
             isWalking: true,
+            routeSpotIndices: [],
+            routeCursor: 0,
         };
     }
 

@@ -30,14 +30,55 @@ export default class VillageLifeLayoutBuilder {
         houses.forEach((house, houseIndex) => {
             const frontDoor = projectIso(house.worldX + (house.footprintWidth * 0.5), house.worldY + house.footprintDepth + 0.26, 0);
             const nearDoor = projectIso(house.worldX + (house.footprintWidth * 0.5), house.worldY + house.footprintDepth + 0.9, 0);
-            spots.push({ x: frontDoor.x, y: frontDoor.y, houseIndex });
-            spots.push({ x: nearDoor.x, y: nearDoor.y });
+            const doorWorldX = house.worldX + (house.footprintWidth * 0.5);
+            spots.push({
+                x: frontDoor.x,
+                y: frontDoor.y,
+                worldX: doorWorldX,
+                worldY: house.worldY + house.footprintDepth + 0.26,
+                houseIndex,
+            });
+            spots.push({
+                x: nearDoor.x,
+                y: nearDoor.y,
+                worldX: doorWorldX,
+                worldY: house.worldY + house.footprintDepth + 0.9,
+            });
+
+            this.buildHousePerimeterSpots(house, projectIso).forEach((spot) => spots.push(spot));
         });
-        [projectIso(-1.1, 1.1, 0), projectIso(0.4, 0.6, 0), projectIso(1.2, 2.1, 0), projectIso(-2.1, 2.0, 0)]
-            .forEach((spot) => spots.push({ x: spot.x, y: spot.y }));
+        [
+            { worldX: -1.1, worldY: 1.1 },
+            { worldX: 0.4, worldY: 0.6 },
+            { worldX: 1.2, worldY: 2.1 },
+            { worldX: -2.1, worldY: 2.0 },
+        ].forEach((spot) => {
+            const iso = projectIso(spot.worldX, spot.worldY, 0);
+            spots.push({ x: iso.x, y: iso.y, worldX: spot.worldX, worldY: spot.worldY });
+        });
         return spots;
     };
 
+
+
+    private buildHousePerimeterSpots(house: VillageHouse, projectIso: (x: number, y: number, z: number) => IsoPoint): VillageSpot[] {
+        const margin = 0.45;
+        const candidates = [
+            { worldX: house.worldX - margin, worldY: house.worldY - margin },
+            { worldX: house.worldX + (house.footprintWidth * 0.5), worldY: house.worldY - margin },
+            { worldX: house.worldX + house.footprintWidth + margin, worldY: house.worldY - margin },
+            { worldX: house.worldX + house.footprintWidth + margin, worldY: house.worldY + (house.footprintDepth * 0.5) },
+            { worldX: house.worldX + house.footprintWidth + margin, worldY: house.worldY + house.footprintDepth + margin },
+            { worldX: house.worldX + (house.footprintWidth * 0.5), worldY: house.worldY + house.footprintDepth + margin },
+            { worldX: house.worldX - margin, worldY: house.worldY + house.footprintDepth + margin },
+            { worldX: house.worldX - margin, worldY: house.worldY + (house.footprintDepth * 0.5) },
+        ];
+
+        return candidates.map((candidate) => {
+            const projected = projectIso(candidate.worldX, candidate.worldY, 0);
+            return { x: projected.x, y: projected.y, worldX: candidate.worldX, worldY: candidate.worldY };
+        });
+    }
     private getRoofVariants = (): string[] => [
         theme.ui.secondaryAccent,
         this.mixColors(theme.ui.secondaryAccent, theme.ui.primaryAccent, 0.2),

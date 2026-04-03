@@ -1,6 +1,7 @@
 import type { VillageActivityType, VillageSpot, VillageVillager } from './VillagePopulation.js';
 
 type PickDifferentSpot = (spotIndex: number) => number;
+type BuildRoute = (fromSpot: number, targetSpot: number) => number[];
 type PickActivity = () => VillageActivityType;
 
 export default class VillageVillagerMotion {
@@ -9,6 +10,7 @@ export default class VillageVillagerMotion {
         spots: VillageSpot[],
         now: number,
         pickDifferentSpot: PickDifferentSpot,
+        buildRoute: BuildRoute,
         pickActivity: PickActivity,
         onSpotVisited: (spotIndex: number, now: number) => void,
     ): void {
@@ -17,14 +19,14 @@ export default class VillageVillagerMotion {
             return;
         }
 
-        if (villager.fromSpot === villager.toSpot) {
+        if (villager.fromSpot === villager.toSpot && villager.routeCursor >= villager.routeSpotIndices.length) {
             if (this.shouldPauseAtSpot()) {
                 villager.pauseUntil = now + 5 + Math.random() * 10;
                 villager.isWalking = false;
                 return;
             }
 
-            this.startTravel(villager, now, pickDifferentSpot, onSpotVisited);
+            this.startTravel(villager, now, pickDifferentSpot, buildRoute, onSpotVisited);
         }
 
         this.advanceTravel(villager, spots, now, pickActivity, onSpotVisited);
@@ -36,10 +38,25 @@ export default class VillageVillagerMotion {
         const from = spots[safeFromSpot];
         const to = spots[safeToSpot];
         if (!from || !to) {
-            return { ...villager, x: 0, y: 0, fromSpot: 0, toSpot: 0 };
+            return {
+                ...villager,
+                x: 0,
+                y: 0,
+                fromSpot: 0,
+                toSpot: 0,
+                routeSpotIndices: Array.isArray(villager.routeSpotIndices) ? villager.routeSpotIndices : [],
+                routeCursor: typeof villager.routeCursor === 'number' ? villager.routeCursor : 0,
+            };
         }
 
-        const aligned = { ...villager, fromSpot: safeFromSpot, toSpot: safeToSpot };
+        const aligned = {
+            ...villager,
+            fromSpot: safeFromSpot,
+            toSpot: safeToSpot,
+            routeSpotIndices: Array.isArray(villager.routeSpotIndices) ? villager.routeSpotIndices : [],
+            routeCursor: typeof villager.routeCursor === 'number' ? villager.routeCursor : 0,
+        };
+
         if (now < aligned.pauseUntil || aligned.fromSpot === aligned.toSpot) {
             return { ...aligned, x: from.x, y: from.y };
         }
@@ -49,10 +66,20 @@ export default class VillageVillagerMotion {
 
     private shouldPauseAtSpot = (): boolean => Math.random() < 0.62;
 
-    private startTravel(villager: VillageVillager, now: number, pickDifferentSpot: PickDifferentSpot, onSpotVisited: (spotIndex: number, now: number) => void): void {
-        villager.toSpot = pickDifferentSpot(villager.fromSpot);
+    private startTravel(
+        villager: VillageVillager,
+        now: number,
+        pickDifferentSpot: PickDifferentSpot,
+        buildRoute: BuildRoute,
+        onSpotVisited: (spotIndex: number, now: number) => void,
+    ): void {
+        const targetSpot = pickDifferentSpot(villager.fromSpot);
+        const route = buildRoute(villager.fromSpot, targetSpot);
+        villager.routeSpotIndices = route;
+        villager.routeCursor = 0;
+        villager.toSpot = route[0] ?? targetSpot;
         villager.travelStart = now;
-        villager.travelDuration = 5 + Math.random() * 4;
+        villager.travelDuration = 2.4 + Math.random() * 1.8;
         villager.isWalking = true;
         onSpotVisited(villager.fromSpot, now);
         onSpotVisited(villager.toSpot, now);
@@ -82,7 +109,19 @@ export default class VillageVillagerMotion {
 
     private finishTravel(villager: VillageVillager, now: number, pickActivity: PickActivity, onSpotVisited: (spotIndex: number, now: number) => void): void {
         villager.fromSpot = villager.toSpot;
+        if (villager.routeCursor < villager.routeSpotIndices.length - 1) {
+            villager.routeCursor += 1;
+            villager.toSpot = villager.routeSpotIndices[villager.routeCursor];
+            villager.travelStart = now;
+            villager.travelDuration = 2.4 + Math.random() * 1.8;
+            villager.isWalking = true;
+            onSpotVisited(villager.fromSpot, now);
+            onSpotVisited(villager.toSpot, now);
+            return;
+        }
+
         villager.toSpot = villager.fromSpot;
+        villager.routeCursor = villager.routeSpotIndices.length;
         villager.travelStart = now;
         villager.travelDuration = 5 + Math.random() * 4;
         villager.pauseUntil = now + 6 + Math.random() * 14;

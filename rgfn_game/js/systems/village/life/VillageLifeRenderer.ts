@@ -33,7 +33,12 @@ export default class VillageLifeRenderer {
         this.isoOriginY = height * 0.34;
         this.villageHouses = this.layoutBuilder.buildHouses();
         this.villageSpots = this.layoutBuilder.buildVillageSpots(this.villageHouses, this.projectIso);
-        this.villagePopulation.initialize(this.villageSpots, performance.now() * 0.001, this.currentVillageName);
+        this.villagePopulation.initialize(
+            this.villageSpots,
+            this.villageHouses.map((house) => ({ x: house.worldX, y: house.worldY, width: house.footprintWidth, depth: house.footprintDepth })),
+            performance.now() * 0.001,
+            this.currentVillageName,
+        );
     }
 
     public update(now: number): void {
