@@ -18,3 +18,14 @@ test('GameTimeRuntime usually differs for different generation seeds', () => {
 
   assert.notDeepEqual(first.getState(), second.getState());
 });
+
+test('GameTimeRuntime first month name is seed-dependent and not hardcoded', () => {
+  const first = new GameTimeRuntime(null, 111).getState();
+  const second = new GameTimeRuntime(null, 222).getState();
+  const firstMonthA = first.months[0]?.name;
+  const firstMonthB = second.months[0]?.name;
+
+  assert.equal(typeof firstMonthA, 'string');
+  assert.equal(typeof firstMonthB, 'string');
+  assert.notEqual(firstMonthA, firstMonthB);
+});

@@ -29,10 +29,10 @@ export default class GameTimeRuntime {
     public getDaylightFactor(): number {
         const hour = this.getHourOfDay();
         if (hour < 5 || hour >= 22) {return 0.46;}
-        if (hour < 7) {return 0.58;}
-        if (hour < 18) {return 1;}
-        if (hour < 20) {return 0.72;}
-        return 0.58;
+        if (hour < 7) {return 0.95;}
+        if (hour < 18) {return 1.12;}
+        if (hour < 20) {return 1.04;}
+        return 0.95;
     }
 
     public getHudClockText(): string {
@@ -131,14 +131,16 @@ export default class GameTimeRuntime {
     }
 
     private generateMonthName(index: number): string {
-        const prefix = ['Aur', 'Vel', 'Nor', 'Tal', 'Mir', 'Sol', 'Dra', 'Fen', 'Kor', 'Lun'][index % 10];
-        const suffixes = ['is', 'or', 'eth', 'un', 'ar', 'en', 'ium', 'al'];
-        const suffix = suffixes[(index * 7 + this.statefulHash(index)) % suffixes.length];
-        return `${prefix}${suffix}`;
-    }
-
-    private statefulHash(index: number): number {
-        return Math.abs(((index + 1) * 1103515245 + 12345) % 2147483647);
+        const starts = ['A', 'Be', 'Cor', 'Dra', 'E', 'Fen', 'Gal', 'Hel', 'I', 'Jar', 'Kel', 'Lor', 'Mor', 'Nor', 'Or', 'Pra', 'Quel', 'Riv', 'Syl', 'Tor', 'Ul', 'Vor', 'Wyn', 'Xan', 'Yor', 'Zel'];
+        const middles = ['a', 'e', 'i', 'o', 'u', 'ae', 'ia', 'ou', 'ei', 'ar', 'el', 'or', 'un', 'ir'];
+        const ends = ['n', 'l', 'r', 's', 'th', 'm', 'x', 'nd', 'ria', 'dor', 'len', 'via', 'tis', 'mar', 'dell', 'ron'];
+        const start = starts[this.sampleInt(0, starts.length - 1)];
+        const middle = middles[this.sampleInt(0, middles.length - 1)];
+        const end = ends[this.sampleInt(0, ends.length - 1)];
+        const maybeSecondMiddle = this.nextRandom() < 0.3 ? middles[this.sampleInt(0, middles.length - 1)] : '';
+        const raw = `${start}${middle}${maybeSecondMiddle}${end}`;
+        const normalized = raw.charAt(0).toUpperCase() + raw.slice(1).toLowerCase();
+        return index === 0 ? normalized : `${normalized}`;
     }
 
     private sampleLogRange(min: number, max: number): number {

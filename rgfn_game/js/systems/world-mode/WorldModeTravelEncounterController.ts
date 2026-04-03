@@ -39,7 +39,8 @@ export default class WorldModeTravelEncounterController {
 
     public onPlayerMoved(isPreviouslyDiscovered: boolean): void {
         const travelMinutes = this.getTravelMinutesForStep();
-        const fatigueScale = travelMinutes / Math.max(1, theme.worldMap.cellTravelMinutes);
+        const nightFatigueBoost = this.callbacks.isNightTime() ? 1.35 : 1;
+        const fatigueScale = (travelMinutes / Math.max(1, theme.worldMap.cellTravelMinutes)) * nightFatigueBoost;
         this.callbacks.onAdvanceTime(travelMinutes, fatigueScale);
         this.player.restoreMana(1);
         this.callbacks.onUpdateHUD();
@@ -100,7 +101,8 @@ export default class WorldModeTravelEncounterController {
 
         this.player.gold -= selectedOption.priceGold;
         const ferryMinutes = Math.max(1, selectedOption.waterCells * 2);
-        const ferryFatigueScale = Math.max(1, ferryMinutes / Math.max(1, theme.worldMap.cellTravelMinutes));
+        const ferryNightFatigueBoost = this.callbacks.isNightTime() ? 1.2 : 1;
+        const ferryFatigueScale = Math.max(1, (ferryMinutes / Math.max(1, theme.worldMap.cellTravelMinutes)) * ferryNightFatigueBoost);
         this.callbacks.onAdvanceTime(ferryMinutes, ferryFatigueScale);
         this.callbacks.onAddBattleLog(`You pay ${selectedOption.priceGold}g to the ferryman.`, 'system');
         this.callbacks.onAddBattleLog(`The ferry departs and reaches ${selectedOption.destinationName} in about ${ferryMinutes} min.`, 'system');
@@ -148,11 +150,12 @@ export default class WorldModeTravelEncounterController {
 
     private getTravelMinutesForStep(): number {
         const base = Math.max(1, theme.worldMap.cellTravelMinutes);
-        if (this.worldMap.isPlayerOnRoad()) {return base;}
+        const nightTimeMultiplier = this.callbacks.isNightTime() ? 1.5 : 1;
+        if (this.worldMap.isPlayerOnRoad()) {return Math.round(base * nightTimeMultiplier);}
         const terrain = this.worldMap.getCurrentTerrain().type;
-        if (terrain === 'forest') {return base * 4;}
-        if (terrain === 'grass') {return base * 2;}
-        return base;
+        if (terrain === 'forest') {return Math.round(base * 4 * nightTimeMultiplier);}
+        if (terrain === 'grass') {return Math.round(base * 2 * nightTimeMultiplier);}
+        return Math.round(base * nightTimeMultiplier);
     }
 
     private handleTravelerEncounter(traveler: Wanderer, isHostile: boolean): void {

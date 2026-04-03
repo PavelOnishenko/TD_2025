@@ -161,11 +161,20 @@ export default class WorldMapVillageNavigationAndRender extends WorldMapMovement
     }
 
     private drawDayNightTint(ctx: CanvasRenderingContext2D): void {
-        const darkness = Math.max(0, 1 - this.daylightFactor);
-        if (darkness <= 0.01) {return;}
         ctx.save();
-        ctx.fillStyle = `rgba(14, 20, 36, ${Math.min(0.62, darkness * 0.7).toFixed(3)})`;
-        ctx.fillRect(0, 0, this.canvasWidth, this.canvasHeight);
+        if (this.daylightFactor < 1) {
+            const darkness = Math.max(0, 1 - this.daylightFactor);
+            if (darkness > 0.01) {
+                ctx.fillStyle = `rgba(14, 20, 36, ${Math.min(0.62, darkness * 0.72).toFixed(3)})`;
+                ctx.fillRect(0, 0, this.canvasWidth, this.canvasHeight);
+            }
+        } else {
+            const brightness = Math.max(0, this.daylightFactor - 1);
+            if (brightness > 0.01) {
+                ctx.fillStyle = `rgba(255, 248, 220, ${Math.min(0.22, brightness * 0.42).toFixed(3)})`;
+                ctx.fillRect(0, 0, this.canvasWidth, this.canvasHeight);
+            }
+        }
         ctx.restore();
     }
 

@@ -180,6 +180,13 @@ export class GameFacade implements GameFacadeStateAccess {
         return { clock: this.gameTime.getHudClockText(), date: this.gameTime.getHudDateText() };
     }
 
+    public isNightTime(): boolean {
+        if (!this.gameTime) {
+            return false;
+        }
+        return this.gameTime.getDaylightFactor() < 0.7;
+    }
+
     private hashStringSeed(text: string): number {
         let hash = 2166136261;
         for (let index = 0; index < text.length; index += 1) {

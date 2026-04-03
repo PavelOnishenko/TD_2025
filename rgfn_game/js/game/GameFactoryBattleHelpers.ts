@@ -124,6 +124,7 @@ export const createWorldModeControllerRuntime = (
     onAddBattleLog: (m, t = 'system') => hudCoordinator.addBattleLog(m, t),
     onUpdateHUD: () => hudCoordinator.updateHUD(),
     onAdvanceTime: (minutes, fatigueScale) => game.advanceTime(minutes, fatigueScale),
+    isNightTime: () => game.isNightTime(),
     onRememberTraveler: (traveler, disposition) => loreBookController.rememberTraveler(traveler, disposition),
     getQuestBattleEncounter: () => game.tryCreateQuestMonsterEncounter(),
 });

@@ -20,7 +20,7 @@
   - `Date` (`Y<year> • <month> <day>`)
 - World-map rendering now applies a **day/night tint**:
   - darker at night,
-  - brighter during daytime,
+  - brighter during daytime and twilight (only night remains dark),
   - transitions at dawn/dusk.
 
 ## Time advancement model in this iteration
@@ -32,9 +32,13 @@
   - road: `x1`
   - off-road grass: `x2`
   - off-road forest: `x4`
+- Night travel penalties:
+  - movement time multiplier: `x1.5`,
+  - fatigue multiplier on top of travel scale: `x1.35`.
 
 ### Ferry travel
 - Ferry action advances time based on water-cell length (`waterCells * 2` minutes).
+- At night, ferry fatigue gain also increases (`x1.2` over ferry fatigue scale).
 
 ### Sleep (camp)
 - Camp sleep advances time by 8 hours.
@@ -53,6 +57,7 @@ Village actions now advance time, including at least:
 
 - Time advancement callback also carries fatigue scaling.
 - Heavy activities (travel/ferry) pass higher fatigue scale values.
+- Night travel explicitly increases fatigue beyond daytime baseline.
 - Lighter village/social actions pass much lower fatigue scale values.
 - Sleep still primarily recovers fatigue through existing recovery mechanics.
 
