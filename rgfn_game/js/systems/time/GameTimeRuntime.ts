@@ -12,8 +12,10 @@ const MINUTES_PER_DAY = 24 * 60;
 
 export default class GameTimeRuntime {
     private readonly state: CalendarState;
+    private rngState: number;
 
-    public constructor(savedState?: Record<string, unknown> | null) {
+    public constructor(savedState?: Record<string, unknown> | null, generationSeed: number = Date.now()) {
+        this.rngState = this.normalizeSeed(generationSeed);
         this.state = this.tryRestore(savedState) ?? this.createRandomCalendarState();
     }
 
@@ -86,7 +88,7 @@ export default class GameTimeRuntime {
     private createRandomCalendarState(): CalendarState {
         const startYear = this.sampleLogRange(0, 10000);
         const monthCount = this.sampleLogRange(1, 60);
-        const styleRoll = Math.random();
+        const styleRoll = this.nextRandom();
         const baseDays = this.sampleLogRange(12, 55);
         const months: CalendarMonth[] = [];
 
@@ -122,16 +124,10 @@ export default class GameTimeRuntime {
         return { startYear, months, totalMinutes };
     }
 
-    private sampleLogRange(min: number, max: number): number {
-        if (min >= max) {return min;}
-        const normalized = Math.log10(1 + Math.random() * 9);
-        return Math.max(min, Math.min(max, Math.round(min + ((max - min) * normalized))));
-    }
-
     private sampleInt(min: number, max: number): number {
         const lower = Math.min(min, max);
         const upper = Math.max(min, max);
-        return lower + Math.floor(Math.random() * (upper - lower + 1));
+        return lower + Math.floor(this.nextRandom() * (upper - lower + 1));
     }
 
     private generateMonthName(index: number): string {
@@ -143,5 +139,24 @@ export default class GameTimeRuntime {
 
     private statefulHash(index: number): number {
         return Math.abs(((index + 1) * 1103515245 + 12345) % 2147483647);
+    }
+
+    private sampleLogRange(min: number, max: number): number {
+        if (min >= max) {return min;}
+        const normalized = Math.log10(1 + this.nextRandom() * 9);
+        return Math.max(min, Math.min(max, Math.round(min + ((max - min) * normalized))));
+    }
+
+    private nextRandom(): number {
+        this.rngState = (1664525 * this.rngState + 1013904223) >>> 0;
+        return this.rngState / 0x100000000;
+    }
+
+    private normalizeSeed(seed: number): number {
+        if (!Number.isFinite(seed)) {
+            return 0x9e3779b9;
+        }
+        const normalized = Math.floor(Math.abs(seed)) >>> 0;
+        return normalized === 0 ? 0x9e3779b9 : normalized;
     }
 }

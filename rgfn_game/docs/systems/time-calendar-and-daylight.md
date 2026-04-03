@@ -11,6 +11,10 @@
     - near-uniform with small variation,
     - fully varied month lengths.
 - World time now advances as actions are performed.
+- Calendar generation is now **bound to world + character generation context**:
+  - generation seed is derived from `worldSeed XOR hash(player.name)`,
+  - so the initial calendar is deterministic for the same world/character pair,
+  - while still remaining random across different newly generated worlds/characters.
 - HUD now displays:
   - `Time` (`HH:MM`)
   - `Date` (`Y<year> • <month> <day>`)
@@ -56,6 +60,7 @@ Village actions now advance time, including at least:
 
 - Time state is now serialized into save data as optional `time` payload.
 - Older saves without `time` remain loadable; a new random calendar is generated when absent.
+- If `time` is absent (legacy save), the runtime deterministically regenerates calendar from current world+character seed source, then continues from there.
 
 ## Integration points
 
