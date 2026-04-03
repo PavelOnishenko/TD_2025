@@ -24,6 +24,8 @@ export type HudElements = {
     playerGold: HTMLElement;
     playerClock: HTMLElement;
     playerDate: HTMLElement;
+    worldCalendarSummary: HTMLElement;
+    worldCalendarList: HTMLElement;
     playerFatigue: HTMLElement;
     playerFatigueState: HTMLElement;
     skillPoints: HTMLElement;

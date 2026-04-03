@@ -29,3 +29,17 @@ test('GameTimeRuntime first month name is seed-dependent and not hardcoded', () 
   assert.equal(typeof firstMonthB, 'string');
   assert.notEqual(firstMonthA, firstMonthB);
 });
+
+test('GameTimeRuntime exposes full generated calendar snapshot with current month marker data', () => {
+  const runtime = new GameTimeRuntime(null, 424242);
+  const snapshot = runtime.getCalendarSnapshot();
+
+  assert.equal(typeof snapshot.startYear, 'number');
+  assert.equal(typeof snapshot.currentYear, 'number');
+  assert.equal(typeof snapshot.currentMonthName, 'string');
+  assert.ok(snapshot.months.length >= 1);
+  assert.ok(snapshot.currentMonthIndex >= 0);
+  assert.ok(snapshot.currentMonthIndex < snapshot.months.length);
+  assert.ok(snapshot.currentDay >= 1);
+  assert.ok(snapshot.daysPerYear >= snapshot.months.length);
+});

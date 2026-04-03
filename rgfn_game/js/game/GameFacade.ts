@@ -173,11 +173,27 @@ export class GameFacade implements GameFacadeStateAccess {
         this.worldMap.setDaylightFactor(this.gameTime.getDaylightFactor());
     }
 
-    public getHudTimeSnapshot(): { clock: string; date: string } {
+    public getHudTimeSnapshot(): { clock: string; date: string; calendarTitle: string; calendarLines: string[] } {
         if (!this.gameTime) {
-            return { clock: '--:--', date: 'Calendar uninitialized' };
+            return {
+                clock: '--:--',
+                date: 'Calendar uninitialized',
+                calendarTitle: 'Calendar is unavailable',
+                calendarLines: [],
+            };
         }
-        return { clock: this.gameTime.getHudClockText(), date: this.gameTime.getHudDateText() };
+        const snapshot = this.gameTime.getCalendarSnapshot();
+        const calendarLines = snapshot.months.map((month, index) => {
+            const prefix = index === snapshot.currentMonthIndex ? '→' : ' ';
+            return `${prefix} ${String(index + 1).padStart(2, '0')}. ${month.name} — ${month.days} days`;
+        });
+
+        return {
+            clock: this.gameTime.getHudClockText(),
+            date: this.gameTime.getHudDateText(),
+            calendarTitle: `Calendar: ${snapshot.months.length} months/year • ${snapshot.daysPerYear} days/year • Epoch Y${snapshot.startYear}`,
+            calendarLines,
+        };
     }
 
     public isNightTime(): boolean {

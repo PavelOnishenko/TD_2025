@@ -15,6 +15,8 @@ import {
 } from '../hud/HudTypes.js';
 import { SelectedCellInfo } from '../../types/game.js';
 
+type WorldTimeSnapshot = { clock: string; date: string; calendarTitle: string; calendarLines: string[] };
+
 export default class HudController {
     private readonly player: Player;
     private readonly hudElements: HudElements;
@@ -27,7 +29,7 @@ export default class HudController {
     private readonly magicController: HudMagicController;
     private readonly panelStateController: HudPanelStateController;
     private readonly selectionInfoController: HudSelectionInfoController;
-    private readonly getWorldTimeSnapshot: () => { clock: string; date: string };
+    private readonly getWorldTimeSnapshot: () => WorldTimeSnapshot;
 
     constructor(
         player: Player,
@@ -37,7 +39,7 @@ export default class HudController {
         gameLog: HTMLElement,
         loreBookController: LoreBookController,
         onBattleEquipmentAction?: BattleEquipmentActionHandler,
-        getWorldTimeSnapshot?: () => { clock: string; date: string },
+        getWorldTimeSnapshot?: () => WorldTimeSnapshot,
     ) {
         this.player = player;
         this.hudElements = hudElements;
@@ -49,7 +51,12 @@ export default class HudController {
         this.magicController = new HudMagicController(this.player, this.hudElements, this.battleUI, magicSystem);
         this.panelStateController = new HudPanelStateController(this.hudElements);
         this.selectionInfoController = new HudSelectionInfoController(this.hudElements);
-        this.getWorldTimeSnapshot = getWorldTimeSnapshot ?? (() => ({ clock: '--:--', date: 'Unknown date' }));
+        this.getWorldTimeSnapshot = getWorldTimeSnapshot ?? (() => ({
+            clock: '--:--',
+            date: 'Unknown date',
+            calendarTitle: 'Calendar is unavailable',
+            calendarLines: [],
+        }));
 
         this.equipmentController.bindEquipmentSlotEvents();
         this.inventoryController.bindInventoryRecoveryEvents();
@@ -164,6 +171,8 @@ export default class HudController {
         const worldTime = this.getWorldTimeSnapshot();
         this.hudElements.playerClock.textContent = worldTime.clock;
         this.hudElements.playerDate.textContent = worldTime.date;
+        this.hudElements.worldCalendarSummary.textContent = worldTime.calendarTitle;
+        this.hudElements.worldCalendarList.textContent = worldTime.calendarLines.join('\n');
     }
 
     private updatePotionButtonsAndRange(): void {
