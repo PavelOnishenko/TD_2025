@@ -94,3 +94,21 @@ Per feedback, villager movement interpolation is now strictly linear per route s
 - Result: no acceleration/deceleration within a segment; feet advance at constant speed from one waypoint to the next.
 
 Implementation: `VillageVillagerMotion.advanceTravel` and `VillageVillagerMotion.alignAlongPath`.
+
+## Follow-up: mixed depth sorting for houses + villagers (2026-04-03)
+
+A fixed draw order (all villagers before all houses) caused incorrect occlusion cases:
+- villager head could disappear while the same villager should be in front,
+- houses could be incorrectly hidden behind villagers depending on camera relation.
+
+Now rendering uses a single mixed queue with depth sorting:
+
+- Villager depth key: villager feet Y (`villager.y`).
+- House depth key: projected front-base corner Y (`projectIso(worldX + footprintWidth, worldY + footprintDepth, 0).y`).
+- Houses and villagers are sorted together by depth ascending and then drawn.
+
+Result:
+- If villager is behind a house, house overlays villager.
+- If villager is in front, villager overlays house.
+
+Implementation: `VillageLifeRenderer.render` + `VillageLifeRenderer.getHouseDrawDepth`.

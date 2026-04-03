@@ -47,8 +47,25 @@ export default class VillageLifeRenderer {
     }
 
     public render(ctx: CanvasRenderingContext2D, time: number): void {
-        this.villagePopulation.getVillagers().forEach((villager) => this.drawVillageVillager(ctx, villager, time));
-        this.villageHouses.forEach((house) => this.houseRenderer.drawVillageHouse(ctx, house));
+        const renderQueue: { depth: number; draw: () => void }[] = [];
+
+        this.villagePopulation.getVillagers().forEach((villager) => {
+            renderQueue.push({
+                depth: villager.y,
+                draw: () => this.drawVillageVillager(ctx, villager, time),
+            });
+        });
+
+        this.villageHouses.forEach((house) => {
+            renderQueue.push({
+                depth: this.getHouseDrawDepth(house),
+                draw: () => this.houseRenderer.drawVillageHouse(ctx, house),
+            });
+        });
+
+        renderQueue
+            .sort((a, b) => a.depth - b.depth)
+            .forEach((entry) => entry.draw());
     }
 
     public getVillageName = (): string => this.currentVillageName;
@@ -70,6 +87,12 @@ export default class VillageLifeRenderer {
         }
 
         house.doorStateUntil = Math.max(house.doorStateUntil, now + 2.2);
+    }
+
+
+    private getHouseDrawDepth(house: VillageHouse): number {
+        const frontCorner = this.projectIso(house.worldX + house.footprintWidth, house.worldY + house.footprintDepth, 0);
+        return frontCorner.y;
     }
 
     private drawVillageVillager(ctx: CanvasRenderingContext2D, villager: VillageVillager, time: number): void {
