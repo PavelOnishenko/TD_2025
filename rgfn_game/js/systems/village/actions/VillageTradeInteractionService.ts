@@ -21,11 +21,36 @@ export default class VillageTradeInteractionService {
         this.deps = deps;
     }
 
-    public handleWait(): void {
-        this.deps.player.heal(1);
-        this.deps.player.restoreMana(1);
-        this.deps.addLog('You wait at the inn and recover 1 HP and 1 mana.', 'player');
+    public handleDoctorTreatment(): void {
+        const treatmentCost = balanceConfig.survival.doctorHealCostGold;
+        if (this.deps.player.gold < treatmentCost) {
+            this.deps.addLog(`Doctor treatment costs ${treatmentCost}g. You need more gold.`, 'system');
+            return;
+        }
+
+        this.deps.player.gold -= treatmentCost;
+        this.deps.player.heal(this.deps.player.maxHp);
+        this.deps.addLog(`The doctor patches you up completely for ${treatmentCost}g. Your HP is fully restored.`, 'player');
         this.deps.callbacks.onUpdateHUD();
+        this.deps.updateButtons();
+    }
+
+    public handleInnMeal(): void {
+        const mealCost = balanceConfig.survival.innMealCostGold;
+        if (this.deps.player.gold < mealCost) {
+            this.deps.addLog(`A warm meal costs ${mealCost}g. You need more gold.`, 'system');
+            return;
+        }
+
+        this.deps.player.gold -= mealCost;
+        this.deps.player.heal(balanceConfig.survival.innMealHpRecovery);
+        this.deps.player.restoreMana(balanceConfig.survival.innMealManaRecovery);
+        this.deps.addLog(
+            `You pay ${mealCost}g for food and drink. You recover ${balanceConfig.survival.innMealHpRecovery} HP and ${balanceConfig.survival.innMealManaRecovery} mana.`,
+            'player',
+        );
+        this.deps.callbacks.onUpdateHUD();
+        this.deps.updateButtons();
     }
 
     public handleSleepInRoom(): void {

@@ -102,7 +102,8 @@ export default class GameUiPrimaryEventBinder {
     private bindVillageEvents(villageNameProvider: () => string): void {
         this.villageUI.enterBtn.addEventListener('click', () => this.villageActionsController.handleEnter(villageNameProvider()));
         this.villageUI.skipBtn.addEventListener('click', () => this.villageActionsController.handleSkip());
-        this.villageUI.waitBtn.addEventListener('click', () => this.villageActionsController.handleWait());
+        this.villageUI.doctorHealBtn.addEventListener('click', () => this.villageActionsController.handleDoctorTreatment());
+        this.villageUI.innMealBtn.addEventListener('click', () => this.villageActionsController.handleInnMeal());
         this.villageUI.buyOffer1Btn.addEventListener('click', () => this.villageActionsController.handleBuyOffer(0));
         this.villageUI.buyOffer2Btn.addEventListener('click', () => this.villageActionsController.handleBuyOffer(1));
         this.villageUI.buyOffer3Btn.addEventListener('click', () => this.villageActionsController.handleBuyOffer(2));

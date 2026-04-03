@@ -1238,3 +1238,28 @@ This prints:
 2. Verify land portions of the same road remain solid.
 3. Verify hidden/unknown fog tiles do not render any road segment artifacts.
 4. Verify ferry prompt and travel still function from both docks.
+
+## April 2, 2026 update: village free wait removed; paid sustain actions added
+
+### Player-facing behavior change
+- The old village **Wait** action is removed.
+- Villages now provide explicit paid sustain options:
+  - **Doctor treatment (4g)**: full HP restore.
+  - **Inn meal (2g)**: small HP + mana restore.
+  - **Sleep in room** remains and continues to be the safe fatigue recovery path.
+
+### Why
+- Prevent free recovery loops in villages.
+- Force active resource management decisions (gold vs survivability).
+
+### Manual verification checklist
+1. Enter any village and confirm there is no `Wait` button in village actions.
+2. Use **Doctor treatment** with enough gold:
+   - gold decreases by 4,
+   - HP becomes full,
+   - mana does not jump to full from this action.
+3. Use **Inn meal** with enough gold:
+   - gold decreases by 2,
+   - HP and mana increase by small configured amounts.
+4. Try each action with insufficient gold and confirm clear rejection log messages.
+5. Confirm **Sleep in room** behavior is unchanged.

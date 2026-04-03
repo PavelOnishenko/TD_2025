@@ -61,7 +61,8 @@ export default class VillageActionsController {
 
     public closeDialogueWindow(): void { this.uiPresenter.closeDialogueWindow(); }
     public handleSkip(): void { this.addLog('You decide not to enter and continue your journey.', 'system'); this.callbacks.onLeaveVillage(); }
-    public handleWait(): void { this.tradeInteraction.handleWait(); }
+    public handleDoctorTreatment(): void { this.tradeInteraction.handleDoctorTreatment(); }
+    public handleInnMeal(): void { this.tradeInteraction.handleInnMeal(); }
     public handleSleepInRoom(): void { this.tradeInteraction.handleSleepInRoom(); }
     public handleBuyOffer(offerIndex: number): void { this.tradeInteraction.handleBuyOffer(offerIndex); }
     public handleSellSelected(): void { this.tradeInteraction.handleSellSelected(Number.parseInt(this.villageUI.sellSelect.value, 10)); }
