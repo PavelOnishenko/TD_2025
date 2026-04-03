@@ -49,6 +49,7 @@ const createVillageActionsController = (
     onUpdateHUD: () => hudCoordinator.updateHUD(),
     onLeaveVillage: () => game.stateMachine.transition(MODES.WORLD_MAP),
     getVillageDirectionHint: (name: string) => worldMap.getVillageDirectionHintFromPlayer(name),
+    getKnownSettlementNames: () => worldMap.getKnownSettlementNames(),
     onVillageBarterCompleted: (trader, item, village) => game.onVillageBarterCompleted(trader, item, village),
     onTryRecruitEscort: (personName, villageName) => game.onTryRecruitEscort(personName, villageName),
 });

@@ -18,6 +18,10 @@ Move NPC conversations into a dedicated popup dialogue window (classic RPG style
   - ask about person
   - ask about barter
   - confirm barter
+- Replaced free-text location/person fields with dropdowns:
+  - `#village-ask-settlement-input` (`<select>`)
+  - `#village-ask-person-input` (`<select>`)
+  - This removes manual typing for repeated direction queries.
 
 ## Runtime behavior
 
@@ -30,6 +34,14 @@ Move NPC conversations into a dedicated popup dialogue window (classic RPG style
 - All newly generated dialogue lines are duplicated into:
   - global game log (`#game-log`), and
   - village dialogue modal log (`#village-dialogue-log`).
+- Settlement dropdown is auto-filled from:
+  - discovered villages from world map fog state,
+  - named quest locations registered into world map metadata,
+  - source/destination villages inferred from active barter/escort quest contracts.
+- Person dropdown is auto-filled from:
+  - active barter trader names,
+  - active escort objective person names,
+  - NPCs already seen in village rumor rosters.
 
 This keeps one shared source of dialogue events while showing NPC conversation in a focused modal.
 

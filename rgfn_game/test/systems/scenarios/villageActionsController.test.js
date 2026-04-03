@@ -60,9 +60,9 @@ function createVillageUi() {
     sellSelectedBtn: createElement('button'),
     npcList: createElement(),
     npcTitle: createElement(),
-    askVillageInput: createElement('input'),
+    askVillageInput: createElement('select'),
     askVillageBtn: createElement('button'),
-    askPersonInput: createElement('input'),
+    askPersonInput: createElement('select'),
     askPersonBtn: createElement('button'),
     askBarterBtn: createElement('button'),
     barterNowBtn: createElement('button'),
@@ -243,6 +243,33 @@ test('VillageActionsController mirrors dialogue lines into modal log and toggles
 
   controller.closeDialogueWindow();
   assert.equal(villageUI.dialogueModal.classList.added.includes('hidden'), true);
+}));
+
+test('VillageActionsController populates settlement and person selects from known map and quest data', () => withDocumentStub(() => {
+  const villageUI = createVillageUi();
+  const gameLog = createElement();
+  const controller = new VillageActionsController(createPlayerStub(), villageUI, gameLog, {
+    onUpdateHUD: () => {},
+    onLeaveVillage: () => {},
+    getVillageDirectionHint: (settlementName) => ({ settlementName, exists: false }),
+    getKnownSettlementNames: () => ['Mossbrook', 'Questspire'],
+    onVillageBarterCompleted: () => {},
+  });
+
+  controller.configureQuestBarterContracts([{ traderName: 'Olive', itemName: 'Kator Kaesh' }]);
+  controller.configureQuestEscortContracts([{ personName: 'Bram', sourceVillage: 'Mossbrook', destinationVillage: 'Farwatch' }]);
+  controller['dialogueEngine'] = {
+    createNpcRoster: () => [{ id: 'moss-0', name: 'Mara', role: 'Trader', look: 'cloak', speechStyle: 'calm', disposition: 'truthful' }],
+    buildLocationAnswer: () => ({ speech: '', tone: '', truthfulness: 'truth' }),
+    buildPersonLocationAnswer: () => ({ speech: '', tone: '', truthfulness: 'truth' }),
+  };
+
+  controller.enterVillage('Mossbrook');
+  const settlementOptions = villageUI.askVillageInput.options.map((option) => option.value);
+  const personOptions = villageUI.askPersonInput.options.map((option) => option.value);
+
+  assert.deepEqual(settlementOptions, ['Farwatch', 'Mossbrook', 'Questspire']);
+  assert.deepEqual(personOptions, ['Bram', 'Mara', 'Olive']);
 }));
 
 test('VillageActionsController allows safe room sleep only with innkeeper selected', () => withDocumentStub(() => {

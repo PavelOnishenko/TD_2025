@@ -20,9 +20,9 @@ export type VillageUI = {
     sellSelectedBtn: HTMLButtonElement;
     npcList: HTMLElement;
     npcTitle: HTMLElement;
-    askVillageInput: HTMLInputElement;
+    askVillageInput: HTMLSelectElement;
     askVillageBtn: HTMLButtonElement;
-    askPersonInput: HTMLInputElement;
+    askPersonInput: HTMLSelectElement;
     askPersonBtn: HTMLButtonElement;
     askBarterBtn: HTMLButtonElement;
     barterNowBtn: HTMLButtonElement;
@@ -33,6 +33,7 @@ export type VillageActionsCallbacks = {
     onUpdateHUD: () => void;
     onLeaveVillage: () => void;
     getVillageDirectionHint: (settlementName: string) => VillageDirectionHint;
+    getKnownSettlementNames?: () => string[];
     onVillageBarterCompleted: (traderName: string, itemName: string, villageName: string) => void;
     onTryRecruitEscort: (personName: string, villageName: string) => 'joined' | 'inactive' | 'already-joined' | 'not-available';
 };

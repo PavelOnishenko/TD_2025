@@ -6,7 +6,7 @@ The village menu now supports a lightweight dialogue flow:
 
 1. Enter village.
 2. Choose one of multiple NPCs in the **Village rumors** section.
-3. Type a settlement name from a quest (for example, `Oakhaven`).
+3. Pick a settlement from the **Ask about location** dropdown (for example, `Oakhaven`).
 4. Ask for directions.
 
 NPCs can respond with different behavioral profiles:
@@ -58,8 +58,19 @@ Village rumors now support asking about **people**, not only settlements.
 
 ### UX flow
 1. Select an NPC in the rumor panel.
-2. Type a person name from quest text (example: `Olive` or any generated trader name) in the person input.
+2. Pick a person name from quest text (example: `Olive` or generated escort/trader names) in the person dropdown.
 3. Click **Ask about person**.
+
+### Dropdown population rules (new)
+- **Settlement list** is a union of:
+  - discovered villages,
+  - named locations known from quest descriptions (even if not discovered physically yet),
+  - source/destination villages from escort and barter quest contracts.
+- **Person list** is a union of:
+  - trader names from active barter contracts,
+  - escort person names from active escort contracts,
+  - villagers/NPCs already observed in rumor rosters.
+- Lists are deduplicated and sorted alphabetically.
 
 ### Button availability rule (RGFN UX)
 - The following four dialogue/barter buttons are now always enabled in the village UI:
