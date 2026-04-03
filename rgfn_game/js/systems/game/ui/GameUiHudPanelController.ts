@@ -2,13 +2,26 @@ import { HudElements } from './GameUiTypes.js';
 import { GameUiEventCallbacks, HudPanelToggle } from './GameUiEventBinderTypes.js';
 
 type PanelConfig = { key: HudPanelToggle; title: string; element: HTMLElement };
+type LayoutContext = 'world' | 'battle';
+type PanelLayoutSnapshot = {
+    offsetX: number;
+    offsetY: number;
+    width: string | null;
+    height: string | null;
+    hidden: boolean;
+    zIndex: number | null;
+};
+type StoredPanelLayout = Partial<Record<HudPanelToggle, PanelLayoutSnapshot>>;
 
 export default class GameUiHudPanelController {
+    private static readonly WORLD_LAYOUT_STORAGE_KEY = 'rgfn_hud_panel_layout_world_v1';
+    private static readonly BATTLE_LAYOUT_STORAGE_KEY = 'rgfn_hud_panel_layout_battle_v1';
     private hudElements: HudElements;
     private callbacks: GameUiEventCallbacks;
     private nextPanelZIndex = 10;
     private readonly panelSpawnOrigin = { x: 24, y: 96 };
     private readonly panelSpawnStepY = 34;
+    private activeLayoutContext: LayoutContext = 'world';
 
     constructor(hudElements: HudElements, callbacks: GameUiEventCallbacks) {
         this.hudElements = hudElements;
@@ -19,6 +32,9 @@ export default class GameUiHudPanelController {
         this.bindHudMenuEvents();
         this.bindPanelToggleButtons();
         this.initializeHudPanelWindows();
+        this.activeLayoutContext = this.getLayoutContextFromModeIndicator();
+        this.restoreLayoutForCurrentContext();
+        this.bindLayoutContextListener();
     }
 
     private bindHudMenuEvents(): void {
@@ -85,6 +101,7 @@ export default class GameUiHudPanelController {
         panel.prepend(header);
         this.bindPanelDragEvents(panel, dragHandle);
         this.bindPanelSpawnPositioning(panel, panelIndex);
+        this.bindPanelPersistenceObserver(panel);
     }
 
     private handlePanelClose(panelKey: HudPanelToggle, panel: HTMLElement): void {
@@ -118,6 +135,7 @@ export default class GameUiHudPanelController {
                 panel.dataset.offsetY = String(nextOffsetY);
                 panel.style.setProperty('--panel-offset-x', `${nextOffsetX}px`);
                 panel.style.setProperty('--panel-offset-y', `${nextOffsetY}px`);
+                this.persistCurrentContextLayout();
             };
 
             const stopDrag = (): void => {
@@ -166,10 +184,148 @@ export default class GameUiHudPanelController {
     private handlePanelToggle(panel: HudPanelToggle): void {
         this.callbacks.onTogglePanel(panel);
         this.setHudMenuOpen(false);
+        this.persistCurrentContextLayout();
     }
 
     private setHudMenuOpen(isOpen: boolean): void {
         this.hudElements.hudMenuPanel.classList.toggle('hidden', !isOpen);
         this.hudElements.hudMenuToggleBtn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    }
+
+    private bindPanelPersistenceObserver(panel: HTMLElement): void {
+        const observer = new MutationObserver(() => this.persistCurrentContextLayout());
+        observer.observe(panel, { attributes: true, attributeFilter: ['class', 'style'] });
+    }
+
+    private bindLayoutContextListener(): void {
+        const modeIndicator = this.hudElements.modeIndicator;
+        const observer = new MutationObserver(() => this.handleLayoutContextChange());
+        observer.observe(modeIndicator, { childList: true, characterData: true, subtree: true });
+    }
+
+    private handleLayoutContextChange(): void {
+        const nextContext = this.getLayoutContextFromModeIndicator();
+        if (nextContext === this.activeLayoutContext) {
+            return;
+        }
+
+        this.persistCurrentContextLayout();
+        this.activeLayoutContext = nextContext;
+        this.restoreLayoutForCurrentContext();
+    }
+
+    private getLayoutContextFromModeIndicator(): LayoutContext {
+        return this.hudElements.modeIndicator.textContent?.trim() === 'Battle!' ? 'battle' : 'world';
+    }
+
+    private restoreLayoutForCurrentContext(): void {
+        const storedLayout = this.getStoredLayout(this.activeLayoutContext);
+        const panelConfigs = this.getPanelConfigs();
+
+        if (!storedLayout) {
+            panelConfigs.forEach(({ element }, panelIndex) => this.resetPanelToSpawn(element, panelIndex));
+            return;
+        }
+
+        panelConfigs.forEach(({ key, element }, panelIndex) => {
+            const snapshot = storedLayout[key];
+            if (!snapshot) {
+                this.resetPanelToSpawn(element, panelIndex);
+                return;
+            }
+
+            element.dataset.offsetX = String(snapshot.offsetX);
+            element.dataset.offsetY = String(snapshot.offsetY);
+            element.dataset.spawnPositioned = 'true';
+            element.style.setProperty('--panel-offset-x', `${snapshot.offsetX}px`);
+            element.style.setProperty('--panel-offset-y', `${snapshot.offsetY}px`);
+            element.style.width = snapshot.width ?? '';
+            element.style.height = snapshot.height ?? '';
+
+            if (snapshot.zIndex !== null) {
+                element.style.zIndex = String(snapshot.zIndex);
+            } else {
+                element.style.removeProperty('z-index');
+            }
+
+            element.classList.toggle('hidden', snapshot.hidden);
+        });
+    }
+
+    private resetPanelToSpawn(panel: HTMLElement, panelIndex: number): void {
+        panel.dataset.offsetX = '0';
+        panel.dataset.offsetY = '0';
+        panel.dataset.spawnPositioned = 'false';
+        panel.style.setProperty('--panel-offset-x', '0px');
+        panel.style.setProperty('--panel-offset-y', '0px');
+        panel.style.removeProperty('z-index');
+        panel.style.width = '';
+        panel.style.height = '';
+        requestAnimationFrame(() => {
+            if (panel.classList.contains('hidden')) {
+                return;
+            }
+
+            const panelRect = panel.getBoundingClientRect();
+            if (panelRect.width <= 0 || panelRect.height <= 0) {
+                return;
+            }
+
+            const targetX = this.panelSpawnOrigin.x;
+            const targetY = this.panelSpawnOrigin.y + (panelIndex * this.panelSpawnStepY);
+            const nextOffsetX = targetX - panelRect.left;
+            const nextOffsetY = targetY - panelRect.top;
+            panel.dataset.offsetX = String(nextOffsetX);
+            panel.dataset.offsetY = String(nextOffsetY);
+            panel.dataset.spawnPositioned = 'true';
+            panel.style.setProperty('--panel-offset-x', `${nextOffsetX}px`);
+            panel.style.setProperty('--panel-offset-y', `${nextOffsetY}px`);
+        });
+    }
+
+    private persistCurrentContextLayout(): void {
+        if (!window.localStorage) {
+            return;
+        }
+
+        const layout: StoredPanelLayout = {};
+        this.getPanelConfigs().forEach(({ key, element }) => {
+            const offsetX = Number.parseFloat(element.dataset.offsetX ?? '0') || 0;
+            const offsetY = Number.parseFloat(element.dataset.offsetY ?? '0') || 0;
+            const zIndex = Number.parseInt(element.style.zIndex || '', 10);
+            layout[key] = {
+                offsetX,
+                offsetY,
+                width: element.style.width || null,
+                height: element.style.height || null,
+                hidden: element.classList.contains('hidden'),
+                zIndex: Number.isFinite(zIndex) ? zIndex : null,
+            };
+        });
+
+        window.localStorage.setItem(this.getStorageKey(this.activeLayoutContext), JSON.stringify(layout));
+    }
+
+    private getStoredLayout(context: LayoutContext): StoredPanelLayout | null {
+        if (!window.localStorage) {
+            return null;
+        }
+
+        const raw = window.localStorage.getItem(this.getStorageKey(context));
+        if (!raw) {
+            return null;
+        }
+
+        try {
+            return JSON.parse(raw) as StoredPanelLayout;
+        } catch {
+            return null;
+        }
+    }
+
+    private getStorageKey(context: LayoutContext): string {
+        return context === 'battle'
+            ? GameUiHudPanelController.BATTLE_LAYOUT_STORAGE_KEY
+            : GameUiHudPanelController.WORLD_LAYOUT_STORAGE_KEY;
     }
 }

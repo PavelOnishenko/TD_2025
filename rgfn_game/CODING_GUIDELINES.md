@@ -227,6 +227,17 @@ When filling "Selected Tile" details in battle mode, do **not** rely on `constru
 
 Why: several enemy archetypes reuse shared classes (for example Ninja can be implemented via the `Skeleton` class), so constructor-based UI labels can be wrong even when combat data is correct.
 
+## HUD panel layout persistence by game mode
+
+- HUD panel positions/sizes/visibility are persisted separately for world-map mode and battle mode via `localStorage`.
+- Storage keys:
+  - `rgfn_hud_panel_layout_world_v1`
+  - `rgfn_hud_panel_layout_battle_v1`
+- The current context is resolved from the HUD mode indicator text (`Battle!` => battle layout; any other mode => world layout).
+- On each panel drag/toggle/style change, the active context layout is immediately saved.
+- On mode switches, the previous context is saved first, then the target context is restored.
+- If no saved layout exists for the target context, panels reset to default spawn positions instead of reusing positions from the previous mode.
+
 ### Pattern 1: Canvas Drawing
 
 ```typescript
