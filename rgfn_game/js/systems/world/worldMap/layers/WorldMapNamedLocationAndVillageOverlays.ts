@@ -31,6 +31,13 @@ export default class WorldMapNamedLocationAndVillageOverlays extends WorldMapVil
         this.focusedLocationName = null;
     };
 
+    public getKnownSettlementNames = (): string[] => {
+        const knownVillages = this.getKnownVillages().map((village) => village.name);
+        const namedLocations = Array.from(this.namedLocations.values()).map((location) => location.name);
+        return Array.from(new Set([...knownVillages, ...namedLocations]))
+            .sort((left, right) => left.localeCompare(right));
+    };
+
     public getCurrentNamedLocation(): string | null {
         const currentKey = this.getCellKey(this.playerGridPos.col, this.playerGridPos.row);
         for (const location of this.namedLocations.values()) {

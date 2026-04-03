@@ -21,6 +21,7 @@ export default class VillageActionsController {
     private villageNpcRosters: Map<string, VillageNpcProfile[]> = new Map();
     private selectedNpcId: string | null = null;
     private escortContracts: QuestEscortContract[] = [];
+    private knownNpcNames: Set<string> = new Set();
 
     constructor(player: Player, villageUI: VillageUI, gameLog: HTMLElement, callbacks: VillageActionsCallbacks) {
         this.villageUI = villageUI;
@@ -39,10 +40,17 @@ export default class VillageActionsController {
         this.prepareVillageUiForEntry(villageName);
         this.handleEnter(villageName);
         this.logVillageContractHints(villageName);
+        this.refreshDialogueTargetOptions();
     }
 
-    public configureQuestBarterContracts(contracts: QuestBarterContract[]): void { this.barterService.configureQuestBarterContracts(contracts); }
-    public configureQuestEscortContracts = (contracts: QuestEscortContract[]): void => { this.escortContracts = contracts; };
+    public configureQuestBarterContracts(contracts: QuestBarterContract[]): void {
+        this.barterService.configureQuestBarterContracts(contracts);
+        this.refreshDialogueTargetOptions();
+    }
+    public configureQuestEscortContracts = (contracts: QuestEscortContract[]): void => {
+        this.escortContracts = contracts;
+        this.refreshDialogueTargetOptions();
+    };
     public exitVillage(): void { this.villageUI.sidebar.classList.add('hidden'); this.closeDialogueWindow(); }
     public handleEnter(villageName: string): void {
         this.addLog(`You enter ${villageName} market square.`, 'system');
@@ -75,6 +83,7 @@ export default class VillageActionsController {
         }
 
         this.selectedNpcId = npc.id;
+        this.knownNpcNames.add(npc.name);
         this.refreshNpcUi();
         this.addLog(`You approach ${npc.name} the ${npc.role}.`, 'player');
         this.addLog(`${npc.name} looks ${npc.look} and speaks in a ${npc.speechStyle} manner.`, 'system-message');
@@ -159,6 +168,8 @@ export default class VillageActionsController {
     private refreshNpcUi(): void {
         this.uiPresenter.renderNpcButtons(this.npcRoster, this.selectedNpcId);
         this.uiPresenter.updateNpcPanel(this.getSelectedNpc());
+        this.npcRoster.forEach((npc) => this.knownNpcNames.add(npc.name));
+        this.refreshDialogueTargetOptions();
         this.updateButtons();
     }
 
@@ -233,5 +244,54 @@ export default class VillageActionsController {
             return 'far';
         }
         return 'very far';
+    }
+
+    private refreshDialogueTargetOptions(): void {
+        this.populateSelectWithOptions(this.villageUI.askVillageInput, this.getKnownSettlementNames(), 'Choose known settlement');
+        this.populateSelectWithOptions(this.villageUI.askPersonInput, this.getKnownPersonNames(), 'Choose known person');
+    }
+
+    private getKnownSettlementNames(): string[] {
+        const knownFromMap = this.callbacks.getKnownSettlementNames?.() ?? [];
+        const fromBarterContracts = this.barterService
+            .getKnownTraderNames()
+            .map((traderName) => this.barterService.getPersonDirectionHint(traderName, this.callbacks.getVillageDirectionHint).villageName)
+            .filter((value): value is string => typeof value === 'string' && value.trim().length > 0);
+        const fromEscortContracts = this.escortContracts.flatMap((contract) => [contract.sourceVillage, contract.destinationVillage]);
+        return this.toSortedUnique([...knownFromMap, ...fromBarterContracts, ...fromEscortContracts]);
+    }
+
+    private getKnownPersonNames(): string[] {
+        const fromBarter = this.barterService.getKnownTraderNames();
+        const fromEscort = this.escortContracts.map((contract) => contract.personName);
+        const fromNpcRoster = Array.from(this.knownNpcNames);
+        return this.toSortedUnique([...fromBarter, ...fromEscort, ...fromNpcRoster]);
+    }
+
+    private populateSelectWithOptions(select: HTMLSelectElement, values: string[], placeholder: string): void {
+        const existingValue = select.value;
+        select.innerHTML = '';
+
+        if (values.length === 0) {
+            const option = document.createElement('option');
+            option.value = '';
+            option.textContent = placeholder;
+            select.appendChild(option);
+            return;
+        }
+
+        values.forEach((value) => {
+            const option = document.createElement('option');
+            option.value = value;
+            option.textContent = value;
+            select.appendChild(option);
+        });
+        const hasPreviousSelection = values.some((value) => value === existingValue);
+        select.value = hasPreviousSelection ? existingValue : values[0];
+    }
+
+    private toSortedUnique(values: string[]): string[] {
+        return Array.from(new Set(values.map((value) => value.trim()).filter((value) => value.length > 0)))
+            .sort((left, right) => left.localeCompare(right));
     }
 }

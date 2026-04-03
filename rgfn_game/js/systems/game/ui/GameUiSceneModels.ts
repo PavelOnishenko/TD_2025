@@ -64,9 +64,9 @@ export class VillageUiModel {
     public sellSelectedBtn!: HTMLButtonElement;
     public npcList!: HTMLElement;
     public npcTitle!: HTMLElement;
-    public askVillageInput!: HTMLInputElement;
+    public askVillageInput!: HTMLSelectElement;
     public askVillageBtn!: HTMLButtonElement;
-    public askPersonInput!: HTMLInputElement;
+    public askPersonInput!: HTMLSelectElement;
     public askPersonBtn!: HTMLButtonElement;
     public askBarterBtn!: HTMLButtonElement;
     public barterNowBtn!: HTMLButtonElement;

@@ -112,12 +112,12 @@ export default class GameUiPrimaryEventBinder {
         this.villageUI.sellSelect.addEventListener('pointerdown', () => this.villageActionsController.updateButtons());
         this.villageUI.sellSelect.addEventListener('change', () => this.villageActionsController.updateButtons());
         this.villageUI.sellSelectedBtn.addEventListener('click', () => this.villageActionsController.handleSellSelected());
-        this.villageUI.askVillageInput.addEventListener('input', () => this.villageActionsController.updateButtons());
+        this.villageUI.askVillageInput.addEventListener('change', () => this.villageActionsController.updateButtons());
         this.villageUI.openDialogueBtn.addEventListener('click', () => this.villageActionsController.openDialogueWindow());
         this.villageUI.dialogueCloseBtn.addEventListener('click', () => this.villageActionsController.closeDialogueWindow());
         this.villageUI.dialogueModal.addEventListener('click', (event: MouseEvent) => this.closeDialogueFromOverlay(event));
         this.villageUI.askVillageBtn.addEventListener('click', () => this.villageActionsController.handleAskAboutSettlement());
-        this.villageUI.askPersonInput.addEventListener('input', () => this.villageActionsController.updateButtons());
+        this.villageUI.askPersonInput.addEventListener('change', () => this.villageActionsController.updateButtons());
         this.villageUI.askPersonBtn.addEventListener('click', () => this.villageActionsController.handleAskAboutPerson());
         this.villageUI.askBarterBtn.addEventListener('click', () => this.villageActionsController.handleAskAboutBarter());
         this.villageUI.barterNowBtn.addEventListener('click', () => this.villageActionsController.handleConfirmBarter());

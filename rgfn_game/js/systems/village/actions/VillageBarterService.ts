@@ -44,6 +44,8 @@ export default class VillageBarterService {
     public getVillageContractHints = (villageName: string): string[] => Array.from(this.questBarterContracts.entries())
         .filter(([contractId]) => this.barterContractVillageById.get(contractId) === villageName)
         .map(([, contract]) => this.toHint(contract));
+    public getKnownTraderNames = (): string[] => Array.from(new Set(Array.from(this.questBarterContracts.values()).map((contract) => contract.traderName)))
+        .sort((left, right) => left.localeCompare(right));
     public getBarterDealForNpc(villageName: string, npcName: string): VillageBarterDeal | null {
         const deals = this.getOrCreateVillageBarterDeals(villageName);
         return deals.find((deal) => deal.traderName.toLocaleLowerCase() === npcName.toLocaleLowerCase()) ?? null;
