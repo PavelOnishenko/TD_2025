@@ -47,8 +47,8 @@ export default class VillageLifeRenderer {
     }
 
     public render(ctx: CanvasRenderingContext2D, time: number): void {
-        this.villageHouses.forEach((house) => this.houseRenderer.drawVillageHouse(ctx, house));
         this.villagePopulation.getVillagers().forEach((villager) => this.drawVillageVillager(ctx, villager, time));
+        this.villageHouses.forEach((house) => this.houseRenderer.drawVillageHouse(ctx, house));
     }
 
     public getVillageName = (): string => this.currentVillageName;

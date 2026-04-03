@@ -59,3 +59,28 @@ Inside `VillageLifeLayoutBuilder`:
 - Full RGFN build passes.
 - Full RGFN test suite passes (`124/124`).
 - Village population scenario tests pass with updated spot shape and initialize signature.
+
+## Follow-up tuning (2026-04-03)
+
+Based on visual feedback, village life rendering/motion was tuned further:
+
+### Draw order adjustment for occlusion
+
+- Villagers are rendered **before** houses.
+- Houses are rendered after villagers, so house geometry overlays villagers when they are behind buildings.
+
+Implementation: `VillageLifeRenderer.render` draw order.
+
+### Movement cadence adjustment
+
+- Villagers now pause less often:
+  - pause chance reduced from `0.62` to `0.2`.
+- Pauses are shorter:
+  - idle pause window reduced to roughly `0.8..2.4s` at a spot,
+  - post-route pause reduced to roughly `1..3s`.
+- Walking is calmer/slower:
+  - per-segment travel duration increased to roughly `4.8..7.2s`.
+- Spawn behavior is more active:
+  - initial spawn pause reduced to roughly `0.5..2.0s`.
+
+This yields more frequent walking cycles while keeping leg movement visually calm.

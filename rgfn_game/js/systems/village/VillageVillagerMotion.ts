@@ -21,7 +21,7 @@ export default class VillageVillagerMotion {
 
         if (villager.fromSpot === villager.toSpot && villager.routeCursor >= villager.routeSpotIndices.length) {
             if (this.shouldPauseAtSpot()) {
-                villager.pauseUntil = now + 5 + Math.random() * 10;
+                villager.pauseUntil = now + 0.8 + Math.random() * 1.6;
                 villager.isWalking = false;
                 return;
             }
@@ -64,7 +64,7 @@ export default class VillageVillagerMotion {
         return this.alignAlongPath(aligned, from, to, now);
     }
 
-    private shouldPauseAtSpot = (): boolean => Math.random() < 0.62;
+    private shouldPauseAtSpot = (): boolean => Math.random() < 0.2;
 
     private startTravel(
         villager: VillageVillager,
@@ -79,7 +79,7 @@ export default class VillageVillagerMotion {
         villager.routeCursor = 0;
         villager.toSpot = route[0] ?? targetSpot;
         villager.travelStart = now;
-        villager.travelDuration = 2.4 + Math.random() * 1.8;
+        villager.travelDuration = 4.8 + Math.random() * 2.4;
         villager.isWalking = true;
         onSpotVisited(villager.fromSpot, now);
         onSpotVisited(villager.toSpot, now);
@@ -113,7 +113,7 @@ export default class VillageVillagerMotion {
             villager.routeCursor += 1;
             villager.toSpot = villager.routeSpotIndices[villager.routeCursor];
             villager.travelStart = now;
-            villager.travelDuration = 2.4 + Math.random() * 1.8;
+            villager.travelDuration = 4.8 + Math.random() * 2.4;
             villager.isWalking = true;
             onSpotVisited(villager.fromSpot, now);
             onSpotVisited(villager.toSpot, now);
@@ -123,8 +123,8 @@ export default class VillageVillagerMotion {
         villager.toSpot = villager.fromSpot;
         villager.routeCursor = villager.routeSpotIndices.length;
         villager.travelStart = now;
-        villager.travelDuration = 5 + Math.random() * 4;
-        villager.pauseUntil = now + 6 + Math.random() * 14;
+        villager.travelDuration = 4.8 + Math.random() * 2.4;
+        villager.pauseUntil = now + 1 + Math.random() * 2;
         villager.isWalking = false;
         villager.activity = pickActivity();
         onSpotVisited(villager.fromSpot, now);
