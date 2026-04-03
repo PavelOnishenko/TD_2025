@@ -30,6 +30,7 @@ export default class VillageTradeInteractionService {
 
         this.deps.player.gold -= treatmentCost;
         this.deps.player.heal(this.deps.player.maxHp);
+        this.deps.callbacks.onAdvanceTime(35, 0.35);
         this.deps.addLog(`The doctor patches you up completely for ${treatmentCost}g. Your HP is fully restored.`, 'player');
         this.deps.callbacks.onUpdateHUD();
         this.deps.updateButtons();
@@ -45,6 +46,7 @@ export default class VillageTradeInteractionService {
         this.deps.player.gold -= mealCost;
         this.deps.player.heal(balanceConfig.survival.innMealHpRecovery);
         this.deps.player.restoreMana(balanceConfig.survival.innMealManaRecovery);
+        this.deps.callbacks.onAdvanceTime(50, 0.2);
         this.deps.addLog(
             `You pay ${mealCost}g for food and drink. You recover ${balanceConfig.survival.innMealHpRecovery} HP and ${balanceConfig.survival.innMealManaRecovery} mana.`,
             'player',
@@ -67,6 +69,7 @@ export default class VillageTradeInteractionService {
         }
 
         this.deps.player.gold -= roomCost;
+        this.deps.callbacks.onAdvanceTime(8 * 60, 0.15);
         const recovered = this.deps.player.recoverFatigue(balanceConfig.survival.villageSleepFatigueRecovery);
         this.deps.player.heal(2);
         this.deps.player.restoreMana(2);
@@ -100,6 +103,7 @@ export default class VillageTradeInteractionService {
         }
 
         this.deps.player.gold -= offer.buyPrice;
+        this.deps.callbacks.onAdvanceTime(20, 0.25);
         this.deps.addLog(`You buy ${offer.kindName} (${offer.buyPrice}g) and receive: ${item.name}.`, 'player');
         this.deps.callbacks.onUpdateHUD();
         this.deps.updateButtons();
@@ -120,6 +124,7 @@ export default class VillageTradeInteractionService {
 
         const sellPrice = this.deps.stockService.getSellPrice(removedItem);
         this.deps.player.gold += sellPrice;
+        this.deps.callbacks.onAdvanceTime(15, 0.2);
         this.deps.addLog(`You sold ${removedItem.name} for ${sellPrice}g.`, 'player');
         this.deps.callbacks.onUpdateHUD();
         this.deps.updateButtons();

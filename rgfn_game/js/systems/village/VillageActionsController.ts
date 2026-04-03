@@ -87,12 +87,13 @@ export default class VillageActionsController {
         this.refreshNpcUi();
         this.addLog(`You approach ${npc.name} the ${npc.role}.`, 'player');
         this.addLog(`${npc.name} looks ${npc.look} and speaks in a ${npc.speechStyle} manner.`, 'system-message');
+        this.callbacks.onAdvanceTime(8, 0.12);
     }
 
-    public handleAskAboutSettlement(): void { this.dialogueInteraction.handleAskAboutSettlement(); }
-    public handleAskAboutPerson(): void { this.dialogueInteraction.handleAskAboutPerson(); }
-    public handleAskAboutBarter(): void { this.dialogueInteraction.handleAskAboutBarter(); }
-    public handleConfirmBarter(): void { this.dialogueInteraction.handleConfirmBarter(); }
+    public handleAskAboutSettlement(): void { this.dialogueInteraction.handleAskAboutSettlement(); this.callbacks.onAdvanceTime(14, 0.1); }
+    public handleAskAboutPerson(): void { this.dialogueInteraction.handleAskAboutPerson(); this.callbacks.onAdvanceTime(14, 0.1); }
+    public handleAskAboutBarter(): void { this.dialogueInteraction.handleAskAboutBarter(); this.callbacks.onAdvanceTime(16, 0.12); }
+    public handleConfirmBarter(): void { this.dialogueInteraction.handleConfirmBarter(); this.callbacks.onAdvanceTime(18, 0.15); }
     public handleRecruitEscort(): void {
         const npc = this.getSelectedNpc();
         if (!npc) {
@@ -102,6 +103,7 @@ export default class VillageActionsController {
         const status = this.callbacks.onTryRecruitEscort(npc.name, this.currentVillageName);
         if (status === 'joined') {
             this.addLog(`${npc.name} agrees to travel with you. Escort objective updated.`, 'system');
+            this.callbacks.onAdvanceTime(20, 0.15);
             return;
         }
         if (status === 'already-joined') {
@@ -110,7 +112,7 @@ export default class VillageActionsController {
         }
         this.addLog(`${npc.name} has no escort contract to join from this village.`, 'system-message');
     }
-    public handleLeave(): void { this.addLog('You leave the village.', 'system'); this.callbacks.onLeaveVillage(); }
+    public handleLeave(): void { this.addLog('You leave the village.', 'system'); this.callbacks.onAdvanceTime(5, 0.08); this.callbacks.onLeaveVillage(); }
     public addLog(message: string, type: string = 'system'): void { this.uiPresenter.addLog(message, type); }
     public updateButtons(): void { this.uiPresenter.updateButtons(); }
 

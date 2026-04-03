@@ -47,6 +47,7 @@ const createVillageActionsController = (
     hudCoordinator: GameHudCoordinator,
 ): VillageActionsController => new VillageActionsController(player, ui.villageUI, ui.gameLogUI.log, {
     onUpdateHUD: () => hudCoordinator.updateHUD(),
+    onAdvanceTime: (minutes, fatigueScale) => game.advanceTime(minutes, fatigueScale),
     onLeaveVillage: () => game.stateMachine.transition(MODES.WORLD_MAP),
     getVillageDirectionHint: (name: string) => worldMap.getVillageDirectionHintFromPlayer(name),
     getKnownSettlementNames: () => worldMap.getKnownSettlementNames(),
@@ -82,6 +83,7 @@ export const createHudCoordinator = (
     battleUiController: BattleUiController,
     loreBookController: LoreBookController,
     onEquipmentAction: (action: string) => boolean,
+    getWorldTimeSnapshot: () => { clock: string; date: string },
 ): GameHudCoordinator => new GameHudCoordinator(
     player,
     new HudController(
@@ -92,6 +94,7 @@ export const createHudCoordinator = (
         ui.gameLogUI.log,
         loreBookController,
         onEquipmentAction,
+        getWorldTimeSnapshot,
     ),
     battleUiController,
     magicSystem,

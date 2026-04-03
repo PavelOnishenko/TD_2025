@@ -80,6 +80,7 @@ export default class WorldMapCore {
     private terrainLayerCaches: Partial<Record<'low' | 'medium', TerrainLayerCache>>;
     private fogRevision: number;
     private terrainRevision: number;
+    protected daylightFactor: number;
 
     constructor(columns: number, rows: number, cellSize: number) {
         this.grid = new GridMap(columns, rows, cellSize);
@@ -111,6 +112,14 @@ export default class WorldMapCore {
         this.terrainLayerCaches = {};
         this.fogRevision = 0;
         this.terrainRevision = 0;
+        this.daylightFactor = 1;
+    }
+
+    public setDaylightFactor(factor: number): void {
+        if (!Number.isFinite(factor)) {
+            return;
+        }
+        this.daylightFactor = Math.max(0.35, Math.min(1.1, factor));
     }
 
     protected initializeWorldMap(): void {

@@ -53,6 +53,8 @@ export class GameHudElementsFactory {
             playerDodgeFormula: el('player-dodge-formula'),
             playerWeapon: el('player-weapon'),
             playerGold: el('player-gold'),
+            playerClock: el('player-clock'),
+            playerDate: el('player-date'),
             playerFatigue: el('player-fatigue'),
             playerFatigueState: el('player-fatigue-state'),
             skillPoints: el('skill-points'),

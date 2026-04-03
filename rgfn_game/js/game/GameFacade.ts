@@ -27,6 +27,7 @@ import GameFacadeWorldInteractionCoordinator from './runtime/GameFacadeWorldInte
 import { createGameRuntime } from './GameFactory.js';
 import type { GameFacadeStateAccess } from './runtime/GameFacadeSharedTypes.js';
 import { FerryRouteOption } from '../systems/world-mode/WorldModeFerryPromptController.js';
+import GameTimeRuntime from '../systems/time/GameTimeRuntime.js';
 
 export type UIBundle = {
     hudElements: HudElements;
@@ -80,6 +81,7 @@ export class GameFacade implements GameFacadeStateAccess {
     public readonly questRuntime = new GameQuestRuntime();
     public readonly persistenceRuntime = new GamePersistenceRuntime(SAVE_KEY);
     public readonly worldInteractionRuntime = new GameWorldInteractionRuntime();
+    public gameTime!: GameTimeRuntime;
     private readonly lifecycle = new GameFacadeLifecycleCoordinator(this);
     private readonly worldInteractionCoordinator = new GameFacadeWorldInteractionCoordinator(this);
     private devController: DeveloperEventController | null = null;
@@ -109,6 +111,11 @@ export class GameFacade implements GameFacadeStateAccess {
         this.hudCoordinator = runtime.hudCoordinator;
         this.battleCoordinator = runtime.battleCoordinator;
         this.devController = runtime.devController;
+        const savedTime = this.persistenceRuntime.getParsedSaveState()?.time ?? null;
+        const worldSeed = Number(this.worldMap.getState().worldSeed ?? 0);
+        const characterSeed = this.hashStringSeed(this.player.name);
+        this.gameTime = new GameTimeRuntime(savedTime, worldSeed ^ characterSeed);
+        this.worldMap.setDaylightFactor(this.gameTime.getDaylightFactor());
         this.questRuntime.initialize(
             runtime.questGenerator,
             runtime.questUiController,
@@ -156,6 +163,38 @@ export class GameFacade implements GameFacadeStateAccess {
     public centerWorldMapOnPlayer(): void { this.worldInteractionCoordinator.centerWorldMapOnPlayer(); }
     public tryEnterVillageFromWorldMap(): void { this.worldInteractionCoordinator.tryEnterVillageFromWorldMap(); }
     public confirmWorldVillageEntry(): void { this.worldInteractionCoordinator.confirmWorldVillageEntry(); }
+
+    public advanceTime(minutes: number, fatigueScale: number): void {
+        if (!this.gameTime || !this.player || !this.worldMap) {
+            return;
+        }
+        this.gameTime.advanceMinutes(minutes);
+        this.player.addTravelFatigue(Math.max(0, fatigueScale));
+        this.worldMap.setDaylightFactor(this.gameTime.getDaylightFactor());
+    }
+
+    public getHudTimeSnapshot(): { clock: string; date: string } {
+        if (!this.gameTime) {
+            return { clock: '--:--', date: 'Calendar uninitialized' };
+        }
+        return { clock: this.gameTime.getHudClockText(), date: this.gameTime.getHudDateText() };
+    }
+
+    public isNightTime(): boolean {
+        if (!this.gameTime) {
+            return false;
+        }
+        return this.gameTime.getDaylightFactor() < 0.7;
+    }
+
+    private hashStringSeed(text: string): number {
+        let hash = 2166136261;
+        for (let index = 0; index < text.length; index += 1) {
+            hash ^= text.charCodeAt(index);
+            hash = Math.imul(hash, 16777619);
+        }
+        return hash >>> 0;
+    }
 }
 
 export default GameFacade;
