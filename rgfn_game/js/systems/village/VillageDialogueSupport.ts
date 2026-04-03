@@ -67,6 +67,7 @@ export class VillageNpcFactory {
         look: this.pick(this.looks),
         speechStyle: this.pick(this.speechStyles),
         disposition: this.pick(this.dispositions),
+        settlementKnowledgeRadiusCells: 6 + Math.floor(Math.random() * 40),
     });
 
     private pick = <T>(items: readonly T[]): T => items[Math.floor(Math.random() * items.length)];

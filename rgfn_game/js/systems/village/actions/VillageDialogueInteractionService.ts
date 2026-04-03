@@ -69,6 +69,22 @@ export default class VillageDialogueInteractionService {
         }
     }
 
+    public handleAskAboutNearbySettlements(): void {
+        const selectedNpc = this.deps.getSelectedNpc();
+        if (!selectedNpc) {
+            this.deps.addLog('Choose an NPC first before asking about nearby settlements.', 'system');
+            return;
+        }
+
+        const knownNames = this.deps.callbacks.getKnownSettlementNames?.() ?? [];
+        const hints = knownNames.map((name) => this.deps.callbacks.getVillageDirectionHint(name));
+        const answer = this.deps.dialogueEngine.buildNearbySettlementsAnswer(selectedNpc, hints, this.deps.getCurrentVillageName());
+
+        this.deps.addLog(`You ask ${selectedNpc.name}: "Какие знаете окрестные поселения?"`, 'player');
+        this.deps.addLog(`${selectedNpc.name} (${selectedNpc.role}, ${answer.truthfulness}): ${answer.speech}`, 'system');
+        this.deps.addLog(answer.tone, 'system-message');
+    }
+
     public handleAskAboutBarter(): void {
         const selectedNpc = this.deps.getSelectedNpc();
         if (!selectedNpc) {

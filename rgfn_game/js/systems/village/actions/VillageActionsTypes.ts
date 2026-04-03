@@ -22,6 +22,7 @@ export type VillageUI = {
     npcTitle: HTMLElement;
     askVillageInput: HTMLSelectElement;
     askVillageBtn: HTMLButtonElement;
+    askNearbySettlementsBtn: HTMLButtonElement;
     askPersonInput: HTMLSelectElement;
     askPersonBtn: HTMLButtonElement;
     askBarterBtn: HTMLButtonElement;

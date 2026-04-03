@@ -93,6 +93,7 @@ export default class GameUiFactory {
         npcTitle: document.getElementById('village-npc-title')!,
         askVillageInput: document.getElementById('village-ask-settlement-input')! as HTMLSelectElement,
         askVillageBtn: document.getElementById('village-ask-settlement-btn')! as HTMLButtonElement,
+        askNearbySettlementsBtn: document.getElementById('village-ask-nearby-settlements-btn')! as HTMLButtonElement,
         askPersonInput: document.getElementById('village-ask-person-input')! as HTMLSelectElement,
         askPersonBtn: document.getElementById('village-ask-person-btn')! as HTMLButtonElement,
         askBarterBtn: document.getElementById('village-ask-barter-btn')! as HTMLButtonElement,

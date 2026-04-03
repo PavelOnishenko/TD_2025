@@ -66,6 +66,7 @@ export class VillageUiModel {
     public npcTitle!: HTMLElement;
     public askVillageInput!: HTMLSelectElement;
     public askVillageBtn!: HTMLButtonElement;
+    public askNearbySettlementsBtn!: HTMLButtonElement;
     public askPersonInput!: HTMLSelectElement;
     public askPersonBtn!: HTMLButtonElement;
     public askBarterBtn!: HTMLButtonElement;
