@@ -73,6 +73,7 @@ function createSharedRuntime(
         battleUiController,
         loreBookController,
         (action) => battleCommandControllerRef?.handleEquipmentAction(action) ?? true,
+        () => game.getHudTimeSnapshot(),
     );
     const villageRuntime = createVillageRuntime(game, ui, player, worldMap, villageLifeRenderer, hudCoordinator);
     return { hudCoordinator, battleCommandControllerRef, ...villageRuntime };

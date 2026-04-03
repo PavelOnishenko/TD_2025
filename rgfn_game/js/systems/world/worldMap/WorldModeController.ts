@@ -20,6 +20,8 @@ type WorldModeCallbacks = {
     onStartBattle: (enemies: Skeleton[], terrainType: TerrainType) => void;
     onAddBattleLog: (message: string, type?: string) => void;
     onUpdateHUD: () => void;
+    onAdvanceTime: (minutes: number, fatigueScale: number) => void;
+    isNightTime: () => boolean;
     onRememberTraveler: (traveler: Wanderer, disposition: 'hostile' | 'peaceful') => void;
     getQuestBattleEncounter: () => { enemies: Skeleton[]; hint?: string } | null;
 };

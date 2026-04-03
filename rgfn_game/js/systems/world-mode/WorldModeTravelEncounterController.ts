@@ -3,6 +3,7 @@ import Player from '../../entities/player/Player.js';
 import Wanderer from '../../entities/Wanderer.js';
 import { ItemDiscoverySplash } from '../../ui/ItemDiscoverySplash.js';
 import { balanceConfig } from '../../config/balance/balanceConfig.js';
+import { theme } from '../../config/ThemeConfig.js';
 import EncounterSystem from '../encounter/EncounterSystem.js';
 import WorldMap from '../world/worldMap/WorldMap.js';
 import WorldModeFerryPromptController from './WorldModeFerryPromptController.js';
@@ -37,7 +38,10 @@ export default class WorldModeTravelEncounterController {
     }
 
     public onPlayerMoved(isPreviouslyDiscovered: boolean): void {
-        this.player.addTravelFatigue(this.getTravelMinutesMultiplier());
+        const travelMinutes = this.getTravelMinutesForStep();
+        const nightFatigueBoost = this.callbacks.isNightTime() ? 1.35 : 1;
+        const fatigueScale = (travelMinutes / Math.max(1, theme.worldMap.cellTravelMinutes)) * nightFatigueBoost;
+        this.callbacks.onAdvanceTime(travelMinutes, fatigueScale);
         this.player.restoreMana(1);
         this.callbacks.onUpdateHUD();
         if (this.handleArrivalPrompts()) {return;}
@@ -97,7 +101,9 @@ export default class WorldModeTravelEncounterController {
 
         this.player.gold -= selectedOption.priceGold;
         const ferryMinutes = Math.max(1, selectedOption.waterCells * 2);
-        this.player.addTravelFatigue(Math.max(1, Math.round(ferryMinutes / 2)));
+        const ferryNightFatigueBoost = this.callbacks.isNightTime() ? 1.2 : 1;
+        const ferryFatigueScale = Math.max(1, (ferryMinutes / Math.max(1, theme.worldMap.cellTravelMinutes)) * ferryNightFatigueBoost);
+        this.callbacks.onAdvanceTime(ferryMinutes, ferryFatigueScale);
         this.callbacks.onAddBattleLog(`You pay ${selectedOption.priceGold}g to the ferryman.`, 'system');
         this.callbacks.onAddBattleLog(`The ferry departs and reaches ${selectedOption.destinationName} in about ${ferryMinutes} min.`, 'system');
         this.callbacks.onUpdateHUD();
@@ -111,6 +117,7 @@ export default class WorldModeTravelEncounterController {
             return;
         }
 
+        this.callbacks.onAdvanceTime(8 * 60, 0.25);
         const recovered = this.player.recoverFatigue(balanceConfig.survival.wildSleepFatigueRecovery);
         this.callbacks.onAddBattleLog(`You camp in the wild and recover ${Math.round(recovered)} fatigue.`, 'player');
 
@@ -141,12 +148,14 @@ export default class WorldModeTravelEncounterController {
         return true;
     }
 
-    private getTravelMinutesMultiplier(): number {
-        if (this.worldMap.isPlayerOnRoad()) {return 1;}
+    private getTravelMinutesForStep(): number {
+        const base = Math.max(1, theme.worldMap.cellTravelMinutes);
+        const nightTimeMultiplier = this.callbacks.isNightTime() ? 1.5 : 1;
+        if (this.worldMap.isPlayerOnRoad()) {return Math.round(base * nightTimeMultiplier);}
         const terrain = this.worldMap.getCurrentTerrain().type;
-        if (terrain === 'forest') {return 4;}
-        if (terrain === 'grass') {return 2;}
-        return 1;
+        if (terrain === 'forest') {return Math.round(base * 4 * nightTimeMultiplier);}
+        if (terrain === 'grass') {return Math.round(base * 2 * nightTimeMultiplier);}
+        return Math.round(base * nightTimeMultiplier);
     }
 
     private handleTravelerEncounter(traveler: Wanderer, isHostile: boolean): void {

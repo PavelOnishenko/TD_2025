@@ -32,6 +32,7 @@ export type VillageUI = {
 
 export type VillageActionsCallbacks = {
     onUpdateHUD: () => void;
+    onAdvanceTime: (minutes: number, fatigueScale: number) => void;
     onLeaveVillage: () => void;
     getVillageDirectionHint: (settlementName: string) => VillageDirectionHint;
     getKnownSettlementNames?: () => string[];

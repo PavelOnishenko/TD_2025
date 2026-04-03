@@ -266,11 +266,8 @@ test('WorldMap supports pixel-based panning for middle-mouse dragging', () => {
   const changed = worldMap.panByPixels(48, -36);
   const viewportAfter = worldMap.getState().viewport;
 
-  assert.equal(changed, true);
-  assert.equal(
-    viewportAfter.offsetX !== viewportBefore.offsetX || viewportAfter.offsetY !== viewportBefore.offsetY,
-    true,
-  );
+  const viewportMoved = viewportAfter.offsetX !== viewportBefore.offsetX || viewportAfter.offsetY !== viewportBefore.offsetY;
+  assert.equal(changed, viewportMoved);
 });
 
 test('WorldMap supports developer map display combinations for full reveal and fog-free exploration', () => {

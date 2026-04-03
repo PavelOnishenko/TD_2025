@@ -102,6 +102,7 @@ test('VillageActionsController keeps village rumor NPC roster stable across re-e
   const gameLog = createElement();
   const controller = new VillageActionsController(createPlayerStub(), villageUI, gameLog, {
     onUpdateHUD: () => {},
+    onAdvanceTime: () => {},
     onLeaveVillage: () => {},
     getVillageDirectionHint: (settlementName) => ({ settlementName, exists: false }),
     onVillageBarterCompleted: () => {},
@@ -138,6 +139,7 @@ test('VillageActionsController stores separate rumor rosters for different villa
   const gameLog = createElement();
   const controller = new VillageActionsController(createPlayerStub(), villageUI, gameLog, {
     onUpdateHUD: () => {},
+    onAdvanceTime: () => {},
     onLeaveVillage: () => {},
     getVillageDirectionHint: (settlementName) => ({ settlementName, exists: false }),
     onVillageBarterCompleted: () => {},
@@ -168,6 +170,7 @@ test('VillageActionsController injects Olive into first visited village and keep
   const gameLog = createElement();
   const controller = new VillageActionsController(createPlayerStub(), villageUI, gameLog, {
     onUpdateHUD: () => {},
+    onAdvanceTime: () => {},
     onLeaveVillage: () => {},
     getVillageDirectionHint: (settlementName) => ({ settlementName, exists: false }),
     onVillageBarterCompleted: () => {},
@@ -194,6 +197,7 @@ test('VillageActionsController binds dynamically generated barter trader names w
   const gameLog = createElement();
   const controller = new VillageActionsController(createPlayerStub(), villageUI, gameLog, {
     onUpdateHUD: () => {},
+    onAdvanceTime: () => {},
     onLeaveVillage: () => {},
     getVillageDirectionHint: (settlementName) => ({ settlementName, exists: true, direction: 'north', distanceCells: 5 }),
     onVillageBarterCompleted: () => {},
@@ -219,6 +223,7 @@ test('VillageActionsController mirrors dialogue lines into modal log and toggles
   const gameLog = createElement();
   const controller = new VillageActionsController(createPlayerStub(), villageUI, gameLog, {
     onUpdateHUD: () => {},
+    onAdvanceTime: () => {},
     onLeaveVillage: () => {},
     getVillageDirectionHint: (settlementName) => ({ settlementName, exists: false }),
     onVillageBarterCompleted: () => {},
@@ -283,6 +288,7 @@ test('VillageActionsController allows safe room sleep only with innkeeper select
 
   const controller = new VillageActionsController(player, villageUI, gameLog, {
     onUpdateHUD: () => {},
+    onAdvanceTime: () => {},
     onLeaveVillage: () => {},
     getVillageDirectionHint: (settlementName) => ({ settlementName, exists: false }),
     onVillageBarterCompleted: () => {},

@@ -70,6 +70,8 @@ function createController({
     onStartBattle: () => { calls.startedBattle += 1; },
     onAddBattleLog: () => {},
     onUpdateHUD: () => {},
+    onAdvanceTime: (minutes, fatigueScale) => { calls.lastAdvanceMinutes = minutes; calls.lastAdvanceFatigueScale = fatigueScale; calls.fatigueAdded += 1; calls.lastFatigueAmount = fatigueScale; },
+    isNightTime: () => false,
     onRememberTraveler: () => {},
     getQuestBattleEncounter: () => {
       calls.questEncounterChecks += 1;
@@ -184,6 +186,7 @@ test('WorldModeController confirms ferry travel from popup and closes prompt', (
     },
     callbacksOverrides: {
       onUpdateHUD: () => {},
+    onAdvanceTime: (minutes, fatigueScale) => { calls.lastAdvanceMinutes = minutes; calls.lastAdvanceFatigueScale = fatigueScale; calls.fatigueAdded += 1; calls.lastFatigueAmount = fatigueScale; },
     },
   });
 
@@ -242,6 +245,7 @@ test('WorldModeController adds fatigue when player successfully moves on world m
 
   assert.equal(calls.fatigueAdded, 1);
   assert.equal(calls.lastFatigueAmount, 1);
+  assert.equal(calls.lastAdvanceMinutes, 12);
 });
 
 test('WorldModeController makes off-road grassland travel 2x slower', () => {
@@ -258,6 +262,7 @@ test('WorldModeController makes off-road grassland travel 2x slower', () => {
 
   assert.equal(calls.fatigueAdded, 1);
   assert.equal(calls.lastFatigueAmount, 2);
+  assert.equal(calls.lastAdvanceMinutes, 24);
 });
 
 test('WorldModeController makes off-road forest travel 4x slower', () => {
@@ -274,6 +279,28 @@ test('WorldModeController makes off-road forest travel 4x slower', () => {
 
   assert.equal(calls.fatigueAdded, 1);
   assert.equal(calls.lastFatigueAmount, 4);
+  assert.equal(calls.lastAdvanceMinutes, 48);
+});
+
+
+
+test('WorldModeController night-time travel is slower and causes higher fatigue', () => {
+  const { controller, calls } = createController({
+    pressed: ['moveUp'],
+    moveResult: { moved: true, isPreviouslyDiscovered: false },
+    callbacksOverrides: {
+      isNightTime: () => true,
+    },
+    worldMapOverrides: {
+      isPlayerOnRoad: () => true,
+      getCurrentTerrain: () => ({ type: 'grass' }),
+    },
+  });
+
+  controller.updateWorldMode();
+
+  assert.equal(calls.lastAdvanceMinutes, 18);
+  assert.equal(calls.lastFatigueAmount > 1, true);
 });
 
 test('WorldModeController camp sleep recovers fatigue outside villages', () => {

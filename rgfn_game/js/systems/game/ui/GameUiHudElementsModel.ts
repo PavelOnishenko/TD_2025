@@ -20,6 +20,8 @@ export class HudElementsModel {
     public playerDodgeFormula!: HTMLElement;
     public playerWeapon!: HTMLElement;
     public playerGold!: HTMLElement;
+    public playerClock!: HTMLElement;
+    public playerDate!: HTMLElement;
     public playerFatigue!: HTMLElement;
     public playerFatigueState!: HTMLElement;
     public skillPoints!: HTMLElement;
