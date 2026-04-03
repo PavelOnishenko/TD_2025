@@ -22,6 +22,7 @@ import GameRuntimeStateMachineFactory from './runtime/GameRuntimeStateMachineFac
 
 export type RuntimeUi = ReturnType<GameUiFactory['create']>;
 export type RuntimeStateMachine = ReturnType<typeof GameRuntimeStateMachineFactory.create>;
+type WorldTimeSnapshot = { clock: string; date: string; calendarTitle: string; calendarLines: string[] };
 
 export const createPlayer = (hasSavedGame: boolean): Player => new Player(0, 0, {
     startingSkillAllocation: hasSavedGame
@@ -83,7 +84,7 @@ export const createHudCoordinator = (
     battleUiController: BattleUiController,
     loreBookController: LoreBookController,
     onEquipmentAction: (action: string) => boolean,
-    getWorldTimeSnapshot: () => { clock: string; date: string },
+    getWorldTimeSnapshot: () => WorldTimeSnapshot,
 ): GameHudCoordinator => new GameHudCoordinator(
     player,
     new HudController(

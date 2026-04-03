@@ -8,6 +8,16 @@ type CalendarState = {
     totalMinutes: number;
 };
 
+export type CalendarSnapshot = {
+    startYear: number;
+    currentYear: number;
+    currentMonthIndex: number;
+    currentMonthName: string;
+    currentDay: number;
+    daysPerYear: number;
+    months: CalendarMonth[];
+};
+
 const MINUTES_PER_DAY = 24 * 60;
 
 export default class GameTimeRuntime {
@@ -52,6 +62,19 @@ export default class GameTimeRuntime {
             startYear: this.state.startYear,
             months: this.state.months.map((month) => ({ ...month })),
             totalMinutes: this.state.totalMinutes,
+        };
+    }
+
+    public getCalendarSnapshot(): CalendarSnapshot {
+        const date = this.getCalendarDate();
+        return {
+            startYear: this.state.startYear,
+            currentYear: date.year,
+            currentMonthIndex: date.monthIndex,
+            currentMonthName: this.state.months[date.monthIndex]?.name ?? 'Unknown',
+            currentDay: date.day,
+            daysPerYear: this.state.months.reduce((sum, month) => sum + month.days, 0),
+            months: this.state.months.map((month) => ({ ...month })),
         };
     }
 

@@ -22,6 +22,8 @@ export class HudElementsModel {
     public playerGold!: HTMLElement;
     public playerClock!: HTMLElement;
     public playerDate!: HTMLElement;
+    public worldCalendarSummary!: HTMLElement;
+    public worldCalendarList!: HTMLElement;
     public playerFatigue!: HTMLElement;
     public playerFatigueState!: HTMLElement;
     public skillPoints!: HTMLElement;

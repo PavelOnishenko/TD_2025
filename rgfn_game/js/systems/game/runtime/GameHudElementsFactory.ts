@@ -55,6 +55,8 @@ export class GameHudElementsFactory {
             playerGold: el('player-gold'),
             playerClock: el('player-clock'),
             playerDate: el('player-date'),
+            worldCalendarSummary: el('world-calendar-summary'),
+            worldCalendarList: el('world-calendar-list'),
             playerFatigue: el('player-fatigue'),
             playerFatigueState: el('player-fatigue-state'),
             skillPoints: el('skill-points'),
