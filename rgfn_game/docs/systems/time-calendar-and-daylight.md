@@ -4,9 +4,16 @@
 
 - A runtime **time/calendar generator** (`GameTimeRuntime`) now creates a random world calendar:
   - Start year sampled on a logarithmic-like curve in range `0..10000`.
-  - Month count sampled on a logarithmic-like curve in range `1..60`.
+  - Month count sampled in range `1..30` using **equal-probability logarithmic buckets**:
+    - `1`
+    - `2..3`
+    - `4..7`
+    - `8..15`
+    - `16..30`
+    - each bucket has the same selection chance.
   - Month names are generated procedurally.
-  - Month day count pattern is randomized between:
+  - Month day counts are also constrained to `1..30` with the same bucketed logarithmic distribution.
+  - Month day count style is randomized between:
     - fully uniform,
     - near-uniform with small variation,
     - fully varied month lengths.
@@ -70,6 +77,18 @@ Village actions now advance time, including at least:
 - Time state is now serialized into save data as optional `time` payload.
 - Older saves without `time` remain loadable; a new random calendar is generated when absent.
 - If `time` is absent (legacy save), the runtime deterministically regenerates calendar from current world+character seed source, then continues from there.
+
+## Calendar generation details (new)
+
+- `months/year` and `days/month` now share the same distribution model:
+  - sample one of log buckets (`1`, `2..3`, `4..7`, `8..15`, `16..30`) with equal chance,
+  - then sample uniformly inside the chosen bucket.
+- This keeps very small calendars possible while preventing extreme-size calendars from dominating generation.
+- Day-length style outcomes:
+  - **Uniform worlds:** every month has identical day count.
+  - **Slightly varied worlds:** months are close to a base value (small ± drift).
+  - **Random worlds:** each month can independently vary across the full `1..30` space.
+- Determinism is preserved per generation seed; same world/character seed context still reproduces the same generated calendar.
 
 ## Integration points
 

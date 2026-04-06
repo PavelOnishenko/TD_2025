@@ -19,6 +19,8 @@ export type CalendarSnapshot = {
 };
 
 const MINUTES_PER_DAY = 24 * 60;
+const CALENDAR_COUNT_MIN = 1;
+const CALENDAR_COUNT_MAX = 30;
 
 export default class GameTimeRuntime {
     private readonly state: CalendarState;
@@ -110,9 +112,9 @@ export default class GameTimeRuntime {
 
     private createRandomCalendarState(): CalendarState {
         const startYear = this.sampleLogRange(0, 10000);
-        const monthCount = this.sampleLogRange(1, 60);
+        const monthCount = this.sampleGroupedLogRange(CALENDAR_COUNT_MIN, CALENDAR_COUNT_MAX);
         const styleRoll = this.nextRandom();
-        const baseDays = this.sampleLogRange(12, 55);
+        const baseDays = this.sampleGroupedLogRange(CALENDAR_COUNT_MIN, CALENDAR_COUNT_MAX);
         const months: CalendarMonth[] = [];
 
         for (let index = 0; index < monthCount; index += 1) {
@@ -120,9 +122,9 @@ export default class GameTimeRuntime {
             if (styleRoll < 0.33) {
                 days = baseDays;
             } else if (styleRoll < 0.66) {
-                days = Math.max(8, baseDays + this.sampleInt(-2, 2));
+                days = Math.max(CALENDAR_COUNT_MIN, Math.min(CALENDAR_COUNT_MAX, baseDays + this.sampleInt(-2, 2)));
             } else {
-                days = this.sampleLogRange(6, 70);
+                days = this.sampleGroupedLogRange(CALENDAR_COUNT_MIN, CALENDAR_COUNT_MAX);
             }
             months.push({ name: this.generateMonthName(index), days });
         }
@@ -170,6 +172,23 @@ export default class GameTimeRuntime {
         if (min >= max) {return min;}
         const normalized = Math.log10(1 + this.nextRandom() * 9);
         return Math.max(min, Math.min(max, Math.round(min + ((max - min) * normalized))));
+    }
+
+    private sampleGroupedLogRange(min: number, max: number): number {
+        if (min >= max) {return min;}
+
+        const buckets: Array<{ from: number; to: number }> = [];
+        let bucketStart = min;
+
+        while (bucketStart <= max) {
+            const bucketEnd = Math.min(max, (bucketStart * 2) - 1);
+            buckets.push({ from: bucketStart, to: bucketEnd });
+            bucketStart *= 2;
+        }
+
+        const bucketIndex = this.sampleInt(0, buckets.length - 1);
+        const bucket = buckets[bucketIndex];
+        return this.sampleInt(bucket.from, bucket.to);
     }
 
     private nextRandom(): number {

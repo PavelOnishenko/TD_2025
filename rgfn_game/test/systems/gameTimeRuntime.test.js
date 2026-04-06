@@ -43,3 +43,35 @@ test('GameTimeRuntime exposes full generated calendar snapshot with current mont
   assert.ok(snapshot.currentDay >= 1);
   assert.ok(snapshot.daysPerYear >= snapshot.months.length);
 });
+
+test('GameTimeRuntime keeps month and day counts within the 1..30 calendar range', () => {
+  for (let seed = 1; seed <= 500; seed += 1) {
+    const snapshot = new GameTimeRuntime(null, seed).getCalendarSnapshot();
+    assert.ok(snapshot.months.length >= 1 && snapshot.months.length <= 30);
+    for (const month of snapshot.months) {
+      assert.ok(month.days >= 1 && month.days <= 30);
+    }
+  }
+});
+
+test('GameTimeRuntime still produces uniform, slightly-varied, and random month-length worlds', () => {
+  const seenStyles = new Set();
+  for (let seed = 1; seed <= 400; seed += 1) {
+    const monthDays = new GameTimeRuntime(null, seed).getCalendarSnapshot().months.map((month) => month.days);
+    const uniqueDays = new Set(monthDays);
+    const minDays = Math.min(...monthDays);
+    const maxDays = Math.max(...monthDays);
+    if (uniqueDays.size === 1) {
+      seenStyles.add('uniform');
+    } else if (maxDays - minDays <= 4) {
+      seenStyles.add('slightly-varied');
+    } else {
+      seenStyles.add('random');
+    }
+    if (seenStyles.size === 3) {
+      break;
+    }
+  }
+
+  assert.deepEqual(new Set(['uniform', 'slightly-varied', 'random']), seenStyles);
+});
