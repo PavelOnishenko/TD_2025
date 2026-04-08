@@ -171,6 +171,7 @@ export default class GameUiHudPanelController {
             panel.dataset.spawnPositioned = 'true';
             panel.style.setProperty('--panel-offset-x', `${nextOffsetX}px`);
             panel.style.setProperty('--panel-offset-y', `${nextOffsetY}px`);
+            this.ensurePanelDragHandleIsReachable(panel);
         };
 
         const scheduleSpawnPlacement = (): void => {
@@ -183,6 +184,10 @@ export default class GameUiHudPanelController {
 
     private handlePanelToggle(panel: HudPanelToggle): void {
         this.callbacks.onTogglePanel(panel);
+        const panelElement = this.getPanelElement(panel);
+        if (panelElement && !panelElement.classList.contains('hidden')) {
+            requestAnimationFrame(() => this.ensurePanelDragHandleIsReachable(panelElement));
+        }
         this.setHudMenuOpen(false);
         this.persistCurrentContextLayout();
     }
@@ -249,6 +254,10 @@ export default class GameUiHudPanelController {
             }
 
             element.classList.toggle('hidden', snapshot.hidden);
+
+            if (!snapshot.hidden) {
+                requestAnimationFrame(() => this.ensurePanelDragHandleIsReachable(element));
+            }
         });
     }
 
@@ -280,7 +289,60 @@ export default class GameUiHudPanelController {
             panel.dataset.spawnPositioned = 'true';
             panel.style.setProperty('--panel-offset-x', `${nextOffsetX}px`);
             panel.style.setProperty('--panel-offset-y', `${nextOffsetY}px`);
+            this.ensurePanelDragHandleIsReachable(panel);
         });
+    }
+
+    private getPanelElement = (panel: HudPanelToggle): HTMLElement | null => this.getPanelConfigs().find((config) => config.key === panel)?.element ?? null;
+
+    private ensurePanelDragHandleIsReachable(panel: HTMLElement): void {
+        if (panel.classList.contains('hidden')) {
+            return;
+        }
+
+        const dragHandle = panel.querySelector<HTMLElement>('.panel-drag-handle');
+        if (!dragHandle) {
+            return;
+        }
+
+        const menuToggleRect = this.hudElements.hudMenuToggleBtn.getBoundingClientRect();
+        const dragHandleRect = dragHandle.getBoundingClientRect();
+        if (menuToggleRect.width <= 0 || menuToggleRect.height <= 0 || dragHandleRect.width <= 0 || dragHandleRect.height <= 0) {
+            return;
+        }
+
+        if (!this.rectanglesOverlap(dragHandleRect, menuToggleRect)) {
+            return;
+        }
+
+        const clearancePx = 12;
+        const horizontalShift = (menuToggleRect.right + clearancePx) - dragHandleRect.left;
+        const verticalShift = (menuToggleRect.bottom + clearancePx) - dragHandleRect.top;
+        this.applyPanelNudge(panel, horizontalShift, verticalShift);
+    }
+
+    private rectanglesOverlap = (firstRect: DOMRect, secondRect: DOMRect): boolean => !(
+        firstRect.right < secondRect.left
+        || firstRect.left > secondRect.right
+        || firstRect.bottom < secondRect.top
+        || firstRect.top > secondRect.bottom
+    );
+
+    private applyPanelNudge(panel: HTMLElement, horizontalShift: number, verticalShift: number): void {
+        const shouldShiftHorizontally = horizontalShift <= verticalShift;
+        const currentOffsetX = Number.parseFloat(panel.dataset.offsetX ?? '0') || 0;
+        const currentOffsetY = Number.parseFloat(panel.dataset.offsetY ?? '0') || 0;
+        const nextOffsetX = shouldShiftHorizontally ? (currentOffsetX + horizontalShift) : currentOffsetX;
+        const nextOffsetY = shouldShiftHorizontally ? currentOffsetY : (currentOffsetY + verticalShift);
+        this.applyPanelOffset(panel, nextOffsetX, nextOffsetY);
+    }
+
+    private applyPanelOffset(panel: HTMLElement, nextOffsetX: number, nextOffsetY: number): void {
+        panel.dataset.offsetX = String(nextOffsetX);
+        panel.dataset.offsetY = String(nextOffsetY);
+        panel.dataset.spawnPositioned = 'true';
+        panel.style.setProperty('--panel-offset-x', `${nextOffsetX}px`);
+        panel.style.setProperty('--panel-offset-y', `${nextOffsetY}px`);
     }
 
     private persistCurrentContextLayout(): void {
