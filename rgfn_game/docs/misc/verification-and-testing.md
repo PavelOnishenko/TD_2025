@@ -1277,7 +1277,7 @@ This prints:
 ### Fix summary
 - Switched drag tracking from index-based to **item-reference-based** tracking in `HudInventoryController`.
 - Added explicit `clearDraggedInventoryItem()` to reset drag state from equipment drop handlers.
-- `getDraggedInventoryItem()` now resolves current index from item identity and self-heals stale references.
+- Removed fallback recovery paths; drag state now enforces strict invariants and throws immediately on impossible states (e.g., dragged index without dragged item reference, or dragged item reference not present in inventory).
 
 ### Regression test added
 - New scenario test verifies dragged item identity remains correct when inventory order changes mid-drag:

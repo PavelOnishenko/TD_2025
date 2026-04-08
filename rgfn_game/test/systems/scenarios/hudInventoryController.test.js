@@ -82,3 +82,40 @@ test('HudInventoryController keeps the dragged item identity when inventory orde
     global.document = originalDocument;
   }
 });
+
+test('HudInventoryController fails fast when drag index exists without dragged item reference', () => {
+  const originalDocument = global.document;
+  global.document = { createElement: () => createElement() };
+
+  try {
+    const player = new Player(0, 0);
+    const knife = new Item({ id: 'knife', name: 'Knife +1', description: 'Light blade', type: 'weapon', handsRequired: 1, damageBonus: 1, requirements: { agility: 0, strength: 0 } });
+    player.addItemToInventory(knife);
+
+    const hudElements = {
+      inventoryCount: createElement(),
+      inventoryCapacity: createElement(),
+      inventoryCapacityHint: createElement(),
+      undoLastDropBtn: createElement(),
+      inventoryGrid: createElement(),
+    };
+    let draggedIndex = 0;
+
+    const controller = new HudInventoryController(
+      player,
+      hudElements,
+      () => {},
+      () => {},
+      () => {},
+      () => draggedIndex,
+      (nextIndex) => { draggedIndex = nextIndex; },
+    );
+
+    assert.throws(
+      () => controller.getDraggedInventoryItem(),
+      /dragged index 0 exists without a dragged item reference/i,
+    );
+  } finally {
+    global.document = originalDocument;
+  }
+});
