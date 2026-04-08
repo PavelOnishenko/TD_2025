@@ -1123,3 +1123,17 @@ To begin migration:
 5. **Commit progress regularly**
 
 Good luck with the migration! 🚀
+
+---
+
+## Progress Log (incremental)
+
+### 2026-04-08
+- Migrated `js/core/game/statePersistence.js` logic into typed source file `js/core/game/statePersistence.ts`.
+- Confirmed compile and targeted persistence regression test pass.
+- Migration remains incremental: runtime JS entrypoints are still in use while TS coverage expands module-by-module.
+
+### OOP-first rule for future phases (added 2026-04-08)
+- Future migrations should prioritize class-based decomposition for stateful systems.
+- File conversion without architecture uplift is considered incomplete.
+- Preferred pattern: typed classes for core logic + thin compatibility adapter for legacy call sites.
