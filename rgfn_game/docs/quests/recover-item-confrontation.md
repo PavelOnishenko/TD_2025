@@ -22,6 +22,7 @@
 - On `fled`, holder relocation can repeat endlessly; every flee picks a different village when possible.
 - Person-location interrogation uses existing person-direction hint pipeline via quest contracts.
 - When the holder is revealed by a villager, the holder NPC is injected into the current village rumor roster immediately so the player can select and confront them without leaving/re-entering the village.
+- Village dialogue now includes a dedicated **Confront for quest item** button to start recover-target fights explicitly (no barter wording required).
 
 ## How to test manually (player-facing)
 
@@ -33,7 +34,7 @@ Use these steps to validate a recover quest from a fresh world:
 4. Watch the log for a line like:
    - `"<NPC> lowers their voice: "<Target Name> is carrying <Item>. You'll find them in this village."`
 5. Confirm that `<Target Name>` appears as a selectable NPC in the **Village Rumors** list immediately after that reveal line.
-6. Select that target NPC and use the dialogue confirmation action (current flow shares the barter-confirm button path for confrontation trigger).
+6. Select that target NPC and click **Confront for quest item**.
 7. Verify battle starts against that exact person.
 8. Resolve battle:
    - **Victory**: quest objective completes and item is granted.
@@ -47,6 +48,7 @@ Use these steps to validate a recover quest from a fresh world:
 - If no confrontation starts after selecting the revealed holder:
   - Verify you are in the holder's `currentVillage` from quest text.
   - Verify the holder name in selected NPC exactly matches the quest condition target.
+  - Verify you clicked **Confront for quest item** (not barter buttons).
 
 ## Files and systems touched
 

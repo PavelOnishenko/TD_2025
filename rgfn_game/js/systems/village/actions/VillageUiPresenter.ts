@@ -47,6 +47,7 @@ export default class VillageUiPresenter {
         this.deps.villageUI.askPersonBtn.disabled = !hasSelectedNpc;
         this.deps.villageUI.askBarterBtn.disabled = !hasSelectedNpc;
         this.deps.villageUI.barterNowBtn.disabled = !hasSelectedNpc;
+        this.deps.villageUI.confrontRecoverBtn.disabled = !hasSelectedNpc;
         this.deps.villageUI.recruitEscortBtn.disabled = !hasSelectedNpc;
         this.deps.villageUI.sleepRoomBtn.disabled = !hasSelectedNpc || !this.deps.isInnkeeper(selectedNpc?.role ?? '');
     }

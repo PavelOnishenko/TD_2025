@@ -28,6 +28,7 @@ export type VillageUI = {
     askPersonBtn: HTMLButtonElement;
     askBarterBtn: HTMLButtonElement;
     barterNowBtn: HTMLButtonElement;
+    confrontRecoverBtn: HTMLButtonElement;
     recruitEscortBtn: HTMLButtonElement;
 };
 

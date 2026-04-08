@@ -122,6 +122,18 @@ export default class VillageDialogueInteractionService {
             this.deps.addLog('Choose an NPC before trying to execute barter.', 'system');
             return;
         }
+        const deal = this.getActiveBarterDeal(selectedNpc.name);
+        if (!deal) {return;}
+        this.executeBarterWithNpc(selectedNpc.name, deal);
+    }
+
+    public handleConfrontRecoverTarget(): void {
+        const selectedNpc = this.deps.getSelectedNpc();
+        if (!selectedNpc) {
+            this.deps.addLog('Choose an NPC before starting a confrontation.', 'system');
+            return;
+        }
+
         const recoverConfrontation = this.deps.callbacks.onTryStartRecoverConfrontation?.(selectedNpc.name, this.deps.getCurrentVillageName())
             ?? { status: 'not-target' as const };
         if (recoverConfrontation.status === 'started' && recoverConfrontation.enemies) {
@@ -137,9 +149,7 @@ export default class VillageDialogueInteractionService {
             this.deps.addLog(`${selectedNpc.name} is not your confirmed target here yet. Ask locals for a solid lead first.`, 'system-message');
             return;
         }
-        const deal = this.getActiveBarterDeal(selectedNpc.name);
-        if (!deal) {return;}
-        this.executeBarterWithNpc(selectedNpc.name, deal);
+        this.deps.addLog(`${selectedNpc.name} is not the recover target for your current quest.`, 'system-message');
     }
 
     private getActiveBarterDeal(npcName: string): ReturnType<VillageBarterService['getBarterDealForNpc']> {

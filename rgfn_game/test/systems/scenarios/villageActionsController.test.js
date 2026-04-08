@@ -67,6 +67,7 @@ function createVillageUi() {
     askPersonBtn: createElement('button'),
     askBarterBtn: createElement('button'),
     barterNowBtn: createElement('button'),
+    confrontRecoverBtn: createElement('button'),
     leaveBtn: createElement('button'),
   };
 }
@@ -241,6 +242,35 @@ test('VillageActionsController adds revealed recover holder into current village
 
   const names = controller['npcRoster'].map((npc) => npc.name);
   assert.equal(names.includes('Pablo Menéndez'), true);
+}));
+
+test('VillageActionsController confront button starts recover battle for selected holder', () => withDocumentStub(() => {
+  const villageUI = createVillageUi();
+  const gameLog = createElement();
+  let startedBattle = false;
+  const controller = new VillageActionsController(createPlayerStub(), villageUI, gameLog, {
+    onUpdateHUD: () => {},
+    onAdvanceTime: () => {},
+    onLeaveVillage: () => {},
+    onRevealRecoverHolder: () => ({ revealed: true, personName: 'Pablo Menéndez', itemName: 'Torva' }),
+    onTryStartRecoverConfrontation: () => ({ status: 'started', enemies: [{ id: 'recover-enemy' }], itemName: 'Torva' }),
+    onStartBattle: () => { startedBattle = true; },
+    getVillageDirectionHint: (settlementName) => ({ settlementName, exists: false }),
+    onVillageBarterCompleted: () => {},
+  });
+
+  controller['dialogueEngine'] = {
+    createNpcRoster: () => [{ id: 'moss-0', name: 'Tor', role: 'Carpenter', look: 'cloak', speechStyle: 'calm', disposition: 'truthful' }],
+    buildLocationAnswer: () => ({ speech: '', tone: '', truthfulness: 'truth' }),
+    buildPersonLocationAnswer: () => ({ speech: '', tone: '', truthfulness: 'truth' }),
+  };
+
+  controller.enterVillage('Thalthalira Harbor');
+  controller.handleSelectNpc(0);
+  controller.handleSelectNpc(0);
+  controller.handleConfrontRecoverTarget();
+
+  assert.equal(startedBattle, true);
 }));
 
 test('VillageActionsController mirrors dialogue lines into modal log and toggles modal visibility', () => withDocumentStub(() => {
