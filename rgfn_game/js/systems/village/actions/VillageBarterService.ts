@@ -121,6 +121,7 @@ export default class VillageBarterService {
         }
         const deals = Array.from(this.questBarterContracts.entries())
             .filter(([contractId]) => this.barterContractVillageById.get(contractId) === villageName)
+            .filter(([, contract]) => contract.contractType !== 'recover')
             .map(([contractId, contract]) => this.createDealFromContract(contractId, contract.traderName, contract.itemName));
         this.villageBarterDeals.set(villageName, deals);
         return deals;
@@ -141,6 +142,9 @@ export default class VillageBarterService {
         });
     }
     private toHint(contract: QuestBarterContract): string {
+        if (contract.contractType === 'recover') {
+            return `${contract.traderName} was last seen here with ${contract.itemName}.`;
+        }
         if (contract.contractType === 'deliver' && contract.destinationVillage) {
             return `${contract.traderName} can hand over ${contract.itemName} here. Deliver it to ${contract.destinationVillage}.`;
         }

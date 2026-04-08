@@ -140,6 +140,14 @@ export class GameFacade implements GameFacadeStateAccess {
     public onMonsterKilled(monsterName: string): void { this.lifecycle.onMonsterKilled(monsterName); }
     public onTryRecruitEscort = (personName: string, villageName: string): 'joined' | 'inactive' | 'already-joined' | 'not-available' =>
         this.lifecycle.onTryRecruitEscort(personName, villageName);
+    public onRevealRecoverHolder = (villageName: string, npcName: string): { revealed: boolean; personName?: string; itemName?: string } =>
+        this.lifecycle.onRevealRecoverHolder(villageName, npcName);
+    public onTryStartRecoverConfrontation = (
+        personName: string,
+        villageName: string,
+    ): { status: 'started' | 'inactive' | 'not-target' | 'not-ready'; enemies?: import('../entities/Skeleton.js').default[]; itemName?: string } =>
+        this.lifecycle.onTryStartRecoverConfrontation(personName, villageName);
+    public onBattleEnded = (result: 'victory' | 'defeat' | 'fled'): void => this.lifecycle.onBattleEnded(result);
 
     public tryCreateQuestMonsterEncounter = (): {
         enemies: import('../entities/Skeleton.js').default[];

@@ -122,6 +122,21 @@ export default class VillageDialogueInteractionService {
             this.deps.addLog('Choose an NPC before trying to execute barter.', 'system');
             return;
         }
+        const recoverConfrontation = this.deps.callbacks.onTryStartRecoverConfrontation?.(selectedNpc.name, this.deps.getCurrentVillageName())
+            ?? { status: 'not-target' as const };
+        if (recoverConfrontation.status === 'started' && recoverConfrontation.enemies) {
+            this.deps.addLog(
+                `You tell ${selectedNpc.name}: "I need ${recoverConfrontation.itemName ?? 'that item'}, and I'll take it whatever the cost."`,
+                'player',
+            );
+            this.deps.addLog(`${selectedNpc.name} draws steel and attacks.`, 'enemy');
+            this.deps.callbacks.onStartBattle?.(recoverConfrontation.enemies);
+            return;
+        }
+        if (recoverConfrontation.status === 'not-ready') {
+            this.deps.addLog(`${selectedNpc.name} is not your confirmed target here yet. Ask locals for a solid lead first.`, 'system-message');
+            return;
+        }
         const deal = this.getActiveBarterDeal(selectedNpc.name);
         if (!deal) {return;}
         this.executeBarterWithNpc(selectedNpc.name, deal);

@@ -1,4 +1,5 @@
 import Item from '../../../entities/Item.js';
+import Skeleton from '../../../entities/Skeleton.js';
 import { PersonDirectionHint, VillageDirectionHint, VillageNpcProfile } from '../VillageDialogueEngine.js';
 
 export type VillageUI = {
@@ -38,6 +39,12 @@ export type VillageActionsCallbacks = {
     getKnownSettlementNames?: () => string[];
     onVillageBarterCompleted: (traderName: string, itemName: string, villageName: string) => void;
     onTryRecruitEscort: (personName: string, villageName: string) => 'joined' | 'inactive' | 'already-joined' | 'not-available';
+    onRevealRecoverHolder?: (villageName: string, npcName: string) => { revealed: boolean; personName?: string; itemName?: string };
+    onTryStartRecoverConfrontation?: (
+        personName: string,
+        villageName: string,
+    ) => { status: 'started' | 'inactive' | 'not-target' | 'not-ready'; enemies?: Skeleton[]; itemName?: string };
+    onStartBattle?: (enemies: Skeleton[]) => void;
 };
 
 export type QuestEscortContract = {
@@ -51,7 +58,7 @@ export type QuestBarterContract = {
     itemName: string;
     sourceVillage?: string;
     destinationVillage?: string;
-    contractType: 'barter' | 'deliver';
+    contractType: 'barter' | 'deliver' | 'recover';
 };
 
 export type VillageOffer = {

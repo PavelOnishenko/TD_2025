@@ -70,8 +70,28 @@ export type EscortObjectiveData = {
     isDead?: boolean;
 };
 
+export type RecoverEnemyProfile = {
+    archetypeId: string;
+    xpValue: number;
+    width: number;
+    height: number;
+    baseStats: { hp: number; damage: number; armor: number; mana: number };
+    skills: { vitality: number; toughness: number; strength: number; agility: number; connection: number; intelligence: number };
+};
+
+export type RecoverObjectiveData = {
+    itemName: string;
+    personName: string;
+    initialVillage: string;
+    currentVillage: string;
+    isPersonKnown?: boolean;
+    hasFled?: boolean;
+    enemyProfile?: RecoverEnemyProfile;
+};
+
 export type QuestObjectiveData = {
     deliver?: DeliverObjectiveData;
     monster?: MonsterObjectiveData;
     escort?: EscortObjectiveData;
+    recover?: RecoverObjectiveData;
 };

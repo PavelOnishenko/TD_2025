@@ -140,6 +140,7 @@ export default class QuestLeafFactory {
     private async createRecoverNode(id: string): Promise<QuestNode> {
         const artifact = await this.generateName('artifact');
         const location = await this.generateName('location');
+        const person = await this.generateName('character');
         return this.contentBuilder.node(
             id,
             `Recover ${artifact.text}`,
@@ -147,6 +148,16 @@ export default class QuestLeafFactory {
             `Obtain ${this.contentBuilder.label(artifact)} at ${location.text}.`,
             'recover',
             this.contentBuilder.entities(artifact, location),
+            {
+                recover: {
+                    itemName: artifact.text,
+                    personName: person.text,
+                    initialVillage: location.text,
+                    currentVillage: location.text,
+                    isPersonKnown: false,
+                    hasFled: false,
+                },
+            },
         );
     }
 

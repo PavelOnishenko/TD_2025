@@ -1,5 +1,6 @@
 import QuestProgressTracker from '../../systems/quest/QuestProgressTracker.js';
-import { EscortObjectiveData, QuestNode } from '../../systems/quest/QuestTypes.js';
+import Item from '../../entities/Item.js';
+import { EscortObjectiveData, QuestNode, RecoverObjectiveData } from '../../systems/quest/QuestTypes.js';
 import QuestUiController from '../../systems/quest/ui/QuestUiController.js';
 import QuestGenerator from '../../systems/quest/QuestGenerator.js';
 import WorldMap from '../../systems/world/worldMap/WorldMap.js';
@@ -13,7 +14,7 @@ type QuestContractsReadyPayload = {
         itemName: string;
         sourceVillage?: string;
         destinationVillage?: string;
-        contractType: 'barter' | 'deliver';
+        contractType: 'barter' | 'deliver' | 'recover';
     }>;
     escortContracts: Array<{ personName: string; sourceVillage: string; destinationVillage: string }>;
 };
@@ -22,6 +23,8 @@ export default class GameQuestRuntime {
     public activeQuest: QuestNode | null = null;
     public questUiController: QuestUiController | null = null;
     public questProgressTracker: QuestProgressTracker | null = null;
+    private onContractsUpdated: ((payload: QuestContractsReadyPayload) => void) | null = null;
+    private pendingRecoverBattleNodeId: string | null = null;
 
     public async initialize(
         questGenerator: QuestGenerator,
@@ -35,6 +38,7 @@ export default class GameQuestRuntime {
         this.activeQuest = quest;
         this.questUiController = questUiController;
         this.questProgressTracker = new QuestProgressTracker(quest);
+        this.onContractsUpdated = onContractsReady;
         onContractsReady({ barterContracts: this.collectBarterContracts(quest), escortContracts: this.collectEscortContracts(quest) });
         this.registerQuestLocations(worldMap, quest);
         questUiController.renderQuest(quest);
@@ -88,6 +92,116 @@ export default class GameQuestRuntime {
             this.questUiController.renderQuest(this.activeQuest);
         }
         return result;
+    }
+
+    public revealRecoverHolder(villageName: string, npcName: string): { revealed: boolean; personName?: string; itemName?: string } {
+        if (!this.activeQuest || !this.questUiController) {
+            return { revealed: false };
+        }
+
+        const normalizedVillage = villageName.trim().toLocaleLowerCase();
+        const normalizedNpc = npcName.trim().toLocaleLowerCase();
+        if (!normalizedVillage || !normalizedNpc) {
+            return { revealed: false };
+        }
+
+        let revealed: { revealed: boolean; personName?: string; itemName?: string } = { revealed: false };
+        this.visitQuestNodes(this.activeQuest, (node) => {
+            if (revealed.revealed || node.objectiveType !== 'recover' || node.children.length > 0 || node.isCompleted) {
+                return;
+            }
+            const recover = node.objectiveData?.recover;
+            if (!recover || recover.isPersonKnown) {
+                return;
+            }
+            if (recover.currentVillage.trim().toLocaleLowerCase() !== normalizedVillage) {
+                return;
+            }
+            if (recover.personName.trim().toLocaleLowerCase() === normalizedNpc) {
+                return;
+            }
+            recover.isPersonKnown = true;
+            this.updateRecoverObjectiveText(node);
+            this.refreshContracts();
+            this.questUiController?.renderQuest(this.activeQuest!);
+            revealed = { revealed: true, personName: recover.personName, itemName: recover.itemName };
+        });
+        return revealed;
+    }
+
+    public startRecoverConfrontation(
+        personName: string,
+        villageName: string,
+    ): { status: 'started' | 'inactive' | 'not-target' | 'not-ready'; enemies?: Skeleton[]; itemName?: string } {
+        if (!this.activeQuest) {
+            return { status: 'inactive' };
+        }
+
+        const normalizedPerson = personName.trim().toLocaleLowerCase();
+        const normalizedVillage = villageName.trim().toLocaleLowerCase();
+        if (!normalizedPerson || !normalizedVillage) {
+            return { status: 'not-target' };
+        }
+
+        let matchedNode: QuestNode | null = null;
+        let matchedRecover: RecoverObjectiveData | null = null;
+        this.visitQuestNodes(this.activeQuest, (node) => {
+            if (matchedRecover || node.objectiveType !== 'recover' || node.children.length > 0 || node.isCompleted) {
+                return;
+            }
+            const recover = node.objectiveData?.recover;
+            if (!recover) {
+                return;
+            }
+            if (recover.personName.trim().toLocaleLowerCase() !== normalizedPerson) {
+                return;
+            }
+            matchedNode = node;
+            matchedRecover = recover;
+        });
+        if (!matchedNode || !matchedRecover) {
+            return { status: 'not-target' };
+        }
+        if (!matchedRecover.isPersonKnown || matchedRecover.currentVillage.trim().toLocaleLowerCase() !== normalizedVillage) {
+            return { status: 'not-ready' };
+        }
+
+        const profile = this.ensureRecoverEnemyProfile(matchedRecover);
+        this.pendingRecoverBattleNodeId = matchedNode.id;
+        return { status: 'started', enemies: [new Skeleton(0, 0, this.toRecoverEnemyConfig(matchedRecover.personName, profile))], itemName: matchedRecover.itemName };
+    }
+
+    public resolveRecoverBattle(result: 'victory' | 'fled', worldMap: WorldMap, player: { addItemToInventory: (item: Item) => boolean }): string[] {
+        if (!this.activeQuest || !this.pendingRecoverBattleNodeId) {
+            return [];
+        }
+
+        const node = this.findQuestNodeById(this.activeQuest, this.pendingRecoverBattleNodeId);
+        this.pendingRecoverBattleNodeId = null;
+        if (!node || node.objectiveType !== 'recover' || node.children.length > 0 || node.isCompleted || !node.objectiveData?.recover) {
+            return [];
+        }
+
+        const recover = node.objectiveData.recover;
+        if (result === 'victory') {
+            node.isCompleted = true;
+            this.questProgressTracker?.recomputeCompletion();
+            this.refreshContracts();
+            this.questUiController?.renderQuest(this.activeQuest);
+            player.addItemToInventory(this.createRecoverQuestItem(recover.itemName));
+            return [`Quest tracker: ${recover.itemName} recovered from ${recover.personName}.`];
+        }
+
+        recover.hasFled = true;
+        recover.isPersonKnown = true;
+        recover.currentVillage = this.pickDifferentVillage(recover.currentVillage, worldMap);
+        this.updateRecoverObjectiveText(node);
+        this.refreshContracts();
+        this.questUiController?.renderQuest(this.activeQuest);
+        return [
+            `${recover.personName} fled with ${recover.itemName}.`,
+            `Quest updated: hunt ${recover.personName}; latest lead points to ${recover.currentVillage}.`,
+        ];
     }
 
     private getRecruitableEscort(node: QuestNode): EscortObjectiveData | null {
@@ -237,8 +351,8 @@ export default class GameQuestRuntime {
         quest.children.forEach((child) => this.registerQuestLocations(worldMap, child));
     }
 
-    private collectBarterContracts(quest: QuestNode): Array<{ traderName: string; itemName: string; sourceVillage?: string; destinationVillage?: string; contractType: 'barter' | 'deliver' }> {
-        const contracts: Array<{ traderName: string; itemName: string; sourceVillage?: string; destinationVillage?: string; contractType: 'barter' | 'deliver' }> = [];
+    private collectBarterContracts(quest: QuestNode): Array<{ traderName: string; itemName: string; sourceVillage?: string; destinationVillage?: string; contractType: 'barter' | 'deliver' | 'recover' }> {
+        const contracts: Array<{ traderName: string; itemName: string; sourceVillage?: string; destinationVillage?: string; contractType: 'barter' | 'deliver' | 'recover' }> = [];
         const visit = (node: QuestNode): void => {
             if (node.objectiveType === 'barter' && node.children.length === 0) {
                 const trader = node.entities.find((entity) => entity.type === 'person')?.text?.trim();
@@ -251,6 +365,17 @@ export default class GameQuestRuntime {
                 const deliverData = node.objectiveData?.deliver;
                 if (deliverData?.sourceTrader && deliverData?.itemName) {
                     contracts.push({ traderName: deliverData.sourceTrader, itemName: deliverData.itemName, sourceVillage: deliverData.sourceVillage, destinationVillage: deliverData.destinationVillage, contractType: 'deliver' });
+                }
+            }
+            if (node.objectiveType === 'recover' && node.children.length === 0 && !node.isCompleted) {
+                const recoverData = node.objectiveData?.recover;
+                if (recoverData?.isPersonKnown) {
+                    contracts.push({
+                        traderName: recoverData.personName,
+                        itemName: recoverData.itemName,
+                        sourceVillage: recoverData.currentVillage,
+                        contractType: 'recover',
+                    });
                 }
             }
             node.children.forEach((child) => visit(child));
@@ -269,6 +394,110 @@ export default class GameQuestRuntime {
             contracts.push({ personName: escort.personName, sourceVillage: escort.sourceVillage, destinationVillage: escort.destinationVillage });
         });
         return contracts;
+    }
+
+    private refreshContracts(): void {
+        if (!this.activeQuest || !this.onContractsUpdated) {
+            return;
+        }
+        this.onContractsUpdated({
+            barterContracts: this.collectBarterContracts(this.activeQuest),
+            escortContracts: this.collectEscortContracts(this.activeQuest),
+        });
+    }
+
+    private updateRecoverObjectiveText(node: QuestNode): void {
+        if (node.objectiveType !== 'recover' || !node.objectiveData?.recover) {
+            return;
+        }
+        const recover = node.objectiveData.recover;
+        if (recover.hasFled) {
+            node.description = `${recover.personName} fled from ${recover.initialVillage} with ${recover.itemName}. Track them down in ${recover.currentVillage} and take it back by force.`;
+            node.conditionText = `Defeat ${recover.personName} in ${recover.currentVillage} and recover ${recover.itemName}.`;
+            return;
+        }
+        if (recover.isPersonKnown) {
+            node.description = `Locals confirmed ${recover.personName} is holding ${recover.itemName} in ${recover.currentVillage}. Confront them and take it, whatever the cost.`;
+            node.conditionText = `Defeat ${recover.personName} at ${recover.currentVillage} and secure ${recover.itemName}.`;
+        }
+    }
+
+    private ensureRecoverEnemyProfile(recover: RecoverObjectiveData): NonNullable<RecoverObjectiveData['enemyProfile']> {
+        if (recover.enemyProfile) {
+            return recover.enemyProfile;
+        }
+        const roll = (): number => Math.floor(Math.random() * 4);
+        recover.enemyProfile = {
+            archetypeId: 'human',
+            xpValue: 8,
+            width: 30,
+            height: 30,
+            baseStats: {
+                hp: 8 + roll(),
+                damage: 2 + roll(),
+                armor: 1 + roll(),
+                mana: 2 + roll(),
+            },
+            skills: {
+                vitality: 1 + roll(),
+                toughness: 1 + roll(),
+                strength: 1 + roll(),
+                agility: 1 + roll(),
+                connection: roll(),
+                intelligence: roll(),
+            },
+        };
+        return recover.enemyProfile;
+    }
+
+    private toRecoverEnemyConfig(personName: string, profile: NonNullable<RecoverObjectiveData['enemyProfile']>) {
+        return {
+            archetypeId: 'human' as const,
+            xpValue: profile.xpValue,
+            name: personName,
+            width: profile.width,
+            height: profile.height,
+            baseStats: profile.baseStats,
+            skills: profile.skills,
+        };
+    }
+
+    private pickDifferentVillage(currentVillage: string, worldMap: WorldMap): string {
+        const villages = worldMap.getAllVillageNames().filter((name) => name.trim().length > 0);
+        if (villages.length <= 1) {
+            return currentVillage;
+        }
+        const alternatives = villages.filter((name) => name.trim().toLocaleLowerCase() !== currentVillage.trim().toLocaleLowerCase());
+        if (alternatives.length === 0) {
+            return currentVillage;
+        }
+        return alternatives[Math.floor(Math.random() * alternatives.length)]!;
+    }
+
+    private createRecoverQuestItem(itemName: string): Item {
+        const normalized = itemName.trim().toLocaleLowerCase().replace(/[^a-z0-9]+/g, '-');
+        return new Item({
+            id: `quest-recover-${normalized || 'artifact'}`,
+            name: itemName,
+            description: `Recovered quest artifact: ${itemName}.`,
+            type: 'quest',
+            goldValue: 0,
+            findWeight: 0,
+            spriteClass: 'quest-item-sprite',
+        });
+    }
+
+    private findQuestNodeById(node: QuestNode, id: string): QuestNode | null {
+        if (node.id === id) {
+            return node;
+        }
+        for (const child of node.children) {
+            const found = this.findQuestNodeById(child, id);
+            if (found) {
+                return found;
+            }
+        }
+        return null;
     }
 
     private visitQuestNodes(node: QuestNode, visitor: (node: QuestNode) => void): void {

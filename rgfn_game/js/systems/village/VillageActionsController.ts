@@ -87,6 +87,14 @@ export default class VillageActionsController {
         this.refreshNpcUi();
         this.addLog(`You approach ${npc.name} the ${npc.role}.`, 'player');
         this.addLog(`${npc.name} looks ${npc.look} and speaks in a ${npc.speechStyle} manner.`, 'system-message');
+        const recoverLead = this.callbacks.onRevealRecoverHolder?.(this.currentVillageName, npc.name) ?? { revealed: false };
+        if (recoverLead.revealed && recoverLead.personName && recoverLead.itemName) {
+            this.addLog(
+                `${npc.name} lowers their voice: "${recoverLead.personName} is carrying ${recoverLead.itemName}. You'll find them in this village."`,
+                'system-message',
+            );
+            this.refreshDialogueTargetOptions();
+        }
         this.callbacks.onAdvanceTime(8, 0.12);
     }
 
