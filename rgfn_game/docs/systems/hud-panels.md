@@ -205,6 +205,28 @@ Hamburger-opened HUD panels are now interactive floating windows:
    - panels return to normal stacked flow (no shifted transforms),
    - close button still works.
 
+### Drag-handle accessibility guard near hamburger button (April 8, 2026)
+
+Problem observed:
+
+- Some panel layouts (especially restored saved layouts and first-open spawn positions) could place a panel header drag handle directly under the top-left hamburger button.
+- Because the hamburger button sits in the same interaction area, users could get stuck with an open panel they could not drag away.
+
+Guard added in `GameUiHudPanelController`:
+
+- After panel spawn placement, after restoring saved layouts, and after opening a panel, the controller now checks if the panel drag handle rectangle overlaps the hamburger button rectangle.
+- If overlap is detected, the panel is nudged either to the right or downward (whichever requires less movement) with a small clearance margin.
+- The adjusted offsets are immediately written back into:
+  - `data-offset-x`, `data-offset-y`,
+  - `--panel-offset-x`, `--panel-offset-y`,
+  so subsequent drag and persistence behavior stays consistent.
+
+Why this is safe:
+
+- The guard runs only for visible panels with an injected `.panel-drag-handle`.
+- It is a no-op for panels that do not overlap the menu button.
+- It reuses existing offset/persistence mechanics instead of introducing an alternate positioning system.
+
 ## HUD panel height/scroll policy update (March 28, 2026, follow-up)
 
 To match the new draggable-window workflow, **HUD content panels no longer auto-clamp their height** and no longer force internal panel scrollbars:
