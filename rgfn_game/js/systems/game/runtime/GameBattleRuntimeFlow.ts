@@ -16,6 +16,7 @@ export type GameBattleRuntimeCallbacks = {
     onUpdateHUD: () => void;
     onDescribeEncounter: (enemies: Skeleton[]) => string;
     onGameOver: () => void;
+    onBattleEnded: (result: 'victory' | 'defeat' | 'fled') => void;
 };
 
 type Controllers = {
@@ -64,6 +65,7 @@ export default class GameBattleRuntimeFlow {
 
     public endBattle(result: 'victory' | 'defeat' | 'fled'): void {
         this.turnTransitioning = true;
+        this.deps.callbacks.onBattleEnded(result);
         if (result === 'fled') {
             this.deps.controllers.battleCommandController.clearPendingLoot();
             this.deps.stateMachine.transition(MODES.WORLD_MAP);

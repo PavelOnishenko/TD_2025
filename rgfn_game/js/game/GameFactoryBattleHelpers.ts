@@ -102,6 +102,7 @@ export const createBattleCoordinator = (
         onUpdateHUD: () => hudCoordinator.updateHUD(),
         onDescribeEncounter: (enemies) => hudCoordinator.describeEncounter(enemies),
         onGameOver: () => game.gameOver(),
+        onBattleEnded: (result) => game.onBattleEnded(result),
     },
 );
 

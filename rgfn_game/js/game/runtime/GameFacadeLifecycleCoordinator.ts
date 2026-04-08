@@ -124,6 +124,28 @@ export default class GameFacadeLifecycleCoordinator {
         return status;
     }
 
+    public onRevealRecoverHolder(villageName: string, npcName: string): { revealed: boolean; personName?: string; itemName?: string } {
+        return this.state.questRuntime.revealRecoverHolder(villageName, npcName);
+    }
+
+    public onTryStartRecoverConfrontation(
+        personName: string,
+        villageName: string,
+    ): { status: 'started' | 'inactive' | 'not-target' | 'not-ready'; enemies?: import('../../entities/Skeleton.js').default[]; itemName?: string } {
+        return this.state.questRuntime.startRecoverConfrontation(personName, villageName);
+    }
+
+    public onBattleEnded(result: 'victory' | 'defeat' | 'fled'): void {
+        if (result !== 'victory' && result !== 'fled') {
+            return;
+        }
+        const lines = this.state.questRuntime.resolveRecoverBattle(result, this.state.worldMap, this.state.player);
+        lines.forEach((line, index) => this.state.hudCoordinator.addBattleLog(line, index === 0 ? 'system' : 'system-message'));
+        if (lines.length > 0) {
+            this.refreshGroupPanel();
+        }
+    }
+
     public onVillageEntered(): void {
         const villageName = this.state.worldMap.getVillageNameAtPlayerPosition();
         const questChanged = this.state.questRuntime.recordLocationEntry(

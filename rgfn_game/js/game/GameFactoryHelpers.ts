@@ -54,6 +54,9 @@ const createVillageActionsController = (
     getKnownSettlementNames: () => worldMap.getKnownSettlementNames(),
     onVillageBarterCompleted: (trader, item, village) => game.onVillageBarterCompleted(trader, item, village),
     onTryRecruitEscort: (personName, villageName) => game.onTryRecruitEscort(personName, villageName),
+    onRevealRecoverHolder: (villageName, npcName) => game.onRevealRecoverHolder(villageName, npcName),
+    onTryStartRecoverConfrontation: (personName, villageName) => game.onTryStartRecoverConfrontation(personName, villageName),
+    onStartBattle: (enemies) => game.stateMachine.transition(MODES.BATTLE, { enemies, terrainType: 'grass' }),
 });
 
 export function createVillageRuntime(

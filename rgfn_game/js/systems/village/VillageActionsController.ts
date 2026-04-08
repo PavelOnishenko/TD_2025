@@ -87,6 +87,16 @@ export default class VillageActionsController {
         this.refreshNpcUi();
         this.addLog(`You approach ${npc.name} the ${npc.role}.`, 'player');
         this.addLog(`${npc.name} looks ${npc.look} and speaks in a ${npc.speechStyle} manner.`, 'system-message');
+        const recoverLead = this.callbacks.onRevealRecoverHolder?.(this.currentVillageName, npc.name) ?? { revealed: false };
+        if (recoverLead.revealed && recoverLead.personName && recoverLead.itemName) {
+            this.appendRecoverHolderIfMissing(this.npcRoster, this.currentVillageName, recoverLead.personName, recoverLead.itemName);
+            this.addLog(
+                `${npc.name} lowers their voice: "${recoverLead.personName} is carrying ${recoverLead.itemName}. You'll find them in this village."`,
+                'system-message',
+            );
+            this.refreshNpcUi();
+            this.refreshDialogueTargetOptions();
+        }
         this.callbacks.onAdvanceTime(8, 0.12);
     }
 
@@ -95,6 +105,7 @@ export default class VillageActionsController {
     public handleAskAboutPerson(): void { this.dialogueInteraction.handleAskAboutPerson(); this.callbacks.onAdvanceTime(14, 0.1); }
     public handleAskAboutBarter(): void { this.dialogueInteraction.handleAskAboutBarter(); this.callbacks.onAdvanceTime(16, 0.12); }
     public handleConfirmBarter(): void { this.dialogueInteraction.handleConfirmBarter(); this.callbacks.onAdvanceTime(18, 0.15); }
+    public handleConfrontRecoverTarget(): void { this.dialogueInteraction.handleConfrontRecoverTarget(); this.callbacks.onAdvanceTime(18, 0.15); }
     public handleRecruitEscort(): void {
         const npc = this.getSelectedNpc();
         if (!npc) {
@@ -220,6 +231,22 @@ export default class VillageActionsController {
             look: 'emerald scarf, ledger satchel, watchful eyes',
             speechStyle: 'steady and transactional',
             disposition: 'truthful',
+        });
+    }
+
+    private appendRecoverHolderIfMissing(roster: VillageNpcProfile[], villageName: string, personName: string, itemName: string): void {
+        const exists = roster.some((npc) => npc.name.toLocaleLowerCase() === personName.toLocaleLowerCase());
+        if (exists) {
+            return;
+        }
+
+        roster.unshift({
+            id: `${villageName.toLowerCase()}-${personName.toLocaleLowerCase()}-recover`,
+            name: personName,
+            role: `Wanted for ${itemName}`,
+            look: 'hidden satchel, tense posture, restless eyes',
+            speechStyle: 'guarded and hostile',
+            disposition: 'liar',
         });
     }
 
