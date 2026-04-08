@@ -500,3 +500,43 @@ The `Quests` panel (`#quests-panel`) now mirrors the desktop resize behavior of 
    - drag behavior should remain unchanged.
 5. Reduce viewport below `920px`:
    - resize affordance should disappear for quests (and still for log).
+
+## Stats panel resize + draggable action micro-panels (April 8, 2026)
+
+### What changed
+
+- `Stats` HUD window (`#stats-panel`) is now desktop-resizable via native CSS corner resize (`resize: both`).
+- Three high-frequency action clusters are now individually draggable on desktop:
+  - `Village Actions` (`#village-actions`)
+  - `Combat Actions` (`#battle-actions`)
+  - `Village Rumors` (`#village-rumors-section`)
+- These clusters receive lightweight runtime window headers with a drag handle title and use the same pointer-drag model as HUD floating windows (CSS transform offsets driven by JS updates).
+
+### Implementation notes
+
+- Runtime hookup lives in `GameUiActionPanelController` (bound from `GameUiEventBinder`):
+  - `decorate()` finds target elements by ID and decorates each once.
+  - `createHeader()` prepends a drag-handle-only header (`.panel-window-header.panel-window-header-aux`).
+  - `applySeed()` computes first visible placement and stores offsets in `data-offset-x/y`.
+- Drag updates use:
+  - `--panel-offset-x`
+  - `--panel-offset-y`
+  - plus temporary `.panel-dragging` for cursor feedback.
+- CSS class `.aux-draggable-panel` provides out-of-flow desktop behavior (`position: fixed; top: 0; left: 0; transform: translate(...)`) while preserving pointer interactivity.
+- Mobile fallback (`max-width: 920px`) explicitly resets `.aux-draggable-panel` to in-flow static positioning and disables `Stats` resizing (`resize: none`) to avoid stacked-layout overlap.
+
+### Why this is useful
+
+- `Stats` can now be expanded when inspecting long derived formulas and stat blocks without forcing global zoom/font changes.
+- Action-heavy play loops (battle turns, village shopping/dialogue loops) can be spatially arranged by the player to reduce panel travel and visual occlusion over the map.
+- Rumor handling can be detached from village sell/buy controls, which improves readability during dialogue-heavy quest routing.
+
+### QA checklist
+
+1. Open HUD `Stats` panel and verify desktop corner resize works in both axes.
+2. Enter village mode and drag `Village Actions` panel by its new header.
+3. Drag `Village Rumors` panel independently and confirm interaction buttons/selects still work after moving.
+4. Enter battle and drag `Combat Actions`; verify battle buttons remain clickable.
+5. Switch viewport below `920px`:
+   - action panels should return to normal in-flow stacked layout;
+   - `Stats` should no longer be resizable.

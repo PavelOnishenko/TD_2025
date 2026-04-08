@@ -328,6 +328,18 @@ h1 {
     margin: 0;
 }
 
+.aux-draggable-panel {
+    position: fixed;
+    top: 0;
+    left: 0;
+    transform: translate(var(--panel-offset-x, 0px), var(--panel-offset-y, 0px));
+    margin: 0;
+    z-index: 8;
+    width: min(320px, calc(100vw - 32px));
+    max-width: calc(100vw - 32px);
+    pointer-events: auto;
+}
+
 .panel-window-header {
     display: flex;
     align-items: center;
@@ -336,6 +348,10 @@ h1 {
     border-bottom: 1px solid var(--color-secondary-accent);
     padding-bottom: 8px;
     margin-bottom: 2px;
+}
+
+.panel-window-header-aux {
+    margin-bottom: 8px;
 }
 
 .panel-drag-handle {
@@ -367,6 +383,13 @@ h1 {
 #magic-panel, #inventory-panel, #skills-panel, #quests-panel, #lore-panel, #stats-panel, #selected-panel {
     width: min(340px, calc(100vw - 48px));
     overflow: visible;
+}
+
+#stats-panel {
+    min-height: 220px;
+    min-width: 260px;
+    resize: both;
+    overflow: auto;
 }
 
 #world-sidebar {
@@ -693,8 +716,16 @@ h1 {
         transform: none;
     }
 
+    .aux-draggable-panel {
+        position: static;
+        transform: none;
+        width: auto;
+        max-width: 100%;
+    }
+
     #game-log-container,
-    #quests-panel {
+    #quests-panel,
+    #stats-panel {
         margin-top: 0;
         height: 260px;
         max-height: 260px;
