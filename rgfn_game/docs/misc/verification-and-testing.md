@@ -1263,3 +1263,29 @@ This prints:
    - HP and mana increase by small configured amounts.
 4. Try each action with insufficient gold and confirm clear rejection log messages.
 5. Confirm **Sleep in room** behavior is unchanged.
+
+## 2026-04-06 — Inventory offhand drag visual desync fix
+
+### Symptom
+- Dragging a one-handed weapon from inventory into the **Off Hand** slot could remove the icon from inventory but leave the offhand UI reading `Fist`.
+- Player stats/damage could still reflect the dragged weapon, which made the panel look out of sync with gameplay state.
+
+### Root cause
+- HUD drag/drop relied on a **dragged inventory index** instead of item identity.
+- If inventory order changed while dragging (or if a stale index was read during drop timing), the drop handler could resolve the wrong slot or no item at all.
+
+### Fix summary
+- Switched drag tracking from index-based to **item-reference-based** tracking in `HudInventoryController`.
+- Added explicit `clearDraggedInventoryItem()` to reset drag state from equipment drop handlers.
+- `getDraggedInventoryItem()` now resolves current index from item identity and self-heals stale references.
+
+### Regression test added
+- New scenario test verifies dragged item identity remains correct when inventory order changes mid-drag:
+  - `rgfn_game/test/systems/scenarios/hudInventoryController.test.js`
+
+### Practical verification flow
+1. Put two one-handed weapons in inventory (e.g., `Knife +1`, `Knife +4`).
+2. Equip one to main hand.
+3. Drag the other to offhand.
+4. Confirm offhand slot displays the weapon sprite/name and inventory count remains consistent.
+5. Unequip both and confirm both return to inventory.
