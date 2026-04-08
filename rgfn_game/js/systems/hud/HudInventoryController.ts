@@ -7,6 +7,8 @@ import { HudElements } from './HudTypes.js';
 type EquipHandler = (item: Item, slotElement: HTMLButtonElement) => void;
 type HudRefreshHandler = () => void;
 type LogHandler = (message: string) => void;
+type DraggedInventoryIndexGetter = () => number | null;
+type DraggedInventoryIndexSetter = (index: number | null) => void;
 
 export default class HudInventoryController {
     private readonly player: Player;
@@ -14,10 +16,11 @@ export default class HudInventoryController {
     private readonly onEquip: EquipHandler;
     private readonly refreshHud: HudRefreshHandler;
     private readonly addLog: LogHandler;
-    private readonly getDraggedInventoryIndex: () => number | null;
-    private readonly setDraggedInventoryIndex: (index: number | null) => void;
+    private readonly getDraggedInventoryIndex: DraggedInventoryIndexGetter;
+    private readonly setDraggedInventoryIndex: DraggedInventoryIndexSetter;
     private readonly itemMetadata: HudInventoryItemMetadata;
     private lastDroppedItem: Item | null = null;
+    private draggedInventoryItem: Item | null = null;
 
     constructor(
         player: Player,
@@ -25,8 +28,8 @@ export default class HudInventoryController {
         onEquip: EquipHandler,
         refreshHud: HudRefreshHandler,
         addLog: LogHandler,
-        getDraggedInventoryIndex: () => number | null,
-        setDraggedInventoryIndex: (index: number | null) => void,
+        getDraggedInventoryIndex: DraggedInventoryIndexGetter,
+        setDraggedInventoryIndex: DraggedInventoryIndexSetter,
     ) {
         this.player = player;
         this.hudElements = hudElements;
@@ -69,13 +72,15 @@ export default class HudInventoryController {
     }
 
     public getDraggedInventoryItem(): { item: Item | null; index: number | null } {
-        const index = this.getDraggedInventoryIndex();
-        if (index === null) {
-            return { item: null, index: null };
+        const draggedItem = this.assertConsistentDragState();
+        if (!draggedItem) { return { item: null, index: null }; }
+        const inventory = this.player.getInventory();
+        const index = inventory.indexOf(draggedItem);
+        if (index === -1) {
+            throw new Error('HudInventoryController invariant violation: dragged item reference is missing from inventory.');
         }
 
-        const inventory = this.player.getInventory();
-        return { item: inventory[index] ?? null, index };
+        return { item: draggedItem, index };
     }
 
     public tryEquipItem(item: Item, slotElement: HTMLButtonElement): boolean {
@@ -86,6 +91,8 @@ export default class HudInventoryController {
         this.itemMetadata.triggerEquipRequirementsFeedback(item, slotElement);
         return false;
     }
+
+    public clearDraggedInventoryItem(): void { this.draggedInventoryItem = null; this.setDraggedInventoryIndex(null); }
 
     private renderInventory(inventory: Item[], inventoryCapacity: number): void {
         this.hudElements.inventoryGrid.innerHTML = '';
@@ -103,21 +110,12 @@ export default class HudInventoryController {
     private setupInventorySlot(slot: HTMLButtonElement, item: Item, index: number): void {
         slot.title = this.itemMetadata.buildInventoryTooltip(item);
         slot.draggable = item.type === 'weapon' || item.type === 'armor';
-        slot.addEventListener('dragstart', () => {
-            this.setDraggedInventoryIndex(index);
-            slot.classList.add('inventory-slot-dragging');
-        });
-        slot.addEventListener('dragend', () => {
-            this.setDraggedInventoryIndex(null);
-            slot.classList.remove('inventory-slot-dragging');
-        });
-        slot.addEventListener('mouseenter', () => slot.classList.add('inventory-slot-hovered'));
-        slot.addEventListener('mouseleave', () => slot.classList.remove('inventory-slot-hovered'));
-        slot.addEventListener('contextmenu', (event) => {
-            event.preventDefault();
-            this.handleDropFromInventory(index);
-        });
+        this.bindInventorySlotInteractionEvents(slot, item, index);
+        this.appendInventorySlotVisuals(slot, item);
+        this.bindEquipClickIfApplicable(slot, item);
+    }
 
+    private appendInventorySlotVisuals(slot: HTMLButtonElement, item: Item): void {
         const sprite = document.createElement('div');
         sprite.className = `item-sprite ${item.spriteClass}`;
         slot.appendChild(sprite);
@@ -126,7 +124,9 @@ export default class HudInventoryController {
         name.className = 'inventory-slot-name';
         name.textContent = item.name;
         slot.appendChild(name);
+    }
 
+    private bindEquipClickIfApplicable(slot: HTMLButtonElement, item: Item): void {
         if (item.type === 'weapon' || item.type === 'armor') {
             slot.addEventListener('click', () => {
                 if (this.tryEquipItem(item, slot)) {
@@ -134,6 +134,30 @@ export default class HudInventoryController {
                 }
             });
         }
+    }
+
+    private bindInventorySlotInteractionEvents(slot: HTMLButtonElement, item: Item, index: number): void {
+        slot.addEventListener('dragstart', () => this.handleDragStart(slot, item, index));
+        slot.addEventListener('dragend', () => this.handleDragEnd(slot));
+        slot.addEventListener('mouseenter', () => slot.classList.add('inventory-slot-hovered'));
+        slot.addEventListener('mouseleave', () => slot.classList.remove('inventory-slot-hovered'));
+        slot.addEventListener('contextmenu', (event) => {
+            event.preventDefault();
+            this.handleDropFromInventory(index);
+        });
+    }
+
+    private handleDragStart(slot: HTMLButtonElement, item: Item, index: number): void { this.draggedInventoryItem = item; this.setDraggedInventoryIndex(index); slot.classList.add('inventory-slot-dragging'); }
+    private handleDragEnd(slot: HTMLButtonElement): void { this.draggedInventoryItem = null; this.setDraggedInventoryIndex(null); slot.classList.remove('inventory-slot-dragging'); }
+
+    private assertConsistentDragState(): Item | null {
+        const draggedIndex = this.getDraggedInventoryIndex();
+        if (draggedIndex === null) {
+            if (this.draggedInventoryItem !== null) { throw new Error('HudInventoryController invariant violation: dragged item exists while dragged index is null.'); }
+            return null;
+        }
+        if (!this.draggedInventoryItem) { throw new Error(`HudInventoryController invariant violation: dragged index ${draggedIndex} exists without a dragged item reference.`); }
+        return this.draggedInventoryItem;
     }
 
     private setupEmptySlot(slot: HTMLButtonElement): void {

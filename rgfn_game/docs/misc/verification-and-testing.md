@@ -1263,3 +1263,34 @@ This prints:
    - HP and mana increase by small configured amounts.
 4. Try each action with insufficient gold and confirm clear rejection log messages.
 5. Confirm **Sleep in room** behavior is unchanged.
+
+## 2026-04-06 — Inventory offhand drag visual desync fix
+
+### Symptom
+- Dragging a one-handed weapon from inventory into the **Off Hand** slot could remove the icon from inventory but leave the offhand UI reading `Fist`.
+- Player stats/damage could still reflect the dragged weapon, which made the panel look out of sync with gameplay state.
+
+### Root cause
+- HUD drag/drop relied on a **dragged inventory index** instead of item identity.
+- If inventory order changed while dragging (or if a stale index was read during drop timing), the drop handler could resolve the wrong slot or no item at all.
+- A separate high-impact bug also existed in player equipment accessors: `PlayerInventoryAndRender` defined a **setter-only** `equippedOffhandWeapon`, which shadowed the inherited getter and made all reads return `undefined` at runtime.
+
+### Fix summary
+- Switched drag tracking from index-based to **item-reference-based** tracking in `HudInventoryController`.
+- Added explicit `clearDraggedInventoryItem()` to reset drag state from equipment drop handlers.
+- Removed fallback recovery paths; drag state now enforces strict invariants and throws immediately on impossible states (e.g., dragged index without dragged item reference, or dragged item reference not present in inventory).
+- Restored offhand read behavior by adding a concrete `get equippedOffhandWeapon()` accessor in `PlayerInventoryAndRender` that proxies to `inventorySystem.getEquippedOffhandWeapon()`.
+
+### Regression test added
+- New scenario test verifies dragged item identity remains correct when inventory order changes mid-drag:
+  - `rgfn_game/test/systems/scenarios/hudInventoryController.test.js`
+- Added player entity regression:
+  - `Player exposes equippedOffhandWeapon getter after equipping offhand slot`
+  - guards against future setter-only accessor regressions that would break HUD/offhand rendering.
+
+### Practical verification flow
+1. Put two one-handed weapons in inventory (e.g., `Knife +1`, `Knife +4`).
+2. Equip one to main hand.
+3. Drag the other to offhand.
+4. Confirm offhand slot displays the weapon sprite/name and inventory count remains consistent.
+5. Unequip both and confirm both return to inventory.
