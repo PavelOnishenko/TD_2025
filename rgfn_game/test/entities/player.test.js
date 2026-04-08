@@ -234,6 +234,20 @@ test('Equipped items are removed from inventory and return on unequip', () => {
   assert.deepEqual(player.getInventory().map((item) => item.id).sort(), ['armor_t2', 'buckler_2', 'shortSword_3']);
 });
 
+test('Player exposes equippedOffhandWeapon getter after equipping offhand slot', () => {
+  const player = new Player(0, 0);
+  const mainKnife = new Item({ id: 'knife_main', name: 'Knife +3', description: 'Main hand', type: 'weapon', handsRequired: 1, damageBonus: 3, requirements: { agility: 0, strength: 0 } });
+  const offKnife = new Item({ id: 'knife_off', name: 'Knife +1', description: 'Off hand', type: 'weapon', handsRequired: 1, damageBonus: 1, requirements: { agility: 0, strength: 0 } });
+
+  player.addItemToInventory(mainKnife);
+  player.addItemToInventory(offKnife);
+  player.equipWeaponToSlot(mainKnife, 'main');
+  player.equipWeaponToSlot(offKnife, 'offhand');
+
+  assert.equal(player.equippedMainWeapon, mainKnife);
+  assert.equal(player.equippedOffhandWeapon, offKnife);
+});
+
 
 test('Player inventory capacity scales with strength at 4 STR intervals', () => {
   const player = new Player(0, 0);

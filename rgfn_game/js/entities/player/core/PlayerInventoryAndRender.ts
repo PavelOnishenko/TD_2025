@@ -8,6 +8,7 @@ import PlayerCombatState from './PlayerCombatState.js';
 export default class PlayerInventoryAndRender extends PlayerCombatState {
     public get equippedWeapon(): Item | null { return this.inventorySystem.getEquippedWeapon(); }
     public set equippedWeapon(weapon: Item | null) { this.inventorySystem.setEquippedWeapon(weapon); }
+    public get equippedOffhandWeapon(): Item | null { return this.inventorySystem.getEquippedOffhandWeapon(); }
     public set equippedOffhandWeapon(weapon: Item | null) { this.inventorySystem.setEquippedOffhandWeapon(weapon); }
 
     public addItemToInventory = (item: Item): boolean => this.inventorySystem.addItem(item);
