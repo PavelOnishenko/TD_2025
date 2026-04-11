@@ -73,13 +73,15 @@ Village rumors now support asking about **people**, not only settlements.
 - Lists are deduplicated and sorted alphabetically.
 
 ### Button availability rule (RGFN UX)
-- The following four dialogue/barter buttons are now always enabled in the village UI:
+- Core dialogue actions remain available once an NPC is selected:
   - **Ask about location**
   - **Ask about person**
   - **Ask about barter**
-  - **I have what you need, let's do our barter**
-- Validation remains in action handlers, so if no NPC is selected or required input is missing, the game log explains what to do next.
-- This preserves guidance via feedback while removing click-lock friction.
+- Quest-only follow-up actions are now **context-sensitive and hidden by default**:
+  - **I have what you need, let's do our barter** appears only for selected NPCs with an unfinished barter contract in the current village.
+  - **Confront for quest item** appears only when the selected NPC is the currently valid recover quest confrontation target and the target has already been revealed.
+  - **Join my group** appears only when the selected NPC is currently recruitable for an active escort objective in this village.
+- Goal: prevent dead-end button clicks and show only actionable quest interactions per-NPC.
 
 ### Reliability model (intentionally lower than village directions)
 - Person rumors have an explicit low knowledge chance (`26%`) before truthful/imprecise branches can trigger.

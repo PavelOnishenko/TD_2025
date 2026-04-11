@@ -4,11 +4,37 @@ import assert from 'node:assert/strict';
 import VillageActionsController from '../../../dist/systems/village/VillageActionsController.js';
 
 function createClassList() {
+  const classes = new Set();
   return {
     added: [],
     removed: [],
-    add(name) { this.added.push(name); },
-    remove(name) { this.removed.push(name); },
+    add(name) {
+      this.added.push(name);
+      classes.add(name);
+    },
+    remove(name) {
+      this.removed.push(name);
+      classes.delete(name);
+    },
+    toggle(name, force) {
+      if (typeof force === 'boolean') {
+        if (force) {
+          this.add(name);
+          return true;
+        }
+        this.remove(name);
+        return false;
+      }
+      if (classes.has(name)) {
+        this.remove(name);
+        return false;
+      }
+      this.add(name);
+      return true;
+    },
+    contains(name) {
+      return classes.has(name);
+    },
   };
 }
 
@@ -68,6 +94,7 @@ function createVillageUi() {
     askBarterBtn: createElement('button'),
     barterNowBtn: createElement('button'),
     confrontRecoverBtn: createElement('button'),
+    recruitEscortBtn: createElement('button'),
     leaveBtn: createElement('button'),
   };
 }
@@ -387,4 +414,41 @@ test('VillageActionsController asks NPC about nearby settlements via dialogue en
   controller.handleAskAboutNearbySettlements();
 
   assert.equal(gameLog.children.some((child) => child.textContent.includes('Nearby list.')), true);
+}));
+
+test('VillageActionsController shows contextual dialogue action buttons only when available for selected NPC', () => withDocumentStub(() => {
+  const villageUI = createVillageUi();
+  const gameLog = createElement();
+  const controller = new VillageActionsController(createPlayerStub(), villageUI, gameLog, {
+    onUpdateHUD: () => {},
+    onLeaveVillage: () => {},
+    onTryRecruitEscort: () => 'not-available',
+    getVillageDirectionHint: (settlementName) => ({ settlementName, exists: false }),
+    onVillageBarterCompleted: () => {},
+  });
+
+  controller.configureQuestBarterContracts([{ traderName: 'Olive', itemName: 'Kator Kaesh', sourceVillage: 'Mossbrook' }]);
+  controller.configureQuestEscortContracts([{ personName: 'Olive', sourceVillage: 'Mossbrook', destinationVillage: 'Farwatch' }]);
+  controller['dialogueEngine'] = {
+    createNpcRoster: () => [{ id: 'moss-0', name: 'Mara', role: 'Trader', look: 'cloak', speechStyle: 'calm', disposition: 'truthful' }],
+    buildLocationAnswer: () => ({ speech: '', tone: '', truthfulness: 'truth' }),
+    buildPersonLocationAnswer: () => ({ speech: '', tone: '', truthfulness: 'truth' }),
+  };
+
+  controller.enterVillage('Mossbrook');
+  assert.equal(villageUI.barterNowBtn.classList.contains('hidden'), true);
+  assert.equal(villageUI.confrontRecoverBtn.classList.contains('hidden'), true);
+  assert.equal(villageUI.recruitEscortBtn.classList.contains('hidden'), true);
+
+  const oliveIndex = controller['npcRoster'].findIndex((npc) => npc.name === 'Olive');
+  controller.handleSelectNpc(oliveIndex);
+  assert.equal(villageUI.barterNowBtn.classList.contains('hidden'), false);
+  assert.equal(villageUI.recruitEscortBtn.classList.contains('hidden'), false);
+  assert.equal(villageUI.confrontRecoverBtn.classList.contains('hidden'), true);
+
+  controller['callbacks'].onRevealRecoverHolder = () => ({ revealed: true, personName: 'Pablo Menéndez', itemName: 'Torva' });
+  controller.handleSelectNpc(oliveIndex);
+  const recoverIndex = controller['npcRoster'].findIndex((npc) => npc.name === 'Pablo Menéndez');
+  controller.handleSelectNpc(recoverIndex);
+  assert.equal(villageUI.confrontRecoverBtn.classList.contains('hidden'), false);
 }));

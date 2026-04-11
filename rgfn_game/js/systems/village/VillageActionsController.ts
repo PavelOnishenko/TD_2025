@@ -22,6 +22,7 @@ export default class VillageActionsController {
     private selectedNpcId: string | null = null;
     private escortContracts: QuestEscortContract[] = [];
     private knownNpcNames: Set<string> = new Set();
+    private joinedEscortNpcKeys: Set<string> = new Set();
 
     constructor(player: Player, villageUI: VillageUI, gameLog: HTMLElement, callbacks: VillageActionsCallbacks) {
         this.villageUI = villageUI;
@@ -114,7 +115,9 @@ export default class VillageActionsController {
         }
         const status = this.callbacks.onTryRecruitEscort(npc.name, this.currentVillageName);
         if (status === 'joined') {
+            this.joinedEscortNpcKeys.add(this.getEscortNpcKey(npc.name, this.currentVillageName));
             this.addLog(`${npc.name} agrees to travel with you. Escort objective updated.`, 'system');
+            this.updateButtons();
             this.callbacks.onAdvanceTime(20, 0.15);
             return;
         }
@@ -151,6 +154,10 @@ export default class VillageActionsController {
         getSelectedNpc: () => this.getSelectedNpc(),
         getSellPrice: (item) => this.stockService.getSellPrice(item),
         isInnkeeper: (role) => this.isInnkeeper(role),
+        shouldShowBarterNowAction: (npcName) => this.hasActiveBarterDealForNpc(npcName),
+        shouldShowConfrontRecoverAction: (npcName, villageName) => this.canConfrontRecoverTarget(npcName, villageName),
+        shouldShowRecruitEscortAction: (npcName, villageName) => this.canRecruitEscort(npcName, villageName),
+        getCurrentVillageName: () => this.currentVillageName,
     });
 
     private createTradeInteraction = (player: Player, callbacks: VillageActionsCallbacks): VillageTradeInteractionService => new VillageTradeInteractionService({
@@ -279,6 +286,39 @@ export default class VillageActionsController {
     private refreshDialogueTargetOptions(): void {
         this.populateSelectWithOptions(this.villageUI.askVillageInput, this.getKnownSettlementNames(), 'Choose known settlement');
         this.populateSelectWithOptions(this.villageUI.askPersonInput, this.getKnownPersonNames(), 'Choose known person');
+    }
+
+    private hasActiveBarterDealForNpc(npcName: string): boolean {
+        if (!npcName.trim() || !this.currentVillageName.trim()) {
+            return false;
+        }
+        const deal = this.barterService.getBarterDealForNpc(this.currentVillageName, npcName);
+        return Boolean(deal && !deal.isCompleted);
+    }
+
+    private canConfrontRecoverTarget(npcName: string, villageName: string): boolean {
+        const selectedNpc = this.getSelectedNpc();
+        if (!npcName.trim() || !villageName.trim() || !selectedNpc) {
+            return false;
+        }
+        return selectedNpc.role.trim().toLocaleLowerCase().startsWith('wanted for ');
+    }
+
+    private canRecruitEscort(npcName: string, villageName: string): boolean {
+        if (!npcName.trim() || !villageName.trim()) {
+            return false;
+        }
+        const normalizedNpc = npcName.trim().toLocaleLowerCase();
+        const normalizedVillage = villageName.trim().toLocaleLowerCase();
+        const isEscortContractNpc = this.escortContracts.some((contract) =>
+            contract.personName.trim().toLocaleLowerCase() === normalizedNpc
+            && contract.sourceVillage.trim().toLocaleLowerCase() === normalizedVillage,
+        );
+        return isEscortContractNpc && !this.joinedEscortNpcKeys.has(this.getEscortNpcKey(npcName, villageName));
+    }
+
+    private getEscortNpcKey(npcName: string, villageName: string): string {
+        return `${villageName.trim().toLocaleLowerCase()}::${npcName.trim().toLocaleLowerCase()}`;
     }
 
     private getKnownSettlementNames(): string[] {
