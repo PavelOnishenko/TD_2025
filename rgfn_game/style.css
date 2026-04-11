@@ -330,9 +330,8 @@ h1 {
 
 .aux-draggable-panel {
     position: fixed;
-    top: 0;
-    left: 0;
-    transform: translate(var(--panel-offset-x, 0px), var(--panel-offset-y, 0px));
+    top: auto;
+    left: auto;
     margin: 0;
     z-index: 8;
     width: min(320px, calc(100vw - 32px));
@@ -403,6 +402,21 @@ h1 {
     max-height: none;
     overflow: visible;
 }
+
+@media (min-width: 921px) {
+    #village-sidebar {
+        width: 0;
+        min-width: 0;
+        padding: 0;
+        gap: 0;
+        border: 0;
+        background: transparent;
+        box-shadow: none;
+        backdrop-filter: none;
+        overflow: hidden;
+    }
+}
+
 #game-log-container {
     width: min(340px, calc(100vw - 48px));
     max-width: calc(100vw - 32px);

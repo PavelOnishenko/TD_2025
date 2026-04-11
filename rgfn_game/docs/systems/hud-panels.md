@@ -522,7 +522,7 @@ The `Quests` panel (`#quests-panel`) now mirrors the desktop resize behavior of 
   - `--panel-offset-x`
   - `--panel-offset-y`
   - plus temporary `.panel-dragging` for cursor feedback.
-- CSS class `.aux-draggable-panel` provides out-of-flow desktop behavior (`position: fixed; top: 0; left: 0; transform: translate(...)`) while preserving pointer interactivity.
+- CSS class `.aux-draggable-panel` provides out-of-flow desktop behavior (`position: fixed`) while pointer drag updates `left/top` directly for independent movement.
 - Mobile fallback (`max-width: 920px`) explicitly resets `.aux-draggable-panel` to in-flow static positioning and disables `Stats` resizing (`resize: none`) to avoid stacked-layout overlap.
 
 ### Why this is useful
@@ -540,3 +540,28 @@ The `Quests` panel (`#quests-panel`) now mirrors the desktop resize behavior of 
 5. Switch viewport below `920px`:
    - action panels should return to normal in-flow stacked layout;
    - `Stats` should no longer be resizable.
+
+## Follow-up fix: independent village/combat/rumor dragging + remove empty village shell (April 8, 2026, patch #2)
+
+### Problem observed
+
+- `Village Rumors` could appear to drag together with `Village Actions`.
+- Root cause: both were nested and used transform-based fixed dragging; transformed parent geometry influenced child fixed positioning.
+- The outer `Village` shell (title-only panel) could remain as an empty visual block after action panels were moved out, which added noise without gameplay value.
+
+### Fix applied
+
+- `GameUiActionPanelController` now drives auxiliary drag position with **`left` + `top`** (fixed positioning) instead of CSS transform offsets.
+  - This keeps nested auxiliary panels independent in drag behavior.
+  - `Village Actions`, `Combat Actions`, and `Village Rumors` now move separately as expected.
+- Desktop `#village-sidebar` shell is intentionally stripped of visual chrome (`border/background/shadow/padding` removed; width collapsed) so players only see actionable floating panels.
+- The standalone village shell is hidden on desktop via CSS (collapsed width + no panel chrome + hidden overflow), so the old `Village: <name>` header is no longer visible to players.
+
+### Regression checklist
+
+1. Enter village mode.
+2. Drag `Village Actions` and verify `Village Rumors` does not move with it.
+3. Drag `Village Rumors` and verify `Village Actions` remains where it was.
+4. Enter combat mode and drag `Combat Actions` independently.
+5. On desktop, confirm there is no empty `Village: ...` panel shell left behind.
+6. On mobile (`<=920px`), confirm fallback stacked flow still works.

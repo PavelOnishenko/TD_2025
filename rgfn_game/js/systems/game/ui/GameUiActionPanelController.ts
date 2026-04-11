@@ -59,8 +59,8 @@ export default class GameUiActionPanelController {
         panel.dataset.offsetX = String(offsetX);
         panel.dataset.offsetY = String(offsetY);
         panel.dataset.spawnPositioned = 'true';
-        panel.style.setProperty('--panel-offset-x', `${offsetX}px`);
-        panel.style.setProperty('--panel-offset-y', `${offsetY}px`);
+        panel.style.left = `${offsetX}px`;
+        panel.style.top = `${offsetY}px`;
     }
 
     private bindDrag(panel: HTMLElement): void {
@@ -104,8 +104,8 @@ export default class GameUiActionPanelController {
         const offsetY = dragState.baseY + (event.clientY - dragState.startY);
         panel.dataset.offsetX = String(offsetX);
         panel.dataset.offsetY = String(offsetY);
-        panel.style.setProperty('--panel-offset-x', `${offsetX}px`);
-        panel.style.setProperty('--panel-offset-y', `${offsetY}px`);
+        panel.style.left = `${offsetX}px`;
+        panel.style.top = `${offsetY}px`;
     }
 
     private stopDrag(panel: HTMLElement, dragHandle: HTMLElement, onMove: (event: PointerEvent) => void, stop: () => void): void {
