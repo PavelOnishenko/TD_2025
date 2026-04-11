@@ -56,3 +56,25 @@ For Neon Void TS migration steps, a "meaningful migration" now means more than a
 - In PR descriptions, explicitly mention which classes were introduced and what responsibilities were split.
 
 This requirement should be treated as default guidance for all future Neon Void migration PRs unless a task explicitly asks for a different style.
+
+## 2026-04-08: formations typed API checkpoint
+
+### What was migrated
+- Added `js/core/game/formations.ts` as a TypeScript compatibility layer over existing runtime module `formations.js`.
+- Introduced explicit TS types for formation entities (`FormationShipDescriptor`, `FormationDefinition`, `FormationEvent`, `FormationPlan`) and manager contract (`FormationManager`, `FormationManagerConfig`).
+- Kept runtime stability by preserving `formations.js` unchanged so all current JS imports/tests continue to work while TS code can adopt typed imports immediately.
+
+### Why this step is useful
+- Unblocks typed callers from using formation planning without waiting for full runtime rewrite.
+- Establishes a single TS contract that can be reused when `formations.js` is later split into class-based TS services.
+- Reduces migration risk: type adoption can proceed independently from behavior changes.
+
+### Verification performed
+- `npm run build` passed (TypeScript compile).
+- `npx eslint js/core/game/formations.ts` passed with zero warnings.
+- `node --test test/game/formations.test.js` passed (4/4).
+
+### Follow-up implementation plan (next PR)
+1. Introduce `FormationParser`, `WaveDifficultyResolver`, and `FormationPlanner` TS classes in separate files under `js/core/game/formations/` to satisfy OOP-first migration guidance while staying within style-guide length limits.
+2. Make `formations.js` a thin adapter over the compiled TS implementation once all direct JS dependencies are migrated.
+3. Add focused tests for parser failure modes (bad probability expressions, malformed ship tokens, minWave + endless interactions).

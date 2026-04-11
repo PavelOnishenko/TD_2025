@@ -1137,3 +1137,24 @@ Good luck with the migration! 🚀
 - Future migrations should prioritize class-based decomposition for stateful systems.
 - File conversion without architecture uplift is considered incomplete.
 - Preferred pattern: typed classes for core logic + thin compatibility adapter for legacy call sites.
+
+---
+
+## Progress Update (2026-04-08)
+
+### Completed in this checkpoint
+- Added typed API facade for formation subsystem: `js/core/game/formations.ts`.
+- Defined reusable TS contracts for formation parsing and wave planning outputs.
+- Preserved runtime compatibility by continuing to serve JS runtime path (`formations.js`) during mixed-language stage.
+
+### Updated recommended order
+1. **Done:** Foundation setup (`tsconfig`, declaration files).
+2. **Done:** State persistence TS migration (`statePersistence.ts` + service classes).
+3. **Done (typed facade):** Formation API contract (`formations.ts`).
+4. **Next:** Full OOP migration of formation runtime logic into TS classes split by responsibility.
+5. **After that:** Projectile/tower/wave systems based on dependency coupling and test coverage.
+
+### Practical guidance for upcoming formation runtime migration
+- Keep parser/planner/resolver in separate files to satisfy style-guide limits (file/function length).
+- Migrate with compatibility adapters first; remove JS adapters only when all importers use TS-compatible entrypoints.
+- Validate at each step with `npm run build`, targeted tests (`test/game/formations.test.js`), and per-file ESLint checks.
