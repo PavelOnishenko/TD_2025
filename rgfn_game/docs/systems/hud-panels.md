@@ -565,3 +565,34 @@ The `Quests` panel (`#quests-panel`) now mirrors the desktop resize behavior of 
 4. Enter combat mode and drag `Combat Actions` independently.
 5. On desktop, confirm there is no empty `Village: ...` panel shell left behind.
 6. On mobile (`<=920px`), confirm fallback stacked flow still works.
+
+## Follow-up fix #3: keep combat actions attached to combat panel + restore village panel visibility (April 11, 2026)
+
+### Player-reported issues
+
+1. `Combat Actions` became detached from the main combat panel and could be dragged independently, which is not desired UX.
+2. In village mode, `Village Actions` and `Village Rumors` could fail to appear after entering a village.
+
+### Root causes
+
+- `battle-actions` was mistakenly included in auxiliary draggable panel decoration, turning a sub-section of combat UI into a separate floating panel.
+- Village action panels start hidden and become visible later; one-time spawn seeding could run before measurable geometry existed (`width/height = 0`), leaving no usable `left/top` position.
+
+### Final behavior
+
+- `Combat Actions` is no longer decorated as an auxiliary draggable panel and therefore remains part of the regular combat sidebar.
+- Auxiliary village panels now seed position reliably when they become visible:
+  - Added class-attribute visibility observer.
+  - Added delayed seed retries (animation-frame attempts) until measurable geometry exists or retry budget is exhausted.
+
+### QA checklist
+
+1. Enter combat:
+   - Verify `Combat Actions` stays inside combat panel and moves together with the combat sidebar behavior.
+2. Enter village:
+   - Verify `Village Actions` appears.
+   - Verify `Village Rumors` appears.
+3. Drag `Village Actions`:
+   - `Village Rumors` remains independent.
+4. Exit/re-enter village:
+   - both village panels remain visible and usable.

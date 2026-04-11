@@ -8,7 +8,6 @@ type ActionPanelConfig = {
 export default class GameUiActionPanelController {
     private static readonly ACTION_PANELS: ActionPanelConfig[] = [
         { elementId: 'village-actions', title: 'Village Actions', offsetX: 0, offsetY: 0 },
-        { elementId: 'battle-actions', title: 'Combat Actions', offsetX: 18, offsetY: 18 },
         { elementId: 'village-rumors-section', title: 'Village Rumors', offsetX: 36, offsetY: 36 },
     ];
     private nextZIndex = 8;
@@ -26,6 +25,7 @@ export default class GameUiActionPanelController {
         panel.classList.add('aux-draggable-panel');
         panel.prepend(this.createHeader(config.title));
         this.seedPosition(panel, config);
+        this.bindVisibilitySeed(panel, config);
         this.bindDrag(panel);
     }
 
@@ -41,16 +41,26 @@ export default class GameUiActionPanelController {
     }
 
     private seedPosition(panel: HTMLElement, config: ActionPanelConfig): void {
-        requestAnimationFrame(() => this.applySeed(panel, config));
+        this.scheduleSeed(panel, config, 0);
     }
 
-    private applySeed(panel: HTMLElement, config: ActionPanelConfig): void {
+    private bindVisibilitySeed(panel: HTMLElement, config: ActionPanelConfig): void {
+        const observer = new MutationObserver(() => this.seedPosition(panel, config));
+        observer.observe(panel, { attributes: true, attributeFilter: ['class'] });
+    }
+
+    private scheduleSeed(panel: HTMLElement, config: ActionPanelConfig, attempt: number): void {
+        requestAnimationFrame(() => this.applySeed(panel, config, attempt));
+    }
+
+    private applySeed(panel: HTMLElement, config: ActionPanelConfig, attempt: number): void {
         if (panel.dataset.spawnPositioned === 'true') {
             return;
         }
 
         const rect = panel.getBoundingClientRect();
         if (rect.width <= 0 || rect.height <= 0) {
+            this.retrySeedIfNeeded(panel, config, attempt);
             return;
         }
 
@@ -61,6 +71,14 @@ export default class GameUiActionPanelController {
         panel.dataset.spawnPositioned = 'true';
         panel.style.left = `${offsetX}px`;
         panel.style.top = `${offsetY}px`;
+    }
+
+    private retrySeedIfNeeded(panel: HTMLElement, config: ActionPanelConfig, attempt: number): void {
+        if (attempt >= 24) {
+            return;
+        }
+
+        this.scheduleSeed(panel, config, attempt + 1);
     }
 
     private bindDrag(panel: HTMLElement): void {
