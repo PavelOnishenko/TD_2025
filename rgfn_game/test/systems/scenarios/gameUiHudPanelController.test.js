@@ -236,3 +236,41 @@ test('GameUiHudPanelController persists panel hidden state on toggle', () => {
     global.requestAnimationFrame = originalRequestAnimationFrame;
   }
 });
+
+test('GameUiHudPanelController keeps combat actions panel hidden outside battle mode', () => {
+  const originalWindow = global.window;
+  const originalDocument = global.document;
+  const originalMutationObserver = global.MutationObserver;
+  const originalRequestAnimationFrame = global.requestAnimationFrame;
+  const observers = [];
+
+  global.window = { localStorage: createLocalStorage() };
+  const hudElements = createHudElements();
+  global.document = createMockDocument(hudElements);
+  global.requestAnimationFrame = (callback) => callback();
+  global.MutationObserver = class {
+    constructor(callback) { this.callback = callback; observers.push(this); }
+    observe(target) { this.target = target; }
+    trigger() { this.callback(); }
+  };
+
+  try {
+    const controller = new GameUiHudPanelController(hudElements, { onTogglePanel() {} });
+    controller.bind();
+
+    assert.equal(hudElements.battleActionsPanel.classList.contains('hidden'), true);
+
+    hudElements.modeIndicator.textContent = 'Battle!';
+    observers.forEach((observer) => observer.target === hudElements.modeIndicator && observer.trigger());
+    assert.equal(hudElements.battleActionsPanel.classList.contains('hidden'), false);
+
+    hudElements.modeIndicator.textContent = 'Village';
+    observers.forEach((observer) => observer.target === hudElements.modeIndicator && observer.trigger());
+    assert.equal(hudElements.battleActionsPanel.classList.contains('hidden'), true);
+  } finally {
+    global.window = originalWindow;
+    global.document = originalDocument;
+    global.MutationObserver = originalMutationObserver;
+    global.requestAnimationFrame = originalRequestAnimationFrame;
+  }
+});

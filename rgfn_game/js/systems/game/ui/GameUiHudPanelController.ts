@@ -20,6 +20,12 @@ type StoredPanelLayout = Record<string, PanelLayoutSnapshot>;
 export default class GameUiHudPanelController {
     private static readonly WORLD_LAYOUT_STORAGE_KEY = 'rgfn_hud_panel_layout_world_v1';
     private static readonly BATTLE_LAYOUT_STORAGE_KEY = 'rgfn_hud_panel_layout_battle_v1';
+    private static readonly COMBAT_PANEL_PERSISTENCE_KEY = 'battleActions';
+    private static readonly MODE_TEXT = {
+        battle: 'Battle!',
+        village: 'Village',
+        world: 'World Map',
+    } as const;
     private hudElements: HudElements;
     private callbacks: GameUiEventCallbacks;
     private nextPanelZIndex = 10;
@@ -36,6 +42,7 @@ export default class GameUiHudPanelController {
         this.initializeHudPanelWindows();
         this.activeLayoutContext = this.getLayoutContextFromModeIndicator();
         this.restoreLayoutForCurrentContext();
+        this.enforceCombatPanelVisibility(this.activeLayoutContext);
         this.bindLayoutContextListener();
     }
     private bindHudMenuEvents(): void {
@@ -195,14 +202,23 @@ export default class GameUiHudPanelController {
     private handleLayoutContextChange(): void {
         const nextContext = this.getLayoutContextFromModeIndicator();
         if (nextContext === this.activeLayoutContext) {
+            this.enforceCombatPanelVisibility(nextContext);
             return;
         }
         this.persistCurrentContextLayout();
         this.activeLayoutContext = nextContext;
         this.restoreLayoutForCurrentContext();
+        this.enforceCombatPanelVisibility(nextContext);
     }
     private getLayoutContextFromModeIndicator(): LayoutContext {
-        return this.hudElements.modeIndicator.textContent?.trim() === 'Battle!' ? 'battle' : 'world';
+        const modeText = this.hudElements.modeIndicator.textContent?.trim() ?? '';
+        if (modeText === GameUiHudPanelController.MODE_TEXT.battle) {
+            return 'battle';
+        }
+        if (modeText === GameUiHudPanelController.MODE_TEXT.world || modeText === GameUiHudPanelController.MODE_TEXT.village) {
+            return 'world';
+        }
+        return 'world';
     }
     private restoreLayoutForCurrentContext(): void {
         const storedLayout = this.getStoredLayout(this.activeLayoutContext);
@@ -239,6 +255,7 @@ export default class GameUiHudPanelController {
                 requestAnimationFrame(() => this.ensurePanelDragHandleIsReachable(element));
             }
         });
+        this.enforceCombatPanelVisibility(this.activeLayoutContext);
     }
     private resetPanelToSpawn(panel: HTMLElement, panelIndex: number): void {
         panel.dataset.offsetX = '0';
@@ -316,6 +333,7 @@ export default class GameUiHudPanelController {
         if (!window.localStorage) {
             return;
         }
+        this.enforceCombatPanelVisibility(this.activeLayoutContext);
         const layout: StoredPanelLayout = {};
         this.getPanelConfigs().forEach(({ key, element, persistenceKey }) => {
             const layoutKey = key ?? persistenceKey;
@@ -325,16 +343,30 @@ export default class GameUiHudPanelController {
             const offsetX = Number.parseFloat(element.dataset.offsetX ?? '0') || 0;
             const offsetY = Number.parseFloat(element.dataset.offsetY ?? '0') || 0;
             const zIndex = Number.parseInt(element.style.zIndex || '', 10);
+            const isCombatPanel = layoutKey === GameUiHudPanelController.COMBAT_PANEL_PERSISTENCE_KEY;
+            const hidden = isCombatPanel
+                ? this.activeLayoutContext !== 'battle'
+                : element.classList.contains('hidden');
             layout[layoutKey] = {
                 offsetX,
                 offsetY,
                 width: element.style.width || null,
                 height: element.style.height || null,
-                hidden: element.classList.contains('hidden'),
+                hidden,
                 zIndex: Number.isFinite(zIndex) ? zIndex : null,
             };
         });
         window.localStorage.setItem(this.getStorageKey(this.activeLayoutContext), JSON.stringify(layout));
+    }
+    private enforceCombatPanelVisibility(context: LayoutContext): void {
+        const combatPanel = this.getPanelConfigs()
+            .find(({ persistenceKey }) => persistenceKey === GameUiHudPanelController.COMBAT_PANEL_PERSISTENCE_KEY)
+            ?.element;
+        if (!combatPanel) {
+            return;
+        }
+        const shouldBeVisible = context === 'battle';
+        combatPanel.classList.toggle('hidden', !shouldBeVisible);
     }
     private getStoredLayout(context: LayoutContext): StoredPanelLayout | null {
         if (!window.localStorage) {
