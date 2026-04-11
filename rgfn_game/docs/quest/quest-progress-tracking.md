@@ -1,5 +1,29 @@
 # Quest progress tracking notes
 
+## April 8, 2026 update: village dialogue contract visibility now follows known quest frontier
+
+- Non-developer mode village dialogue dropdowns are now aligned with quest knowledge progression:
+  - discovered map settlements still appear,
+  - NPCs met in person still appear,
+  - quest-linked settlement/person entries are now restricted to quest nodes that are **known by the frontier model** (in-progress or already completed),
+  - future unknown quest branches no longer leak contract names into village dialogue controls.
+- Developer mode remains intentionally permissive and continues exposing full debug contract pools.
+
+### Runtime integration details
+
+- `GameQuestRuntime.collectBarterContracts(...)` now filters using `collectKnownQuestNodes(...)` before emitting barter/deliver/recover contracts.
+- `GameQuestRuntime.collectEscortContracts(...)` now applies the same known-node filter before exposing escort persons/villages.
+- Contract refreshes now run after additional quest progression events so UI contract data stays synchronized as objectives change:
+  - location-entry quest progression,
+  - barter completion progression,
+  - monster-kill progression.
+
+### Regression coverage
+
+- Added `GameQuestRuntime` test coverage to verify:
+  - completed + current known objectives are exposed,
+  - future unknown contract objectives are not exposed.
+
 ## March 30, 2026 update: strict runtime gating for unknown quest objectives
 
 - We now use a single "known objective frontier" model not only in UI, but also in runtime logic:

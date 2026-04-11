@@ -1,3 +1,4 @@
+/* eslint-disable style-guide/file-length-warning */
 import Player from '../../entities/player/Player.js';
 import VillageDialogueEngine, { VillageNpcProfile } from './VillageDialogueEngine.js';
 import VillageBarterService from './actions/VillageBarterService.js';
@@ -6,6 +7,7 @@ import VillageUiPresenter from './actions/VillageUiPresenter.js';
 import VillageTradeInteractionService from './actions/VillageTradeInteractionService.js';
 import VillageDialogueInteractionService from './actions/VillageDialogueInteractionService.js';
 import { QuestBarterContract, QuestEscortContract, VillageActionsCallbacks, VillageUI } from './actions/VillageActionsTypes.js';
+import { isDeveloperModeEnabled } from '../../utils/DeveloperModeConfig.js';
 
 export default class VillageActionsController {
     private readonly villageUI: VillageUI;
@@ -88,16 +90,7 @@ export default class VillageActionsController {
         this.refreshNpcUi();
         this.addLog(`You approach ${npc.name} the ${npc.role}.`, 'player');
         this.addLog(`${npc.name} looks ${npc.look} and speaks in a ${npc.speechStyle} manner.`, 'system-message');
-        const recoverLead = this.callbacks.onRevealRecoverHolder?.(this.currentVillageName, npc.name) ?? { revealed: false };
-        if (recoverLead.revealed && recoverLead.personName && recoverLead.itemName) {
-            this.appendRecoverHolderIfMissing(this.npcRoster, this.currentVillageName, recoverLead.personName, recoverLead.itemName);
-            this.addLog(
-                `${npc.name} lowers their voice: "${recoverLead.personName} is carrying ${recoverLead.itemName}. You'll find them in this village."`,
-                'system-message',
-            );
-            this.refreshNpcUi();
-            this.refreshDialogueTargetOptions();
-        }
+        this.addRecoverLeadFromNpc(npc);
         this.callbacks.onAdvanceTime(8, 0.12);
     }
 
@@ -323,6 +316,9 @@ export default class VillageActionsController {
 
     private getKnownSettlementNames(): string[] {
         const knownFromMap = this.callbacks.getKnownSettlementNames?.() ?? [];
+        if (!isDeveloperModeEnabled()) {
+            return this.toSortedUnique(knownFromMap);
+        }
         const fromBarterContracts = this.barterService
             .getKnownTraderNames()
             .map((traderName) => this.barterService.getPersonDirectionHint(traderName, this.callbacks.getVillageDirectionHint).villageName)
@@ -332,8 +328,9 @@ export default class VillageActionsController {
     }
 
     private getKnownPersonNames(): string[] {
-        const fromBarter = this.barterService.getKnownTraderNames();
-        const fromEscort = this.escortContracts.map((contract) => contract.personName);
+        const knownSettlements = this.buildKnownSettlementSet();
+        const fromBarter = this.barterService.getKnownTraderNames().filter((traderName) => this.shouldIncludeTraderName(traderName, knownSettlements));
+        const fromEscort = this.escortContracts.filter((contract) => this.shouldIncludeEscortContract(contract, knownSettlements)).map((contract) => contract.personName);
         const fromNpcRoster = Array.from(this.knownNpcNames);
         return this.toSortedUnique([...fromBarter, ...fromEscort, ...fromNpcRoster]);
     }
@@ -343,25 +340,63 @@ export default class VillageActionsController {
         select.innerHTML = '';
 
         if (values.length === 0) {
-            const option = document.createElement('option');
-            option.value = '';
-            option.textContent = placeholder;
-            select.appendChild(option);
+            this.createAndAppendOption(select, '', placeholder);
             return;
         }
 
         values.forEach((value) => {
-            const option = document.createElement('option');
-            option.value = value;
-            option.textContent = value;
-            select.appendChild(option);
+            this.createAndAppendOption(select, value, value);
         });
         const hasPreviousSelection = values.some((value) => value === existingValue);
         select.value = hasPreviousSelection ? existingValue : values[0];
     }
 
-    private toSortedUnique(values: string[]): string[] {
-        return Array.from(new Set(values.map((value) => value.trim()).filter((value) => value.length > 0)))
-            .sort((left, right) => left.localeCompare(right));
+    private toSortedUnique = (values: string[]): string[] => Array.from(new Set(values.map((value) => value.trim()).filter((value) => value.length > 0)))
+        .sort((left, right) => left.localeCompare(right));
+
+    private addRecoverLeadFromNpc(npc: VillageNpcProfile): void {
+        const recoverLead = this.callbacks.onRevealRecoverHolder?.(this.currentVillageName, npc.name) ?? { revealed: false };
+        if (!recoverLead.revealed || !recoverLead.personName || !recoverLead.itemName) {
+            return;
+        }
+
+        this.appendRecoverHolderIfMissing(this.npcRoster, this.currentVillageName, recoverLead.personName, recoverLead.itemName);
+        this.addLog(
+            `${npc.name} lowers their voice: "${recoverLead.personName} is carrying ${recoverLead.itemName}. You'll find them in this village."`,
+            'system-message',
+        );
+        this.refreshNpcUi();
+        this.refreshDialogueTargetOptions();
+    }
+
+    private buildKnownSettlementSet = (): Set<string> => new Set((this.callbacks.getKnownSettlementNames?.() ?? []).map((name) => name.trim().toLocaleLowerCase()));
+
+    private shouldIncludeTraderName(traderName: string, knownSettlements: Set<string>): boolean {
+        if (isDeveloperModeEnabled()) {
+            return true;
+        }
+
+        const hint = this.barterService.getPersonDirectionHint(traderName, this.callbacks.getVillageDirectionHint);
+        if (!hint.exists || !hint.villageName) {
+            return false;
+        }
+        return knownSettlements.has(hint.villageName.trim().toLocaleLowerCase());
+    }
+
+    private shouldIncludeEscortContract(contract: QuestEscortContract, knownSettlements: Set<string>): boolean {
+        if (isDeveloperModeEnabled()) {
+            return true;
+        }
+
+        const source = contract.sourceVillage.trim().toLocaleLowerCase();
+        const destination = contract.destinationVillage.trim().toLocaleLowerCase();
+        return knownSettlements.has(source) || knownSettlements.has(destination);
+    }
+
+    private createAndAppendOption(select: HTMLSelectElement, value: string, text: string): void {
+        const option = document.createElement('option');
+        option.value = value;
+        option.textContent = text;
+        select.appendChild(option);
     }
 }

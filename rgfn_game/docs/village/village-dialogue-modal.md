@@ -37,10 +37,10 @@ Move NPC conversations into a dedicated popup dialogue window (classic RPG style
 - Settlement dropdown is auto-filled from:
   - discovered villages from world map fog state,
   - named quest locations registered into world map metadata,
-  - source/destination villages inferred from active barter/escort quest contracts.
+  - source/destination villages inferred from active barter/escort quest contracts **only when developer mode is enabled**.
 - Person dropdown is auto-filled from:
-  - active barter trader names,
-  - active escort objective person names,
+  - active barter trader names tied to discovered villages (or all traders in developer mode),
+  - active escort objective person names tied to discovered villages (or all escorts in developer mode),
   - NPCs already seen in village rumor rosters.
 
 This keeps one shared source of dialogue events while showing NPC conversation in a focused modal.
@@ -80,6 +80,27 @@ File: `rgfn_game/test/systems/villageActionsController.test.js`.
 - Root cause: `handleSelectNpc(...)` refreshed labels and NPC buttons but did not recalculate button enabled/disabled state.
 - Fix: call `updateButtons()` inside `handleSelectNpc(...)` right after selecting NPC and rerendering.
 - Regression guard: test now checks the button is disabled before selection and enabled immediately after selection.
+
+## Known pitfall fixed (April 8, 2026)
+
+- Symptom: fresh non-developer playthroughs showed very large settlement/person dropdowns in NPC dialogue, including undiscovered villages and quest names.
+- Root cause: the dropdown aggregation merged all escort/barter contract data into selects regardless of map discovery and mode.
+- Fix:
+  - Non-developer mode now limits settlement options to `worldMap.getKnownSettlementNames()` output.
+  - Non-developer mode now limits person options to:
+    - already encountered NPC names in visible village rosters,
+    - contract names whose source/destination village is already discovered.
+  - Developer mode preserves full debug list behavior for both settlements and persons.
+- Regression guards:
+  - Added test that undiscovered `Farwatch`/`Cora` are hidden when developer mode is off.
+  - Added test that they appear again when developer mode is enabled.
+
+## Follow-up pitfall fixed (April 11, 2026)
+
+- Symptom: location dropdown still showed many undiscovered names in non-developer mode even after contract gating fixes.
+- Root cause: `worldMap.getKnownSettlementNames()` merged in `namedLocations` without checking tile discovery state.
+- Fix: `WorldMapNamedLocationAndVillageOverlays.getKnownSettlementNames()` now includes named locations only when their anchor cell is discovered.
+- Regression guard: `worldMap.test.js` now verifies undiscovered named location entries are excluded until discovered.
 
 ## Notes for future extension
 

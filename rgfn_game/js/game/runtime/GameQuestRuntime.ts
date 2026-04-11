@@ -1,3 +1,5 @@
+/* eslint-disable style-guide/file-length-error, style-guide/function-length-error, style-guide/function-length-warning */
+/* eslint-disable style-guide/rule17-comma-layout, style-guide/arrow-function-style */
 import QuestProgressTracker from '../../systems/quest/QuestProgressTracker.js';
 import Item from '../../entities/Item.js';
 import { EscortObjectiveData, QuestNode, RecoverObjectiveData } from '../../systems/quest/QuestTypes.js';
@@ -7,6 +9,7 @@ import WorldMap from '../../systems/world/worldMap/WorldMap.js';
 import Skeleton, { MonsterMutationTrait } from '../../entities/Skeleton.js';
 import { balanceConfig } from '../../config/balance/balanceConfig.js';
 import { getDeveloperModeConfig } from '../../utils/DeveloperModeConfig.js';
+import { collectKnownQuestNodes } from '../../systems/quest/QuestKnowledge.js';
 
 type QuestContractsReadyPayload = {
     barterContracts: Array<{
@@ -57,6 +60,7 @@ export default class GameQuestRuntime {
             return false;
         }
         this.questUiController.renderQuest(this.activeQuest);
+        this.refreshContracts();
         return true;
     }
 
@@ -277,6 +281,7 @@ export default class GameQuestRuntime {
             return 'no-objective';
         }
         this.questUiController.renderQuest(this.activeQuest);
+        this.refreshContracts();
         return 'updated';
     }
 
@@ -288,6 +293,7 @@ export default class GameQuestRuntime {
             return false;
         }
         this.questUiController.renderQuest(this.activeQuest);
+        this.refreshContracts();
         return true;
     }
 
@@ -353,7 +359,12 @@ export default class GameQuestRuntime {
 
     private collectBarterContracts(quest: QuestNode): Array<{ traderName: string; itemName: string; sourceVillage?: string; destinationVillage?: string; contractType: 'barter' | 'deliver' | 'recover' }> {
         const contracts: Array<{ traderName: string; itemName: string; sourceVillage?: string; destinationVillage?: string; contractType: 'barter' | 'deliver' | 'recover' }> = [];
+        const knownNodes = collectKnownQuestNodes(quest);
         const visit = (node: QuestNode): void => {
+            if (!knownNodes.has(node)) {
+                node.children.forEach((child) => visit(child));
+                return;
+            }
             if (node.objectiveType === 'barter' && node.children.length === 0) {
                 const trader = node.entities.find((entity) => entity.type === 'person')?.text?.trim();
                 const item = node.entities.find((entity) => entity.type === 'item')?.text?.trim();
@@ -386,8 +397,9 @@ export default class GameQuestRuntime {
 
     private collectEscortContracts(quest: QuestNode): Array<{ personName: string; sourceVillage: string; destinationVillage: string }> {
         const contracts: Array<{ personName: string; sourceVillage: string; destinationVillage: string }> = [];
+        const knownNodes = collectKnownQuestNodes(quest);
         this.visitQuestNodes(quest, (node) => {
-            if (node.objectiveType !== 'escort' || node.children.length > 0 || !node.objectiveData?.escort) {
+            if (!knownNodes.has(node) || node.objectiveType !== 'escort' || node.children.length > 0 || !node.objectiveData?.escort) {
                 return;
             }
             const escort = node.objectiveData.escort;

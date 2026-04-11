@@ -125,6 +125,29 @@ function withDocumentStub(fn) {
   }
 }
 
+function withDeveloperMode(enabled, fn) {
+  const originalWindow = globalThis.window;
+  globalThis.window = {
+    localStorage: {
+      getItem: () => JSON.stringify({
+        enabled,
+        everythingDiscovered: enabled,
+        fogOfWar: true,
+        questIntroEnabled: !enabled,
+        encounterTypes: { monster: true, item: true, traveler: true },
+        autoGodBoostOnCharacterCreation: enabled,
+      }),
+      setItem: () => {},
+    },
+  };
+
+  try {
+    fn();
+  } finally {
+    globalThis.window = originalWindow;
+  }
+}
+
 test('VillageActionsController keeps village rumor NPC roster stable across re-entry to same village', () => withDocumentStub(() => {
   const villageUI = createVillageUi();
   const gameLog = createElement();
@@ -333,18 +356,51 @@ test('VillageActionsController mirrors dialogue lines into modal log and toggles
   assert.equal(villageUI.dialogueModal.classList.added.includes('hidden'), true);
 }));
 
-test('VillageActionsController populates settlement and person selects from known map and quest data', () => withDocumentStub(() => {
+test('VillageActionsController hides undiscovered settlement and person targets when developer mode is off', () => withDocumentStub(() => {
   const villageUI = createVillageUi();
   const gameLog = createElement();
   const controller = new VillageActionsController(createPlayerStub(), villageUI, gameLog, {
     onUpdateHUD: () => {},
     onLeaveVillage: () => {},
-    getVillageDirectionHint: (settlementName) => ({ settlementName, exists: false }),
+    getVillageDirectionHint: (settlementName) => ({ settlementName, exists: true, direction: 'west', distanceCells: 4 }),
     getKnownSettlementNames: () => ['Mossbrook', 'Questspire'],
     onVillageBarterCompleted: () => {},
   });
 
-  controller.configureQuestBarterContracts([{ traderName: 'Olive', itemName: 'Kator Kaesh' }]);
+  controller.configureQuestBarterContracts([
+    { traderName: 'Olive', itemName: 'Kator Kaesh', sourceVillage: 'Mossbrook' },
+    { traderName: 'Cora', itemName: 'Void Relic', sourceVillage: 'Farwatch' },
+  ]);
+  controller.configureQuestEscortContracts([{ personName: 'Bram', sourceVillage: 'Mossbrook', destinationVillage: 'Farwatch' }]);
+  controller['dialogueEngine'] = {
+    createNpcRoster: () => [{ id: 'moss-0', name: 'Mara', role: 'Trader', look: 'cloak', speechStyle: 'calm', disposition: 'truthful' }],
+    buildLocationAnswer: () => ({ speech: '', tone: '', truthfulness: 'truth' }),
+    buildPersonLocationAnswer: () => ({ speech: '', tone: '', truthfulness: 'truth' }),
+  };
+
+  controller.enterVillage('Mossbrook');
+  const settlementOptions = villageUI.askVillageInput.options.map((option) => option.value);
+  const personOptions = villageUI.askPersonInput.options.map((option) => option.value);
+
+  assert.deepEqual(settlementOptions, ['Mossbrook', 'Questspire']);
+  assert.deepEqual(personOptions, ['Bram', 'Mara', 'Olive']);
+}));
+
+test('VillageActionsController shows undiscovered settlement and person targets in developer mode', () => withDeveloperMode(true, () => withDocumentStub(() => {
+  const villageUI = createVillageUi();
+  const gameLog = createElement();
+  const controller = new VillageActionsController(createPlayerStub(), villageUI, gameLog, {
+    onUpdateHUD: () => {},
+    onLeaveVillage: () => {},
+    getVillageDirectionHint: (settlementName) => ({ settlementName, exists: true, direction: 'west', distanceCells: 4 }),
+    getKnownSettlementNames: () => ['Mossbrook', 'Questspire'],
+    onVillageBarterCompleted: () => {},
+  });
+
+  controller.configureQuestBarterContracts([
+    { traderName: 'Olive', itemName: 'Kator Kaesh', sourceVillage: 'Mossbrook' },
+    { traderName: 'Cora', itemName: 'Void Relic', sourceVillage: 'Farwatch' },
+  ]);
   controller.configureQuestEscortContracts([{ personName: 'Bram', sourceVillage: 'Mossbrook', destinationVillage: 'Farwatch' }]);
   controller['dialogueEngine'] = {
     createNpcRoster: () => [{ id: 'moss-0', name: 'Mara', role: 'Trader', look: 'cloak', speechStyle: 'calm', disposition: 'truthful' }],
@@ -357,8 +413,8 @@ test('VillageActionsController populates settlement and person selects from know
   const personOptions = villageUI.askPersonInput.options.map((option) => option.value);
 
   assert.deepEqual(settlementOptions, ['Farwatch', 'Mossbrook', 'Questspire']);
-  assert.deepEqual(personOptions, ['Bram', 'Mara', 'Olive']);
-}));
+  assert.deepEqual(personOptions, ['Bram', 'Cora', 'Mara', 'Olive']);
+})));
 
 test('VillageActionsController allows safe room sleep only with innkeeper selected', () => withDocumentStub(() => {
   const villageUI = createVillageUi();

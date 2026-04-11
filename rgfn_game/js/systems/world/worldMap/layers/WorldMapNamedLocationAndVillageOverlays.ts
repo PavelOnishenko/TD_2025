@@ -33,7 +33,9 @@ export default class WorldMapNamedLocationAndVillageOverlays extends WorldMapVil
 
     public getKnownSettlementNames = (): string[] => {
         const knownVillages = this.getKnownVillages().map((village) => village.name);
-        const namedLocations = Array.from(this.namedLocations.values()).map((location) => location.name);
+        const namedLocations = Array.from(this.namedLocations.values())
+            .filter((location) => this.isDiscovered(location.position.col, location.position.row))
+            .map((location) => location.name);
         return Array.from(new Set([...knownVillages, ...namedLocations]))
             .sort((left, right) => left.localeCompare(right));
     };
