@@ -12,6 +12,10 @@ type PresenterDeps = {
     getSelectedNpc: () => VillageNpcProfile | null;
     getSellPrice: (item: Item) => number;
     isInnkeeper: (role: string) => boolean;
+    shouldShowBarterNowAction: (npcName: string) => boolean;
+    shouldShowConfrontRecoverAction: (npcName: string, villageName: string) => boolean;
+    shouldShowRecruitEscortAction: (npcName: string, villageName: string) => boolean;
+    getCurrentVillageName: () => string;
 };
 
 export default class VillageUiPresenter {
@@ -46,9 +50,19 @@ export default class VillageUiPresenter {
         this.deps.villageUI.askVillageBtn.disabled = !hasSelectedNpc;
         this.deps.villageUI.askPersonBtn.disabled = !hasSelectedNpc;
         this.deps.villageUI.askBarterBtn.disabled = !hasSelectedNpc;
-        this.deps.villageUI.barterNowBtn.disabled = !hasSelectedNpc;
-        this.deps.villageUI.confrontRecoverBtn.disabled = !hasSelectedNpc;
-        this.deps.villageUI.recruitEscortBtn.disabled = !hasSelectedNpc;
+        const selectedNpcName = selectedNpc?.name ?? '';
+        const currentVillageName = this.deps.getCurrentVillageName();
+        const showBarterNow = hasSelectedNpc && this.deps.shouldShowBarterNowAction(selectedNpcName);
+        const showConfrontRecover = hasSelectedNpc && this.deps.shouldShowConfrontRecoverAction(selectedNpcName, currentVillageName);
+        const showRecruitEscort = hasSelectedNpc && this.deps.shouldShowRecruitEscortAction(selectedNpcName, currentVillageName);
+
+        this.deps.villageUI.barterNowBtn.classList.toggle('hidden', !showBarterNow);
+        this.deps.villageUI.confrontRecoverBtn.classList.toggle('hidden', !showConfrontRecover);
+        this.deps.villageUI.recruitEscortBtn.classList.toggle('hidden', !showRecruitEscort);
+
+        this.deps.villageUI.barterNowBtn.disabled = !showBarterNow;
+        this.deps.villageUI.confrontRecoverBtn.disabled = !showConfrontRecover;
+        this.deps.villageUI.recruitEscortBtn.disabled = !showRecruitEscort;
         this.deps.villageUI.sleepRoomBtn.disabled = !hasSelectedNpc || !this.deps.isInnkeeper(selectedNpc?.role ?? '');
     }
 
