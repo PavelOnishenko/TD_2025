@@ -83,6 +83,9 @@ function createHudElements() {
   const selectedPanel = createElement('selected');
   const worldMapPanel = createElement('worldMap');
   const logPanel = createElement('log');
+  const battleActionsPanel = createElement('battleActions');
+  const villageActionsPanel = createElement('villageActions');
+  const villageRumorsPanel = createElement('villageRumors');
 
   const modeIndicator = createElement('mode');
   modeIndicator.textContent = 'World Map';
@@ -111,6 +114,22 @@ function createHudElements() {
     selectedPanel,
     worldMapPanel,
     logPanel,
+    battleActionsPanel,
+    villageActionsPanel,
+    villageRumorsPanel,
+  };
+}
+
+function createMockDocument(hudElements) {
+  const idMap = {
+    'battle-sidebar': hudElements.battleActionsPanel,
+    'village-actions': hudElements.villageActionsPanel,
+    'village-rumors-section': hudElements.villageRumorsPanel,
+  };
+
+  return {
+    createElement: () => createElement('dynamic'),
+    getElementById(id) { return idMap[id] ?? null; },
   };
 }
 
@@ -130,7 +149,8 @@ test('GameUiHudPanelController stores separate panel layouts for world map and b
   const observers = [];
 
   global.window = { localStorage: createLocalStorage() };
-  global.document = { createElement: () => createElement('dynamic') };
+  const hudElements = createHudElements();
+  global.document = createMockDocument(hudElements);
   global.requestAnimationFrame = (callback) => callback();
   global.MutationObserver = class {
     constructor(callback) { this.callback = callback; observers.push(this); }
@@ -139,7 +159,6 @@ test('GameUiHudPanelController stores separate panel layouts for world map and b
   };
 
   try {
-    const hudElements = createHudElements();
     const controller = new GameUiHudPanelController(hudElements, {
       onTogglePanel(panel) {
         const key = `${panel}Panel`;
@@ -190,7 +209,8 @@ test('GameUiHudPanelController persists panel hidden state on toggle', () => {
   const originalRequestAnimationFrame = global.requestAnimationFrame;
 
   global.window = { localStorage: createLocalStorage() };
-  global.document = { createElement: () => createElement('dynamic') };
+  const hudElements = createHudElements();
+  global.document = createMockDocument(hudElements);
   global.requestAnimationFrame = (callback) => callback();
   global.MutationObserver = class {
     constructor() {}
@@ -198,7 +218,6 @@ test('GameUiHudPanelController persists panel hidden state on toggle', () => {
   };
 
   try {
-    const hudElements = createHudElements();
     const controller = new GameUiHudPanelController(hudElements, {
       onTogglePanel(panel) {
         const key = `${panel}Panel`;

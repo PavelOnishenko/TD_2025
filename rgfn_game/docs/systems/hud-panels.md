@@ -522,3 +522,31 @@ The `Quests` panel (`#quests-panel`) now mirrors the desktop resize behavior of 
    - drag behavior should remain unchanged.
 5. Reduce viewport below `920px`:
    - resize affordance should disappear for quests (and still for log).
+
+## Draggable parity for combat/village action surfaces (April 11, 2026)
+
+To align interaction behavior with existing HUD windows (`Stats`, `Skills`, etc.), three gameplay panels now use the same draggable header system:
+
+- `#battle-sidebar` → header title `Combat Actions`
+- `#village-actions` → header title `Village Actions`
+- `#village-rumors-section` → header title `Village Rumors`
+
+### Behavior details
+
+- Drag is initiated **only** from the injected panel header drag handle (same pointer handling path used by HUD windows).
+- These three panels are configured as **non-closable** in the shared panel decorator (`✕` is disabled/hidden), because they are mode-driven runtime surfaces and do not have standalone HUD menu reopen toggles.
+- Layout persistence (offset, z-index, hidden state snapshots) still uses the same storage/context pipeline as other draggable windows, so world/battle context switching remains consistent.
+
+### Dev notes
+
+- `GameUiHudPanelController` now discovers these three mode panels directly by DOM id (`battle-sidebar`, `village-actions`, `village-rumors-section`) and decorates them through the same draggable-window pipeline.
+- Existing panel-controller tests still pass after extending panel config inventory and test DOM mocks.
+
+### Quick QA checklist
+
+1. Enter battle mode and drag `Combat Actions` by its header.
+2. Enter village mode, open village actions, and drag:
+   - `Village Actions` by its header;
+   - `Village Rumors` by its header.
+3. Confirm body content interactions (buttons/selects) still work and do **not** trigger drag.
+4. Switch between world and battle modes and verify panel placements remain stable.
