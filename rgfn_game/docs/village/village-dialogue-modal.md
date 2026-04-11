@@ -95,6 +95,13 @@ File: `rgfn_game/test/systems/villageActionsController.test.js`.
   - Added test that undiscovered `Farwatch`/`Cora` are hidden when developer mode is off.
   - Added test that they appear again when developer mode is enabled.
 
+## Follow-up pitfall fixed (April 11, 2026)
+
+- Symptom: location dropdown still showed many undiscovered names in non-developer mode even after contract gating fixes.
+- Root cause: `worldMap.getKnownSettlementNames()` merged in `namedLocations` without checking tile discovery state.
+- Fix: `WorldMapNamedLocationAndVillageOverlays.getKnownSettlementNames()` now includes named locations only when their anchor cell is discovered.
+- Regression guard: `worldMap.test.js` now verifies undiscovered named location entries are excluded until discovered.
+
 ## Notes for future extension
 
 - If needed, next step is to render only NPC conversation lines in modal (filter by tags), while keeping full system log in main log panel.

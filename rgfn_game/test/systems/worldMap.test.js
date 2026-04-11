@@ -463,6 +463,33 @@ test('WorldMap exposes village names and anchors matching quest locations to vil
   assert.equal(worldMap.revealNamedLocation(villageName), true);
 }));
 
+test('WorldMap getKnownSettlementNames excludes undiscovered named locations', () => withMockedRandom([0.11], () => {
+  const worldMap = new WorldMap(40, 30, 20);
+  worldMap.registerNamedLocation('Questspire');
+  const location = worldMap['namedLocations'].get('Questspire');
+  assert.ok(location);
+
+  const originalIsDiscovered = worldMap.isDiscovered.bind(worldMap);
+  worldMap.isDiscovered = (col, row) => {
+    if (col === location.position.col && row === location.position.row) {
+      return false;
+    }
+    return originalIsDiscovered(col, row);
+  };
+
+  const hiddenNames = worldMap.getKnownSettlementNames();
+  assert.equal(hiddenNames.includes('Questspire'), false);
+
+  worldMap.isDiscovered = (col, row) => {
+    if (col === location.position.col && row === location.position.row) {
+      return true;
+    }
+    return originalIsDiscovered(col, row);
+  };
+  const revealedNames = worldMap.getKnownSettlementNames();
+  assert.equal(revealedNames.includes('Questspire'), true);
+}));
+
 test('WorldMap stores multiple location features per cell and surfaces them in selected cell info', () => withMockedRandom([0.11], () => {
   const worldMap = new WorldMap(40, 30, 20);
   const villageIndex = Array.from(worldMap.villageIndexSet.values())[0];
