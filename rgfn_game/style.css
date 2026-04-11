@@ -364,29 +364,23 @@ h1 {
     font-weight: 700;
 }
 
-#magic-panel, #inventory-panel, #skills-panel, #quests-panel, #lore-panel, #stats-panel, #selected-panel {
+#magic-panel, #inventory-panel, #skills-panel, #quests-panel, #lore-panel, #stats-panel, #selected-panel, #group-panel,
+#world-sidebar, #battle-sidebar, #village-sidebar, #game-log-container, #village-actions, #village-rumors-section {
     width: min(340px, calc(100vw - 48px));
-    overflow: visible;
-}
-
-#world-sidebar {
-    width: min(340px, calc(100vw - 48px));
-    max-height: min(100%, calc(100dvh - 180px));
+    max-width: calc(100vw - 32px);
+    max-inline-size: calc(100vw - 32px);
+    min-height: 220px;
+    min-inline-size: 260px;
+    max-height: calc(100dvh - 32px);
+    max-block-size: calc(100dvh - 32px);
     overflow: auto;
+    resize: both;
 }
 
 #world-sidebar {
     flex-shrink: 0;
-    max-height: none;
-    overflow: visible;
 }
 #game-log-container {
-    width: min(340px, calc(100vw - 48px));
-    max-width: calc(100vw - 32px);
-    max-inline-size: calc(100vw - 32px);
-    max-height: calc(100dvh - 32px);
-    max-block-size: calc(100dvh - 32px);
-    overflow: hidden;
     align-self: flex-start;
 }
 
@@ -396,25 +390,9 @@ h1 {
     display: none;
 }
 
-#game-log-container {
-    min-height: 220px;
-    height: min(42vh, 360px);
-    min-width: 260px;
-    min-inline-size: 260px;
-    resize: both;
-}
-
 #battle-sidebar {
-    width: min(340px, calc(100vw - 48px));
-    max-width: calc(100vw - 32px);
-    max-inline-size: calc(100vw - 32px);
-    min-height: 220px;
     height: min(42vh, 360px);
-    min-width: 260px;
-    min-inline-size: 260px;
-    overflow: hidden;
     align-self: flex-start;
-    resize: both;
 }
 
 #quests-panel {
@@ -422,17 +400,14 @@ h1 {
     top: 0;
     left: 0;
     transform: translate(var(--panel-offset-x, 0px), var(--panel-offset-y, 0px));
-    max-width: calc(100vw - 32px);
-    max-inline-size: calc(100vw - 32px);
     max-height: none;
     max-block-size: none;
-    min-height: 220px;
     height: min(42vh, 360px);
-    min-width: 260px;
-    min-inline-size: 260px;
-    overflow: hidden;
     align-self: flex-start;
-    resize: both;
+}
+
+#game-log-container {
+    height: min(42vh, 360px);
 }
 
 #game-log-container h3 {
@@ -706,9 +681,8 @@ h1 {
         transform: none;
     }
 
-    #game-log-container,
-    #quests-panel,
-    #battle-sidebar {
+    #magic-panel, #inventory-panel, #skills-panel, #quests-panel, #lore-panel, #stats-panel, #selected-panel, #group-panel,
+    #world-sidebar, #battle-sidebar, #village-sidebar, #game-log-container, #village-actions, #village-rumors-section {
         margin-top: 0;
         height: 260px;
         max-height: 260px;
