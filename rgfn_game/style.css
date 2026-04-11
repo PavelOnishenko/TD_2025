@@ -404,6 +404,19 @@ h1 {
     resize: both;
 }
 
+#battle-sidebar {
+    width: min(340px, calc(100vw - 48px));
+    max-width: calc(100vw - 32px);
+    max-inline-size: calc(100vw - 32px);
+    min-height: 220px;
+    height: min(42vh, 360px);
+    min-width: 260px;
+    min-inline-size: 260px;
+    overflow: hidden;
+    align-self: flex-start;
+    resize: both;
+}
+
 #quests-panel {
     position: fixed;
     top: 0;
@@ -694,7 +707,8 @@ h1 {
     }
 
     #game-log-container,
-    #quests-panel {
+    #quests-panel,
+    #battle-sidebar {
         margin-top: 0;
         height: 260px;
         max-height: 260px;

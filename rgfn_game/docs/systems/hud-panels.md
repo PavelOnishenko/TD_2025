@@ -550,3 +550,55 @@ To align interaction behavior with existing HUD windows (`Stats`, `Skills`, etc.
    - `Village Rumors` by its header.
 3. Confirm body content interactions (buttons/selects) still work and do **not** trigger drag.
 4. Switch between world and battle modes and verify panel placements remain stable.
+
+## Combat panel mode-lock + resize parity fix (April 11, 2026, follow-up)
+
+### Problem summary
+
+- `#battle-sidebar` (combat actions) could appear while the game was in non-battle contexts (world map / village), which is invalid UX because the panel contains battle-only actions.
+- The panel width was not constrained like standard HUD windows (`Stats`, `Village Actions`) and could render overly wide.
+- Unlike `Log` and `Quests`, the combat panel was not resizable.
+
+### Implementation details
+
+- Added explicit mode-text mapping inside `GameUiHudPanelController` and now treat only exact `Battle!` as battle layout context.
+- Added a dedicated combat panel guard (`enforceCombatPanelVisibility`) that runs during:
+  - initial bind,
+  - every layout-context observer update,
+  - layout restore,
+  - layout persistence.
+- The guard forces strict visibility:
+  - **battle context** → combat panel visible,
+  - **non-battle context** (world/village/unknown text) → combat panel hidden.
+- Persistence now hard-locks combat panel hidden-state snapshots by context (never trusting stale DOM class state in non-battle contexts).
+
+### Sizing/resize parity updates
+
+- `#battle-sidebar` now uses the same desktop sizing contract as other floating panels:
+  - width: `min(340px, calc(100vw - 48px))`,
+  - min-size: `260x220`,
+  - viewport caps: `calc(100vw - 32px)`,
+  - `resize: both`,
+  - `overflow: hidden`,
+  - `align-self: flex-start`.
+- Mobile fallback (`max-width: 920px`) now disables battle panel resize exactly like log/quests (`resize: none` and fixed stacked height).
+
+### Regression coverage
+
+- Added `GameUiHudPanelController` scenario test verifying combat panel visibility lock:
+  1. Hidden in `World Map`,
+  2. Visible in `Battle!`,
+  3. Hidden again in `Village`.
+
+### Quick QA checklist
+
+1. Start in world map mode:
+   - combat panel should stay hidden.
+2. Enter battle:
+   - combat panel appears automatically.
+3. Leave battle to village/world:
+   - combat panel hides immediately.
+4. In battle on desktop:
+   - drag lower-right corner to resize panel width/height.
+5. On mobile breakpoint (`<=920px`):
+   - resize affordance should be disabled.
