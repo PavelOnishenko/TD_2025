@@ -41,6 +41,52 @@ function createRecoverQuest() {
   };
 }
 
+function createQuestWithKnownAndUnknownContracts() {
+  return {
+    id: 'main',
+    title: 'Main',
+    description: '',
+    conditionText: '',
+    objectiveType: 'scout',
+    entities: [],
+    children: [
+      {
+        id: 'barter-complete',
+        title: 'Completed barter',
+        description: '',
+        conditionText: '',
+        objectiveType: 'barter',
+        entities: [{ text: 'Olive', type: 'person' }, { text: 'Kator Kaesh', type: 'item' }],
+        children: [],
+        isCompleted: true,
+      },
+      {
+        id: 'escort-active',
+        title: 'Active escort',
+        description: '',
+        conditionText: '',
+        objectiveType: 'escort',
+        entities: [{ text: 'Bram', type: 'person' }, { text: 'Farwatch', type: 'location' }],
+        objectiveData: { escort: { personName: 'Bram', sourceVillage: 'Mossbrook', destinationVillage: 'Farwatch' } },
+        children: [],
+        isCompleted: false,
+      },
+      {
+        id: 'future-deliver',
+        title: 'Future delivery',
+        description: '',
+        conditionText: '',
+        objectiveType: 'deliver',
+        entities: [],
+        objectiveData: { deliver: { sourceTrader: 'Cora', itemName: 'Void Relic', sourceVillage: 'Silent Reach', destinationVillage: 'North Cross' } },
+        children: [],
+        isCompleted: false,
+      },
+    ],
+    isCompleted: false,
+  };
+}
+
 test('GameQuestRuntime revealRecoverHolder confirms target person when speaking with another villager', () => {
   const runtime = new GameQuestRuntime();
   const quest = createRecoverQuest();
@@ -108,4 +154,16 @@ test('GameQuestRuntime completes recover objective and grants item after victory
 
   assert.equal(quest.children[0].isCompleted, true);
   assert.equal(inventory.includes('Torva'), true);
+});
+
+test('GameQuestRuntime exposes contracts only from known quest nodes (in-progress + completed)', () => {
+  const runtime = new GameQuestRuntime();
+  const quest = createQuestWithKnownAndUnknownContracts();
+
+  const barter = runtime['collectBarterContracts'](quest);
+  const escort = runtime['collectEscortContracts'](quest);
+
+  assert.equal(barter.some((contract) => contract.traderName === 'Olive'), true);
+  assert.equal(barter.some((contract) => contract.traderName === 'Cora'), false);
+  assert.equal(escort.some((contract) => contract.personName === 'Bram'), true);
 });
