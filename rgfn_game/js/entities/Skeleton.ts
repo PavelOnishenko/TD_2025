@@ -1,9 +1,11 @@
+/* eslint-disable style-guide/file-length-warning */
 import Entity from '../../../engine/core/Entity.js';
 import { withDamageable } from '../../../engine/core/Damageable.js';
 import { balanceConfig } from '../config/balance/balanceConfig.js';
 import { cloneBaseStats, deriveCreatureStats, normalizeCreatureSkills } from '../config/creatureStats.js';
 import { CreatureBaseStats, CreatureSkill, CreatureSkills } from '../config/creatureTypes.js';
-import { CombatBuffSnapshot, CombatStatusState } from '../systems/combat/DirectionalCombat.js';
+import { CombatBuffSnapshot, CombatMove, CombatStatusState } from '../systems/combat/DirectionalCombat.js';
+import { MonsterDirectionalBehavior, selectWeightedBehavior } from '../systems/combat/MonsterBehaviorCodex.js';
 import { MonsterMutationEngine } from './monster/MonsterMutationEngine.js';
 import { MonsterStatusEffects } from './monster/MonsterStatusEffects.js';
 import { MonsterVisualRenderer } from './monster/MonsterVisualRenderer.js';
@@ -79,9 +81,13 @@ export default class Skeleton extends DamageableEntity {
     public mana: number;
     public readonly mutations: MonsterMutationTrait[];
 
+    private directionalBehaviorPool: MonsterDirectionalBehavior[];
+    private activeDirectionalBehavior: { id: string; moves: CombatMove[]; nextMoveIndex: number } | null;
+
     private readonly monsterStatusEffects: MonsterStatusEffects;
     private readonly monsterVisualRenderer: MonsterVisualRenderer;
 
+    // eslint-disable-next-line style-guide/function-length-warning
     constructor(x: number, y: number, enemyConfig?: EnemyConfig) {
         super(x, y);
         const { config, archetypeId, baseStats, skills } = this.buildInitialization(enemyConfig);
@@ -96,6 +102,8 @@ export default class Skeleton extends DamageableEntity {
         this.skills = skills;
         this.assignDerivedCombatStats(derivedStats);
         this.mutations = [...(config.mutations ?? [])];
+        this.directionalBehaviorPool = [];
+        this.activeDirectionalBehavior = null;
         MonsterMutationEngine.applyMutations(this);
         this.monsterStatusEffects = new MonsterStatusEffects();
         this.monsterVisualRenderer = new MonsterVisualRenderer();
@@ -169,6 +177,42 @@ export default class Skeleton extends DamageableEntity {
         this.monsterVisualRenderer.drawEntity(ctx, this.name, this.x, this.y, this.width, this.height);
         this.monsterVisualRenderer.drawHealthBar(ctx, this.x, this.y, this.width, this.height, this.hp, this.maxHp);
     }
+
+
+    public setDirectionalBehaviorPool(behaviorPool: MonsterDirectionalBehavior[]): void {
+        this.directionalBehaviorPool = behaviorPool
+            .filter((behavior) => behavior.moves.length > 0)
+            .map((behavior) => ({ id: behavior.id, weight: behavior.weight, moves: [...behavior.moves] }));
+        this.activeDirectionalBehavior = null;
+        if (this.directionalBehaviorPool.length === 0) {
+            throw new Error(`Monster "${this.name}" received an empty directional behavior pool.`);
+        }
+    }
+
+    // eslint-disable-next-line style-guide/function-length-warning
+    public rollDirectionalCombatMove(): CombatMove {
+        if (!this.activeDirectionalBehavior || this.activeDirectionalBehavior.nextMoveIndex >= this.activeDirectionalBehavior.moves.length) {
+            const nextBehavior = selectWeightedBehavior(this.directionalBehaviorPool);
+            if (!nextBehavior) {
+                throw new Error(`Monster "${this.name}" has no directional behavior to execute.`);
+            }
+
+            this.activeDirectionalBehavior = { id: nextBehavior.id, moves: [...nextBehavior.moves], nextMoveIndex: 0 };
+        }
+
+        const nextMove = this.activeDirectionalBehavior.moves[this.activeDirectionalBehavior.nextMoveIndex];
+        if (!nextMove) {
+            throw new Error(`Monster "${this.name}" attempted to execute an invalid directional behavior move.`);
+        }
+        this.activeDirectionalBehavior.nextMoveIndex += 1;
+        if (this.activeDirectionalBehavior.nextMoveIndex >= this.activeDirectionalBehavior.moves.length) {
+            this.activeDirectionalBehavior = null;
+        }
+
+        return nextMove;
+    }
+
+
 
     public shouldAvoidHit(): boolean {
         const behaviorChance = this.behavior.avoidHitChance ?? 0;

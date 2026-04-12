@@ -17,6 +17,7 @@ import MagicSystem from '../systems/controllers/magic/MagicSystem.js';
 import LoreBookController from '../systems/controllers/lore/LoreBookController.js';
 import { consumeNextCharacterRollAllocation } from '../utils/NextCharacterRollConfig.js';
 import { balanceConfig } from '../config/balance/balanceConfig.js';
+import { initializeWorldMonsterBehaviorCodex } from '../systems/combat/MonsterBehaviorDirector.js';
 import { GameFacade } from './GameFacade.js';
 import GameRuntimeStateMachineFactory from './runtime/GameRuntimeStateMachineFactory.js';
 
@@ -30,15 +31,18 @@ export const createPlayer = (hasSavedGame: boolean): Player => new Player(0, 0, 
         : consumeNextCharacterRollAllocation(balanceConfig.player.initialRandomAllocatedSkillPoints ?? 0),
 });
 
-export const createRuntimeBase = (hasSavedGame: boolean, worldColumns: number, worldRows: number, worldCellSize: number) => ({
-    player: createPlayer(hasSavedGame),
-    worldMap: new WorldMap(worldColumns, worldRows, worldCellSize),
-    battleMap: new BattleMap(),
-    turnManager: new TurnManager(),
-    encounterSystem: new EncounterSystem(),
-    villageLifeRenderer: new VillageLifeRenderer(new VillagePopulation()),
-    ui: new GameUiFactory().create(),
-});
+export const createRuntimeBase = (hasSavedGame: boolean, worldColumns: number, worldRows: number, worldCellSize: number) => {
+    initializeWorldMonsterBehaviorCodex();
+    return {
+        player: createPlayer(hasSavedGame),
+        worldMap: new WorldMap(worldColumns, worldRows, worldCellSize),
+        battleMap: new BattleMap(),
+        turnManager: new TurnManager(),
+        encounterSystem: new EncounterSystem(),
+        villageLifeRenderer: new VillageLifeRenderer(new VillagePopulation()),
+        ui: new GameUiFactory().create(),
+    };
+};
 
 const createVillageActionsController = (
     game: GameFacade,

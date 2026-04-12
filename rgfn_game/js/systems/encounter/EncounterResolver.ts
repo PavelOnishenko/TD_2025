@@ -2,6 +2,7 @@ import { randomInt } from '../../../../engine/utils/MathUtils.js';
 import Skeleton, { EnemyConfig } from '../../entities/Skeleton.js';
 import Item, { DISCOVERABLE_ITEM_LIBRARY, HEALING_POTION_ITEM, MANA_POTION_ITEM } from '../../entities/Item.js';
 import { balanceConfig } from '../../config/balance/balanceConfig.js';
+import { assignMonsterBehaviorPool } from '../combat/MonsterBehaviorDirector.js';
 import type { EncounterResult, ForcedEncounterType, RandomEncounterType } from './EncounterSystem.js';
 import Wanderer from '../../entities/Wanderer.js';
 
@@ -19,11 +20,11 @@ type EncounterGenerationOptions = {
 
 export default class EncounterResolver {
     private forcedEncounters: ForcedEncounterType[];
-
     constructor() {
         this.forcedEncounters = [];
     }
 
+    // eslint-disable-next-line style-guide/function-length-warning
     public generateEncounter(itemDiscoveryChance: number, rolls: EncounterRolls, options: EncounterGenerationOptions = {}): EncounterResult {
         const { canDiscoverItems = true, enabledEventTypes = ['monster', 'item', 'traveler'] } = options;
 
@@ -74,6 +75,7 @@ export default class EncounterResolver {
 
     public getForcedEncounterQueue = (): ForcedEncounterType[] => [...this.forcedEncounters];
 
+    // eslint-disable-next-line style-guide/function-length-warning
     private createRandomItemEncounter(): EncounterResult {
         const _discoverableItems: Item[] = [new Item(HEALING_POTION_ITEM), new Item(MANA_POTION_ITEM)];
         const weightedPool = balanceConfig.items.discoveryPool;
@@ -98,7 +100,7 @@ export default class EncounterResolver {
     }
 
     private createDragonEncounter(): EncounterResult {
-        const dragon = new Skeleton(0, 0, balanceConfig.enemies.dragon);
+        const dragon = this.createEnemy(balanceConfig.enemies.dragon);
         if (dragon.shouldPassEncounter()) {
             return { type: 'none' };
         }
@@ -120,7 +122,7 @@ export default class EncounterResolver {
         }
 
         if (type === 'dragon') {
-            return { type: 'battle', enemies: [new Skeleton(0, 0, balanceConfig.enemies.dragon)] };
+            return { type: 'battle', enemies: [this.createEnemy(balanceConfig.enemies.dragon)] };
         }
 
         return { type: 'battle', enemies: this.createEnemiesForEncounter(type) };
@@ -132,6 +134,7 @@ export default class EncounterResolver {
         const isHostile = Math.random() < 0.5;
         return { type: 'traveler', traveler, isHostile };
     }
+    // eslint-disable-next-line style-guide/function-length-warning
     private createEnemiesForEncounter(encounterType: string): Skeleton[] {
         if (encounterType === 'skeleton') {
             return this.createEnemyGroup(
@@ -152,7 +155,14 @@ export default class EncounterResolver {
         const configMap: Record<string, EnemyConfig> = { ninja: balanceConfig.enemies.ninja, darkKnight: balanceConfig.enemies.darkKnight };
 
         const config = configMap[encounterType] ?? balanceConfig.enemies.skeleton;
-        return [new Skeleton(0, 0, config)];
+        return [this.createEnemy(config)];
+    }
+
+
+    private createEnemy(config: EnemyConfig): Skeleton {
+        const enemy = new Skeleton(0, 0, config);
+        assignMonsterBehaviorPool(enemy);
+        return enemy;
     }
 
     private createEnemyGroup(config: EnemyConfig, min: number, max: number): Skeleton[] {
@@ -160,7 +170,7 @@ export default class EncounterResolver {
         const enemies: Skeleton[] = [];
 
         for (let i = 0; i < count; i++) {
-            enemies.push(new Skeleton(0, 0, config));
+            enemies.push(this.createEnemy(config));
         }
 
         return enemies;
