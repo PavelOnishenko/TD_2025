@@ -6,6 +6,9 @@ This file is a hard reminder for every future task.
 
 1. Run the correct lint scope for touched code.
 2. Fix all lint errors/warnings that are in scope for the task.
+   - Super important: never disable lint/style rules to make output clean.
+   - Remove any suppression lines you encounter (`eslint-disable*`, equivalent rule-disable comments, etc.).
+   - Fix root causes in code (refactor/extract/reformat) and then re-run lint.
 3. Run style-guide audit and drive these to zero for active RGFN refactor tasks:
    - Rule 3 (file <= 200 lines) violations
    - Rule 2 (named function <= 20 lines) potential violations

@@ -8,10 +8,23 @@ Mandatory expectation for every change:
 
 1. Run the TypeScript linter.
 2. Review the results.
-3. Fix all blocking lint errors.
+3. Fix all lint warnings/errors in touched code by changing implementation (refactor/extract/reformat), not by disabling rules.
 4. Re-run lint until it is clean.
 5. Run tests.
 6. Only then prepare code for review.
+
+## 🚨 Super Important Rule: No linter suppression policy
+
+Do not disable linter warnings/errors/rules in code or config. Suppression comments are not an acceptable fix.
+
+If you see any suppression line (for example `eslint-disable*`, style-rule disable markers, or similar), treat it as technical debt that must be removed in active work:
+
+1. Delete the suppression line.
+2. Run lint for the proper scope.
+3. Fix root causes (long function/file, arrow style, naming, formatting, extraction, etc.).
+4. Re-run lint and tests until clean.
+
+Policy intent: we improve code through refactoring rather than muting diagnostics, and we keep touched files compliant.
 
 
 ## Non-negotiable pre-result reminder
@@ -64,6 +77,8 @@ Before publishing any code changes:
 5. Include lint/test command output summary in task notes or PR.
 
 If lint reports errors, code is **not ready** for review.
+
+If lint reports warnings in touched code and they are fixable via refactor/formatting, code is also **not ready** for review.
 
 ## How this maps to `docs/Style_Guide.txt` (17 rules)
 
