@@ -20,13 +20,27 @@ export type DeveloperUI = {
     developerModeToggle: HTMLInputElement;
     everythingDiscoveredToggle: HTMLInputElement;
     fogOfWarToggle: HTMLInputElement;
+    worldMapProfilingToggle: HTMLInputElement;
+    worldMapProfilingOpenBtn: HTMLButtonElement;
+    worldMapProfilingPanel: HTMLElement;
+    worldMapProfilingDragHandle: HTMLElement;
+    worldMapProfilingCloseBtn: HTMLButtonElement;
+    worldMapProfilingRefreshBtn: HTMLButtonElement;
+    worldMapProfilingAutoRefreshToggle: HTMLInputElement;
+    worldMapProfilingOutput: HTMLElement;
 };
+
+export type WorldMapDrawProfilingSnapshot = Record<string, { frames: number; avgMs: number; maxMs: number; lastFrameMs: number }>;
 
 export type DeveloperCallbacks = {
     addVillageLog: (message: string, type?: string) => void;
     getEventLabel: (type: ForcedEncounterType) => string;
     getMapDisplayConfig: () => MapDisplayConfig;
     setMapDisplayConfig: (config: Partial<MapDisplayConfig>) => void;
+    setWorldMapDrawProfilingEnabled: (enabled: boolean) => void;
+    isWorldMapDrawProfilingEnabled: () => boolean;
+    resetWorldMapDrawProfiling: () => void;
+    getWorldMapDrawProfilingSnapshot: () => WorldMapDrawProfilingSnapshot;
 };
 
 export const ENCOUNTER_LABELS: Record<RandomEncounterType, string> = { monster: 'Monster', item: 'Item', traveler: 'Traveler' };

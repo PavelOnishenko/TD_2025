@@ -320,6 +320,25 @@ test('WorldMap draw renders visible terrain, fog and grid without throwing on a 
   assert.ok(ctx.calls.some(c => c[0] === 'stroke'));
 });
 
+test('WorldMap draw profiling exposes section timing snapshots', () => {
+  const worldMap = new WorldMap(60, 45, theme.worldMap.cellSize.default);
+  worldMap.resizeToCanvas(720, 720);
+  const ctx = createMockCanvasContext();
+  worldMap.setDrawProfilingEnabled(true);
+  worldMap.resetDrawProfiling();
+
+  worldMap.draw(ctx, null);
+  worldMap.draw(ctx, null);
+
+  const snapshot = worldMap.getDrawProfilingSnapshot();
+  assert.ok(snapshot.drawTotal.frames >= 2);
+  assert.ok(snapshot.terrainLayer.frames >= 2);
+  assert.ok(snapshot.markers.frames >= 2);
+  assert.equal(typeof snapshot.drawTotal.avgMs, 'number');
+  assert.equal(snapshot.drawTotal.maxMs >= 0, true);
+  assert.equal(snapshot.drawTotal.lastFrameMs >= 0, true);
+});
+
 
 test('WorldMap draw switches to low-detail rendering when zoomed out with fog disabled', () => {
   const worldMap = new WorldMap(100, 100, theme.worldMap.cellSize.min);

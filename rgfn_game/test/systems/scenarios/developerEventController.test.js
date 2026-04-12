@@ -30,6 +30,7 @@ function createClassList(initial = []) {
 
 function createDeveloperUi() {
   const createInput = () => ({ value: '0', checked: true });
+  const createEventTarget = () => ({ addEventListener: () => {} });
 
   return {
     modal: { classList: createClassList(['hidden']) },
@@ -61,6 +62,14 @@ function createDeveloperUi() {
     developerModeToggle: { checked: false },
     everythingDiscoveredToggle: { checked: false },
     fogOfWarToggle: { checked: true },
+    worldMapProfilingToggle: { checked: false },
+    worldMapProfilingOpenBtn: createEventTarget(),
+    worldMapProfilingPanel: { classList: createClassList(['hidden']), dataset: {}, style: { setProperty: () => {} } },
+    worldMapProfilingDragHandle: createEventTarget(),
+    worldMapProfilingCloseBtn: createEventTarget(),
+    worldMapProfilingRefreshBtn: createEventTarget(),
+    worldMapProfilingAutoRefreshToggle: { checked: false },
+    worldMapProfilingOutput: { textContent: '' },
   };
 }
 
@@ -69,12 +78,26 @@ function createController(logs, encounterSystem, developerUI) {
     everythingDiscovered: false,
     fogOfWar: true,
   };
+  let worldMapProfilingEnabled = false;
+  const worldMapSnapshot = {
+    drawTotal: { frames: 3, avgMs: 7.25, maxMs: 11.6, lastFrameMs: 8.1 },
+    terrainLayer: { frames: 3, avgMs: 4.12, maxMs: 6.4, lastFrameMs: 4.3 },
+  };
 
   return new DeveloperEventController(developerUI, encounterSystem, {
     addVillageLog: (message) => logs.push(message),
     getEventLabel: (type) => type,
     getMapDisplayConfig: () => ({ ...mapDisplayConfig }),
     setMapDisplayConfig: (config) => Object.assign(mapDisplayConfig, config),
+    setWorldMapDrawProfilingEnabled: (enabled) => {
+      worldMapProfilingEnabled = Boolean(enabled);
+    },
+    isWorldMapDrawProfilingEnabled: () => worldMapProfilingEnabled,
+    resetWorldMapDrawProfiling: () => {
+      worldMapSnapshot.drawTotal = { ...worldMapSnapshot.drawTotal, frames: 0, avgMs: 0, maxMs: 0, lastFrameMs: 0 };
+      worldMapSnapshot.terrainLayer = { ...worldMapSnapshot.terrainLayer, frames: 0, avgMs: 0, maxMs: 0, lastFrameMs: 0 };
+    },
+    getWorldMapDrawProfilingSnapshot: () => ({ ...worldMapSnapshot }),
   });
 }
 
@@ -160,4 +183,35 @@ test('DeveloperEventController applies persistent developer mode presets', () =>
     traveler: false,
   });
   assert.equal(logs.at(-1), '[DEV] Persistent developer mode enabled.');
+});
+
+test('DeveloperEventController renders world-map profiling snapshot in developer panel output', () => {
+  const logs = [];
+  const encounterSystem = new EncounterSystem(1);
+  const developerUI = createDeveloperUi();
+  const controller = createController(logs, encounterSystem, developerUI);
+
+  controller.renderWorldMapProfilingPanel();
+  assert.match(developerUI.worldMapProfilingOutput.textContent, /drawTotal/);
+
+  developerUI.worldMapProfilingToggle.checked = true;
+  controller.handleWorldMapDrawProfilingToggle(true);
+  assert.equal(logs.at(-1), '[DEV] World-map draw profiling enabled and reset.');
+  assert.match(developerUI.worldMapProfilingOutput.textContent, /\"profilingEnabled\": true/);
+
+  controller.handleWorldMapProfilingRefresh();
+  assert.match(developerUI.worldMapProfilingOutput.textContent, /\"capturedAt\"/);
+});
+
+test('DeveloperEventController opens standalone world-map profiling panel from hidden state', () => {
+  const logs = [];
+  const encounterSystem = new EncounterSystem(1);
+  const developerUI = createDeveloperUi();
+  const controller = createController(logs, encounterSystem, developerUI);
+
+  controller.toggleWorldMapProfilingPanel(true);
+
+  assert.equal(developerUI.worldMapProfilingPanel.classList.contains('hidden'), false);
+  assert.equal(developerUI.worldMapProfilingPanel.dataset.spawnPositioned, 'true');
+  assert.match(developerUI.worldMapProfilingOutput.textContent, /\"sections\"/);
 });

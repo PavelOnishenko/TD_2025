@@ -139,3 +139,117 @@ In non-browser/test contexts (no `document` or no `drawImage`), rendering falls 
 - Added automated test:
   - `WorldMap terrain cache render is fog-agnostic and does not draw unknown cells into cached terrain layer`
 - Test asserts cache-build `drawCell(..., { showFogOverlay: false })` calls use only `discovered` fog state.
+
+## April 2026 decision memo: optimize current canvas vs migrate to an engine
+
+If the map is functionally correct but causes high laptop heat, we should treat this as a **performance-product decision**, not only a rendering-tech decision.
+
+### Recommendation (short version)
+
+- **Do one more focused optimization pass in the current architecture first** (1-2 PRs max, time-boxed).
+- If the pass does **not** produce measurable thermal/frame-time improvement, then migrate the map renderer to a higher-level rendering stack.
+- Avoid a full game-engine migration immediately unless we also plan to move input, UI, scene composition, and asset pipeline together.
+
+### Why this recommendation
+
+- Current code already has meaningful cache infrastructure and test coverage around world-map behavior.
+- A full engine migration introduces large integration risk (save/load semantics, HUD consistency, battle/world mode coupling).
+- If we can remove remaining hotspots (especially high-detail draw cost + overdraw + per-frame overlay churn), we may get most practical gains without rewriting core systems.
+
+### High-ROI optimizations that are still possible without major architecture changes
+
+1. **Dynamic resolution scaling for world map only**
+   - Render world-map canvas at scale factor (for example 0.75) when frame-time budget is exceeded for N frames.
+   - Upscale composited result to screen.
+   - Often gives immediate thermal/CPU/GPU relief on laptops.
+
+2. **Frame-budgeted overlay updates**
+   - Keep terrain layer at full rate, but render expensive non-critical overlays every 2nd frame when under load.
+   - Preserve cursor/selection feedback at full rate.
+
+3. **Chunked cache invalidation**
+   - Invalidate and rebuild only affected chunks around movement/fog changes, not full visible area.
+   - Especially useful on large maps with frequent player moves.
+
+4. **Color pipeline simplification**
+   - Precompute palette variants per terrain class and avoid repeated runtime shade/alpha math in hot loops.
+   - This also helps with perceived color inconsistency issues.
+
+5. **DevicePixelRatio cap for map layer**
+   - Clamp effective DPR for world-map canvas (for example max 1.25 or 1.5) while keeping UI text at native DPR.
+   - Big win on high-DPI laptops where map detail does not benefit proportionally.
+
+### If migration is needed: best-fit options
+
+For this specific problem (many independent hoverable cells + camera + layered rendering), practical migration order:
+
+1. **PixiJS (recommended first)**
+   - Strong 2D rendering performance, straightforward texture/sprite batching, incremental adoption possible.
+   - Can keep most gameplay logic and migrate rendering layer first.
+
+2. **Phaser**
+   - Good if you want more built-in game-framework features (scene lifecycle, physics options, input helpers).
+   - Slightly heavier migration surface compared to PixiJS-only renderer swap.
+
+3. **Godot/Unity**
+   - Best if you intentionally want a long-term full-engine product pipeline.
+   - Highest migration cost and biggest short-term delivery slowdown.
+
+### Migration trigger criteria (use objective gates)
+
+Proceed to renderer migration when **all** are true after the time-boxed optimization pass:
+
+- P95 frame-time target is still missed in representative map scenarios.
+- Thermal plateau remains uncomfortably high during 3-minute mixed map session.
+- Optimization complexity is increasing faster than measured gains.
+
+### Practical next step
+
+- Run one final evidence-driven pass using `world-map-optimization-scientific-plan.md` protocol.
+- Implement only 1-2 techniques above (start with DPR cap + dynamic resolution scaling).
+- Compare before/after metrics.
+- Decide keep-canvas vs Pixi migration based on data, not intuition.
+
+## April 2026 protocol execution status update (Milestone 0 started)
+
+- Added built-in draw-stage profiling hooks directly into `WorldMap.draw(...)`.
+- Profiling is opt-in and can be enabled in runtime:
+  - `setDrawProfilingEnabled(true)`
+  - `resetDrawProfiling()`
+  - `getDrawProfilingSnapshot()`
+- Snapshot reports average/max/last timings for:
+  - `drawTotal`
+  - `terrainLayer`
+  - `roads`
+  - `locationFeatures`
+  - `namedLocations`
+  - `dayNightTint`
+  - `focusOverlay`
+  - `markers`
+- Added automated regression coverage to ensure profiling API produces stable timing snapshots after map draws.
+
+### How to see values while the global map is on screen
+
+1. Open world map in-game.
+2. Open DevTools console.
+3. Run:
+   - `const map = game?.worldMap ?? game?.worldModeController?.worldMap;`
+   - `map.setDrawProfilingEnabled(true);`
+   - `map.resetDrawProfiling();`
+4. Pan/zoom/move on world map for ~30-60s.
+5. Inspect:
+   - `console.table(map.getDrawProfilingSnapshot());`
+6. Disable profiling when done:
+   - `map.setDrawProfilingEnabled(false);`
+
+### Developer window alternative (recommended for quick QA)
+
+- Open Developer Event Queue with `~`.
+- Click **Open Profiling Panel** from developer console.
+- Use the standalone **World map profiling** panel:
+  - drag it like other HUD panels,
+  - resize it like log/quests style panels,
+  - enable profiling,
+  - optionally enable auto-refresh,
+  - inspect the live JSON snapshot directly in the panel.
+- This removes the need to keep DevTools console open while testing map movement.

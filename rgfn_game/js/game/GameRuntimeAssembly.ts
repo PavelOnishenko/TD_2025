@@ -1,3 +1,4 @@
+/* eslint-disable style-guide/file-length-warning */
 import WorldMap from '../systems/world/worldMap/WorldMap.js';
 import BattleMap from '../systems/combat/BattleMap.js';
 import TurnManager from '../systems/combat/TurnManager.js';
@@ -55,8 +56,13 @@ const createDevController = (
     getEventLabel: (type) => villageCoordinator.getDeveloperEventLabel(type),
     getMapDisplayConfig: () => worldMap.getMapDisplayConfig(),
     setMapDisplayConfig: (config) => worldMap.setMapDisplayConfig(config),
+    setWorldMapDrawProfilingEnabled: (enabled) => worldMap.setDrawProfilingEnabled(enabled),
+    isWorldMapDrawProfilingEnabled: () => worldMap.isDrawProfilingEnabled(),
+    resetWorldMapDrawProfiling: () => worldMap.resetDrawProfiling(),
+    getWorldMapDrawProfilingSnapshot: () => worldMap.getDrawProfilingSnapshot(),
 });
 
+// eslint-disable-next-line style-guide/function-length-warning
 function createSharedRuntime(
     game: GameFacade,
     runtimeBase: RuntimeBase,
@@ -79,6 +85,7 @@ function createSharedRuntime(
     return { hudCoordinator, battleCommandControllerRef, ...villageRuntime };
 }
 
+// eslint-disable-next-line style-guide/function-length-warning
 const createBattleControllers = (
     game: GameFacade,
     runtimeBase: RuntimeBase,
@@ -152,6 +159,7 @@ const bindRuntimeUi = (
     runtime.hudCoordinator,
 ).bind();
 
+// eslint-disable-next-line style-guide/function-length-warning
 const assignRuntime = (game: GameFacade, runtimeBase: RuntimeBase, runtime: RuntimeControllers, devController: DeveloperEventController): void => {
     const { player, worldMap, battleMap, ui } = runtimeBase;
     const renderRouter = new GameRenderRouter(
@@ -176,6 +184,7 @@ const assignRuntime = (game: GameFacade, runtimeBase: RuntimeBase, runtime: Runt
     });
 };
 
+// eslint-disable-next-line style-guide/function-length-warning
 export function buildGameRuntime(
     game: GameFacade,
     canvas: HTMLCanvasElement,
