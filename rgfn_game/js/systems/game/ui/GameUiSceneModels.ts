@@ -74,6 +74,7 @@ export class VillageUiModel {
     public barterNowBtn!: HTMLButtonElement;
     public confrontRecoverBtn!: HTMLButtonElement;
     public recruitEscortBtn!: HTMLButtonElement;
+    public defendVillageBtn!: HTMLButtonElement;
     public leaveBtn!: HTMLButtonElement;
 }
 

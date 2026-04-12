@@ -120,9 +120,10 @@ export class GameFacade implements GameFacadeStateAccess {
             runtime.questGenerator,
             runtime.questUiController,
             () => this.persistenceRuntime.getParsedSaveState()?.quest ?? null,
-            ({ barterContracts, escortContracts }) => {
+            ({ barterContracts, escortContracts, defendContracts }) => {
                 this.villageActionsController.configureQuestBarterContracts(barterContracts);
                 this.villageActionsController.configureQuestEscortContracts(escortContracts);
+                this.villageActionsController.configureQuestDefendContracts(defendContracts);
             },
             this.worldMap,
         );
@@ -148,6 +149,18 @@ export class GameFacade implements GameFacadeStateAccess {
     ): { status: 'started' | 'inactive' | 'not-target' | 'not-ready'; enemies?: import('../entities/Skeleton.js').default[]; itemName?: string } =>
         this.lifecycle.onTryStartRecoverConfrontation(personName, villageName);
     public onBattleEnded = (result: 'victory' | 'defeat' | 'fled'): void => this.lifecycle.onBattleEnded(result);
+    public onVillageAdvanceTime(minutes: number, fatigueScale: number): void {
+        this.lifecycle.onVillageAdvanceTime(minutes, fatigueScale);
+    }
+    public onVillageLeave(): void {
+        this.lifecycle.onVillageLeave();
+    }
+    public onTryStartDefendObjective = (
+        npcName: string,
+        villageName: string,
+        villagerNames: string[],
+    ): { status: 'started' | 'inactive' | 'not-target' | 'already-active'; objectiveTitle?: string; days?: number } =>
+        this.lifecycle.onTryStartDefendObjective(npcName, villageName, villagerNames);
 
     public tryCreateQuestMonsterEncounter = (): {
         enemies: import('../entities/Skeleton.js').default[];

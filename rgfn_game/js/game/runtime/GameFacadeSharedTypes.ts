@@ -36,4 +36,5 @@ export type GameFacadeStateAccess = {
     persistenceRuntime: GamePersistenceRuntime;
     worldInteractionRuntime: GameWorldInteractionRuntime;
     gameTime: GameTimeRuntime;
+    advanceTime: (minutes: number, fatigueScale: number) => void;
 };

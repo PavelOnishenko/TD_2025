@@ -102,6 +102,7 @@ export default class GameUiFactory {
         barterNowBtn: document.getElementById('village-confirm-barter-btn')! as HTMLButtonElement,
         confrontRecoverBtn: document.getElementById('village-confront-recover-btn')! as HTMLButtonElement,
         recruitEscortBtn: document.getElementById('village-recruit-escort-btn')! as HTMLButtonElement,
+        defendVillageBtn: document.getElementById('village-defend-objective-btn')! as HTMLButtonElement,
         leaveBtn: document.getElementById('village-leave-btn')! as HTMLButtonElement,
     });
 

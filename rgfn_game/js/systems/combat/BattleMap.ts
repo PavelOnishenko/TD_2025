@@ -27,13 +27,15 @@ export default class BattleMap {
         this.obstacleGenerator = new BattleMapObstacleGenerator(this.grid);
     }
 
-    public setup(player: CombatEntity, enemies: CombatEntity[], terrainType: TerrainType = 'grass'): void {
+    public setup(player: CombatEntity, enemies: CombatEntity[], terrainType: TerrainType = 'grass', allies: CombatEntity[] = []): void {
         this.entities = [];
         this.terrainType = terrainType;
         const playerSpawn = this.getPlayerSpawnPosition();
         const enemySpawns = this.getEnemySpawnPositions(enemies.length);
+        const allySpawns = this.getAllySpawnPositions(allies.length, playerSpawn);
         this.obstacles = this.obstacleGenerator.generate(terrainType, playerSpawn, enemySpawns);
         this.placeEntity(player, playerSpawn.col, playerSpawn.row);
+        allies.forEach((ally, index) => this.placeEntity(ally, allySpawns[index].col, allySpawns[index].row));
         enemies.forEach((enemy, index) => this.placeEntity(enemy, enemySpawns[index].col, enemySpawns[index].row));
     }
 
@@ -120,6 +122,21 @@ export default class BattleMap {
         const formationWidth = Math.max(1, ((clampedCount - 1) * spacing) + 1);
         const startCol = Math.max(1, Math.floor((this.grid.columns - formationWidth) / 2));
         return Array.from({ length: clampedCount }, (_, index) => ({ col: Math.min(this.grid.columns - 2, startCol + (index * spacing)), row: 1 }));
+    }
+
+    private getAllySpawnPositions(allyCount: number, playerSpawn: GridPosition): GridPosition[] {
+        const clampedCount = Math.max(0, allyCount);
+        if (clampedCount === 0) {
+            return [];
+        }
+        const positions: GridPosition[] = [];
+        for (let index = 0; index < clampedCount; index += 1) {
+            const colOffset = (index % 2 === 0 ? -1 : 1) * (Math.floor(index / 2) + 1);
+            const col = Math.max(1, Math.min(this.grid.columns - 2, playerSpawn.col + colOffset));
+            const row = Math.max(1, Math.min(this.grid.rows - 2, playerSpawn.row - 1));
+            positions.push({ col, row });
+        }
+        return positions;
     }
 
     private placeEntity(entity: CombatEntity, col: number, row: number): void {

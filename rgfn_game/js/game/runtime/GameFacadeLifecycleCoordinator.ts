@@ -153,12 +153,45 @@ export default class GameFacadeLifecycleCoordinator {
         if (result !== 'victory' && result !== 'fled') {
             return;
         }
+        const battleContext = this.state.battleCoordinator.getBattleContext();
+        if (battleContext.kind === 'village-defense' && battleContext.villageName) {
+            const survivors = this.state.battleCoordinator.getCurrentAllies()
+                .filter((ally) => !ally.isDead())
+                .map((ally) => ({ name: ally.name, hp: ally.hp }));
+            const casualtyLines = this.state.questRuntime.applyDefenderBattleResults(battleContext.villageName, survivors);
+            casualtyLines.forEach((line) => this.state.hudCoordinator.addBattleLog(line, 'system-message'));
+        }
         const lines = this.state.questRuntime.resolveRecoverBattle(result, this.state.worldMap, this.state.player);
         lines.forEach((line, index) => this.state.hudCoordinator.addBattleLog(line, index === 0 ? 'system' : 'system-message'));
         if (lines.length > 0) {
             this.refreshGroupPanel();
         }
     }
+
+    public onVillageAdvanceTime(minutes: number, fatigueScale: number): void {
+        this.state.advanceTime(minutes, fatigueScale);
+        const villageName = this.state.villageCoordinator.getVillageName();
+        const defenseTick = this.state.questRuntime.onVillageTimeAdvanced(villageName, minutes);
+        defenseTick.logs.forEach((line) => this.state.hudCoordinator.addBattleLog(line, 'system-message'));
+        if (!defenseTick.triggeredBattle || !defenseTick.attackers) {
+            return;
+        }
+        this.state.hudCoordinator.addBattleLog('Village defense combat starts!', 'system');
+        this.state.stateMachine.transition(MODES.BATTLE, {
+            enemies: defenseTick.attackers,
+            allies: defenseTick.allies ?? [],
+            terrainType: 'grass',
+            battleKind: 'village-defense',
+            villageName,
+        });
+    }
+
+    public onTryStartDefendObjective = (
+        npcName: string,
+        villageName: string,
+        villagerNames: string[],
+    ): { status: 'started' | 'inactive' | 'not-target' | 'already-active'; objectiveTitle?: string; days?: number } =>
+        this.state.questRuntime.tryStartDefendObjective(villageName, npcName, villagerNames);
 
     public onVillageEntered(): void {
         const villageName = this.state.worldMap.getVillageNameAtPlayerPosition();
@@ -225,5 +258,12 @@ export default class GameFacadeLifecycleCoordinator {
         if (this.state.loop.resume()) {
             this.state.hudCoordinator.updateSelectedCell(this.state.worldMap.getSelectedCellInfo());
         }
+    }
+
+    public onVillageLeave(): void {
+        const villageName = this.state.villageCoordinator.getVillageName();
+        const rollbackLines = this.state.questRuntime.rollbackDefendObjectivesForVillage(villageName);
+        rollbackLines.forEach((line) => this.state.hudCoordinator.addBattleLog(line, 'system-message'));
+        this.state.stateMachine.transition(MODES.WORLD_MAP);
     }
 }

@@ -4,19 +4,34 @@ export default class TurnManager {
     private entities: CombatEntity[];
     private currentTurnIndex: number;
     private consumedTurnCountsByEntityId: Map<number, number>;
+    private teamByEntityId: Map<number, 'player' | 'enemy'>;
+    private playerEntityId: number | null;
     public waitingForPlayer: boolean;
 
     constructor() {
         this.entities = [];
         this.currentTurnIndex = 0;
         this.consumedTurnCountsByEntityId = new Map();
+        this.teamByEntityId = new Map();
+        this.playerEntityId = null;
         this.waitingForPlayer = false;
     }
 
-    public initializeTurns(entities: CombatEntity[]): void {
+    public initializeTurns(entities: CombatEntity[], teams?: { player: CombatEntity; allies?: CombatEntity[]; enemies?: CombatEntity[] }): void {
         this.entities = entities.filter(e => e.active && !e.isDead());
         this.currentTurnIndex = 0;
         this.consumedTurnCountsByEntityId.clear();
+        this.teamByEntityId.clear();
+        const fallbackPlayer = this.entities.find((entity) => entity.constructor.name === 'Player');
+        this.playerEntityId = teams?.player?.id ?? fallbackPlayer?.id ?? null;
+        if (teams?.player) {
+            this.teamByEntityId.set(teams.player.id, 'player');
+        }
+        (teams?.allies ?? []).forEach((ally) => this.teamByEntityId.set(ally.id, 'player'));
+        (teams?.enemies ?? []).forEach((enemy) => this.teamByEntityId.set(enemy.id, 'enemy'));
+        this.entities
+            .filter((entity) => !this.teamByEntityId.has(entity.id))
+            .forEach((entity) => this.teamByEntityId.set(entity.id, entity.constructor.name === 'Player' ? 'player' : 'enemy'));
         this.waitingForPlayer = false;
     }
 
@@ -29,7 +44,7 @@ export default class TurnManager {
 
     public isPlayerTurn(): boolean {
         const current = this.getCurrentEntity();
-        return current !== null && current.constructor.name === 'Player';
+        return current !== null && this.playerEntityId !== null && current.id === this.playerEntityId;
     }
 
     public nextTurn(): CombatEntity | null {
@@ -89,10 +104,26 @@ export default class TurnManager {
     }
 
     public hasActiveCombatants(): boolean {
-        const players = this.entities.filter(e => e.constructor.name === 'Player' && !e.isDead());
-        const enemies = this.entities.filter(e => e.constructor.name !== 'Player' && !e.isDead());
+        const players = this.entities.filter((entity) => !entity.isDead() && this.getTeam(entity) === 'player');
+        const enemies = this.entities.filter((entity) => !entity.isDead() && this.getTeam(entity) === 'enemy');
         return players.length > 0 && enemies.length > 0;
     }
 
-    public getActiveEnemies = (): CombatEntity[] => this.entities.filter(e => e.constructor.name !== 'Player' && !e.isDead());
+    public getActiveEnemies = (): CombatEntity[] => this.entities.filter((entity) => this.getTeam(entity) === 'enemy' && !entity.isDead());
+
+    public getOpponentsOf(entity: CombatEntity): CombatEntity[] {
+        const team = this.getTeam(entity);
+        return this.entities.filter((candidate) => this.getTeam(candidate) !== team && !candidate.isDead());
+    }
+
+    public isAlly(entity: CombatEntity): boolean {
+        if (this.playerEntityId === null) {
+            return false;
+        }
+        return this.getTeam(entity) === 'player' && entity.id !== this.playerEntityId;
+    }
+
+    public getPlayerSideParticipantCount = (): number => this.entities.filter((entity) => this.getTeam(entity) === 'player' && !entity.isDead()).length;
+
+    private getTeam = (entity: CombatEntity): 'player' | 'enemy' => this.teamByEntityId.get(entity.id) ?? (entity.constructor.name === 'Player' ? 'player' : 'enemy');
 }
