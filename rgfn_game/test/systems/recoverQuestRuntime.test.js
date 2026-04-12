@@ -87,6 +87,43 @@ function createQuestWithKnownAndUnknownContracts() {
   };
 }
 
+function createKnownDefendQuest() {
+  return {
+    id: 'main',
+    title: 'Main',
+    description: '',
+    conditionText: '',
+    objectiveType: 'scout',
+    entities: [],
+    children: [
+      {
+        id: 'defend-active',
+        title: 'Defend Heights Gate',
+        description: '',
+        conditionText: '',
+        objectiveType: 'defend',
+        entities: [
+          { text: 'Heights Gate', type: 'location' },
+          { text: 'Quinn Evans', type: 'person' },
+        ],
+        objectiveData: {
+          defend: {
+            villageName: 'Heights Gate',
+            artifactName: 'Allies Coverage',
+            contactName: 'Quinn Evans',
+            durationDays: 3,
+            timeRemainingMinutes: 4320,
+            isDefenseActive: false,
+          },
+        },
+        children: [],
+        isCompleted: false,
+      },
+    ],
+    isCompleted: false,
+  };
+}
+
 test('GameQuestRuntime revealRecoverHolder confirms target person when speaking with another villager', () => {
   const runtime = new GameQuestRuntime();
   const quest = createRecoverQuest();
@@ -176,4 +213,19 @@ test('GameQuestRuntime exposes only known quest location names for dialogue know
   const locations = runtime.getKnownQuestLocationNames();
 
   assert.deepEqual(locations, ['Farwatch']);
+});
+
+test('GameQuestRuntime exposes defend contracts for known active defend objectives', () => {
+  const runtime = new GameQuestRuntime();
+  const quest = createKnownDefendQuest();
+
+  const defendContracts = runtime['collectDefendContracts'](quest);
+
+  assert.deepEqual(defendContracts, [
+    {
+      personName: 'Quinn Evans',
+      villageName: 'Heights Gate',
+      artifactName: 'Allies Coverage',
+    },
+  ]);
 });

@@ -6,7 +6,7 @@ import VillageStockService from './actions/VillageStockService.js';
 import VillageUiPresenter from './actions/VillageUiPresenter.js';
 import VillageTradeInteractionService from './actions/VillageTradeInteractionService.js';
 import VillageDialogueInteractionService from './actions/VillageDialogueInteractionService.js';
-import { QuestBarterContract, QuestEscortContract, VillageActionsCallbacks, VillageUI } from './actions/VillageActionsTypes.js';
+import { QuestBarterContract, QuestDefendContract, QuestEscortContract, VillageActionsCallbacks, VillageUI } from './actions/VillageActionsTypes.js';
 import { isDeveloperModeEnabled } from '../../utils/DeveloperModeConfig.js';
 export default class VillageActionsController {
     private readonly villageUI: VillageUI;
@@ -22,6 +22,7 @@ export default class VillageActionsController {
     private villageNpcRosters: Map<string, VillageNpcProfile[]> = new Map();
     private selectedNpcId: string | null = null;
     private escortContracts: QuestEscortContract[] = [];
+    private defendContracts: QuestDefendContract[] = [];
     private knownNpcNames: Set<string> = new Set();
     private joinedEscortNpcKeys: Set<string> = new Set();
 
@@ -52,6 +53,14 @@ export default class VillageActionsController {
     public configureQuestEscortContracts = (contracts: QuestEscortContract[]): void => {
         this.escortContracts = contracts;
         this.refreshDialogueTargetOptions();
+    };
+    public configureQuestDefendContracts = (contracts: QuestDefendContract[]): void => {
+        this.defendContracts = contracts;
+        this.villageNpcRosters.forEach((roster, villageName) => this.ensureQuestPeoplePresent(roster, villageName));
+        if (this.currentVillageName.trim()) {
+            this.npcRoster = this.getOrCreateVillageNpcRoster(this.currentVillageName);
+            this.refreshNpcUi();
+        }
     };
     public exitVillage(): void {
         this.villageUI.sidebar.classList.add('hidden');
@@ -218,16 +227,24 @@ export default class VillageActionsController {
     private getOrCreateVillageNpcRoster(villageName: string): VillageNpcProfile[] {
         const cachedRoster = this.villageNpcRosters.get(villageName);
         if (cachedRoster) {
+            this.ensureQuestPeoplePresent(cachedRoster, villageName);
             return cachedRoster;
         }
 
         const roster = this.dialogueEngine.createNpcRoster(villageName);
+        this.ensureQuestPeoplePresent(roster, villageName);
+        this.villageNpcRosters.set(villageName, roster);
+        return roster;
+    }
+
+    private ensureQuestPeoplePresent(roster: VillageNpcProfile[], villageName: string): void {
         this.barterService.getVillageContractTraders(villageName).forEach((traderName) => this.appendTraderIfMissing(roster, villageName, traderName));
         this.escortContracts
             .filter((contract) => contract.sourceVillage.trim().toLocaleLowerCase() === villageName.trim().toLocaleLowerCase())
             .forEach((contract) => this.appendEscortIfMissing(roster, villageName, contract));
-        this.villageNpcRosters.set(villageName, roster);
-        return roster;
+        this.defendContracts
+            .filter((contract) => contract.villageName.trim().toLocaleLowerCase() === villageName.trim().toLocaleLowerCase())
+            .forEach((contract) => this.appendDefendContactIfMissing(roster, villageName, contract));
     }
 
     private appendEscortIfMissing(roster: VillageNpcProfile[], villageName: string, contract: QuestEscortContract): void {
@@ -257,6 +274,21 @@ export default class VillageActionsController {
             role: 'Barter Broker',
             look: 'emerald scarf, ledger satchel, watchful eyes',
             speechStyle: 'steady and transactional',
+            disposition: 'truthful',
+        });
+    }
+
+    private appendDefendContactIfMissing(roster: VillageNpcProfile[], villageName: string, contract: QuestDefendContract): void {
+        const exists = roster.some((npc) => npc.name.toLocaleLowerCase() === contract.personName.toLocaleLowerCase());
+        if (exists) {
+            return;
+        }
+        roster.unshift({
+            id: `${villageName.toLowerCase()}-${contract.personName.toLocaleLowerCase()}-defend`,
+            name: contract.personName,
+            role: `Artifact Custodian (${contract.artifactName})`,
+            look: 'dusty gloves, encrypted satchel, sleepless eyes',
+            speechStyle: 'urgent and strategic',
             disposition: 'truthful',
         });
     }

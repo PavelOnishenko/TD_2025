@@ -120,9 +120,10 @@ export class GameFacade implements GameFacadeStateAccess {
             runtime.questGenerator,
             runtime.questUiController,
             () => this.persistenceRuntime.getParsedSaveState()?.quest ?? null,
-            ({ barterContracts, escortContracts }) => {
+            ({ barterContracts, escortContracts, defendContracts }) => {
                 this.villageActionsController.configureQuestBarterContracts(barterContracts);
                 this.villageActionsController.configureQuestEscortContracts(escortContracts);
+                this.villageActionsController.configureQuestDefendContracts(defendContracts);
             },
             this.worldMap,
         );

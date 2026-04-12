@@ -20,6 +20,7 @@ type QuestContractsReadyPayload = {
         contractType: 'barter' | 'deliver' | 'recover';
     }>;
     escortContracts: Array<{ personName: string; sourceVillage: string; destinationVillage: string }>;
+    defendContracts: Array<{ personName: string; villageName: string; artifactName: string }>;
 };
 
 export default class GameQuestRuntime {
@@ -44,7 +45,11 @@ export default class GameQuestRuntime {
         this.questProgressTracker = new QuestProgressTracker(quest);
         this.onContractsUpdated = onContractsReady;
         this.worldMap = worldMap;
-        onContractsReady({ barterContracts: this.collectBarterContracts(quest), escortContracts: this.collectEscortContracts(quest) });
+        onContractsReady({
+            barterContracts: this.collectBarterContracts(quest),
+            escortContracts: this.collectEscortContracts(quest),
+            defendContracts: this.collectDefendContracts(quest),
+        });
         this.syncKnownQuestLocations();
         questUiController.renderQuest(quest);
         if (!savedQuest && getDeveloperModeConfig().questIntroEnabled) {
@@ -634,7 +639,28 @@ export default class GameQuestRuntime {
         this.onContractsUpdated({
             barterContracts: this.collectBarterContracts(this.activeQuest),
             escortContracts: this.collectEscortContracts(this.activeQuest),
+            defendContracts: this.collectDefendContracts(this.activeQuest),
         });
+    }
+
+    private collectDefendContracts(quest: QuestNode): Array<{ personName: string; villageName: string; artifactName: string }> {
+        const contracts: Array<{ personName: string; villageName: string; artifactName: string }> = [];
+        const knownNodes = collectKnownQuestNodes(quest);
+        this.visitQuestNodes(quest, (node) => {
+            if (!knownNodes.has(node) || node.objectiveType !== 'defend' || node.children.length > 0 || node.isCompleted) {
+                return;
+            }
+            const defend = node.objectiveData?.defend;
+            if (!defend?.contactName || !defend.villageName) {
+                return;
+            }
+            contracts.push({
+                personName: defend.contactName,
+                villageName: defend.villageName,
+                artifactName: defend.artifactName,
+            });
+        });
+        return contracts;
     }
 
     private updateRecoverObjectiveText(node: QuestNode): void {

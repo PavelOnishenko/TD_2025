@@ -62,6 +62,12 @@ export type QuestEscortContract = {
     destinationVillage: string;
 };
 
+export type QuestDefendContract = {
+    personName: string;
+    villageName: string;
+    artifactName: string;
+};
+
 export type QuestBarterContract = {
     traderName: string;
     itemName: string;
