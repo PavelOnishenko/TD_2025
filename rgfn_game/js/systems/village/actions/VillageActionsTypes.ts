@@ -31,6 +31,7 @@ export type VillageUI = {
     barterNowBtn: HTMLButtonElement;
     confrontRecoverBtn: HTMLButtonElement;
     recruitEscortBtn: HTMLButtonElement;
+    defendVillageBtn: HTMLButtonElement;
 };
 
 export type VillageActionsCallbacks = {
@@ -48,6 +49,11 @@ export type VillageActionsCallbacks = {
         villageName: string,
     ) => { status: 'started' | 'inactive' | 'not-target' | 'not-ready'; enemies?: Skeleton[]; itemName?: string };
     onStartBattle?: (enemies: Skeleton[]) => void;
+    onTryStartDefend?: (
+        npcName: string,
+        villageName: string,
+        villagerNames: string[],
+    ) => { status: 'started' | 'inactive' | 'not-target' | 'already-active'; objectiveTitle?: string; days?: number };
 };
 
 export type QuestEscortContract = {

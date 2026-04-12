@@ -51,8 +51,14 @@ export default class GameBattleCoordinator {
         this.runtimeFlow = new GameBattleRuntimeFlow({ stateMachine, ...deps, callbacks, controllers, onStartBattle: () => this.startBattle() });
     }
 
-    public enterBattleMode(enemies: Skeleton[], terrainType: TerrainType = 'grass'): void {
-        this.runtimeFlow.enterBattleMode(enemies, terrainType);
+    public enterBattleMode(
+        enemies: Skeleton[],
+        terrainType: TerrainType = 'grass',
+        allies: Skeleton[] = [],
+        battleKind: 'default' | 'village-defense' = 'default',
+        villageName?: string,
+    ): void {
+        this.runtimeFlow.enterBattleMode(enemies, terrainType, allies, battleKind, villageName);
     }
 
     public updateBattleMode(): void {
@@ -141,6 +147,8 @@ export default class GameBattleCoordinator {
     }
 
     public getCurrentEnemies = (): Skeleton[] => this.runtimeFlow.getCurrentEnemies();
+    public getCurrentAllies = (): Skeleton[] => this.runtimeFlow.getCurrentAllies();
+    public getBattleContext = (): { kind: 'default' | 'village-defense'; villageName: string | null } => this.runtimeFlow.getBattleContext();
 
     public getSelectedEnemy = (): Skeleton | null => this.controllers.battlePlayerActionController.getSelectedEnemy();
 

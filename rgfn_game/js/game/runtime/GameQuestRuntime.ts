@@ -2,7 +2,7 @@
 /* eslint-disable style-guide/rule17-comma-layout, style-guide/arrow-function-style */
 import QuestProgressTracker from '../../systems/quest/QuestProgressTracker.js';
 import Item from '../../entities/Item.js';
-import { EscortObjectiveData, QuestNode, RecoverObjectiveData } from '../../systems/quest/QuestTypes.js';
+import { DefendObjectiveData, DefendObjectiveDefender, EscortObjectiveData, QuestNode, RecoverObjectiveData } from '../../systems/quest/QuestTypes.js';
 import QuestUiController from '../../systems/quest/ui/QuestUiController.js';
 import QuestGenerator from '../../systems/quest/QuestGenerator.js';
 import WorldMap from '../../systems/world/worldMap/WorldMap.js';
@@ -306,6 +306,199 @@ export default class GameQuestRuntime {
         return true;
     }
 
+    public tryStartDefendObjective(
+        villageName: string,
+        npcName: string,
+        availableVillagerNames: string[],
+    ): { status: 'started' | 'inactive' | 'not-target' | 'already-active'; objectiveTitle?: string; days?: number } {
+        if (!this.activeQuest || !this.questUiController) {
+            return { status: 'inactive' };
+        }
+        const normalizedVillage = villageName.trim().toLocaleLowerCase();
+        const normalizedNpc = npcName.trim().toLocaleLowerCase();
+        if (!normalizedVillage || !normalizedNpc) {
+            return { status: 'not-target' };
+        }
+
+        let startedNode: QuestNode | null = null;
+        let foundMatchingNode = false;
+        this.visitQuestNodes(this.activeQuest, (node) => {
+            if (startedNode || node.objectiveType !== 'defend' || node.children.length > 0 || node.isCompleted) {
+                return;
+            }
+            const defend = node.objectiveData?.defend;
+            if (!defend) {
+                return;
+            }
+            if (defend.villageName.trim().toLocaleLowerCase() !== normalizedVillage || defend.contactName.trim().toLocaleLowerCase() !== normalizedNpc) {
+                return;
+            }
+            foundMatchingNode = true;
+            if (defend.isDefenseActive) {
+                return;
+            }
+            defend.isDefenseActive = true;
+            defend.timeRemainingMinutes = Math.max(1, defend.durationDays * 24 * 60);
+            defend.battleCooldownMinutes = this.rollDefenseCooldownMinutes();
+            defend.defenders = this.createDefenderRoster(availableVillagerNames, defend.contactName);
+            startedNode = node;
+        });
+
+        if (!foundMatchingNode) {
+            return { status: 'not-target' };
+        }
+        if (!startedNode) {
+            return { status: 'already-active' };
+        }
+
+        this.questUiController.renderQuest(this.activeQuest);
+        return {
+            status: 'started',
+            objectiveTitle: startedNode.title,
+            days: startedNode.objectiveData?.defend?.durationDays ?? undefined,
+        };
+    }
+
+    public onVillageTimeAdvanced(
+        villageName: string,
+        minutes: number,
+    ): {
+        stateChanged: boolean;
+        triggeredBattle: boolean;
+        attackers?: Skeleton[];
+        allies?: Skeleton[];
+        logs: string[];
+    } {
+        if (!this.activeQuest || !this.questUiController || minutes <= 0) {
+            return { stateChanged: false, triggeredBattle: false, logs: [] };
+        }
+
+        const normalizedVillage = villageName.trim().toLocaleLowerCase();
+        const logs: string[] = [];
+        let stateChanged = false;
+        let triggeredBattle = false;
+        let attackers: Skeleton[] | undefined;
+        let allies: Skeleton[] | undefined;
+
+        this.visitQuestNodes(this.activeQuest, (node) => {
+            if (triggeredBattle || node.objectiveType !== 'defend' || node.children.length > 0 || node.isCompleted) {
+                return;
+            }
+            const defend = node.objectiveData?.defend;
+            if (!defend?.isDefenseActive) {
+                return;
+            }
+            if (defend.villageName.trim().toLocaleLowerCase() !== normalizedVillage) {
+                return;
+            }
+
+            stateChanged = true;
+            defend.timeRemainingMinutes = Math.max(0, defend.timeRemainingMinutes - minutes);
+            this.regenerateDefenderRoster(defend, minutes);
+            defend.battleCooldownMinutes = Math.max(0, (defend.battleCooldownMinutes ?? 0) - minutes);
+
+            if (defend.timeRemainingMinutes <= 0) {
+                node.isCompleted = true;
+                defend.isDefenseActive = false;
+                this.resolveDefendArtifactOutcome(defend, logs);
+                return;
+            }
+
+            if ((defend.battleCooldownMinutes ?? 0) > 0) {
+                return;
+            }
+
+            const livingDefenders = (defend.defenders ?? []).filter((defender) => !defender.isDead && defender.currentHp > 0);
+            if (livingDefenders.length === 0) {
+                defend.isDefenseActive = false;
+                defend.timeRemainingMinutes = defend.durationDays * 24 * 60;
+                defend.battleCooldownMinutes = 0;
+                defend.defenders = [];
+                logs.push(`Defense line collapsed in ${defend.villageName}. The objective resets: speak with ${defend.contactName} again.`);
+                return;
+            }
+
+            attackers = this.createDefenseAttackers();
+            allies = livingDefenders.map((defender) => this.createVillageCombatant(defender.name, defender.maxHp, defender.currentHp, 4, 5));
+            defend.battleCooldownMinutes = this.rollDefenseCooldownMinutes();
+            logs.push(`Raiders attack ${defend.villageName}! Hold the line until ${defend.artifactName} is secured.`);
+            triggeredBattle = true;
+        });
+
+        if (stateChanged) {
+            this.questProgressTracker?.recomputeCompletion();
+            this.questUiController.renderQuest(this.activeQuest);
+        }
+
+        return { stateChanged, triggeredBattle, attackers, allies, logs };
+    }
+
+    public rollbackDefendObjectivesForVillage(villageName: string): string[] {
+        if (!this.activeQuest || !villageName.trim()) {
+            return [];
+        }
+        const normalizedVillage = villageName.trim().toLocaleLowerCase();
+        const lines: string[] = [];
+        let changed = false;
+        this.visitQuestNodes(this.activeQuest, (node) => {
+            if (node.objectiveType !== 'defend' || node.children.length > 0 || node.isCompleted) {
+                return;
+            }
+            const defend = node.objectiveData?.defend;
+            if (!defend?.isDefenseActive) {
+                return;
+            }
+            if (defend.villageName.trim().toLocaleLowerCase() !== normalizedVillage) {
+                return;
+            }
+            defend.isDefenseActive = false;
+            defend.timeRemainingMinutes = defend.durationDays * 24 * 60;
+            defend.battleCooldownMinutes = 0;
+            defend.defenders = [];
+            lines.push(`You left ${defend.villageName} during the defense. The operation resets; report to ${defend.contactName} again.`);
+            changed = true;
+        });
+        if (changed) {
+            this.questProgressTracker?.recomputeCompletion();
+            this.questUiController?.renderQuest(this.activeQuest);
+        }
+        return lines;
+    }
+
+    public applyDefenderBattleResults(villageName: string, survivors: Array<{ name: string; hp: number }>): string[] {
+        if (!this.activeQuest || !villageName.trim()) {
+            return [];
+        }
+        const normalizedVillage = villageName.trim().toLocaleLowerCase();
+        const hpByName = new Map(survivors.map((survivor) => [survivor.name.trim().toLocaleLowerCase(), survivor.hp]));
+        const lines: string[] = [];
+        this.visitQuestNodes(this.activeQuest, (node) => {
+            if (node.objectiveType !== 'defend' || node.children.length > 0 || node.isCompleted) {
+                return;
+            }
+            const defend = node.objectiveData?.defend;
+            if (!defend?.isDefenseActive || defend.villageName.trim().toLocaleLowerCase() !== normalizedVillage) {
+                return;
+            }
+            (defend.defenders ?? []).forEach((defender) => {
+                const survivorHp = hpByName.get(defender.name.trim().toLocaleLowerCase());
+                if (typeof survivorHp === 'number') {
+                    defender.currentHp = Math.max(0, survivorHp);
+                    defender.isDead = survivorHp <= 0;
+                    return;
+                }
+                defender.currentHp = 0;
+                defender.isDead = true;
+                lines.push(`${defender.name} was killed while defending ${defend.villageName}.`);
+            });
+            defend.defenders = (defend.defenders ?? []).filter((defender) => !defender.isDead);
+        });
+        if (lines.length > 0) {
+            this.questUiController?.renderQuest(this.activeQuest);
+        }
+        return lines;
+    }
+
     public tryCreateQuestMonsterEncounter(worldMap: WorldMap): { enemies: Skeleton[]; hint?: string } | null {
         if (!this.questProgressTracker) {
             return null;
@@ -557,4 +750,93 @@ export default class GameQuestRuntime {
     }
 
     private getEscortMaxHp = (_escort: EscortObjectiveData): number => 6;
+
+    private createDefenderRoster(availableVillagerNames: string[], contactName: string): DefendObjectiveDefender[] {
+        const normalizedContact = contactName.trim().toLocaleLowerCase();
+        const uniqueNames = Array.from(
+            new Set(
+                availableVillagerNames
+                    .map((name) => name.trim())
+                    .filter((name) => name.length > 0),
+            ),
+        );
+        const prioritized = uniqueNames.filter((name) => name.toLocaleLowerCase() !== normalizedContact);
+        const pool = [contactName.trim(), ...prioritized];
+        const defenderCount = Math.min(pool.length, this.randomInt(2, 5));
+        return pool.slice(0, defenderCount).map((name) => {
+            const maxHp = this.randomInt(7, 11);
+            return { name, maxHp, currentHp: maxHp };
+        });
+    }
+
+    private regenerateDefenderRoster(defend: DefendObjectiveData, minutes: number): void {
+        const healAmount = Math.floor(minutes / (8 * 60));
+        if (healAmount <= 0) {
+            return;
+        }
+        (defend.defenders ?? []).forEach((defender) => {
+            if (defender.isDead || defender.currentHp <= 0) {
+                return;
+            }
+            defender.currentHp = Math.min(defender.maxHp, defender.currentHp + healAmount);
+        });
+    }
+
+    private createDefenseAttackers(): Skeleton[] {
+        const count = this.randomInt(1, 6);
+        return Array.from({ length: count }, (_, index) => this.createVillageCombatant(`Hired Blade ${index + 1}`));
+    }
+
+    private createVillageCombatant(name: string, maxHp?: number, currentHp?: number, minDamage: number = 3, maxDamage: number = 6): Skeleton {
+        const defender = new Skeleton(0, 0, {
+            archetypeId: 'human',
+            xpValue: this.randomInt(3, 6),
+            name,
+            width: 30,
+            height: 30,
+            baseStats: {
+                hp: maxHp ?? this.randomInt(7, 11),
+                damage: this.randomInt(minDamage, maxDamage),
+                armor: this.randomInt(0, 2),
+                mana: this.randomInt(0, 3),
+            },
+            skills: {
+                vitality: this.randomInt(0, 3),
+                toughness: this.randomInt(0, 3),
+                strength: this.randomInt(0, 3),
+                agility: this.randomInt(0, 3),
+                connection: this.randomInt(0, 2),
+                intelligence: this.randomInt(0, 2),
+            },
+        });
+        if (typeof currentHp === 'number') {
+            defender.hp = Math.max(0, Math.min(defender.maxHp, currentHp));
+            if (defender.hp <= 0) {
+                defender.active = false;
+            }
+        }
+        return defender;
+    }
+
+    private resolveDefendArtifactOutcome(defend: DefendObjectiveData, logs: string[]): void {
+        const staysWithNpc = Math.random() < 0.5;
+        if (staysWithNpc) {
+            logs.push(`${defend.contactName} keeps ${defend.artifactName} under guard in ${defend.villageName}.`);
+            return;
+        }
+        const added = this.createRecoverQuestItem(defend.artifactName);
+        logs.push(`${defend.artifactName} is completed and awarded to you.`);
+        logs.push(`Quest reward prepared: ${added.name}.`);
+    }
+
+    private rollDefenseCooldownMinutes(): number {
+        const dayPortion = this.randomInt(4, 12);
+        return dayPortion * 60;
+    }
+
+    private randomInt(min: number, max: number): number {
+        const lower = Math.ceil(Math.min(min, max));
+        const upper = Math.floor(Math.max(min, max));
+        return lower + Math.floor(Math.random() * ((upper - lower) + 1));
+    }
 }

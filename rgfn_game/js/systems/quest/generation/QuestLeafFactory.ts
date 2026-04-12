@@ -179,13 +179,27 @@ export default class QuestLeafFactory {
     private async createDefendNode(id: string): Promise<QuestNode> {
         const location = await this.generateName('location');
         const artifact = await this.generateName('artifact');
+        const contact = await this.generateName('character');
+        const durationDays = this.random.nextInt(3, 7);
         return this.contentBuilder.node(
             id,
             `Defend ${location.text}`,
-            `Hold ${location.text} until the ${this.contentBuilder.label(artifact)} is secured.`,
-            `Prevent the fall of ${location.text} while securing ${this.contentBuilder.label(artifact)}.`,
+            `${contact.text} asks you to hold ${location.text} until the ${this.contentBuilder.label(artifact)} is secured.`,
+            `Speak with ${contact.text} in ${location.text}, then Prevent the fall of ${location.text} for ${durationDays} day${durationDays === 1 ? '' : 's'} while securing ${this.contentBuilder.label(artifact)}.`,
             'defend',
-            this.contentBuilder.entities(location, artifact),
+            this.contentBuilder.entities(location, artifact, contact),
+            {
+                defend: {
+                    villageName: location.text,
+                    artifactName: artifact.text,
+                    contactName: contact.text,
+                    durationDays,
+                    timeRemainingMinutes: durationDays * 24 * 60,
+                    isDefenseActive: false,
+                    defenders: [],
+                    battleCooldownMinutes: 0,
+                },
+            },
         );
     }
 

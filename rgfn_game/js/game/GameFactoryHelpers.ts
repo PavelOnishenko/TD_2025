@@ -48,8 +48,8 @@ const createVillageActionsController = (
     hudCoordinator: GameHudCoordinator,
 ): VillageActionsController => new VillageActionsController(player, ui.villageUI, ui.gameLogUI.log, {
     onUpdateHUD: () => hudCoordinator.updateHUD(),
-    onAdvanceTime: (minutes, fatigueScale) => game.advanceTime(minutes, fatigueScale),
-    onLeaveVillage: () => game.stateMachine.transition(MODES.WORLD_MAP),
+    onAdvanceTime: (minutes, fatigueScale) => game.onVillageAdvanceTime(minutes, fatigueScale),
+    onLeaveVillage: () => game.onVillageLeave(),
     getVillageDirectionHint: (name: string) => worldMap.getVillageDirectionHintFromPlayer(name),
     getKnownSettlementNames: () => worldMap.getKnownSettlementNames(),
     getKnownQuestSettlementNames: () => game.questRuntime.getKnownQuestLocationNames(),
@@ -58,6 +58,7 @@ const createVillageActionsController = (
     onRevealRecoverHolder: (villageName, npcName) => game.onRevealRecoverHolder(villageName, npcName),
     onTryStartRecoverConfrontation: (personName, villageName) => game.onTryStartRecoverConfrontation(personName, villageName),
     onStartBattle: (enemies) => game.stateMachine.transition(MODES.BATTLE, { enemies, terrainType: 'grass' }),
+    onTryStartDefend: (npcName, villageName, villagerNames) => game.onTryStartDefendObjective(npcName, villageName, villagerNames),
 });
 
 // eslint-disable-next-line style-guide/function-length-warning

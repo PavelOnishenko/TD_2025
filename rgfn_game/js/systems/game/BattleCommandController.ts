@@ -180,7 +180,7 @@ export default class BattleCommandController {
     };
 
     private handleTargetDefeated = (target: Skeleton): void => {
-        this.lootManager.handleKillRewards(target, this.player, this.callbacks);
+        this.lootManager.handleKillRewards(target, this.player, this.callbacks, this.turnManager.getPlayerSideParticipantCount());
     };
 
     private handlePotionUse(fromBattleControls: boolean, usePotion: () => boolean, emptyMessage: string, successMessage: string): void {

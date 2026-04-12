@@ -89,9 +89,28 @@ export type RecoverObjectiveData = {
     enemyProfile?: RecoverEnemyProfile;
 };
 
+export type DefendObjectiveDefender = {
+    name: string;
+    maxHp: number;
+    currentHp: number;
+    isDead?: boolean;
+};
+
+export type DefendObjectiveData = {
+    villageName: string;
+    artifactName: string;
+    contactName: string;
+    durationDays: number;
+    timeRemainingMinutes: number;
+    isDefenseActive?: boolean;
+    defenders?: DefendObjectiveDefender[];
+    battleCooldownMinutes?: number;
+};
+
 export type QuestObjectiveData = {
     deliver?: DeliverObjectiveData;
     monster?: MonsterObjectiveData;
     escort?: EscortObjectiveData;
     recover?: RecoverObjectiveData;
+    defend?: DefendObjectiveData;
 };

@@ -104,6 +104,27 @@ export default class VillageActionsController {
     public handleAskAboutBarter(): void { this.dialogueInteraction.handleAskAboutBarter(); this.callbacks.onAdvanceTime(16, 0.12); }
     public handleConfirmBarter(): void { this.dialogueInteraction.handleConfirmBarter(); this.callbacks.onAdvanceTime(18, 0.15); }
     public handleConfrontRecoverTarget(): void { this.dialogueInteraction.handleConfrontRecoverTarget(); this.callbacks.onAdvanceTime(18, 0.15); }
+    public handleStartDefendObjective(): void {
+        const npc = this.getSelectedNpc();
+        if (!npc) {
+            this.addLog('Choose an NPC before committing to village defense duty.', 'system');
+            return;
+        }
+        const status = this.callbacks.onTryStartDefend?.(npc.name, this.currentVillageName, this.npcRoster.map((villager) => villager.name))
+            ?? { status: 'inactive' as const };
+        if (status.status === 'started') {
+            this.addLog(`You tell ${npc.name}: "I am ready to defend you as we agreed upon earlier."`, 'player');
+            this.addLog(`${npc.name}: "Hold this village for ${status.days ?? '?'} days while we secure the artifact."`, 'system');
+            this.callbacks.onAdvanceTime(20, 0.15);
+            this.updateButtons();
+            return;
+        }
+        if (status.status === 'already-active') {
+            this.addLog(`${npc.name} says the defense operation is already underway. Stay in the village and keep watch.`, 'system-message');
+            return;
+        }
+        this.addLog(`${npc.name} has no defense assignment for you in this village.`, 'system-message');
+    }
     // eslint-disable-next-line style-guide/function-length-warning
     public handleRecruitEscort(): void {
         const npc = this.getSelectedNpc();
@@ -156,6 +177,7 @@ export default class VillageActionsController {
         shouldShowBarterNowAction: (npcName) => this.hasActiveBarterDealForNpc(npcName),
         shouldShowConfrontRecoverAction: (npcName, villageName) => this.canConfrontRecoverTarget(npcName, villageName),
         shouldShowRecruitEscortAction: (npcName, villageName) => this.canRecruitEscort(npcName, villageName),
+        shouldShowDefendAction: (npcName, villageName) => this.canStartDefendObjective(npcName, villageName),
         getCurrentVillageName: () => this.currentVillageName,
     });
 
@@ -315,6 +337,13 @@ export default class VillageActionsController {
     }
 
     private getEscortNpcKey = (npcName: string, villageName: string): string => `${villageName.trim().toLocaleLowerCase()}::${npcName.trim().toLocaleLowerCase()}`;
+
+    private canStartDefendObjective(npcName: string, villageName: string): boolean {
+        if (!npcName.trim() || !villageName.trim() || !this.callbacks.onTryStartDefend) {
+            return false;
+        }
+        return true;
+    }
 
     private getKnownSettlementNames(): string[] {
         const knownFromMap = this.callbacks.getKnownSettlementNames?.() ?? [];

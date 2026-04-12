@@ -15,20 +15,22 @@ type LootCallbacks = {
 export default class BattleLootManager {
     private pendingLoot: Item[] = [];
 
-    public handleKillRewards(target: Skeleton, player: Player, callbacks: LootCallbacks): void {
+    public handleKillRewards(target: Skeleton, player: Player, callbacks: LootCallbacks, participantCount: number = 1): void {
         callbacks.onAddBattleLog(`${target.name} defeated!`, 'system');
         callbacks.onEnemyDefeated?.(target);
 
         if (target.xpValue && target.xpValue > 0) {
-            const leveledUp = player.addXp(target.xpValue);
-            callbacks.onAddBattleLog(`Gained ${target.xpValue} XP!`, 'system');
+            const shareCount = Math.max(1, Math.floor(participantCount));
+            const playerShare = Math.max(1, Math.floor(target.xpValue / shareCount));
+            const leveledUp = player.addXp(playerShare);
+            callbacks.onAddBattleLog(`Gained ${playerShare} XP (${target.xpValue} total split across ${shareCount} allies).`, 'system');
             if (leveledUp) {
                 callbacks.onAddBattleLog(`LEVEL UP! Now level ${player.level}!`, 'system');
                 callbacks.onAddBattleLog(`Gained ${balanceConfig.leveling.skillPointsPerLevel} skill points! HP and mana fully restored!`, 'system');
             }
         }
 
-        this.collectLoot(target, callbacks);
+        this.collectLoot(target, callbacks, Math.max(1, Math.floor(participantCount)));
         if (callbacks.getSelectedEnemy() === target) {
             callbacks.setSelectedEnemy(null);
         }
@@ -56,7 +58,7 @@ export default class BattleLootManager {
         this.pendingLoot = [];
     };
 
-    private collectLoot(target: Skeleton, callbacks: LootCallbacks): void {
+    private collectLoot(target: Skeleton, callbacks: LootCallbacks, participantCount: number): void {
         const loot: Item[] = [];
         const lootable = target as Skeleton & { getLootItems?: () => Item[] };
 
@@ -72,6 +74,10 @@ export default class BattleLootManager {
         }
 
         for (const item of loot) {
+            if (participantCount > 1 && Math.random() > (1 / participantCount)) {
+                callbacks.onAddBattleLog(`${item.name} was claimed by allied defenders.`, 'system-message');
+                continue;
+            }
             this.pendingLoot.push(item);
             callbacks.onAddBattleLog(`${item.name} dropped. It will be collected after battle.`, 'system');
         }

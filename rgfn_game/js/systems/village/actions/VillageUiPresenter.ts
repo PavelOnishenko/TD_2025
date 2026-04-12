@@ -15,6 +15,7 @@ type PresenterDeps = {
     shouldShowBarterNowAction: (npcName: string) => boolean;
     shouldShowConfrontRecoverAction: (npcName: string, villageName: string) => boolean;
     shouldShowRecruitEscortAction: (npcName: string, villageName: string) => boolean;
+    shouldShowDefendAction: (npcName: string, villageName: string) => boolean;
     getCurrentVillageName: () => string;
 };
 
@@ -55,14 +56,17 @@ export default class VillageUiPresenter {
         const showBarterNow = hasSelectedNpc && this.deps.shouldShowBarterNowAction(selectedNpcName);
         const showConfrontRecover = hasSelectedNpc && this.deps.shouldShowConfrontRecoverAction(selectedNpcName, currentVillageName);
         const showRecruitEscort = hasSelectedNpc && this.deps.shouldShowRecruitEscortAction(selectedNpcName, currentVillageName);
+        const showDefendVillage = hasSelectedNpc && this.deps.shouldShowDefendAction(selectedNpcName, currentVillageName);
 
         this.deps.villageUI.barterNowBtn.classList.toggle('hidden', !showBarterNow);
         this.deps.villageUI.confrontRecoverBtn.classList.toggle('hidden', !showConfrontRecover);
         this.deps.villageUI.recruitEscortBtn.classList.toggle('hidden', !showRecruitEscort);
+        this.deps.villageUI.defendVillageBtn.classList.toggle('hidden', !showDefendVillage);
 
         this.deps.villageUI.barterNowBtn.disabled = !showBarterNow;
         this.deps.villageUI.confrontRecoverBtn.disabled = !showConfrontRecover;
         this.deps.villageUI.recruitEscortBtn.disabled = !showRecruitEscort;
+        this.deps.villageUI.defendVillageBtn.disabled = !showDefendVillage;
         this.deps.villageUI.sleepRoomBtn.disabled = !hasSelectedNpc || !this.deps.isInnkeeper(selectedNpc?.role ?? '');
     }
 
