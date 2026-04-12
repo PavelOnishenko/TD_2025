@@ -69,6 +69,15 @@ function createDeveloperUi() {
     worldMapProfilingCloseBtn: createEventTarget(),
     worldMapProfilingRefreshBtn: createEventTarget(),
     worldMapProfilingAutoRefreshToggle: { checked: false },
+    worldMapProfilingFpsCapSelect: { value: 'uncapped' },
+    worldMapProfilingDevicePixelRatioClampSelect: { value: 'auto' },
+    worldMapProfilingRenderLayerToggles: {
+      terrain: createInput(),
+      character: createInput(),
+      locations: createInput(),
+      roads: createInput(),
+      selectionCursor: createInput(),
+    },
     worldMapProfilingOutput: { textContent: '' },
   };
 }
@@ -79,6 +88,9 @@ function createController(logs, encounterSystem, developerUI) {
     fogOfWar: true,
   };
   let worldMapProfilingEnabled = false;
+  const worldMapLayerToggles = { terrain: true, character: true, locations: true, roads: true, selectionCursor: true };
+  let worldMapRenderFpsCap = 'uncapped';
+  let worldMapDprClamp = 'auto';
   const worldMapSnapshot = {
     drawTotal: { frames: 3, avgMs: 7.25, maxMs: 11.6, lastFrameMs: 8.1 },
     terrainLayer: { frames: 3, avgMs: 4.12, maxMs: 6.4, lastFrameMs: 4.3 },
@@ -98,6 +110,14 @@ function createController(logs, encounterSystem, developerUI) {
       worldMapSnapshot.terrainLayer = { ...worldMapSnapshot.terrainLayer, frames: 0, avgMs: 0, maxMs: 0, lastFrameMs: 0 };
     },
     getWorldMapDrawProfilingSnapshot: () => ({ ...worldMapSnapshot }),
+    getWorldMapPerformanceSnapshot: () => ({ cacheHits: 3, cacheRebuilds: 1 }),
+    getWorldMapPointerSnapshot: () => ({ hoverTileChangesPerSecond: 5, rawMouseMoveEventsPerSecond: 42 }),
+    getWorldMapRenderLayerToggles: () => ({ ...worldMapLayerToggles }),
+    setWorldMapRenderLayerToggles: (toggles) => Object.assign(worldMapLayerToggles, toggles),
+    getWorldMapRenderFpsCap: () => worldMapRenderFpsCap,
+    setWorldMapRenderFpsCap: (cap) => { worldMapRenderFpsCap = cap; },
+    getWorldMapDevicePixelRatioClamp: () => worldMapDprClamp,
+    setWorldMapDevicePixelRatioClamp: (clamp) => { worldMapDprClamp = clamp; },
   });
 }
 

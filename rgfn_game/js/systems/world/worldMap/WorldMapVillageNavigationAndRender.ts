@@ -1,5 +1,5 @@
 // @ts-nocheck
-/* eslint-disable style-guide/file-length-warning */
+/* eslint-disable style-guide/file-length-warning, style-guide/function-length-error */
 import WorldMapMovementAndViewport from './WorldMapMovementAndViewport.js';
 import { theme } from '../../../config/ThemeConfig.js';
 import { generateVillageName } from '../VillageNameGenerator.js';
@@ -175,7 +175,6 @@ export default class WorldMapVillageNavigationAndRender extends WorldMapMovement
         return 'far';
     }
 
-    /* eslint-disable style-guide/function-length-warning */
     public draw(ctx: CanvasRenderingContext2D, _renderer: any): void {
         this.profileSection('drawTotal', () => {
             if (this.areAllRenderLayersDisabled()) {
@@ -189,20 +188,40 @@ export default class WorldMapVillageNavigationAndRender extends WorldMapMovement
             const currentTier = this.getRenderTier(detailLevel);
             if (this.lastRenderTier !== currentTier) {
                 this.lastRenderTier = currentTier;
-                this.invalidateWorldRedraw();
+                this.noteRedrawCause('zoomChange');
             }
+            const overlayOnlyRedraw = !this.worldNeedsRedraw && this.overlayNeedsRedraw;
+            if (overlayOnlyRedraw && this.staticFrameCanvas) {
+                ctx.drawImage(this.staticFrameCanvas, 0, 0);
+                this.approxDrawCallsThisFrame += 1;
+                this.profileSection('entities', () => this.drawCharacterMarker(ctx));
+                this.profileSection('cursorSelection', () => this.drawSelectionMarker(ctx));
+                this.noteDynamicRedraw();
+                return;
+            }
+
             this.renderer.drawBackground(ctx, this.canvasWidth, this.canvasHeight);
             this.approxDrawCallsThisFrame += 1;
             this.drawOptionalTerrainLayers(ctx, bounds, detailLevel);
             this.drawOptionalRoadLayer(ctx, bounds);
             this.drawOptionalLocationLayers(ctx, bounds);
+            this.drawOptionalScaleLegend(ctx);
+
+            const staticCtx = this.ensureStaticFrameCanvas(this.canvasWidth, this.canvasHeight);
+            if (staticCtx) {
+                if (typeof staticCtx.clearRect === 'function') {
+                    staticCtx.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
+                }
+                if (typeof staticCtx.drawImage === 'function') {
+                    staticCtx.drawImage(ctx.canvas, 0, 0);
+                }
+            }
+
             this.profileSection('entities', () => this.drawCharacterMarker(ctx));
             this.profileSection('cursorSelection', () => this.drawSelectionMarker(ctx));
-            this.drawOptionalScaleLegend(ctx);
             this.noteDynamicRedraw();
         });
     }
-    /* eslint-enable style-guide/function-length-warning */
 
     private readonly areAllRenderLayersDisabled = (): boolean => !this.renderLayerToggles.terrain
             && !this.renderLayerToggles.roads
@@ -249,21 +268,19 @@ export default class WorldMapVillageNavigationAndRender extends WorldMapMovement
     }
 
     private drawDayNightTint(ctx: CanvasRenderingContext2D): void {
-        ctx.save();
         if (this.daylightFactor < 1) {
             const darkness = Math.max(0, 1 - this.daylightFactor);
             if (darkness > 0.01) {
                 ctx.fillStyle = `rgba(14, 20, 36, ${Math.min(0.62, darkness * 0.72).toFixed(3)})`;
                 ctx.fillRect(0, 0, this.canvasWidth, this.canvasHeight);
             }
-        } else {
-            const brightness = Math.max(0, this.daylightFactor - 1);
-            if (brightness > 0.01) {
-                ctx.fillStyle = `rgba(255, 248, 220, ${Math.min(0.22, brightness * 0.42).toFixed(3)})`;
-                ctx.fillRect(0, 0, this.canvasWidth, this.canvasHeight);
-            }
+            return;
         }
-        ctx.restore();
+        const brightness = Math.max(0, this.daylightFactor - 1);
+        if (brightness > 0.01) {
+            ctx.fillStyle = `rgba(255, 248, 220, ${Math.min(0.22, brightness * 0.42).toFixed(3)})`;
+            ctx.fillRect(0, 0, this.canvasWidth, this.canvasHeight);
+        }
     }
 
     private drawTerrainLayer(

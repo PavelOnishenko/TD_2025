@@ -1,4 +1,5 @@
 // @ts-nocheck
+/* eslint-disable style-guide/file-length-warning, style-guide/function-length-warning, style-guide/rule17-comma-layout */
 import WorldMapRoadNetwork from './WorldMapRoadNetwork.js';
 import { theme } from '../../../config/ThemeConfig.js';
 import { FOG_STATE } from './WorldMapCore.js';
@@ -116,6 +117,7 @@ export default class WorldMapPersistenceAndSelection extends WorldMapRoadNetwork
                 ? config.fogOfWar
                 : this.mapDisplayConfig.fogOfWar,
         };
+        this.noteRedrawCause('diagnosticsUiChange');
         this.invalidateWorldRedraw();
     };
 

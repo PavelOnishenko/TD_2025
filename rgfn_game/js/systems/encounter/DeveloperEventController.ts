@@ -1,4 +1,4 @@
-/* eslint-disable style-guide/file-length-warning */
+/* eslint-disable style-guide/file-length-warning, style-guide/function-length-warning, style-guide/rule17-comma-layout */
 import EncounterSystem, { ForcedEncounterType, RandomEncounterType } from './EncounterSystem.js';
 import { MapDisplayConfig } from '../../types/game.js';
 import DeveloperEncounterControls from './DeveloperEncounterControls.js';
@@ -15,6 +15,7 @@ export default class DeveloperEventController {
     private nextCharacterRollControls: DeveloperNextCharacterRollControls;
     private randomAndMapControls: DeveloperRandomAndMapControls;
     private worldMapProfilingIntervalId: ReturnType<typeof setInterval> | null;
+    private lastProfilingPayloadCacheKey: string;
 
     constructor(developerUI: DeveloperUI, encounterSystem: EncounterSystem, callbacks: DeveloperCallbacks) {
         this.developerUI = developerUI;
@@ -24,10 +25,10 @@ export default class DeveloperEventController {
         this.nextCharacterRollControls = new DeveloperNextCharacterRollControls(developerUI, callbacks);
         this.randomAndMapControls = new DeveloperRandomAndMapControls(developerUI, callbacks);
         this.worldMapProfilingIntervalId = null;
+        this.lastProfilingPayloadCacheKey = '';
         this.bindWorldMapProfilingPanelDrag();
     }
 
-    // eslint-disable-next-line style-guide/function-length-warning
     public toggleModal(forceVisible?: boolean): void {
         const shouldShow = typeof forceVisible === 'boolean'
             ? forceVisible
@@ -203,24 +204,33 @@ export default class DeveloperEventController {
         if (this.worldMapProfilingIntervalId !== null) {
             clearInterval(this.worldMapProfilingIntervalId);
             this.worldMapProfilingIntervalId = null;
+            this.lastProfilingPayloadCacheKey = '';
         }
     }
 
     public renderWorldMapProfilingPanel(): void {
         const snapshot = this.callbacks.getWorldMapDrawProfilingSnapshot();
+        const metrics = {
+            ...this.callbacks.getWorldMapPerformanceSnapshot(),
+            ...this.callbacks.getWorldMapPointerSnapshot(),
+        };
         const payload = {
-            capturedAt: new Date().toISOString(),
             profilingEnabled: this.callbacks.isWorldMapDrawProfilingEnabled(),
             renderLayers: this.callbacks.getWorldMapRenderLayerToggles(),
             renderFpsCap: this.callbacks.getWorldMapRenderFpsCap(),
             devicePixelRatioClamp: this.callbacks.getWorldMapDevicePixelRatioClamp(),
-            metrics: {
-                ...this.callbacks.getWorldMapPerformanceSnapshot(),
-                ...this.callbacks.getWorldMapPointerSnapshot(),
-            },
+            metrics,
             sections: snapshot,
         };
-        this.developerUI.worldMapProfilingOutput.textContent = JSON.stringify(payload, null, 2);
+        const cacheKey = JSON.stringify(payload);
+        if (cacheKey === this.lastProfilingPayloadCacheKey) {
+            return;
+        }
+        this.lastProfilingPayloadCacheKey = cacheKey;
+        this.developerUI.worldMapProfilingOutput.textContent = JSON.stringify({
+            ...payload,
+            capturedAt: new Date().toISOString(),
+        }, null, 2);
     }
 
     private syncWorldMapRenderLayerTogglesFromMap(): void {
@@ -255,7 +265,6 @@ export default class DeveloperEventController {
         dragHandle.addEventListener('pointerdown', (event: PointerEvent) => this.handleProfilingPanelPointerDown(event, panel, dragHandle));
     }
 
-    // eslint-disable-next-line style-guide/function-length-warning
     private handleProfilingPanelPointerDown(event: PointerEvent, panel: HTMLElement, dragHandle: HTMLElement): void {
         if (event.button !== 0) {
             return;

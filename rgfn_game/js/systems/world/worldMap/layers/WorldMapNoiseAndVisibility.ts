@@ -95,6 +95,7 @@ export default class WorldMapNoiseAndVisibility extends WorldMapWaterAndSettleme
 
     private refreshVisibility(): void {
         this.fogRevision += 1;
+        this.noteRedrawCause('visibilityFogChange');
         for (let index = 0; index < this.fogStatesByIndex.length; index += 1) {
             if (this.fogStatesByIndex[index] === FOG_STATE.DISCOVERED) {
                 this.fogStatesByIndex[index] = FOG_STATE.HIDDEN;
