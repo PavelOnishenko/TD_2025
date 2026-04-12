@@ -183,15 +183,32 @@
                     <div id="lore-panel" class="hud-section stats overlay-panel hidden">
                         <div class="stat">Lore Book</div>
                         <div class="lore-calendar-nav">
-                            <a href="#lore-world-calendar-section" class="action-btn lore-calendar-jump-btn">Jump to World Calendar</a>
+                            <button
+                                id="lore-calendar-jump-btn"
+                                class="action-btn lore-calendar-jump-btn"
+                                type="button"
+                                popovertarget="lore-calendar-popover"
+                            >
+                                Open World Calendar
+                            </button>
                         </div>
-                        <section id="lore-world-calendar-section" class="world-calendar-panel lore-calendar-panel">
-                            <h3>World Calendar</h3>
-                            <p id="world-calendar-summary" class="world-calendar-summary">Calendar is generating...</p>
-                            <pre id="world-calendar-list" class="world-calendar-list" aria-live="polite"></pre>
-                        </section>
                         <div id="lore-body" class="lore-body"></div>
                     </div>
+                    <section id="lore-calendar-popover" class="lore-calendar-popover world-calendar-panel" popover="auto">
+                        <div class="lore-calendar-popover-header">
+                            <h3>World Calendar</h3>
+                            <button
+                                class="action-btn lore-calendar-close-btn"
+                                type="button"
+                                popovertarget="lore-calendar-popover"
+                                popovertargetaction="hide"
+                            >
+                                Close
+                            </button>
+                        </div>
+                        <p id="world-calendar-summary" class="world-calendar-summary">Calendar is generating...</p>
+                        <pre id="world-calendar-list" class="world-calendar-list" aria-live="polite"></pre>
+                    </section>
                     <div id="selected-panel" class="hud-section stats overlay-panel hidden">
                         <div class="stat">Selected Tile</div>
                         <div id="selected-cell-empty" class="stat-detail">Move the mouse over the world map to inspect a cell.</div>

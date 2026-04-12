@@ -25,11 +25,11 @@
 - HUD now displays:
   - `Time` (`HH:MM`)
   - `Date` (`Y<year> • <month> <day>`)
-- Lore panel now includes a full **calendar registry view** generated with the world:
+- Lore panel now exposes world calendar through a dedicated **Open World Calendar** action:
   - month index + generated month name + day count for every month in the year,
   - current month is marked with `→`,
   - summary includes months/year, days/year, and epoch start year.
-  - a dedicated **Jump to World Calendar** button is shown at the top of Lore to quickly scroll to the calendar section.
+  - calendar content appears in a separate dismissible popover window, so the Lore Book list itself stays focused on character/village/creature entries.
 - World-map rendering now applies a **day/night tint**:
   - darker at night,
   - brighter during daytime and twilight (only night remains dark),
@@ -97,7 +97,7 @@ Village actions now advance time, including at least:
 - World movement/encounters time ticks: `js/systems/world-mode/WorldModeTravelEncounterController.ts`
 - Village action time ticks: `js/systems/village/*`
 - HUD clock/date binding: `js/systems/controllers/HudController.ts` and `index.html`
-- Full calendar display wiring in Lore panel: `js/game/GameFacade.ts`, `js/systems/controllers/HudController.ts`, `index.html`, `style.css`
+- Full calendar display wiring in Lore panel + popover window: `js/game/GameFacade.ts`, `js/systems/controllers/HudController.ts`, `index.html`, `style.css`
 - Day/night world tint: `js/systems/world/worldMap/WorldMapVillageNavigationAndRender.ts`
 - Save snapshot extension: `js/game/runtime/GamePersistenceRuntime.ts`
 

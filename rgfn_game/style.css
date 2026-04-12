@@ -535,7 +535,6 @@ h1 {
 #enemy-info,
 #battle-instructions,
 #world-actions,
-#lore-panel .world-calendar-panel,
 #village-prompt,
 #village-actions {
     overflow: auto;
@@ -613,8 +612,35 @@ h1 {
 .lore-calendar-jump-btn {
     display: inline-flex;
     align-items: center;
-    text-decoration: none;
     font-size: 13px;
+}
+
+.lore-calendar-popover {
+    width: min(380px, calc(100vw - 32px));
+    max-height: min(72vh, 640px);
+    margin: auto;
+    color: var(--color-text-primary);
+    background-color: var(--color-secondary-bg);
+    border: 2px solid var(--color-secondary-accent);
+    box-shadow: 0 14px 36px color-mix(in srgb, var(--color-panel-shadow) 46%, transparent);
+    border-radius: 10px;
+}
+
+.lore-calendar-popover::backdrop {
+    background: color-mix(in srgb, black 40%, transparent);
+}
+
+.lore-calendar-popover-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.lore-calendar-close-btn {
+    font-size: 12px;
+    line-height: 1;
+    padding: 6px 10px;
 }
 
 .village-section {
