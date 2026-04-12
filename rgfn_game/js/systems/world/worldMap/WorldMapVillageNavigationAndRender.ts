@@ -169,6 +169,13 @@ export default class WorldMapVillageNavigationAndRender extends WorldMapMovement
         return 'full';
     }
 
+    private getRenderTier(detailLevel: 'full' | 'medium' | 'low'): 'near' | 'mid' | 'far' {
+        if (detailLevel === 'full') {return 'near';}
+        if (detailLevel === 'medium') {return 'mid';}
+        return 'far';
+    }
+
+    /* eslint-disable style-guide/function-length-warning */
     public draw(ctx: CanvasRenderingContext2D, _renderer: any): void {
         this.profileSection('drawTotal', () => {
             if (this.areAllRenderLayersDisabled()) {
@@ -179,6 +186,11 @@ export default class WorldMapVillageNavigationAndRender extends WorldMapMovement
             const bounds = this.profileSection('visibleTileCalculation', () => this.getVisibleBounds());
             this.visibleTileCountThisFrame = Math.max(0, (bounds.endCol - bounds.startCol + 1) * (bounds.endRow - bounds.startRow + 1));
             const detailLevel = this.getRenderDetailLevel(bounds);
+            const currentTier = this.getRenderTier(detailLevel);
+            if (this.lastRenderTier !== currentTier) {
+                this.lastRenderTier = currentTier;
+                this.invalidateWorldRedraw();
+            }
             this.renderer.drawBackground(ctx, this.canvasWidth, this.canvasHeight);
             this.approxDrawCallsThisFrame += 1;
             this.drawOptionalTerrainLayers(ctx, bounds, detailLevel);
@@ -187,8 +199,10 @@ export default class WorldMapVillageNavigationAndRender extends WorldMapMovement
             this.profileSection('entities', () => this.drawCharacterMarker(ctx));
             this.profileSection('cursorSelection', () => this.drawSelectionMarker(ctx));
             this.drawOptionalScaleLegend(ctx);
+            this.noteDynamicRedraw();
         });
     }
+    /* eslint-enable style-guide/function-length-warning */
 
     private readonly areAllRenderLayersDisabled = (): boolean => !this.renderLayerToggles.terrain
             && !this.renderLayerToggles.roads
@@ -210,7 +224,12 @@ export default class WorldMapVillageNavigationAndRender extends WorldMapMovement
 
     private drawOptionalRoadLayer(ctx: CanvasRenderingContext2D, bounds: { startCol: number; endCol: number; startRow: number; endRow: number }): void {
         if (this.renderLayerToggles.roads) {
-            this.profileSection('roads', () => this.drawVillageRoads(ctx, bounds));
+            const shouldUseRoadCache = this.grid.cellSize <= 18;
+            this.profileSection('roads', () => {
+                if (!shouldUseRoadCache || !this.drawRoadLayerFromCache(ctx, bounds, this.grid.cellSize <= 10 ? 'low' : 'medium')) {
+                    this.drawVillageRoads(ctx, bounds);
+                }
+            });
         }
     }
 
@@ -256,6 +275,7 @@ export default class WorldMapVillageNavigationAndRender extends WorldMapMovement
         const terrainRenderedFromCache = shouldUseTerrainCache && this.drawTerrainLayerFromCache(ctx, bounds, detailLevel);
         if (!terrainRenderedFromCache) {
             this.drawTerrainCells(ctx, bounds, detailLevel);
+            this.noteStaticRedraw();
             return;
         }
         this.drawFogOverlayForVisibleCells(ctx, bounds, detailLevel);

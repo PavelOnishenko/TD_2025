@@ -1,12 +1,15 @@
+/* eslint-disable style-guide/file-length-warning, style-guide/function-length-warning */
 import { MODES } from '../../systems/game/runtime/GameModeStateMachine.js';
 import type { GameFacadeStateAccess } from './GameFacadeSharedTypes.js';
 import { getDeveloperModeConfig } from '../../utils/DeveloperModeConfig.js';
 
 export default class GameFacadeLifecycleCoordinator {
     private readonly state: GameFacadeStateAccess;
+    private readonly handleVisibilityChangeBound: () => void;
 
     public constructor(state: GameFacadeStateAccess) {
         this.state = state;
+        this.handleVisibilityChangeBound = this.handleVisibilityChange.bind(this);
     }
 
     public initializeAfterRuntimeAssignment(): void {
@@ -34,6 +37,8 @@ export default class GameFacadeLifecycleCoordinator {
     public start(): void {
         this.handleResize();
         this.refreshHud();
+        document.addEventListener('visibilitychange', this.handleVisibilityChangeBound);
+        this.handleVisibilityChange();
         this.state.loop.start();
     }
 
@@ -133,16 +138,16 @@ export default class GameFacadeLifecycleCoordinator {
         return status;
     }
 
-    public onRevealRecoverHolder(villageName: string, npcName: string): { revealed: boolean; personName?: string; itemName?: string } {
-        return this.state.questRuntime.revealRecoverHolder(villageName, npcName);
-    }
+    public onRevealRecoverHolder = (villageName: string, npcName: string): { revealed: boolean; personName?: string; itemName?: string } => (
+        this.state.questRuntime.revealRecoverHolder(villageName, npcName)
+    );
 
-    public onTryStartRecoverConfrontation(
+    public onTryStartRecoverConfrontation = (
         personName: string,
         villageName: string,
-    ): { status: 'started' | 'inactive' | 'not-target' | 'not-ready'; enemies?: import('../../entities/Skeleton.js').default[]; itemName?: string } {
-        return this.state.questRuntime.startRecoverConfrontation(personName, villageName);
-    }
+    ): { status: 'started' | 'inactive' | 'not-target' | 'not-ready'; enemies?: import('../../entities/Skeleton.js').default[]; itemName?: string } => (
+        this.state.questRuntime.startRecoverConfrontation(personName, villageName)
+    );
 
     public onBattleEnded(result: 'victory' | 'defeat' | 'fled'): void {
         if (result !== 'victory' && result !== 'fled') {
@@ -208,5 +213,17 @@ export default class GameFacadeLifecycleCoordinator {
         const [x, y] = this.state.worldMap.getPlayerPixelPosition();
         this.state.player.x = x;
         this.state.player.y = y;
+    }
+
+    private handleVisibilityChange(): void {
+        const hidden = typeof document !== 'undefined' && document.hidden;
+        this.state.worldMap?.setRenderVisibilityState(hidden);
+        if (hidden) {
+            this.state.loop.pause('tab-hidden');
+            return;
+        }
+        if (this.state.loop.resume()) {
+            this.state.hudCoordinator.updateSelectedCell(this.state.worldMap.getSelectedCellInfo());
+        }
     }
 }

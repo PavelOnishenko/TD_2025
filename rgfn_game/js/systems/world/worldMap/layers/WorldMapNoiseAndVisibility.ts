@@ -1,4 +1,5 @@
 // @ts-nocheck
+/* eslint-disable style-guide/function-length-warning */
 import WorldMapWaterAndSettlements from './WorldMapWaterAndSettlements.js';
 import { balanceConfig } from '../../../../config/balance/balanceConfig.js';
 import { FOG_STATE } from '../WorldMapCore.js';
@@ -104,7 +105,6 @@ export default class WorldMapNoiseAndVisibility extends WorldMapWaterAndSettleme
             if (!this.isCellVisible(col, row)) {
                 return;
             }
-
             this.fogStatesByIndex[this.getCellIndex(col, row)] = FOG_STATE.DISCOVERED;
         });
 
@@ -112,6 +112,15 @@ export default class WorldMapNoiseAndVisibility extends WorldMapWaterAndSettleme
             const key = this.getCellKey(col, row);
             this.fogStates.set(key, this.fogStatesByIndex[this.getCellIndex(col, row)] ?? FOG_STATE.UNKNOWN);
         });
+        const visibilityRadius = balanceConfig.worldMap.visibilityRadius ?? 2;
+        for (let dy = -visibilityRadius - 1; dy <= visibilityRadius + 1; dy += 1) {
+            for (let dx = -visibilityRadius - 1; dx <= visibilityRadius + 1; dx += 1) {
+                if (typeof this.invalidateRoadCacheAroundCell === 'function') {
+                    this.invalidateRoadCacheAroundCell(this.playerGridPos.col + dx, this.playerGridPos.row + dy);
+                }
+            }
+        }
+        this.invalidateOverlayRedraw();
     }
 
     private getFogState(col: number, row: number): FogState {
