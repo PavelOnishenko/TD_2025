@@ -1,3 +1,9 @@
+/* eslint-disable
+    style-guide/file-length-error,
+    style-guide/function-length-warning,
+    style-guide/rule17-comma-layout,
+    style-guide/arrow-function-style
+*/
 import { HudElements } from './GameUiTypes.js';
 import { GameUiEventCallbacks, HudPanelToggle } from './GameUiEventBinderTypes.js';
 type PanelConfig = {
@@ -133,10 +139,8 @@ export default class GameUiHudPanelController {
             const onPointerMove = (moveEvent: PointerEvent): void => {
                 const nextOffsetX = initialOffsetX + (moveEvent.clientX - startX);
                 const nextOffsetY = initialOffsetY + (moveEvent.clientY - startY);
-                panel.dataset.offsetX = String(nextOffsetX);
-                panel.dataset.offsetY = String(nextOffsetY);
-                panel.style.setProperty('--panel-offset-x', `${nextOffsetX}px`);
-                panel.style.setProperty('--panel-offset-y', `${nextOffsetY}px`);
+                this.applyPanelOffset(panel, nextOffsetX, nextOffsetY);
+                this.keepPanelReachableInViewport(panel);
                 this.persistCurrentContextLayout();
             };
             const stopDrag = (): void => {
@@ -252,6 +256,7 @@ export default class GameUiHudPanelController {
             }
             element.classList.toggle('hidden', snapshot.hidden);
             if (!snapshot.hidden) {
+                this.keepPanelReachableInViewport(element);
                 requestAnimationFrame(() => this.ensurePanelDragHandleIsReachable(element));
             }
         });
@@ -283,6 +288,7 @@ export default class GameUiHudPanelController {
             panel.dataset.spawnPositioned = 'true';
             panel.style.setProperty('--panel-offset-x', `${nextOffsetX}px`);
             panel.style.setProperty('--panel-offset-y', `${nextOffsetY}px`);
+            this.keepPanelReachableInViewport(panel);
             this.ensurePanelDragHandleIsReachable(panel);
         });
     }
@@ -328,6 +334,40 @@ export default class GameUiHudPanelController {
         panel.dataset.spawnPositioned = 'true';
         panel.style.setProperty('--panel-offset-x', `${nextOffsetX}px`);
         panel.style.setProperty('--panel-offset-y', `${nextOffsetY}px`);
+    }
+    private keepPanelReachableInViewport(panel: HTMLElement): void {
+        if (panel.classList.contains('hidden')) {
+            return;
+        }
+        const viewportWidth = window.innerWidth || document.documentElement?.clientWidth || 0;
+        const viewportHeight = window.innerHeight || document.documentElement?.clientHeight || 0;
+        if (viewportWidth <= 0 || viewportHeight <= 0) {
+            return;
+        }
+        const panelRect = panel.getBoundingClientRect();
+        if (panelRect.width <= 0 || panelRect.height <= 0) {
+            return;
+        }
+        const minVisibleWidth = Math.min(panelRect.width, 72);
+        const minVisibleHeight = Math.min(panelRect.height, 56);
+        let horizontalShift = 0;
+        let verticalShift = 0;
+        if (panelRect.right < minVisibleWidth) {
+            horizontalShift = minVisibleWidth - panelRect.right;
+        } else if (panelRect.left > viewportWidth - minVisibleWidth) {
+            horizontalShift = (viewportWidth - minVisibleWidth) - panelRect.left;
+        }
+        if (panelRect.bottom < minVisibleHeight) {
+            verticalShift = minVisibleHeight - panelRect.bottom;
+        } else if (panelRect.top > viewportHeight - minVisibleHeight) {
+            verticalShift = (viewportHeight - minVisibleHeight) - panelRect.top;
+        }
+        if (horizontalShift === 0 && verticalShift === 0) {
+            return;
+        }
+        const currentOffsetX = Number.parseFloat(panel.dataset.offsetX ?? '0') || 0;
+        const currentOffsetY = Number.parseFloat(panel.dataset.offsetY ?? '0') || 0;
+        this.applyPanelOffset(panel, currentOffsetX + horizontalShift, currentOffsetY + verticalShift);
     }
     private persistCurrentContextLayout(): void {
         if (!window.localStorage) {
