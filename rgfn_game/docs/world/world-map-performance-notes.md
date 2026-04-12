@@ -253,3 +253,37 @@ Proceed to renderer migration when **all** are true after the time-boxed optimiz
   - optionally enable auto-refresh,
   - inspect the live JSON snapshot directly in the panel.
 - This removes the need to keep DevTools console open while testing map movement.
+
+## April 12, 2026 field profiling update (user-provided zoom sweep)
+
+Real in-game profiler sweep across seven zoom levels showed a **mid-zoom frame-time cliff**:
+
+- Closest zoom: `drawTotal.avgMs ~4.58`, `terrainLayer.avgMs ~4.36`
+- 28% out: `drawTotal.avgMs ~5.54`, `terrainLayer.avgMs ~5.21`
+- 42% out: `drawTotal.avgMs ~7.24`, `terrainLayer.avgMs ~6.84`
+- 56% out: `drawTotal.avgMs ~6.83`, `terrainLayer.avgMs ~6.43`
+- 70% out: `drawTotal.avgMs ~10.00`, `terrainLayer.avgMs ~9.55`
+- 84% out: `drawTotal.avgMs ~16.98`, `terrainLayer.avgMs ~16.30` (**worst point**)
+- Farthest zoom: `drawTotal.avgMs ~9.18`, `terrainLayer.avgMs ~7.80`
+
+### Interpretation
+
+- `terrainLayer` dominates total frame cost in every sample.
+- The non-monotonic shape (84% is worse than farthest zoom) indicates a **detail-level transition issue**, not only raw visible-cell growth.
+- In practice, this matches the renderer behavior where the map may switch into `full` detail around that band, re-enabling expensive per-cell neighbor work without cache benefits.
+
+### Follow-up change implemented
+
+- Adjusted detail-level thresholds to keep more mid-zoom states in `medium` detail:
+  - previous medium condition: `cellSize <= 14 || visibleCellCount >= 1400`
+  - new medium condition: `cellSize <= 18 || visibleCellCount >= 900`
+- Goal: avoid entering `full` detail while visible window is still large enough to make per-cell neighbor sampling expensive.
+
+### What to verify next
+
+1. Re-run the same seven zoom checkpoints and compare:
+   - `drawTotal.avgMs`
+   - `terrainLayer.avgMs`
+   - `terrainLayer.maxMs`
+2. Ensure close zoom visuals still look sufficiently rich (full detail should still be used when zoomed in enough).
+3. If needed, tune thresholds one more time using the same profiler protocol rather than subjective feel.

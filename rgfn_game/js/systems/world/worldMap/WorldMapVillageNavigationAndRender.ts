@@ -162,7 +162,9 @@ export default class WorldMapVillageNavigationAndRender extends WorldMapMovement
         const visibleRows = Math.max(0, bounds.endRow - bounds.startRow + 1);
         const visibleCellCount = visibleColumns * visibleRows;
         if (this.grid.cellSize <= 10 || (!this.mapDisplayConfig.fogOfWar && visibleCellCount >= 2500)) {return 'low';}
-        if (this.grid.cellSize <= 14 || visibleCellCount >= 1400) {return 'medium';}
+        // Keep medium detail over a wider "mid-zoom" band to avoid expensive full-detail
+        // neighbor sampling on large visible windows (observed profiler spike around ~70-84% zoom).
+        if (this.grid.cellSize <= 18 || visibleCellCount >= 900) {return 'medium';}
         return 'full';
     }
 
