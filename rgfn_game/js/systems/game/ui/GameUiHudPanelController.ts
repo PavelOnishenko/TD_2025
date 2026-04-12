@@ -43,6 +43,7 @@ export default class GameUiHudPanelController {
     private readonly panelBorderDragThresholdPx = 8;
     private readonly panelResizeCornerPriorityPx = 18;
     private activeLayoutContext: LayoutContext = 'world';
+    private selectedPanelHiddenBeforeVillage: boolean | null = null;
     constructor(hudElements: HudElements, callbacks: GameUiEventCallbacks) {
         this.hudElements = hudElements;
         this.callbacks = callbacks;
@@ -247,6 +248,7 @@ export default class GameUiHudPanelController {
         const nextContext = this.getLayoutContextFromModeIndicator();
         if (nextContext === this.activeLayoutContext) {
             this.enforceVillagePanelVisibility(modeText);
+            this.enforceSelectedPanelVisibility(modeText);
             this.enforceCombatPanelVisibility(nextContext);
             return;
         }
@@ -254,6 +256,7 @@ export default class GameUiHudPanelController {
         this.activeLayoutContext = nextContext;
         this.restoreLayoutForCurrentContext();
         this.enforceVillagePanelVisibility(modeText);
+        this.enforceSelectedPanelVisibility(modeText);
         this.enforceCombatPanelVisibility(nextContext);
     }
     private getLayoutContextFromModeIndicator(): LayoutContext {
@@ -285,6 +288,7 @@ export default class GameUiHudPanelController {
                 return;
             }
             const shouldForceVillageVisibility = this.shouldForceVillagePanelsVisible() && this.isVillagePanel(layoutKey);
+            const shouldForceSelectedHidden = this.shouldForceSelectedPanelHidden() && this.isSelectedPanel(layoutKey);
             element.dataset.offsetX = String(snapshot.offsetX);
             element.dataset.offsetY = String(snapshot.offsetY);
             element.dataset.spawnPositioned = 'true';
@@ -297,13 +301,14 @@ export default class GameUiHudPanelController {
             } else {
                 element.style.removeProperty('z-index');
             }
-            element.classList.toggle('hidden', shouldForceVillageVisibility ? false : snapshot.hidden);
+            element.classList.toggle('hidden', shouldForceVillageVisibility ? false : shouldForceSelectedHidden ? true : snapshot.hidden);
             if (!element.classList.contains('hidden')) {
                 this.keepPanelReachableInViewport(element);
                 requestAnimationFrame(() => this.ensurePanelDragHandleIsReachable(element));
             }
         });
         this.enforceVillagePanelVisibility(this.hudElements.modeIndicator.textContent?.trim() ?? '');
+        this.enforceSelectedPanelVisibility(this.hudElements.modeIndicator.textContent?.trim() ?? '');
         this.enforceCombatPanelVisibility(this.activeLayoutContext);
     }
     private resetPanelToSpawn(panel: HTMLElement, panelIndex: number): void {
@@ -429,11 +434,14 @@ export default class GameUiHudPanelController {
             const zIndex = Number.parseInt(element.style.zIndex || '', 10);
             const isCombatPanel = layoutKey === GameUiHudPanelController.COMBAT_PANEL_PERSISTENCE_KEY;
             const isForcedVillagePanel = this.shouldForceVillagePanelsVisible() && this.isVillagePanel(layoutKey);
+            const isForcedSelectedPanel = this.shouldForceSelectedPanelHidden() && this.isSelectedPanel(layoutKey);
             const hidden = isCombatPanel
                 ? this.activeLayoutContext !== 'battle'
                 : isForcedVillagePanel
                     ? false
-                    : element.classList.contains('hidden');
+                    : isForcedSelectedPanel
+                        ? (this.selectedPanelHiddenBeforeVillage ?? element.classList.contains('hidden'))
+                        : element.classList.contains('hidden');
             layout[layoutKey] = {
                 offsetX,
                 offsetY,
@@ -473,6 +481,29 @@ export default class GameUiHudPanelController {
         return context === 'battle'
             ? GameUiHudPanelController.BATTLE_LAYOUT_STORAGE_KEY
             : GameUiHudPanelController.WORLD_LAYOUT_STORAGE_KEY;
+    }
+
+    private isSelectedPanel(layoutKey: string): boolean {
+        return layoutKey === 'selected';
+    }
+    private shouldForceSelectedPanelHidden(): boolean {
+        return (this.hudElements.modeIndicator.textContent?.trim() ?? '') === GameUiHudPanelController.MODE_TEXT.village;
+    }
+    private enforceSelectedPanelVisibility(modeText: string): void {
+        if (modeText === GameUiHudPanelController.MODE_TEXT.village) {
+            if (this.selectedPanelHiddenBeforeVillage === null) {
+                this.selectedPanelHiddenBeforeVillage = this.hudElements.selectedPanel.classList.contains('hidden');
+            }
+            this.hudElements.selectedPanel.classList.add('hidden');
+            this.hudElements.toggleSelectedPanelBtn.classList.remove('active');
+            return;
+        }
+        if (this.selectedPanelHiddenBeforeVillage === null) {
+            return;
+        }
+        this.hudElements.selectedPanel.classList.toggle('hidden', this.selectedPanelHiddenBeforeVillage);
+        this.hudElements.toggleSelectedPanelBtn.classList.toggle('active', !this.selectedPanelHiddenBeforeVillage);
+        this.selectedPanelHiddenBeforeVillage = null;
     }
     private isVillagePanel(layoutKey: string): boolean {
         return layoutKey === GameUiHudPanelController.VILLAGE_ACTIONS_PANEL_PERSISTENCE_KEY
