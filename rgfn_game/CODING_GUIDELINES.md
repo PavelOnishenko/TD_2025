@@ -237,6 +237,12 @@ Why: several enemy archetypes reuse shared classes (for example Ninja can be imp
 - On each panel drag/toggle/style change, the active context layout is immediately saved.
 - On mode switches, the previous context is saved first, then the target context is restored.
 - If no saved layout exists for the target context, panels reset to default spawn positions instead of reusing positions from the previous mode.
+- Draggable HUD windows support two drag-entry surfaces:
+  - The panel title bar (`.panel-drag-handle`), as before.
+  - Any edge border strip of the panel (top/right/bottom/left), so partially off-screen windows can still be recovered.
+- Bottom-right resize affordance remains the highest-priority interaction area:
+  - The resize corner does **not** start drag handling.
+  - Native CSS `resize: both` behavior should continue to work unchanged on desktop panels.
 
 ### Pattern 1: Canvas Drawing
 
