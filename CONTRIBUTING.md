@@ -11,6 +11,27 @@ npm test
 
 If lint reports any errors, fix them immediately and rerun lint before publishing the result.
 
+## 🚨 Super Important Rule: Never suppress linter diagnostics
+
+Lint suppressions are prohibited in this repository. This includes any line-level, block-level, file-level, or config-level disabling of linter warnings/errors/rules.
+
+Examples of prohibited patterns (non-exhaustive):
+
+- `eslint-disable`
+- `eslint-disable-next-line`
+- `eslint-disable-line`
+- `@ts-ignore` used to bypass lint/style signals
+- Any equivalent "disable rule" comment for style-guide rules
+
+From now on, when a suppression line is encountered:
+
+1. Remove the suppression line.
+2. Run lint.
+3. Fix the actual reported problem by changing code (refactor/extract/reformat/rename/simplify), not by muting diagnostics.
+4. Re-run lint and tests until clean.
+
+This applies to all tasks and all touched files. Code is not considered done if suppressions remain or if lint warnings/errors are left unresolved in touched code.
+
 Detailed policy and Style Guide mapping: `docs/TypeScript_Linter_Workflow.md`.
 
 ## Game-scoped linting (RGFN-only tasks)
