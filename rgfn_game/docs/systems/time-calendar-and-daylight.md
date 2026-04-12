@@ -101,6 +101,15 @@ Village actions now advance time, including at least:
 - Day/night world tint: `js/systems/world/worldMap/WorldMapVillageNavigationAndRender.ts`
 - Save snapshot extension: `js/game/runtime/GamePersistenceRuntime.ts`
 
+## Lore calendar popover visibility guarantee
+
+- The calendar popover is explicitly hidden by default in CSS (`display: none`) and only becomes visible in the `:popover-open` state.
+- This prevents accidental always-visible rendering in browsers that might otherwise paint the `<section>` as a normal block element.
+- Automated regression checks cover:
+  - Lore button + popover target wiring in `index.html`.
+  - required CSS visibility rules for hidden-by-default and open-state display.
+  - test file: `rgfn_game/test/ui/loreCalendarPopover.test.js`.
+
 ## Practical follow-up ideas
 
 1. Add explicit **combat time ticks** per turn/action for full parity with "everything costs time".

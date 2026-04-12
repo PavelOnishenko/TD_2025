@@ -616,6 +616,7 @@ h1 {
 }
 
 .lore-calendar-popover {
+    display: none;
     width: min(380px, calc(100vw - 32px));
     max-height: min(72vh, 640px);
     margin: auto;
@@ -624,6 +625,10 @@ h1 {
     border: 2px solid var(--color-secondary-accent);
     box-shadow: 0 14px 36px color-mix(in srgb, var(--color-panel-shadow) 46%, transparent);
     border-radius: 10px;
+}
+
+.lore-calendar-popover:popover-open {
+    display: flex;
 }
 
 .lore-calendar-popover::backdrop {
