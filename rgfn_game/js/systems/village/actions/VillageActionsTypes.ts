@@ -10,6 +10,7 @@ export type VillageUI = {
     actions: HTMLElement;
     openDialogueBtn: HTMLButtonElement;
     sleepRoomBtn: HTMLButtonElement;
+    villageWaitBtn: HTMLButtonElement;
     dialogueModal: HTMLElement;
     dialogueCloseBtn: HTMLButtonElement;
     dialogueSelectedNpc: HTMLElement;

@@ -57,6 +57,7 @@ export class VillageUiModel {
     public skipBtn!: HTMLButtonElement;
     public doctorHealBtn!: HTMLButtonElement;
     public innMealBtn!: HTMLButtonElement;
+    public villageWaitBtn!: HTMLButtonElement;
     public buyOffer1Btn!: HTMLButtonElement;
     public buyOffer2Btn!: HTMLButtonElement;
     public buyOffer3Btn!: HTMLButtonElement;

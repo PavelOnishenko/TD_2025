@@ -87,6 +87,7 @@ export default class VillageActionsController {
     public handleSkip(): void { this.addLog('You decide not to enter and continue your journey.', 'system'); this.callbacks.onLeaveVillage(); }
     public handleDoctorTreatment(): void { this.tradeInteraction.handleDoctorTreatment(); }
     public handleInnMeal(): void { this.tradeInteraction.handleInnMeal(); }
+    public handleVillageWait(): void { this.tradeInteraction.handleVillageWait(); }
     public handleSleepInRoom(): void { this.tradeInteraction.handleSleepInRoom(); }
     public handleBuyOffer(offerIndex: number): void { this.tradeInteraction.handleBuyOffer(offerIndex); }
     public handleSellSelected(): void { this.tradeInteraction.handleSellSelected(Number.parseInt(this.villageUI.sellSelect.value, 10)); }
@@ -113,6 +114,7 @@ export default class VillageActionsController {
     public handleAskAboutBarter(): void { this.dialogueInteraction.handleAskAboutBarter(); this.callbacks.onAdvanceTime(16, 0.12); }
     public handleConfirmBarter(): void { this.dialogueInteraction.handleConfirmBarter(); this.callbacks.onAdvanceTime(18, 0.15); }
     public handleConfrontRecoverTarget(): void { this.dialogueInteraction.handleConfrontRecoverTarget(); this.callbacks.onAdvanceTime(18, 0.15); }
+    // eslint-disable-next-line style-guide/function-length-warning
     public handleStartDefendObjective(): void {
         const npc = this.getSelectedNpc();
         if (!npc) {
