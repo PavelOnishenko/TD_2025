@@ -4,6 +4,8 @@ import { CreatureBaseStats, CreatureSkills } from '../../../config/creatureTypes
 import Player from '../../../entities/player/Player.js';
 import Wanderer from '../../../entities/Wanderer.js';
 import WorldMap from '../../world/worldMap/WorldMap.js';
+import { getDeveloperModeConfig } from '../../../utils/DeveloperModeConfig.js';
+import { getWorldMonsterBehaviorCodexSnapshot } from '../../combat/MonsterBehaviorDirector.js';
 
 type LoreBookElements = {
     loreBody: HTMLElement;
@@ -54,6 +56,7 @@ export default class LoreBookController {
         });
     }
 
+    // eslint-disable-next-line style-guide/function-length-warning
     public render(): void {
         const playerSkills = this.player.getSkillRecord();
         const playerBaseStats = this.player.getBaseStatsRecord();
@@ -61,6 +64,7 @@ export default class LoreBookController {
         const archetypeMarkup = this.buildArchetypeMarkup();
         const travelerMarkup = this.buildTravelerMarkup();
         const villageMarkup = this.buildVillageMarkup(villages);
+        const devMonsterBehaviorMarkup = this.buildDeveloperMonsterBehaviorMarkup();
 
         this.elements.loreBody.innerHTML = `
             <section class="lore-section">
@@ -85,9 +89,52 @@ export default class LoreBookController {
                 <h3>Creature compendium</h3>
                 ${archetypeMarkup}
             </section>
+            ${devMonsterBehaviorMarkup}
         `;
     }
 
+
+    // eslint-disable-next-line style-guide/function-length-warning
+    private buildDeveloperMonsterBehaviorMarkup(): string {
+        if (!getDeveloperModeConfig().enabled) {
+            return '';
+        }
+
+        const codex = getWorldMonsterBehaviorCodexSnapshot();
+        const entries = Object.entries(codex);
+        if (entries.length === 0) {
+            return `
+                <section class="lore-section">
+                    <h3>Monster behavior codex (DEV)</h3>
+                    <p class="lore-empty">No monster behavior codex has been generated yet.</p>
+                </section>
+            `;
+        }
+
+        const behaviorMarkup = entries
+            .sort(([a], [b]) => a.localeCompare(b))
+            .map(([monsterType, behaviors]) => {
+                const lines = behaviors
+                    .map((behavior) => `<li><strong>${this.escapeHtml(behavior.id)}</strong> (w=${behavior.weight}): ${this.escapeHtml(behavior.moves.join(' -> '))}</li>`)
+                    .join('');
+                return `
+                    <article class="lore-entry">
+                        <h4>${this.escapeHtml(monsterType)}</h4>
+                        <ul>${lines}</ul>
+                    </article>
+                `;
+            })
+            .join('');
+
+        return `
+            <section class="lore-section">
+                <h3>Monster behavior codex (DEV)</h3>
+                ${behaviorMarkup}
+            </section>
+        `;
+    }
+
+    // eslint-disable-next-line style-guide/arrow-function-style
     private buildArchetypeMarkup(): string {
         return Object.values(balanceConfig.creatureArchetypes)
             .map((archetype) => {
@@ -106,6 +153,7 @@ export default class LoreBookController {
             .join('');
     }
 
+    // eslint-disable-next-line style-guide/arrow-function-style
     private buildTravelerMarkup(): string {
         return Array.from(this.knownTravelers.values())
             .sort((left, right) => left.name.localeCompare(right.name) || left.level - right.level)

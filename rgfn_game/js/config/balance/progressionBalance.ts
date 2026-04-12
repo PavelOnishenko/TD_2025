@@ -22,5 +22,21 @@ export const combatBalance = {
     blockDamageReduction: 0.5,
     successfulDodgeDamageMultiplier: 1.5,
     enemyDirectionalActionWeights: { AttackLeft: 2, AttackCenter: 3, AttackRight: 2, Block: 2, DodgeLeft: 1, DodgeRight: 1 },
+    enemyBehaviorGeneration: {
+        minBehaviorsPerMonsterType: 2,
+        maxBehaviorsPerMonsterType: 6,
+        minMovesPerBehavior: 1,
+        maxMovesPerBehavior: 5,
+        behaviorWeightMin: 1,
+        behaviorWeightMax: 4,
+        monsterMovePools: {
+            skeleton: ['AttackLeft', 'AttackCenter', 'AttackRight', 'Block', 'DodgeLeft', 'DodgeRight'],
+            zombie: ['AttackLeft', 'AttackCenter', 'AttackRight', 'Block'],
+            ninja: ['AttackLeft', 'AttackCenter', 'AttackRight', 'DodgeLeft', 'DodgeRight'],
+            darkKnight: ['AttackLeft', 'AttackCenter', 'AttackRight', 'Block', 'Block'],
+            dragon: ['AttackCenter', 'AttackLeft', 'AttackRight', 'Block'],
+            human: ['AttackLeft', 'AttackCenter', 'AttackRight', 'Block', 'DodgeLeft', 'DodgeRight'],
+        },
+    },
     spellRanges: { slow: 4 },
 };

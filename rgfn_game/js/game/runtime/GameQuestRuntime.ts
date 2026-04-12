@@ -10,6 +10,7 @@ import Skeleton, { MonsterMutationTrait } from '../../entities/Skeleton.js';
 import { balanceConfig } from '../../config/balance/balanceConfig.js';
 import { getDeveloperModeConfig } from '../../utils/DeveloperModeConfig.js';
 import { collectKnownQuestNodes } from '../../systems/quest/QuestKnowledge.js';
+import { assignMonsterBehaviorPool } from '../../systems/combat/MonsterBehaviorDirector.js';
 
 type QuestContractsReadyPayload = {
     barterContracts: Array<{
@@ -181,7 +182,7 @@ export default class GameQuestRuntime {
 
         const profile = this.ensureRecoverEnemyProfile(matchedRecover);
         this.pendingRecoverBattleNodeId = matchedNode.id;
-        return { status: 'started', enemies: [new Skeleton(0, 0, this.toRecoverEnemyConfig(matchedRecover.personName, profile))], itemName: matchedRecover.itemName };
+        return { status: 'started', enemies: [this.createQuestEnemy(this.toRecoverEnemyConfig(matchedRecover.personName, profile))], itemName: matchedRecover.itemName };
     }
 
     public resolveRecoverBattle(result: 'victory' | 'fled', worldMap: WorldMap, player: { addItemToInventory: (item: Item) => boolean }): string[] {
@@ -324,10 +325,17 @@ export default class GameQuestRuntime {
             }
             const spawnCount = Math.max(1, Math.min(3, objective.remainingKills));
             const mutations = objective.mutations.filter((value): value is MonsterMutationTrait => ['feral strength', 'void armor', 'acid blood', 'blink speed', 'barbed hide', 'grave intellect'].includes(value));
-            const enemies = Array.from({ length: spawnCount }, () => new Skeleton(0, 0, { ...balanceConfig.enemies.skeleton, name: objective.targetName, mutations }));
+            const enemies = Array.from({ length: spawnCount }, () => this.createQuestEnemy({ ...balanceConfig.enemies.skeleton, name: objective.targetName, mutations }));
             return { enemies, hint: `Scouts report ${objective.targetName} tracks near ${objective.villageName} (${hint.direction ?? 'nearby'}).` };
         }
         return null;
+    }
+
+
+    private createQuestEnemy(config: ConstructorParameters<typeof Skeleton>[2]): Skeleton {
+        const enemy = new Skeleton(0, 0, config);
+        assignMonsterBehaviorPool(enemy);
+        return enemy;
     }
 
     private resolveEscortArrival(locationName: string): boolean {

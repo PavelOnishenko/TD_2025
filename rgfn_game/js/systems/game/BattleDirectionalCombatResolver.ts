@@ -1,6 +1,5 @@
 import Player from '../../entities/player/Player.js';
 import Skeleton from '../../entities/Skeleton.js';
-import { balanceConfig } from '../../config/balance/balanceConfig.js';
 import { CombatMove, getMoveLabel, isAttackMove, resolveDirectionalCombatExchange } from '../combat/DirectionalCombat.js';
 
 type DirectionalCombatCallbacks = {
@@ -18,8 +17,9 @@ export default class BattleDirectionalCombatResolver {
         this.callbacks = callbacks;
     }
 
+    // eslint-disable-next-line style-guide/function-length-warning
     public performExchange(playerMove: CombatMove, target: Skeleton): void {
-        const enemyMove = this.rollEnemyDirectionalMove();
+        const enemyMove = target.rollDirectionalCombatMove();
         const exchange = resolveDirectionalCombatExchange({
             actorName: 'Player',
             opponentName: target.name,
@@ -76,23 +76,5 @@ export default class BattleDirectionalCombatResolver {
         } else if (isAttackMove(enemyMove)) {
             this.callbacks.onAddBattleLog(`${target.name}'s ${getMoveLabel(enemyMove)} fails to deal damage.`, 'system');
         }
-    }
-
-    private rollEnemyDirectionalMove(): CombatMove {
-        const entries = Object.entries(balanceConfig.combat.enemyDirectionalActionWeights) as [CombatMove, number][];
-        const totalWeight = entries.reduce((sum, [, weight]) => sum + Math.max(0, weight), 0);
-        if (totalWeight <= 0) {
-            return 'AttackCenter';
-        }
-
-        let roll = Math.random() * totalWeight;
-        for (const [move, weight] of entries) {
-            roll -= Math.max(0, weight);
-            if (roll <= 0) {
-                return move;
-            }
-        }
-
-        return 'AttackCenter';
     }
 }

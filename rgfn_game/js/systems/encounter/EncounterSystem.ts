@@ -67,7 +67,7 @@ export default class EncounterSystem {
     public generateMonsterBattleEncounter(): { type: 'battle'; enemies: Skeleton[] } {
         const encounter = this.encounterResolver.generateEncounter(this.itemDiscoveryChance, {
             rollEncounterEventType: () => 'monster',
-            rollEncounterType: () => this.rollEncounterType(),
+            rollEncounterType: () => this.rollNonPassingMonsterEncounterType(),
         }, { canDiscoverItems: false, enabledEventTypes: ['monster'] });
 
         if (encounter.type === 'battle') {
@@ -151,6 +151,18 @@ export default class EncounterSystem {
         }
 
         return entries[entries.length - 1].type;
+    }
+
+
+    private rollNonPassingMonsterEncounterType(): string {
+        for (let attempt = 0; attempt < 8; attempt++) {
+            const encounterType = this.rollEncounterType();
+            if (encounterType !== 'dragon') {
+                return encounterType;
+            }
+        }
+
+        return 'skeleton';
     }
 
     private rollEncounterType(): string {
