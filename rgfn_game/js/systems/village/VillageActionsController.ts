@@ -1,4 +1,4 @@
-/* eslint-disable style-guide/file-length-warning */
+/* eslint-disable style-guide/file-length-error */
 import Player from '../../entities/player/Player.js';
 import VillageDialogueEngine, { VillageNpcProfile } from './VillageDialogueEngine.js';
 import VillageBarterService from './actions/VillageBarterService.js';
@@ -53,7 +53,12 @@ export default class VillageActionsController {
         this.escortContracts = contracts;
         this.refreshDialogueTargetOptions();
     };
-    public exitVillage(): void { this.villageUI.sidebar.classList.add('hidden'); this.closeDialogueWindow(); }
+    public exitVillage(): void {
+        this.villageUI.sidebar.classList.add('hidden');
+        this.villageUI.actions.classList.add('hidden');
+        this.villageUI.rumorsPanel.classList.add('hidden');
+        this.closeDialogueWindow();
+    }
     public handleEnter(villageName: string): void {
         this.addLog(`You enter ${villageName} market square.`, 'system');
         this.addLog('This village offers one potion type and three random item kinds.', 'system');
@@ -126,9 +131,10 @@ export default class VillageActionsController {
 
     private prepareVillageUiForEntry(villageName: string): void {
         this.villageUI.title.textContent = `Village: ${villageName}`;
-        this.villageUI.sidebar.classList.remove('hidden');
+        this.villageUI.sidebar.classList.add('hidden');
         this.villageUI.prompt.classList.add('hidden');
         this.villageUI.actions.classList.remove('hidden');
+        this.villageUI.rumorsPanel.classList.remove('hidden');
         this.closeDialogueWindow();
         this.villageUI.dialogueLog.innerHTML = '';
         this.addLog(`You arrive at ${villageName}.`, 'system');

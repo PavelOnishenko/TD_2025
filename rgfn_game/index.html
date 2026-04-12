@@ -266,43 +266,43 @@
                             <button id="spell-arcane-lance-btn" class="action-btn">Arcane Lance</button>
                         </div>
                     </div>
-                    <div id="village-sidebar" class="overlay-panel hidden">
+                    <div id="village-sidebar" class="hidden"></div>
+                    <div id="village-actions" class="overlay-panel hidden">
                         <h2 id="village-title">Village</h2>
-                        <div id="village-prompt">
+                        <div id="village-prompt" class="hidden">
                             <p>You found a village. Enter?</p>
                             <div id="village-entry-actions">
                                 <button id="village-enter-btn" class="action-btn">Enter</button>
                                 <button id="village-skip-btn" class="action-btn">Continue</button>
                             </div>
                         </div>
-                        <div id="village-actions" class="hidden">
-                            <p><strong>Village Actions:</strong></p>
-                            <div id="village-action-buttons">
-                                <button id="village-doctor-heal-btn" class="action-btn">Doctor treatment (4g)</button>
-                                <button id="village-inn-meal-btn" class="action-btn">Inn meal (2g)</button>
-                                <div class="village-section">
-                                    <p class="village-section-title">Village stock (random quality)</p>
-                                    <div id="village-stock-buttons">
-                                        <button id="village-buy-offer-1-btn" class="action-btn">Offer 1</button>
-                                        <button id="village-buy-offer-2-btn" class="action-btn">Offer 2</button>
-                                        <button id="village-buy-offer-3-btn" class="action-btn">Offer 3</button>
-                                        <button id="village-buy-offer-4-btn" class="action-btn">Offer 4</button>
-                                    </div>
+                        <div id="village-action-buttons">
+                            <button id="village-doctor-heal-btn" class="action-btn">Doctor treatment (4g)</button>
+                            <button id="village-inn-meal-btn" class="action-btn">Inn meal (2g)</button>
+                            <div class="village-section">
+                                <p class="village-section-title">Village stock (random quality)</p>
+                                <div id="village-stock-buttons">
+                                    <button id="village-buy-offer-1-btn" class="action-btn">Offer 1</button>
+                                    <button id="village-buy-offer-2-btn" class="action-btn">Offer 2</button>
+                                    <button id="village-buy-offer-3-btn" class="action-btn">Offer 3</button>
+                                    <button id="village-buy-offer-4-btn" class="action-btn">Offer 4</button>
                                 </div>
-                                <div class="village-section">
-                                    <p class="village-section-title">Sell inventory item</p>
-                                    <select id="village-sell-select" class="village-sell-select"></select>
-                                    <button id="village-sell-selected-btn" class="action-btn">Sell selected</button>
-                                </div>
-                                <div id="village-rumors-section" class="village-section village-floating-rumors">
-                                    <p class="village-section-title">Village rumors</p>
-                                    <p id="village-npc-title" class="village-npc-title">Choose someone to talk to</p>
-                                    <div id="village-npc-list" class="village-npc-list"></div>
-                                    <button id="village-open-dialogue-btn" class="action-btn">Open NPC dialogue window</button>
-                                    <button id="village-sleep-room-btn" class="action-btn">Sleep in room</button>
-                                </div>
-                                <button id="village-leave-btn" class="action-btn">Leave</button>
                             </div>
+                            <div class="village-section">
+                                <p class="village-section-title">Sell inventory item</p>
+                                <select id="village-sell-select" class="village-sell-select"></select>
+                                <button id="village-sell-selected-btn" class="action-btn">Sell selected</button>
+                            </div>
+                            <button id="village-leave-btn" class="action-btn">Leave</button>
+                        </div>
+                    </div>
+                    <div id="village-rumors-section" class="overlay-panel hidden">
+                        <h2>Village Rumors</h2>
+                        <div class="village-section">
+                            <p id="village-npc-title" class="village-npc-title">Choose someone to talk to</p>
+                            <div id="village-npc-list" class="village-npc-list"></div>
+                            <button id="village-open-dialogue-btn" class="action-btn">Open NPC dialogue window</button>
+                            <button id="village-sleep-room-btn" class="action-btn">Sleep in room</button>
                         </div>
                     </div>
                 </div>

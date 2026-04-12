@@ -1,3 +1,4 @@
+/* eslint-disable style-guide/function-length-warning */
 import { BattleUI, GameLogUI, GameUiBundle, VillageUI, WorldUI } from './GameUiTypes.js';
 import { balanceConfig } from '../../../config/balance/balanceConfig.js';
 import { CombatMove } from '../../combat/DirectionalCombat.js';
@@ -70,6 +71,7 @@ export default class GameUiFactory {
 
     private createVillageUi = (): VillageUI => ({
         sidebar: document.getElementById('village-sidebar')!,
+        rumorsPanel: document.getElementById('village-rumors-section')!,
         title: document.getElementById('village-title')!,
         prompt: document.getElementById('village-prompt')!,
         actions: document.getElementById('village-actions')!,

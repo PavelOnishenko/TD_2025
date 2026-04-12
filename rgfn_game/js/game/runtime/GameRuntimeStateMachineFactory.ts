@@ -9,7 +9,14 @@ import { GameFacade, UIBundle } from '../GameFacade.js';
 export default class GameRuntimeStateMachineFactory {
     public static readonly create = (game: GameFacade, ui: UIBundle, worldMap: WorldMap, villageCoordinator: GameVillageCoordinator): StateMachine =>
         new GameModeStateMachine<{ enemies: Skeleton[]; terrainType: TerrainType }>({
-            onEnterWorld: () => game.worldModeController.enterWorldMode(ui.hudElements.modeIndicator, ui.worldUI.sidebar, ui.battleUI.sidebar, ui.villageUI.sidebar),
+            onEnterWorld: () => game.worldModeController.enterWorldMode(
+                ui.hudElements.modeIndicator,
+                ui.worldUI.sidebar,
+                ui.battleUI.sidebar,
+                ui.villageUI.sidebar,
+                ui.villageUI.actions,
+                ui.villageUI.rumorsPanel,
+            ),
             onUpdateWorld: () => game.worldModeController.updateWorldMode(),
             onEnterBattle: (battleData) => game.battleCoordinator.enterBattleMode(battleData.enemies, battleData.terrainType),
             onUpdateBattle: () => game.battleCoordinator.updateBattleMode(),

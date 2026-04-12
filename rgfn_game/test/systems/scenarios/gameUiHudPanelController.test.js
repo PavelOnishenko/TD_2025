@@ -281,6 +281,42 @@ test('GameUiHudPanelController repositions off-screen village panels back into v
   }
 });
 
+test('GameUiHudPanelController forces village action and rumors panels visible in Village mode', () => {
+  const originalWindow = global.window;
+  const originalDocument = global.document;
+  const originalMutationObserver = global.MutationObserver;
+  const originalRequestAnimationFrame = global.requestAnimationFrame;
+
+  const storage = createLocalStorage();
+  storage.setItem(WORLD_KEY, JSON.stringify({
+    villageActions: { offsetX: 12, offsetY: 22, width: null, height: null, hidden: true, zIndex: null },
+    villageRumors: { offsetX: 24, offsetY: 44, width: null, height: null, hidden: true, zIndex: null },
+  }));
+
+  global.window = { localStorage: storage, innerWidth: 1280, innerHeight: 720 };
+  const hudElements = createHudElements();
+  hudElements.modeIndicator.textContent = 'Village';
+  global.document = createMockDocument(hudElements);
+  global.requestAnimationFrame = (callback) => callback();
+  global.MutationObserver = class {
+    constructor() {}
+    observe() {}
+  };
+
+  try {
+    const controller = new GameUiHudPanelController(hudElements, { onTogglePanel() {} });
+    controller.bind();
+
+    assert.equal(hudElements.villageActionsPanel.classList.contains('hidden'), false);
+    assert.equal(hudElements.villageRumorsPanel.classList.contains('hidden'), false);
+  } finally {
+    global.window = originalWindow;
+    global.document = originalDocument;
+    global.MutationObserver = originalMutationObserver;
+    global.requestAnimationFrame = originalRequestAnimationFrame;
+  }
+});
+
 test('GameUiHudPanelController keeps combat actions panel hidden outside battle mode', () => {
   const originalWindow = global.window;
   const originalDocument = global.document;

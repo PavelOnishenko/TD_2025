@@ -69,6 +69,7 @@ function createElement(tag = 'div') {
 function createVillageUi() {
   return {
     sidebar: createElement(),
+    rumorsPanel: createElement(),
     title: createElement(),
     prompt: createElement(),
     actions: createElement(),
@@ -183,6 +184,26 @@ test('VillageActionsController keeps village rumor NPC roster stable across re-e
 
   assert.deepEqual(secondRoster, firstRoster);
   assert.equal(createNpcRosterCalls, 1);
+}));
+
+test('VillageActionsController shows village actions + rumors on entry and hides both on exit', () => withDocumentStub(() => {
+  const villageUI = createVillageUi();
+  const controller = new VillageActionsController(createPlayerStub(), villageUI, createElement(), {
+    onUpdateHUD: () => {},
+    onAdvanceTime: () => {},
+    onLeaveVillage: () => {},
+    getVillageDirectionHint: (settlementName) => ({ settlementName, exists: false }),
+    onVillageBarterCompleted: () => {},
+  });
+
+  controller.enterVillage('Mossbrook');
+  assert.equal(villageUI.actions.classList.contains('hidden'), false);
+  assert.equal(villageUI.rumorsPanel.classList.contains('hidden'), false);
+  assert.equal(villageUI.sidebar.classList.contains('hidden'), true);
+
+  controller.exitVillage();
+  assert.equal(villageUI.actions.classList.contains('hidden'), true);
+  assert.equal(villageUI.rumorsPanel.classList.contains('hidden'), true);
 }));
 
 test('VillageActionsController stores separate rumor rosters for different villages', () => withDocumentStub(() => {

@@ -15,9 +15,14 @@
   2. A stored panel layout is restored.
   3. A panel is reset to spawn.
 - The guard ensures at least a minimal visible area remains inside the viewport and nudges the panel back if it is fully outside horizontal/vertical bounds.
+- Village runtime now treats **`#village-actions` and `#village-rumors-section` as primary panels** and does not rely on the old `#village-sidebar` shell for player interactions.
+- The previous empty `#village-sidebar` visual container remains hidden and no longer serves as an interactive panel.
+- Entering village mode now force-shows both required panels and leaving village/battle/world mode force-hides both panels, so mode transitions cannot strand controls in a hidden state.
 
 ## Regression test coverage
 - Added scenario test that preloads world layout storage with extreme negative offsets for `villageActions` and verifies bind/restore nudges the panel back toward visible coordinates.
+- Added scenario test that preloads hidden state for village panels and verifies Village mode force-enables both panels.
+- Added village actions controller test verifying entry shows both village panels and exit hides both.
 - Existing layout persistence tests continue to validate context-specific layout storage and hidden-state behavior.
 
 ## Lessons learned / prevention checklist
@@ -31,6 +36,8 @@
    - world -> village
    - battle -> world
    - resolution/window-size changes followed by reload
+5. **Do not route critical village interactions through decorative wrappers**.
+   - A visual shell panel with no actions can become a false-positive \"village UI is present\" signal; critical controls must be direct mode-owned panels.
 
 ## Follow-up ideas
 - Add optional `Reset HUD layout` action in menu to clear persisted layout keys.
