@@ -52,6 +52,7 @@ const createVillageActionsController = (
     onLeaveVillage: () => game.stateMachine.transition(MODES.WORLD_MAP),
     getVillageDirectionHint: (name: string) => worldMap.getVillageDirectionHintFromPlayer(name),
     getKnownSettlementNames: () => worldMap.getKnownSettlementNames(),
+    getKnownQuestSettlementNames: () => game.questRuntime.getKnownQuestLocationNames(),
     onVillageBarterCompleted: (trader, item, village) => game.onVillageBarterCompleted(trader, item, village),
     onTryRecruitEscort: (personName, villageName) => game.onTryRecruitEscort(personName, villageName),
     onRevealRecoverHolder: (villageName, npcName) => game.onRevealRecoverHolder(villageName, npcName),
@@ -59,6 +60,7 @@ const createVillageActionsController = (
     onStartBattle: (enemies) => game.stateMachine.transition(MODES.BATTLE, { enemies, terrainType: 'grass' }),
 });
 
+// eslint-disable-next-line style-guide/function-length-warning
 export function createVillageRuntime(
     game: GameFacade,
     ui: RuntimeUi,
@@ -80,6 +82,7 @@ export function createVillageRuntime(
     return { villageActionsController, villageCoordinator, stateMachine };
 }
 
+// eslint-disable-next-line style-guide/function-length-warning
 export const createHudCoordinator = (
     player: Player,
     ui: RuntimeUi,

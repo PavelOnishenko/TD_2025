@@ -28,6 +28,7 @@ export default class GameQuestRuntime {
     public questProgressTracker: QuestProgressTracker | null = null;
     private onContractsUpdated: ((payload: QuestContractsReadyPayload) => void) | null = null;
     private pendingRecoverBattleNodeId: string | null = null;
+    private worldMap: WorldMap | null = null;
 
     public async initialize(
         questGenerator: QuestGenerator,
@@ -42,8 +43,9 @@ export default class GameQuestRuntime {
         this.questUiController = questUiController;
         this.questProgressTracker = new QuestProgressTracker(quest);
         this.onContractsUpdated = onContractsReady;
+        this.worldMap = worldMap;
         onContractsReady({ barterContracts: this.collectBarterContracts(quest), escortContracts: this.collectEscortContracts(quest) });
-        this.registerQuestLocations(worldMap, quest);
+        this.syncKnownQuestLocations();
         questUiController.renderQuest(quest);
         if (!savedQuest && getDeveloperModeConfig().questIntroEnabled) {
             questUiController.showIntro();
@@ -62,6 +64,13 @@ export default class GameQuestRuntime {
         this.questUiController.renderQuest(this.activeQuest);
         this.refreshContracts();
         return true;
+    }
+
+    public getKnownQuestLocationNames(): string[] {
+        if (!this.activeQuest) {
+            return [];
+        }
+        return this.collectKnownQuestLocationNames(this.activeQuest);
     }
 
     public recruitEscort(personName: string, villageName: string): 'joined' | 'inactive' | 'already-joined' | 'not-available' {
@@ -348,13 +357,29 @@ export default class GameQuestRuntime {
         return changed;
     }
 
-    private registerQuestLocations(worldMap: WorldMap, quest: QuestNode): void {
-        for (const entity of quest.entities) {
-            if (entity.type === 'location') {
-                worldMap.registerNamedLocation(entity.text);
-            }
+    private syncKnownQuestLocations(): void {
+        if (!this.worldMap || !this.activeQuest) {
+            return;
         }
-        quest.children.forEach((child) => this.registerQuestLocations(worldMap, child));
+        this.collectKnownQuestLocationNames(this.activeQuest)
+            .forEach((locationName) => this.worldMap?.registerNamedLocation(locationName));
+    }
+
+    private collectKnownQuestLocationNames(quest: QuestNode): string[] {
+        const knownNodes = collectKnownQuestNodes(quest);
+        const locationNames = new Set<string>();
+        const visit = (node: QuestNode): void => {
+            if (knownNodes.has(node)) {
+                node.entities
+                    .filter((entity) => entity.type === 'location')
+                    .map((entity) => entity.text.trim())
+                    .filter((name) => name.length > 0)
+                    .forEach((name) => locationNames.add(name));
+            }
+            node.children.forEach((child) => visit(child));
+        };
+        visit(quest);
+        return Array.from(locationNames).sort((left, right) => left.localeCompare(right));
     }
 
     private collectBarterContracts(quest: QuestNode): Array<{ traderName: string; itemName: string; sourceVillage?: string; destinationVillage?: string; contractType: 'barter' | 'deliver' | 'recover' }> {
@@ -412,6 +437,7 @@ export default class GameQuestRuntime {
         if (!this.activeQuest || !this.onContractsUpdated) {
             return;
         }
+        this.syncKnownQuestLocations();
         this.onContractsUpdated({
             barterContracts: this.collectBarterContracts(this.activeQuest),
             escortContracts: this.collectEscortContracts(this.activeQuest),

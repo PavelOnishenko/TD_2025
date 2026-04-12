@@ -38,6 +38,7 @@ export type VillageActionsCallbacks = {
     onLeaveVillage: () => void;
     getVillageDirectionHint: (settlementName: string) => VillageDirectionHint;
     getKnownSettlementNames?: () => string[];
+    getKnownQuestSettlementNames?: () => string[];
     onVillageBarterCompleted: (traderName: string, itemName: string, villageName: string) => void;
     onTryRecruitEscort: (personName: string, villageName: string) => 'joined' | 'inactive' | 'already-joined' | 'not-available';
     onRevealRecoverHolder?: (villageName: string, npcName: string) => { revealed: boolean; personName?: string; itemName?: string };
