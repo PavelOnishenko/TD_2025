@@ -65,6 +65,7 @@ export default class WorldMapNamedLocationAndVillageOverlays extends WorldMapVil
                     this.renderer,
                     { x: cell.x + (cell.width / 2), y: cell.y + (cell.height / 2) },
                 );
+                this.approxDrawCallsThisFrame += 1;
             });
         });
     }
@@ -78,9 +79,11 @@ export default class WorldMapNamedLocationAndVillageOverlays extends WorldMapVil
             visibleSegments.forEach((segment) => {
                 if (segment.style === 'waterCrossing') {
                     this.renderer.drawWaterCrossingRoadPath(ctx, segment.points, segment.alpha);
+                    this.approxDrawCallsThisFrame += 1;
                     return;
                 }
                 this.renderer.drawVillageRoadPath(ctx, segment.points, segment.alpha);
+                this.approxDrawCallsThisFrame += 1;
             });
         });
     }

@@ -37,6 +37,8 @@ export default class WorldMapTerrainCacheRenderer extends WorldMapFocusAndFogOve
         const destinationY = this.grid.offsetY + sourceY;
 
         ctx.drawImage(cacheCanvas, sourceX, sourceY, sourceWidth, sourceHeight, destinationX, destinationY, sourceWidth, sourceHeight);
+        this.approxDrawCallsThisFrame += 1;
+        this.drawnTileCountThisFrame += Math.max(1, (bounds.endCol - bounds.startCol + 1) * (bounds.endRow - bounds.startRow + 1));
     }
 
     private supportsTerrainLayerCaching = (ctx: CanvasRenderingContext2D): boolean => typeof document !== 'undefined' && typeof (ctx as CanvasRenderingContext2D & { drawImage?: unknown }).drawImage === 'function';

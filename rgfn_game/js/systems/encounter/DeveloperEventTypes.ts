@@ -34,6 +34,8 @@ export type DeveloperUI = {
         roads: HTMLInputElement;
         selectionCursor: HTMLInputElement;
     };
+    worldMapProfilingFpsCapSelect: HTMLSelectElement;
+    worldMapProfilingDevicePixelRatioClampSelect: HTMLSelectElement;
     worldMapProfilingOutput: HTMLElement;
 };
 
@@ -62,6 +64,12 @@ export type DeveloperCallbacks = {
         roads: boolean;
         selectionCursor: boolean;
     };
+    getWorldMapPerformanceSnapshot: () => Record<string, unknown>;
+    getWorldMapPointerSnapshot: () => { rawMouseMoveEventsPerSecond: number; hoverTileChangesPerSecond: number };
+    setWorldMapRenderFpsCap: (cap: 'uncapped' | '60' | '30') => void;
+    getWorldMapRenderFpsCap: () => 'uncapped' | '60' | '30';
+    setWorldMapDevicePixelRatioClamp: (clamp: 'auto' | '1' | '1.5') => void;
+    getWorldMapDevicePixelRatioClamp: () => 'auto' | '1' | '1.5';
 };
 
 export const ENCOUNTER_LABELS: Record<RandomEncounterType, string> = { monster: 'Monster', item: 'Item', traveler: 'Traveler' };

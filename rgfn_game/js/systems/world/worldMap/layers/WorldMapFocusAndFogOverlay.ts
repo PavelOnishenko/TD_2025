@@ -79,6 +79,8 @@ export default class WorldMapFocusAndFogOverlay extends WorldMapPersistenceAndSe
             undefined,
             { showFogOverlay: this.mapDisplayConfig.fogOfWar, detailLevel },
         );
+        this.drawnTileCountThisFrame += 1;
+        this.approxDrawCallsThisFrame += 1;
     }
 
 }

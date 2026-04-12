@@ -437,6 +437,22 @@
                 <label class="dev-events-toggle" for="dev-world-map-render-roads"><input id="dev-world-map-render-roads" type="checkbox" checked> Render roads</label>
                 <label class="dev-events-toggle" for="dev-world-map-render-selection-cursor"><input id="dev-world-map-render-selection-cursor" type="checkbox" checked> Render selection cursor</label>
             </div>
+            <div class="dev-events-toggle-grid dev-events-toggle-grid-single">
+                <label class="dev-events-toggle" for="dev-world-map-render-fps-cap">Render FPS cap
+                    <select id="dev-world-map-render-fps-cap">
+                        <option value="uncapped">uncapped</option>
+                        <option value="60">60</option>
+                        <option value="30">30</option>
+                    </select>
+                </label>
+                <label class="dev-events-toggle" for="dev-world-map-dpr-clamp">devicePixelRatio clamp
+                    <select id="dev-world-map-dpr-clamp">
+                        <option value="auto">auto</option>
+                        <option value="1">1.0</option>
+                        <option value="1.5">1.5</option>
+                    </select>
+                </label>
+            </div>
             <div class="dev-roll-actions">
                 <button id="dev-world-map-profiling-refresh-btn" class="action-btn" type="button">Refresh Profiling Snapshot</button>
             </div>

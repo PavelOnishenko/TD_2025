@@ -10,8 +10,14 @@ import type { FerryRouteOption } from '../../systems/world-mode/WorldModeFerryPr
 export default class GameWorldInteractionRuntime {
     private isWorldMapMiddleDragActive = false;
     private worldMapDragPointer = { x: 0, y: 0 };
+    private mouseMoveSecondWindow = -1;
+    private mouseMoveCountInWindow = 0;
+    private hoverChangeCountInWindow = 0;
+    private rawMouseMoveEventsPerSecond = 0;
+    private hoverTileChangesPerSecond = 0;
 
     public handleCanvasMove(event: MouseEvent, canvas: HTMLCanvasElement, stateMachine: ReturnType<GameModeStateMachine<unknown>['create']>, worldMap: WorldMap, battleMap: BattleMap, hudCoordinator: GameHudCoordinator, player: Player): void {
+        this.trackMouseMoveEvent();
         if (this.isWorldMapMiddleDragActive && stateMachine.isInState(MODES.WORLD_MAP)) {
             this.handleWorldMapMiddleDragMove(event, worldMap, player);
         }
@@ -19,8 +25,11 @@ export default class GameWorldInteractionRuntime {
         const worldX = (event.clientX - rect.left) * (canvas.width / rect.width);
         const worldY = (event.clientY - rect.top) * (canvas.height / rect.height);
         if (stateMachine.isInState(MODES.WORLD_MAP)) {
-            worldMap.updateSelectedCellFromPixel(worldX, worldY);
-            hudCoordinator.updateSelectedCell(worldMap.getSelectedCellInfo());
+            const changed = worldMap.updateSelectedCellFromPixel(worldX, worldY);
+            if (changed) {
+                this.trackHoverTileChange();
+                hudCoordinator.updateSelectedCell(worldMap.getSelectedCellInfo());
+            }
             return;
         }
         if (stateMachine.isInState(MODES.BATTLE)) {
@@ -165,5 +174,34 @@ export default class GameWorldInteractionRuntime {
         const [x, y] = worldMap.getPlayerPixelPosition();
         player.x = x;
         player.y = y;
+    }
+
+    public getPointerDiagnosticsSnapshot(): { rawMouseMoveEventsPerSecond: number; hoverTileChangesPerSecond: number } {
+        return {
+            rawMouseMoveEventsPerSecond: this.rawMouseMoveEventsPerSecond,
+            hoverTileChangesPerSecond: this.hoverTileChangesPerSecond,
+        };
+    }
+
+    private trackMouseMoveEvent(): void {
+        this.refreshMouseWindowIfNeeded();
+        this.mouseMoveCountInWindow += 1;
+        this.rawMouseMoveEventsPerSecond = this.mouseMoveCountInWindow;
+    }
+
+    private trackHoverTileChange(): void {
+        this.refreshMouseWindowIfNeeded();
+        this.hoverChangeCountInWindow += 1;
+        this.hoverTileChangesPerSecond = this.hoverChangeCountInWindow;
+    }
+
+    private refreshMouseWindowIfNeeded(): void {
+        const nowSecond = Math.floor(Date.now() / 1000);
+        if (nowSecond === this.mouseMoveSecondWindow) {
+            return;
+        }
+        this.mouseMoveSecondWindow = nowSecond;
+        this.mouseMoveCountInWindow = 0;
+        this.hoverChangeCountInWindow = 0;
     }
 }

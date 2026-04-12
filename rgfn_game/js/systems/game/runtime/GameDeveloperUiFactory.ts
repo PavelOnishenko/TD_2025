@@ -3,7 +3,7 @@ import { DeveloperUI } from '../ui/GameUiTypes.js';
 export class GameDeveloperUiFactory {
     public create = (): DeveloperUI => ({ ...this.createBaseDeveloperUi(), ...this.createProfilingUi() });
 
-    private readonly createBaseDeveloperUi = (): Omit<DeveloperUI, 'worldMapProfilingToggle' | 'worldMapProfilingOpenBtn' | 'worldMapProfilingPanel' | 'worldMapProfilingDragHandle' | 'worldMapProfilingCloseBtn' | 'worldMapProfilingRefreshBtn' | 'worldMapProfilingAutoRefreshToggle' | 'worldMapProfilingRenderLayerToggles' | 'worldMapProfilingOutput'> => ({
+    private readonly createBaseDeveloperUi = (): Omit<DeveloperUI, 'worldMapProfilingToggle' | 'worldMapProfilingOpenBtn' | 'worldMapProfilingPanel' | 'worldMapProfilingDragHandle' | 'worldMapProfilingCloseBtn' | 'worldMapProfilingRefreshBtn' | 'worldMapProfilingAutoRefreshToggle' | 'worldMapProfilingRenderLayerToggles' | 'worldMapProfilingFpsCapSelect' | 'worldMapProfilingDevicePixelRatioClampSelect' | 'worldMapProfilingOutput'> => ({
         ...this.createQueueAndEncounterUi(),
         ...this.createNextRollAndRandomUi(),
         ...this.createModeAndMapDisplayUi(),
@@ -45,7 +45,7 @@ export class GameDeveloperUiFactory {
         fogOfWarToggle: document.getElementById('dev-map-display-fog-of-war')! as HTMLInputElement,
     });
 
-    private readonly createProfilingUi = (): Pick<DeveloperUI, 'worldMapProfilingToggle' | 'worldMapProfilingOpenBtn' | 'worldMapProfilingPanel' | 'worldMapProfilingDragHandle' | 'worldMapProfilingCloseBtn' | 'worldMapProfilingRefreshBtn' | 'worldMapProfilingAutoRefreshToggle' | 'worldMapProfilingRenderLayerToggles' | 'worldMapProfilingOutput'> => ({
+    private readonly createProfilingUi = (): Pick<DeveloperUI, 'worldMapProfilingToggle' | 'worldMapProfilingOpenBtn' | 'worldMapProfilingPanel' | 'worldMapProfilingDragHandle' | 'worldMapProfilingCloseBtn' | 'worldMapProfilingRefreshBtn' | 'worldMapProfilingAutoRefreshToggle' | 'worldMapProfilingRenderLayerToggles' | 'worldMapProfilingFpsCapSelect' | 'worldMapProfilingDevicePixelRatioClampSelect' | 'worldMapProfilingOutput'> => ({
         worldMapProfilingToggle: document.getElementById('dev-world-map-profiling-enabled')! as HTMLInputElement,
         worldMapProfilingOpenBtn: document.getElementById('dev-world-map-profiling-open-btn')! as HTMLButtonElement,
         worldMapProfilingPanel: document.getElementById('dev-world-map-profiling-panel')!,
@@ -54,6 +54,8 @@ export class GameDeveloperUiFactory {
         worldMapProfilingRefreshBtn: document.getElementById('dev-world-map-profiling-refresh-btn')! as HTMLButtonElement,
         worldMapProfilingAutoRefreshToggle: document.getElementById('dev-world-map-profiling-auto-refresh')! as HTMLInputElement,
         worldMapProfilingRenderLayerToggles: this.createWorldMapProfilingRenderLayerToggles(),
+        worldMapProfilingFpsCapSelect: document.getElementById('dev-world-map-render-fps-cap')! as HTMLSelectElement,
+        worldMapProfilingDevicePixelRatioClampSelect: document.getElementById('dev-world-map-dpr-clamp')! as HTMLSelectElement,
         worldMapProfilingOutput: document.getElementById('dev-world-map-profiling-output')!,
     });
 

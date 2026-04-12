@@ -84,6 +84,7 @@ export default class WorldMapMovementAndViewport extends WorldMapNoiseAndVisibil
             this.visitedCells.add(destinationKey);
             this.refreshVisibility();
             this.ensureCellIsVisible(newCol, newRow);
+            this.invalidateWorldRedraw();
             return { moved: true, isPreviouslyDiscovered };
         }
         return { moved: false, isPreviouslyDiscovered: false };
@@ -97,6 +98,7 @@ export default class WorldMapMovementAndViewport extends WorldMapNoiseAndVisibil
         const nextCellSize = this.grid.cellSize > 0 ? this.grid.cellSize : configuredCellSize;
         this.grid.updateLayout(nextCellSize, this.grid.offsetX, this.grid.offsetY);
         this.clampViewport();
+        this.invalidateWorldRedraw();
     }
 
     public centerOnPlayer(): void {
@@ -121,6 +123,7 @@ export default class WorldMapMovementAndViewport extends WorldMapNoiseAndVisibil
         const nextOffsetY = Math.round((this.canvasHeight / 2) - (centerRow * nextCellSize));
         this.grid.updateLayout(nextCellSize, nextOffsetX, nextOffsetY);
         this.clampViewport();
+        this.markZoomChangedThisFrame();
         return true;
     }
 
@@ -132,7 +135,11 @@ export default class WorldMapMovementAndViewport extends WorldMapNoiseAndVisibil
         const beforeY = this.grid.offsetY;
         this.grid.updateLayout(this.grid.cellSize, beforeX + offsets.x, beforeY + offsets.y);
         this.clampViewport();
-        return beforeX !== this.grid.offsetX || beforeY !== this.grid.offsetY;
+        const changed = beforeX !== this.grid.offsetX || beforeY !== this.grid.offsetY;
+        if (changed) {
+            this.markCameraMovedThisFrame();
+        }
+        return changed;
     }
 
     public panByPixels(deltaX: number, deltaY: number): boolean {
@@ -144,7 +151,11 @@ export default class WorldMapMovementAndViewport extends WorldMapNoiseAndVisibil
         const beforeY = this.grid.offsetY;
         this.grid.updateLayout(this.grid.cellSize, beforeX + deltaX, beforeY + deltaY);
         this.clampViewport();
-        return beforeX !== this.grid.offsetX || beforeY !== this.grid.offsetY;
+        const changed = beforeX !== this.grid.offsetX || beforeY !== this.grid.offsetY;
+        if (changed) {
+            this.markCameraMovedThisFrame();
+        }
+        return changed;
     }
 
     private centerViewportOnCell(col: number, row: number): void {
@@ -152,6 +163,7 @@ export default class WorldMapMovementAndViewport extends WorldMapNoiseAndVisibil
         const offsetY = Math.round((this.canvasHeight / 2) - ((row + 0.5) * this.grid.cellSize) + theme.worldMap.gridOffset.y);
         this.grid.updateLayout(this.grid.cellSize, offsetX, offsetY);
         this.clampViewport();
+        this.markCameraMovedThisFrame();
     }
 
     private ensureCellIsVisible(col: number, row: number): void {
@@ -176,6 +188,7 @@ export default class WorldMapMovementAndViewport extends WorldMapNoiseAndVisibil
 
         this.grid.updateLayout(this.grid.cellSize, offsetX, offsetY);
         this.clampViewport();
+        this.markCameraMovedThisFrame();
     }
 
 }
