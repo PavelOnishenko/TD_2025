@@ -248,3 +248,33 @@
 3. Reach source village and barter with named trader for required item.
 4. Travel to destination while carrying item.
 5. Confirm courier leaf is marked complete in quest UI.
+
+## April 11, 2026 update: dialogue location list now uses quest-knowledge + discovered-map knowledge
+
+### Problem observed
+- In non-developer mode, some NPC dialogue location dropdowns could include names from deeper future quest steps that the player had not unlocked yet.
+- This was especially confusing in runs where only the first visible quest task was known, but dialogue controls still leaked additional settlement names.
+
+### What changed
+- `GameQuestRuntime` now exposes `getKnownQuestLocationNames()`:
+  - collects location entities only from **known quest nodes** (same frontier model used for contract visibility),
+  - returns sorted unique names,
+  - used as a dedicated source for player-facing quest-location knowledge.
+- `VillageActionsController` now consumes a new callback:
+  - `getKnownQuestSettlementNames`,
+  - non-developer mode settlement dropdown = union of:
+    1) discovered map settlements,
+    2) known quest settlements.
+- Quest location registration on world map is now synchronized via `syncKnownQuestLocations()` during contract refresh:
+  - newly unlocked quest locations become registerable as progress advances,
+  - unknown future nodes are not proactively registered into dialogue-facing known lists.
+
+### Why this is safer
+- Dialogue UI is no longer forced to infer quest knowledge from world map internals only.
+- The runtime has an explicit quest-knowledge API boundary for settlements.
+- This keeps non-developer mode aligned with the intended rule:
+  - show only what the current character can know from discovered map state + active/completed quest frontier.
+
+### Regression coverage added
+- `recoverQuestRuntime.test.js` now verifies known quest settlement extraction excludes unknown future contracts.
+- `villageActionsController.test.js` now verifies non-developer settlement dropdown merges discovered map names with known quest names.

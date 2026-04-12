@@ -8,7 +8,6 @@ import VillageTradeInteractionService from './actions/VillageTradeInteractionSer
 import VillageDialogueInteractionService from './actions/VillageDialogueInteractionService.js';
 import { QuestBarterContract, QuestEscortContract, VillageActionsCallbacks, VillageUI } from './actions/VillageActionsTypes.js';
 import { isDeveloperModeEnabled } from '../../utils/DeveloperModeConfig.js';
-
 export default class VillageActionsController {
     private readonly villageUI: VillageUI;
     private readonly callbacks: VillageActionsCallbacks;
@@ -100,6 +99,7 @@ export default class VillageActionsController {
     public handleAskAboutBarter(): void { this.dialogueInteraction.handleAskAboutBarter(); this.callbacks.onAdvanceTime(16, 0.12); }
     public handleConfirmBarter(): void { this.dialogueInteraction.handleConfirmBarter(); this.callbacks.onAdvanceTime(18, 0.15); }
     public handleConfrontRecoverTarget(): void { this.dialogueInteraction.handleConfrontRecoverTarget(); this.callbacks.onAdvanceTime(18, 0.15); }
+    // eslint-disable-next-line style-guide/function-length-warning
     public handleRecruitEscort(): void {
         const npc = this.getSelectedNpc();
         if (!npc) {
@@ -207,7 +207,6 @@ export default class VillageActionsController {
         if (exists) {
             return;
         }
-
         roster.unshift({
             id: `${villageName.toLowerCase()}-${contract.personName.toLocaleLowerCase()}-escort`,
             name: contract.personName,
@@ -254,7 +253,6 @@ export default class VillageActionsController {
         if (!this.selectedNpcId) {
             return null;
         }
-
         return this.npcRoster.find((npc) => npc.id === this.selectedNpcId) ?? null;
     }
 
@@ -310,21 +308,20 @@ export default class VillageActionsController {
         return isEscortContractNpc && !this.joinedEscortNpcKeys.has(this.getEscortNpcKey(npcName, villageName));
     }
 
-    private getEscortNpcKey(npcName: string, villageName: string): string {
-        return `${villageName.trim().toLocaleLowerCase()}::${npcName.trim().toLocaleLowerCase()}`;
-    }
+    private getEscortNpcKey = (npcName: string, villageName: string): string => `${villageName.trim().toLocaleLowerCase()}::${npcName.trim().toLocaleLowerCase()}`;
 
     private getKnownSettlementNames(): string[] {
         const knownFromMap = this.callbacks.getKnownSettlementNames?.() ?? [];
+        const knownFromQuest = this.callbacks.getKnownQuestSettlementNames?.() ?? [];
         if (!isDeveloperModeEnabled()) {
-            return this.toSortedUnique(knownFromMap);
+            return this.toSortedUnique([...knownFromMap, ...knownFromQuest]);
         }
         const fromBarterContracts = this.barterService
             .getKnownTraderNames()
             .map((traderName) => this.barterService.getPersonDirectionHint(traderName, this.callbacks.getVillageDirectionHint).villageName)
             .filter((value): value is string => typeof value === 'string' && value.trim().length > 0);
         const fromEscortContracts = this.escortContracts.flatMap((contract) => [contract.sourceVillage, contract.destinationVillage]);
-        return this.toSortedUnique([...knownFromMap, ...fromBarterContracts, ...fromEscortContracts]);
+        return this.toSortedUnique([...knownFromMap, ...knownFromQuest, ...fromBarterContracts, ...fromEscortContracts]);
     }
 
     private getKnownPersonNames(): string[] {
@@ -359,7 +356,6 @@ export default class VillageActionsController {
         if (!recoverLead.revealed || !recoverLead.personName || !recoverLead.itemName) {
             return;
         }
-
         this.appendRecoverHolderIfMissing(this.npcRoster, this.currentVillageName, recoverLead.personName, recoverLead.itemName);
         this.addLog(
             `${npc.name} lowers their voice: "${recoverLead.personName} is carrying ${recoverLead.itemName}. You'll find them in this village."`,

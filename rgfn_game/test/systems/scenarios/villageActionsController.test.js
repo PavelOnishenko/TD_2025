@@ -364,6 +364,7 @@ test('VillageActionsController hides undiscovered settlement and person targets 
     onLeaveVillage: () => {},
     getVillageDirectionHint: (settlementName) => ({ settlementName, exists: true, direction: 'west', distanceCells: 4 }),
     getKnownSettlementNames: () => ['Mossbrook', 'Questspire'],
+    getKnownQuestSettlementNames: () => ['Golder Bridge', 'Distant Cove'],
     onVillageBarterCompleted: () => {},
   });
 
@@ -382,7 +383,7 @@ test('VillageActionsController hides undiscovered settlement and person targets 
   const settlementOptions = villageUI.askVillageInput.options.map((option) => option.value);
   const personOptions = villageUI.askPersonInput.options.map((option) => option.value);
 
-  assert.deepEqual(settlementOptions, ['Mossbrook', 'Questspire']);
+  assert.deepEqual(settlementOptions, ['Distant Cove', 'Golder Bridge', 'Mossbrook', 'Questspire']);
   assert.deepEqual(personOptions, ['Bram', 'Mara', 'Olive']);
 }));
 

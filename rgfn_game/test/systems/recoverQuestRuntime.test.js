@@ -167,3 +167,13 @@ test('GameQuestRuntime exposes contracts only from known quest nodes (in-progres
   assert.equal(barter.some((contract) => contract.traderName === 'Cora'), false);
   assert.equal(escort.some((contract) => contract.personName === 'Bram'), true);
 });
+
+test('GameQuestRuntime exposes only known quest location names for dialogue knowledge', () => {
+  const runtime = new GameQuestRuntime();
+  const quest = createQuestWithKnownAndUnknownContracts();
+
+  runtime.activeQuest = quest;
+  const locations = runtime.getKnownQuestLocationNames();
+
+  assert.deepEqual(locations, ['Farwatch']);
+});
