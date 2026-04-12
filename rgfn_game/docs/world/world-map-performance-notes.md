@@ -287,3 +287,38 @@ Real in-game profiler sweep across seven zoom levels showed a **mid-zoom frame-t
    - `terrainLayer.maxMs`
 2. Ensure close zoom visuals still look sufficiently rich (full detail should still be used when zoomed in enough).
 3. If needed, tune thresholds one more time using the same profiler protocol rather than subjective feel.
+
+## April 12, 2026 update: world-profiling render-layer checkboxes for isolation tests
+
+Added five independent render-layer toggles to the **World Map Profiling** panel so QA can profile stage costs and machine thermals in controlled combinations:
+
+- `Render terrain`
+- `Render character marker`
+- `Render locations`
+- `Render roads`
+- `Render selection cursor`
+
+### Behavior details
+
+- Each toggle immediately updates world-map rendering behavior at runtime.
+- Toggling does **not** require reopening the profiling panel.
+- If all five toggles are off, world-map draw path now short-circuits to a blank canvas (`clearRect`) and skips layer rendering entirely.
+- Profiling JSON now includes a `renderLayers` object so recorded snapshots explicitly show which layers were enabled during capture.
+
+### Practical profiling recipes
+
+1. **Terrain-only baseline**
+   - Enable only `Render terrain`.
+   - Use this as primary baseline for draw-time + CPU load comparisons.
+2. **Overlays-only impact**
+   - Disable terrain, enable locations/roads/markers selectively.
+   - Useful for measuring non-terrain overhead independently.
+3. **Blank-canvas thermal/control state**
+   - Disable all five toggles.
+   - Confirms idle/global-map-overhead floor while world mode stays active.
+
+### Related automated coverage
+
+- Added tests to verify:
+  - all-layer-off mode produces a blank map draw path (no background draw, explicit clear),
+  - character marker and selection cursor toggles are independently respected.

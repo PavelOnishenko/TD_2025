@@ -1,8 +1,15 @@
 import { DeveloperUI } from '../ui/GameUiTypes.js';
 
 export class GameDeveloperUiFactory {
-    // eslint-disable-next-line style-guide/function-length-warning
-    public create = (): DeveloperUI => ({
+    public create = (): DeveloperUI => ({ ...this.createBaseDeveloperUi(), ...this.createProfilingUi() });
+
+    private readonly createBaseDeveloperUi = (): Omit<DeveloperUI, 'worldMapProfilingToggle' | 'worldMapProfilingOpenBtn' | 'worldMapProfilingPanel' | 'worldMapProfilingDragHandle' | 'worldMapProfilingCloseBtn' | 'worldMapProfilingRefreshBtn' | 'worldMapProfilingAutoRefreshToggle' | 'worldMapProfilingRenderLayerToggles' | 'worldMapProfilingOutput'> => ({
+        ...this.createQueueAndEncounterUi(),
+        ...this.createNextRollAndRandomUi(),
+        ...this.createModeAndMapDisplayUi(),
+    });
+
+    private readonly createQueueAndEncounterUi = (): Pick<DeveloperUI, 'modal' | 'closeBtn' | 'eventType' | 'queueList' | 'addBtn' | 'clearBtn' | 'encounterTypeSummary' | 'enableAllEncountersBtn' | 'disableAllEncountersBtn' | 'encounterTypeToggles'> => ({
         modal: document.getElementById('dev-events-modal')!,
         closeBtn: document.getElementById('dev-events-close-btn')! as HTMLButtonElement,
         eventType: document.getElementById('dev-event-type')! as HTMLSelectElement,
@@ -13,6 +20,9 @@ export class GameDeveloperUiFactory {
         enableAllEncountersBtn: document.getElementById('dev-encounter-types-enable-all-btn')! as HTMLButtonElement,
         disableAllEncountersBtn: document.getElementById('dev-encounter-types-disable-all-btn')! as HTMLButtonElement,
         encounterTypeToggles: this.createEncounterTypeToggles(),
+    });
+
+    private readonly createNextRollAndRandomUi = (): Pick<DeveloperUI, 'nextRollOpenBtn' | 'nextRollSummary' | 'nextRollModal' | 'nextRollCloseBtn' | 'nextRollTotal' | 'nextRollStatus' | 'nextRollSaveBtn' | 'nextRollClearBtn' | 'nextRollInputs' | 'randomModeSelect' | 'randomSeedInput' | 'randomSummary' | 'randomStatus' | 'randomApplyBtn'> => ({
         nextRollOpenBtn: document.getElementById('dev-next-roll-open-btn')! as HTMLButtonElement,
         nextRollSummary: document.getElementById('dev-next-roll-summary')!,
         nextRollModal: document.getElementById('dev-next-roll-modal')!,
@@ -27,9 +37,15 @@ export class GameDeveloperUiFactory {
         randomSummary: document.getElementById('dev-random-summary')!,
         randomStatus: document.getElementById('dev-random-status')!,
         randomApplyBtn: document.getElementById('dev-random-apply-btn')! as HTMLButtonElement,
+    });
+
+    private readonly createModeAndMapDisplayUi = (): Pick<DeveloperUI, 'developerModeToggle' | 'everythingDiscoveredToggle' | 'fogOfWarToggle'> => ({
         developerModeToggle: document.getElementById('dev-mode-enabled')! as HTMLInputElement,
         everythingDiscoveredToggle: document.getElementById('dev-map-display-everything-discovered')! as HTMLInputElement,
         fogOfWarToggle: document.getElementById('dev-map-display-fog-of-war')! as HTMLInputElement,
+    });
+
+    private readonly createProfilingUi = (): Pick<DeveloperUI, 'worldMapProfilingToggle' | 'worldMapProfilingOpenBtn' | 'worldMapProfilingPanel' | 'worldMapProfilingDragHandle' | 'worldMapProfilingCloseBtn' | 'worldMapProfilingRefreshBtn' | 'worldMapProfilingAutoRefreshToggle' | 'worldMapProfilingRenderLayerToggles' | 'worldMapProfilingOutput'> => ({
         worldMapProfilingToggle: document.getElementById('dev-world-map-profiling-enabled')! as HTMLInputElement,
         worldMapProfilingOpenBtn: document.getElementById('dev-world-map-profiling-open-btn')! as HTMLButtonElement,
         worldMapProfilingPanel: document.getElementById('dev-world-map-profiling-panel')!,
@@ -37,6 +53,7 @@ export class GameDeveloperUiFactory {
         worldMapProfilingCloseBtn: document.getElementById('dev-world-map-profiling-close-btn')! as HTMLButtonElement,
         worldMapProfilingRefreshBtn: document.getElementById('dev-world-map-profiling-refresh-btn')! as HTMLButtonElement,
         worldMapProfilingAutoRefreshToggle: document.getElementById('dev-world-map-profiling-auto-refresh')! as HTMLInputElement,
+        worldMapProfilingRenderLayerToggles: this.createWorldMapProfilingRenderLayerToggles(),
         worldMapProfilingOutput: document.getElementById('dev-world-map-profiling-output')!,
     });
 
@@ -53,5 +70,13 @@ export class GameDeveloperUiFactory {
         agility: document.getElementById('dev-next-roll-agility')! as HTMLInputElement,
         connection: document.getElementById('dev-next-roll-connection')! as HTMLInputElement,
         intelligence: document.getElementById('dev-next-roll-intelligence')! as HTMLInputElement,
+    });
+
+    private readonly createWorldMapProfilingRenderLayerToggles = (): DeveloperUI['worldMapProfilingRenderLayerToggles'] => ({
+        terrain: document.getElementById('dev-world-map-render-terrain')! as HTMLInputElement,
+        character: document.getElementById('dev-world-map-render-character')! as HTMLInputElement,
+        locations: document.getElementById('dev-world-map-render-locations')! as HTMLInputElement,
+        roads: document.getElementById('dev-world-map-render-roads')! as HTMLInputElement,
+        selectionCursor: document.getElementById('dev-world-map-render-selection-cursor')! as HTMLInputElement,
     });
 }

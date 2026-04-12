@@ -62,6 +62,14 @@ type DrawProfileStats = {
     lastFrameMs: number;
 };
 
+type WorldMapRenderLayerToggles = {
+    terrain: boolean;
+    roads: boolean;
+    locations: boolean;
+    character: boolean;
+    selectionCursor: boolean;
+};
+
 export default class WorldMapCore {
     private grid: GridMap;
     private playerGridPos: GridPosition;
@@ -90,6 +98,7 @@ export default class WorldMapCore {
     private terrainRevision: number;
     private drawProfilingEnabled: boolean;
     private drawProfileStats: Record<'drawTotal' | 'terrainLayer' | 'roads' | 'locationFeatures' | 'namedLocations' | 'dayNightTint' | 'focusOverlay' | 'markers', DrawProfileStats>;
+    protected renderLayerToggles: WorldMapRenderLayerToggles;
     protected daylightFactor: number;
 
     constructor(columns: number, rows: number, cellSize: number) {
@@ -125,10 +134,18 @@ export default class WorldMapCore {
         this.terrainRevision = 0;
         this.drawProfilingEnabled = false;
         this.drawProfileStats = this.createEmptyDrawProfileStats();
+        this.renderLayerToggles = this.createDefaultRenderLayerToggles();
         this.daylightFactor = 1;
     }
 
     private readonly createEmptyStat = (): DrawProfileStats => ({ frames: 0, totalMs: 0, maxMs: 0, lastFrameMs: 0 });
+    private readonly createDefaultRenderLayerToggles = (): WorldMapRenderLayerToggles => ({
+        terrain: true,
+        roads: true,
+        locations: true,
+        character: true,
+        selectionCursor: true,
+    });
 
     private readonly createEmptyDrawProfileStats = (): Record<'drawTotal' | 'terrainLayer' | 'roads' | 'locationFeatures' | 'namedLocations' | 'dayNightTint' | 'focusOverlay' | 'markers', DrawProfileStats> => ({
         drawTotal: this.createEmptyStat(),
@@ -174,6 +191,12 @@ export default class WorldMapCore {
         });
         return snapshot;
     }
+
+    public setRenderLayerToggles = (toggles: Partial<WorldMapRenderLayerToggles>): void => {
+        this.renderLayerToggles = { ...this.renderLayerToggles, ...toggles };
+    };
+
+    public getRenderLayerToggles = (): WorldMapRenderLayerToggles => ({ ...this.renderLayerToggles });
 
     public setDaylightFactor(factor: number): void {
         if (!Number.isFinite(factor)) {

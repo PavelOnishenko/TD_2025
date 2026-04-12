@@ -42,6 +42,7 @@ export default class GameUiDevStatBinder {
         this.developerUI.worldMapProfilingToggle.addEventListener('change', () => this.developerEventController.handleWorldMapDrawProfilingToggle(this.developerUI.worldMapProfilingToggle.checked));
         this.developerUI.worldMapProfilingRefreshBtn.addEventListener('click', () => this.developerEventController.handleWorldMapProfilingRefresh());
         this.developerUI.worldMapProfilingAutoRefreshToggle.addEventListener('change', () => this.developerEventController.handleWorldMapProfilingAutoRefreshToggle(this.developerUI.worldMapProfilingAutoRefreshToggle.checked));
+        this.bindWorldMapRenderLayerToggleEvents();
         Object.values(this.developerUI.nextRollInputs).forEach((input) => {
             input.addEventListener('input', () => this.developerEventController.handleNextCharacterRollInputChanged());
         });
@@ -55,6 +56,15 @@ export default class GameUiDevStatBinder {
         Object.entries(this.developerUI.encounterTypeToggles).forEach(([type, input]) => {
             input.addEventListener('change', () => this.developerEventController.handleEncounterTypeToggle(type as RandomEncounterType, input.checked));
         });
+    }
+
+    private bindWorldMapRenderLayerToggleEvents(): void {
+        const toggles = this.developerUI.worldMapProfilingRenderLayerToggles;
+        toggles.terrain.addEventListener('change', () => this.developerEventController.handleWorldMapRenderLayerToggle('terrain', toggles.terrain.checked));
+        toggles.character.addEventListener('change', () => this.developerEventController.handleWorldMapRenderLayerToggle('character', toggles.character.checked));
+        toggles.locations.addEventListener('change', () => this.developerEventController.handleWorldMapRenderLayerToggle('locations', toggles.locations.checked));
+        toggles.roads.addEventListener('change', () => this.developerEventController.handleWorldMapRenderLayerToggle('roads', toggles.roads.checked));
+        toggles.selectionCursor.addEventListener('change', () => this.developerEventController.handleWorldMapRenderLayerToggle('selectionCursor', toggles.selectionCursor.checked));
     }
 
     private handleMapDisplayToggle(type: 'everythingDiscovered' | 'fogOfWar'): void {

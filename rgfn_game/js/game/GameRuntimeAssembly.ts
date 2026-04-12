@@ -60,6 +60,8 @@ const createDevController = (
     isWorldMapDrawProfilingEnabled: () => worldMap.isDrawProfilingEnabled(),
     resetWorldMapDrawProfiling: () => worldMap.resetDrawProfiling(),
     getWorldMapDrawProfilingSnapshot: () => worldMap.getDrawProfilingSnapshot(),
+    setWorldMapRenderLayerToggles: (toggles) => worldMap.setRenderLayerToggles(toggles),
+    getWorldMapRenderLayerToggles: () => worldMap.getRenderLayerToggles(),
 });
 
 // eslint-disable-next-line style-guide/function-length-warning

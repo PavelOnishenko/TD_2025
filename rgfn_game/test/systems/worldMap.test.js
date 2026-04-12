@@ -320,6 +320,61 @@ test('WorldMap draw renders visible terrain, fog and grid without throwing on a 
   assert.ok(ctx.calls.some(c => c[0] === 'stroke'));
 });
 
+test('WorldMap render layer toggles can fully blank the global map draw output', () => {
+  const worldMap = new WorldMap(30, 20, theme.worldMap.cellSize.default);
+  worldMap.resizeToCanvas(720, 720);
+  const ctx = createMockCanvasContext();
+  ctx.clearRect = (...args) => ctx.calls.push(['clearRect', ...args]);
+  let drawBackgroundCalls = 0;
+  const originalDrawBackground = worldMap.renderer.drawBackground.bind(worldMap.renderer);
+  worldMap.renderer.drawBackground = (...args) => {
+    drawBackgroundCalls += 1;
+    return originalDrawBackground(...args);
+  };
+
+  worldMap.setRenderLayerToggles({
+    terrain: false,
+    roads: false,
+    locations: false,
+    character: false,
+    selectionCursor: false,
+  });
+
+  worldMap.draw(ctx, null);
+
+  assert.equal(drawBackgroundCalls, 0);
+  assert.ok(ctx.calls.some((call) => call[0] === 'clearRect'));
+});
+
+test('WorldMap render layer toggles independently control character and selection cursor markers', () => {
+  const worldMap = new WorldMap(30, 20, theme.worldMap.cellSize.default);
+  worldMap.resizeToCanvas(720, 720);
+  placePlayerAt(worldMap, 4, 4);
+  worldMap.selectedGridPos = { col: 5, row: 5 };
+  worldMap.setMapDisplayConfig({ everythingDiscovered: true, fogOfWar: false });
+
+  const playerCalls = [];
+  const cursorCalls = [];
+  const originalDrawPlayerMarker = worldMap.renderer.drawPlayerMarker.bind(worldMap.renderer);
+  const originalDrawCursorMarker = worldMap.renderer.drawCursorMarker.bind(worldMap.renderer);
+  worldMap.renderer.drawPlayerMarker = (...args) => {
+    playerCalls.push(args);
+    return originalDrawPlayerMarker(...args);
+  };
+  worldMap.renderer.drawCursorMarker = (...args) => {
+    cursorCalls.push(args);
+    return originalDrawCursorMarker(...args);
+  };
+
+  worldMap.setRenderLayerToggles({ character: false, selectionCursor: true });
+  worldMap.draw(createMockCanvasContext(), null);
+  worldMap.setRenderLayerToggles({ character: true, selectionCursor: false });
+  worldMap.draw(createMockCanvasContext(), null);
+
+  assert.equal(playerCalls.length, 1);
+  assert.equal(cursorCalls.length, 1);
+});
+
 test('WorldMap draw profiling exposes section timing snapshots', () => {
   const worldMap = new WorldMap(60, 45, theme.worldMap.cellSize.default);
   worldMap.resizeToCanvas(720, 720);
