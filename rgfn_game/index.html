@@ -182,8 +182,33 @@
                     </div>
                     <div id="lore-panel" class="hud-section stats overlay-panel hidden">
                         <div class="stat">Lore Book</div>
+                        <div class="lore-calendar-nav">
+                            <button
+                                id="lore-calendar-jump-btn"
+                                class="action-btn lore-calendar-jump-btn"
+                                type="button"
+                                popovertarget="lore-calendar-popover"
+                            >
+                                Open World Calendar
+                            </button>
+                        </div>
                         <div id="lore-body" class="lore-body"></div>
                     </div>
+                    <section id="lore-calendar-popover" class="lore-calendar-popover world-calendar-panel" popover="auto">
+                        <div class="lore-calendar-popover-header">
+                            <h3>World Calendar</h3>
+                            <button
+                                class="action-btn lore-calendar-close-btn"
+                                type="button"
+                                popovertarget="lore-calendar-popover"
+                                popovertargetaction="hide"
+                            >
+                                Close
+                            </button>
+                        </div>
+                        <p id="world-calendar-summary" class="world-calendar-summary">Calendar is generating...</p>
+                        <pre id="world-calendar-list" class="world-calendar-list" aria-live="polite"></pre>
+                    </section>
                     <div id="selected-panel" class="hud-section stats overlay-panel hidden">
                         <div class="stat">Selected Tile</div>
                         <div id="selected-cell-empty" class="stat-detail">Move the mouse over the world map to inspect a cell.</div>
@@ -207,11 +232,6 @@
                                 <button id="world-camp-sleep-btn" class="action-btn">Camp Sleep (Risky)</button>
                                 <button id="world-center-on-character-btn" class="action-btn">Center on Character</button>
                             </div>
-                        </div>
-                        <div class="world-calendar-panel">
-                            <h3>World Calendar</h3>
-                            <p id="world-calendar-summary" class="world-calendar-summary">Calendar is generating...</p>
-                            <pre id="world-calendar-list" class="world-calendar-list" aria-live="polite"></pre>
                         </div>
                     </div>
                     <div id="game-log-container" class="overlay-panel hidden">
