@@ -114,6 +114,15 @@ export default class WorldMapCore {
     protected frameSkippedNoRedrawThisFrame: boolean;
     protected fullRedrawCount: number;
     protected skippedNoRedrawCount: number;
+    protected cacheHits: number;
+    protected cacheRebuilds: number;
+    protected invalidatedChunkCount: number;
+    protected chunkRedrawCount: number;
+    protected staticRedrawCount: number;
+    protected dynamicRedrawCount: number;
+    protected fullRecompositionCount: number;
+    protected visibilityPauseCount: number;
+    protected renderPausedForVisibility: boolean;
     protected frameTimesMs: number[];
     protected lastFrameMs: number;
     protected lastUpdateMs: number;
@@ -124,6 +133,7 @@ export default class WorldMapCore {
     protected canvasPixelWidth: number;
     protected canvasPixelHeight: number;
     protected currentDevicePixelRatio: number;
+    protected lastRenderTier: 'near' | 'mid' | 'far' | null;
 
     constructor(columns: number, rows: number, cellSize: number) {
         this.grid = new GridMap(columns, rows, cellSize);
@@ -171,6 +181,15 @@ export default class WorldMapCore {
         this.frameSkippedNoRedrawThisFrame = false;
         this.fullRedrawCount = 0;
         this.skippedNoRedrawCount = 0;
+        this.cacheHits = 0;
+        this.cacheRebuilds = 0;
+        this.invalidatedChunkCount = 0;
+        this.chunkRedrawCount = 0;
+        this.staticRedrawCount = 0;
+        this.dynamicRedrawCount = 0;
+        this.fullRecompositionCount = 0;
+        this.visibilityPauseCount = 0;
+        this.renderPausedForVisibility = false;
         this.frameTimesMs = [];
         this.lastFrameMs = 0;
         this.lastUpdateMs = 0;
@@ -181,6 +200,7 @@ export default class WorldMapCore {
         this.canvasPixelWidth = Math.max(1, Math.floor(columns * cellSize));
         this.canvasPixelHeight = Math.max(1, Math.floor(rows * cellSize));
         this.currentDevicePixelRatio = 1;
+        this.lastRenderTier = null;
     }
 
     private readonly createEmptyStat = (): DrawProfileStats => ({ frames: 0, totalMs: 0, maxMs: 0, lastFrameMs: 0 });
@@ -291,22 +311,20 @@ export default class WorldMapCore {
         }
     }
 
-    public setRenderFpsCap(cap: 'uncapped' | '60' | '30'): void {
+    public setRenderFpsCap = (cap: 'uncapped' | '60' | '30'): void => {
         this.renderFpsCap = cap === '60' ? 60 : cap === '30' ? 30 : 'uncapped';
-    }
+    };
 
-    public getRenderFpsCap(): 'uncapped' | '60' | '30' {
-        return this.renderFpsCap === 'uncapped' ? 'uncapped' : String(this.renderFpsCap) as '60' | '30';
-    }
+    public getRenderFpsCap = (): 'uncapped' | '60' | '30' => (this.renderFpsCap === 'uncapped' ? 'uncapped' : String(this.renderFpsCap) as '60' | '30');
 
     public setDevicePixelRatioClamp(clamp: 'auto' | '1' | '1.5'): void {
         this.devicePixelRatioClamp = clamp === '1' ? 1 : clamp === '1.5' ? 1.5 : 'auto';
         this.invalidateWorldRedraw();
     }
 
-    public getDevicePixelRatioClamp(): 'auto' | '1' | '1.5' {
-        return this.devicePixelRatioClamp === 'auto' ? 'auto' : String(this.devicePixelRatioClamp) as '1' | '1.5';
-    }
+    public getDevicePixelRatioClamp = (): 'auto' | '1' | '1.5' => (
+        this.devicePixelRatioClamp === 'auto' ? 'auto' : String(this.devicePixelRatioClamp) as '1' | '1.5'
+    );
 
     public getEffectiveDevicePixelRatio(rawDevicePixelRatio: number): number {
         const safeDpr = Number.isFinite(rawDevicePixelRatio) && rawDevicePixelRatio > 0 ? rawDevicePixelRatio : 1;
@@ -321,6 +339,9 @@ export default class WorldMapCore {
     }
 
     public shouldRenderThisFrame(nowMs: number): boolean {
+        if (this.renderPausedForVisibility) {
+            return false;
+        }
         if (!this.worldNeedsRedraw && !this.overlayNeedsRedraw && !this.uiNeedsRedraw) {
             this.frameSkippedNoRedrawThisFrame = true;
             this.skippedNoRedrawCount += 1;
@@ -351,9 +372,45 @@ export default class WorldMapCore {
             this.frameTimesMs.shift();
         }
         this.fullRedrawCount += 1;
+        this.fullRecompositionCount += 1;
         this.worldNeedsRedraw = false;
         this.overlayNeedsRedraw = false;
         this.uiNeedsRedraw = false;
+    }
+
+    protected noteCacheHit = (): void => {
+        this.cacheHits += 1;
+    };
+
+    protected noteCacheRebuild = (chunkCount = 1): void => {
+        this.cacheRebuilds += 1;
+        this.chunkRedrawCount += Math.max(1, Math.floor(chunkCount));
+    };
+
+    protected noteInvalidatedChunk = (count = 1): void => {
+        this.invalidatedChunkCount += Math.max(1, Math.floor(count));
+    };
+
+    protected noteStaticRedraw = (): void => {
+        this.staticRedrawCount += 1;
+    };
+
+    protected noteDynamicRedraw = (): void => {
+        this.dynamicRedrawCount += 1;
+    };
+
+    public setRenderVisibilityState(hidden: boolean): void {
+        if (hidden) {
+            if (!this.renderPausedForVisibility) {
+                this.visibilityPauseCount += 1;
+            }
+            this.renderPausedForVisibility = true;
+            return;
+        }
+        this.renderPausedForVisibility = false;
+        this.invalidateWorldRedraw();
+        this.invalidateOverlayRedraw();
+        this.invalidateUiRedraw();
     }
 
     public getPerformanceSnapshot(): Record<string, unknown> {
@@ -369,11 +426,20 @@ export default class WorldMapCore {
             drawnTileCount: this.drawnTileCountThisFrame,
             approximateDrawCalls: this.approxDrawCallsThisFrame,
             fullRedrawCount: this.fullRedrawCount,
+            staticRedrawCount: this.staticRedrawCount,
+            dynamicRedrawCount: this.dynamicRedrawCount,
+            fullRecompositionCount: this.fullRecompositionCount,
+            cacheHits: this.cacheHits,
+            cacheRebuilds: this.cacheRebuilds,
+            chunkRedrawCount: this.chunkRedrawCount,
+            invalidatedChunkCount: this.invalidatedChunkCount,
             cameraMovedThisFrame: this.cameraMovedThisFrame,
             zoomChangedThisFrame: this.zoomChangedThisFrame,
             hoveredTileChangedThisFrame: this.hoveredTileChangedThisFrame,
             canvasPixelSize: `${this.canvasPixelWidth}x${this.canvasPixelHeight}`,
             currentDevicePixelRatio: this.currentDevicePixelRatio,
+            renderPausedForVisibility: this.renderPausedForVisibility,
+            visibilityPauseCount: this.visibilityPauseCount,
             frameSkippedBecauseNoRedrawWasNeeded: this.frameSkippedNoRedrawThisFrame,
             skippedNoRedrawCount: this.skippedNoRedrawCount,
             dirtyFlags: { worldNeedsRedraw: this.worldNeedsRedraw, overlayNeedsRedraw: this.overlayNeedsRedraw, uiNeedsRedraw: this.uiNeedsRedraw },

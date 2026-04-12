@@ -599,3 +599,49 @@ test('WorldMap persists location feature occupancy in save state', () => withMoc
   const restoredFeatures = restored.getLocationFeatureIdsAt(col, row);
   assert.deepEqual(new Set(restoredFeatures), new Set(['village', 'ferry-dock']));
 }));
+
+test('WorldMap performance snapshot exposes cache and redraw diagnostics', () => {
+  const worldMap = new WorldMap(20, 16, 10);
+  const snapshot = worldMap.getPerformanceSnapshot();
+
+  assert.equal(typeof snapshot.cacheHits, 'number');
+  assert.equal(typeof snapshot.cacheRebuilds, 'number');
+  assert.equal(typeof snapshot.chunkRedrawCount, 'number');
+  assert.equal(typeof snapshot.invalidatedChunkCount, 'number');
+  assert.equal(typeof snapshot.staticRedrawCount, 'number');
+  assert.equal(typeof snapshot.dynamicRedrawCount, 'number');
+  assert.equal(typeof snapshot.fullRecompositionCount, 'number');
+  assert.equal(typeof snapshot.renderPausedForVisibility, 'boolean');
+  assert.equal(typeof snapshot.visibilityPauseCount, 'number');
+});
+
+test('WorldMap reuses chunk cache for repeated draw in same tier', () => {
+  const originalDocument = globalThis.document;
+  const worldMap = new WorldMap(20, 16, 10);
+  const frameCtx = createMockCanvasContext();
+  frameCtx.drawImage = (...args) => frameCtx.calls.push(['drawImage', ...args]);
+  frameCtx.clearRect = (...args) => frameCtx.calls.push(['clearRect', ...args]);
+  const offscreenFactory = () => {
+    const cacheCtx = createMockCanvasContext();
+    cacheCtx.drawImage = () => {};
+    cacheCtx.clearRect = () => {};
+    return { width: 0, height: 0, getContext: () => cacheCtx };
+  };
+  globalThis.document = { createElement: () => offscreenFactory() };
+
+  try {
+    worldMap.beginRenderFrame(1);
+    worldMap.draw(frameCtx, null);
+    worldMap.finishRenderFrame(1);
+
+    worldMap.markCameraMovedThisFrame();
+    worldMap.beginRenderFrame(2);
+    worldMap.draw(frameCtx, null);
+    worldMap.finishRenderFrame(1);
+  } finally {
+    globalThis.document = originalDocument;
+  }
+
+  const snapshot = worldMap.getPerformanceSnapshot();
+  assert.equal(snapshot.cacheHits > 0, true);
+});
