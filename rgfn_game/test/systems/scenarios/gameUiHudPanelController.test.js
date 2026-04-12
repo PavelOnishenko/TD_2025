@@ -354,3 +354,86 @@ test('GameUiHudPanelController keeps combat actions panel hidden outside battle 
     global.requestAnimationFrame = originalRequestAnimationFrame;
   }
 });
+
+test('GameUiHudPanelController allows dragging panels from any panel border', () => {
+  const originalWindow = global.window;
+  const originalDocument = global.document;
+  const originalMutationObserver = global.MutationObserver;
+  const originalRequestAnimationFrame = global.requestAnimationFrame;
+
+  global.window = { localStorage: createLocalStorage(), innerWidth: 1280, innerHeight: 720 };
+  const hudElements = createHudElements();
+  global.document = createMockDocument(hudElements);
+  global.requestAnimationFrame = (callback) => callback();
+  global.MutationObserver = class {
+    constructor() {}
+    observe() {}
+  };
+
+  try {
+    const controller = new GameUiHudPanelController(hudElements, { onTogglePanel() {} });
+    controller.bind();
+    const statsPanel = hudElements.statsPanel;
+    statsPanel.getBoundingClientRect = () => ({ left: 24, top: 96, width: 240, height: 180, right: 264, bottom: 276 });
+
+    statsPanel.listeners.pointerdown({
+      button: 0,
+      pointerId: 10,
+      target: statsPanel,
+      clientX: 25,
+      clientY: 120,
+      preventDefault() {},
+    });
+    statsPanel.listeners.pointermove({ clientX: 65, clientY: 150 });
+    statsPanel.listeners.pointerup();
+
+    assert.equal(statsPanel.dataset.offsetX, '64');
+    assert.equal(statsPanel.dataset.offsetY, '126');
+  } finally {
+    global.window = originalWindow;
+    global.document = originalDocument;
+    global.MutationObserver = originalMutationObserver;
+    global.requestAnimationFrame = originalRequestAnimationFrame;
+  }
+});
+
+test('GameUiHudPanelController keeps bottom-right resize corner behavior higher priority than border drag', () => {
+  const originalWindow = global.window;
+  const originalDocument = global.document;
+  const originalMutationObserver = global.MutationObserver;
+  const originalRequestAnimationFrame = global.requestAnimationFrame;
+
+  global.window = { localStorage: createLocalStorage(), innerWidth: 1280, innerHeight: 720 };
+  const hudElements = createHudElements();
+  global.document = createMockDocument(hudElements);
+  global.requestAnimationFrame = (callback) => callback();
+  global.MutationObserver = class {
+    constructor() {}
+    observe() {}
+  };
+
+  try {
+    const controller = new GameUiHudPanelController(hudElements, { onTogglePanel() {} });
+    controller.bind();
+    const statsPanel = hudElements.statsPanel;
+    statsPanel.getBoundingClientRect = () => ({ left: 24, top: 96, width: 240, height: 180, right: 264, bottom: 276 });
+
+    statsPanel.listeners.pointerdown({
+      button: 0,
+      pointerId: 11,
+      target: statsPanel,
+      clientX: 260,
+      clientY: 272,
+      preventDefault() {},
+    });
+
+    assert.equal(statsPanel.listeners.pointermove, undefined);
+    assert.equal(statsPanel.dataset.offsetX, '24');
+    assert.equal(statsPanel.dataset.offsetY, '96');
+  } finally {
+    global.window = originalWindow;
+    global.document = originalDocument;
+    global.MutationObserver = originalMutationObserver;
+    global.requestAnimationFrame = originalRequestAnimationFrame;
+  }
+});

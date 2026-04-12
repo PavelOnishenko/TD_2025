@@ -40,6 +40,8 @@ export default class GameUiHudPanelController {
     private nextPanelZIndex = 10;
     private readonly panelSpawnOrigin = { x: 24, y: 96 };
     private readonly panelSpawnStepY = 34;
+    private readonly panelBorderDragThresholdPx = 8;
+    private readonly panelResizeCornerPriorityPx = 18;
     private activeLayoutContext: LayoutContext = 'world';
     constructor(hudElements: HudElements, callbacks: GameUiEventCallbacks) {
         this.hudElements = hudElements;
@@ -131,31 +133,65 @@ export default class GameUiHudPanelController {
             if (event.button !== 0) {
                 return;
             }
-            event.preventDefault();
-            dragHandle.setPointerCapture(event.pointerId);
-            panel.style.zIndex = String(this.nextPanelZIndex++);
-            panel.classList.add('panel-dragging');
-            const startX = event.clientX;
-            const startY = event.clientY;
-            const initialOffsetX = Number.parseFloat(panel.dataset.offsetX ?? '0') || 0;
-            const initialOffsetY = Number.parseFloat(panel.dataset.offsetY ?? '0') || 0;
-            const onPointerMove = (moveEvent: PointerEvent): void => {
-                const nextOffsetX = initialOffsetX + (moveEvent.clientX - startX);
-                const nextOffsetY = initialOffsetY + (moveEvent.clientY - startY);
-                this.applyPanelOffset(panel, nextOffsetX, nextOffsetY);
-                this.keepPanelReachableInViewport(panel);
-                this.persistCurrentContextLayout();
-            };
-            const stopDrag = (): void => {
-                panel.classList.remove('panel-dragging');
-                dragHandle.removeEventListener('pointermove', onPointerMove);
-                dragHandle.removeEventListener('pointerup', stopDrag);
-                dragHandle.removeEventListener('pointercancel', stopDrag);
-            };
-            dragHandle.addEventListener('pointermove', onPointerMove);
-            dragHandle.addEventListener('pointerup', stopDrag);
-            dragHandle.addEventListener('pointercancel', stopDrag);
+            this.startPanelDrag(event, panel, dragHandle);
         });
+        panel.addEventListener('pointerdown', (event: PointerEvent) => {
+            if (!this.shouldStartBorderDrag(event, panel, dragHandle)) {
+                return;
+            }
+            this.startPanelDrag(event, panel, panel);
+        });
+    }
+    private shouldStartBorderDrag(event: PointerEvent, panel: HTMLElement, dragHandle: HTMLElement): boolean {
+        if (event.button !== 0 || event.target === dragHandle) {
+            return false;
+        }
+        const panelRect = panel.getBoundingClientRect();
+        if (panelRect.width <= 0 || panelRect.height <= 0) {
+            return false;
+        }
+        const localX = event.clientX - panelRect.left;
+        const localY = event.clientY - panelRect.top;
+        if (localX < 0 || localY < 0 || localX > panelRect.width || localY > panelRect.height) {
+            return false;
+        }
+        const isInResizePriorityCorner = localX >= (panelRect.width - this.panelResizeCornerPriorityPx)
+            && localY >= (panelRect.height - this.panelResizeCornerPriorityPx);
+        if (isInResizePriorityCorner) {
+            return false;
+        }
+        const threshold = this.panelBorderDragThresholdPx;
+        const isOnBorder = localX <= threshold
+            || localY <= threshold
+            || localX >= (panelRect.width - threshold)
+            || localY >= (panelRect.height - threshold);
+        return isOnBorder;
+    }
+    private startPanelDrag(event: PointerEvent, panel: HTMLElement, dragSurface: HTMLElement): void {
+        event.preventDefault();
+        dragSurface.setPointerCapture(event.pointerId);
+        panel.style.zIndex = String(this.nextPanelZIndex++);
+        panel.classList.add('panel-dragging');
+        const startX = event.clientX;
+        const startY = event.clientY;
+        const initialOffsetX = Number.parseFloat(panel.dataset.offsetX ?? '0') || 0;
+        const initialOffsetY = Number.parseFloat(panel.dataset.offsetY ?? '0') || 0;
+        const onPointerMove = (moveEvent: PointerEvent): void => {
+            const nextOffsetX = initialOffsetX + (moveEvent.clientX - startX);
+            const nextOffsetY = initialOffsetY + (moveEvent.clientY - startY);
+            this.applyPanelOffset(panel, nextOffsetX, nextOffsetY);
+            this.keepPanelReachableInViewport(panel);
+            this.persistCurrentContextLayout();
+        };
+        const stopDrag = (): void => {
+            panel.classList.remove('panel-dragging');
+            dragSurface.removeEventListener('pointermove', onPointerMove);
+            dragSurface.removeEventListener('pointerup', stopDrag);
+            dragSurface.removeEventListener('pointercancel', stopDrag);
+        };
+        dragSurface.addEventListener('pointermove', onPointerMove);
+        dragSurface.addEventListener('pointerup', stopDrag);
+        dragSurface.addEventListener('pointercancel', stopDrag);
     }
     private bindPanelSpawnPositioning(panel: HTMLElement, panelIndex: number): void {
         const placePanelAtSpawn = (): void => {
