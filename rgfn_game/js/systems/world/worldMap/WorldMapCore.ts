@@ -108,6 +108,8 @@ export default class WorldMapCore {
     protected cameraMovedThisFrame: boolean;
     protected zoomChangedThisFrame: boolean;
     protected hoveredTileChangedThisFrame: boolean;
+    protected redrawCauseCounts: Record<string, number>;
+    protected staticFrameCanvas: HTMLCanvasElement | null;
     protected visibleTileCountThisFrame: number;
     protected drawnTileCountThisFrame: number;
     protected approxDrawCallsThisFrame: number;
@@ -175,6 +177,8 @@ export default class WorldMapCore {
         this.cameraMovedThisFrame = false;
         this.zoomChangedThisFrame = false;
         this.hoveredTileChangedThisFrame = false;
+        this.redrawCauseCounts = this.createInitialRedrawCauseCounts();
+        this.staticFrameCanvas = null;
         this.visibleTileCountThisFrame = 0;
         this.drawnTileCountThisFrame = 0;
         this.approxDrawCallsThisFrame = 0;
@@ -211,6 +215,21 @@ export default class WorldMapCore {
         character: true,
         selectionCursor: true,
     });
+
+    private readonly createInitialRedrawCauseCounts = (): Record<string, number> => ({
+        cameraMovement: 0,
+        zoomChange: 0,
+        hoverTileChange: 0,
+        selectionChange: 0,
+        diagnosticsUiChange: 0,
+        visibilityFogChange: 0,
+        mapContentChange: 0,
+        forcedFullRedraw: 0,
+    });
+
+    protected noteRedrawCause = (cause: keyof ReturnType<WorldMapCore['createInitialRedrawCauseCounts']>): void => {
+        this.redrawCauseCounts[cause] = (this.redrawCauseCounts[cause] ?? 0) + 1;
+    };
 
     private readonly createEmptyDrawProfileStats = (): Record<'drawTotal' | 'visibleTileCalculation' | 'terrain' | 'roads' | 'entities' | 'cursorSelection' | 'overlayDebug', DrawProfileStats> => ({
         drawTotal: this.createEmptyStat(),
@@ -258,6 +277,7 @@ export default class WorldMapCore {
 
     public setRenderLayerToggles = (toggles: Partial<WorldMapRenderLayerToggles>): void => {
         this.renderLayerToggles = { ...this.renderLayerToggles, ...toggles };
+        this.noteRedrawCause('diagnosticsUiChange');
         this.invalidateWorldRedraw();
     };
 
@@ -268,6 +288,7 @@ export default class WorldMapCore {
             return;
         }
         this.daylightFactor = Math.max(0.35, Math.min(1.1, factor));
+        this.noteRedrawCause('mapContentChange');
         this.invalidateWorldRedraw();
     }
 
@@ -285,16 +306,20 @@ export default class WorldMapCore {
 
     public markCameraMovedThisFrame(): void {
         this.cameraMovedThisFrame = true;
+        this.noteRedrawCause('cameraMovement');
         this.invalidateWorldRedraw();
     }
 
     public markZoomChangedThisFrame(): void {
         this.zoomChangedThisFrame = true;
+        this.noteRedrawCause('zoomChange');
         this.invalidateWorldRedraw();
     }
 
     public noteHoverTileChangedThisFrame(): void {
         this.hoveredTileChangedThisFrame = true;
+        this.noteRedrawCause('hoverTileChange');
+        this.noteRedrawCause('selectionChange');
         this.invalidateOverlayRedraw();
         this.invalidateUiRedraw();
     }
@@ -303,6 +328,8 @@ export default class WorldMapCore {
         this.cameraMovedThisFrame = false;
         this.zoomChangedThisFrame = false;
         this.hoveredTileChangedThisFrame = false;
+        this.redrawCauseCounts = this.createInitialRedrawCauseCounts();
+        this.staticFrameCanvas = null;
     }
 
     public setLastUpdateMs(elapsedMs: number): void {
@@ -319,6 +346,7 @@ export default class WorldMapCore {
 
     public setDevicePixelRatioClamp(clamp: 'auto' | '1' | '1.5'): void {
         this.devicePixelRatioClamp = clamp === '1' ? 1 : clamp === '1.5' ? 1.5 : 'auto';
+        this.noteRedrawCause('diagnosticsUiChange');
         this.invalidateWorldRedraw();
     }
 
@@ -408,6 +436,7 @@ export default class WorldMapCore {
             return;
         }
         this.renderPausedForVisibility = false;
+        this.noteRedrawCause('forcedFullRedraw');
         this.invalidateWorldRedraw();
         this.invalidateOverlayRedraw();
         this.invalidateUiRedraw();
@@ -443,7 +472,24 @@ export default class WorldMapCore {
             frameSkippedBecauseNoRedrawWasNeeded: this.frameSkippedNoRedrawThisFrame,
             skippedNoRedrawCount: this.skippedNoRedrawCount,
             dirtyFlags: { worldNeedsRedraw: this.worldNeedsRedraw, overlayNeedsRedraw: this.overlayNeedsRedraw, uiNeedsRedraw: this.uiNeedsRedraw },
+            redrawCauses: { ...this.redrawCauseCounts },
         };
+    }
+
+    protected ensureStaticFrameCanvas(width: number, height: number): CanvasRenderingContext2D | null {
+        const nextWidth = Math.max(1, Math.floor(width));
+        const nextHeight = Math.max(1, Math.floor(height));
+        if (!this.staticFrameCanvas || this.staticFrameCanvas.width !== nextWidth || this.staticFrameCanvas.height !== nextHeight) {
+            if (typeof document === 'undefined' || typeof document.createElement !== 'function') {
+                this.staticFrameCanvas = null;
+                return null;
+            }
+            const canvas = document.createElement('canvas');
+            canvas.width = nextWidth;
+            canvas.height = nextHeight;
+            this.staticFrameCanvas = canvas;
+        }
+        return this.staticFrameCanvas.getContext('2d');
     }
 
     protected initializeWorldMap(): void {

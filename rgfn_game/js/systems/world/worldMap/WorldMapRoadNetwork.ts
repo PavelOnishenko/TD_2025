@@ -1,4 +1,5 @@
 // @ts-nocheck
+/* eslint-disable style-guide/file-length-warning, style-guide/function-length-warning, style-guide/function-length-error */
 import WorldMapNamedLocationAndVillageOverlays from './layers/WorldMapNamedLocationAndVillageOverlays.js';
 import { FOG_STATE } from './WorldMapCore.js';
 import { buildSamplePoints, detectFerryRoutePairs } from './layers/WorldMapFerryRouteUtils.js';
@@ -61,6 +62,7 @@ export default class WorldMapRoadNetwork extends WorldMapNamedLocationAndVillage
         this.villageRoadLinks = links.map(({ from, to }) => {
             const controls = this.buildVillageRoadControls(from, to);
             const link: VillageRoadLink = { from, to, control1: controls.control1, control2: controls.control2 };
+            (link as VillageRoadLink & { sampledPoints?: VillageRoadPoint[] }).sampledPoints = this.buildRoadSamplePoints(link);
             this.markRoadCellsForLink(link);
             this.registerFerryDockRoutesForLink(link);
             return link;
@@ -106,9 +108,24 @@ export default class WorldMapRoadNetwork extends WorldMapNamedLocationAndVillage
         };
     }
 
-    private buildVisibleRoadSegments(link: VillageRoadLink): Array<{ points: VillageRoadPoint[]; alpha: number; style: 'land' | 'waterCrossing' }> {
-        const segments: Array<{ points: VillageRoadPoint[]; alpha: number; style: 'land' | 'waterCrossing' }> = [];
+    private buildRoadSamplePoints(link: VillageRoadLink): VillageRoadPoint[] {
         const samples = Math.max(26, Math.ceil(this.getRoadLinkDistance(link) * 7));
+        const points: VillageRoadPoint[] = [];
+        for (let index = 0; index <= samples; index += 1) {
+            points.push(this.sampleRoadLinkPoint(link, index / samples));
+        }
+        return points;
+    }
+
+    private buildVisibleRoadSegments(
+        link: VillageRoadLink,
+        options: {
+            bounds?: { startCol: number; endCol: number; startRow: number; endRow: number };
+            chunkLocal?: { startCol: number; startRow: number };
+        } = {},
+    ): Array<{ points: VillageRoadPoint[]; alpha: number; style: 'land' | 'waterCrossing' }> {
+        const segments: Array<{ points: VillageRoadPoint[]; alpha: number; style: 'land' | 'waterCrossing' }> = [];
+        const sampledPoints = (link as VillageRoadLink & { sampledPoints?: VillageRoadPoint[] }).sampledPoints ?? this.buildRoadSamplePoints(link);
         let active: VillageRoadPoint[] = [];
         let activeStyle: 'land' | 'waterCrossing' | null = null;
 
@@ -118,17 +135,22 @@ export default class WorldMapRoadNetwork extends WorldMapNamedLocationAndVillage
             active = [];
         };
 
-        for (let index = 0; index <= samples; index += 1) {
-            const gridPoint = this.sampleRoadLinkPoint(link, index / samples);
+        sampledPoints.forEach((gridPoint) => {
             const col = Math.floor(gridPoint.x);
             const row = Math.floor(gridPoint.y);
+            if (options.bounds
+                && (col < options.bounds.startCol || col > options.bounds.endCol || row < options.bounds.startRow || row > options.bounds.endRow)) {
+                flushSegment();
+                activeStyle = null;
+                return;
+            }
             const hasRoad = this.grid.isValidPosition(col, row) && this.roadIndexSet.has(this.getCellIndex(col, row));
             const fogState = hasRoad ? this.getFogState(col, row) : FOG_STATE.UNKNOWN;
             const terrainType = this.getTerrain(col, row)?.type ?? 'grass';
             if (fogState === FOG_STATE.UNKNOWN) {
                 flushSegment();
                 activeStyle = null;
-                continue;
+                return;
             }
 
             const pointStyle: 'land' | 'waterCrossing' = terrainType === 'water' ? 'waterCrossing' : 'land';
@@ -136,8 +158,15 @@ export default class WorldMapRoadNetwork extends WorldMapNamedLocationAndVillage
                 flushSegment();
             }
             activeStyle = pointStyle;
+            if (options.chunkLocal) {
+                active.push({
+                    x: (gridPoint.x - options.chunkLocal.startCol) * this.grid.cellSize,
+                    y: (gridPoint.y - options.chunkLocal.startRow) * this.grid.cellSize,
+                });
+                return;
+            }
             active.push(this.gridPointToCanvas(gridPoint));
-        }
+        });
 
         flushSegment();
         return segments;

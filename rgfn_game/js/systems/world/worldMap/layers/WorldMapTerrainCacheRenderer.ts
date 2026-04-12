@@ -12,6 +12,8 @@ type ChunkCacheLayer = {
 };
 
 export default class WorldMapTerrainCacheRenderer extends WorldMapFocusAndFogOverlay {
+    private readonly cachedRenderCellTemplate = { col: 0, row: 0, x: 0, y: 0, width: 0, height: 0, data: {} };
+
     private getChunkSizeTiles = (): number => 20;
 
     private getChunkKey = (chunkCol: number, chunkRow: number): string => `${chunkCol},${chunkRow}`;
@@ -65,17 +67,26 @@ export default class WorldMapTerrainCacheRenderer extends WorldMapFocusAndFogOve
         if (!this.supportsTerrainLayerCaching(ctx)) {return false;}
         const cellSize = this.grid.cellSize;
         const layer = this.ensureChunkLayer('terrain', detailLevel, cellSize, this.terrainRevision);
+        const renderOptions = { showFogOverlay: false, detailLevel };
         this.drawVisibleChunks(ctx, bounds, layer, (cacheCtx, chunkBounds) => {
-            for (let row = chunkBounds.startRow; row <= chunkBounds.endRow; row += 1) {
-                for (let col = chunkBounds.startCol; col <= chunkBounds.endCol; col += 1) {
-                    const terrain = this.getTerrain(col, row);
+            const cell = this.cachedRenderCellTemplate;
+            cell.width = cellSize;
+            cell.height = cellSize;
+            const startCol = chunkBounds.startCol;
+            const startRow = chunkBounds.startRow;
+            for (let row = startRow; row <= chunkBounds.endRow; row += 1) {
+                cell.row = row;
+                cell.y = (row - startRow) * cellSize;
+                for (let col = startCol; col <= chunkBounds.endCol; col += 1) {
+                    cell.col = col;
+                    cell.x = (col - startCol) * cellSize;
                     this.renderer.drawCell(
                         cacheCtx,
-                        { col, row, x: (col - chunkBounds.startCol) * cellSize, y: (row - chunkBounds.startRow) * cellSize, width: cellSize, height: cellSize, data: {} },
+                        cell,
                         FOG_STATE.DISCOVERED,
-                        terrain,
+                        this.getTerrain(col, row),
                         undefined,
-                        { showFogOverlay: false, detailLevel },
+                        renderOptions,
                     );
                 }
             }
@@ -93,11 +104,7 @@ export default class WorldMapTerrainCacheRenderer extends WorldMapFocusAndFogOve
         const cellSize = this.grid.cellSize;
         const layer = this.ensureChunkLayer('roads', detailLevel, cellSize, this.terrainRevision + this.fogRevision);
         this.drawVisibleChunks(ctx, bounds, layer, (cacheCtx, chunkBounds) => {
-            const previousOffsetX = this.grid.offsetX;
-            const previousOffsetY = this.grid.offsetY;
-            this.grid.updateLayout(this.grid.cellSize, -(chunkBounds.startCol * this.grid.cellSize), -(chunkBounds.startRow * this.grid.cellSize));
-            this.drawVillageRoads(cacheCtx, chunkBounds);
-            this.grid.updateLayout(this.grid.cellSize, previousOffsetX, previousOffsetY);
+            this.drawVillageRoads(cacheCtx, chunkBounds, { chunkLocal: true });
         });
         this.noteStaticRedraw();
         return true;
@@ -116,8 +123,8 @@ export default class WorldMapTerrainCacheRenderer extends WorldMapFocusAndFogOve
                 const canvas = this.getOrRebuildChunkCanvas(layer, chunkCol, chunkRow, chunkRect, redrawChunk);
                 if (!canvas) {continue;}
 
-                const destinationX = this.grid.offsetX + (chunkRect.startCol * this.grid.cellSize);
-                const destinationY = this.grid.offsetY + (chunkRect.startRow * this.grid.cellSize);
+                const destinationX = this.grid.offsetX + (chunkRect.startCol * layer.cellSize);
+                const destinationY = this.grid.offsetY + (chunkRect.startRow * layer.cellSize);
                 ctx.drawImage(canvas, destinationX, destinationY);
                 this.approxDrawCallsThisFrame += 1;
             }
