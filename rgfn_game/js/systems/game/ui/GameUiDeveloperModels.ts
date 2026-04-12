@@ -31,6 +31,10 @@ export class DeveloperUiModel {
     public everythingDiscoveredToggle!: HTMLInputElement;
     public fogOfWarToggle!: HTMLInputElement;
     public worldMapProfilingToggle!: HTMLInputElement;
+    public worldMapProfilingOpenBtn!: HTMLButtonElement;
+    public worldMapProfilingPanel!: HTMLElement;
+    public worldMapProfilingDragHandle!: HTMLElement;
+    public worldMapProfilingCloseBtn!: HTMLButtonElement;
     public worldMapProfilingRefreshBtn!: HTMLButtonElement;
     public worldMapProfilingAutoRefreshToggle!: HTMLInputElement;
     public worldMapProfilingOutput!: HTMLElement;

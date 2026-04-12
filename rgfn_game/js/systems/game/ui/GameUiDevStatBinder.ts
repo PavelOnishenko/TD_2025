@@ -37,6 +37,8 @@ export default class GameUiDevStatBinder {
         this.developerUI.developerModeToggle.addEventListener('change', () => this.developerEventController.handleDeveloperModeToggle(this.developerUI.developerModeToggle.checked));
         this.developerUI.everythingDiscoveredToggle.addEventListener('change', () => this.handleMapDisplayToggle('everythingDiscovered'));
         this.developerUI.fogOfWarToggle.addEventListener('change', () => this.handleMapDisplayToggle('fogOfWar'));
+        this.developerUI.worldMapProfilingOpenBtn.addEventListener('click', () => this.developerEventController.toggleWorldMapProfilingPanel(true));
+        this.developerUI.worldMapProfilingCloseBtn.addEventListener('click', () => this.developerEventController.toggleWorldMapProfilingPanel(false));
         this.developerUI.worldMapProfilingToggle.addEventListener('change', () => this.developerEventController.handleWorldMapDrawProfilingToggle(this.developerUI.worldMapProfilingToggle.checked));
         this.developerUI.worldMapProfilingRefreshBtn.addEventListener('click', () => this.developerEventController.handleWorldMapProfilingRefresh());
         this.developerUI.worldMapProfilingAutoRefreshToggle.addEventListener('change', () => this.developerEventController.handleWorldMapProfilingAutoRefreshToggle(this.developerUI.worldMapProfilingAutoRefreshToggle.checked));

@@ -245,7 +245,10 @@ Proceed to renderer migration when **all** are true after the time-boxed optimiz
 ### Developer window alternative (recommended for quick QA)
 
 - Open Developer Event Queue with `~`.
-- Use the **World map profiling** section:
+- Click **Open Profiling Panel** from developer console.
+- Use the standalone **World map profiling** panel:
+  - drag it like other HUD panels,
+  - resize it like log/quests style panels,
   - enable profiling,
   - optionally enable auto-refresh,
   - inspect the live JSON snapshot directly in the panel.

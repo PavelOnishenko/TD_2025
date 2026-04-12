@@ -390,18 +390,29 @@
                     </div>
                 </div>
                 <div class="dev-events-queue-wrap">
-                    <h3>World map profiling</h3>
-                    <p class="dev-events-hint dev-events-hint-tight">Live draw-stage timings for the currently running world map. Keep this panel open while panning/zooming the map.</p>
-                    <div class="dev-events-toggle-grid dev-events-toggle-grid-single">
-                        <label class="dev-events-toggle" for="dev-world-map-profiling-enabled"><input id="dev-world-map-profiling-enabled" type="checkbox"> Enable world-map draw profiling (resets counters on enable)</label>
-                        <label class="dev-events-toggle" for="dev-world-map-profiling-auto-refresh"><input id="dev-world-map-profiling-auto-refresh" type="checkbox"> Auto-refresh values (every ~0.75s)</label>
-                    </div>
+                    <h3>World map profiling window</h3>
+                    <p class="dev-events-hint dev-events-hint-tight">Open a standalone draggable/resizable profiling window (like HUD panels) for live map draw metrics.</p>
                     <div class="dev-roll-actions">
-                        <button id="dev-world-map-profiling-refresh-btn" class="action-btn" type="button">Refresh Profiling Snapshot</button>
+                        <button id="dev-world-map-profiling-open-btn" class="action-btn" type="button">Open Profiling Panel</button>
                     </div>
-                    <pre id="dev-world-map-profiling-output" class="dev-world-map-profiling-output">{}</pre>
                 </div>
             </div>
+        </div>
+
+        <div id="dev-world-map-profiling-panel" class="overlay-panel draggable-panel hidden dev-world-map-profiling-panel">
+            <div class="panel-window-header">
+                <span id="dev-world-map-profiling-drag-handle" class="panel-drag-handle" title="Drag to move panel">World Map Profiling</span>
+                <button id="dev-world-map-profiling-close-btn" class="action-btn panel-close-btn" type="button" aria-label="Close world map profiling panel">×</button>
+            </div>
+            <p class="dev-events-hint dev-events-hint-tight">Live draw-stage timings for the currently running world map.</p>
+            <div class="dev-events-toggle-grid dev-events-toggle-grid-single">
+                <label class="dev-events-toggle" for="dev-world-map-profiling-enabled"><input id="dev-world-map-profiling-enabled" type="checkbox"> Enable world-map draw profiling (resets counters on enable)</label>
+                <label class="dev-events-toggle" for="dev-world-map-profiling-auto-refresh"><input id="dev-world-map-profiling-auto-refresh" type="checkbox"> Auto-refresh values (every ~0.75s)</label>
+            </div>
+            <div class="dev-roll-actions">
+                <button id="dev-world-map-profiling-refresh-btn" class="action-btn" type="button">Refresh Profiling Snapshot</button>
+            </div>
+            <pre id="dev-world-map-profiling-output" class="dev-world-map-profiling-output">{}</pre>
         </div>
 
         <div id="dev-next-roll-modal" class="dev-events-modal hidden" role="dialog" aria-modal="true" aria-labelledby="dev-next-roll-title">

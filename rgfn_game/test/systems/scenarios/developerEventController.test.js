@@ -30,6 +30,7 @@ function createClassList(initial = []) {
 
 function createDeveloperUi() {
   const createInput = () => ({ value: '0', checked: true });
+  const createEventTarget = () => ({ addEventListener: () => {} });
 
   return {
     modal: { classList: createClassList(['hidden']) },
@@ -62,7 +63,11 @@ function createDeveloperUi() {
     everythingDiscoveredToggle: { checked: false },
     fogOfWarToggle: { checked: true },
     worldMapProfilingToggle: { checked: false },
-    worldMapProfilingRefreshBtn: {},
+    worldMapProfilingOpenBtn: createEventTarget(),
+    worldMapProfilingPanel: { classList: createClassList(['hidden']), dataset: {}, style: { setProperty: () => {} } },
+    worldMapProfilingDragHandle: createEventTarget(),
+    worldMapProfilingCloseBtn: createEventTarget(),
+    worldMapProfilingRefreshBtn: createEventTarget(),
     worldMapProfilingAutoRefreshToggle: { checked: false },
     worldMapProfilingOutput: { textContent: '' },
   };
@@ -196,4 +201,17 @@ test('DeveloperEventController renders world-map profiling snapshot in developer
 
   controller.handleWorldMapProfilingRefresh();
   assert.match(developerUI.worldMapProfilingOutput.textContent, /\"capturedAt\"/);
+});
+
+test('DeveloperEventController opens standalone world-map profiling panel from hidden state', () => {
+  const logs = [];
+  const encounterSystem = new EncounterSystem(1);
+  const developerUI = createDeveloperUi();
+  const controller = createController(logs, encounterSystem, developerUI);
+
+  controller.toggleWorldMapProfilingPanel(true);
+
+  assert.equal(developerUI.worldMapProfilingPanel.classList.contains('hidden'), false);
+  assert.equal(developerUI.worldMapProfilingPanel.dataset.spawnPositioned, 'true');
+  assert.match(developerUI.worldMapProfilingOutput.textContent, /\"sections\"/);
 });

@@ -1,3 +1,4 @@
+/* eslint-disable style-guide/file-length-warning */
 import EncounterSystem, { ForcedEncounterType, RandomEncounterType } from './EncounterSystem.js';
 import { MapDisplayConfig } from '../../types/game.js';
 import DeveloperEncounterControls from './DeveloperEncounterControls.js';
@@ -23,6 +24,7 @@ export default class DeveloperEventController {
         this.nextCharacterRollControls = new DeveloperNextCharacterRollControls(developerUI, callbacks);
         this.randomAndMapControls = new DeveloperRandomAndMapControls(developerUI, callbacks);
         this.worldMapProfilingIntervalId = null;
+        this.bindWorldMapProfilingPanelDrag();
     }
 
     // eslint-disable-next-line style-guide/function-length-warning
@@ -142,6 +144,20 @@ export default class DeveloperEventController {
         this.renderWorldMapProfilingPanel();
     }
 
+    public toggleWorldMapProfilingPanel(forceVisible?: boolean): void {
+        const shouldShow = typeof forceVisible === 'boolean'
+            ? forceVisible
+            : this.developerUI.worldMapProfilingPanel.classList.contains('hidden');
+        this.developerUI.worldMapProfilingPanel.classList.toggle('hidden', !shouldShow);
+        if (!shouldShow) {
+            this.stopWorldMapProfilingAutoRefresh();
+            return;
+        }
+        this.ensureWorldMapProfilingPanelSpawnPosition();
+        this.developerUI.worldMapProfilingToggle.checked = this.callbacks.isWorldMapDrawProfilingEnabled();
+        this.renderWorldMapProfilingPanel();
+    }
+
     public handleWorldMapProfilingRefresh(): void {
         this.renderWorldMapProfilingPanel();
     }
@@ -174,6 +190,79 @@ export default class DeveloperEventController {
         const snapshot = this.callbacks.getWorldMapDrawProfilingSnapshot();
         const payload = { capturedAt: new Date().toISOString(), profilingEnabled: this.callbacks.isWorldMapDrawProfilingEnabled(), sections: snapshot };
         this.developerUI.worldMapProfilingOutput.textContent = JSON.stringify(payload, null, 2);
+    }
+
+    private ensureWorldMapProfilingPanelSpawnPosition(): void {
+        const panel = this.developerUI.worldMapProfilingPanel;
+        if (panel.dataset.spawnPositioned === 'true') {
+            return;
+        }
+        panel.dataset.offsetX = '28';
+        panel.dataset.offsetY = '120';
+        panel.dataset.spawnPositioned = 'true';
+        panel.style.setProperty('--panel-offset-x', '28px');
+        panel.style.setProperty('--panel-offset-y', '120px');
+    }
+
+    private bindWorldMapProfilingPanelDrag(): void {
+        const panel = this.developerUI.worldMapProfilingPanel;
+        const dragHandle = this.developerUI.worldMapProfilingDragHandle;
+        dragHandle.addEventListener('pointerdown', (event: PointerEvent) => this.handleProfilingPanelPointerDown(event, panel, dragHandle));
+    }
+
+    // eslint-disable-next-line style-guide/function-length-warning
+    private handleProfilingPanelPointerDown(event: PointerEvent, panel: HTMLElement, dragHandle: HTMLElement): void {
+        if (event.button !== 0) {
+            return;
+        }
+        event.preventDefault();
+        panel.style.zIndex = '35';
+        panel.classList.add('panel-dragging');
+        const startX = event.clientX;
+        const startY = event.clientY;
+        const initialOffsetX = Number.parseFloat(panel.dataset.offsetX ?? '0') || 0;
+        const initialOffsetY = Number.parseFloat(panel.dataset.offsetY ?? '0') || 0;
+        const pointerId = event.pointerId;
+        if (typeof dragHandle.setPointerCapture === 'function') {
+            dragHandle.setPointerCapture(pointerId);
+        }
+        const onPointerMove = (moveEvent: PointerEvent): void => this.updateProfilingPanelOffset(panel, startX, startY, initialOffsetX, initialOffsetY, moveEvent);
+        const onPointerUp = (): void => this.finishProfilingPanelDrag(panel, dragHandle, pointerId, onPointerMove, onPointerUp);
+        dragHandle.addEventListener('pointermove', onPointerMove);
+        dragHandle.addEventListener('pointerup', onPointerUp);
+        dragHandle.addEventListener('pointercancel', onPointerUp);
+    }
+
+    private updateProfilingPanelOffset(
+        panel: HTMLElement,
+        startX: number,
+        startY: number,
+        initialOffsetX: number,
+        initialOffsetY: number,
+        moveEvent: PointerEvent,
+    ): void {
+        const nextOffsetX = initialOffsetX + (moveEvent.clientX - startX);
+        const nextOffsetY = initialOffsetY + (moveEvent.clientY - startY);
+        panel.dataset.offsetX = String(nextOffsetX);
+        panel.dataset.offsetY = String(nextOffsetY);
+        panel.style.setProperty('--panel-offset-x', `${nextOffsetX}px`);
+        panel.style.setProperty('--panel-offset-y', `${nextOffsetY}px`);
+    }
+
+    private finishProfilingPanelDrag(
+        panel: HTMLElement,
+        dragHandle: HTMLElement,
+        pointerId: number,
+        onPointerMove: (event: PointerEvent) => void,
+        onPointerUp: () => void,
+    ): void {
+        panel.classList.remove('panel-dragging');
+        if (typeof dragHandle.releasePointerCapture === 'function') {
+            dragHandle.releasePointerCapture(pointerId);
+        }
+        dragHandle.removeEventListener('pointermove', onPointerMove);
+        dragHandle.removeEventListener('pointerup', onPointerUp);
+        dragHandle.removeEventListener('pointercancel', onPointerUp);
     }
 
     public renderQueue(): void {

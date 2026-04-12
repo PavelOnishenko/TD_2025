@@ -1053,6 +1053,18 @@ h1 {
     white-space: pre;
 }
 
+.dev-world-map-profiling-panel {
+    width: min(440px, calc(100vw - 48px));
+    max-width: calc(100vw - 32px);
+    min-width: 280px;
+    min-height: 220px;
+    height: min(48vh, 420px);
+    max-height: calc(100dvh - 32px);
+    resize: both;
+    overflow: auto;
+    z-index: 34;
+}
+
 .item-sprite.mana-potion-sprite {
     background: linear-gradient(180deg, var(--color-primary-accent) 0 35%, var(--color-secondary-accent) 35% 100%);
     border: 2px solid var(--color-primary-accent);

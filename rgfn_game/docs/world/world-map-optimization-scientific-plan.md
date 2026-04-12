@@ -163,15 +163,18 @@ Object.keys(window).filter((k) => /game|world/i.test(k));
 
 #### Developer panel window (no browser console needed)
 
-The developer modal now includes a **World map profiling** window:
+The developer modal now includes a dedicated button to open a standalone **World map profiling** panel:
 
 1. Press `~` to open Developer Event Queue.
-2. In **World map profiling**:
+2. Click **Open Profiling Panel**.
+3. In standalone panel:
+   - drag by header to reposition,
+   - resize from bottom-right corner,
    - enable **Enable world-map draw profiling**,
    - optionally enable **Auto-refresh values**.
-3. Keep world map active and pan/zoom.
-4. Read live JSON in the panel (`drawTotal`, `terrainLayer`, `roads`, `locationFeatures`, `namedLocations`, `dayNightTint`, `focusOverlay`, `markers`).
-5. Use **Refresh Profiling Snapshot** for manual one-shot capture.
+4. Keep world map active and pan/zoom.
+5. Read live JSON in the panel (`drawTotal`, `terrainLayer`, `roads`, `locationFeatures`, `namedLocations`, `dayNightTint`, `focusOverlay`, `markers`).
+6. Use **Refresh Profiling Snapshot** for manual one-shot capture.
 
 ### Report template (mandatory)
 

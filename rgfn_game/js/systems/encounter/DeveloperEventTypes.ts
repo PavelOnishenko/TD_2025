@@ -21,6 +21,10 @@ export type DeveloperUI = {
     everythingDiscoveredToggle: HTMLInputElement;
     fogOfWarToggle: HTMLInputElement;
     worldMapProfilingToggle: HTMLInputElement;
+    worldMapProfilingOpenBtn: HTMLButtonElement;
+    worldMapProfilingPanel: HTMLElement;
+    worldMapProfilingDragHandle: HTMLElement;
+    worldMapProfilingCloseBtn: HTMLButtonElement;
     worldMapProfilingRefreshBtn: HTMLButtonElement;
     worldMapProfilingAutoRefreshToggle: HTMLInputElement;
     worldMapProfilingOutput: HTMLElement;
