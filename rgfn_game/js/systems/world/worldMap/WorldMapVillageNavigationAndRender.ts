@@ -170,18 +170,58 @@ export default class WorldMapVillageNavigationAndRender extends WorldMapMovement
 
     public draw(ctx: CanvasRenderingContext2D, _renderer: any): void {
         this.profileSection('drawTotal', () => {
-            this.renderer.drawBackground(ctx, this.canvasWidth, this.canvasHeight);
+            if (this.areAllRenderLayersDisabled()) {
+                ctx.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
+                return;
+            }
             const bounds = this.getVisibleBounds();
             const detailLevel = this.getRenderDetailLevel(bounds);
-            this.profileSection('terrainLayer', () => this.drawTerrainLayer(ctx, bounds, detailLevel));
-            this.profileSection('roads', () => this.drawVillageRoads(ctx, bounds));
-            this.profileSection('locationFeatures', () => this.drawLocationFeatures(ctx, bounds));
-            this.profileSection('namedLocations', () => this.drawNamedLocations(ctx, bounds));
-            this.profileSection('dayNightTint', () => this.drawDayNightTint(ctx));
-            this.profileSection('focusOverlay', () => this.drawNamedLocationFocus(ctx));
+            this.renderer.drawBackground(ctx, this.canvasWidth, this.canvasHeight);
+            this.drawOptionalTerrainLayers(ctx, bounds, detailLevel);
+            this.drawOptionalRoadLayer(ctx, bounds);
+            this.drawOptionalLocationLayers(ctx, bounds);
             this.profileSection('markers', () => this.drawMarkers(ctx));
-            this.renderer.drawScaleLegend(ctx, this.grid, `${theme.worldMap.cellTravelMinutes} min walk / cell`, this.canvasWidth, this.canvasHeight);
+            this.drawOptionalScaleLegend(ctx);
         });
+    }
+
+    private readonly areAllRenderLayersDisabled = (): boolean => !this.renderLayerToggles.terrain
+            && !this.renderLayerToggles.roads
+            && !this.renderLayerToggles.locations
+            && !this.renderLayerToggles.character
+            && !this.renderLayerToggles.selectionCursor;
+
+    private drawOptionalTerrainLayers(
+        ctx: CanvasRenderingContext2D,
+        bounds: { startCol: number; endCol: number; startRow: number; endRow: number },
+        detailLevel: 'full' | 'medium' | 'low',
+    ): void {
+        if (!this.renderLayerToggles.terrain) {
+            return;
+        }
+        this.profileSection('terrainLayer', () => this.drawTerrainLayer(ctx, bounds, detailLevel));
+        this.profileSection('dayNightTint', () => this.drawDayNightTint(ctx));
+    }
+
+    private drawOptionalRoadLayer(ctx: CanvasRenderingContext2D, bounds: { startCol: number; endCol: number; startRow: number; endRow: number }): void {
+        if (this.renderLayerToggles.roads) {
+            this.profileSection('roads', () => this.drawVillageRoads(ctx, bounds));
+        }
+    }
+
+    private drawOptionalLocationLayers(ctx: CanvasRenderingContext2D, bounds: { startCol: number; endCol: number; startRow: number; endRow: number }): void {
+        if (!this.renderLayerToggles.locations) {
+            return;
+        }
+        this.profileSection('locationFeatures', () => this.drawLocationFeatures(ctx, bounds));
+        this.profileSection('namedLocations', () => this.drawNamedLocations(ctx, bounds));
+        this.profileSection('focusOverlay', () => this.drawNamedLocationFocus(ctx));
+    }
+
+    private drawOptionalScaleLegend(ctx: CanvasRenderingContext2D): void {
+        if (this.renderLayerToggles.terrain) {
+            this.renderer.drawScaleLegend(ctx, this.grid, `${theme.worldMap.cellTravelMinutes} min walk / cell`, this.canvasWidth, this.canvasHeight);
+        }
     }
 
     private drawDayNightTint(ctx: CanvasRenderingContext2D): void {
@@ -232,10 +272,14 @@ export default class WorldMapVillageNavigationAndRender extends WorldMapMovement
     }
 
     private drawMarkers(ctx: CanvasRenderingContext2D): void {
-        const playerCell = this.grid.getCellAt(this.playerGridPos.col, this.playerGridPos.row);
-        if (playerCell) {this.renderer.drawPlayerMarker(ctx, playerCell);}
+        if (this.renderLayerToggles.character) {
+            const playerCell = this.grid.getCellAt(this.playerGridPos.col, this.playerGridPos.row);
+            if (playerCell) {this.renderer.drawPlayerMarker(ctx, playerCell);}
+        }
         const selectedCell = this.selectedGridPos ? this.grid.getCellAt(this.selectedGridPos.col, this.selectedGridPos.row) : null;
-        if (selectedCell) {this.renderer.drawCursorMarker(ctx, selectedCell, this.isCellVisible(selectedCell.col, selectedCell.row));}
+        if (this.renderLayerToggles.selectionCursor && selectedCell) {
+            this.renderer.drawCursorMarker(ctx, selectedCell, this.isCellVisible(selectedCell.col, selectedCell.row));
+        }
     }
 
 }

@@ -27,6 +27,13 @@ export type DeveloperUI = {
     worldMapProfilingCloseBtn: HTMLButtonElement;
     worldMapProfilingRefreshBtn: HTMLButtonElement;
     worldMapProfilingAutoRefreshToggle: HTMLInputElement;
+    worldMapProfilingRenderLayerToggles: {
+        terrain: HTMLInputElement;
+        character: HTMLInputElement;
+        locations: HTMLInputElement;
+        roads: HTMLInputElement;
+        selectionCursor: HTMLInputElement;
+    };
     worldMapProfilingOutput: HTMLElement;
 };
 
@@ -41,6 +48,20 @@ export type DeveloperCallbacks = {
     isWorldMapDrawProfilingEnabled: () => boolean;
     resetWorldMapDrawProfiling: () => void;
     getWorldMapDrawProfilingSnapshot: () => WorldMapDrawProfilingSnapshot;
+    setWorldMapRenderLayerToggles: (toggles: Partial<{
+        terrain: boolean;
+        character: boolean;
+        locations: boolean;
+        roads: boolean;
+        selectionCursor: boolean;
+    }>) => void;
+    getWorldMapRenderLayerToggles: () => {
+        terrain: boolean;
+        character: boolean;
+        locations: boolean;
+        roads: boolean;
+        selectionCursor: boolean;
+    };
 };
 
 export const ENCOUNTER_LABELS: Record<RandomEncounterType, string> = { monster: 'Monster', item: 'Item', traveler: 'Traveler' };

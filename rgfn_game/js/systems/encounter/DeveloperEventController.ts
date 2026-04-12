@@ -46,6 +46,7 @@ export default class DeveloperEventController {
         this.randomAndMapControls.renderMapDisplayControls();
         this.developerUI.developerModeToggle.checked = getDeveloperModeConfig().enabled;
         this.developerUI.worldMapProfilingToggle.checked = this.callbacks.isWorldMapDrawProfilingEnabled();
+        this.syncWorldMapRenderLayerTogglesFromMap();
         this.renderWorldMapProfilingPanel();
     }
 
@@ -155,6 +156,7 @@ export default class DeveloperEventController {
         }
         this.ensureWorldMapProfilingPanelSpawnPosition();
         this.developerUI.worldMapProfilingToggle.checked = this.callbacks.isWorldMapDrawProfilingEnabled();
+        this.syncWorldMapRenderLayerTogglesFromMap();
         this.renderWorldMapProfilingPanel();
     }
 
@@ -169,6 +171,12 @@ export default class DeveloperEventController {
             return;
         }
         this.startWorldMapProfilingAutoRefresh();
+    }
+
+    public handleWorldMapRenderLayerToggle(layer: 'terrain' | 'character' | 'locations' | 'roads' | 'selectionCursor', enabled: boolean): void {
+        this.callbacks.setWorldMapRenderLayerToggles({ [layer]: enabled });
+        this.callbacks.addVillageLog(`[DEV] World-map render layer "${layer}" ${enabled ? 'enabled' : 'disabled'}.`, 'system');
+        this.renderWorldMapProfilingPanel();
     }
 
     private startWorldMapProfilingAutoRefresh(): void {
@@ -188,8 +196,22 @@ export default class DeveloperEventController {
 
     public renderWorldMapProfilingPanel(): void {
         const snapshot = this.callbacks.getWorldMapDrawProfilingSnapshot();
-        const payload = { capturedAt: new Date().toISOString(), profilingEnabled: this.callbacks.isWorldMapDrawProfilingEnabled(), sections: snapshot };
+        const payload = {
+            capturedAt: new Date().toISOString(),
+            profilingEnabled: this.callbacks.isWorldMapDrawProfilingEnabled(),
+            renderLayers: this.callbacks.getWorldMapRenderLayerToggles(),
+            sections: snapshot,
+        };
         this.developerUI.worldMapProfilingOutput.textContent = JSON.stringify(payload, null, 2);
+    }
+
+    private syncWorldMapRenderLayerTogglesFromMap(): void {
+        const toggles = this.callbacks.getWorldMapRenderLayerToggles();
+        this.developerUI.worldMapProfilingRenderLayerToggles.terrain.checked = toggles.terrain;
+        this.developerUI.worldMapProfilingRenderLayerToggles.character.checked = toggles.character;
+        this.developerUI.worldMapProfilingRenderLayerToggles.locations.checked = toggles.locations;
+        this.developerUI.worldMapProfilingRenderLayerToggles.roads.checked = toggles.roads;
+        this.developerUI.worldMapProfilingRenderLayerToggles.selectionCursor.checked = toggles.selectionCursor;
     }
 
     private ensureWorldMapProfilingPanelSpawnPosition(): void {

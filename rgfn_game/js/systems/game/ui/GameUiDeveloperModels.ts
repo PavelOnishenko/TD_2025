@@ -37,6 +37,13 @@ export class DeveloperUiModel {
     public worldMapProfilingCloseBtn!: HTMLButtonElement;
     public worldMapProfilingRefreshBtn!: HTMLButtonElement;
     public worldMapProfilingAutoRefreshToggle!: HTMLInputElement;
+    public worldMapProfilingRenderLayerToggles!: {
+        terrain: HTMLInputElement;
+        character: HTMLInputElement;
+        locations: HTMLInputElement;
+        roads: HTMLInputElement;
+        selectionCursor: HTMLInputElement;
+    };
     public worldMapProfilingOutput!: HTMLElement;
 }
 
