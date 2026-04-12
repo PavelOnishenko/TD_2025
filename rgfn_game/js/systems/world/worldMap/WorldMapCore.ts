@@ -1,5 +1,5 @@
 // @ts-nocheck
-/* eslint-disable style-guide/file-length-warning */
+/* eslint-disable style-guide/file-length-error, style-guide/function-length-error, style-guide/function-length-warning */
 import GridMap from '../../../utils/GridMap.js';
 import { FogState, MapDisplayConfig, TerrainData, GridPosition, GridCell, TerrainType } from '../../types/game.js';
 import WorldMapRenderer from './WorldMapRenderer.js';
@@ -61,6 +61,8 @@ type DrawProfileStats = {
     maxMs: number;
     lastFrameMs: number;
 };
+type RenderFpsCap = 'uncapped' | 60 | 30;
+type DevicePixelRatioClamp = 'auto' | 1 | 1.5;
 
 type WorldMapRenderLayerToggles = {
     terrain: boolean;
@@ -97,16 +99,37 @@ export default class WorldMapCore {
     private fogRevision: number;
     private terrainRevision: number;
     private drawProfilingEnabled: boolean;
-    private drawProfileStats: Record<'drawTotal' | 'terrainLayer' | 'roads' | 'locationFeatures' | 'namedLocations' | 'dayNightTint' | 'focusOverlay' | 'markers', DrawProfileStats>;
+    private drawProfileStats: Record<'drawTotal' | 'visibleTileCalculation' | 'terrain' | 'roads' | 'entities' | 'cursorSelection' | 'overlayDebug', DrawProfileStats>;
     protected renderLayerToggles: WorldMapRenderLayerToggles;
     protected daylightFactor: number;
+    protected worldNeedsRedraw: boolean;
+    protected overlayNeedsRedraw: boolean;
+    protected uiNeedsRedraw: boolean;
+    protected cameraMovedThisFrame: boolean;
+    protected zoomChangedThisFrame: boolean;
+    protected hoveredTileChangedThisFrame: boolean;
+    protected visibleTileCountThisFrame: number;
+    protected drawnTileCountThisFrame: number;
+    protected approxDrawCallsThisFrame: number;
+    protected frameSkippedNoRedrawThisFrame: boolean;
+    protected fullRedrawCount: number;
+    protected skippedNoRedrawCount: number;
+    protected frameTimesMs: number[];
+    protected lastFrameMs: number;
+    protected lastUpdateMs: number;
+    protected lastRenderMs: number;
+    protected lastRenderAtMs: number;
+    protected renderFpsCap: RenderFpsCap;
+    protected devicePixelRatioClamp: DevicePixelRatioClamp;
+    protected canvasPixelWidth: number;
+    protected canvasPixelHeight: number;
+    protected currentDevicePixelRatio: number;
 
     constructor(columns: number, rows: number, cellSize: number) {
         this.grid = new GridMap(columns, rows, cellSize);
         this.initializeCoreState(columns, rows, cellSize);
     }
 
-    // eslint-disable-next-line style-guide/function-length-warning
     private initializeCoreState(columns: number, rows: number, cellSize: number): void {
         this.playerGridPos = { col: 0, row: 0 };
         this.fogStates = new Map();
@@ -136,6 +159,28 @@ export default class WorldMapCore {
         this.drawProfileStats = this.createEmptyDrawProfileStats();
         this.renderLayerToggles = this.createDefaultRenderLayerToggles();
         this.daylightFactor = 1;
+        this.worldNeedsRedraw = true;
+        this.overlayNeedsRedraw = true;
+        this.uiNeedsRedraw = true;
+        this.cameraMovedThisFrame = false;
+        this.zoomChangedThisFrame = false;
+        this.hoveredTileChangedThisFrame = false;
+        this.visibleTileCountThisFrame = 0;
+        this.drawnTileCountThisFrame = 0;
+        this.approxDrawCallsThisFrame = 0;
+        this.frameSkippedNoRedrawThisFrame = false;
+        this.fullRedrawCount = 0;
+        this.skippedNoRedrawCount = 0;
+        this.frameTimesMs = [];
+        this.lastFrameMs = 0;
+        this.lastUpdateMs = 0;
+        this.lastRenderMs = 0;
+        this.lastRenderAtMs = 0;
+        this.renderFpsCap = 'uncapped';
+        this.devicePixelRatioClamp = 'auto';
+        this.canvasPixelWidth = Math.max(1, Math.floor(columns * cellSize));
+        this.canvasPixelHeight = Math.max(1, Math.floor(rows * cellSize));
+        this.currentDevicePixelRatio = 1;
     }
 
     private readonly createEmptyStat = (): DrawProfileStats => ({ frames: 0, totalMs: 0, maxMs: 0, lastFrameMs: 0 });
@@ -147,15 +192,14 @@ export default class WorldMapCore {
         selectionCursor: true,
     });
 
-    private readonly createEmptyDrawProfileStats = (): Record<'drawTotal' | 'terrainLayer' | 'roads' | 'locationFeatures' | 'namedLocations' | 'dayNightTint' | 'focusOverlay' | 'markers', DrawProfileStats> => ({
+    private readonly createEmptyDrawProfileStats = (): Record<'drawTotal' | 'visibleTileCalculation' | 'terrain' | 'roads' | 'entities' | 'cursorSelection' | 'overlayDebug', DrawProfileStats> => ({
         drawTotal: this.createEmptyStat(),
-        terrainLayer: this.createEmptyStat(),
+        visibleTileCalculation: this.createEmptyStat(),
+        terrain: this.createEmptyStat(),
         roads: this.createEmptyStat(),
-        locationFeatures: this.createEmptyStat(),
-        namedLocations: this.createEmptyStat(),
-        dayNightTint: this.createEmptyStat(),
-        focusOverlay: this.createEmptyStat(),
-        markers: this.createEmptyStat(),
+        entities: this.createEmptyStat(),
+        cursorSelection: this.createEmptyStat(),
+        overlayDebug: this.createEmptyStat(),
     });
 
     public setDrawProfilingEnabled = (enabled: boolean): void => {
@@ -169,7 +213,7 @@ export default class WorldMapCore {
     };
 
     protected recordDrawProfileSection(
-        section: 'drawTotal' | 'terrainLayer' | 'roads' | 'locationFeatures' | 'namedLocations' | 'dayNightTint' | 'focusOverlay' | 'markers',
+        section: 'drawTotal' | 'visibleTileCalculation' | 'terrain' | 'roads' | 'entities' | 'cursorSelection' | 'overlayDebug',
         elapsedMs: number,
     ): void {
         if (!this.drawProfilingEnabled || !Number.isFinite(elapsedMs)) {
@@ -182,9 +226,9 @@ export default class WorldMapCore {
         stats.lastFrameMs = elapsedMs;
     }
 
-    public getDrawProfilingSnapshot(): Record<'drawTotal' | 'terrainLayer' | 'roads' | 'locationFeatures' | 'namedLocations' | 'dayNightTint' | 'focusOverlay' | 'markers', { frames: number; avgMs: number; maxMs: number; lastFrameMs: number }> {
-        const snapshot = {} as Record<'drawTotal' | 'terrainLayer' | 'roads' | 'locationFeatures' | 'namedLocations' | 'dayNightTint' | 'focusOverlay' | 'markers', { frames: number; avgMs: number; maxMs: number; lastFrameMs: number }>;
-        const sections = Object.keys(this.drawProfileStats) as Array<'drawTotal' | 'terrainLayer' | 'roads' | 'locationFeatures' | 'namedLocations' | 'dayNightTint' | 'focusOverlay' | 'markers'>;
+    public getDrawProfilingSnapshot(): Record<'drawTotal' | 'visibleTileCalculation' | 'terrain' | 'roads' | 'entities' | 'cursorSelection' | 'overlayDebug', { frames: number; avgMs: number; maxMs: number; lastFrameMs: number }> {
+        const snapshot = {} as Record<'drawTotal' | 'visibleTileCalculation' | 'terrain' | 'roads' | 'entities' | 'cursorSelection' | 'overlayDebug', { frames: number; avgMs: number; maxMs: number; lastFrameMs: number }>;
+        const sections = Object.keys(this.drawProfileStats) as Array<'drawTotal' | 'visibleTileCalculation' | 'terrain' | 'roads' | 'entities' | 'cursorSelection' | 'overlayDebug'>;
         sections.forEach((section) => {
             const stats = this.drawProfileStats[section];
             snapshot[section] = { frames: stats.frames, avgMs: stats.frames > 0 ? stats.totalMs / stats.frames : 0, maxMs: stats.maxMs, lastFrameMs: stats.lastFrameMs };
@@ -194,6 +238,7 @@ export default class WorldMapCore {
 
     public setRenderLayerToggles = (toggles: Partial<WorldMapRenderLayerToggles>): void => {
         this.renderLayerToggles = { ...this.renderLayerToggles, ...toggles };
+        this.invalidateWorldRedraw();
     };
 
     public getRenderLayerToggles = (): WorldMapRenderLayerToggles => ({ ...this.renderLayerToggles });
@@ -203,6 +248,136 @@ export default class WorldMapCore {
             return;
         }
         this.daylightFactor = Math.max(0.35, Math.min(1.1, factor));
+        this.invalidateWorldRedraw();
+    }
+
+    protected invalidateWorldRedraw = (): void => {
+        this.worldNeedsRedraw = true;
+    };
+
+    protected invalidateOverlayRedraw = (): void => {
+        this.overlayNeedsRedraw = true;
+    };
+
+    protected invalidateUiRedraw = (): void => {
+        this.uiNeedsRedraw = true;
+    };
+
+    public markCameraMovedThisFrame(): void {
+        this.cameraMovedThisFrame = true;
+        this.invalidateWorldRedraw();
+    }
+
+    public markZoomChangedThisFrame(): void {
+        this.zoomChangedThisFrame = true;
+        this.invalidateWorldRedraw();
+    }
+
+    public noteHoverTileChangedThisFrame(): void {
+        this.hoveredTileChangedThisFrame = true;
+        this.invalidateOverlayRedraw();
+        this.invalidateUiRedraw();
+    }
+
+    public resetPerFrameFlags(): void {
+        this.cameraMovedThisFrame = false;
+        this.zoomChangedThisFrame = false;
+        this.hoveredTileChangedThisFrame = false;
+    }
+
+    public setLastUpdateMs(elapsedMs: number): void {
+        if (Number.isFinite(elapsedMs)) {
+            this.lastUpdateMs = elapsedMs;
+        }
+    }
+
+    public setRenderFpsCap(cap: 'uncapped' | '60' | '30'): void {
+        this.renderFpsCap = cap === '60' ? 60 : cap === '30' ? 30 : 'uncapped';
+    }
+
+    public getRenderFpsCap(): 'uncapped' | '60' | '30' {
+        return this.renderFpsCap === 'uncapped' ? 'uncapped' : String(this.renderFpsCap) as '60' | '30';
+    }
+
+    public setDevicePixelRatioClamp(clamp: 'auto' | '1' | '1.5'): void {
+        this.devicePixelRatioClamp = clamp === '1' ? 1 : clamp === '1.5' ? 1.5 : 'auto';
+        this.invalidateWorldRedraw();
+    }
+
+    public getDevicePixelRatioClamp(): 'auto' | '1' | '1.5' {
+        return this.devicePixelRatioClamp === 'auto' ? 'auto' : String(this.devicePixelRatioClamp) as '1' | '1.5';
+    }
+
+    public getEffectiveDevicePixelRatio(rawDevicePixelRatio: number): number {
+        const safeDpr = Number.isFinite(rawDevicePixelRatio) && rawDevicePixelRatio > 0 ? rawDevicePixelRatio : 1;
+        const effective = this.devicePixelRatioClamp === 'auto' ? safeDpr : Math.min(safeDpr, this.devicePixelRatioClamp);
+        this.currentDevicePixelRatio = effective;
+        return effective;
+    }
+
+    public setCanvasPixelSize(width: number, height: number): void {
+        this.canvasPixelWidth = Math.max(1, Math.floor(width));
+        this.canvasPixelHeight = Math.max(1, Math.floor(height));
+    }
+
+    public shouldRenderThisFrame(nowMs: number): boolean {
+        if (!this.worldNeedsRedraw && !this.overlayNeedsRedraw && !this.uiNeedsRedraw) {
+            this.frameSkippedNoRedrawThisFrame = true;
+            this.skippedNoRedrawCount += 1;
+            return false;
+        }
+        if (this.renderFpsCap !== 'uncapped') {
+            const minDelta = 1000 / this.renderFpsCap;
+            if ((nowMs - this.lastRenderAtMs) < minDelta) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public beginRenderFrame(nowMs: number): void {
+        this.frameSkippedNoRedrawThisFrame = false;
+        this.visibleTileCountThisFrame = 0;
+        this.drawnTileCountThisFrame = 0;
+        this.approxDrawCallsThisFrame = 0;
+        this.lastRenderAtMs = nowMs;
+    }
+
+    public finishRenderFrame(elapsedMs: number): void {
+        this.lastRenderMs = elapsedMs;
+        this.lastFrameMs = elapsedMs;
+        this.frameTimesMs.push(elapsedMs);
+        if (this.frameTimesMs.length > 60) {
+            this.frameTimesMs.shift();
+        }
+        this.fullRedrawCount += 1;
+        this.worldNeedsRedraw = false;
+        this.overlayNeedsRedraw = false;
+        this.uiNeedsRedraw = false;
+    }
+
+    public getPerformanceSnapshot(): Record<string, unknown> {
+        const avgFrameMs = this.frameTimesMs.length > 0
+            ? this.frameTimesMs.reduce((sum, value) => sum + value, 0) / this.frameTimesMs.length
+            : 0;
+        return {
+            fps: this.lastFrameMs > 0 ? 1000 / this.lastFrameMs : 0,
+            avgFrameMs,
+            updateMs: this.lastUpdateMs,
+            renderMs: this.lastRenderMs,
+            visibleTileCount: this.visibleTileCountThisFrame,
+            drawnTileCount: this.drawnTileCountThisFrame,
+            approximateDrawCalls: this.approxDrawCallsThisFrame,
+            fullRedrawCount: this.fullRedrawCount,
+            cameraMovedThisFrame: this.cameraMovedThisFrame,
+            zoomChangedThisFrame: this.zoomChangedThisFrame,
+            hoveredTileChangedThisFrame: this.hoveredTileChangedThisFrame,
+            canvasPixelSize: `${this.canvasPixelWidth}x${this.canvasPixelHeight}`,
+            currentDevicePixelRatio: this.currentDevicePixelRatio,
+            frameSkippedBecauseNoRedrawWasNeeded: this.frameSkippedNoRedrawThisFrame,
+            skippedNoRedrawCount: this.skippedNoRedrawCount,
+            dirtyFlags: { worldNeedsRedraw: this.worldNeedsRedraw, overlayNeedsRedraw: this.overlayNeedsRedraw, uiNeedsRedraw: this.uiNeedsRedraw },
+        };
     }
 
     protected initializeWorldMap(): void {

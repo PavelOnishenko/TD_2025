@@ -42,6 +42,8 @@ export default class GameUiDevStatBinder {
         this.developerUI.worldMapProfilingToggle.addEventListener('change', () => this.developerEventController.handleWorldMapDrawProfilingToggle(this.developerUI.worldMapProfilingToggle.checked));
         this.developerUI.worldMapProfilingRefreshBtn.addEventListener('click', () => this.developerEventController.handleWorldMapProfilingRefresh());
         this.developerUI.worldMapProfilingAutoRefreshToggle.addEventListener('change', () => this.developerEventController.handleWorldMapProfilingAutoRefreshToggle(this.developerUI.worldMapProfilingAutoRefreshToggle.checked));
+        this.developerUI.worldMapProfilingFpsCapSelect.addEventListener('change', () => this.developerEventController.handleWorldMapRenderFpsCapChanged(this.developerUI.worldMapProfilingFpsCapSelect.value as 'uncapped' | '60' | '30'));
+        this.developerUI.worldMapProfilingDevicePixelRatioClampSelect.addEventListener('change', () => this.developerEventController.handleWorldMapDevicePixelRatioClampChanged(this.developerUI.worldMapProfilingDevicePixelRatioClampSelect.value as 'auto' | '1' | '1.5'));
         this.bindWorldMapRenderLayerToggleEvents();
         Object.values(this.developerUI.nextRollInputs).forEach((input) => {
             input.addEventListener('input', () => this.developerEventController.handleNextCharacterRollInputChanged());

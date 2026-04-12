@@ -49,6 +49,7 @@ const createDevController = (
     ui: RuntimeUi,
     encounterSystem: EncounterSystem,
     worldMap: WorldMap,
+    worldInteractionRuntime: GameFacade['worldInteractionRuntime'],
     villageActionsController: { addLog: (message: string, type?: string) => void },
     villageCoordinator: { getDeveloperEventLabel: (type: string) => string },
 ): DeveloperEventController => new DeveloperEventController(ui.developerUI, encounterSystem, {
@@ -62,6 +63,12 @@ const createDevController = (
     getWorldMapDrawProfilingSnapshot: () => worldMap.getDrawProfilingSnapshot(),
     setWorldMapRenderLayerToggles: (toggles) => worldMap.setRenderLayerToggles(toggles),
     getWorldMapRenderLayerToggles: () => worldMap.getRenderLayerToggles(),
+    getWorldMapPerformanceSnapshot: () => worldMap.getPerformanceSnapshot(),
+    getWorldMapPointerSnapshot: () => worldInteractionRuntime.getPointerDiagnosticsSnapshot(),
+    setWorldMapRenderFpsCap: (cap) => worldMap.setRenderFpsCap(cap),
+    getWorldMapRenderFpsCap: () => worldMap.getRenderFpsCap(),
+    setWorldMapDevicePixelRatioClamp: (clamp) => worldMap.setDevicePixelRatioClamp(clamp),
+    getWorldMapDevicePixelRatioClamp: () => worldMap.getDevicePixelRatioClamp(),
 });
 
 // eslint-disable-next-line style-guide/function-length-warning
@@ -201,6 +208,7 @@ export function buildGameRuntime(
         runtimeBase.ui,
         runtimeBase.encounterSystem,
         runtimeBase.worldMap,
+        game.worldInteractionRuntime,
         runtime.villageActionsController,
         runtime.villageCoordinator,
     );

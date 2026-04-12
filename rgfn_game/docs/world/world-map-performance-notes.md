@@ -322,3 +322,50 @@ Added five independent render-layer toggles to the **World Map Profiling** panel
 - Added tests to verify:
   - all-layer-off mode produces a blank map draw path (no background draw, explicit clear),
   - character marker and selection cursor toggles are independently respected.
+## April 12, 2026 update: diagnostics expansion + dirty redraw pass
+
+### What was added
+- Extended the **existing World Map Profiling** panel payload with runtime metrics:
+  - FPS,
+  - rolling avg frame ms (last 60 rendered frames),
+  - update ms and render ms,
+  - visible/drawn tile counts,
+  - approximate draw calls,
+  - full redraw count,
+  - raw mousemove events/sec,
+  - hover-tile changes/sec,
+  - per-frame booleans for camera moved / zoom changed / hovered tile changed,
+  - canvas pixel size,
+  - current effective devicePixelRatio,
+  - `frameSkippedBecauseNoRedrawWasNeeded`.
+- Added dirty redraw flags in world-map runtime state:
+  - `worldNeedsRedraw`,
+  - `overlayNeedsRedraw`,
+  - `uiNeedsRedraw`.
+- Added controls in the same profiling panel (no new panel):
+  - render FPS cap: `uncapped`, `60`, `30`,
+  - devicePixelRatio clamp: `auto`, `1.0`, `1.5`.
+- Added per-section timing categories:
+  - visible tile calculation,
+  - terrain,
+  - roads,
+  - entities,
+  - cursor/selection,
+  - overlay/debug.
+
+### Optimization behavior
+- Mouse move no longer forces world-map selection redraw unless the hovered tile actually changed.
+- Viewport bounds processing keeps a cull margin but avoids processing outside visible+margin windows.
+- Disabled render layers now short-circuit their own per-layer work paths.
+- Idle redraw now skips render work whenever world/overlay/UI are not dirty (subject to FPS cap logic when redraw is needed).
+
+### Manual verification checklist
+1. Open **Developer Console → World map profiling window** and open the profiling panel.
+2. Toggle auto-refresh and observe metrics update.
+3. **Idle test**: keep camera/zoom/hover unchanged; verify skipped-no-redraw metric rises and redraw activity stays minimal.
+4. **Mouse move test**: move cursor inside a single tile repeatedly; hover-change/sec should stay low while raw mousemove/sec increases.
+5. **Pan test**: middle-mouse drag; camera-changed metric should flip and redraw resume.
+6. **Zoom test**: wheel / keyboard zoom; zoom-changed metric should flip and redraw resume.
+7. **Layer toggle test**: disable terrain/roads/locations/character/cursor independently and observe section timings drop for disabled layers.
+8. **FPS cap test**: switch uncapped → 60 → 30 and observe render cadence drop.
+9. **DPR clamp test**: set auto/1.0/1.5 and resize window; confirm canvas pixel size and effective DPR in diagnostics reflect clamp.

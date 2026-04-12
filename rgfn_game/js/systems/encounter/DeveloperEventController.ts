@@ -47,6 +47,7 @@ export default class DeveloperEventController {
         this.developerUI.developerModeToggle.checked = getDeveloperModeConfig().enabled;
         this.developerUI.worldMapProfilingToggle.checked = this.callbacks.isWorldMapDrawProfilingEnabled();
         this.syncWorldMapRenderLayerTogglesFromMap();
+        this.syncWorldMapRuntimeControlSelections();
         this.renderWorldMapProfilingPanel();
     }
 
@@ -157,6 +158,7 @@ export default class DeveloperEventController {
         this.ensureWorldMapProfilingPanelSpawnPosition();
         this.developerUI.worldMapProfilingToggle.checked = this.callbacks.isWorldMapDrawProfilingEnabled();
         this.syncWorldMapRenderLayerTogglesFromMap();
+        this.syncWorldMapRuntimeControlSelections();
         this.renderWorldMapProfilingPanel();
     }
 
@@ -176,6 +178,16 @@ export default class DeveloperEventController {
     public handleWorldMapRenderLayerToggle(layer: 'terrain' | 'character' | 'locations' | 'roads' | 'selectionCursor', enabled: boolean): void {
         this.callbacks.setWorldMapRenderLayerToggles({ [layer]: enabled });
         this.callbacks.addVillageLog(`[DEV] World-map render layer "${layer}" ${enabled ? 'enabled' : 'disabled'}.`, 'system');
+        this.renderWorldMapProfilingPanel();
+    }
+
+    public handleWorldMapRenderFpsCapChanged(cap: 'uncapped' | '60' | '30'): void {
+        this.callbacks.setWorldMapRenderFpsCap(cap);
+        this.renderWorldMapProfilingPanel();
+    }
+
+    public handleWorldMapDevicePixelRatioClampChanged(clamp: 'auto' | '1' | '1.5'): void {
+        this.callbacks.setWorldMapDevicePixelRatioClamp(clamp);
         this.renderWorldMapProfilingPanel();
     }
 
@@ -200,6 +212,12 @@ export default class DeveloperEventController {
             capturedAt: new Date().toISOString(),
             profilingEnabled: this.callbacks.isWorldMapDrawProfilingEnabled(),
             renderLayers: this.callbacks.getWorldMapRenderLayerToggles(),
+            renderFpsCap: this.callbacks.getWorldMapRenderFpsCap(),
+            devicePixelRatioClamp: this.callbacks.getWorldMapDevicePixelRatioClamp(),
+            metrics: {
+                ...this.callbacks.getWorldMapPerformanceSnapshot(),
+                ...this.callbacks.getWorldMapPointerSnapshot(),
+            },
             sections: snapshot,
         };
         this.developerUI.worldMapProfilingOutput.textContent = JSON.stringify(payload, null, 2);
@@ -212,6 +230,11 @@ export default class DeveloperEventController {
         this.developerUI.worldMapProfilingRenderLayerToggles.locations.checked = toggles.locations;
         this.developerUI.worldMapProfilingRenderLayerToggles.roads.checked = toggles.roads;
         this.developerUI.worldMapProfilingRenderLayerToggles.selectionCursor.checked = toggles.selectionCursor;
+    }
+
+    private syncWorldMapRuntimeControlSelections(): void {
+        this.developerUI.worldMapProfilingFpsCapSelect.value = this.callbacks.getWorldMapRenderFpsCap();
+        this.developerUI.worldMapProfilingDevicePixelRatioClampSelect.value = this.callbacks.getWorldMapDevicePixelRatioClamp();
     }
 
     private ensureWorldMapProfilingPanelSpawnPosition(): void {

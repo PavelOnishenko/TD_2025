@@ -13,7 +13,7 @@ export default class WorldMapVillageNavigationAndRender extends WorldMapMovement
     }
 
     private profileSection<T>(
-        section: 'drawTotal' | 'terrainLayer' | 'roads' | 'locationFeatures' | 'namedLocations' | 'dayNightTint' | 'focusOverlay' | 'markers',
+        section: 'drawTotal' | 'visibleTileCalculation' | 'terrain' | 'roads' | 'entities' | 'cursorSelection' | 'overlayDebug',
         work: () => T,
     ): T {
         if (!this.isDrawProfilingEnabled()) {
@@ -53,10 +53,11 @@ export default class WorldMapVillageNavigationAndRender extends WorldMapMovement
     }
 
     private getVisibleBounds(): { startCol: number; endCol: number; startRow: number; endRow: number } {
-        const startCol = Math.max(0, Math.floor((-this.grid.offsetX) / this.grid.cellSize) - 1);
-        const endCol = Math.min(this.grid.columns - 1, Math.ceil((this.canvasWidth - this.grid.offsetX) / this.grid.cellSize) + 1);
-        const startRow = Math.max(0, Math.floor((-this.grid.offsetY) / this.grid.cellSize) - 1);
-        const endRow = Math.min(this.grid.rows - 1, Math.ceil((this.canvasHeight - this.grid.offsetY) / this.grid.cellSize) + 1);
+        const marginTiles = 2;
+        const startCol = Math.max(0, Math.floor((-this.grid.offsetX) / this.grid.cellSize) - marginTiles);
+        const endCol = Math.min(this.grid.columns - 1, Math.ceil((this.canvasWidth - this.grid.offsetX) / this.grid.cellSize) + marginTiles);
+        const startRow = Math.max(0, Math.floor((-this.grid.offsetY) / this.grid.cellSize) - marginTiles);
+        const endRow = Math.min(this.grid.rows - 1, Math.ceil((this.canvasHeight - this.grid.offsetY) / this.grid.cellSize) + marginTiles);
         return { startCol, endCol, startRow, endRow };
     }
 
@@ -172,15 +173,19 @@ export default class WorldMapVillageNavigationAndRender extends WorldMapMovement
         this.profileSection('drawTotal', () => {
             if (this.areAllRenderLayersDisabled()) {
                 ctx.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
+                this.approxDrawCallsThisFrame += 1;
                 return;
             }
-            const bounds = this.getVisibleBounds();
+            const bounds = this.profileSection('visibleTileCalculation', () => this.getVisibleBounds());
+            this.visibleTileCountThisFrame = Math.max(0, (bounds.endCol - bounds.startCol + 1) * (bounds.endRow - bounds.startRow + 1));
             const detailLevel = this.getRenderDetailLevel(bounds);
             this.renderer.drawBackground(ctx, this.canvasWidth, this.canvasHeight);
+            this.approxDrawCallsThisFrame += 1;
             this.drawOptionalTerrainLayers(ctx, bounds, detailLevel);
             this.drawOptionalRoadLayer(ctx, bounds);
             this.drawOptionalLocationLayers(ctx, bounds);
-            this.profileSection('markers', () => this.drawMarkers(ctx));
+            this.profileSection('entities', () => this.drawCharacterMarker(ctx));
+            this.profileSection('cursorSelection', () => this.drawSelectionMarker(ctx));
             this.drawOptionalScaleLegend(ctx);
         });
     }
@@ -199,8 +204,8 @@ export default class WorldMapVillageNavigationAndRender extends WorldMapMovement
         if (!this.renderLayerToggles.terrain) {
             return;
         }
-        this.profileSection('terrainLayer', () => this.drawTerrainLayer(ctx, bounds, detailLevel));
-        this.profileSection('dayNightTint', () => this.drawDayNightTint(ctx));
+        this.profileSection('terrain', () => this.drawTerrainLayer(ctx, bounds, detailLevel));
+        this.profileSection('overlayDebug', () => this.drawDayNightTint(ctx));
     }
 
     private drawOptionalRoadLayer(ctx: CanvasRenderingContext2D, bounds: { startCol: number; endCol: number; startRow: number; endRow: number }): void {
@@ -213,9 +218,9 @@ export default class WorldMapVillageNavigationAndRender extends WorldMapMovement
         if (!this.renderLayerToggles.locations) {
             return;
         }
-        this.profileSection('locationFeatures', () => this.drawLocationFeatures(ctx, bounds));
-        this.profileSection('namedLocations', () => this.drawNamedLocations(ctx, bounds));
-        this.profileSection('focusOverlay', () => this.drawNamedLocationFocus(ctx));
+        this.profileSection('overlayDebug', () => this.drawLocationFeatures(ctx, bounds));
+        this.profileSection('overlayDebug', () => this.drawNamedLocations(ctx, bounds));
+        this.profileSection('overlayDebug', () => this.drawNamedLocationFocus(ctx));
     }
 
     private drawOptionalScaleLegend(ctx: CanvasRenderingContext2D): void {
@@ -267,18 +272,28 @@ export default class WorldMapVillageNavigationAndRender extends WorldMapMovement
                     detailLevel === 'full' && terrain ? this.getTerrainNeighbors(col, row, terrain.type) : undefined,
                     { showFogOverlay: this.mapDisplayConfig.fogOfWar, detailLevel },
                 );
+                this.drawnTileCountThisFrame += 1;
+                this.approxDrawCallsThisFrame += 1;
             }
         }
     }
 
-    private drawMarkers(ctx: CanvasRenderingContext2D): void {
-        if (this.renderLayerToggles.character) {
-            const playerCell = this.grid.getCellAt(this.playerGridPos.col, this.playerGridPos.row);
-            if (playerCell) {this.renderer.drawPlayerMarker(ctx, playerCell);}
+    private drawCharacterMarker(ctx: CanvasRenderingContext2D): void {
+        if (!this.renderLayerToggles.character) {
+            return;
         }
+        const playerCell = this.grid.getCellAt(this.playerGridPos.col, this.playerGridPos.row);
+        if (playerCell) {
+            this.renderer.drawPlayerMarker(ctx, playerCell);
+            this.approxDrawCallsThisFrame += 1;
+        }
+    }
+
+    private drawSelectionMarker(ctx: CanvasRenderingContext2D): void {
         const selectedCell = this.selectedGridPos ? this.grid.getCellAt(this.selectedGridPos.col, this.selectedGridPos.row) : null;
         if (this.renderLayerToggles.selectionCursor && selectedCell) {
             this.renderer.drawCursorMarker(ctx, selectedCell, this.isCellVisible(selectedCell.col, selectedCell.row));
+            this.approxDrawCallsThisFrame += 1;
         }
     }
 

@@ -38,6 +38,7 @@ export default class GameFacadeLifecycleCoordinator {
     }
 
     public update(deltaTime: number): void {
+        const updateStart = performance.now();
         this.state.stateMachine.update(deltaTime);
         this.state.input.update();
         this.state.persistenceRuntime.saveGameIfChanged(
@@ -47,9 +48,16 @@ export default class GameFacadeLifecycleCoordinator {
             this.state.questRuntime.activeQuest,
             this.state.gameTime?.getState(),
         );
+        this.state.worldMap?.setLastUpdateMs(performance.now() - updateStart);
     }
 
     public render(): void {
+        const nowMs = performance.now();
+        if (this.state.stateMachine.isInState(MODES.WORLD_MAP) && this.state.worldMap && !this.state.worldMap.shouldRenderThisFrame(nowMs)) {
+            return;
+        }
+        const renderStart = performance.now();
+        this.state.worldMap?.beginRenderFrame(nowMs);
         this.state.renderer.beginFrame();
         if (this.state.stateMachine.isInState(MODES.WORLD_MAP)) {
             this.state.renderRouter.renderWorldMode();
@@ -64,6 +72,7 @@ export default class GameFacadeLifecycleCoordinator {
             );
         }
         this.state.renderer.endFrame();
+        this.state.worldMap?.finishRenderFrame(performance.now() - renderStart);
     }
 
     public gameOver(): void {
@@ -165,11 +174,13 @@ export default class GameFacadeLifecycleCoordinator {
 
     public handleResize = (): void => {
         const rect = this.state.canvas.getBoundingClientRect();
-        const width = Math.max(160, Math.floor(rect.width));
-        const height = Math.max(160, Math.floor(rect.height));
+        const dpr = this.state.worldMap?.getEffectiveDevicePixelRatio(window.devicePixelRatio || 1) ?? (window.devicePixelRatio || 1);
+        const width = Math.max(160, Math.floor(rect.width * dpr));
+        const height = Math.max(160, Math.floor(rect.height * dpr));
         if (width !== this.state.canvas.width || height !== this.state.canvas.height) {
             this.state.canvas.width = width;
             this.state.canvas.height = height;
+            this.state.worldMap?.setCanvasPixelSize(width, height);
         }
         if (!this.state.worldMap || !this.state.battleMap) {
             return;

@@ -44,6 +44,8 @@ export class DeveloperUiModel {
         roads: HTMLInputElement;
         selectionCursor: HTMLInputElement;
     };
+    public worldMapProfilingFpsCapSelect!: HTMLSelectElement;
+    public worldMapProfilingDevicePixelRatioClampSelect!: HTMLSelectElement;
     public worldMapProfilingOutput!: HTMLElement;
 }
 

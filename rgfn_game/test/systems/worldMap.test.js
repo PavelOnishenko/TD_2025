@@ -387,8 +387,9 @@ test('WorldMap draw profiling exposes section timing snapshots', () => {
 
   const snapshot = worldMap.getDrawProfilingSnapshot();
   assert.ok(snapshot.drawTotal.frames >= 2);
-  assert.ok(snapshot.terrainLayer.frames >= 2);
-  assert.ok(snapshot.markers.frames >= 2);
+  assert.ok(snapshot.terrain.frames >= 2);
+  assert.ok(snapshot.entities.frames >= 2);
+  assert.ok(snapshot.visibleTileCalculation.frames >= 2);
   assert.equal(typeof snapshot.drawTotal.avgMs, 'number');
   assert.equal(snapshot.drawTotal.maxMs >= 0, true);
   assert.equal(snapshot.drawTotal.lastFrameMs >= 0, true);

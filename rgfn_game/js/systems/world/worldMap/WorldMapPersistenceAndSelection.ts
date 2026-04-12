@@ -116,20 +116,33 @@ export default class WorldMapPersistenceAndSelection extends WorldMapRoadNetwork
                 ? config.fogOfWar
                 : this.mapDisplayConfig.fogOfWar,
         };
+        this.invalidateWorldRedraw();
     };
 
     public updateSelectedCellFromPixel(pixelX: number, pixelY: number): boolean {
         const [col, row] = this.grid.pixelToGrid(pixelX, pixelY);
+        const previous = this.selectedGridPos ? { ...this.selectedGridPos } : null;
         if (!this.grid.isValidPosition(col, row)) {
             this.selectedGridPos = null;
-            return false;
+            const changed = previous !== null;
+            if (changed) {
+                this.noteHoverTileChangedThisFrame();
+            }
+            return changed;
         }
 
         this.selectedGridPos = { col, row };
-        return true;
+        const changed = !previous || previous.col !== col || previous.row !== row;
+        if (changed) {
+            this.noteHoverTileChangedThisFrame();
+        }
+        return changed;
     }
 
     public clearSelectedCell = (): void => {
+        if (this.selectedGridPos) {
+            this.noteHoverTileChangedThisFrame();
+        }
         this.selectedGridPos = null;
     };
 
