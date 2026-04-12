@@ -1,7 +1,7 @@
 /* eslint-disable style-guide/file-length-error, style-guide/function-length-error, style-guide/function-length-warning */
 /* eslint-disable style-guide/rule17-comma-layout, style-guide/arrow-function-style */
 import QuestProgressTracker from '../../systems/quest/QuestProgressTracker.js';
-import Item from '../../entities/Item.js';
+import Item, { DISCOVERABLE_ITEM_LIBRARY } from '../../entities/Item.js';
 import { DefendObjectiveData, DefendObjectiveDefender, EscortObjectiveData, QuestNode, RecoverObjectiveData } from '../../systems/quest/QuestTypes.js';
 import QuestUiController from '../../systems/quest/ui/QuestUiController.js';
 import QuestGenerator from '../../systems/quest/QuestGenerator.js';
@@ -20,7 +20,13 @@ type QuestContractsReadyPayload = {
         contractType: 'barter' | 'deliver' | 'recover';
     }>;
     escortContracts: Array<{ personName: string; sourceVillage: string; destinationVillage: string }>;
-    defendContracts: Array<{ personName: string; villageName: string; artifactName: string }>;
+    defendContracts: Array<{
+        personName: string;
+        villageName: string;
+        artifactName: string;
+        activeDefenderNames: string[];
+        fallenDefenderNames: string[];
+    }>;
 };
 
 export default class GameQuestRuntime {
@@ -345,7 +351,7 @@ export default class GameQuestRuntime {
             defend.isDefenseActive = true;
             defend.timeRemainingMinutes = Math.max(1, defend.durationDays * 24 * 60);
             defend.battleCooldownMinutes = this.rollDefenseCooldownMinutes();
-            defend.defenders = this.createDefenderRoster(availableVillagerNames, defend.contactName);
+            defend.defenders = this.createDefenderRoster(availableVillagerNames, defend.contactName, defend.fallenDefenderNames ?? []);
             startedNode = node;
         });
 
@@ -357,6 +363,7 @@ export default class GameQuestRuntime {
         }
 
         this.questUiController.renderQuest(this.activeQuest);
+        this.refreshContracts();
         return {
             status: 'started',
             objectiveTitle: startedNode.title,
@@ -424,15 +431,17 @@ export default class GameQuestRuntime {
             }
 
             attackers = this.createDefenseAttackers();
-            allies = livingDefenders.map((defender) => this.createVillageCombatant(defender.name, defender.maxHp, defender.currentHp, 4, 5));
+            allies = livingDefenders.map((defender) => this.createVillageCombatantFromDefender(defender));
             defend.battleCooldownMinutes = this.rollDefenseCooldownMinutes();
             logs.push(`Raiders attack ${defend.villageName}! Hold the line until ${defend.artifactName} is secured.`);
+            logs.push(`Defenders at your side: ${livingDefenders.map((defender) => defender.name).join(', ')}.`);
             triggeredBattle = true;
         });
 
         if (stateChanged) {
             this.questProgressTracker?.recomputeCompletion();
             this.questUiController.renderQuest(this.activeQuest);
+            this.refreshContracts();
         }
 
         return { stateChanged, triggeredBattle, attackers, allies, logs };
@@ -494,12 +503,14 @@ export default class GameQuestRuntime {
                 }
                 defender.currentHp = 0;
                 defender.isDead = true;
+                defend.fallenDefenderNames = Array.from(new Set([...(defend.fallenDefenderNames ?? []), defender.name]));
                 lines.push(`${defender.name} was killed while defending ${defend.villageName}.`);
             });
             defend.defenders = (defend.defenders ?? []).filter((defender) => !defender.isDead);
         });
         if (lines.length > 0) {
             this.questUiController?.renderQuest(this.activeQuest);
+            this.refreshContracts();
         }
         return lines;
     }
@@ -643,8 +654,20 @@ export default class GameQuestRuntime {
         });
     }
 
-    private collectDefendContracts(quest: QuestNode): Array<{ personName: string; villageName: string; artifactName: string }> {
-        const contracts: Array<{ personName: string; villageName: string; artifactName: string }> = [];
+    private collectDefendContracts(quest: QuestNode): Array<{
+        personName: string;
+        villageName: string;
+        artifactName: string;
+        activeDefenderNames: string[];
+        fallenDefenderNames: string[];
+    }> {
+        const contracts: Array<{
+            personName: string;
+            villageName: string;
+            artifactName: string;
+            activeDefenderNames: string[];
+            fallenDefenderNames: string[];
+        }> = [];
         const knownNodes = collectKnownQuestNodes(quest);
         this.visitQuestNodes(quest, (node) => {
             if (!knownNodes.has(node) || node.objectiveType !== 'defend' || node.children.length > 0 || node.isCompleted) {
@@ -658,6 +681,8 @@ export default class GameQuestRuntime {
                 personName: defend.contactName,
                 villageName: defend.villageName,
                 artifactName: defend.artifactName,
+                activeDefenderNames: (defend.defenders ?? []).filter((defender) => !defender.isDead).map((defender) => defender.name),
+                fallenDefenderNames: [...(defend.fallenDefenderNames ?? [])],
             });
         });
         return contracts;
@@ -777,8 +802,9 @@ export default class GameQuestRuntime {
 
     private getEscortMaxHp = (_escort: EscortObjectiveData): number => 6;
 
-    private createDefenderRoster(availableVillagerNames: string[], contactName: string): DefendObjectiveDefender[] {
+    private createDefenderRoster(availableVillagerNames: string[], contactName: string, fallenDefenderNames: string[]): DefendObjectiveDefender[] {
         const normalizedContact = contactName.trim().toLocaleLowerCase();
+        const fallenNames = new Set(fallenDefenderNames.map((name) => name.trim().toLocaleLowerCase()));
         const uniqueNames = Array.from(
             new Set(
                 availableVillagerNames
@@ -786,13 +812,11 @@ export default class GameQuestRuntime {
                     .filter((name) => name.length > 0),
             ),
         );
-        const prioritized = uniqueNames.filter((name) => name.toLocaleLowerCase() !== normalizedContact);
-        const pool = [contactName.trim(), ...prioritized];
+        const prioritized = uniqueNames.filter((name) => name.toLocaleLowerCase() !== normalizedContact && !fallenNames.has(name.toLocaleLowerCase()));
+        const shouldIncludeContact = !fallenNames.has(contactName.trim().toLocaleLowerCase());
+        const pool = [shouldIncludeContact ? contactName.trim() : '', ...prioritized].filter((name) => name.length > 0);
         const defenderCount = Math.min(pool.length, this.randomInt(2, 5));
-        return pool.slice(0, defenderCount).map((name) => {
-            const maxHp = this.randomInt(7, 11);
-            return { name, maxHp, currentHp: maxHp };
-        });
+        return pool.slice(0, defenderCount).map((name) => this.createDefenderProfile(name));
     }
 
     private regenerateDefenderRoster(defend: DefendObjectiveData, minutes: number): void {
@@ -813,7 +837,90 @@ export default class GameQuestRuntime {
         return Array.from({ length: count }, (_, index) => this.createVillageCombatant(`Hired Blade ${index + 1}`));
     }
 
-    private createVillageCombatant(name: string, maxHp?: number, currentHp?: number, minDamage: number = 3, maxDamage: number = 6): Skeleton {
+    private createDefenderProfile(name: string): DefendObjectiveDefender {
+        const level = this.randomInt(1, 4);
+        const maxHp = this.randomInt(7, 11) + level;
+        const inventoryItemIds = this.rollDefenderInventoryItemIds(level);
+        const [equippedWeaponItemId, equippedArmorItemId] = this.pickDefenderEquipment(inventoryItemIds);
+        return {
+            name,
+            level,
+            maxHp,
+            currentHp: maxHp,
+            inventoryItemIds,
+            equippedWeaponItemId,
+            equippedArmorItemId,
+            stats: {
+                damage: this.randomInt(4, 7) + level,
+                armor: this.randomInt(0, 3),
+                mana: this.randomInt(0, 4),
+                vitality: this.randomInt(0, 4) + level,
+                toughness: this.randomInt(0, 4) + level,
+                strength: this.randomInt(0, 4) + level,
+                agility: this.randomInt(0, 4) + level,
+                connection: this.randomInt(0, 3),
+                intelligence: this.randomInt(0, 3),
+            },
+        };
+    }
+
+    private rollDefenderInventoryItemIds(level: number): string[] {
+        const pool = DISCOVERABLE_ITEM_LIBRARY;
+        const rolls = this.randomInt(2, Math.min(5, level + 2));
+        const itemIds: string[] = [];
+        for (let index = 0; index < rolls; index += 1) {
+            const randomItem = pool[this.randomInt(0, pool.length - 1)];
+            if (!randomItem?.id) {
+                continue;
+            }
+            itemIds.push(randomItem.id);
+        }
+        return itemIds;
+    }
+
+    private pickDefenderEquipment(inventoryItemIds: string[]): [string | undefined, string | undefined] {
+        const items = inventoryItemIds.map((itemId) => DISCOVERABLE_ITEM_LIBRARY.find((entry) => entry.id === itemId)).filter(Boolean);
+        const bestWeapon = items
+            .filter((item) => item.type === 'weapon')
+            .sort((left, right) => (right.damageBonus ?? 0) - (left.damageBonus ?? 0))[0];
+        const bestArmor = items
+            .filter((item) => item.type === 'armor')
+            .sort((left, right) => (right.effects?.flatArmor ?? 0) - (left.effects?.flatArmor ?? 0))[0];
+        return [bestWeapon?.id, bestArmor?.id];
+    }
+
+    private createVillageCombatantFromDefender(defender: DefendObjectiveDefender): Skeleton {
+        const stats = defender.stats;
+        const equippedWeaponData = defender.equippedWeaponItemId
+            ? DISCOVERABLE_ITEM_LIBRARY.find((item) => item.id === defender.equippedWeaponItemId)
+            : undefined;
+        const equippedArmorData = defender.equippedArmorItemId
+            ? DISCOVERABLE_ITEM_LIBRARY.find((item) => item.id === defender.equippedArmorItemId)
+            : undefined;
+        const damageFromWeapon = equippedWeaponData?.damageBonus ?? 0;
+        const armorFromItem = equippedArmorData?.effects?.flatArmor ?? 0;
+        return this.createVillageCombatant(
+            defender.name,
+            defender.maxHp,
+            defender.currentHp,
+            3 + damageFromWeapon + (stats?.damage ?? 0),
+            4 + damageFromWeapon + (stats?.damage ?? 0),
+            (stats?.armor ?? 0) + armorFromItem,
+            stats?.mana ?? 0,
+            stats,
+        );
+    }
+
+    private createVillageCombatant(
+        name: string,
+        maxHp?: number,
+        currentHp?: number,
+        minDamage: number = 3,
+        maxDamage: number = 6,
+        armor: number = this.randomInt(0, 2),
+        mana: number = this.randomInt(0, 3),
+        stats?: DefendObjectiveDefender['stats'],
+    ): Skeleton {
         const defender = new Skeleton(0, 0, {
             archetypeId: 'human',
             xpValue: this.randomInt(3, 6),
@@ -823,16 +930,16 @@ export default class GameQuestRuntime {
             baseStats: {
                 hp: maxHp ?? this.randomInt(7, 11),
                 damage: this.randomInt(minDamage, maxDamage),
-                armor: this.randomInt(0, 2),
-                mana: this.randomInt(0, 3),
+                armor,
+                mana,
             },
             skills: {
-                vitality: this.randomInt(0, 3),
-                toughness: this.randomInt(0, 3),
-                strength: this.randomInt(0, 3),
-                agility: this.randomInt(0, 3),
-                connection: this.randomInt(0, 2),
-                intelligence: this.randomInt(0, 2),
+                vitality: stats?.vitality ?? this.randomInt(0, 3),
+                toughness: stats?.toughness ?? this.randomInt(0, 3),
+                strength: stats?.strength ?? this.randomInt(0, 3),
+                agility: stats?.agility ?? this.randomInt(0, 3),
+                connection: stats?.connection ?? this.randomInt(0, 2),
+                intelligence: stats?.intelligence ?? this.randomInt(0, 2),
             },
         });
         if (typeof currentHp === 'number') {

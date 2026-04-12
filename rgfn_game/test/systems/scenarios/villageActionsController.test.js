@@ -318,6 +318,41 @@ test('VillageActionsController injects defend contact NPC into the target villag
   assert.equal(names.includes('Quinn Evans'), true);
 }));
 
+test('VillageActionsController removes fallen defenders from village rumor roster', () => withDocumentStub(() => {
+  const villageUI = createVillageUi();
+  const gameLog = createElement();
+  const controller = new VillageActionsController(createPlayerStub(), villageUI, gameLog, {
+    onUpdateHUD: () => {},
+    onAdvanceTime: () => {},
+    onLeaveVillage: () => {},
+    getVillageDirectionHint: (settlementName) => ({ settlementName, exists: true, direction: 'north', distanceCells: 3 }),
+    onVillageBarterCompleted: () => {},
+    onTryStartDefend: () => ({ status: 'inactive' }),
+  });
+
+  controller.configureQuestDefendContracts([
+    {
+      personName: 'Quinn Evans',
+      villageName: 'Heights Gate',
+      artifactName: 'Allies Coverage',
+      fallenDefenderNames: ['Mara'],
+    },
+  ]);
+  controller['dialogueEngine'] = {
+    createNpcRoster: () => [
+      { id: 'heights-0', name: 'Mara', role: 'Carpenter', look: 'cloak', speechStyle: 'calm', disposition: 'truthful' },
+      { id: 'heights-1', name: 'Tor', role: 'Guard', look: 'hood', speechStyle: 'grim', disposition: 'truthful' },
+    ],
+    buildLocationAnswer: () => ({ speech: '', tone: '', truthfulness: 'truth' }),
+    buildPersonLocationAnswer: () => ({ speech: '', tone: '', truthfulness: 'truth' }),
+  };
+
+  controller.enterVillage('Heights Gate');
+  const names = controller['npcRoster'].map((npc) => npc.name);
+  assert.equal(names.includes('Mara'), false);
+  assert.equal(names.includes('Tor'), true);
+}));
+
 test('VillageActionsController adds revealed recover holder into current village roster immediately', () => withDocumentStub(() => {
   const villageUI = createVillageUi();
   const gameLog = createElement();

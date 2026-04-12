@@ -240,13 +240,15 @@ export default class VillageActionsController {
     }
 
     private ensureQuestPeoplePresent(roster: VillageNpcProfile[], villageName: string): void {
+        const unavailableNpcNames = this.getUnavailableNpcNames(villageName);
+        this.removeUnavailableNpcs(roster, unavailableNpcNames);
         this.barterService.getVillageContractTraders(villageName).forEach((traderName) => this.appendTraderIfMissing(roster, villageName, traderName));
         this.escortContracts
             .filter((contract) => contract.sourceVillage.trim().toLocaleLowerCase() === villageName.trim().toLocaleLowerCase())
             .forEach((contract) => this.appendEscortIfMissing(roster, villageName, contract));
         this.defendContracts
             .filter((contract) => contract.villageName.trim().toLocaleLowerCase() === villageName.trim().toLocaleLowerCase())
-            .forEach((contract) => this.appendDefendContactIfMissing(roster, villageName, contract));
+            .forEach((contract) => this.appendDefendContactIfMissing(roster, villageName, contract, unavailableNpcNames));
     }
 
     private appendEscortIfMissing(roster: VillageNpcProfile[], villageName: string, contract: QuestEscortContract): void {
@@ -280,7 +282,10 @@ export default class VillageActionsController {
         });
     }
 
-    private appendDefendContactIfMissing(roster: VillageNpcProfile[], villageName: string, contract: QuestDefendContract): void {
+    private appendDefendContactIfMissing(roster: VillageNpcProfile[], villageName: string, contract: QuestDefendContract, unavailableNpcNames: Set<string>): void {
+        if (unavailableNpcNames.has(contract.personName.trim().toLocaleLowerCase())) {
+            return;
+        }
         const exists = roster.some((npc) => npc.name.toLocaleLowerCase() === contract.personName.toLocaleLowerCase());
         if (exists) {
             return;
@@ -309,6 +314,32 @@ export default class VillageActionsController {
             speechStyle: 'guarded and hostile',
             disposition: 'liar',
         });
+    }
+
+    private getUnavailableNpcNames(villageName: string): Set<string> {
+        const normalizedVillage = villageName.trim().toLocaleLowerCase();
+        return new Set(
+            this.defendContracts
+                .filter((contract) => contract.villageName.trim().toLocaleLowerCase() === normalizedVillage)
+                .flatMap((contract) => contract.fallenDefenderNames ?? [])
+                .map((name) => name.trim().toLocaleLowerCase())
+                .filter((name) => name.length > 0),
+        );
+    }
+
+    private removeUnavailableNpcs(roster: VillageNpcProfile[], unavailableNpcNames: Set<string>): void {
+        if (unavailableNpcNames.size === 0) {
+            return;
+        }
+        for (let index = roster.length - 1; index >= 0; index -= 1) {
+            if (unavailableNpcNames.has(roster[index].name.trim().toLocaleLowerCase())) {
+                roster.splice(index, 1);
+            }
+        }
+        const selectedNpc = this.getSelectedNpc();
+        if (selectedNpc && unavailableNpcNames.has(selectedNpc.name.trim().toLocaleLowerCase())) {
+            this.selectedNpcId = null;
+        }
     }
 
     private getSelectedNpc(): VillageNpcProfile | null {

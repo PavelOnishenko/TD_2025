@@ -1,3 +1,4 @@
+/* eslint-disable style-guide/file-length-warning, style-guide/function-length-warning */
 import QuestPackService from './QuestPackService.js';
 import { QuestRandom } from './QuestRandom.js';
 import { theme } from '../../../config/ThemeConfig.js';
@@ -197,6 +198,7 @@ export default class QuestLeafFactory {
                     timeRemainingMinutes: durationDays * 24 * 60,
                     isDefenseActive: false,
                     defenders: [],
+                    fallenDefenderNames: [],
                     battleCooldownMinutes: 0,
                 },
             },

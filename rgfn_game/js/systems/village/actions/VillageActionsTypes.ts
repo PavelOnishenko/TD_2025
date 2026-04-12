@@ -67,6 +67,8 @@ export type QuestDefendContract = {
     personName: string;
     villageName: string;
     artifactName: string;
+    activeDefenderNames?: string[];
+    fallenDefenderNames?: string[];
 };
 
 export type QuestBarterContract = {
