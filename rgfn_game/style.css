@@ -1039,6 +1039,20 @@ h1 {
     color: var(--color-warning);
 }
 
+.dev-world-map-profiling-output {
+    margin-top: 10px;
+    max-height: 220px;
+    overflow: auto;
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid var(--color-secondary-accent);
+    background: rgba(6, 12, 24, 0.78);
+    color: #b7f7d5;
+    font-size: 12px;
+    line-height: 1.35;
+    white-space: pre;
+}
+
 .item-sprite.mana-potion-sprite {
     background: linear-gradient(180deg, var(--color-primary-accent) 0 35%, var(--color-secondary-accent) 35% 100%);
     border: 2px solid var(--color-primary-accent);

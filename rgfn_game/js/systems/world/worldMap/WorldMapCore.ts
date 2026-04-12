@@ -1,4 +1,5 @@
 // @ts-nocheck
+/* eslint-disable style-guide/file-length-warning */
 import GridMap from '../../../utils/GridMap.js';
 import { FogState, MapDisplayConfig, TerrainData, GridPosition, GridCell, TerrainType } from '../../types/game.js';
 import WorldMapRenderer from './WorldMapRenderer.js';
@@ -54,6 +55,13 @@ type TerrainLayerCache = {
     detailLevel: 'low' | 'medium';
 };
 
+type DrawProfileStats = {
+    frames: number;
+    totalMs: number;
+    maxMs: number;
+    lastFrameMs: number;
+};
+
 export default class WorldMapCore {
     private grid: GridMap;
     private playerGridPos: GridPosition;
@@ -80,6 +88,8 @@ export default class WorldMapCore {
     private terrainLayerCaches: Partial<Record<'low' | 'medium', TerrainLayerCache>>;
     private fogRevision: number;
     private terrainRevision: number;
+    private drawProfilingEnabled: boolean;
+    private drawProfileStats: Record<'drawTotal' | 'terrainLayer' | 'roads' | 'locationFeatures' | 'namedLocations' | 'dayNightTint' | 'focusOverlay' | 'markers', DrawProfileStats>;
     protected daylightFactor: number;
 
     constructor(columns: number, rows: number, cellSize: number) {
@@ -87,6 +97,7 @@ export default class WorldMapCore {
         this.initializeCoreState(columns, rows, cellSize);
     }
 
+    // eslint-disable-next-line style-guide/function-length-warning
     private initializeCoreState(columns: number, rows: number, cellSize: number): void {
         this.playerGridPos = { col: 0, row: 0 };
         this.fogStates = new Map();
@@ -112,7 +123,56 @@ export default class WorldMapCore {
         this.terrainLayerCaches = {};
         this.fogRevision = 0;
         this.terrainRevision = 0;
+        this.drawProfilingEnabled = false;
+        this.drawProfileStats = this.createEmptyDrawProfileStats();
         this.daylightFactor = 1;
+    }
+
+    private readonly createEmptyStat = (): DrawProfileStats => ({ frames: 0, totalMs: 0, maxMs: 0, lastFrameMs: 0 });
+
+    private readonly createEmptyDrawProfileStats = (): Record<'drawTotal' | 'terrainLayer' | 'roads' | 'locationFeatures' | 'namedLocations' | 'dayNightTint' | 'focusOverlay' | 'markers', DrawProfileStats> => ({
+        drawTotal: this.createEmptyStat(),
+        terrainLayer: this.createEmptyStat(),
+        roads: this.createEmptyStat(),
+        locationFeatures: this.createEmptyStat(),
+        namedLocations: this.createEmptyStat(),
+        dayNightTint: this.createEmptyStat(),
+        focusOverlay: this.createEmptyStat(),
+        markers: this.createEmptyStat(),
+    });
+
+    public setDrawProfilingEnabled = (enabled: boolean): void => {
+        this.drawProfilingEnabled = Boolean(enabled);
+    };
+
+    public isDrawProfilingEnabled = (): boolean => this.drawProfilingEnabled;
+
+    public resetDrawProfiling = (): void => {
+        this.drawProfileStats = this.createEmptyDrawProfileStats();
+    };
+
+    protected recordDrawProfileSection(
+        section: 'drawTotal' | 'terrainLayer' | 'roads' | 'locationFeatures' | 'namedLocations' | 'dayNightTint' | 'focusOverlay' | 'markers',
+        elapsedMs: number,
+    ): void {
+        if (!this.drawProfilingEnabled || !Number.isFinite(elapsedMs)) {
+            return;
+        }
+        const stats = this.drawProfileStats[section];
+        stats.frames += 1;
+        stats.totalMs += elapsedMs;
+        stats.maxMs = Math.max(stats.maxMs, elapsedMs);
+        stats.lastFrameMs = elapsedMs;
+    }
+
+    public getDrawProfilingSnapshot(): Record<'drawTotal' | 'terrainLayer' | 'roads' | 'locationFeatures' | 'namedLocations' | 'dayNightTint' | 'focusOverlay' | 'markers', { frames: number; avgMs: number; maxMs: number; lastFrameMs: number }> {
+        const snapshot = {} as Record<'drawTotal' | 'terrainLayer' | 'roads' | 'locationFeatures' | 'namedLocations' | 'dayNightTint' | 'focusOverlay' | 'markers', { frames: number; avgMs: number; maxMs: number; lastFrameMs: number }>;
+        const sections = Object.keys(this.drawProfileStats) as Array<'drawTotal' | 'terrainLayer' | 'roads' | 'locationFeatures' | 'namedLocations' | 'dayNightTint' | 'focusOverlay' | 'markers'>;
+        sections.forEach((section) => {
+            const stats = this.drawProfileStats[section];
+            snapshot[section] = { frames: stats.frames, avgMs: stats.frames > 0 ? stats.totalMs / stats.frames : 0, maxMs: stats.maxMs, lastFrameMs: stats.lastFrameMs };
+        });
+        return snapshot;
     }
 
     public setDaylightFactor(factor: number): void {

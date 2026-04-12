@@ -1,6 +1,7 @@
 import { DeveloperUI } from '../ui/GameUiTypes.js';
 
 export class GameDeveloperUiFactory {
+    // eslint-disable-next-line style-guide/function-length-warning
     public create = (): DeveloperUI => ({
         modal: document.getElementById('dev-events-modal')!,
         closeBtn: document.getElementById('dev-events-close-btn')! as HTMLButtonElement,
@@ -29,24 +30,24 @@ export class GameDeveloperUiFactory {
         developerModeToggle: document.getElementById('dev-mode-enabled')! as HTMLInputElement,
         everythingDiscoveredToggle: document.getElementById('dev-map-display-everything-discovered')! as HTMLInputElement,
         fogOfWarToggle: document.getElementById('dev-map-display-fog-of-war')! as HTMLInputElement,
+        worldMapProfilingToggle: document.getElementById('dev-world-map-profiling-enabled')! as HTMLInputElement,
+        worldMapProfilingRefreshBtn: document.getElementById('dev-world-map-profiling-refresh-btn')! as HTMLButtonElement,
+        worldMapProfilingAutoRefreshToggle: document.getElementById('dev-world-map-profiling-auto-refresh')! as HTMLInputElement,
+        worldMapProfilingOutput: document.getElementById('dev-world-map-profiling-output')!,
     });
 
-    private createEncounterTypeToggles(): DeveloperUI['encounterTypeToggles'] {
-        return {
-            monster: document.getElementById('dev-encounter-type-monster')! as HTMLInputElement,
-            item: document.getElementById('dev-encounter-type-item')! as HTMLInputElement,
-            traveler: document.getElementById('dev-encounter-type-traveler')! as HTMLInputElement,
-        };
-    }
+    private readonly createEncounterTypeToggles = (): DeveloperUI['encounterTypeToggles'] => ({
+        monster: document.getElementById('dev-encounter-type-monster')! as HTMLInputElement,
+        item: document.getElementById('dev-encounter-type-item')! as HTMLInputElement,
+        traveler: document.getElementById('dev-encounter-type-traveler')! as HTMLInputElement,
+    });
 
-    private createNextRollInputs(): DeveloperUI['nextRollInputs'] {
-        return {
-            vitality: document.getElementById('dev-next-roll-vitality')! as HTMLInputElement,
-            toughness: document.getElementById('dev-next-roll-toughness')! as HTMLInputElement,
-            strength: document.getElementById('dev-next-roll-strength')! as HTMLInputElement,
-            agility: document.getElementById('dev-next-roll-agility')! as HTMLInputElement,
-            connection: document.getElementById('dev-next-roll-connection')! as HTMLInputElement,
-            intelligence: document.getElementById('dev-next-roll-intelligence')! as HTMLInputElement,
-        };
-    }
+    private readonly createNextRollInputs = (): DeveloperUI['nextRollInputs'] => ({
+        vitality: document.getElementById('dev-next-roll-vitality')! as HTMLInputElement,
+        toughness: document.getElementById('dev-next-roll-toughness')! as HTMLInputElement,
+        strength: document.getElementById('dev-next-roll-strength')! as HTMLInputElement,
+        agility: document.getElementById('dev-next-roll-agility')! as HTMLInputElement,
+        connection: document.getElementById('dev-next-roll-connection')! as HTMLInputElement,
+        intelligence: document.getElementById('dev-next-roll-intelligence')! as HTMLInputElement,
+    });
 }

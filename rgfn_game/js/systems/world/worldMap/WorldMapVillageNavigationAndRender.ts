@@ -1,9 +1,31 @@
 // @ts-nocheck
+/* eslint-disable style-guide/file-length-warning */
 import WorldMapMovementAndViewport from './WorldMapMovementAndViewport.js';
 import { theme } from '../../../config/ThemeConfig.js';
 import { generateVillageName } from '../VillageNameGenerator.js';
 import { FOG_STATE } from './WorldMapCore.js';
 export default class WorldMapVillageNavigationAndRender extends WorldMapMovementAndViewport {
+    private getProfileNow(): number {
+        if (typeof performance !== 'undefined' && typeof performance.now === 'function') {
+            return performance.now();
+        }
+        return Date.now();
+    }
+
+    private profileSection<T>(
+        section: 'drawTotal' | 'terrainLayer' | 'roads' | 'locationFeatures' | 'namedLocations' | 'dayNightTint' | 'focusOverlay' | 'markers',
+        work: () => T,
+    ): T {
+        if (!this.isDrawProfilingEnabled()) {
+            return work();
+        }
+        const start = this.getProfileNow();
+        const result = work();
+        this.recordDrawProfileSection(section, this.getProfileNow() - start);
+        return result;
+    }
+
+    // eslint-disable-next-line style-guide/function-length-warning
     private clampViewport(): void {
         const mapWidth = this.grid.columns * this.grid.cellSize;
         const mapHeight = this.grid.rows * this.grid.cellSize;
@@ -45,9 +67,7 @@ export default class WorldMapVillageNavigationAndRender extends WorldMapMovement
     }
 
     public isPlayerOnRoad = (): boolean => this.isRoadAt(this.playerGridPos.col, this.playerGridPos.row);
-    public isFerryDockAt(col: number, row: number): boolean {
-        return this.hasLocationFeatureAt(col, row, 'ferry-dock');
-    }
+    public isFerryDockAt = (col: number, row: number): boolean => this.hasLocationFeatureAt(col, row, 'ferry-dock');
     public isPlayerOnFerryDock = (): boolean => this.isFerryDockAt(this.playerGridPos.col, this.playerGridPos.row);
 
     public getFerryRoutesAtPlayerPosition(): Array<{ from: GridPosition; to: GridPosition; waterCells: number }> {
@@ -147,17 +167,19 @@ export default class WorldMapVillageNavigationAndRender extends WorldMapMovement
     }
 
     public draw(ctx: CanvasRenderingContext2D, _renderer: any): void {
-        this.renderer.drawBackground(ctx, this.canvasWidth, this.canvasHeight);
-        const bounds = this.getVisibleBounds();
-        const detailLevel = this.getRenderDetailLevel(bounds);
-        this.drawTerrainLayer(ctx, bounds, detailLevel);
-        this.drawVillageRoads(ctx, bounds);
-        this.drawLocationFeatures(ctx, bounds);
-        this.drawNamedLocations(ctx, bounds);
-        this.drawDayNightTint(ctx);
-        this.drawNamedLocationFocus(ctx);
-        this.drawMarkers(ctx);
-        this.renderer.drawScaleLegend(ctx, this.grid, `${theme.worldMap.cellTravelMinutes} min walk / cell`, this.canvasWidth, this.canvasHeight);
+        this.profileSection('drawTotal', () => {
+            this.renderer.drawBackground(ctx, this.canvasWidth, this.canvasHeight);
+            const bounds = this.getVisibleBounds();
+            const detailLevel = this.getRenderDetailLevel(bounds);
+            this.profileSection('terrainLayer', () => this.drawTerrainLayer(ctx, bounds, detailLevel));
+            this.profileSection('roads', () => this.drawVillageRoads(ctx, bounds));
+            this.profileSection('locationFeatures', () => this.drawLocationFeatures(ctx, bounds));
+            this.profileSection('namedLocations', () => this.drawNamedLocations(ctx, bounds));
+            this.profileSection('dayNightTint', () => this.drawDayNightTint(ctx));
+            this.profileSection('focusOverlay', () => this.drawNamedLocationFocus(ctx));
+            this.profileSection('markers', () => this.drawMarkers(ctx));
+            this.renderer.drawScaleLegend(ctx, this.grid, `${theme.worldMap.cellTravelMinutes} min walk / cell`, this.canvasWidth, this.canvasHeight);
+        });
     }
 
     private drawDayNightTint(ctx: CanvasRenderingContext2D): void {

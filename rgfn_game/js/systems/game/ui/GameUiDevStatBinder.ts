@@ -21,6 +21,7 @@ export default class GameUiDevStatBinder {
         this.bindStatEvents();
     }
 
+    // eslint-disable-next-line style-guide/function-length-warning
     private bindDeveloperEvents(): void {
         this.developerUI.addBtn.addEventListener('click', () => this.developerEventController.handleQueueAdd());
         this.developerUI.clearBtn.addEventListener('click', () => this.developerEventController.handleQueueClear());
@@ -36,6 +37,9 @@ export default class GameUiDevStatBinder {
         this.developerUI.developerModeToggle.addEventListener('change', () => this.developerEventController.handleDeveloperModeToggle(this.developerUI.developerModeToggle.checked));
         this.developerUI.everythingDiscoveredToggle.addEventListener('change', () => this.handleMapDisplayToggle('everythingDiscovered'));
         this.developerUI.fogOfWarToggle.addEventListener('change', () => this.handleMapDisplayToggle('fogOfWar'));
+        this.developerUI.worldMapProfilingToggle.addEventListener('change', () => this.developerEventController.handleWorldMapDrawProfilingToggle(this.developerUI.worldMapProfilingToggle.checked));
+        this.developerUI.worldMapProfilingRefreshBtn.addEventListener('click', () => this.developerEventController.handleWorldMapProfilingRefresh());
+        this.developerUI.worldMapProfilingAutoRefreshToggle.addEventListener('change', () => this.developerEventController.handleWorldMapProfilingAutoRefreshToggle(this.developerUI.worldMapProfilingAutoRefreshToggle.checked));
         Object.values(this.developerUI.nextRollInputs).forEach((input) => {
             input.addEventListener('input', () => this.developerEventController.handleNextCharacterRollInputChanged());
         });
@@ -68,6 +72,7 @@ export default class GameUiDevStatBinder {
         }
     }
 
+    // eslint-disable-next-line style-guide/function-length-warning
     private bindStatEvents(): void {
         this.hudElements.addVitalityBtn.addEventListener('click', () => this.callbacks.onAddStat('vitality'));
         this.hudElements.addToughnessBtn.addEventListener('click', () => this.callbacks.onAddStat('toughness'));

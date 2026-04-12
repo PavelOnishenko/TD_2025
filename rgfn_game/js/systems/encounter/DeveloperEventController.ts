@@ -13,6 +13,7 @@ export default class DeveloperEventController {
     private encounterControls: DeveloperEncounterControls;
     private nextCharacterRollControls: DeveloperNextCharacterRollControls;
     private randomAndMapControls: DeveloperRandomAndMapControls;
+    private worldMapProfilingIntervalId: ReturnType<typeof setInterval> | null;
 
     constructor(developerUI: DeveloperUI, encounterSystem: EncounterSystem, callbacks: DeveloperCallbacks) {
         this.developerUI = developerUI;
@@ -21,8 +22,10 @@ export default class DeveloperEventController {
         this.encounterControls = new DeveloperEncounterControls(developerUI, encounterSystem, callbacks);
         this.nextCharacterRollControls = new DeveloperNextCharacterRollControls(developerUI, callbacks);
         this.randomAndMapControls = new DeveloperRandomAndMapControls(developerUI, callbacks);
+        this.worldMapProfilingIntervalId = null;
     }
 
+    // eslint-disable-next-line style-guide/function-length-warning
     public toggleModal(forceVisible?: boolean): void {
         const shouldShow = typeof forceVisible === 'boolean'
             ? forceVisible
@@ -30,6 +33,7 @@ export default class DeveloperEventController {
 
         this.developerUI.modal.classList.toggle('hidden', !shouldShow);
         if (!shouldShow) {
+            this.stopWorldMapProfilingAutoRefresh();
             return;
         }
 
@@ -39,6 +43,8 @@ export default class DeveloperEventController {
         this.randomAndMapControls.renderRandomProviderControls();
         this.randomAndMapControls.renderMapDisplayControls();
         this.developerUI.developerModeToggle.checked = getDeveloperModeConfig().enabled;
+        this.developerUI.worldMapProfilingToggle.checked = this.callbacks.isWorldMapDrawProfilingEnabled();
+        this.renderWorldMapProfilingPanel();
     }
 
     public applyDeveloperModeOnStartup(): void {
@@ -123,6 +129,51 @@ export default class DeveloperEventController {
 
     public handleMapDisplayToggle(setting: keyof MapDisplayConfig, enabled: boolean): void {
         this.randomAndMapControls.toggleMapDisplaySetting(setting, enabled);
+    }
+
+    public handleWorldMapDrawProfilingToggle(enabled: boolean): void {
+        this.callbacks.setWorldMapDrawProfilingEnabled(enabled);
+        if (enabled) {
+            this.callbacks.resetWorldMapDrawProfiling();
+            this.callbacks.addVillageLog('[DEV] World-map draw profiling enabled and reset.', 'system');
+        } else {
+            this.callbacks.addVillageLog('[DEV] World-map draw profiling disabled.', 'system');
+        }
+        this.renderWorldMapProfilingPanel();
+    }
+
+    public handleWorldMapProfilingRefresh(): void {
+        this.renderWorldMapProfilingPanel();
+    }
+
+    public handleWorldMapProfilingAutoRefreshToggle(enabled: boolean): void {
+        if (!enabled) {
+            this.stopWorldMapProfilingAutoRefresh();
+            this.renderWorldMapProfilingPanel();
+            return;
+        }
+        this.startWorldMapProfilingAutoRefresh();
+    }
+
+    private startWorldMapProfilingAutoRefresh(): void {
+        this.stopWorldMapProfilingAutoRefresh();
+        this.worldMapProfilingIntervalId = setInterval(() => {
+            this.renderWorldMapProfilingPanel();
+        }, 750);
+        this.renderWorldMapProfilingPanel();
+    }
+
+    private stopWorldMapProfilingAutoRefresh(): void {
+        if (this.worldMapProfilingIntervalId !== null) {
+            clearInterval(this.worldMapProfilingIntervalId);
+            this.worldMapProfilingIntervalId = null;
+        }
+    }
+
+    public renderWorldMapProfilingPanel(): void {
+        const snapshot = this.callbacks.getWorldMapDrawProfilingSnapshot();
+        const payload = { capturedAt: new Date().toISOString(), profilingEnabled: this.callbacks.isWorldMapDrawProfilingEnabled(), sections: snapshot };
+        this.developerUI.worldMapProfilingOutput.textContent = JSON.stringify(payload, null, 2);
     }
 
     public renderQueue(): void {

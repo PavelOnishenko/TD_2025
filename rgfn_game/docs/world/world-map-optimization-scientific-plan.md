@@ -76,10 +76,110 @@ We treat performance as an experiment with reproducible conditions.
   - visible cells,
   - cache hit ratios,
   - fog/terrain revision counts.
+- Built-in world-map draw profiler API (implemented in April 2026):
+  - `worldMap.setDrawProfilingEnabled(true)`
+  - `worldMap.resetDrawProfiling()`
+  - run a scenario for N frames
+  - `worldMap.getDrawProfilingSnapshot()` for per-section timings:
+    - `drawTotal`
+    - `terrainLayer`
+    - `roads`
+    - `locationFeatures`
+    - `namedLocations`
+    - `dayNightTint`
+    - `focusOverlay`
+    - `markers`
+
+#### Quick capture snippet (copy/paste in browser console)
+
+```js
+const map = game?.worldMap ?? game?.worldModeController?.worldMap;
+map.setDrawProfilingEnabled(true);
+map.resetDrawProfiling();
+
+// Interact with map for ~30-60s, then:
+console.table(map.getDrawProfilingSnapshot());
+```
+
+#### In-game validation workflow (step-by-step)
+
+1. Start the game and enter **World Map** mode (where the global map is visibly rendering).
+2. Open browser DevTools (`F12` or `Ctrl+Shift+I`) and switch to **Console**.
+3. Resolve the live map instance:
+
+```js
+const map = game?.worldMap ?? game?.worldModeController?.worldMap;
+```
+
+4. Confirm the reference is valid:
+
+```js
+map
+```
+
+Expected: object output (not `undefined` / `null`).
+
+5. Enable and reset profiling:
+
+```js
+map.setDrawProfilingEnabled(true);
+map.resetDrawProfiling();
+```
+
+6. While the global map is displayed, perform one scenario:
+   - pan continuously for ~30-60s, or
+   - zoom in/out repeatedly, or
+   - mixed movement + zoom + hover.
+
+7. Read profiling values:
+
+```js
+console.table(map.getDrawProfilingSnapshot());
+```
+
+8. Interpret quickly:
+   - `drawTotal.avgMs` = average full frame cost in world-map draw path.
+   - Largest `avgMs` section = first bottleneck candidate.
+   - `maxMs` spikes indicate stutter-risk sections.
+
+9. Optional: disable profiling after capture:
+
+```js
+map.setDrawProfilingEnabled(false);
+```
+
+#### Troubleshooting when `map` is undefined
+
+- Ensure you are actually in world-map mode (battle/village screens may not expose the same object).
+- Try inspecting global candidates:
+
+```js
+Object.keys(window).filter((k) => /game|world/i.test(k));
+```
+
+- If project bootstraps under another global name, adapt:
+  - `window.<rootGameObject>.worldMap`
+  - `window.<rootGameObject>.worldModeController?.worldMap`
+
+#### Developer panel window (no browser console needed)
+
+The developer modal now includes a **World map profiling** window:
+
+1. Press `~` to open Developer Event Queue.
+2. In **World map profiling**:
+   - enable **Enable world-map draw profiling**,
+   - optionally enable **Auto-refresh values**.
+3. Keep world map active and pan/zoom.
+4. Read live JSON in the panel (`drawTotal`, `terrainLayer`, `roads`, `locationFeatures`, `namedLocations`, `dayNightTint`, `focusOverlay`, `markers`).
+5. Use **Refresh Profiling Snapshot** for manual one-shot capture.
 
 ### Report template (mandatory)
 
 For each run: commit hash, scenario name, zoom mode, average FPS, P95 frame, long tasks, notes.
+
+Suggested extension for this repository:
+- Include `getDrawProfilingSnapshot()` output (as JSON/table) in the run note.
+- Record whether the scenario was run with fog on/off, because terrain/fog layering paths differ.
 
 ---
 
