@@ -18,7 +18,11 @@ function createCoordinator() {
       battleSplash: { showBattleStart: () => {}, showBattleEnd: () => {} },
       hudElements: { modeIndicator: { textContent: '' } },
       battleUI: { sidebar: { classList: { remove: () => {}, add: () => {} } } },
-      villageUI: { sidebar: { classList: { add: () => {} } } },
+      villageUI: {
+        sidebar: { classList: { add: () => {} } },
+        actions: { classList: { add: () => {} } },
+        rumorsPanel: { classList: { add: () => {} } },
+      },
       worldUI: { sidebar: { classList: { add: () => {} } } },
     },
     {

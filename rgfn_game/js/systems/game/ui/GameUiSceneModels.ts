@@ -43,6 +43,7 @@ export type WorldUI = WorldUiModel;
 
 export class VillageUiModel {
     public sidebar!: HTMLElement;
+    public rumorsPanel!: HTMLElement;
     public title!: HTMLElement;
     public prompt!: HTMLElement;
     public actions!: HTMLElement;

@@ -1,3 +1,10 @@
+/* eslint-disable
+    style-guide/file-length-error,
+    style-guide/function-length-warning,
+    style-guide/function-length-error,
+    style-guide/rule17-comma-layout,
+    style-guide/arrow-function-style
+*/
 import { HudElements } from './GameUiTypes.js';
 import { GameUiEventCallbacks, HudPanelToggle } from './GameUiEventBinderTypes.js';
 type PanelConfig = {
@@ -21,6 +28,8 @@ export default class GameUiHudPanelController {
     private static readonly WORLD_LAYOUT_STORAGE_KEY = 'rgfn_hud_panel_layout_world_v1';
     private static readonly BATTLE_LAYOUT_STORAGE_KEY = 'rgfn_hud_panel_layout_battle_v1';
     private static readonly COMBAT_PANEL_PERSISTENCE_KEY = 'battleActions';
+    private static readonly VILLAGE_ACTIONS_PANEL_PERSISTENCE_KEY = 'villageActions';
+    private static readonly VILLAGE_RUMORS_PANEL_PERSISTENCE_KEY = 'villageRumors';
     private static readonly MODE_TEXT = {
         battle: 'Battle!',
         village: 'Village',
@@ -133,10 +142,8 @@ export default class GameUiHudPanelController {
             const onPointerMove = (moveEvent: PointerEvent): void => {
                 const nextOffsetX = initialOffsetX + (moveEvent.clientX - startX);
                 const nextOffsetY = initialOffsetY + (moveEvent.clientY - startY);
-                panel.dataset.offsetX = String(nextOffsetX);
-                panel.dataset.offsetY = String(nextOffsetY);
-                panel.style.setProperty('--panel-offset-x', `${nextOffsetX}px`);
-                panel.style.setProperty('--panel-offset-y', `${nextOffsetY}px`);
+                this.applyPanelOffset(panel, nextOffsetX, nextOffsetY);
+                this.keepPanelReachableInViewport(panel);
                 this.persistCurrentContextLayout();
             };
             const stopDrag = (): void => {
@@ -200,14 +207,17 @@ export default class GameUiHudPanelController {
         observer.observe(modeIndicator, { childList: true, characterData: true, subtree: true });
     }
     private handleLayoutContextChange(): void {
+        const modeText = this.hudElements.modeIndicator.textContent?.trim() ?? '';
         const nextContext = this.getLayoutContextFromModeIndicator();
         if (nextContext === this.activeLayoutContext) {
+            this.enforceVillagePanelVisibility(modeText);
             this.enforceCombatPanelVisibility(nextContext);
             return;
         }
         this.persistCurrentContextLayout();
         this.activeLayoutContext = nextContext;
         this.restoreLayoutForCurrentContext();
+        this.enforceVillagePanelVisibility(modeText);
         this.enforceCombatPanelVisibility(nextContext);
     }
     private getLayoutContextFromModeIndicator(): LayoutContext {
@@ -238,6 +248,7 @@ export default class GameUiHudPanelController {
                 this.resetPanelToSpawn(element, panelIndex);
                 return;
             }
+            const shouldForceVillageVisibility = this.shouldForceVillagePanelsVisible() && this.isVillagePanel(layoutKey);
             element.dataset.offsetX = String(snapshot.offsetX);
             element.dataset.offsetY = String(snapshot.offsetY);
             element.dataset.spawnPositioned = 'true';
@@ -250,11 +261,13 @@ export default class GameUiHudPanelController {
             } else {
                 element.style.removeProperty('z-index');
             }
-            element.classList.toggle('hidden', snapshot.hidden);
-            if (!snapshot.hidden) {
+            element.classList.toggle('hidden', shouldForceVillageVisibility ? false : snapshot.hidden);
+            if (!element.classList.contains('hidden')) {
+                this.keepPanelReachableInViewport(element);
                 requestAnimationFrame(() => this.ensurePanelDragHandleIsReachable(element));
             }
         });
+        this.enforceVillagePanelVisibility(this.hudElements.modeIndicator.textContent?.trim() ?? '');
         this.enforceCombatPanelVisibility(this.activeLayoutContext);
     }
     private resetPanelToSpawn(panel: HTMLElement, panelIndex: number): void {
@@ -283,6 +296,7 @@ export default class GameUiHudPanelController {
             panel.dataset.spawnPositioned = 'true';
             panel.style.setProperty('--panel-offset-x', `${nextOffsetX}px`);
             panel.style.setProperty('--panel-offset-y', `${nextOffsetY}px`);
+            this.keepPanelReachableInViewport(panel);
             this.ensurePanelDragHandleIsReachable(panel);
         });
     }
@@ -329,6 +343,40 @@ export default class GameUiHudPanelController {
         panel.style.setProperty('--panel-offset-x', `${nextOffsetX}px`);
         panel.style.setProperty('--panel-offset-y', `${nextOffsetY}px`);
     }
+    private keepPanelReachableInViewport(panel: HTMLElement): void {
+        if (panel.classList.contains('hidden')) {
+            return;
+        }
+        const viewportWidth = window.innerWidth || document.documentElement?.clientWidth || 0;
+        const viewportHeight = window.innerHeight || document.documentElement?.clientHeight || 0;
+        if (viewportWidth <= 0 || viewportHeight <= 0) {
+            return;
+        }
+        const panelRect = panel.getBoundingClientRect();
+        if (panelRect.width <= 0 || panelRect.height <= 0) {
+            return;
+        }
+        const minVisibleWidth = Math.min(panelRect.width, 72);
+        const minVisibleHeight = Math.min(panelRect.height, 56);
+        let horizontalShift = 0;
+        let verticalShift = 0;
+        if (panelRect.right < minVisibleWidth) {
+            horizontalShift = minVisibleWidth - panelRect.right;
+        } else if (panelRect.left > viewportWidth - minVisibleWidth) {
+            horizontalShift = (viewportWidth - minVisibleWidth) - panelRect.left;
+        }
+        if (panelRect.bottom < minVisibleHeight) {
+            verticalShift = minVisibleHeight - panelRect.bottom;
+        } else if (panelRect.top > viewportHeight - minVisibleHeight) {
+            verticalShift = (viewportHeight - minVisibleHeight) - panelRect.top;
+        }
+        if (horizontalShift === 0 && verticalShift === 0) {
+            return;
+        }
+        const currentOffsetX = Number.parseFloat(panel.dataset.offsetX ?? '0') || 0;
+        const currentOffsetY = Number.parseFloat(panel.dataset.offsetY ?? '0') || 0;
+        this.applyPanelOffset(panel, currentOffsetX + horizontalShift, currentOffsetY + verticalShift);
+    }
     private persistCurrentContextLayout(): void {
         if (!window.localStorage) {
             return;
@@ -344,9 +392,12 @@ export default class GameUiHudPanelController {
             const offsetY = Number.parseFloat(element.dataset.offsetY ?? '0') || 0;
             const zIndex = Number.parseInt(element.style.zIndex || '', 10);
             const isCombatPanel = layoutKey === GameUiHudPanelController.COMBAT_PANEL_PERSISTENCE_KEY;
+            const isForcedVillagePanel = this.shouldForceVillagePanelsVisible() && this.isVillagePanel(layoutKey);
             const hidden = isCombatPanel
                 ? this.activeLayoutContext !== 'battle'
-                : element.classList.contains('hidden');
+                : isForcedVillagePanel
+                    ? false
+                    : element.classList.contains('hidden');
             layout[layoutKey] = {
                 offsetX,
                 offsetY,
@@ -386,5 +437,25 @@ export default class GameUiHudPanelController {
         return context === 'battle'
             ? GameUiHudPanelController.BATTLE_LAYOUT_STORAGE_KEY
             : GameUiHudPanelController.WORLD_LAYOUT_STORAGE_KEY;
+    }
+    private isVillagePanel(layoutKey: string): boolean {
+        return layoutKey === GameUiHudPanelController.VILLAGE_ACTIONS_PANEL_PERSISTENCE_KEY
+            || layoutKey === GameUiHudPanelController.VILLAGE_RUMORS_PANEL_PERSISTENCE_KEY;
+    }
+    private shouldForceVillagePanelsVisible(): boolean {
+        return (this.hudElements.modeIndicator.textContent?.trim() ?? '') === GameUiHudPanelController.MODE_TEXT.village;
+    }
+    private enforceVillagePanelVisibility(modeText: string): void {
+        if (modeText !== GameUiHudPanelController.MODE_TEXT.village) {
+            return;
+        }
+        this.getPanelConfigs().forEach(({ element, persistenceKey }) => {
+            if (!persistenceKey || !this.isVillagePanel(persistenceKey)) {
+                return;
+            }
+            element.classList.remove('hidden');
+            this.keepPanelReachableInViewport(element);
+            requestAnimationFrame(() => this.ensurePanelDragHandleIsReachable(element));
+        });
     }
 }

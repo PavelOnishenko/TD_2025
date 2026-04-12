@@ -303,7 +303,6 @@ h1 {
 .overlay-panel,
 #world-sidebar,
 #battle-sidebar,
-#village-sidebar,
 #game-log-container {
     pointer-events: auto;
     width: 100%;
@@ -365,7 +364,7 @@ h1 {
 }
 
 #magic-panel, #inventory-panel, #skills-panel, #quests-panel, #lore-panel, #stats-panel, #selected-panel, #group-panel,
-#world-sidebar, #battle-sidebar, #village-sidebar, #game-log-container, #village-actions, #village-rumors-section {
+#world-sidebar, #battle-sidebar, #game-log-container, #village-actions, #village-rumors-section {
     width: min(340px, calc(100vw - 48px));
     max-width: calc(100vw - 32px);
     max-inline-size: calc(100vw - 32px);
@@ -385,8 +384,7 @@ h1 {
 }
 
 #world-sidebar.hidden,
-#battle-sidebar.hidden,
-#village-sidebar.hidden {
+#battle-sidebar.hidden {
     display: none;
 }
 
@@ -495,7 +493,8 @@ h1 {
 
 #world-sidebar h2,
 #battle-sidebar h2,
-#village-sidebar h2 {
+#village-actions h2,
+#village-rumors-section h2 {
     color: var(--color-enemy);
     text-align: center;
     margin: 0;
@@ -511,7 +510,8 @@ h1 {
 #battle-instructions,
 #world-actions,
 #village-prompt,
-#village-actions {
+#village-actions,
+#village-rumors-section {
     overflow: auto;
     min-height: 0;
     padding: 10px;
@@ -630,16 +630,6 @@ h1 {
     background-color: color-mix(in srgb, var(--color-panel-highlight) 58%, transparent);
 }
 
-.village-floating-rumors {
-    position: absolute;
-    top: 0;
-    right: calc(100% + 16px);
-    width: min(320px, 34vw);
-    max-height: min(58vh, 520px);
-    overflow-y: auto;
-    box-shadow: 0 10px 24px color-mix(in srgb, var(--color-panel-shadow) 32%, transparent);
-}
-
 .village-section-title {
     margin: 0 0 6px;
     font-size: 12px;
@@ -726,19 +716,11 @@ h1 {
     }
 
     #magic-panel, #inventory-panel, #skills-panel, #quests-panel, #lore-panel, #stats-panel, #selected-panel, #group-panel,
-    #world-sidebar, #battle-sidebar, #village-sidebar, #game-log-container, #village-actions, #village-rumors-section {
+    #world-sidebar, #battle-sidebar, #game-log-container, #village-actions, #village-rumors-section {
         margin-top: 0;
         height: 260px;
         max-height: 260px;
         resize: none;
-    }
-
-    .village-floating-rumors {
-        position: static;
-        width: auto;
-        max-height: none;
-        overflow: visible;
-        box-shadow: none;
     }
 }
 

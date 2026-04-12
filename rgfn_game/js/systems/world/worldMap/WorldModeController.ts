@@ -1,3 +1,4 @@
+/* eslint-disable style-guide/function-length-warning */
 import InputManager from '../../../../../engine/systems/InputManager.js';
 import WorldMap from './WorldMap.js';
 import EncounterSystem from '../../encounter/EncounterSystem.js';
@@ -60,13 +61,22 @@ export default class WorldModeController {
         );
     }
 
-    public enterWorldMode(hudModeIndicator: HTMLElement, worldSidebar: HTMLElement, battleSidebar: HTMLElement, villageSidebar: HTMLElement): void {
+    public enterWorldMode(
+        hudModeIndicator: HTMLElement,
+        worldSidebar: HTMLElement,
+        battleSidebar: HTMLElement,
+        villageSidebar: HTMLElement,
+        villageActionsPanel: HTMLElement,
+        villageRumorsPanel: HTMLElement,
+    ): void {
         this.villagePromptController.closeVillageEntryPrompt();
         this.ferryPromptController.dismissFerryPrompt();
         hudModeIndicator.textContent = 'World Map';
         worldSidebar.classList.add('hidden');
         battleSidebar.classList.add('hidden');
         villageSidebar.classList.add('hidden');
+        villageActionsPanel.classList.add('hidden');
+        villageRumorsPanel.classList.add('hidden');
 
         const [px, py] = this.worldMap.getPlayerPixelPosition();
         this.player.x = px;

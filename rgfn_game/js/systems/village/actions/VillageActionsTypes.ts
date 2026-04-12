@@ -4,6 +4,7 @@ import { PersonDirectionHint, VillageDirectionHint, VillageNpcProfile } from '..
 
 export type VillageUI = {
     sidebar: HTMLElement;
+    rumorsPanel: HTMLElement;
     title: HTMLElement;
     prompt: HTMLElement;
     actions: HTMLElement;

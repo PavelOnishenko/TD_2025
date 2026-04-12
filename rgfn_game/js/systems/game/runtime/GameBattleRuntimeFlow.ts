@@ -55,6 +55,8 @@ export default class GameBattleRuntimeFlow {
         this.deps.worldUI.sidebar.classList.add('hidden');
         this.deps.battleUI.sidebar.classList.remove('hidden');
         this.deps.villageUI.sidebar.classList.add('hidden');
+        this.deps.villageUI.actions.classList.add('hidden');
+        this.deps.villageUI.rumorsPanel.classList.add('hidden');
         this.deps.controllers.battleCommandController.clearPendingLoot();
         this.currentEnemies = enemies;
         this.currentTerrainType = terrainType;
