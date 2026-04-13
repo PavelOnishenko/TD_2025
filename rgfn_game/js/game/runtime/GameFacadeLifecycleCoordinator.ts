@@ -73,6 +73,7 @@ export default class GameFacadeLifecycleCoordinator {
         if (this.state.stateMachine.isInState(MODES.BATTLE)) {
             this.state.renderRouter.renderBattleMode(
                 this.state.battleCoordinator.getCurrentEnemies(),
+                this.state.battleCoordinator.getCurrentAllies(),
                 this.state.battleCoordinator.getSelectedEnemy(),
             );
         }
