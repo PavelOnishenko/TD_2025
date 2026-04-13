@@ -64,6 +64,9 @@ Inside `#world-map-shell`:
 
 ## Notes for future changes
 
-- Positioning currently clamps popup to canvas bounds and anchors above the player tile.
+- Positioning converts world-canvas coordinates into CSS viewport coordinates before clamping.
+  - Runtime uses the canvas `getBoundingClientRect()` size to compute `scaleX/scaleY`.
+  - Anchor point from world map (`getPlayerPixelPosition`) is multiplied by those scales.
+  - Clamping is applied in viewport pixels, so popup placement stays stable across world-map zoom levels and stretched canvas layouts.
 - If future design adds touch-first controls, reuse this popup for long-press village interactions.
 - If village tiles ever become multi-cell settlements, replace the current `isPlayerOnVillage` close condition with tile identity matching.
