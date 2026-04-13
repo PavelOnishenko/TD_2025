@@ -86,3 +86,37 @@ test('BattleTurnController skips an enemy turn already consumed by directional c
     globalThis.setTimeout = originalSetTimeout;
   }
 });
+
+test('BattleTurnController immediately re-enables player actions on player turn', () => {
+  const player = new Player();
+  const enemy = new Skeleton(2, 'Skeleton A');
+  const turnManager = new TurnManager();
+  turnManager.initializeTurns([player, enemy]);
+
+  const logs = [];
+  let buttonsEnabled = false;
+  let playerReadyCount = 0;
+  const battleTurnController = new BattleTurnController(
+    {
+      isInAttackRange: () => false,
+      moveEntityToward: () => {},
+    },
+    turnManager,
+    player,
+    {
+      onAddBattleLog: (message) => logs.push(message),
+      onUpdateHUD: () => {},
+      onEnableBattleButtons: (enabled) => { buttonsEnabled = enabled; },
+      onBattleEnd: () => {},
+      onPlayerTurnReady: () => { playerReadyCount += 1; },
+    }
+  );
+
+  battleTurnController.processTurn();
+
+  assert.equal(turnManager.isPlayerTurn(), true);
+  assert.equal(turnManager.waitingForPlayer, true);
+  assert.equal(buttonsEnabled, true);
+  assert.equal(playerReadyCount, 1);
+  assert.deepEqual(logs, []);
+});

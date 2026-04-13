@@ -73,6 +73,7 @@ export default class GameFacadeLifecycleCoordinator {
         if (this.state.stateMachine.isInState(MODES.BATTLE)) {
             this.state.renderRouter.renderBattleMode(
                 this.state.battleCoordinator.getCurrentEnemies(),
+                this.state.battleCoordinator.getCurrentAllies(),
                 this.state.battleCoordinator.getSelectedEnemy(),
             );
         }
@@ -157,7 +158,7 @@ export default class GameFacadeLifecycleCoordinator {
         if (battleContext.kind === 'village-defense' && battleContext.villageName) {
             const survivors = this.state.battleCoordinator.getCurrentAllies()
                 .filter((ally) => !ally.isDead())
-                .map((ally) => ({ name: ally.name, hp: ally.hp }));
+                .map((ally) => ({ name: ally.name, hp: ally.hp, maxHp: ally.maxHp }));
             const casualtyLines = this.state.questRuntime.applyDefenderBattleResults(battleContext.villageName, survivors);
             casualtyLines.forEach((line) => this.state.hudCoordinator.addBattleLog(line, 'system-message'));
         }
