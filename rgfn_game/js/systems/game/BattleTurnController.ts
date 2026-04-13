@@ -48,6 +48,7 @@ export default class BattleTurnController {
         }
 
         if (this.turnManager.isPlayerTurn()) {
+            this.callbacks.onEnableBattleButtons(false);
             const playerEffectMessages = this.player.consumePlayerTurnEffects();
             playerEffectMessages.forEach((message) => this.callbacks.onAddBattleLog(message, 'system'));
             this.turnManager.waitingForPlayer = true;
@@ -62,49 +63,60 @@ export default class BattleTurnController {
 
     private executeAiTurn(actor: Skeleton): void {
         setTimeout(() => {
-            if (actor.shouldSkipTurnFromSlow()) {
-                const effectMessages = actor.consumeTurnEffects();
-                this.completeAiTurn(effectMessages);
-                return;
-            }
-
-            const effectMessages = actor.consumeTurnEffects();
-            effectMessages
-                .filter((message) => !message.includes('skips this turn'))
-                .forEach((message) => this.callbacks.onAddBattleLog(message, 'system'));
-
-            const target = this.selectAiTarget(actor);
-            if (!target) {
-                this.completeAiTurn();
-                return;
-            }
-
-            const attackRange = this.getEnemyAttackRange(actor);
-            const inRange = this.battleMap.isInAttackRange(actor, target, attackRange);
-
-            if (inRange) {
-                this.performAiAttack(actor, target);
-                if (this.player.isDead()) {
-                    this.callbacks.onAddBattleLog('You have been defeated!', 'system');
-                    setTimeout(() => this.callbacks.onBattleEnd('defeat'), timingConfig.battle.defeatEndDelay);
+            try {
+                if (this.processAiTurn(actor)) {
                     return;
                 }
-            } else {
-                this.battleMap.moveEntityToward(actor, target, attackRange);
-                this.callbacks.onAddBattleLog(`${actor.name} moves closer...`, this.turnManager.isAlly(actor) ? 'system-message' : 'enemy');
+            } catch {
+                this.callbacks.onAddBattleLog(`${actor.name} hesitates, and the turn advances.`, 'system');
+                this.advanceTurnLoop();
             }
-
-            this.turnManager.nextTurn();
-            setTimeout(() => this.processTurn(), timingConfig.battle.enemyTurnDelay);
         }, timingConfig.battle.enemyActionStartDelay);
+    }
+
+    private processAiTurn(actor: Skeleton): boolean {
+        if (actor.shouldSkipTurnFromSlow()) {
+            const effectMessages = actor.consumeTurnEffects();
+            this.completeAiTurn(effectMessages);
+            return true;
+        }
+        this.logAiTurnEffects(actor.consumeTurnEffects());
+        const target = this.selectAiTarget(actor);
+        if (!target) {
+            this.completeAiTurn();
+            return true;
+        }
+        const attackRange = this.getEnemyAttackRange(actor);
+        if (this.battleMap.isInAttackRange(actor, target, attackRange)) {
+            this.performAiAttack(actor, target);
+            if (this.player.isDead()) {
+                this.callbacks.onAddBattleLog('You have been defeated!', 'system');
+                setTimeout(() => this.callbacks.onBattleEnd('defeat'), timingConfig.battle.defeatEndDelay);
+                return true;
+            }
+        } else {
+            this.battleMap.moveEntityToward(actor, target, attackRange);
+            this.callbacks.onAddBattleLog(`${actor.name} moves closer...`, this.turnManager.isAlly(actor) ? 'system-message' : 'enemy');
+        }
+        this.advanceTurnLoop();
+        return true;
     }
 
     private completeAiTurn(logs: string[] = []): void {
         logs.forEach((message) => this.callbacks.onAddBattleLog(message, 'system'));
+        this.advanceTurnLoop();
+    }
+
+    private advanceTurnLoop(): void {
         this.turnManager.nextTurn();
         setTimeout(() => this.processTurn(), timingConfig.battle.enemyTurnDelay);
     }
 
+    private logAiTurnEffects(effectMessages: string[]): void {
+        effectMessages
+            .filter((message) => !message.includes('skips this turn'))
+            .forEach((message) => this.callbacks.onAddBattleLog(message, 'system'));
+    }
 
     private getEnemyAttackRange(enemy: Skeleton): number {
         const rangedEnemy = enemy as Skeleton & { getAttackRange?: () => number };
@@ -167,7 +179,6 @@ export default class BattleTurnController {
         this.callbacks.onUpdateHUD();
         return true;
     }
-
     private selectAiTarget(actor: Skeleton): Player | Skeleton | null {
         const opponents = this.turnManager.getOpponentsOf(actor) as Array<Player | Skeleton>;
         if (opponents.length === 0) {

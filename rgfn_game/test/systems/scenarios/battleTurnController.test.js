@@ -120,3 +120,56 @@ test('BattleTurnController immediately re-enables player actions on player turn'
   assert.equal(playerReadyCount, 1);
   assert.deepEqual(logs, []);
 });
+
+test('BattleTurnController recovers from AI turn errors and still returns control to the player', async () => {
+  const originalSetTimeout = globalThis.setTimeout;
+  globalThis.setTimeout = (callback) => {
+    callback();
+    return 0;
+  };
+
+  try {
+    const player = new Player();
+    const ally = new Skeleton(2, 'Defender');
+    ally.consumeTurnEffects = () => {
+      throw new Error('ai effect failure');
+    };
+    const enemy = new Skeleton(3, 'Hired Blade 1');
+    const turnManager = new TurnManager();
+    turnManager.initializeTurns([player, ally, enemy], {
+      player,
+      allies: [ally],
+      enemies: [enemy],
+    });
+    turnManager.nextTurn();
+
+    const logs = [];
+    let buttonsEnabled = false;
+    let playerReadyCount = 0;
+    const battleTurnController = new BattleTurnController(
+      {
+        isInAttackRange: () => false,
+        moveEntityToward: () => {},
+      },
+      turnManager,
+      player,
+      {
+        onAddBattleLog: (message) => logs.push(message),
+        onUpdateHUD: () => {},
+        onEnableBattleButtons: (enabled) => { buttonsEnabled = enabled; },
+        onBattleEnd: () => {},
+        onPlayerTurnReady: () => { playerReadyCount += 1; },
+      }
+    );
+
+    battleTurnController.processTurn();
+
+    assert.equal(logs.includes('Defender hesitates, and the turn advances.'), true);
+    assert.equal(turnManager.isPlayerTurn(), true);
+    assert.equal(turnManager.waitingForPlayer, true);
+    assert.equal(buttonsEnabled, true);
+    assert.equal(playerReadyCount, 1);
+  } finally {
+    globalThis.setTimeout = originalSetTimeout;
+  }
+});
