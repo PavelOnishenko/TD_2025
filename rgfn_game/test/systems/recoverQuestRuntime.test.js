@@ -254,7 +254,7 @@ test('GameQuestRuntime records fallen defenders and exposes them in defend contr
   assert.deepEqual(defendContracts[0].activeDefenderNames, ['Tor']);
 });
 
-test('GameQuestRuntime spawns defend allies with persisted HP values (no hidden vitality inflation)', () => {
+test('GameQuestRuntime spawns full-health defend allies at derived max HP and keeps wounded values', () => {
   const runtime = new GameQuestRuntime();
   const defender = {
     name: 'Vara',
@@ -276,10 +276,25 @@ test('GameQuestRuntime spawns defend allies with persisted HP values (no hidden 
   };
 
   const allyAtFullHp = runtime.createVillageCombatantFromDefender(defender);
-  assert.equal(allyAtFullHp.maxHp, 12);
-  assert.equal(allyAtFullHp.hp, 12);
+  assert.equal(allyAtFullHp.hp, allyAtFullHp.maxHp);
+  assert.equal(allyAtFullHp.maxHp > defender.maxHp, true);
 
   const woundedAlly = runtime.createVillageCombatantFromDefender({ ...defender, currentHp: 7 });
-  assert.equal(woundedAlly.maxHp, 12);
   assert.equal(woundedAlly.hp, 7);
+});
+
+test('GameQuestRuntime persists defender maxHp from combat survivors after battle', () => {
+  const runtime = new GameQuestRuntime();
+  const quest = createKnownDefendQuest();
+  runtime.activeQuest = quest;
+  runtime.questUiController = { renderQuest: () => {} };
+
+  quest.children[0].objectiveData.defend.isDefenseActive = true;
+  quest.children[0].objectiveData.defend.defenders = [
+    { name: 'Mara', level: 2, maxHp: 10, currentHp: 10, inventoryItemIds: [] },
+  ];
+
+  runtime.applyDefenderBattleResults('Heights Gate', [{ name: 'Mara', hp: 14, maxHp: 16 }]);
+  assert.equal(quest.children[0].objectiveData.defend.defenders[0].maxHp, 16);
+  assert.equal(quest.children[0].objectiveData.defend.defenders[0].currentHp, 14);
 });

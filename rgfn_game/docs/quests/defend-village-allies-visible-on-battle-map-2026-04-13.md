@@ -39,7 +39,7 @@ Allied village defenders now follow the same spatial/combat representation model
 - This change is rendering integration only, with no combat balance/math modifications.
 - If similar symptoms reappear, first verify render pipeline includes all active turn participants.
 
-## Follow-up (2026-04-13): defender HP should spawn exactly from persisted roster state
+## Follow-up (2026-04-13): defender HP should start full at defense activation without overriding derived max HP
 
 After the visibility fix, an additional issue was confirmed:
 - defenders could spawn at a **fraction** of HP on the first defend battle after activation.
@@ -49,12 +49,13 @@ After the visibility fix, an additional issue was confirmed:
 Defender roster metadata persisted `maxHp/currentHp`, but defender spawn conversion also reapplied vitality-based HP derivation through `Skeleton` stat calculation.  
 That effectively increased runtime combatant `maxHp` beyond persisted `defender.maxHp`, making full persisted HP look partially depleted in combat UI.
 
-### Resolution
+### Resolution (updated)
 
-- Defender combatants are now normalized immediately after creation:
-  - `combatant.maxHp = defender.maxHp` (clamped minimum 1),
-  - `combatant.hp = defender.currentHp` clamped into `[0, defender.maxHp]`,
-  - `combatant.active` follows resulting HP.
+- We no longer override runtime `combatant.maxHp` (so skill/vitality-derived max HP remains authoritative).
+- Spawn HP now uses a state-aware rule:
+  - if persisted roster state is "full" (`currentHp >= persisted maxHp`), spawn the ally at runtime full (`combatant.hp = combatant.maxHp`);
+  - if persisted roster state is wounded, preserve the persisted current HP value (clamped to runtime max HP).
+- Battle result persistence now stores both `hp` and `maxHp` from ally survivors, keeping roster max HP aligned with actual combat runtime values for future battles/rest regeneration.
 
 ### Expected behavior now
 
@@ -62,3 +63,13 @@ That effectively increased runtime combatant `maxHp` beyond persisted `defender.
 - Subsequent defend fights: allied defenders retain HP losses from prior witnessed battles.
 - Passive village-time regeneration still heals living defenders gradually.
 - Player HP remains player-owned state (including rest/healing potion effects) and is not overwritten by defend roster logic.
+
+## Additional implementation notes for future debugging
+
+- Persistence handoff location:
+  - `GameFacadeLifecycleCoordinator.onBattleEnded(...)` collects survivor allies with both `{ hp, maxHp }`.
+  - `GameQuestRuntime.applyDefenderBattleResults(...)` writes back defender `currentHp` and `maxHp`.
+- Practical impact:
+  - prevents recurring "starts partially wounded" confusion after waiting into first raid,
+  - avoids reverting defender caps to stale values between battles,
+  - keeps regeneration clamps consistent with what players actually saw in combat.

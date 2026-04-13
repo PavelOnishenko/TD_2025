@@ -480,12 +480,12 @@ export default class GameQuestRuntime {
         return lines;
     }
 
-    public applyDefenderBattleResults(villageName: string, survivors: Array<{ name: string; hp: number }>): string[] {
+    public applyDefenderBattleResults(villageName: string, survivors: Array<{ name: string; hp: number; maxHp?: number }>): string[] {
         if (!this.activeQuest || !villageName.trim()) {
             return [];
         }
         const normalizedVillage = villageName.trim().toLocaleLowerCase();
-        const hpByName = new Map(survivors.map((survivor) => [survivor.name.trim().toLocaleLowerCase(), survivor.hp]));
+        const survivorByName = new Map(survivors.map((survivor) => [survivor.name.trim().toLocaleLowerCase(), survivor]));
         const lines: string[] = [];
         this.visitQuestNodes(this.activeQuest, (node) => {
             if (node.objectiveType !== 'defend' || node.children.length > 0 || node.isCompleted) {
@@ -496,10 +496,14 @@ export default class GameQuestRuntime {
                 return;
             }
             (defend.defenders ?? []).forEach((defender) => {
-                const survivorHp = hpByName.get(defender.name.trim().toLocaleLowerCase());
-                if (typeof survivorHp === 'number') {
-                    defender.currentHp = Math.max(0, survivorHp);
-                    defender.isDead = survivorHp <= 0;
+                const survivor = survivorByName.get(defender.name.trim().toLocaleLowerCase());
+                if (survivor) {
+                    const normalizedMaxHp = typeof survivor.maxHp === 'number' && survivor.maxHp > 0
+                        ? Math.max(1, survivor.maxHp)
+                        : defender.maxHp;
+                    defender.maxHp = normalizedMaxHp;
+                    defender.currentHp = Math.max(0, Math.min(normalizedMaxHp, survivor.hp));
+                    defender.isDead = defender.currentHp <= 0;
                     return;
                 }
                 defender.currentHp = 0;
@@ -917,11 +921,14 @@ export default class GameQuestRuntime {
             stats?.mana ?? 0,
             stats,
         );
-        const normalizedMaxHp = Math.max(1, defender.maxHp);
-        const normalizedCurrentHp = Math.max(0, Math.min(normalizedMaxHp, defender.currentHp));
-        combatant.maxHp = normalizedMaxHp;
-        combatant.hp = normalizedCurrentHp;
-        combatant.active = normalizedCurrentHp > 0;
+        const normalizedStoredMaxHp = Math.max(1, defender.maxHp);
+        const normalizedStoredCurrentHp = Math.max(0, Math.min(normalizedStoredMaxHp, defender.currentHp));
+        const shouldStartAtFullHp = normalizedStoredCurrentHp >= normalizedStoredMaxHp;
+        const resolvedHp = shouldStartAtFullHp
+            ? combatant.maxHp
+            : Math.min(combatant.maxHp, normalizedStoredCurrentHp);
+        combatant.hp = resolvedHp;
+        combatant.active = resolvedHp > 0;
         return combatant;
     }
 
