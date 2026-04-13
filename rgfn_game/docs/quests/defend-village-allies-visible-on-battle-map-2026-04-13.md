@@ -38,3 +38,27 @@ Allied village defenders now follow the same spatial/combat representation model
 - Turn/team logic was already correct (allies in `TurnManager` player-side team).
 - This change is rendering integration only, with no combat balance/math modifications.
 - If similar symptoms reappear, first verify render pipeline includes all active turn participants.
+
+## Follow-up (2026-04-13): defender HP should spawn exactly from persisted roster state
+
+After the visibility fix, an additional issue was confirmed:
+- defenders could spawn at a **fraction** of HP on the first defend battle after activation.
+
+### Cause
+
+Defender roster metadata persisted `maxHp/currentHp`, but defender spawn conversion also reapplied vitality-based HP derivation through `Skeleton` stat calculation.  
+That effectively increased runtime combatant `maxHp` beyond persisted `defender.maxHp`, making full persisted HP look partially depleted in combat UI.
+
+### Resolution
+
+- Defender combatants are now normalized immediately after creation:
+  - `combatant.maxHp = defender.maxHp` (clamped minimum 1),
+  - `combatant.hp = defender.currentHp` clamped into `[0, defender.maxHp]`,
+  - `combatant.active` follows resulting HP.
+
+### Expected behavior now
+
+- On first defend fight after objective activation: allied defenders spawn at full HP.
+- Subsequent defend fights: allied defenders retain HP losses from prior witnessed battles.
+- Passive village-time regeneration still heals living defenders gradually.
+- Player HP remains player-owned state (including rest/healing potion effects) and is not overwritten by defend roster logic.

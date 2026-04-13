@@ -907,7 +907,7 @@ export default class GameQuestRuntime {
             : undefined;
         const damageFromWeapon = equippedWeaponData?.damageBonus ?? 0;
         const armorFromItem = equippedArmorData?.effects?.flatArmor ?? 0;
-        return this.createVillageCombatant(
+        const combatant = this.createVillageCombatant(
             defender.name,
             defender.maxHp,
             defender.currentHp,
@@ -917,6 +917,12 @@ export default class GameQuestRuntime {
             stats?.mana ?? 0,
             stats,
         );
+        const normalizedMaxHp = Math.max(1, defender.maxHp);
+        const normalizedCurrentHp = Math.max(0, Math.min(normalizedMaxHp, defender.currentHp));
+        combatant.maxHp = normalizedMaxHp;
+        combatant.hp = normalizedCurrentHp;
+        combatant.active = normalizedCurrentHp > 0;
+        return combatant;
     }
 
     private createVillageCombatant(

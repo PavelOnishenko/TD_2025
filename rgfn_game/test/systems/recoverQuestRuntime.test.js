@@ -253,3 +253,33 @@ test('GameQuestRuntime records fallen defenders and exposes them in defend contr
   assert.equal(defendContracts[0].fallenDefenderNames.includes('Mara'), true);
   assert.deepEqual(defendContracts[0].activeDefenderNames, ['Tor']);
 });
+
+test('GameQuestRuntime spawns defend allies with persisted HP values (no hidden vitality inflation)', () => {
+  const runtime = new GameQuestRuntime();
+  const defender = {
+    name: 'Vara',
+    level: 3,
+    maxHp: 12,
+    currentHp: 12,
+    inventoryItemIds: [],
+    stats: {
+      damage: 4,
+      armor: 1,
+      mana: 0,
+      vitality: 5,
+      toughness: 0,
+      strength: 0,
+      agility: 0,
+      connection: 0,
+      intelligence: 0,
+    },
+  };
+
+  const allyAtFullHp = runtime.createVillageCombatantFromDefender(defender);
+  assert.equal(allyAtFullHp.maxHp, 12);
+  assert.equal(allyAtFullHp.hp, 12);
+
+  const woundedAlly = runtime.createVillageCombatantFromDefender({ ...defender, currentHp: 7 });
+  assert.equal(woundedAlly.maxHp, 12);
+  assert.equal(woundedAlly.hp, 7);
+});
