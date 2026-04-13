@@ -73,3 +73,35 @@ That effectively increased runtime combatant `maxHp` beyond persisted `defender.
   - prevents recurring "starts partially wounded" confusion after waiting into first raid,
   - avoids reverting defender caps to stale values between battles,
   - keeps regeneration clamps consistent with what players actually saw in combat.
+
+## Follow-up (2026-04-13): combat action panel could remain disabled after enemy/allied exchanges
+
+### Symptom
+
+In some village-defense encounters against Hired Blades, the combat log advanced normally (moves, attacks, evades), but when control should have returned to the player, all combat action buttons stayed disabled.
+
+### Root cause
+
+Player action readiness was gated through asynchronous turn handoff timing.  
+If the handoff chain was interrupted in practice (timing race/order), UI readiness could lag behind turn ownership and leave the player with an inactive action panel even though it was effectively the player's turn.
+
+### Resolution
+
+- `BattleTurnController.processTurn()` now enforces the player-turn invariant synchronously:
+  - when `TurnManager` reports player turn, it immediately sets `waitingForPlayer = true`,
+  - immediately calls `onPlayerTurnReady()`,
+  - immediately enables battle buttons.
+- This removes dependence on delayed callback timing for basic player input availability.
+
+### Programmatic safety checks added
+
+- Added scenario regression test that verifies on player turn:
+  - `turnManager.waitingForPlayer === true`,
+  - action buttons are enabled,
+  - `onPlayerTurnReady` is invoked exactly once for that handoff.
+
+### Why this is safe
+
+- The change only affects the transition point into a player turn.
+- Enemy/allied AI sequencing, damage resolution, and battle-end checks remain unchanged.
+- It hardens input readiness against timing-related UI lock states without changing combat balance.

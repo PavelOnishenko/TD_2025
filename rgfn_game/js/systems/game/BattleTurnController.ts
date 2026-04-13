@@ -1,3 +1,4 @@
+/* eslint-disable style-guide/function-length-warning */
 import BattleMap from '../combat/BattleMap.js';
 import TurnManager from '../combat/TurnManager.js';
 import Player from '../../entities/player/Player.js';
@@ -49,10 +50,9 @@ export default class BattleTurnController {
         if (this.turnManager.isPlayerTurn()) {
             const playerEffectMessages = this.player.consumePlayerTurnEffects();
             playerEffectMessages.forEach((message) => this.callbacks.onAddBattleLog(message, 'system'));
-            setTimeout(() => {
-                this.callbacks.onPlayerTurnReady();
-                this.callbacks.onEnableBattleButtons(true);
-            }, timingConfig.battle.turnStartInputDelay);
+            this.turnManager.waitingForPlayer = true;
+            this.callbacks.onPlayerTurnReady();
+            this.callbacks.onEnableBattleButtons(true);
             return;
         }
 
