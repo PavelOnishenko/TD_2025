@@ -1,3 +1,4 @@
+/* eslint-disable style-guide/file-length-warning, style-guide/function-length-warning */
 import BattleMap from '../../systems/combat/BattleMap.js';
 import WorldMap from '../../systems/world/worldMap/WorldMap.js';
 import Player from '../../entities/player/Player.js';
@@ -124,8 +125,7 @@ export default class GameWorldInteractionRuntime {
         worldUI.villageEntryTitle.textContent = `You found ${villageName}.`;
         const width = worldUI.villageEntryPopup.offsetWidth || 190;
         const height = worldUI.villageEntryPopup.offsetHeight || 84;
-        const left = Math.max(14, Math.min(Math.max(14, canvas.width - width - 14), anchor.x - (width / 2)));
-        const top = Math.max(14, Math.min(Math.max(14, canvas.height - height - 14), anchor.y - height - 16));
+        const { left, top } = this.getWorldPopupPlacement(anchor, { width, height }, canvas);
         worldUI.villageEntryPopup.style.left = `${left}px`;
         worldUI.villageEntryPopup.style.top = `${top}px`;
         worldUI.villageEntryPopup.classList.remove('hidden');
@@ -159,8 +159,7 @@ export default class GameWorldInteractionRuntime {
 
         const width = worldUI.ferryPopup.offsetWidth || 230;
         const height = worldUI.ferryPopup.offsetHeight || 140;
-        const left = Math.max(14, Math.min(Math.max(14, canvas.width - width - 14), anchor.x - (width / 2)));
-        const top = Math.max(14, Math.min(Math.max(14, canvas.height - height - 14), anchor.y - height - 16));
+        const { left, top } = this.getWorldPopupPlacement(anchor, { width, height }, canvas);
         worldUI.ferryPopup.style.left = `${left}px`;
         worldUI.ferryPopup.style.top = `${top}px`;
         worldUI.ferryPopup.classList.remove('hidden');
@@ -176,12 +175,28 @@ export default class GameWorldInteractionRuntime {
         player.y = y;
     }
 
-    public getPointerDiagnosticsSnapshot(): { rawMouseMoveEventsPerSecond: number; hoverTileChangesPerSecond: number } {
+    private getWorldPopupPlacement(anchor: { x: number; y: number }, popup: { width: number; height: number }, canvas: HTMLCanvasElement): { left: number; top: number } {
+        const canvasRect = canvas.getBoundingClientRect();
+        const viewportWidth = canvasRect.width > 0 ? canvasRect.width : canvas.width;
+        const viewportHeight = canvasRect.height > 0 ? canvasRect.height : canvas.height;
+        const scaleX = canvas.width > 0 ? viewportWidth / canvas.width : 1;
+        const scaleY = canvas.height > 0 ? viewportHeight / canvas.height : 1;
+        const popupMargin = 14;
+        const anchorX = anchor.x * scaleX;
+        const anchorY = anchor.y * scaleY;
+        const maxLeft = Math.max(popupMargin, viewportWidth - popup.width - popupMargin);
+        const maxTop = Math.max(popupMargin, viewportHeight - popup.height - popupMargin);
+
         return {
-            rawMouseMoveEventsPerSecond: this.rawMouseMoveEventsPerSecond,
-            hoverTileChangesPerSecond: this.hoverTileChangesPerSecond,
+            left: Math.max(popupMargin, Math.min(maxLeft, anchorX - (popup.width / 2))),
+            top: Math.max(popupMargin, Math.min(maxTop, anchorY - popup.height - 16)),
         };
     }
+
+    public readonly getPointerDiagnosticsSnapshot = (): { rawMouseMoveEventsPerSecond: number; hoverTileChangesPerSecond: number } => ({
+        rawMouseMoveEventsPerSecond: this.rawMouseMoveEventsPerSecond,
+        hoverTileChangesPerSecond: this.hoverTileChangesPerSecond,
+    });
 
     private trackMouseMoveEvent(): void {
         this.refreshMouseWindowIfNeeded();
