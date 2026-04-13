@@ -71,6 +71,7 @@ export default class GameUiPrimaryEventBinder {
         }
     }
 
+    // eslint-disable-next-line style-guide/function-length-warning
     private bindBattleEvents(): void {
         this.battleUI.attackBtn.addEventListener('click', () => this.callbacks.onAttack());
         Object.entries(this.battleUI.directionalButtons).forEach(([move, button]) => {
@@ -99,11 +100,13 @@ export default class GameUiPrimaryEventBinder {
         this.worldUI.ferryCancelBtn.addEventListener('click', () => this.callbacks.onDismissFerryTravelPrompt());
     }
 
+    // eslint-disable-next-line style-guide/function-length-warning
     private bindVillageEvents(villageNameProvider: () => string): void {
         this.villageUI.enterBtn.addEventListener('click', () => this.villageActionsController.handleEnter(villageNameProvider()));
         this.villageUI.skipBtn.addEventListener('click', () => this.villageActionsController.handleSkip());
         this.villageUI.doctorHealBtn.addEventListener('click', () => this.villageActionsController.handleDoctorTreatment());
         this.villageUI.innMealBtn.addEventListener('click', () => this.villageActionsController.handleInnMeal());
+        this.villageUI.villageWaitBtn.addEventListener('click', () => this.villageActionsController.handleVillageWait());
         this.villageUI.buyOffer1Btn.addEventListener('click', () => this.villageActionsController.handleBuyOffer(0));
         this.villageUI.buyOffer2Btn.addEventListener('click', () => this.villageActionsController.handleBuyOffer(1));
         this.villageUI.buyOffer3Btn.addEventListener('click', () => this.villageActionsController.handleBuyOffer(2));

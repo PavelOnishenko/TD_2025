@@ -10,6 +10,7 @@ export type VillageUI = {
     actions: HTMLElement;
     openDialogueBtn: HTMLButtonElement;
     sleepRoomBtn: HTMLButtonElement;
+    villageWaitBtn: HTMLButtonElement;
     dialogueModal: HTMLElement;
     dialogueCloseBtn: HTMLButtonElement;
     dialogueSelectedNpc: HTMLElement;
@@ -66,6 +67,8 @@ export type QuestDefendContract = {
     personName: string;
     villageName: string;
     artifactName: string;
+    activeDefenderNames?: string[];
+    fallenDefenderNames?: string[];
 };
 
 export type QuestBarterContract = {

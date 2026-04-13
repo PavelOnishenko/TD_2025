@@ -114,6 +114,8 @@ function createKnownDefendQuest() {
             durationDays: 3,
             timeRemainingMinutes: 4320,
             isDefenseActive: false,
+            defenders: [],
+            fallenDefenderNames: [],
           },
         },
         children: [],
@@ -226,6 +228,28 @@ test('GameQuestRuntime exposes defend contracts for known active defend objectiv
       personName: 'Quinn Evans',
       villageName: 'Heights Gate',
       artifactName: 'Allies Coverage',
+      activeDefenderNames: [],
+      fallenDefenderNames: [],
     },
   ]);
+});
+
+test('GameQuestRuntime records fallen defenders and exposes them in defend contracts', () => {
+  const runtime = new GameQuestRuntime();
+  const quest = createKnownDefendQuest();
+  runtime.activeQuest = quest;
+  runtime.questUiController = { renderQuest: () => {} };
+
+  quest.children[0].objectiveData.defend.isDefenseActive = true;
+  quest.children[0].objectiveData.defend.defenders = [
+    { name: 'Mara', level: 2, maxHp: 10, currentHp: 10, inventoryItemIds: ['knife_t1'] },
+    { name: 'Tor', level: 2, maxHp: 9, currentHp: 9, inventoryItemIds: ['armor_t1'] },
+  ];
+
+  const lines = runtime.applyDefenderBattleResults('Heights Gate', [{ name: 'Tor', hp: 4 }]);
+  assert.equal(lines.some((line) => line.includes('Mara was killed')), true);
+
+  const defendContracts = runtime['collectDefendContracts'](quest);
+  assert.equal(defendContracts[0].fallenDefenderNames.includes('Mara'), true);
+  assert.deepEqual(defendContracts[0].activeDefenderNames, ['Tor']);
 });

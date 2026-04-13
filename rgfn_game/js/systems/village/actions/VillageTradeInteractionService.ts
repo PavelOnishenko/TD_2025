@@ -55,6 +55,26 @@ export default class VillageTradeInteractionService {
         this.deps.updateButtons();
     }
 
+    public handleVillageWait(): void {
+        const waitMinutes = Math.max(1, balanceConfig.survival.villageWaitMinutes);
+        const hpRecovered = Math.max(0, Math.floor(balanceConfig.survival.villageWaitHpRecovery));
+        const manaRecovered = Math.max(0, Math.floor(balanceConfig.survival.villageWaitManaRecovery));
+        this.deps.callbacks.onAdvanceTime(waitMinutes, 0.5);
+        if (hpRecovered > 0) {
+            this.deps.player.heal(hpRecovered);
+        }
+        if (manaRecovered > 0) {
+            this.deps.player.restoreMana(manaRecovered);
+        }
+        this.deps.addLog(
+            `You wait in the village for ${Math.floor(waitMinutes / 60)}h. Fatigue rises, but you slowly recover ${hpRecovered} HP and ${manaRecovered} mana.`,
+            'system-message',
+        );
+        this.deps.callbacks.onUpdateHUD();
+        this.deps.updateButtons();
+    }
+
+    // eslint-disable-next-line style-guide/function-length-warning
     public handleSleepInRoom(): void {
         const selectedNpc = this.deps.getSelectedNpc();
         if (!selectedNpc || !this.isInnkeeper(selectedNpc.role)) {
@@ -78,6 +98,7 @@ export default class VillageTradeInteractionService {
         this.deps.updateButtons();
     }
 
+    // eslint-disable-next-line style-guide/function-length-warning
     public handleBuyOffer(offerIndex: number): void {
         const offer = this.deps.stockService.getOffer(offerIndex);
         if (!offer) {
@@ -109,6 +130,7 @@ export default class VillageTradeInteractionService {
         this.deps.updateButtons();
     }
 
+    // eslint-disable-next-line style-guide/function-length-warning
     public handleSellSelected(selectedIndex: number): void {
         if (!Number.isFinite(selectedIndex)) {
             this.deps.addLog('Choose an inventory item to sell.', 'system');

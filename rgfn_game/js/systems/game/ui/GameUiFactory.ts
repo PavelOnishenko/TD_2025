@@ -85,6 +85,7 @@ export default class GameUiFactory {
         skipBtn: document.getElementById('village-skip-btn')! as HTMLButtonElement,
         doctorHealBtn: document.getElementById('village-doctor-heal-btn')! as HTMLButtonElement,
         innMealBtn: document.getElementById('village-inn-meal-btn')! as HTMLButtonElement,
+        villageWaitBtn: document.getElementById('village-wait-btn')! as HTMLButtonElement,
         buyOffer1Btn: document.getElementById('village-buy-offer-1-btn')! as HTMLButtonElement,
         buyOffer2Btn: document.getElementById('village-buy-offer-2-btn')! as HTMLButtonElement,
         buyOffer3Btn: document.getElementById('village-buy-offer-3-btn')! as HTMLButtonElement,

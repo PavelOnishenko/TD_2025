@@ -75,6 +75,7 @@ function createVillageUi() {
     actions: createElement(),
     openDialogueBtn: createElement('button'),
     sleepRoomBtn: createElement('button'),
+    villageWaitBtn: createElement('button'),
     dialogueModal: createElement(),
     dialogueCloseBtn: createElement('button'),
     dialogueSelectedNpc: createElement(),
@@ -317,6 +318,41 @@ test('VillageActionsController injects defend contact NPC into the target villag
   assert.equal(names.includes('Quinn Evans'), true);
 }));
 
+test('VillageActionsController removes fallen defenders from village rumor roster', () => withDocumentStub(() => {
+  const villageUI = createVillageUi();
+  const gameLog = createElement();
+  const controller = new VillageActionsController(createPlayerStub(), villageUI, gameLog, {
+    onUpdateHUD: () => {},
+    onAdvanceTime: () => {},
+    onLeaveVillage: () => {},
+    getVillageDirectionHint: (settlementName) => ({ settlementName, exists: true, direction: 'north', distanceCells: 3 }),
+    onVillageBarterCompleted: () => {},
+    onTryStartDefend: () => ({ status: 'inactive' }),
+  });
+
+  controller.configureQuestDefendContracts([
+    {
+      personName: 'Quinn Evans',
+      villageName: 'Heights Gate',
+      artifactName: 'Allies Coverage',
+      fallenDefenderNames: ['Mara'],
+    },
+  ]);
+  controller['dialogueEngine'] = {
+    createNpcRoster: () => [
+      { id: 'heights-0', name: 'Mara', role: 'Carpenter', look: 'cloak', speechStyle: 'calm', disposition: 'truthful' },
+      { id: 'heights-1', name: 'Tor', role: 'Guard', look: 'hood', speechStyle: 'grim', disposition: 'truthful' },
+    ],
+    buildLocationAnswer: () => ({ speech: '', tone: '', truthfulness: 'truth' }),
+    buildPersonLocationAnswer: () => ({ speech: '', tone: '', truthfulness: 'truth' }),
+  };
+
+  controller.enterVillage('Heights Gate');
+  const names = controller['npcRoster'].map((npc) => npc.name);
+  assert.equal(names.includes('Mara'), false);
+  assert.equal(names.includes('Tor'), true);
+}));
+
 test('VillageActionsController adds revealed recover holder into current village roster immediately', () => withDocumentStub(() => {
   const villageUI = createVillageUi();
   const gameLog = createElement();
@@ -494,6 +530,33 @@ test('VillageActionsController allows safe room sleep only with innkeeper select
 
   assert.equal(recovered > 0, true);
   assert.equal(player.gold < 20, true);
+}));
+
+test('VillageActionsController advances long village time and applies tiny regen when waiting', () => withDocumentStub(() => {
+  const villageUI = createVillageUi();
+  const gameLog = createElement();
+  const onAdvanceTimeCalls = [];
+  const player = createPlayerStub();
+  let healedBy = 0;
+  let manaBy = 0;
+  player.heal = (amount) => { healedBy += amount; };
+  player.restoreMana = (amount) => { manaBy += amount; };
+
+  const controller = new VillageActionsController(player, villageUI, gameLog, {
+    onUpdateHUD: () => {},
+    onAdvanceTime: (minutes, fatigueScale) => onAdvanceTimeCalls.push({ minutes, fatigueScale }),
+    onLeaveVillage: () => {},
+    getVillageDirectionHint: (settlementName) => ({ settlementName, exists: false }),
+    onVillageBarterCompleted: () => {},
+  });
+
+  controller.handleVillageWait();
+
+  assert.equal(onAdvanceTimeCalls.length, 1);
+  assert.deepEqual(onAdvanceTimeCalls[0], { minutes: 720, fatigueScale: 0.5 });
+  assert.equal(healedBy, 1);
+  assert.equal(manaBy, 1);
+  assert.equal(gameLog.children.some((child) => String(child.textContent ?? '').includes('You wait in the village for 12h.')), true);
 }));
 
 test('VillageActionsController asks NPC about nearby settlements via dialogue engine', () => withDocumentStub(() => {

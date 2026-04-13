@@ -91,8 +91,23 @@ export type RecoverObjectiveData = {
 
 export type DefendObjectiveDefender = {
     name: string;
+    level: number;
     maxHp: number;
     currentHp: number;
+    inventoryItemIds: string[];
+    equippedWeaponItemId?: string;
+    equippedArmorItemId?: string;
+    stats?: {
+        damage: number;
+        armor: number;
+        mana: number;
+        vitality: number;
+        toughness: number;
+        strength: number;
+        agility: number;
+        connection: number;
+        intelligence: number;
+    };
     isDead?: boolean;
 };
 
@@ -104,6 +119,7 @@ export type DefendObjectiveData = {
     timeRemainingMinutes: number;
     isDefenseActive?: boolean;
     defenders?: DefendObjectiveDefender[];
+    fallenDefenderNames?: string[];
     battleCooldownMinutes?: number;
 };
 
