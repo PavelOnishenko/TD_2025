@@ -158,7 +158,7 @@ export default class WorldMapPersistenceAndSelection extends WorldMapRoadNetwork
             return null;
         }
 
-        const isVillage = this.hasLocationFeatureAt(this.selectedGridPos.col, this.selectedGridPos.row, 'village');
+        const isVillage = this.isVillageAt(this.selectedGridPos.col, this.selectedGridPos.row);
         const locationFeatureIds = this.getLocationFeatureIdsAt(this.selectedGridPos.col, this.selectedGridPos.row);
         const isCurrentVillage = isVillage
             && this.selectedGridPos.col === this.playerGridPos.col

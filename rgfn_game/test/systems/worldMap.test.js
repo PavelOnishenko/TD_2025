@@ -37,6 +37,20 @@ test('WorldMap generation excludes mountain and desert terrain types', () => wit
   assert.equal(terrainTypes.includes('desert'), false);
 }));
 
+test('WorldMap still treats legacy village cells as enterable when location feature cache is missing', () => withMockedRandom([0.29], () => {
+  const worldMap = new WorldMap(40, 30, 20);
+  const [firstVillageKey] = worldMap.getState().villages;
+  assert.equal(typeof firstVillageKey, 'string');
+
+  const [colText, rowText] = firstVillageKey.split(',');
+  const col = Number(colText);
+  const row = Number(rowText);
+  placePlayerAt(worldMap, col, row);
+
+  worldMap.clearAllLocationFeatures();
+  assert.equal(worldMap.isPlayerOnVillage(), true);
+}));
+
 test('WorldMap generates villages before placing the player into the world', () => withMockedRandom([0.11], () => {
   const worldMap = new WorldMap(40, 30, 20);
   const state = worldMap.getState();

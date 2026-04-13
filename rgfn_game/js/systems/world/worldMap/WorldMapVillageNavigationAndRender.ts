@@ -104,6 +104,13 @@ export default class WorldMapVillageNavigationAndRender extends WorldMapMovement
     public getCurrentTerrain = (): TerrainData => this.getTerrain(this.playerGridPos.col, this.playerGridPos.row) ?? { type: 'grass', color: theme.worldMap.terrain.grass, pattern: 'plain', elevation: 0.5, moisture: 0.5, heat: 0.5, seed: 0 };
 
     public getVillageNameAtPlayerPosition = (): string => this.getVillageName(this.playerGridPos.col, this.playerGridPos.row);
+    public isVillageAt(col: number, row: number): boolean {
+        const index = this.getCellIndex(col, row);
+        const key = this.getCellKey(col, row);
+        return this.hasLocationFeatureAt(col, row, 'village')
+            || this.villageIndexSet.has(index)
+            || this.villages.has(key);
+    }
     public getKnownVillages = (): KnownVillage[] => Array.from(this.villages.values())
         .map((key) => {
             const [colText, rowText] = key.split(',');
@@ -143,7 +150,7 @@ export default class WorldMapVillageNavigationAndRender extends WorldMapMovement
         return generateVillageName(seed);
     }
 
-    public isPlayerOnVillage = (): boolean => this.hasLocationFeatureAt(this.playerGridPos.col, this.playerGridPos.row, 'village');
+    public isPlayerOnVillage = (): boolean => this.isVillageAt(this.playerGridPos.col, this.playerGridPos.row);
 
     public markVillageAtPlayerPosition(): void {
         const key = this.getCellKey(this.playerGridPos.col, this.playerGridPos.row);
