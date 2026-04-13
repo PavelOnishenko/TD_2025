@@ -30,26 +30,53 @@ const sanitizeMovePool = (movePool: string[]): CombatMove[] => {
 };
 
 // eslint-disable-next-line style-guide/function-length-warning
+const generateBehaviorPoolFromMovePool = (
+    behaviorPoolId: string,
+    movePool: string[],
+    config: Pick<
+        MonsterBehaviorGenerationConfig,
+        'minBehaviorsPerMonsterType'
+        | 'maxBehaviorsPerMonsterType'
+        | 'minMovesPerBehavior'
+        | 'maxMovesPerBehavior'
+        | 'behaviorWeightMin'
+        | 'behaviorWeightMax'
+    >,
+): MonsterDirectionalBehavior[] => {
+    const sanitizedPool = sanitizeMovePool(movePool);
+    const behaviorCount = randomInt(config.minBehaviorsPerMonsterType, config.maxBehaviorsPerMonsterType);
+    const createBehavior = (behaviorIndex: number): MonsterDirectionalBehavior => {
+        const movesCount = randomInt(config.minMovesPerBehavior, config.maxMovesPerBehavior);
+        const moves = Array.from({ length: movesCount }, () => pickOne(sanitizedPool));
+        const weight = randomInt(config.behaviorWeightMin, config.behaviorWeightMax);
+        return { id: `${behaviorPoolId}-behavior-${behaviorIndex + 1}`, weight, moves };
+    };
+    return Array.from({ length: behaviorCount }, (_, behaviorIndex) => createBehavior(behaviorIndex));
+};
+
 export function generateMonsterDirectionalBehaviorCodex(config: MonsterBehaviorGenerationConfig): MonsterDirectionalBehaviorCodex {
     const codex: MonsterDirectionalBehaviorCodex = {};
 
     Object.entries(config.monsterMovePools).forEach(([monsterType, movePool]) => {
-        const sanitizedPool = sanitizeMovePool(movePool);
-        const behaviorCount = randomInt(config.minBehaviorsPerMonsterType, config.maxBehaviorsPerMonsterType);
-        const behaviors: MonsterDirectionalBehavior[] = [];
-
-        for (let behaviorIndex = 0; behaviorIndex < behaviorCount; behaviorIndex++) {
-            const movesCount = randomInt(config.minMovesPerBehavior, config.maxMovesPerBehavior);
-            const moves: CombatMove[] = Array.from({ length: movesCount }, () => pickOne(sanitizedPool));
-            const weight = randomInt(config.behaviorWeightMin, config.behaviorWeightMax);
-            behaviors.push({ id: `${monsterType}-behavior-${behaviorIndex + 1}`, weight, moves });
-        }
-
-        codex[monsterType] = behaviors;
+        codex[monsterType] = generateBehaviorPoolFromMovePool(monsterType, movePool, config);
     });
 
     return codex;
 }
+
+export const generateDirectionalBehaviorPool = (
+    behaviorPoolId: string,
+    movePool: string[],
+    config: Pick<
+        MonsterBehaviorGenerationConfig,
+        'minBehaviorsPerMonsterType'
+        | 'maxBehaviorsPerMonsterType'
+        | 'minMovesPerBehavior'
+        | 'maxMovesPerBehavior'
+        | 'behaviorWeightMin'
+        | 'behaviorWeightMax'
+    >,
+): MonsterDirectionalBehavior[] => generateBehaviorPoolFromMovePool(behaviorPoolId, movePool, config);
 
 export function selectWeightedBehavior(behaviors: MonsterDirectionalBehavior[]): MonsterDirectionalBehavior | null {
     const totalWeight = behaviors.reduce((sum, behavior) => sum + Math.max(0, behavior.weight), 0);
