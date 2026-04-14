@@ -511,10 +511,7 @@ export default class GameQuestRuntime {
             (defend.defenders ?? []).forEach((defender) => {
                 const survivor = survivorByName.get(defender.name.trim().toLocaleLowerCase());
                 if (survivor) {
-                    if (typeof survivor.maxHp === 'number') {
-                        defender.maxHp = survivor.maxHp;
-                    }
-                    defender.currentHp = survivor.hp;
+                    defender.currentHp = Math.max(0, Math.min(defender.maxHp, survivor.hp));
                     defender.isDead = defender.currentHp <= 0;
                     return;
                 }
@@ -933,8 +930,10 @@ export default class GameQuestRuntime {
             stats?.mana ?? 0,
             stats,
         );
-        const shouldStartAtFullHp = defender.currentHp >= defender.maxHp;
-        combatant.hp = shouldStartAtFullHp ? combatant.maxHp : defender.currentHp;
+        const persistedMaxHp = Math.max(1, defender.maxHp);
+        const persistedCurrentHp = Math.max(0, Math.min(persistedMaxHp, defender.currentHp));
+        combatant.maxHp = persistedMaxHp;
+        combatant.hp = persistedCurrentHp;
         combatant.active = combatant.hp > 0;
         return combatant;
     }

@@ -28,13 +28,15 @@ During village-defense quests, allied defenders could end up with inflated maxim
 
 ## Verification added
 - Updated defend runtime tests to assert:
-  - Defend allies can enter with derived runtime `maxHp` from stats/skills.
-  - Survivor-reported `maxHp` and `hp` are persisted directly in defend battle results.
+  - Defend allies keep the persisted defender `maxHp` when entering battle.
+  - Survivor-reported `maxHp` is ignored for defend persistence.
+  - Survivor `hp` is clamped to stored defender `maxHp` when applying battle results.
   - Defend start rolls battle budget and does not always trigger on first 12h wait.
 
-## Follow-up adjustment (same day)
-- Per gameplay feedback, all **defense-side HP normalization** was removed:
-  - Survivor `maxHp` is persisted directly.
-  - Survivor `hp` is persisted directly (no clamping in defend persistence path).
-  - Defend combatants use their **derived** runtime `maxHp` from stats/skills; when a defender enters at "full", they enter at the derived full HP.
-- Battle pacing budget (2-6 total raids across defend duration) remains intact.
+## Follow-up adjustment (same day, second pass)
+- Additional gameplay validation showed teammate max HP still increased between defend battles.
+- Defend HP persistence is now strict:
+  - `maxHp` is immutable for defenders during a running defend objective.
+  - Only `currentHp` changes over time and battle outcomes.
+  - Runtime ally instances are forced to defender persisted `maxHp`, so battle-derived HP growth cannot leak back into quest state.
+- Battle pacing budget (2-6 total raids across defend duration) remains intact and unchanged by this pass.

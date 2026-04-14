@@ -254,7 +254,7 @@ test('GameQuestRuntime records fallen defenders and exposes them in defend contr
   assert.deepEqual(defendContracts[0].activeDefenderNames, ['Tor']);
 });
 
-test('GameQuestRuntime uses derived defend ally maxHp and preserves wounded values', () => {
+test('GameQuestRuntime keeps defend ally maxHp fixed and preserves wounded values', () => {
   const runtime = new GameQuestRuntime();
   const defender = {
     name: 'Vara',
@@ -276,14 +276,15 @@ test('GameQuestRuntime uses derived defend ally maxHp and preserves wounded valu
   };
 
   const allyAtFullHp = runtime.createVillageCombatantFromDefender(defender);
-  assert.equal(allyAtFullHp.hp, allyAtFullHp.maxHp);
-  assert.equal(allyAtFullHp.maxHp > defender.maxHp, true);
+  assert.equal(allyAtFullHp.maxHp, defender.maxHp);
+  assert.equal(allyAtFullHp.hp, defender.maxHp);
 
   const woundedAlly = runtime.createVillageCombatantFromDefender({ ...defender, currentHp: 7 });
+  assert.equal(woundedAlly.maxHp, defender.maxHp);
   assert.equal(woundedAlly.hp, 7);
 });
 
-test('GameQuestRuntime persists survivor maxHp and hp after battle without clamping', () => {
+test('GameQuestRuntime keeps stored defender maxHp and clamps survivor hp after battle', () => {
   const runtime = new GameQuestRuntime();
   const quest = createKnownDefendQuest();
   runtime.activeQuest = quest;
@@ -295,8 +296,8 @@ test('GameQuestRuntime persists survivor maxHp and hp after battle without clamp
   ];
 
   runtime.applyDefenderBattleResults('Heights Gate', [{ name: 'Mara', hp: 14, maxHp: 16 }]);
-  assert.equal(quest.children[0].objectiveData.defend.defenders[0].maxHp, 16);
-  assert.equal(quest.children[0].objectiveData.defend.defenders[0].currentHp, 14);
+  assert.equal(quest.children[0].objectiveData.defend.defenders[0].maxHp, 10);
+  assert.equal(quest.children[0].objectiveData.defend.defenders[0].currentHp, 10);
 });
 
 test('GameQuestRuntime defend objective starts with randomized 2-6 battles and does not always trigger on 12h wait', () => {
