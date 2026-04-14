@@ -121,6 +121,7 @@ export type DefendObjectiveData = {
     defenders?: DefendObjectiveDefender[];
     fallenDefenderNames?: string[];
     battleCooldownMinutes?: number;
+    remainingBattles?: number;
 };
 
 export type QuestObjectiveData = {
