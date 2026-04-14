@@ -42,3 +42,15 @@ test('Skeleton directional move roll throws when no behavior pool is assigned (n
 
   assert.throws(() => skeleton.rollDirectionalCombatMove(), /no directional behavior/i);
 });
+
+test('Human archetype entities receive instance-scoped directional behavior pools automatically', () => {
+  const wandererA = new Skeleton(0, 0, { archetypeId: 'human', xpValue: 1, name: 'Wanderer Alpha', width: 10, height: 10 });
+  const wandererB = new Skeleton(0, 0, { archetypeId: 'human', xpValue: 1, name: 'Wanderer Beta', width: 10, height: 10 });
+
+  const validMoves = new Set(['AttackLeft', 'AttackCenter', 'AttackRight', 'Block', 'DodgeLeft', 'DodgeRight']);
+  const firstMoveA = wandererA.rollDirectionalCombatMove();
+  const firstMoveB = wandererB.rollDirectionalCombatMove();
+
+  assert.equal(validMoves.has(firstMoveA), true);
+  assert.equal(validMoves.has(firstMoveB), true);
+});

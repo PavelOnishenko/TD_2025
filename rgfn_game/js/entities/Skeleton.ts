@@ -5,6 +5,7 @@ import { balanceConfig } from '../config/balance/balanceConfig.js';
 import { cloneBaseStats, deriveCreatureStats, normalizeCreatureSkills } from '../config/creatureStats.js';
 import { CreatureBaseStats, CreatureSkill, CreatureSkills } from '../config/creatureTypes.js';
 import { CombatBuffSnapshot, CombatMove, CombatStatusState } from '../systems/combat/DirectionalCombat.js';
+import { generateDirectionalBehaviorPool } from '../systems/combat/MonsterBehaviorCodex.js';
 import { MonsterDirectionalBehavior, selectWeightedBehavior } from '../systems/combat/MonsterBehaviorCodex.js';
 import { MonsterMutationEngine } from './monster/MonsterMutationEngine.js';
 import { MonsterStatusEffects } from './monster/MonsterStatusEffects.js';
@@ -108,6 +109,7 @@ export default class Skeleton extends DamageableEntity {
         this.monsterStatusEffects = new MonsterStatusEffects();
         this.monsterVisualRenderer = new MonsterVisualRenderer();
         this.initializeHp(derivedStats.maxHp);
+        this.initializeHumanDirectionalBehaviorPool();
     }
 
     private buildInitialization(enemyConfig?: EnemyConfig): SkeletonInitialization {
@@ -140,6 +142,21 @@ export default class Skeleton extends DamageableEntity {
     private initializeHp(maxHp: number): void {
         const hpMultiplier = Math.max(0, balanceConfig.enemies.hpMultiplier ?? 1);
         (this as any).initDamageable(Math.round(maxHp * hpMultiplier));
+    }
+
+    private initializeHumanDirectionalBehaviorPool(): void {
+        if (this.archetypeId !== 'human') {
+            return;
+        }
+
+        const behaviorGeneration = balanceConfig.combat.enemyBehaviorGeneration;
+        const movePool = behaviorGeneration.monsterMovePools.human;
+        if (!movePool || movePool.length === 0) {
+            throw new Error('Missing directional move pool for human archetype.');
+        }
+        const behaviorPoolId = `human-${this.name.toLocaleLowerCase().replace(/[^a-z0-9]+/g, '-')}-${this.id}`;
+        const behaviorPool = generateDirectionalBehaviorPool(behaviorPoolId, movePool, behaviorGeneration);
+        this.setDirectionalBehaviorPool(behaviorPool);
     }
 
     public takeDamage(amount: number): boolean {
