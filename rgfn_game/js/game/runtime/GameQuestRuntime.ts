@@ -351,7 +351,8 @@ export default class GameQuestRuntime {
             }
             defend.isDefenseActive = true;
             defend.timeRemainingMinutes = Math.max(1, defend.durationDays * 24 * 60);
-            defend.battleCooldownMinutes = this.rollDefenseCooldownMinutes();
+            defend.remainingBattles = this.rollDefenseBattleCount();
+            defend.battleCooldownMinutes = this.rollDefenseCooldownMinutes(defend.timeRemainingMinutes, defend.remainingBattles);
             defend.defenders = this.createDefenderRoster(availableVillagerNames, defend.contactName, defend.fallenDefenderNames ?? []);
             startedNode = node;
         });
@@ -413,6 +414,8 @@ export default class GameQuestRuntime {
             if (defend.timeRemainingMinutes <= 0) {
                 node.isCompleted = true;
                 defend.isDefenseActive = false;
+                defend.remainingBattles = 0;
+                defend.battleCooldownMinutes = 0;
                 this.resolveDefendArtifactOutcome(defend, logs);
                 return;
             }
@@ -426,14 +429,23 @@ export default class GameQuestRuntime {
                 defend.isDefenseActive = false;
                 defend.timeRemainingMinutes = defend.durationDays * 24 * 60;
                 defend.battleCooldownMinutes = 0;
+                defend.remainingBattles = 0;
                 defend.defenders = [];
                 logs.push(`Defense line collapsed in ${defend.villageName}. The objective resets: speak with ${defend.contactName} again.`);
                 return;
             }
 
+            const remainingBattles = Math.max(0, defend.remainingBattles ?? 0);
+            if (remainingBattles <= 0) {
+                return;
+            }
+
             attackers = this.createDefenseAttackers();
             allies = livingDefenders.map((defender) => this.createVillageCombatantFromDefender(defender));
-            defend.battleCooldownMinutes = this.rollDefenseCooldownMinutes();
+            defend.remainingBattles = Math.max(0, remainingBattles - 1);
+            defend.battleCooldownMinutes = defend.remainingBattles > 0
+                ? this.rollDefenseCooldownMinutes(defend.timeRemainingMinutes, defend.remainingBattles)
+                : 0;
             logs.push(`Raiders attack ${defend.villageName}! Hold the line until ${defend.artifactName} is secured.`);
             logs.push(`Defenders at your side: ${livingDefenders.map((defender) => defender.name).join(', ')}.`);
             triggeredBattle = true;
@@ -469,6 +481,7 @@ export default class GameQuestRuntime {
             defend.isDefenseActive = false;
             defend.timeRemainingMinutes = defend.durationDays * 24 * 60;
             defend.battleCooldownMinutes = 0;
+            defend.remainingBattles = 0;
             defend.defenders = [];
             lines.push(`You left ${defend.villageName} during the defense. The operation resets; report to ${defend.contactName} again.`);
             changed = true;
@@ -498,11 +511,10 @@ export default class GameQuestRuntime {
             (defend.defenders ?? []).forEach((defender) => {
                 const survivor = survivorByName.get(defender.name.trim().toLocaleLowerCase());
                 if (survivor) {
-                    const normalizedMaxHp = typeof survivor.maxHp === 'number' && survivor.maxHp > 0
-                        ? Math.max(1, survivor.maxHp)
-                        : defender.maxHp;
-                    defender.maxHp = normalizedMaxHp;
-                    defender.currentHp = Math.max(0, Math.min(normalizedMaxHp, survivor.hp));
+                    if (typeof survivor.maxHp === 'number') {
+                        defender.maxHp = survivor.maxHp;
+                    }
+                    defender.currentHp = survivor.hp;
                     defender.isDead = defender.currentHp <= 0;
                     return;
                 }
@@ -921,14 +933,9 @@ export default class GameQuestRuntime {
             stats?.mana ?? 0,
             stats,
         );
-        const normalizedStoredMaxHp = Math.max(1, defender.maxHp);
-        const normalizedStoredCurrentHp = Math.max(0, Math.min(normalizedStoredMaxHp, defender.currentHp));
-        const shouldStartAtFullHp = normalizedStoredCurrentHp >= normalizedStoredMaxHp;
-        const resolvedHp = shouldStartAtFullHp
-            ? combatant.maxHp
-            : Math.min(combatant.maxHp, normalizedStoredCurrentHp);
-        combatant.hp = resolvedHp;
-        combatant.active = resolvedHp > 0;
+        const shouldStartAtFullHp = defender.currentHp >= defender.maxHp;
+        combatant.hp = shouldStartAtFullHp ? combatant.maxHp : defender.currentHp;
+        combatant.active = combatant.hp > 0;
         return combatant;
     }
 
@@ -983,9 +990,16 @@ export default class GameQuestRuntime {
         logs.push(`Quest reward prepared: ${added.name}.`);
     }
 
-    private rollDefenseCooldownMinutes(): number {
-        const dayPortion = this.randomInt(4, 12);
-        return dayPortion * 60;
+    private rollDefenseCooldownMinutes(timeRemainingMinutes: number, remainingBattles: number): number {
+        const safeRemainingBattles = Math.max(1, remainingBattles);
+        const averageGap = Math.max(60, Math.floor(timeRemainingMinutes / (safeRemainingBattles + 1)));
+        const minimumGap = Math.max(60, Math.floor(averageGap * 0.5));
+        const maximumGap = Math.max(minimumGap, Math.floor(averageGap * 1.5));
+        return this.randomInt(minimumGap, maximumGap);
+    }
+
+    private rollDefenseBattleCount(): number {
+        return this.randomInt(2, 6);
     }
 
     private randomInt(min: number, max: number): number {

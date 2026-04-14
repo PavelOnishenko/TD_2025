@@ -254,7 +254,7 @@ test('GameQuestRuntime records fallen defenders and exposes them in defend contr
   assert.deepEqual(defendContracts[0].activeDefenderNames, ['Tor']);
 });
 
-test('GameQuestRuntime spawns full-health defend allies at derived max HP and keeps wounded values', () => {
+test('GameQuestRuntime uses derived defend ally maxHp and preserves wounded values', () => {
   const runtime = new GameQuestRuntime();
   const defender = {
     name: 'Vara',
@@ -283,7 +283,7 @@ test('GameQuestRuntime spawns full-health defend allies at derived max HP and ke
   assert.equal(woundedAlly.hp, 7);
 });
 
-test('GameQuestRuntime persists defender maxHp from combat survivors after battle', () => {
+test('GameQuestRuntime persists survivor maxHp and hp after battle without clamping', () => {
   const runtime = new GameQuestRuntime();
   const quest = createKnownDefendQuest();
   runtime.activeQuest = quest;
@@ -297,4 +297,36 @@ test('GameQuestRuntime persists defender maxHp from combat survivors after battl
   runtime.applyDefenderBattleResults('Heights Gate', [{ name: 'Mara', hp: 14, maxHp: 16 }]);
   assert.equal(quest.children[0].objectiveData.defend.defenders[0].maxHp, 16);
   assert.equal(quest.children[0].objectiveData.defend.defenders[0].currentHp, 14);
+});
+
+test('GameQuestRuntime defend objective starts with randomized 2-6 battles and does not always trigger on 12h wait', () => {
+  const runtime = new GameQuestRuntime();
+  const quest = createKnownDefendQuest();
+  runtime.activeQuest = quest;
+  runtime.questUiController = { renderQuest: () => {} };
+  runtime.refreshContracts = () => {};
+  runtime.randomInt = (min, max) => {
+    if (min === 2 && max === 6) {
+      return 2;
+    }
+    if (min === 540 && max === 1620) {
+      return 1440;
+    }
+    if (min === 720 && max === 2160) {
+      return 1440;
+    }
+    return min;
+  };
+
+  const started = runtime.tryStartDefendObjective('Heights Gate', 'Quinn Evans', ['Mara', 'Tor']);
+  assert.equal(started.status, 'started');
+  assert.equal(quest.children[0].objectiveData.defend.remainingBattles, 2);
+  assert.equal(quest.children[0].objectiveData.defend.battleCooldownMinutes, 1440);
+
+  const firstWait = runtime.onVillageTimeAdvanced('Heights Gate', 12 * 60);
+  assert.equal(firstWait.triggeredBattle, false);
+
+  const secondWait = runtime.onVillageTimeAdvanced('Heights Gate', 12 * 60);
+  assert.equal(secondWait.triggeredBattle, true);
+  assert.equal(quest.children[0].objectiveData.defend.remainingBattles, 1);
 });
