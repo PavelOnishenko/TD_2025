@@ -604,12 +604,14 @@ test('VillageActionsController shows contextual dialogue action buttons only whe
   };
 
   controller.enterVillage('Mossbrook');
+  assert.equal(villageUI.askBarterBtn.classList.contains('hidden'), true);
   assert.equal(villageUI.barterNowBtn.classList.contains('hidden'), true);
   assert.equal(villageUI.confrontRecoverBtn.classList.contains('hidden'), true);
   assert.equal(villageUI.recruitEscortBtn.classList.contains('hidden'), true);
 
   const oliveIndex = controller['npcRoster'].findIndex((npc) => npc.name === 'Olive');
   controller.handleSelectNpc(oliveIndex);
+  assert.equal(villageUI.askBarterBtn.classList.contains('hidden'), false);
   assert.equal(villageUI.barterNowBtn.classList.contains('hidden'), false);
   assert.equal(villageUI.recruitEscortBtn.classList.contains('hidden'), false);
   assert.equal(villageUI.confrontRecoverBtn.classList.contains('hidden'), true);
@@ -619,4 +621,35 @@ test('VillageActionsController shows contextual dialogue action buttons only whe
   const recoverIndex = controller['npcRoster'].findIndex((npc) => npc.name === 'Pablo Menéndez');
   controller.handleSelectNpc(recoverIndex);
   assert.equal(villageUI.confrontRecoverBtn.classList.contains('hidden'), false);
+}));
+
+test('VillageActionsController shows defend dialogue action only for NPCs with defend contracts in the current village', () => withDocumentStub(() => {
+  const villageUI = createVillageUi();
+  const gameLog = createElement();
+  const controller = new VillageActionsController(createPlayerStub(), villageUI, gameLog, {
+    onUpdateHUD: () => {},
+    onLeaveVillage: () => {},
+    onTryRecruitEscort: () => 'not-available',
+    onTryStartDefend: () => ({ status: 'inactive' }),
+    getVillageDirectionHint: (settlementName) => ({ settlementName, exists: false }),
+    onVillageBarterCompleted: () => {},
+  });
+
+  controller.configureQuestDefendContracts([{ personName: 'Olive', villageName: 'Mossbrook', days: 2, enemyPools: [] }]);
+  controller['dialogueEngine'] = {
+    createNpcRoster: () => [{ id: 'moss-0', name: 'Mara', role: 'Trader', look: 'cloak', speechStyle: 'calm', disposition: 'truthful' }],
+    buildLocationAnswer: () => ({ speech: '', tone: '', truthfulness: 'truth' }),
+    buildPersonLocationAnswer: () => ({ speech: '', tone: '', truthfulness: 'truth' }),
+  };
+
+  controller.enterVillage('Mossbrook');
+  assert.equal(villageUI.defendVillageBtn.classList.contains('hidden'), true);
+
+  const oliveIndex = controller['npcRoster'].findIndex((npc) => npc.name === 'Olive');
+  controller.handleSelectNpc(oliveIndex);
+  assert.equal(villageUI.defendVillageBtn.classList.contains('hidden'), false);
+
+  const maraIndex = controller['npcRoster'].findIndex((npc) => npc.name === 'Mara');
+  controller.handleSelectNpc(maraIndex);
+  assert.equal(villageUI.defendVillageBtn.classList.contains('hidden'), true);
 }));

@@ -188,6 +188,7 @@ export default class VillageActionsController {
         getSelectedNpc: () => this.getSelectedNpc(),
         getSellPrice: (item) => this.stockService.getSellPrice(item),
         isInnkeeper: (role) => this.isInnkeeper(role),
+        shouldShowAskBarterAction: (npcName) => this.hasActiveBarterDealForNpc(npcName),
         shouldShowBarterNowAction: (npcName) => this.hasActiveBarterDealForNpc(npcName),
         shouldShowConfrontRecoverAction: (npcName, villageName) => this.canConfrontRecoverTarget(npcName, villageName),
         shouldShowRecruitEscortAction: (npcName, villageName) => this.canRecruitEscort(npcName, villageName),
@@ -410,7 +411,12 @@ export default class VillageActionsController {
         if (!npcName.trim() || !villageName.trim() || !this.callbacks.onTryStartDefend) {
             return false;
         }
-        return true;
+        const normalizedNpc = npcName.trim().toLocaleLowerCase();
+        const normalizedVillage = villageName.trim().toLocaleLowerCase();
+        return this.defendContracts.some((contract) =>
+            contract.personName.trim().toLocaleLowerCase() === normalizedNpc
+            && contract.villageName.trim().toLocaleLowerCase() === normalizedVillage,
+        );
     }
 
     // eslint-disable-next-line style-guide/function-length-warning
