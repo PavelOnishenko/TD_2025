@@ -1,6 +1,7 @@
 import Player from '../../../entities/player/Player.js';
 import { createItemById } from '../../../entities/Item.js';
 import { balanceConfig } from '../../../config/balance/balanceConfig.js';
+import { applyRandomEnchantmentsToGeneratedItem, buildRandomDiscoverableWeapon } from '../../../entities/items/WeaponEnchantments.js';
 import VillageStockService from './VillageStockService.js';
 import { VillageActionsCallbacks } from './VillageActionsTypes.js';
 import { VillageNpcProfile } from '../VillageDialogueEngine.js';
@@ -111,8 +112,9 @@ export default class VillageTradeInteractionService {
             return;
         }
 
-        const itemId = offer.possibleItemIds[Math.floor(Math.random() * offer.possibleItemIds.length)];
-        const item = createItemById(itemId);
+        const item = offer.isEnchantedWeaponOffer
+            ? this.buildVillageEnchantedWeapon(offer.buyPrice)
+            : this.buildRegularOfferItem(offer.possibleItemIds);
         if (!item) {
             this.deps.addLog('The merchant cannot find that item right now.', 'system');
             return;
@@ -155,5 +157,20 @@ export default class VillageTradeInteractionService {
     private isInnkeeper(role: string): boolean {
         const normalized = role.trim().toLocaleLowerCase();
         return normalized.includes('innkeeper') || normalized.includes('tavern') || normalized.includes('host');
+    }
+
+    private buildRegularOfferItem(itemIds: string[]): ReturnType<typeof createItemById> {
+        const itemId = itemIds[Math.floor(Math.random() * itemIds.length)];
+        const item = itemId ? createItemById(itemId) : null;
+        return item ? applyRandomEnchantmentsToGeneratedItem(item) : null;
+    }
+
+    private buildVillageEnchantedWeapon(offerPrice: number): ReturnType<typeof createItemById> {
+        const item = buildRandomDiscoverableWeapon();
+        if (!item) {
+            return null;
+        }
+        item.goldValue = Math.max(item.goldValue, offerPrice);
+        return item;
     }
 }

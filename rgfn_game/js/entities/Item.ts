@@ -7,6 +7,7 @@ import type {
     ItemData,
     ItemEffects,
     ItemRequirements,
+    WeaponEnchantment,
 } from './ItemDeclarations.js';
 import { getAllItemData, getDiscoverableItemData, getItemDataById } from './items/ItemRegistry.js';
 
@@ -16,6 +17,7 @@ export type {
     ItemData,
     ItemEffects,
     ItemRequirements,
+    WeaponEnchantment,
 } from './ItemDeclarations.js';
 
 export default class Item {
@@ -32,6 +34,7 @@ export default class Item {
     public isRanged: boolean;
     public spriteClass: string;
     public effects: ItemEffects;
+    public enchantments: WeaponEnchantment[];
 
     constructor(data: ItemData) {
         this.id = data.id;
@@ -47,7 +50,30 @@ export default class Item {
         this.isRanged = data.isRanged ?? false;
         this.spriteClass = data.spriteClass ?? 'unknown-item-sprite';
         this.effects = data.effects ?? {};
+        this.enchantments = Array.isArray(data.enchantments) ? data.enchantments.map((enchantment) => ({ ...enchantment })) : [];
     }
+
+    public getPlasmaBonusDamage = (): number =>
+        this.enchantments
+            .filter((enchantment) => enchantment.type === 'plasma')
+            .reduce((sum, enchantment) => sum + (enchantment.plasmaBonusDamage ?? 0), 0);
+
+    public toItemData = (): ItemData => ({
+        id: this.id,
+        name: this.name,
+        description: this.description,
+        type: this.type,
+        attackRange: this.attackRange,
+        handsRequired: this.handsRequired,
+        damageBonus: this.damageBonus,
+        requirements: { ...this.requirements },
+        goldValue: this.goldValue,
+        findWeight: this.findWeight,
+        isRanged: this.isRanged,
+        spriteClass: this.spriteClass,
+        effects: { ...this.effects },
+        enchantments: this.enchantments.map((enchantment) => ({ ...enchantment })),
+    });
 }
 
 export const ITEM_LIBRARY: ItemData[] = getAllItemData();

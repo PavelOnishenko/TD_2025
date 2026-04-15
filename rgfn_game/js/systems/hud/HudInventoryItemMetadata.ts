@@ -36,6 +36,9 @@ export default class HudInventoryItemMetadata {
         }
         if (item.type === 'weapon') {
             lines.push(`Damage if requirements met: ${this.calculateWeaponDamageAtRequirements(item)}`);
+            if (item.enchantments.length > 0) {
+                lines.push(`Enchantments: ${item.enchantments.map((enchantment) => enchantment.type).join(', ')}`);
+            }
         }
 
         return lines.join('\n');
@@ -50,7 +53,7 @@ export default class HudInventoryItemMetadata {
             ? calculateBowDamageBonus(effectiveStrength, effectiveAgility)
             : calculateMeleeDamageBonus(effectiveStrength, effectiveAgility);
         const offHandDamage = item.handsRequired === 1 ? balanceConfig.combat.fistDamagePerHand : 0;
-        return item.damageBonus + offHandDamage + statBonus;
+        return item.damageBonus + item.getPlasmaBonusDamage() + offHandDamage + statBonus;
     }
 
     private getRequirementEntries(item: Item): Array<{ label: 'AGI' | 'STR'; required: number; current: number }> {

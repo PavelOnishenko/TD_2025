@@ -65,13 +65,7 @@ export default class PlayerBase extends DamageableEntity {
         this.width = balanceConfig.player.width;
         this.height = balanceConfig.player.height;
         this.initializePrimaryStats(options.startingSkillAllocation ?? null);
-        this.inventorySystem = new PlayerInventory({
-            getInventoryCapacity: () => this.getInventoryCapacity(),
-            onEquipmentChanged: () => this.updateStats(),
-            onHealingPotionUsed: () => this.heal(5),
-            onManaPotionUsed: () => this.restoreMana(balanceConfig.combat.manaPotionRestore),
-            canEquip: (item) => this.canEquipItem(item),
-        });
+        this.inventorySystem = this.createInventorySystem();
         this.renderer = new PlayerRenderer();
         this.updateStats();
         this.mana = this.maxMana;
@@ -127,9 +121,16 @@ export default class PlayerBase extends DamageableEntity {
         const mainWeapon = this.equippedMainWeapon;
         const offhandWeapon = this.equippedOffhandWeapon;
         if (!mainWeapon && !offhandWeapon) { this.damage = fist * 2 + (meleeBonus * 2); return; }
-        if (mainWeapon?.handsRequired === 2) { this.damage = mainWeapon.damageBonus + (mainWeapon.isRanged ? rangedBonus : meleeBonus); return; }
-        const main = mainWeapon ? mainWeapon.damageBonus + (mainWeapon.isRanged ? rangedBonus : meleeBonus) : fist + meleeBonus;
-        const off = offhandWeapon ? offhandWeapon.damageBonus + (offhandWeapon.isRanged ? rangedBonus : meleeBonus) : fist + meleeBonus;
+        if (mainWeapon?.handsRequired === 2) {
+            this.damage = mainWeapon.damageBonus + (mainWeapon.isRanged ? rangedBonus : meleeBonus) + mainWeapon.getPlasmaBonusDamage();
+            return;
+        }
+        const main = mainWeapon
+            ? mainWeapon.damageBonus + (mainWeapon.isRanged ? rangedBonus : meleeBonus) + mainWeapon.getPlasmaBonusDamage()
+            : fist + meleeBonus;
+        const off = offhandWeapon
+            ? offhandWeapon.damageBonus + (offhandWeapon.isRanged ? rangedBonus : meleeBonus) + offhandWeapon.getPlasmaBonusDamage()
+            : fist + meleeBonus;
         this.damage = main + off;
     }
 
@@ -138,6 +139,14 @@ export default class PlayerBase extends DamageableEntity {
     public getInventoryCapacity = (): number => this.getInventoryCapacityForStrength(this.strength);
     public restoreMana(amount: number): void { if (amount > 0) {this.mana = Math.min(this.maxMana, this.mana + amount);} }
     public canEquipItem = (item: Item): boolean => this.agility >= (item.requirements.agility ?? 0) && this.strength >= (item.requirements.strength ?? 0);
+
+    private createInventorySystem = (): PlayerInventory => new PlayerInventory({
+        getInventoryCapacity: () => this.getInventoryCapacity(),
+        onEquipmentChanged: () => this.updateStats(),
+        onHealingPotionUsed: () => this.heal(5),
+        onManaPotionUsed: () => this.restoreMana(balanceConfig.combat.manaPotionRestore),
+        canEquip: (item) => this.canEquipItem(item),
+    });
 
     private initializePrimaryStats(startingSkillAllocation: Partial<Record<PlayerStat, number>> | null): void {
         this.vitality = balanceConfig.player.initialVitality;

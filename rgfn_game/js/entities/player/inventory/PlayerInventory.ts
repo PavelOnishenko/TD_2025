@@ -1,4 +1,5 @@
 import Item from '../../Item.js';
+import { ItemData } from '../../ItemDeclarations.js';
 import PlayerInventoryEquipment from './PlayerInventoryEquipment.js';
 import type { InventoryState, PlayerInventoryHooks, PotionItemId, RestoreInventoryStateArgs } from './PlayerInventoryTypes.js';
 
@@ -10,7 +11,6 @@ export default class PlayerInventory {
     constructor(hooks: PlayerInventoryHooks) {
         this.hooks = hooks;
     }
-
     public addItem(item: Item): boolean {
         if (this.inventory.length >= this.hooks.getInventoryCapacity()) {
             return false;
@@ -18,7 +18,6 @@ export default class PlayerInventory {
         this.inventory.push(item);
         return true;
     }
-
     public useHealingPotion = (): boolean => this.usePotionById('healingPotion', this.hooks.onHealingPotionUsed);
 
     public useManaPotion = (): boolean => this.usePotionById('manaPotion', this.hooks.onManaPotionUsed);
@@ -46,7 +45,6 @@ export default class PlayerInventory {
         }
         return removedItem;
     }
-
     public unequipWeapon(): Item | null {
         const weapon = this.equipment.unequipWeapon(this.moveItemToInventory);
         if (!weapon) {
@@ -55,7 +53,6 @@ export default class PlayerInventory {
         this.hooks.onEquipmentChanged();
         return weapon;
     }
-
     public unequipOffhandWeapon(): Item | null {
         const weapon = this.equipment.unequipOffhandWeapon(this.moveItemToInventory);
         if (!weapon) {
@@ -64,7 +61,6 @@ export default class PlayerInventory {
         this.hooks.onEquipmentChanged();
         return weapon;
     }
-
     public unequipArmor(): Item | null {
         const armor = this.equipment.unequipArmor(this.moveItemToInventory);
         if (!armor) {
@@ -73,21 +69,18 @@ export default class PlayerInventory {
         this.hooks.onEquipmentChanged();
         return armor;
     }
-
     public setEquippedWeapon(weapon: Item | null): void {
         this.moveEquippedItemsToInventory([this.equipment.getEquippedMainWeapon(), this.equipment.getEquippedOffhandWeapon()], [weapon]);
         this.removeItemFromInventory(weapon);
         this.equipment.setEquippedWeapon(weapon);
         this.hooks.onEquipmentChanged();
     }
-
     public setEquippedOffhandWeapon(weapon: Item | null): void {
         this.moveEquippedItemsToInventory([this.equipment.getEquippedOffhandWeapon()], [this.equipment.getEquippedMainWeapon(), weapon]);
         this.removeItemFromInventory(weapon);
         this.equipment.setEquippedOffhandWeapon(weapon);
         this.hooks.onEquipmentChanged();
     }
-
     public equipWeaponToSlot(weapon: Item, slot: 'main' | 'offhand'): void {
         const previousMainWeapon = this.equipment.getEquippedMainWeapon();
         const previousOffhandWeapon = this.equipment.getEquippedOffhandWeapon();
@@ -100,21 +93,43 @@ export default class PlayerInventory {
         );
         this.hooks.onEquipmentChanged();
     }
-
     public setEquippedArmor(armor: Item | null): void {
         this.moveEquippedItemsToInventory([this.equipment.getEquippedArmor()], [armor]);
         this.removeItemFromInventory(armor);
         this.equipment.setEquippedArmor(armor);
         this.hooks.onEquipmentChanged();
     }
-
     public restoreState({ itemIds, equippedWeaponId, equippedArmorId, itemFactory, equippedOffhandWeaponId }: RestoreInventoryStateArgs): void {
         this.restoreInventoryItems(itemIds, itemFactory);
         this.equipment.restoreFromFactory(equippedWeaponId, equippedOffhandWeaponId, equippedArmorId, itemFactory);
         this.hooks.onEquipmentChanged();
     }
+    public getState = (): InventoryState => ({
+        inventoryItemIds: this.inventory.map((item) => item.id),
+        inventoryItems: this.inventory.map((item) => item.toItemData()),
+        equippedWeapon: this.equipment.getEquippedMainWeapon()?.toItemData() ?? null,
+        equippedOffhandWeapon: this.equipment.getEquippedOffhandWeapon()?.toItemData() ?? null,
+        equippedArmor: this.equipment.getEquippedArmor()?.toItemData() ?? null,
+        ...this.equipment.getEquippedItemIds(),
+    });
 
-    public getState = (): InventoryState => ({ inventoryItemIds: this.inventory.map((item) => item.id), ...this.equipment.getEquippedItemIds() });
+    public restoreStateFromSnapshots(
+        inventoryItems: ItemData[] | undefined,
+        equippedWeapon: ItemData | null | undefined,
+        equippedOffhandWeapon: ItemData | null | undefined,
+        equippedArmor: ItemData | null | undefined,
+    ): boolean {
+        if (!Array.isArray(inventoryItems)) {
+            return false;
+        }
+        this.inventory.length = 0;
+        inventoryItems.forEach((itemData) => this.inventory.push(new Item(itemData)));
+        this.equipment.setEquippedWeapon(equippedWeapon ? new Item(equippedWeapon) : null);
+        this.equipment.setEquippedOffhandWeapon(equippedOffhandWeapon ? new Item(equippedOffhandWeapon) : null);
+        this.equipment.setEquippedArmor(equippedArmor ? new Item(equippedArmor) : null);
+        this.hooks.onEquipmentChanged();
+        return true;
+    }
 
     private readonly moveItemToInventory = (item: Item): boolean => {
         if (this.inventory.includes(item)) {

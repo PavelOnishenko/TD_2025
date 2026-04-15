@@ -1,6 +1,7 @@
 import Player from '../../entities/player/Player.js';
 import Skeleton from '../../entities/Skeleton.js';
 import { CombatMove, getMoveLabel, isAttackMove, resolveDirectionalCombatExchange } from '../combat/DirectionalCombat.js';
+import { resolveWeaponEnchantmentAttack } from './WeaponEnchantmentCombat.js';
 
 type DirectionalCombatCallbacks = {
     onAddBattleLog: (message: string, type?: string) => void;
@@ -63,8 +64,11 @@ export default class BattleDirectionalCombatResolver {
 
     private applyDamage(actorDamage: number, enemyDamage: number, actorMove: CombatMove, enemyMove: CombatMove, target: Skeleton): void {
         if (actorDamage > 0) {
-            target.takeDamage(actorDamage);
-            this.callbacks.onAddBattleLog(`${target.name} takes ${actorDamage} damage from ${getMoveLabel(actorMove)}.`, 'damage');
+            const enchantmentOutcome = resolveWeaponEnchantmentAttack(target, [this.player.equippedMainWeapon, this.player.equippedOffhandWeapon]);
+            const totalDamage = Math.max(0, Math.round((actorDamage + enchantmentOutcome.flatDamageBonus) * enchantmentOutcome.damageMultiplier));
+            target.takeDamage(totalDamage);
+            this.callbacks.onAddBattleLog(`${target.name} takes ${totalDamage} damage from ${getMoveLabel(actorMove)}.`, 'damage');
+            enchantmentOutcome.logs.forEach((message) => this.callbacks.onAddBattleLog(message, 'system'));
             this.callbacks.onApplyRetaliation(target, true);
         } else if (isAttackMove(actorMove)) {
             this.callbacks.onAddBattleLog(`Your ${getMoveLabel(actorMove)} deals no damage this turn.`, 'system');

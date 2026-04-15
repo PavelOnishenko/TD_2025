@@ -10,7 +10,7 @@ import { CombatMove, getMoveLabel } from '../combat/DirectionalCombat.js';
 import BattleTargetResolver from './BattleTargetResolver.js';
 import BattleLootManager from './BattleLootManager.js';
 import BattleDirectionalCombatResolver from './BattleDirectionalCombatResolver.js';
-
+import { resolveWeaponEnchantmentAttack } from './WeaponEnchantmentCombat.js';
 type BattleCommandCallbacks = {
     onUpdateHUD: () => void; onAddBattleLog: (message: string, type?: string) => void; onEnableBattleButtons: (enabled: boolean) => void;
     onProcessTurn: () => void; onEndBattle: (result: 'victory' | 'fled') => void; onPlayerTurnTransitionStart: () => void; onPlayerTurnReady: () => void;
@@ -21,7 +21,6 @@ export default class BattleCommandController {
     private stateMachine: StateMachine; private player: Player; private battleMap: BattleMap; private turnManager: TurnManager;
     private callbacks: BattleCommandCallbacks; private magicSystem: MagicSystem; private targetResolver: BattleTargetResolver;
     private lootManager: BattleLootManager; private directionalCombatResolver: BattleDirectionalCombatResolver;
-
     constructor(stateMachine: StateMachine, player: Player, battleMap: BattleMap, turnManager: TurnManager, magicSystem: MagicSystem, callbacks: BattleCommandCallbacks) {
         this.stateMachine = stateMachine;
         this.player = player;
@@ -37,7 +36,6 @@ export default class BattleCommandController {
             onTargetDefeated: this.handleTargetDefeated,
         });
     }
-
     public handleEquipmentAction(actionDescription: string): boolean {
         if (!this.stateMachine.isInState('BATTLE')) {return true;}
         if (!this.canUseBattleTurnInput()) {
@@ -50,7 +48,6 @@ export default class BattleCommandController {
         this.finishPlayerAction(timingConfig.battle.playerActionDelay);
         return true;
     }
-
     public handleAttack(): void {
         if (!this.canUseBattleTurnInput()) {return;}
         const enemies = this.turnManager.getActiveEnemies() as Skeleton[];
@@ -163,9 +160,11 @@ export default class BattleCommandController {
         attackBonusMessages.forEach((message) => this.callbacks.onAddBattleLog(message, 'system'));
         if (target.shouldAvoidHit()) {this.callbacks.onAddBattleLog(`${target.name} dodges the hit!`, 'enemy'); return;}
 
-        const damage = this.player.getPhysicalDamageWithBuff();
+        const enchantmentOutcome = resolveWeaponEnchantmentAttack(target, [this.player.equippedMainWeapon, this.player.equippedOffhandWeapon]);
+        const damage = Math.max(0, Math.round((this.player.getPhysicalDamageWithBuff() + enchantmentOutcome.flatDamageBonus) * enchantmentOutcome.damageMultiplier));
         target.takeDamage(damage);
         this.callbacks.onAddBattleLog(`${target.name} takes ${damage} damage!`, 'damage');
+        enchantmentOutcome.logs.forEach((message) => this.callbacks.onAddBattleLog(message, 'system'));
         this.applyRetaliationEffects(target, true);
         if (target.isDead()) {this.handleTargetDefeated(target);}
     }

@@ -43,11 +43,11 @@ export default class PlayerInventoryAndRender extends PlayerCombatState {
         if (!main && !off) {return `Unarmed: (${fist} + ${meleeBonus}) + (${fist} + ${meleeBonus}) = ${this.damage}`;}
         if (main?.handsRequired === 2) {
             const statBonus = main.isRanged ? calculateBowDamageBonus(this.strength, this.agility) : meleeBonus;
-            return `${main.isRanged ? 'Ranged' : 'Melee'} (2H): weapon ${main.damageBonus} + stat bonus ${statBonus} = ${this.damage}`;
+            return `${main.isRanged ? 'Ranged' : 'Melee'} (2H): weapon ${main.damageBonus + main.getPlasmaBonusDamage()} + stat bonus ${statBonus} = ${this.damage}`;
         }
         const rangedBonus = calculateBowDamageBonus(this.strength, this.agility);
-        const mainText = main ? `${main.name} (${main.damageBonus} + ${main.isRanged ? rangedBonus : meleeBonus})` : `Fist (${fist} + ${meleeBonus})`;
-        const offText = off ? `${off.name} (${off.damageBonus} + ${off.isRanged ? rangedBonus : meleeBonus})` : `Fist (${fist} + ${meleeBonus})`;
+        const mainText = main ? `${main.name} (${main.damageBonus + main.getPlasmaBonusDamage()} + ${main.isRanged ? rangedBonus : meleeBonus})` : `Fist (${fist} + ${meleeBonus})`;
+        const offText = off ? `${off.name} (${off.damageBonus + off.getPlasmaBonusDamage()} + ${off.isRanged ? rangedBonus : meleeBonus})` : `Fist (${fist} + ${meleeBonus})`;
         return `Dual hand: main ${mainText} + off ${offText} = ${this.damage}`;
     }
 

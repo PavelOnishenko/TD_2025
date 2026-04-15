@@ -15,6 +15,17 @@ export interface ItemEffects {
     maxAbsorbHp?: number;
 }
 
+export type WeaponEnchantmentType = 'plasma' | 'wormhole' | 'confusion' | 'doubt';
+
+export type WeaponEnchantment = {
+    type: WeaponEnchantmentType;
+    plasmaBonusDamage?: number;
+    wormholeCritChance?: number;
+    confusionStunChance?: number;
+    doubtDamagePerSecond?: number;
+    doubtDurationSeconds?: number;
+};
+
 export interface ItemData {
     id: string;
     name: string;
@@ -29,4 +40,5 @@ export interface ItemData {
     isRanged?: boolean;
     spriteClass?: string;
     effects?: ItemEffects;
+    enchantments?: WeaponEnchantment[];
 }
