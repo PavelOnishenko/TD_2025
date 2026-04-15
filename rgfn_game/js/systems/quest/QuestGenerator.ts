@@ -1,7 +1,7 @@
 import QuestLeafFactory from './generation/QuestLeafFactory.js';
 import QuestPackService from './generation/QuestPackService.js';
 import { DefaultQuestRandom, QuestRandom } from './generation/QuestRandom.js';
-import { QuestNode } from './QuestTypes.js';
+import { QuestNode, QuestRewardMetadata } from './QuestTypes.js';
 import { theme } from '../../config/ThemeConfig.js';
 
 type GenerationContext = { depth: number; idPrefix: string };
@@ -26,6 +26,15 @@ export default class QuestGenerator {
         const title = await this.packService.generateName('mainQuest', theme.quest.nameGeneration.maxWordsByDomain.mainQuest);
         const children = await this.generateChildren();
         return this.node('main', title.text, DEFAULT_DESCRIPTION, DEFAULT_CONDITION, children);
+    }
+
+    public async generateSideQuest(id: string, giverNpcName: string, giverVillageName: string): Promise<QuestNode> {
+        const rootId = id.trim();
+        const giverName = giverNpcName.trim();
+        const villageName = giverVillageName.trim();
+        const leaf = await this.leafFactory.createSide(`${rootId}.1`, { villageName, giverNpcName: giverName });
+        const rewardMetadata = this.generateSideQuestRewardMetadata();
+        return this.createSideQuestRootNode(rootId, giverName, villageName, leaf, rewardMetadata);
     }
 
     private async generateChildren(): Promise<QuestNode[]> {
@@ -63,5 +72,23 @@ export default class QuestGenerator {
         objectiveType: 'scout',
         entities: [],
         children,
+    });
+
+    private generateSideQuestRewardMetadata(): QuestRewardMetadata {
+        const xp = this.random.nextInt(12, 30);
+        const gold = this.random.nextInt(10, 45);
+        const itemName = this.random.pick(['Repair Kit', 'Hunter Tonic', 'Scout Charm', 'Trail Rations']);
+        return { xp, gold, itemName, requiresTurnIn: true };
+    }
+
+    private renderRewardText = (rewardMetadata: QuestRewardMetadata): string =>
+        `${rewardMetadata.xp} XP, ${rewardMetadata.gold}g, ${rewardMetadata.itemName}`;
+
+    private createSideQuestRootNode = (id: string, giverNpcName: string, giverVillageName: string, leaf: QuestNode, rewardMetadata: QuestRewardMetadata): QuestNode => ({
+        id, objectiveType: 'scout', entities: [], children: [leaf], track: 'side', giverNpcName, giverVillageName, rewardMetadata, status: 'available',
+        title: `${giverNpcName}'s Request`,
+        description: `Assist ${giverNpcName} with a local task in ${giverVillageName}.`,
+        conditionText: 'Complete the listed task and return to the quest giver.',
+        reward: this.renderRewardText(rewardMetadata),
     });
 }

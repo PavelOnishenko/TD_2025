@@ -55,3 +55,27 @@
 - The current integration auto-accepts offers on NPC selection for flow simplicity.
 - If explicit UI acceptance is needed later, wire a dedicated village action button and call the same callbacks.
 - Reward handling currently returns reward text; economic/item granting is expected to be layered by caller.
+
+## 2026-04-15: Side quest generation expansion
+
+- `QuestObjectiveType` now includes side-focused objective leaves:
+  - `localDelivery`
+  - `gather`
+  - `repair`
+  - `patrol`
+- `QuestObjectiveData` now carries dedicated payload shapes for those types:
+  - `localDelivery` → village + source NPC + recipient NPC + item + completion flag.
+  - `gather` → village + item + required/current amount.
+  - `repair` → village + structure + required/repaired materials + completion flag.
+  - `patrol` → village + checkpoint list + visited checkpoints + completion flag.
+- Leaf pools are now split:
+  - **Main quest leaf pool** remains unchanged (existing quest objective family only).
+  - **Side quest leaf pool** includes all existing objective leaves plus new side-only leaves.
+- Side quest leaf generation supports local constraints:
+  - A side quest can pass `villageName` and `giverNpcName`.
+  - Existing objective types (`deliver`, `travel`, `barter`, etc.) still generate, but are anchored locally to the giver context when generated as side quests.
+- Side quest root metadata now includes reward metadata:
+  - `rewardMetadata: { xp, gold, itemName, requiresTurnIn: true }`
+  - Human-readable `reward` text remains for dialogue/UI continuity.
+- Reward claim timing remains unchanged:
+  - Rewards are still represented as claimable on giver turn-in (`readyToTurnIn` → `completed`) and not auto-claimed at objective completion.
