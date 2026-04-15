@@ -79,6 +79,31 @@ test('QuestLeafFactory supports the four added leaf quest types', async () => {
   assert.equal(travel.objectiveType, 'travel');
 });
 
+test('QuestLeafFactory can create side-only local objective types', async () => {
+  const packService = new FakeQuestPackService(createNames());
+  const random = new ScriptedQuestRandom({
+    ints: [3, 2],
+    picks: ['localDelivery', 'Ration Crate', 'gather', 'Medicinal Herbs', 'repair', 'Well Pump', 'Timber', 'Canvas', 'patrol', 'North Gate', 'South Wall'],
+  });
+  const factory = new QuestLeafFactory(packService, random);
+  const context = { villageName: 'Ashford', giverNpcName: 'Mira' };
+
+  const localDelivery = await factory.createSide('side.1', context);
+  const gather = await factory.createSide('side.2', context);
+  const repair = await factory.createSide('side.3', context);
+  const patrol = await factory.createSide('side.4', context);
+
+  assert.equal(localDelivery.objectiveType, 'localDelivery');
+  assert.equal(localDelivery.objectiveData.localDelivery.villageName, 'Ashford');
+  assert.equal(localDelivery.objectiveData.localDelivery.sourceNpcName, 'Mira');
+  assert.equal(gather.objectiveType, 'gather');
+  assert.equal(gather.objectiveData.gather.villageName, 'Ashford');
+  assert.equal(repair.objectiveType, 'repair');
+  assert.equal(repair.objectiveData.repair.villageName, 'Ashford');
+  assert.equal(patrol.objectiveType, 'patrol');
+  assert.equal(patrol.objectiveData.patrol.villageName, 'Ashford');
+});
+
 test('QuestLeafFactory delivery quests include pickup source person and village in text and objective data', async () => {
   const packService = new FakeQuestPackService(createNames());
   const random = new ScriptedQuestRandom({ picks: ['deliver'] });
@@ -110,4 +135,23 @@ test('QuestLeafFactory purge objectives include anchored village intel and monst
   assert.match(node.conditionText, /near Old Well/);
   assert.equal(node.entities.some((entity) => entity.type === 'monster' && entity.text === 'Rift Wyrm'), true);
   assert.equal(node.objectiveData?.monster?.villageName, 'Old Well');
+});
+
+test('QuestGenerator creates side quests with reward metadata claimable on giver turn-in', async () => {
+  const packService = new FakeQuestPackService(createNames());
+  const random = new ScriptedQuestRandom({ ints: [24, 35], picks: ['localDelivery', 'Ration Crate', 'Nomad Broker', 'Scout Charm'] });
+  const generator = new QuestGenerator({ packService, random });
+
+  const sideQuest = await generator.generateSideQuest('side.99', 'Mira Vale', 'Old Well');
+
+  assert.equal(sideQuest.track, 'side');
+  assert.equal(sideQuest.giverNpcName, 'Mira Vale');
+  assert.equal(sideQuest.giverVillageName, 'Old Well');
+  assert.equal(sideQuest.status, 'available');
+  assert.equal(sideQuest.children.length, 1);
+  assert.equal(sideQuest.children[0].objectiveType, 'localDelivery');
+  assert.equal(sideQuest.rewardMetadata.requiresTurnIn, true);
+  assert.equal(sideQuest.rewardMetadata.xp, 24);
+  assert.equal(sideQuest.rewardMetadata.gold, 35);
+  assert.match(sideQuest.reward, /24 XP, 35g/);
 });

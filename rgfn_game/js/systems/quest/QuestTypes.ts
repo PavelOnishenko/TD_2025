@@ -1,13 +1,17 @@
 export type QuestObjectiveType =
     | 'eliminate'
     | 'deliver'
+    | 'localDelivery'
     | 'travel'
     | 'barter'
     | 'scout'
     | 'hunt'
     | 'recover'
     | 'escort'
-    | 'defend';
+    | 'defend'
+    | 'gather'
+    | 'repair'
+    | 'patrol';
 
 export type QuestNameDomain = 'location' | 'artifact' | 'character' | 'monster' | 'mainQuest';
 
@@ -29,6 +33,7 @@ export type QuestNode = {
     giverNpcName?: string;
     giverVillageName?: string;
     reward?: string;
+    rewardMetadata?: QuestRewardMetadata;
     status?: QuestStatus;
 };
 
@@ -38,6 +43,14 @@ export type DeliverObjectiveData = {
     destinationVillage: string;
     itemName: string;
     isPickedUp?: boolean;
+};
+
+export type LocalDeliveryObjectiveData = {
+    villageName: string;
+    sourceNpcName: string;
+    recipientNpcName: string;
+    itemName: string;
+    isDelivered?: boolean;
 };
 
 export type GeneratedName = {
@@ -131,10 +144,43 @@ export type DefendObjectiveData = {
     remainingBattles?: number;
 };
 
+export type GatherObjectiveData = {
+    villageName: string;
+    itemName: string;
+    requiredAmount: number;
+    currentAmount?: number;
+};
+
+export type RepairObjectiveData = {
+    villageName: string;
+    structureName: string;
+    requiredMaterials: string[];
+    repairedMaterials?: string[];
+    isRepaired?: boolean;
+};
+
+export type PatrolObjectiveData = {
+    villageName: string;
+    checkpoints: string[];
+    visitedCheckpoints?: string[];
+    isPatrolComplete?: boolean;
+};
+
+export type QuestRewardMetadata = {
+    xp: number;
+    gold: number;
+    itemName: string;
+    requiresTurnIn: true;
+};
+
 export type QuestObjectiveData = {
     deliver?: DeliverObjectiveData;
+    localDelivery?: LocalDeliveryObjectiveData;
     monster?: MonsterObjectiveData;
     escort?: EscortObjectiveData;
     recover?: RecoverObjectiveData;
     defend?: DefendObjectiveData;
+    gather?: GatherObjectiveData;
+    repair?: RepairObjectiveData;
+    patrol?: PatrolObjectiveData;
 };

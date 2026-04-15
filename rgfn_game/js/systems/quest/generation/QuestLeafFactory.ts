@@ -2,10 +2,26 @@
 import QuestPackService from './QuestPackService.js';
 import { QuestRandom } from './QuestRandom.js';
 import { theme } from '../../../config/ThemeConfig.js';
-import { DeliverObjectiveData, GeneratedName, QuestNode, QuestObjectiveType } from '../QuestTypes.js';
+import { DeliverObjectiveData, GeneratedName, QuestNameDomain, QuestNode, QuestObjectiveType } from '../QuestTypes.js';
 import QuestLeafContentBuilder from './QuestLeafContentBuilder.js';
 
-const LEAF_TYPES: QuestObjectiveType[] = ['eliminate', 'deliver', 'travel', 'barter', 'scout', 'hunt', 'recover', 'escort', 'defend'];
+type SideQuestConstraints = {
+    villageName?: string;
+    giverNpcName?: string;
+};
+
+type LeafGenerationContext = {
+    localVillageName?: string;
+    localNpcName?: string;
+};
+
+const MAIN_LEAF_TYPES: QuestObjectiveType[] = ['eliminate', 'deliver', 'travel', 'barter', 'scout', 'hunt', 'recover', 'escort', 'defend'];
+const SIDE_ONLY_LEAF_TYPES: QuestObjectiveType[] = ['localDelivery', 'gather', 'repair', 'patrol'];
+const SIDE_LEAF_TYPES: QuestObjectiveType[] = [...MAIN_LEAF_TYPES, ...SIDE_ONLY_LEAF_TYPES];
+const REPAIR_STRUCTURES = ['Well Pump', 'Palisade Gate', 'Watchtower Winch', 'Granary Roof'];
+const GATHER_ITEMS = ['Medicinal Herbs', 'Iron Scrap', 'Lantern Oil', 'Timber Bundles'];
+const LOCAL_DELIVERY_ITEMS = ['Ration Crate', 'Treated Bandages', 'Signal Flare Kit', 'Courier Satchel'];
+const PATROL_CHECKPOINTS = ['North Gate', 'Market Square', 'River Watch', 'Old Shrine', 'South Wall'];
 
 export default class QuestLeafFactory {
     private readonly packService: QuestPackService;
@@ -20,16 +36,33 @@ export default class QuestLeafFactory {
     }
 
     public async create(id: string): Promise<QuestNode> {
-        const type = this.random.pick(LEAF_TYPES);
+        const type = this.random.pick(MAIN_LEAF_TYPES);
+        return this.createFromType(id, type);
+    }
+
+    public async createSide(id: string, constraints: SideQuestConstraints = {}): Promise<QuestNode> {
+        const type = this.random.pick(SIDE_LEAF_TYPES);
+        const context: LeafGenerationContext = {
+            localVillageName: constraints.villageName?.trim() || undefined,
+            localNpcName: constraints.giverNpcName?.trim() || undefined,
+        };
+        return this.createFromType(id, type, context);
+    }
+
+    private createFromType(id: string, type: QuestObjectiveType, context?: LeafGenerationContext): Promise<QuestNode> {
         if (type === 'eliminate') { return this.createEliminateNode(id); }
-        if (type === 'deliver') { return this.createDeliverNode(id); }
-        if (type === 'travel') { return this.createTravelNode(id); }
-        if (type === 'barter') { return this.createBarterNode(id); }
-        if (type === 'scout') { return this.createScoutNode(id); }
-        if (type === 'hunt') { return this.createHuntNode(id); }
-        if (type === 'recover') { return this.createRecoverNode(id); }
-        if (type === 'escort') { return this.createEscortNode(id); }
-        return this.createDefendNode(id);
+        if (type === 'deliver') { return this.createDeliverNode(id, context); }
+        if (type === 'travel') { return this.createTravelNode(id, context); }
+        if (type === 'barter') { return this.createBarterNode(id, context); }
+        if (type === 'scout') { return this.createScoutNode(id, context); }
+        if (type === 'hunt') { return this.createHuntNode(id, context); }
+        if (type === 'recover') { return this.createRecoverNode(id, context); }
+        if (type === 'escort') { return this.createEscortNode(id, context); }
+        if (type === 'defend') { return this.createDefendNode(id, context); }
+        if (type === 'localDelivery') { return this.createLocalDeliveryNode(id, context); }
+        if (type === 'gather') { return this.createGatherNode(id, context); }
+        if (type === 'repair') { return this.createRepairNode(id, context); }
+        return this.createPatrolNode(id, context);
     }
 
     private async createEliminateNode(id: string): Promise<QuestNode> {
@@ -51,11 +84,11 @@ export default class QuestLeafFactory {
         );
     }
 
-    private async createDeliverNode(id: string): Promise<QuestNode> {
+    private async createDeliverNode(id: string, context?: LeafGenerationContext): Promise<QuestNode> {
         const artifact = await this.generateName('artifact');
-        const sourceTrader = await this.generateName('character');
-        const sourceVillage = await this.generateName('location');
-        const destination = await this.resolveDestination(sourceVillage);
+        const sourceTrader = await this.resolveTrader(context);
+        const sourceVillage = await this.resolveVillage(context);
+        const destination = await this.resolveDestination(sourceVillage, context);
         const objectiveData: DeliverObjectiveData = {
             sourceVillage: sourceVillage.text,
             sourceTrader: sourceTrader.text,
@@ -75,8 +108,8 @@ export default class QuestLeafFactory {
         );
     }
 
-    private async createTravelNode(id: string): Promise<QuestNode> {
-        const destination = await this.generateName('location');
+    private async createTravelNode(id: string, context?: LeafGenerationContext): Promise<QuestNode> {
+        const destination = await this.resolveVillage(context);
         return this.contentBuilder.node(
             id,
             `Scout ${destination.text}`,
@@ -87,8 +120,8 @@ export default class QuestLeafFactory {
         );
     }
 
-    private async createBarterNode(id: string): Promise<QuestNode> {
-        const trader = await this.generateName('character');
+    private async createBarterNode(id: string, context?: LeafGenerationContext): Promise<QuestNode> {
+        const trader = await this.resolveTrader(context);
         const artifact = await this.generateName('artifact');
         return this.contentBuilder.node(
             id,
@@ -100,8 +133,8 @@ export default class QuestLeafFactory {
         );
     }
 
-    private async createScoutNode(id: string): Promise<QuestNode> {
-        const destination = await this.generateName('location');
+    private async createScoutNode(id: string, context?: LeafGenerationContext): Promise<QuestNode> {
+        const destination = await this.resolveVillage(context);
         return this.contentBuilder.node(
             id,
             `Investigate ${destination.text}`,
@@ -112,9 +145,9 @@ export default class QuestLeafFactory {
         );
     }
 
-    private async createHuntNode(id: string): Promise<QuestNode> {
+    private async createHuntNode(id: string, context?: LeafGenerationContext): Promise<QuestNode> {
         const profile = await this.contentBuilder.rareMonsterProfile(() => this.generateName('monster'));
-        const location = await this.generateName('location');
+        const location = await this.resolveVillage(context);
         const details = `Origin: mutated from ${profile.mutatedFrom}. `
             + `Stats: ${profile.stats.join(', ')}. `
             + `Effects: ${profile.effects.join(', ')}. `
@@ -138,10 +171,10 @@ export default class QuestLeafFactory {
         );
     }
 
-    private async createRecoverNode(id: string): Promise<QuestNode> {
+    private async createRecoverNode(id: string, context?: LeafGenerationContext): Promise<QuestNode> {
         const artifact = await this.generateName('artifact');
-        const location = await this.generateName('location');
-        const person = await this.generateName('character');
+        const location = await this.resolveVillage(context);
+        const person = await this.resolveTrader(context);
         return this.contentBuilder.node(
             id,
             `Recover ${artifact.text}`,
@@ -162,10 +195,10 @@ export default class QuestLeafFactory {
         );
     }
 
-    private async createEscortNode(id: string): Promise<QuestNode> {
-        const character = await this.generateName('character');
-        const source = await this.generateName('location');
-        const destination = await this.resolveDestination(source);
+    private async createEscortNode(id: string, context?: LeafGenerationContext): Promise<QuestNode> {
+        const character = await this.resolveTrader(context);
+        const source = await this.resolveVillage(context);
+        const destination = await this.resolveDestination(source, context);
         return this.contentBuilder.node(
             id,
             `Escort ${character.text}`,
@@ -177,10 +210,10 @@ export default class QuestLeafFactory {
         );
     }
 
-    private async createDefendNode(id: string): Promise<QuestNode> {
-        const location = await this.generateName('location');
+    private async createDefendNode(id: string, context?: LeafGenerationContext): Promise<QuestNode> {
+        const location = await this.resolveVillage(context);
         const artifact = await this.generateName('artifact');
-        const contact = await this.generateName('character');
+        const contact = await this.resolveTrader(context);
         const durationDays = this.random.nextInt(3, 7);
         return this.contentBuilder.node(
             id,
@@ -205,16 +238,117 @@ export default class QuestLeafFactory {
         );
     }
 
+    public async createLocalDeliveryNode(id: string, context?: LeafGenerationContext): Promise<QuestNode> {
+        const village = await this.resolveVillage(context);
+        const sourceNpc = await this.resolveTrader(context);
+        const recipient = await this.generateName('character');
+        const itemName = this.random.pick(LOCAL_DELIVERY_ITEMS);
+        return this.contentBuilder.node(
+            id,
+            `Local Delivery: ${itemName}`,
+            `Collect ${itemName} from ${sourceNpc.text} and hand it to ${recipient.text} in ${village.text}.`,
+            `Deliver ${itemName} to ${recipient.text} in ${village.text}.`,
+            'localDelivery',
+            this.contentBuilder.entities(sourceNpc, recipient, village, this.localName(itemName, 'artifact')),
+            {
+                localDelivery: { villageName: village.text, sourceNpcName: sourceNpc.text, recipientNpcName: recipient.text, itemName, isDelivered: false },
+            },
+        );
+    }
+
+    public async createGatherNode(id: string, context?: LeafGenerationContext): Promise<QuestNode> {
+        const village = await this.resolveVillage(context);
+        const itemName = this.random.pick(GATHER_ITEMS);
+        const requiredAmount = this.random.nextInt(2, 5);
+        return this.contentBuilder.node(
+            id,
+            `Gather ${itemName}`,
+            `Collect ${requiredAmount} bundles of ${itemName} for stores in ${village.text}.`,
+            `Bring ${requiredAmount} ${itemName} to ${village.text}.`,
+            'gather',
+            this.contentBuilder.entities(village, this.localName(itemName, 'artifact')),
+            {
+                gather: { villageName: village.text, itemName, requiredAmount, currentAmount: 0 },
+            },
+        );
+    }
+
+    public async createRepairNode(id: string, context?: LeafGenerationContext): Promise<QuestNode> {
+        const village = await this.resolveVillage(context);
+        const structureName = this.random.pick(REPAIR_STRUCTURES);
+        const requiredMaterials = [this.random.pick(['Timber', 'Iron Nails', 'Resin', 'Rope']), this.random.pick(['Stone Slabs', 'Canvas', 'Pitch'])];
+        return this.contentBuilder.node(
+            id,
+            `Repair ${structureName}`,
+            `Use local supplies to repair the ${structureName} in ${village.text}.`,
+            `Restore the ${structureName} in ${village.text}.`,
+            'repair',
+            this.contentBuilder.entities(village, this.localName(structureName, 'artifact')),
+            {
+                repair: { villageName: village.text, structureName, requiredMaterials, repairedMaterials: [], isRepaired: false },
+            },
+        );
+    }
+
+    public async createPatrolNode(id: string, context?: LeafGenerationContext): Promise<QuestNode> {
+        const village = await this.resolveVillage(context);
+        const checkpoints = this.pickUniqueStrings(PATROL_CHECKPOINTS, this.random.nextInt(2, 4));
+        return this.contentBuilder.node(
+            id,
+            `Patrol ${village.text}`,
+            `Sweep ${village.text} and report at checkpoints: ${checkpoints.join(', ')}.`,
+            `Visit all patrol checkpoints in ${village.text}.`,
+            'patrol',
+            this.contentBuilder.entities(village, ...checkpoints.map((checkpoint) => this.localName(checkpoint, 'location'))),
+            {
+                patrol: { villageName: village.text, checkpoints, visitedCheckpoints: [], isPatrolComplete: false },
+            },
+        );
+    }
+
     private generateName = (
         domain: 'location' | 'artifact' | 'character' | 'monster',
     ): Promise<GeneratedName> => this.packService.generateName(domain, this.maxWordsByDomain[domain]);
 
-    private async resolveDestination(sourceVillage: GeneratedName): Promise<GeneratedName> {
+    private async resolveDestination(sourceVillage: GeneratedName, context?: LeafGenerationContext): Promise<GeneratedName> {
+        if (context?.localVillageName) {
+            return sourceVillage;
+        }
         let destination = await this.generateName('location');
         const source = sourceVillage.text.trim().toLocaleLowerCase();
         if (destination.text.trim().toLocaleLowerCase() === source) {
             destination = await this.generateName('location');
         }
         return destination;
+    }
+
+    private async resolveVillage(context?: LeafGenerationContext): Promise<GeneratedName> {
+        if (context?.localVillageName) {
+            return this.localName(context.localVillageName, 'location');
+        }
+        return this.generateName('location');
+    }
+
+    private async resolveTrader(context?: LeafGenerationContext): Promise<GeneratedName> {
+        if (context?.localNpcName) {
+            return this.localName(context.localNpcName, 'character');
+        }
+        return this.generateName('character');
+    }
+
+    private localName = (text: string, domain: QuestNameDomain): GeneratedName => ({ text, domain, sourceTypes: ['local-pattern'] });
+
+    private pickUniqueStrings(values: string[], count: number): string[] {
+        const local = [...values];
+        const selected: string[] = [];
+        while (local.length > 0 && selected.length < count) {
+            const choice = this.random.pick(local);
+            selected.push(choice);
+            const index = local.findIndex((entry) => entry === choice);
+            if (index >= 0) {
+                local.splice(index, 1);
+            }
+        }
+        return selected;
     }
 }
