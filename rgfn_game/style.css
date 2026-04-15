@@ -44,10 +44,6 @@ html { height: 100%; }
     overflow: hidden;
 }
 
-#magic-panel, #inventory-panel, #skills-panel, #quests-panel, #lore-panel {
-    position: relative;
-}
-
 #hud {
     position: absolute;
     top: 12px;
