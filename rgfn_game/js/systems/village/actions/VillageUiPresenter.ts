@@ -101,6 +101,7 @@ export default class VillageUiPresenter {
         if (!npc) {
             this.deps.villageUI.npcTitle.textContent = 'Choose someone to talk to';
             this.deps.villageUI.dialogueSelectedNpc.textContent = 'Select an NPC in the village rumors panel first.';
+            this.deps.villageUI.sideQuestList.innerHTML = '<p>Select an NPC to view side quests.</p>';
             return;
         }
 

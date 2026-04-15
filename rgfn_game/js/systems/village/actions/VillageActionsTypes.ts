@@ -16,6 +16,8 @@ export type VillageUI = {
     dialogueCloseBtn: HTMLButtonElement;
     dialogueSelectedNpc: HTMLElement;
     dialogueLog: HTMLElement;
+    sideQuestPanel: HTMLElement;
+    sideQuestList: HTMLElement;
     buyOffer1Btn: HTMLButtonElement;
     buyOffer2Btn: HTMLButtonElement;
     buyOffer3Btn: HTMLButtonElement;
@@ -58,6 +60,7 @@ export type VillageActionsCallbacks = {
         villagerNames: string[],
     ) => { status: 'started' | 'inactive' | 'not-target' | 'already-active'; objectiveTitle?: string; days?: number };
     getVillageSideQuestOffers?: (villageName: string, npcName: string) => QuestNode[];
+    getVillageNpcActiveSideQuests?: (villageName: string, npcName: string) => QuestNode[];
     acceptSideQuest?: (questId: string) => { accepted: boolean; reason?: 'inactive' | 'not-found' | 'already-active' };
     turnInSideQuest?: (
         questId: string,

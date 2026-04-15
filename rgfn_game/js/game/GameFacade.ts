@@ -171,6 +171,8 @@ export class GameFacade implements GameFacadeStateAccess {
     public markSideQuestReadyToTurnIn = (questId: string): boolean => this.questRuntime.markSideQuestReadyToTurnIn(questId);
     public getVillageSideQuestOffers = (villageName: string, npcName: string): QuestNode[] =>
         this.questRuntime.getVillageSideQuestOffers(villageName, npcName);
+    public getVillageNpcActiveSideQuests = (villageName: string, npcName: string): QuestNode[] =>
+        this.questRuntime.getVillageNpcActiveSideQuests(villageName, npcName);
     public acceptSideQuest = (questId: string): { accepted: boolean; reason?: 'inactive' | 'not-found' | 'already-active' } =>
         this.questRuntime.acceptSideQuest(questId);
     public turnInSideQuest = (

@@ -80,6 +80,8 @@ function createVillageUi() {
     dialogueCloseBtn: createElement('button'),
     dialogueSelectedNpc: createElement(),
     dialogueLog: createElement(),
+    sideQuestPanel: createElement(),
+    sideQuestList: createElement(),
     buyOffer1Btn: createElement('button'),
     buyOffer2Btn: createElement('button'),
     buyOffer3Btn: createElement('button'),
@@ -652,4 +654,82 @@ test('VillageActionsController shows defend dialogue action only for NPCs with d
   const maraIndex = controller['npcRoster'].findIndex((npc) => npc.name === 'Mara');
   controller.handleSelectNpc(maraIndex);
   assert.equal(villageUI.defendVillageBtn.classList.contains('hidden'), true);
+}));
+
+test('VillageActionsController requires explicit side-quest acceptance and exposes accept action in dialogue UI', () => withDocumentStub(() => {
+  const villageUI = createVillageUi();
+  const gameLog = createElement();
+  let acceptCalls = 0;
+  const offerQuest = {
+    id: 'side-quest-offer',
+    title: 'Patch the Mill Wheel',
+    description: 'Bring repair tools to the village mill.',
+    reward: '20g',
+    status: 'available',
+    children: [],
+  };
+  const controller = new VillageActionsController(createPlayerStub(), villageUI, gameLog, {
+    onUpdateHUD: () => {},
+    onLeaveVillage: () => {},
+    onAdvanceTime: () => {},
+    getVillageDirectionHint: (settlementName) => ({ settlementName, exists: false }),
+    onVillageBarterCompleted: () => {},
+    getVillageSideQuestOffers: () => [offerQuest],
+    getVillageNpcActiveSideQuests: () => [],
+    acceptSideQuest: () => { acceptCalls += 1; return { accepted: true }; },
+  });
+  controller['dialogueEngine'] = {
+    createNpcRoster: () => [{ id: 'moss-0', name: 'Mara', role: 'Trader', look: 'cloak', speechStyle: 'calm', disposition: 'truthful' }],
+    buildLocationAnswer: () => ({ speech: '', tone: '', truthfulness: 'truth' }),
+    buildPersonLocationAnswer: () => ({ speech: '', tone: '', truthfulness: 'truth' }),
+  };
+
+  controller.enterVillage('Mossbrook');
+  controller.handleSelectNpc(0);
+
+  assert.equal(acceptCalls, 0);
+  const acceptButton = villageUI.sideQuestList.children.find((child) => child.children?.some((entry) => entry.textContent === 'Accept quest'));
+  assert.ok(acceptButton);
+  controller.handleAcceptSideQuest('side-quest-offer');
+  assert.equal(acceptCalls, 1);
+  assert.equal(gameLog.children.some((child) => String(child.textContent ?? '').includes('Side quest accepted')), true);
+}));
+
+test('VillageActionsController shows turn-in action for ready side quests and turn-in is explicit', () => withDocumentStub(() => {
+  const villageUI = createVillageUi();
+  const gameLog = createElement();
+  let turnInCalls = 0;
+  const readyQuest = {
+    id: 'side-quest-ready',
+    title: 'Deliver Herbs',
+    description: 'Hand over the herb crate.',
+    reward: 'Potion Bundle',
+    status: 'readyToTurnIn',
+    children: [],
+  };
+  const controller = new VillageActionsController(createPlayerStub(), villageUI, gameLog, {
+    onUpdateHUD: () => {},
+    onLeaveVillage: () => {},
+    onAdvanceTime: () => {},
+    getVillageDirectionHint: (settlementName) => ({ settlementName, exists: false }),
+    onVillageBarterCompleted: () => {},
+    getVillageSideQuestOffers: () => [],
+    getVillageNpcActiveSideQuests: () => [readyQuest],
+    turnInSideQuest: () => { turnInCalls += 1; return { turnedIn: true, reward: 'Potion Bundle' }; },
+  });
+  controller['dialogueEngine'] = {
+    createNpcRoster: () => [{ id: 'moss-0', name: 'Mara', role: 'Trader', look: 'cloak', speechStyle: 'calm', disposition: 'truthful' }],
+    buildLocationAnswer: () => ({ speech: '', tone: '', truthfulness: 'truth' }),
+    buildPersonLocationAnswer: () => ({ speech: '', tone: '', truthfulness: 'truth' }),
+  };
+
+  controller.enterVillage('Mossbrook');
+  controller.handleSelectNpc(0);
+
+  assert.equal(turnInCalls, 0);
+  const hasTurnInButton = villageUI.sideQuestList.children.some((child) => child.children?.some((entry) => entry.textContent === 'Turn in quest'));
+  assert.equal(hasTurnInButton, true);
+  controller.handleTurnInSideQuest('side-quest-ready');
+  assert.equal(turnInCalls, 1);
+  assert.equal(gameLog.children.some((child) => String(child.textContent ?? '').includes('turn-in')), true);
 }));
