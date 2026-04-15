@@ -1,5 +1,16 @@
 export const itemBalance = {
     monsterDropChance: 0.35,
+    enchantments: {
+        chanceOnRandomWeapon: 0.28,
+        chanceForExtraEnchantment: 0.33,
+        maxEnchantmentsPerWeapon: 3,
+        villageSpecialOfferChance: 0.3,
+        priceMultiplierPerScore: 0.35,
+        plasma: { minBonusDamage: 1, maxBonusDamage: 6 },
+        wormhole: { minCritChance: 10, maxCritChance: 35 },
+        confusion: { minStunChance: 8, maxStunChance: 30 },
+        doubt: { minDamagePerSecond: 1, maxDamagePerSecond: 4, minDurationSeconds: 2, maxDurationSeconds: 5 },
+    },
     discoveryPool: [
         { id: 'healingPotion', weight: 4 },
         { id: 'knife_t1', weight: 10 },

@@ -1,4 +1,5 @@
 import Item from '../../../entities/Item.js';
+import { balanceConfig } from '../../../config/balance/balanceConfig.js';
 import { NON_POTION_KINDS, POTION_KINDS, VillageOffer } from './VillageActionsTypes.js';
 
 export default class VillageStockService {
@@ -12,6 +13,7 @@ export default class VillageStockService {
             buyPrice: offerKind.buyPrice,
             possibleItemIds: offerKind.itemIds,
         }));
+        this.tryInjectEnchantedWeaponOffer();
     }
 
     public getCurrentOffers = (): VillageOffer[] => this.currentOffers;
@@ -19,6 +21,24 @@ export default class VillageStockService {
     public getOffer = (index: number): VillageOffer | undefined => this.currentOffers[index];
 
     public getSellPrice = (item: Item): number => Math.max(1, Math.ceil(item.goldValue * 0.5));
+
+    private tryInjectEnchantedWeaponOffer(): void {
+        const chance = balanceConfig.items.enchantments.villageSpecialOfferChance;
+        if (Math.random() >= chance || this.currentOffers.length < 2) {
+            return;
+        }
+        const replaceIndex = 1 + Math.floor(Math.random() * (this.currentOffers.length - 1));
+        const replacedOffer = this.currentOffers[replaceIndex];
+        if (!replacedOffer) {
+            return;
+        }
+        this.currentOffers[replaceIndex] = {
+            kindName: 'Enchanted Weapon',
+            buyPrice: Math.max(1, Math.ceil(replacedOffer.buyPrice * 1.8)),
+            possibleItemIds: [],
+            isEnchantedWeaponOffer: true,
+        };
+    }
 
     private pickOne = <T>(array: T[]): T => array[Math.floor(Math.random() * array.length)];
 

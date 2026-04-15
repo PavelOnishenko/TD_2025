@@ -176,6 +176,16 @@ export default class Skeleton extends DamageableEntity {
 
     public shouldSkipTurnFromSlow = (): boolean => this.monsterStatusEffects.shouldSkipTurnFromSlow();
 
+    public shouldSkipTurn = (): boolean => this.monsterStatusEffects.shouldSkipTurn();
+
+    public applyStun(duration: number): void {
+        this.monsterStatusEffects.applyStun(duration);
+    }
+
+    public applyDamageOverTime(damagePerTurn: number, duration: number, sourceLabel: string): void {
+        this.monsterStatusEffects.applyDamageOverTime(damagePerTurn, duration, sourceLabel);
+    }
+
     public getDirectionalCombatBuffSnapshot = (): CombatBuffSnapshot => this.monsterStatusEffects.getDirectionalCombatBuffSnapshot();
 
     public applyDirectionalCombatRewards = (rewards: CombatStatusState): string[] => this.monsterStatusEffects.applyDirectionalCombatRewards(rewards, this.name);
@@ -184,7 +194,7 @@ export default class Skeleton extends DamageableEntity {
 
     public expireDirectionalBonusesWithoutAttack = (): string[] => this.monsterStatusEffects.expireDirectionalBonusesWithoutAttack(this.name);
 
-    public consumeTurnEffects = (): string[] => this.monsterStatusEffects.consumeTurnEffects(this.name);
+    public consumeTurnEffects = (): string[] => this.monsterStatusEffects.consumeTurnEffects(this.name, (amount) => void this.applyIncomingDamage(Math.max(0, amount)));
 
     public getSkillRecord = (): CreatureSkills => normalizeCreatureSkills(this.skills);
 

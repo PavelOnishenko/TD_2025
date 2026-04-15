@@ -92,6 +92,7 @@ export type VillageOffer = {
     kindName: string;
     buyPrice: number;
     possibleItemIds: string[];
+    isEnchantedWeaponOffer?: boolean;
 };
 
 export type BarterItemCost = {

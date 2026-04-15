@@ -1,4 +1,5 @@
 import Item from '../../Item.js';
+import { ItemData } from '../../ItemDeclarations.js';
 
 export type PlayerInventoryHooks = {
     onEquipmentChanged: () => void;
@@ -13,6 +14,10 @@ export type InventoryState = {
     equippedWeaponId: string | null;
     equippedOffhandWeaponId: string | null;
     equippedArmorId: string | null;
+    inventoryItems?: ItemData[];
+    equippedWeapon?: ItemData | null;
+    equippedOffhandWeapon?: ItemData | null;
+    equippedArmor?: ItemData | null;
 };
 
 export type RestoreInventoryStateArgs = {

@@ -5,6 +5,8 @@ export class MonsterStatusEffects {
     private cursedArmorReduction: number = 0;
     private curseTurns: number = 0;
     private slowTurns: number = 0;
+    private stunTurns: number = 0;
+    private damageOverTimeEffects: Array<{ damagePerTurn: number; turnsRemaining: number; sourceLabel: string }> = [];
     private blockAdvantage: boolean = false;
     private successfulDodgeMultiplier: number | null = null;
 
@@ -26,6 +28,17 @@ export class MonsterStatusEffects {
     public applySlow = (duration: number): void => void (this.slowTurns = Math.max(this.slowTurns, duration));
 
     public shouldSkipTurnFromSlow = (): boolean => this.slowTurns > 0;
+
+    public applyStun = (duration: number): void => void (this.stunTurns = Math.max(this.stunTurns, duration));
+
+    public shouldSkipTurn = (): boolean => this.stunTurns > 0 || this.slowTurns > 0;
+
+    public applyDamageOverTime(damagePerTurn: number, duration: number, sourceLabel: string): void {
+        if (damagePerTurn <= 0 || duration <= 0) {
+            return;
+        }
+        this.damageOverTimeEffects.push({ damagePerTurn, turnsRemaining: duration, sourceLabel });
+    }
 
     public getDirectionalCombatBuffSnapshot = (): CombatBuffSnapshot => ({
         hasBlockAdvantage: this.blockAdvantage,
@@ -76,11 +89,34 @@ export class MonsterStatusEffects {
         return events;
     }
 
-    public consumeTurnEffects(name: string): string[] {
+    public consumeTurnEffects(name: string, applyDamage: (amount: number) => void): string[] {
         const events: string[] = [];
+        this.consumeDamageOverTime(name, applyDamage, events);
+        this.consumeStun(name, events);
         this.consumeSlow(name, events);
         this.consumeCurse(name, events);
         return events;
+    }
+
+    private consumeDamageOverTime(name: string, applyDamage: (amount: number) => void, events: string[]): void {
+        const remainingEffects: Array<{ damagePerTurn: number; turnsRemaining: number; sourceLabel: string }> = [];
+        this.damageOverTimeEffects.forEach((effect) => {
+            applyDamage(effect.damagePerTurn);
+            events.push(`${name} suffers ${effect.damagePerTurn} ${effect.sourceLabel} damage.`);
+            const turnsRemaining = effect.turnsRemaining - 1;
+            if (turnsRemaining > 0) {
+                remainingEffects.push({ ...effect, turnsRemaining });
+            }
+        });
+        this.damageOverTimeEffects = remainingEffects;
+    }
+
+    private consumeStun(name: string, events: string[]): void {
+        if (this.stunTurns <= 0) {
+            return;
+        }
+        this.stunTurns -= 1;
+        events.push(`${name} is stunned and skips this turn.`);
     }
 
     private consumeSlow(name: string, events: string[]): void {
