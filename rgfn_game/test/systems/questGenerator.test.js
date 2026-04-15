@@ -155,3 +155,35 @@ test('QuestGenerator creates side quests with reward metadata claimable on giver
   assert.equal(sideQuest.rewardMetadata.gold, 35);
   assert.match(sideQuest.reward, /24 XP, 35g/);
 });
+
+test('QuestGenerator constrains side quest villages to nearby candidates and injects direction hints in objective text', async () => {
+  const packService = new FakeQuestPackService(createNames());
+  const random = new ScriptedQuestRandom({
+    ints: [18, 22],
+    picks: ['travel', 'Fog Chapel', 'Repair Kit'],
+  });
+  const generator = new QuestGenerator({
+    packService,
+    random,
+    nearbyVillagesProvider: () => [
+      { name: 'Fog Chapel', distanceCells: 3 },
+      { name: 'Stone Causeway', distanceCells: 7 },
+    ],
+    villageDirectionHintProvider: (villageName) => {
+      if (villageName === 'Fog Chapel') {
+        return { settlementName: villageName, exists: true, direction: 'north-east', distanceCells: 3 };
+      }
+      if (villageName === 'Stone Causeway') {
+        return { settlementName: villageName, exists: true, direction: 'east', distanceCells: 7 };
+      }
+      return { settlementName: villageName, exists: true, direction: 'north', distanceCells: 0 };
+    },
+  });
+
+  const sideQuest = await generator.generateSideQuest('side.101', 'Mira Vale', 'Old Well');
+
+  assert.equal(sideQuest.children[0].objectiveType, 'travel');
+  assert.equal(sideQuest.children[0].entities.some((entity) => entity.type === 'location' && entity.text === 'Fog Chapel'), true);
+  assert.match(sideQuest.children[0].description, /Fog Chapel \(north-east, 3 cells\)/);
+  assert.equal(sideQuest.children[0].entities.some((entity) => entity.type === 'location' && entity.text === 'Burnt Orchard'), false);
+});

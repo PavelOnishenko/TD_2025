@@ -131,6 +131,52 @@ export default class WorldMapVillageNavigationAndRender extends WorldMapMovement
         return { settlementName, exists: true, direction: this.resolveDirection(dx, dy), distanceCells: Math.round(Math.sqrt((dx * dx) + (dy * dy))) };
     }
 
+    public getNearbyVillagesFromVillage(villageName: string, maxDistanceCells: number): Array<{
+        name: string;
+        col: number;
+        row: number;
+        direction: 'north' | 'north-east' | 'east' | 'south-east' | 'south' | 'south-west' | 'west' | 'north-west';
+        distanceCells: number;
+    }> {
+        const normalizedVillageName = villageName.trim().toLocaleLowerCase();
+        const sourceVillage = this.findVillagePositionByNameInsensitive(villageName);
+        const clampedDistance = Math.max(0, Math.floor(maxDistanceCells));
+        if (!sourceVillage || !normalizedVillageName || clampedDistance <= 0) {
+            return [];
+        }
+
+        return Array.from(this.villages.values())
+            .map((key) => {
+                const [colText, rowText] = key.split(',');
+                const col = Number(colText);
+                const row = Number(rowText);
+                const name = this.getVillageName(col, row);
+                if (name.trim().toLocaleLowerCase() === normalizedVillageName) {
+                    return null;
+                }
+                const dx = col - sourceVillage.col;
+                const dy = row - sourceVillage.row;
+                const distanceCells = Math.round(Math.sqrt((dx * dx) + (dy * dy)));
+                if (distanceCells > clampedDistance) {
+                    return null;
+                }
+                return { name, col, row, distanceCells, direction: this.resolveDirection(dx, dy) };
+            })
+            .filter((entry): entry is {
+                name: string;
+                col: number;
+                row: number;
+                direction: 'north' | 'north-east' | 'east' | 'south-east' | 'south' | 'south-west' | 'west' | 'north-west';
+                distanceCells: number;
+            } => entry !== null)
+            .sort((left, right) => {
+                if (left.distanceCells !== right.distanceCells) {
+                    return left.distanceCells - right.distanceCells;
+                }
+                return left.name.localeCompare(right.name);
+            });
+    }
+
     public getAllVillageNames = (): string[] => Array.from(this.villages.values())
         .map((key) => {
             const [colText, rowText] = key.split(',');

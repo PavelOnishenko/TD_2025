@@ -4,19 +4,22 @@ import { QuestRandom } from './QuestRandom.js';
 import { theme } from '../../../config/ThemeConfig.js';
 import { DeliverObjectiveData, GeneratedName, QuestNameDomain, QuestNode, QuestObjectiveType } from '../QuestTypes.js';
 import QuestLeafContentBuilder from './QuestLeafContentBuilder.js';
-
+import { WorldVillageDirectionHint } from '../../world/worldMap/WorldMap.js';
 type SideQuestConstraints = {
     villageName?: string;
     giverNpcName?: string;
+    nearbyVillageNames?: string[];
+    villageDirectionHints?: Record<string, WorldVillageDirectionHint>;
 };
 
 type LeafGenerationContext = {
     localVillageName?: string;
     localNpcName?: string;
+    nearbyVillageNames?: string[];
+    villageDirectionHints?: Record<string, WorldVillageDirectionHint>;
 };
 
-const MAIN_LEAF_TYPES: QuestObjectiveType[] = ['eliminate', 'deliver', 'travel', 'barter', 'scout', 'hunt', 'recover', 'escort', 'defend'];
-const SIDE_ONLY_LEAF_TYPES: QuestObjectiveType[] = ['localDelivery', 'gather', 'repair', 'patrol'];
+const MAIN_LEAF_TYPES: QuestObjectiveType[] = ['eliminate', 'deliver', 'travel', 'barter', 'scout', 'hunt', 'recover', 'escort', 'defend']; const SIDE_ONLY_LEAF_TYPES: QuestObjectiveType[] = ['localDelivery', 'gather', 'repair', 'patrol'];
 const SIDE_LEAF_TYPES: QuestObjectiveType[] = [...MAIN_LEAF_TYPES, ...SIDE_ONLY_LEAF_TYPES];
 const REPAIR_STRUCTURES = ['Well Pump', 'Palisade Gate', 'Watchtower Winch', 'Granary Roof'];
 const GATHER_ITEMS = ['Medicinal Herbs', 'Iron Scrap', 'Lantern Oil', 'Timber Bundles'];
@@ -42,9 +45,14 @@ export default class QuestLeafFactory {
 
     public async createSide(id: string, constraints: SideQuestConstraints = {}): Promise<QuestNode> {
         const type = this.random.pick(SIDE_LEAF_TYPES);
+        const nearbyVillageNames = (constraints.nearbyVillageNames ?? [])
+            .map((name) => name.trim())
+            .filter((name) => name.length > 0 && name.toLocaleLowerCase() !== constraints.villageName?.trim().toLocaleLowerCase());
         const context: LeafGenerationContext = {
             localVillageName: constraints.villageName?.trim() || undefined,
             localNpcName: constraints.giverNpcName?.trim() || undefined,
+            nearbyVillageNames,
+            villageDirectionHints: constraints.villageDirectionHints,
         };
         return this.createFromType(id, type, context);
     }
@@ -95,8 +103,10 @@ export default class QuestLeafFactory {
             destinationVillage: destination.text,
             itemName: artifact.text,
         };
-        const description = `Acquire ${this.contentBuilder.label(artifact)} from ${sourceTrader.text} in ${sourceVillage.text}, then carry it to ${destination.text}.`;
-        const condition = `Reach ${destination.text} while carrying ${this.contentBuilder.label(artifact)} obtained from ${sourceTrader.text} in ${sourceVillage.text}.`;
+        const sourceVillageLabel = this.withVillageHint(sourceVillage.text, context);
+        const destinationLabel = this.withVillageHint(destination.text, context);
+        const description = `Acquire ${this.contentBuilder.label(artifact)} from ${sourceTrader.text} in ${sourceVillageLabel}, then carry it to ${destinationLabel}.`;
+        const condition = `Reach ${destinationLabel} while carrying ${this.contentBuilder.label(artifact)} obtained from ${sourceTrader.text} in ${sourceVillageLabel}.`;
         return this.contentBuilder.node(
             id,
             `Courier: ${artifact.text}`,
@@ -110,11 +120,12 @@ export default class QuestLeafFactory {
 
     private async createTravelNode(id: string, context?: LeafGenerationContext): Promise<QuestNode> {
         const destination = await this.resolveVillage(context);
+        const destinationLabel = this.withVillageHint(destination.text, context);
         return this.contentBuilder.node(
             id,
             `Scout ${destination.text}`,
-            `Travel to ${destination.text} and secure the path.`,
-            `Enter ${destination.text}.`,
+            `Travel to ${destinationLabel} and secure the path.`,
+            `Enter ${destinationLabel}.`,
             'travel',
             this.contentBuilder.entities(destination),
         );
@@ -135,11 +146,12 @@ export default class QuestLeafFactory {
 
     private async createScoutNode(id: string, context?: LeafGenerationContext): Promise<QuestNode> {
         const destination = await this.resolveVillage(context);
+        const destinationLabel = this.withVillageHint(destination.text, context);
         return this.contentBuilder.node(
             id,
             `Investigate ${destination.text}`,
-            `Inspect tracks, ruins, and anomalies around ${destination.text}.`,
-            `Finish one scouting investigation at ${destination.text}.`,
+            `Inspect tracks, ruins, and anomalies around ${destinationLabel}.`,
+            `Finish one scouting investigation at ${destinationLabel}.`,
             'scout',
             this.contentBuilder.entities(destination),
         );
@@ -148,6 +160,7 @@ export default class QuestLeafFactory {
     private async createHuntNode(id: string, context?: LeafGenerationContext): Promise<QuestNode> {
         const profile = await this.contentBuilder.rareMonsterProfile(() => this.generateName('monster'));
         const location = await this.resolveVillage(context);
+        const locationLabel = this.withVillageHint(location.text, context);
         const details = `Origin: mutated from ${profile.mutatedFrom}. `
             + `Stats: ${profile.stats.join(', ')}. `
             + `Effects: ${profile.effects.join(', ')}. `
@@ -155,8 +168,8 @@ export default class QuestLeafFactory {
         return this.contentBuilder.node(
             id,
             `Hunt ${profile.name.text}`,
-            `Track ${profile.count} rare mutant target${profile.count > 1 ? 's' : ''} near ${location.text}. ${details}`,
-            `Kill ${profile.count} ${this.contentBuilder.pluralLabel(profile.name, profile.count)} near ${location.text}.`,
+            `Track ${profile.count} rare mutant target${profile.count > 1 ? 's' : ''} near ${locationLabel}. ${details}`,
+            `Kill ${profile.count} ${this.contentBuilder.pluralLabel(profile.name, profile.count)} near ${locationLabel}.`,
             'hunt',
             this.contentBuilder.entities(profile.name, location),
             {
@@ -175,11 +188,12 @@ export default class QuestLeafFactory {
         const artifact = await this.generateName('artifact');
         const location = await this.resolveVillage(context);
         const person = await this.resolveTrader(context);
+        const locationLabel = this.withVillageHint(location.text, context);
         return this.contentBuilder.node(
             id,
             `Recover ${artifact.text}`,
-            `Retrieve the ${this.contentBuilder.label(artifact)} from ${location.text} and extract intact.`,
-            `Obtain ${this.contentBuilder.label(artifact)} at ${location.text}.`,
+            `Retrieve the ${this.contentBuilder.label(artifact)} from ${locationLabel} and extract intact.`,
+            `Obtain ${this.contentBuilder.label(artifact)} at ${locationLabel}.`,
             'recover',
             this.contentBuilder.entities(artifact, location),
             {
@@ -199,11 +213,13 @@ export default class QuestLeafFactory {
         const character = await this.resolveTrader(context);
         const source = await this.resolveVillage(context);
         const destination = await this.resolveDestination(source, context);
+        const sourceLabel = this.withVillageHint(source.text, context);
+        const destinationLabel = this.withVillageHint(destination.text, context);
         return this.contentBuilder.node(
             id,
             `Escort ${character.text}`,
-            `Find ${character.text} in ${source.text}, ask them to join your group, then escort them safely to ${destination.text}.`,
-            `Recruit ${character.text} in ${source.text}, then arrive at ${destination.text} while ${character.text} is alive and still in your group.`,
+            `Find ${character.text} in ${sourceLabel}, ask them to join your group, then escort them safely to ${destinationLabel}.`,
+            `Recruit ${character.text} in ${sourceLabel}, then arrive at ${destinationLabel} while ${character.text} is alive and still in your group.`,
             'escort',
             this.contentBuilder.entities(character, source, destination),
             { escort: { personName: character.text, sourceVillage: source.text, destinationVillage: destination.text } },
@@ -215,11 +231,12 @@ export default class QuestLeafFactory {
         const artifact = await this.generateName('artifact');
         const contact = await this.resolveTrader(context);
         const durationDays = this.random.nextInt(3, 7);
+        const locationLabel = this.withVillageHint(location.text, context);
         return this.contentBuilder.node(
             id,
             `Defend ${location.text}`,
-            `${contact.text} asks you to hold ${location.text} until the ${this.contentBuilder.label(artifact)} is secured.`,
-            `Speak with ${contact.text} in ${location.text}, then Prevent the fall of ${location.text} for ${durationDays} day${durationDays === 1 ? '' : 's'} while securing ${this.contentBuilder.label(artifact)}.`,
+            `${contact.text} asks you to hold ${locationLabel} until the ${this.contentBuilder.label(artifact)} is secured.`,
+            `Speak with ${contact.text} in ${locationLabel}, then Prevent the fall of ${locationLabel} for ${durationDays} day${durationDays === 1 ? '' : 's'} while securing ${this.contentBuilder.label(artifact)}.`,
             'defend',
             this.contentBuilder.entities(location, artifact, contact),
             {
@@ -311,7 +328,11 @@ export default class QuestLeafFactory {
     ): Promise<GeneratedName> => this.packService.generateName(domain, this.maxWordsByDomain[domain]);
 
     private async resolveDestination(sourceVillage: GeneratedName, context?: LeafGenerationContext): Promise<GeneratedName> {
-        if (context?.localVillageName) {
+        const nearbyVillage = this.pickNearbyVillageExcluding(context, sourceVillage.text);
+        if (nearbyVillage) {
+            return this.localName(nearbyVillage, 'location');
+        }
+        if (context?.localVillageName && !context?.nearbyVillageNames?.length) {
             return sourceVillage;
         }
         let destination = await this.generateName('location');
@@ -323,9 +344,9 @@ export default class QuestLeafFactory {
     }
 
     private async resolveVillage(context?: LeafGenerationContext): Promise<GeneratedName> {
-        if (context?.localVillageName) {
-            return this.localName(context.localVillageName, 'location');
-        }
+        const villagePool = this.buildVillagePool(context);
+        if (villagePool.length === 1) {return this.localName(villagePool[0], 'location');}
+        if (villagePool.length > 1) {return this.localName(this.random.pick(villagePool), 'location');}
         return this.generateName('location');
     }
 
@@ -338,6 +359,29 @@ export default class QuestLeafFactory {
 
     private localName = (text: string, domain: QuestNameDomain): GeneratedName => ({ text, domain, sourceTypes: ['local-pattern'] });
 
+    private buildVillagePool(context?: LeafGenerationContext): string[] {
+        if (!context) {return [];}
+        const local = context.localVillageName?.trim();
+        const nearby = (context.nearbyVillageNames ?? []).map((name) => name.trim()).filter((name) => name.length > 0);
+        return Array.from(new Set([...(local ? [local] : []), ...nearby]));
+    }
+
+    private pickNearbyVillageExcluding(context: LeafGenerationContext | undefined, excludedVillageName: string): string | null {
+        const normalizedExcluded = excludedVillageName.trim().toLocaleLowerCase();
+        const nearby = (context?.nearbyVillageNames ?? [])
+            .map((name) => name.trim())
+            .filter((name) => name.length > 0 && name.toLocaleLowerCase() !== normalizedExcluded);
+        if (nearby.length === 0) {return null;}
+        return this.random.pick(nearby);
+    }
+
+    private withVillageHint(villageName: string, context?: LeafGenerationContext): string {
+        const hint = context?.villageDirectionHints?.[villageName.trim().toLocaleLowerCase()];
+        if (!hint?.exists || !hint.direction || typeof hint.distanceCells !== 'number' || hint.distanceCells <= 0) {
+            return villageName;
+        }
+        return `${villageName} (${hint.direction}, ${hint.distanceCells} cells)`;
+    }
     private pickUniqueStrings(values: string[], count: number): string[] {
         const local = [...values];
         const selected: string[] = [];

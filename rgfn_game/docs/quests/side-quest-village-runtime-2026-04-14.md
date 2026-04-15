@@ -79,3 +79,24 @@
   - Human-readable `reward` text remains for dialogue/UI continuity.
 - Reward claim timing remains unchanged:
   - Rewards are still represented as claimable on giver turn-in (`readyToTurnIn` → `completed`) and not auto-claimed at objective completion.
+
+## 2026-04-15: Proximity-constrained side-quest generation and village NPC locality
+
+- World map village navigation now exposes a proximity query API:
+  - `getNearbyVillagesFromVillage(villageName, maxDistanceCells)`
+  - Output is distance-sorted and includes direction + distance metadata per nearby village.
+- Side quest generation now consumes map proximity context:
+  - Side-quest generation path provides current village + nearby villages.
+  - Candidate side-quest villages are restricted to:
+    - the giver's village
+    - nearby villages only (never arbitrary far settlements)
+- New balance controls:
+  - `balanceConfig.quest.sideQuestMaxVillageDistanceCells` controls maximum allowed side-quest target range from the giver village.
+  - `balanceConfig.quest.sideQuestNearbyRosterDistanceCells` controls village roster injection locality for side-quest-related NPC references.
+- Objective text now reuses map direction hints:
+  - Quest leaf descriptions/conditions annotate nearby settlement names with distance-direction context when available, e.g. `VillageName (north-east, 3 cells)`.
+  - Distance annotations are suppressed for zero-distance (same-village) objectives.
+- Village action/dialogue locality behavior tightened:
+  - Known-person dialogue options are filtered to current village + immediate nearby villages.
+  - Accepted side quests can inject referenced NPCs only into local/nearby village rosters, never distant village rosters.
+  - This keeps rumor, dialogue, and objective references spatially coherent for the active local play area.
