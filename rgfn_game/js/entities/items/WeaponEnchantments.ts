@@ -81,7 +81,22 @@ const buildEnchantmentDescriptionLine = (enchantment: WeaponEnchantment): string
     if (enchantment.type === 'confusion') {
         return `Confusion: ${formatPercent(enchantment.confusionStunChance ?? 0)} chance to stun target for 1 turn.`;
     }
-    return `Doubt: +${enchantment.doubtDamagePerSecond ?? 0} damage/sec for ${enchantment.doubtDurationSeconds ?? 0}s.`;
+    return `Doubt: +${enchantment.doubtDamagePerSecond ?? 0} damage/turn for ${enchantment.doubtDurationSeconds ?? 0} turns.`;
+};
+
+export const buildEnchantmentDetailLine = (enchantment: WeaponEnchantment): string => {
+    if (enchantment.type === 'plasma') {
+        const bonus = enchantment.plasmaBonusDamage ?? 0;
+        const delayed = Math.max(1, Math.floor(bonus / 2));
+        return `Plasma → +${bonus} hit damage, +${delayed} delayed damage on next turn.`;
+    }
+    if (enchantment.type === 'wormhole') {
+        return `Wormhole → ${formatPercent(enchantment.wormholeCritChance ?? 0)} crit chance, 2x damage on proc.`;
+    }
+    if (enchantment.type === 'confusion') {
+        return `Confusion → ${formatPercent(enchantment.confusionStunChance ?? 0)} chance to stun for 1 turn.`;
+    }
+    return `Doubt → ${enchantment.doubtDamagePerSecond ?? 0} damage per turn for ${enchantment.doubtDurationSeconds ?? 0} turns.`;
 };
 
 const buildEnchantedName = (baseName: string, enchantments: WeaponEnchantment[]): string => {

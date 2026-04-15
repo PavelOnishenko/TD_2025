@@ -14,7 +14,7 @@ Implemented weapon enchantment effects:
 - **plasma**: `+N` direct damage and delayed `N/2` damage next turn,
 - **wormhole**: `M%` chance to crit for `2x` total attack damage,
 - **confusion**: `P%` chance to stun for 1 turn (target skips turn),
-- **doubt**: `+Q` damage per second for `R` seconds.
+- **doubt**: `+Q` damage per turn for `R` turns.
 
 Multiple enchantments can appear on the same weapon.
 
@@ -44,6 +44,13 @@ Added under `balanceConfig.items.enchantments` (`rgfn_game/js/config/balance/ite
   - turn-based stun support,
   - generalized damage-over-time support,
   - consumption of DoT/stun during turn processing.
+
+## UX: inspecting exact enchantment parameters
+- Inventory weapon tooltip now includes full per-enchantment parameter lines (not only enchantment names).
+- **Shift+click** on a weapon in the inventory logs an explicit enchantment breakdown into the game log.
+- **Shift+click** on equipped weapon slots (main hand/off hand) logs the same breakdown for currently held weapons.
+- Equipment hint text in the inventory panel now documents this interaction.
+- Doubt wording is now consistent with turn-based combat in both item descriptions and combat logs (`damage/turn`, `turns`).
 
 ## Persistence
 To preserve randomized enchantments through saves:

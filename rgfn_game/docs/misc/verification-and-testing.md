@@ -1294,3 +1294,25 @@ This prints:
 3. Drag the other to offhand.
 4. Confirm offhand slot displays the weapon sprite/name and inventory count remains consistent.
 5. Unequip both and confirm both return to inventory.
+
+## 2026-04-15 — Weapon enchantment inspection UX (inventory + equipped)
+
+### What changed
+- Added explicit enchantment parameter inspection flow for weapons:
+  - Shift+click inventory weapon to print exact enchantment values to the game log.
+  - Shift+click equipped Main Hand/Off Hand weapon slot to print the same details.
+- Expanded tooltip content so enchantments show parameter lines (e.g., Doubt damage per turn + duration turns), not only enchantment type names.
+- Updated all user-facing Doubt text from "damage/sec" to "damage/turn" to match turn-based mechanics.
+
+### Manual verification checklist
+1. Open Inventory panel and ensure at least one enchanted weapon exists in inventory.
+2. Hover the weapon and verify tooltip includes detailed enchantment parameter lines.
+3. Shift+click that weapon in inventory and confirm game log prints the full enchantment breakdown.
+4. Equip the weapon, then Shift+click Main Hand slot and confirm the same breakdown appears.
+5. If weapon has Doubt enchantment, verify all text uses "damage/turn" and "turns".
+
+### Regression notes
+- Regular click behavior remains unchanged:
+  - inventory weapon click equips,
+  - equipped slot click unequips,
+  - right-click inventory still drops item.
