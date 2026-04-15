@@ -128,7 +128,11 @@ export default class HudInventoryController {
 
     private bindEquipClickIfApplicable(slot: HTMLButtonElement, item: Item): void {
         if (item.type === 'weapon' || item.type === 'armor') {
-            slot.addEventListener('click', () => {
+            slot.addEventListener('click', (event) => {
+                if (item.type === 'weapon' && event.shiftKey) {
+                    this.itemMetadata.inspectWeaponEnchantments(item).forEach((line) => this.addLog(line));
+                    return;
+                }
                 if (this.tryEquipItem(item, slot)) {
                     this.onEquip(item, slot);
                 }

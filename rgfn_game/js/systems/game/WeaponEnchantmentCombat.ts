@@ -47,11 +47,11 @@ const applyConfusion = (enchantment: WeaponEnchantment, target: Skeleton, state:
 };
 
 const applyDoubt = (enchantment: WeaponEnchantment, target: Skeleton, state: WeaponEnchantmentCombatResult): void => {
-    const dps = enchantment.doubtDamagePerSecond ?? 0;
+    const damagePerTurn = enchantment.doubtDamagePerSecond ?? 0;
     const duration = enchantment.doubtDurationSeconds ?? 0;
-    if (dps > 0 && duration > 0) {
-        target.applyDamageOverTime(dps, duration, 'doubt');
-        state.logs.push(`Doubt enchantment triggers: ${dps} damage/sec for ${duration}s.`);
+    if (damagePerTurn > 0 && duration > 0) {
+        target.applyDamageOverTime(damagePerTurn, duration, 'doubt');
+        state.logs.push(`Doubt enchantment triggers: ${damagePerTurn} damage/turn for ${duration} turns.`);
     }
 };
 
