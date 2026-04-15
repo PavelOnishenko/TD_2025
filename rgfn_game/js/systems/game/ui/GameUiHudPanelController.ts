@@ -219,7 +219,13 @@ export default class GameUiHudPanelController {
             this.ensurePanelDragHandleIsReachable(panel);
         };
         const scheduleSpawnPlacement = (): void => {
-            requestAnimationFrame(() => placePanelAtSpawn());
+            requestAnimationFrame(() => {
+                placePanelAtSpawn();
+                if (panel.classList.contains('hidden') || panel.dataset.spawnPositioned === 'true') {
+                    return;
+                }
+                scheduleSpawnPlacement();
+            });
         };
         scheduleSpawnPlacement();
         const visibilityObserver = new MutationObserver(() => scheduleSpawnPlacement());

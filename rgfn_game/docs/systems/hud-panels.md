@@ -637,3 +637,26 @@ To align interaction behavior with existing HUD windows (`Stats`, `Skills`, etc.
 ### Regression test
 
 - Added scenario test: reopening `Inventory` while `Skills` has high z-index must bring `Inventory` to front.
+
+## Panel spawn reliability hardening (April 15, 2026)
+
+### Additional finding after z-index fix
+
+- In some open/toggle timing paths, a panel could remain at its default offset because initial spawn placement ran while dimensions were still `0x0`.
+- When that happened, multiple panels could appear at the same origin and feel visually coupled (including resize overlap artifacts).
+
+### Implementation update
+
+- `bindPanelSpawnPositioning` now retries spawn placement across animation frames until one of these is true:
+  - panel becomes hidden again, or
+  - `spawnPositioned` is successfully set.
+- This guarantees that delayed layout measurement does not leave a panel un-positioned.
+
+### Why this matters for Skills vs Inventory
+
+- `Inventory` and `Skills` now reliably get their own spawn offsets even if the first measurement frame is zero-sized.
+- This removes a major overlap path that could make panel behavior look mutually dependent.
+
+### Regression test
+
+- Added scenario test ensuring a panel with initial `0x0` bounds is retried and eventually marked `spawnPositioned=true` once measurable.

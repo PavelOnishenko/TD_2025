@@ -593,3 +593,53 @@ test('GameUiHudPanelController brings a toggled-open panel to front so overlappi
     global.requestAnimationFrame = originalRequestAnimationFrame;
   }
 });
+
+test('GameUiHudPanelController keeps retrying spawn placement until a newly opened panel has measurable size', () => {
+  const originalWindow = global.window;
+  const originalDocument = global.document;
+  const originalMutationObserver = global.MutationObserver;
+  const originalRequestAnimationFrame = global.requestAnimationFrame;
+  const observers = [];
+
+  global.window = { localStorage: createLocalStorage(), innerWidth: 1280, innerHeight: 720 };
+  const hudElements = createHudElements();
+  hudElements.inventoryPanel.classList.add('hidden');
+  let inventoryRectCallCount = 0;
+  hudElements.inventoryPanel.getBoundingClientRect = () => {
+    inventoryRectCallCount += 1;
+    if (inventoryRectCallCount === 1) {
+      return { left: 0, top: 0, width: 0, height: 0, right: 0, bottom: 0 };
+    }
+    return { left: 0, top: 0, width: 240, height: 180, right: 240, bottom: 180 };
+  };
+  global.document = createMockDocument(hudElements);
+  global.requestAnimationFrame = (callback) => callback();
+  global.MutationObserver = class {
+    constructor(callback) { this.callback = callback; observers.push(this); }
+    observe(target) { this.target = target; }
+    trigger() { this.callback(); }
+  };
+
+  try {
+    const controller = new GameUiHudPanelController(hudElements, {
+      onTogglePanel(panel) {
+        const key = `${panel}Panel`;
+        hudElements[key].classList.toggle('hidden');
+      },
+    });
+    controller.bind();
+
+    hudElements.toggleInventoryPanelBtn.listeners.click();
+    observers
+      .filter((observer) => observer.target === hudElements.inventoryPanel)
+      .forEach((observer) => observer.trigger());
+
+    assert.equal(hudElements.inventoryPanel.dataset.spawnPositioned, 'true');
+    assert.equal(inventoryRectCallCount >= 2, true);
+  } finally {
+    global.window = originalWindow;
+    global.document = originalDocument;
+    global.MutationObserver = originalMutationObserver;
+    global.requestAnimationFrame = originalRequestAnimationFrame;
+  }
+});
