@@ -1,6 +1,7 @@
 import Item from '../../../entities/Item.js';
 import Skeleton from '../../../entities/Skeleton.js';
 import { PersonDirectionHint, VillageDirectionHint, VillageNpcProfile } from '../VillageDialogueEngine.js';
+import { QuestNode } from '../../quest/QuestTypes.js';
 
 export type VillageUI = {
     sidebar: HTMLElement;
@@ -55,6 +56,13 @@ export type VillageActionsCallbacks = {
         villageName: string,
         villagerNames: string[],
     ) => { status: 'started' | 'inactive' | 'not-target' | 'already-active'; objectiveTitle?: string; days?: number };
+    getVillageSideQuestOffers?: (villageName: string, npcName: string) => QuestNode[];
+    acceptSideQuest?: (questId: string) => { accepted: boolean; reason?: 'inactive' | 'not-found' | 'already-active' };
+    turnInSideQuest?: (
+        questId: string,
+        npcName: string,
+        villageName: string,
+    ) => { turnedIn: boolean; reason?: 'inactive' | 'not-found' | 'wrong-giver' | 'not-ready' | 'already-completed'; reward?: string };
 };
 
 export type QuestEscortContract = {

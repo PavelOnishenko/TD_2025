@@ -2,7 +2,7 @@
 /* eslint-disable style-guide/rule17-comma-layout, style-guide/arrow-function-style */
 import QuestProgressTracker from '../../systems/quest/QuestProgressTracker.js';
 import Item, { DISCOVERABLE_ITEM_LIBRARY } from '../../entities/Item.js';
-import { DefendObjectiveData, DefendObjectiveDefender, EscortObjectiveData, QuestNode, RecoverObjectiveData } from '../../systems/quest/QuestTypes.js';
+import { DefendObjectiveData, DefendObjectiveDefender, EscortObjectiveData, QuestNode, QuestStatus, RecoverObjectiveData } from '../../systems/quest/QuestTypes.js';
 import QuestUiController from '../../systems/quest/ui/QuestUiController.js';
 import QuestGenerator from '../../systems/quest/QuestGenerator.js';
 import WorldMap from '../../systems/world/worldMap/WorldMap.js';
@@ -32,11 +32,18 @@ type QuestContractsReadyPayload = {
 
 export default class GameQuestRuntime {
     public activeQuest: QuestNode | null = null;
+    public activeSideQuests: QuestNode[] = [];
     public questUiController: QuestUiController | null = null;
     public questProgressTracker: QuestProgressTracker | null = null;
     private onContractsUpdated: ((payload: QuestContractsReadyPayload) => void) | null = null;
     private pendingRecoverBattleNodeId: string | null = null;
     private worldMap: WorldMap | null = null;
+    private readonly sideQuestOffersByNpc: Map<string, QuestNode[]> = new Map();
+    private readonly maxSideQuestsPerVillager: number;
+
+    public constructor(maxSideQuestsPerVillager: number = 2) {
+        this.maxSideQuestsPerVillager = Math.max(1, Math.min(3, Math.floor(maxSideQuestsPerVillager)));
+    }
 
     public async initialize(
         questGenerator: QuestGenerator,
@@ -62,6 +69,101 @@ export default class GameQuestRuntime {
         if (!savedQuest && getDeveloperModeConfig().questIntroEnabled) {
             questUiController.showIntro();
         }
+    }
+
+    public registerVillageSideQuestOffer(quest: QuestNode): boolean {
+        if (!quest.id.trim()) {
+            return false;
+        }
+        const giverNpcName = quest.giverNpcName?.trim();
+        const giverVillageName = quest.giverVillageName?.trim();
+        if (!giverNpcName || !giverVillageName) {
+            return false;
+        }
+        const npcKey = this.getVillagerQuestKey(giverVillageName, giverNpcName);
+        const offers = this.sideQuestOffersByNpc.get(npcKey) ?? [];
+        if (offers.some((offer) => offer.id === quest.id) || this.activeSideQuests.some((activeQuest) => activeQuest.id === quest.id)) {
+            return false;
+        }
+        if (offers.length >= this.maxSideQuestsPerVillager) {
+            return false;
+        }
+        quest.track = 'side';
+        quest.status = this.normalizeSideQuestStatus(quest.status);
+        this.sideQuestOffersByNpc.set(npcKey, [...offers, quest]);
+        return true;
+    }
+
+    public getVillageSideQuestOffers(villageName: string, npcName: string): QuestNode[] {
+        const npcKey = this.getVillagerQuestKey(villageName, npcName);
+        const offers = this.sideQuestOffersByNpc.get(npcKey) ?? [];
+        return offers.map((quest) => ({ ...quest }));
+    }
+
+    public acceptSideQuest(questId: string): { accepted: boolean; reason?: 'inactive' | 'not-found' | 'already-active' } {
+        const normalizedQuestId = questId.trim();
+        if (!normalizedQuestId) {
+            return { accepted: false, reason: 'not-found' };
+        }
+        const existing = this.activeSideQuests.find((quest) => quest.id === normalizedQuestId);
+        if (existing) {
+            return { accepted: false, reason: 'already-active' };
+        }
+
+        for (const [npcKey, offers] of this.sideQuestOffersByNpc.entries()) {
+            const offerIndex = offers.findIndex((offer) => offer.id === normalizedQuestId);
+            if (offerIndex < 0) {
+                continue;
+            }
+            const offer = offers[offerIndex];
+            offer.status = 'active';
+            offer.track = 'side';
+            this.activeSideQuests.push(offer);
+            offers.splice(offerIndex, 1);
+            if (offers.length === 0) {
+                this.sideQuestOffersByNpc.delete(npcKey);
+            } else {
+                this.sideQuestOffersByNpc.set(npcKey, offers);
+            }
+            return { accepted: true };
+        }
+        return { accepted: false, reason: 'not-found' };
+    }
+
+    public turnInSideQuest(
+        questId: string,
+        npcName: string,
+        villageName: string,
+    ): { turnedIn: boolean; reason?: 'inactive' | 'not-found' | 'wrong-giver' | 'not-ready' | 'already-completed'; reward?: string } {
+        const normalizedQuestId = questId.trim();
+        if (!normalizedQuestId) {
+            return { turnedIn: false, reason: 'not-found' };
+        }
+        const quest = this.activeSideQuests.find((entry) => entry.id === normalizedQuestId);
+        if (!quest) {
+            return { turnedIn: false, reason: 'not-found' };
+        }
+        if (quest.status === 'completed') {
+            return { turnedIn: false, reason: 'already-completed' };
+        }
+        if (quest.status !== 'readyToTurnIn') {
+            return { turnedIn: false, reason: 'not-ready' };
+        }
+        if (!this.isMatchingQuestGiver(quest, npcName, villageName)) {
+            return { turnedIn: false, reason: 'wrong-giver' };
+        }
+        quest.status = 'completed';
+        quest.isCompleted = true;
+        return { turnedIn: true, reward: quest.reward };
+    }
+
+    public markSideQuestReadyToTurnIn(questId: string): boolean {
+        const quest = this.activeSideQuests.find((entry) => entry.id === questId.trim());
+        if (!quest || quest.status === 'completed') {
+            return false;
+        }
+        quest.status = 'readyToTurnIn';
+        return true;
     }
 
     public recordLocationEntry(locationName: string, carriedItemNames: string[]): boolean {
@@ -788,6 +890,27 @@ export default class GameQuestRuntime {
             findWeight: 0,
             spriteClass: 'quest-item-sprite',
         });
+    }
+
+    private getVillagerQuestKey(villageName: string, npcName: string): string {
+        const normalizedVillage = villageName.trim().toLocaleLowerCase();
+        const normalizedNpc = npcName.trim().toLocaleLowerCase();
+        return `${normalizedVillage}::${normalizedNpc}`;
+    }
+
+    private normalizeSideQuestStatus(status: QuestStatus | undefined): QuestStatus {
+        if (status === 'active' || status === 'readyToTurnIn' || status === 'completed') {
+            return status;
+        }
+        return 'available';
+    }
+
+    private isMatchingQuestGiver(quest: QuestNode, npcName: string, villageName: string): boolean {
+        if (!quest.giverNpcName || !quest.giverVillageName) {
+            return false;
+        }
+        return quest.giverNpcName.trim().toLocaleLowerCase() === npcName.trim().toLocaleLowerCase()
+            && quest.giverVillageName.trim().toLocaleLowerCase() === villageName.trim().toLocaleLowerCase();
     }
 
     private findQuestNodeById(node: QuestNode, id: string): QuestNode | null {

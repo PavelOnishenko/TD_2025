@@ -9,6 +9,7 @@ export type GameSaveState = {
     player: Record<string, unknown>;
     spellLevels: Record<string, number>;
     quest: QuestNode | null;
+    sideQuests?: QuestNode[];
     time?: Record<string, unknown>;
 };
 
@@ -17,11 +18,13 @@ export default class GamePersistenceRuntime {
 
     public constructor(private readonly saveKey: string) {}
 
+    // eslint-disable-next-line style-guide/function-length-warning
     public saveGameIfChanged(
         worldMap: WorldMap,
         player: Player,
         magicSystem: MagicSystem,
         activeQuest: QuestNode | null,
+        activeSideQuests: QuestNode[] = [],
         timeState?: Record<string, unknown>,
     ): void {
         const snapshot = JSON.stringify({
@@ -30,6 +33,7 @@ export default class GamePersistenceRuntime {
             player: player.getState(),
             spellLevels: magicSystem.getSpellLevels(),
             quest: activeQuest,
+            sideQuests: activeSideQuests,
             time: timeState,
         } as GameSaveState);
         if (snapshot === this.lastSavedSnapshot) {

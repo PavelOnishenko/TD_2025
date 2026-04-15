@@ -44,6 +44,7 @@ export const createRuntimeBase = (hasSavedGame: boolean, worldColumns: number, w
     };
 };
 
+// eslint-disable-next-line style-guide/function-length-warning
 const createVillageActionsController = (
     game: GameFacade,
     ui: RuntimeUi,
@@ -63,6 +64,9 @@ const createVillageActionsController = (
     onTryStartRecoverConfrontation: (personName, villageName) => game.onTryStartRecoverConfrontation(personName, villageName),
     onStartBattle: (enemies) => game.stateMachine.transition(MODES.BATTLE, { enemies, terrainType: 'grass' }),
     onTryStartDefend: (npcName, villageName, villagerNames) => game.onTryStartDefendObjective(npcName, villageName, villagerNames),
+    getVillageSideQuestOffers: (villageName, npcName) => game.getVillageSideQuestOffers(villageName, npcName),
+    acceptSideQuest: (questId) => game.acceptSideQuest(questId),
+    turnInSideQuest: (questId, npcName, villageName) => game.turnInSideQuest(questId, npcName, villageName),
 });
 
 // eslint-disable-next-line style-guide/function-length-warning
