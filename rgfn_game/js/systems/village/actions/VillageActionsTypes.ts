@@ -41,6 +41,7 @@ export type VillageActionsCallbacks = {
     onAdvanceTime: (minutes: number, fatigueScale: number) => void;
     onLeaveVillage: () => void;
     getVillageDirectionHint: (settlementName: string) => VillageDirectionHint;
+    getNearbyVillageNames?: (villageName: string, maxDistanceCells: number) => string[];
     getKnownSettlementNames?: () => string[];
     getKnownQuestSettlementNames?: () => string[];
     onVillageBarterCompleted: (traderName: string, itemName: string, villageName: string) => void;

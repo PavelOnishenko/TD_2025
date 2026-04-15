@@ -9,6 +9,7 @@ import VillageDialogueInteractionService from './actions/VillageDialogueInteract
 import { QuestBarterContract, QuestDefendContract, QuestEscortContract, VillageActionsCallbacks, VillageUI } from './actions/VillageActionsTypes.js';
 import { isDeveloperModeEnabled } from '../../utils/DeveloperModeConfig.js';
 import { QuestNode } from '../quest/QuestTypes.js';
+import { balanceConfig } from '../../config/balance/balanceConfig.js';
 export default class VillageActionsController {
     private readonly villageUI: VillageUI;
     private readonly callbacks: VillageActionsCallbacks;
@@ -433,6 +434,7 @@ export default class VillageActionsController {
             .map(({ offer }) => offer);
         acceptedOffers.forEach((quest) => {
             this.activeNpcSideQuestIds.add(quest.id);
+            this.injectSideQuestNpcReferencesIntoNearbyRosters(quest);
             this.addLog(`New side quest accepted: ${quest.title}.`, 'system');
         });
         if (acceptedOffers.length > 0) {
@@ -480,7 +482,7 @@ export default class VillageActionsController {
     }
 
     private getKnownPersonNames(): string[] {
-        const knownSettlements = this.buildKnownSettlementSet();
+        const knownSettlements = this.buildNearbyKnownSettlementSet();
         const fromBarter = this.barterService.getKnownTraderNames().filter((traderName) => this.shouldIncludeTraderName(traderName, knownSettlements));
         const fromEscort = this.escortContracts.filter((contract) => this.shouldIncludeEscortContract(contract, knownSettlements)).map((contract) => contract.personName);
         const fromNpcRoster = Array.from(this.knownNpcNames);
@@ -520,7 +522,73 @@ export default class VillageActionsController {
         this.refreshDialogueTargetOptions();
     }
 
-    private buildKnownSettlementSet = (): Set<string> => new Set((this.callbacks.getKnownSettlementNames?.() ?? []).map((name) => name.trim().toLocaleLowerCase()));
+    private buildNearbyKnownSettlementSet = (): Set<string> => {
+        const knownSettlements = this.callbacks.getKnownSettlementNames?.() ?? [];
+        const nearbySettlements = this.getNearbyVillageSet(this.currentVillageName);
+        return new Set(
+            knownSettlements
+                .map((name) => name.trim().toLocaleLowerCase())
+                .filter((name) => nearbySettlements.has(name)),
+        );
+    };
+
+    private getNearbyVillageSet(villageName: string): Set<string> {
+        const normalizedVillage = villageName.trim().toLocaleLowerCase();
+        if (!normalizedVillage) {
+            return new Set();
+        }
+        const maxDistanceCells = Math.max(1, Math.floor(balanceConfig.quest?.sideQuestNearbyRosterDistanceCells ?? 4));
+        const nearby = this.callbacks.getNearbyVillageNames?.(villageName, maxDistanceCells) ?? [];
+        return new Set([normalizedVillage, ...nearby.map((name) => name.trim().toLocaleLowerCase()).filter((name) => name.length > 0)]);
+    }
+
+    private injectSideQuestNpcReferencesIntoNearbyRosters(quest: QuestNode): void {
+        const nearbyVillageSet = this.getNearbyVillageSet(this.currentVillageName);
+        this.injectNpcIntoNearbyVillageRoster(nearbyVillageSet, quest.giverVillageName, quest.giverNpcName, 'Side Quest Giver');
+        quest.children.forEach((child) => this.injectChildObjectiveNpcs(nearbyVillageSet, child));
+    }
+
+    private injectChildObjectiveNpcs(nearbyVillageSet: Set<string>, child: QuestNode): void {
+        const localDelivery = child.objectiveData?.localDelivery;
+        if (localDelivery) {
+            this.injectNpcIntoNearbyVillageRoster(nearbyVillageSet, localDelivery.villageName, localDelivery.sourceNpcName, 'Courier Handler');
+            this.injectNpcIntoNearbyVillageRoster(nearbyVillageSet, localDelivery.villageName, localDelivery.recipientNpcName, 'Delivery Recipient');
+        }
+        const recover = child.objectiveData?.recover;
+        if (recover) {
+            this.injectNpcIntoNearbyVillageRoster(nearbyVillageSet, recover.currentVillage, recover.personName, `Wanted for ${recover.itemName}`);
+        }
+        const escort = child.objectiveData?.escort;
+        if (escort) {
+            this.injectNpcIntoNearbyVillageRoster(nearbyVillageSet, escort.sourceVillage, escort.personName, `Escort to ${escort.destinationVillage}`);
+        }
+        const defend = child.objectiveData?.defend;
+        if (defend) {
+            this.injectNpcIntoNearbyVillageRoster(nearbyVillageSet, defend.villageName, defend.contactName, `Artifact Custodian (${defend.artifactName})`);
+        }
+    }
+
+    // eslint-disable-next-line style-guide/function-length-warning
+    private injectNpcIntoNearbyVillageRoster(nearbyVillageSet: Set<string>, villageName: string | undefined, npcName: string | undefined, role: string): void {
+        const normalizedVillage = villageName?.trim().toLocaleLowerCase();
+        const normalizedNpcName = npcName?.trim();
+        if (!normalizedVillage || !normalizedNpcName || !nearbyVillageSet.has(normalizedVillage)) {
+            return;
+        }
+        const roster = this.getOrCreateVillageNpcRoster(villageName.trim());
+        const exists = roster.some((npc) => npc.name.trim().toLocaleLowerCase() === normalizedNpcName.toLocaleLowerCase());
+        if (exists) {
+            return;
+        }
+        roster.unshift({
+            id: `${normalizedVillage}-${normalizedNpcName.toLocaleLowerCase()}-side`,
+            name: normalizedNpcName,
+            role,
+            look: 'travel-worn cloak, practical satchel, watchful gaze',
+            speechStyle: 'measured and direct',
+            disposition: 'truthful',
+        });
+    }
 
     private shouldIncludeTraderName(traderName: string, knownSettlements: Set<string>): boolean {
         if (isDeveloperModeEnabled()) {
