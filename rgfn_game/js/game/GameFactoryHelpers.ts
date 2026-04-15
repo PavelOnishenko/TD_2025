@@ -67,6 +67,7 @@ const createVillageActionsController = (
     onStartBattle: (enemies) => game.stateMachine.transition(MODES.BATTLE, { enemies, terrainType: 'grass' }),
     onTryStartDefend: (npcName, villageName, villagerNames) => game.onTryStartDefendObjective(npcName, villageName, villagerNames),
     getVillageSideQuestOffers: (villageName, npcName) => game.getVillageSideQuestOffers(villageName, npcName),
+    getVillageNpcActiveSideQuests: (villageName, npcName) => game.getVillageNpcActiveSideQuests(villageName, npcName),
     acceptSideQuest: (questId) => game.acceptSideQuest(questId),
     turnInSideQuest: (questId, npcName, villageName) => game.turnInSideQuest(questId, npcName, villageName),
 });

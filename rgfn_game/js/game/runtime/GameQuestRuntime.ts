@@ -100,6 +100,16 @@ export default class GameQuestRuntime {
         return offers.map((quest) => ({ ...quest }));
     }
 
+    public getVillageNpcActiveSideQuests(villageName: string, npcName: string): QuestNode[] {
+        const normalizedVillage = villageName.trim().toLocaleLowerCase();
+        const normalizedNpc = npcName.trim().toLocaleLowerCase();
+        return this.activeSideQuests
+            .filter((quest) => quest.status !== 'completed')
+            .filter((quest) => quest.giverVillageName?.trim().toLocaleLowerCase() === normalizedVillage)
+            .filter((quest) => quest.giverNpcName?.trim().toLocaleLowerCase() === normalizedNpc)
+            .map((quest) => ({ ...quest }));
+    }
+
     public acceptSideQuest(questId: string): { accepted: boolean; reason?: 'inactive' | 'not-found' | 'already-active' } {
         const normalizedQuestId = questId.trim();
         if (!normalizedQuestId) {

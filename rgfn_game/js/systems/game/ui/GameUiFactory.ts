@@ -81,6 +81,8 @@ export default class GameUiFactory {
         dialogueCloseBtn: document.getElementById('village-dialogue-close-btn')! as HTMLButtonElement,
         dialogueSelectedNpc: document.getElementById('village-dialogue-selected-npc')!,
         dialogueLog: document.getElementById('village-dialogue-log')!,
+        sideQuestPanel: document.getElementById('village-side-quest-panel')!,
+        sideQuestList: document.getElementById('village-side-quest-list')!,
         enterBtn: document.getElementById('village-enter-btn')! as HTMLButtonElement,
         skipBtn: document.getElementById('village-skip-btn')! as HTMLButtonElement,
         doctorHealBtn: document.getElementById('village-doctor-heal-btn')! as HTMLButtonElement,

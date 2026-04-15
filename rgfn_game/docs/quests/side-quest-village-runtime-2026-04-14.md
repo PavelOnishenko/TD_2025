@@ -56,6 +56,38 @@
 - If explicit UI acceptance is needed later, wire a dedicated village action button and call the same callbacks.
 - Reward handling currently returns reward text; economic/item granting is expected to be layered by caller.
 
+## 2026-04-15: Player-facing side-quest UX in village dialogue
+
+- The village dialogue modal now includes a **Side quests** panel (`#village-side-quest-panel`) with a per-NPC list (`#village-side-quest-list`).
+- The panel renders quest cards with:
+  - quest title + status label,
+  - description,
+  - **reward preview text** (`Reward preview: ...`).
+- Action controls are now explicit:
+  - **Accept quest** button appears for each offer.
+  - **Turn in quest** button appears only when quest status is `readyToTurnIn`.
+- Auto-accept-on-select was removed from default player flow.
+  - Optional developer-only behavior now exists when developer mode is enabled.
+- Side-quest callback surface expanded:
+  - `getVillageNpcActiveSideQuests(villageName, npcName)` returns active/ready quests tied to quest giver.
+- Logging updates now make progression explicit:
+  - side-quest board updated snapshots per selected NPC,
+  - accepted quest logs,
+  - quest tracker updated logs,
+  - ready-to-turn-in logs (once per quest id),
+  - turn-in completion logs with reward text.
+
+### Verification checklist used for this change
+
+1. Enter village.
+2. Select NPC.
+3. Confirm side-quest cards are visible with reward previews.
+4. Click **Accept quest**.
+5. Confirm acceptance + tracker update logs.
+6. Return with a `readyToTurnIn` quest.
+7. Click **Turn in quest**.
+8. Confirm single completion + reward log, and that repeated turn-in does not grant duplicate completion.
+
 ## 2026-04-15: Side quest generation expansion
 
 - `QuestObjectiveType` now includes side-focused objective leaves:
