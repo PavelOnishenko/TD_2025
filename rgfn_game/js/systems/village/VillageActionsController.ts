@@ -8,6 +8,7 @@ import VillageTradeInteractionService from './actions/VillageTradeInteractionSer
 import VillageDialogueInteractionService from './actions/VillageDialogueInteractionService.js';
 import { QuestBarterContract, QuestDefendContract, QuestEscortContract, VillageActionsCallbacks, VillageUI } from './actions/VillageActionsTypes.js';
 import { isDeveloperModeEnabled } from '../../utils/DeveloperModeConfig.js';
+import { QuestNode } from '../quest/QuestTypes.js';
 export default class VillageActionsController {
     private readonly villageUI: VillageUI;
     private readonly callbacks: VillageActionsCallbacks;
@@ -23,6 +24,7 @@ export default class VillageActionsController {
     private selectedNpcId: string | null = null;
     private escortContracts: QuestEscortContract[] = [];
     private defendContracts: QuestDefendContract[] = [];
+    private activeNpcSideQuestIds: Set<string> = new Set();
     private knownNpcNames: Set<string> = new Set();
     private joinedEscortNpcKeys: Set<string> = new Set();
 
@@ -105,6 +107,7 @@ export default class VillageActionsController {
         this.addLog(`You approach ${npc.name} the ${npc.role}.`, 'player');
         this.addLog(`${npc.name} looks ${npc.look} and speaks in a ${npc.speechStyle} manner.`, 'system-message');
         this.addRecoverLeadFromNpc(npc);
+        this.handleSelectedNpcSideQuests(npc);
         this.callbacks.onAdvanceTime(8, 0.12);
     }
 
@@ -408,6 +411,58 @@ export default class VillageActionsController {
             return false;
         }
         return true;
+    }
+
+    // eslint-disable-next-line style-guide/function-length-warning
+    private handleSelectedNpcSideQuests(npc: VillageNpcProfile): void {
+        const offers = this.callbacks.getVillageSideQuestOffers?.(this.currentVillageName, npc.name) ?? [];
+        if (offers.length === 0) {
+            if (this.tryTurnInNpcSideQuest(npc)) {
+                this.updateButtons();
+            }
+            return;
+        }
+        this.addLog(
+            `${npc.name} can offer ${offers.length} side quest${offers.length === 1 ? '' : 's'}.`,
+            'system-message',
+        );
+        offers.forEach((offer) => this.addLog(this.formatSideQuestOfferLine(offer), 'system-message'));
+        const acceptedOffers = offers
+            .map((offer) => ({ offer, result: this.callbacks.acceptSideQuest?.(offer.id) ?? { accepted: false, reason: 'inactive' as const } }))
+            .filter(({ result }) => result.accepted)
+            .map(({ offer }) => offer);
+        acceptedOffers.forEach((quest) => {
+            this.activeNpcSideQuestIds.add(quest.id);
+            this.addLog(`New side quest accepted: ${quest.title}.`, 'system');
+        });
+        if (acceptedOffers.length > 0) {
+            this.updateButtons();
+        }
+    }
+
+    private formatSideQuestOfferLine(quest: QuestNode): string {
+        const rewardSegment = quest.reward?.trim() ? ` Reward: ${quest.reward}.` : '';
+        return `Offer — ${quest.title}: ${quest.description}.${rewardSegment}`;
+    }
+
+    private tryTurnInNpcSideQuest(npc: VillageNpcProfile): boolean {
+        if (!this.callbacks.turnInSideQuest || this.activeNpcSideQuestIds.size === 0) {
+            return false;
+        }
+        let turnedInAny = false;
+        Array.from(this.activeNpcSideQuestIds).forEach((questId) => {
+            const result = this.callbacks.turnInSideQuest?.(questId, npc.name, this.currentVillageName);
+            if (!result?.turnedIn) {
+                return;
+            }
+            turnedInAny = true;
+            this.activeNpcSideQuestIds.delete(questId);
+            this.addLog(
+                `${npc.name} accepts your side-quest handoff for ${questId}.${result.reward ? ` Reward received: ${result.reward}.` : ''}`,
+                'system',
+            );
+        });
+        return turnedInAny;
     }
 
     private getKnownSettlementNames(): string[] {

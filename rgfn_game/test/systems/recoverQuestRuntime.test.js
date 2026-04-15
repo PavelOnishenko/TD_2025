@@ -126,6 +126,24 @@ function createKnownDefendQuest() {
   };
 }
 
+function createSideQuest(overrides = {}) {
+  return {
+    id: 'side-1',
+    title: 'Find Lost Satchel',
+    description: 'Retrieve a satchel from the old road.',
+    conditionText: 'Return with the satchel.',
+    objectiveType: 'scout',
+    entities: [],
+    children: [],
+    track: 'side',
+    giverNpcName: 'Mira',
+    giverVillageName: 'Ashford',
+    reward: '18g',
+    status: 'available',
+    ...overrides,
+  };
+}
+
 test('GameQuestRuntime revealRecoverHolder confirms target person when speaking with another villager', () => {
   const runtime = new GameQuestRuntime();
   const quest = createRecoverQuest();
@@ -330,4 +348,40 @@ test('GameQuestRuntime defend objective starts with randomized 2-6 battles and d
   const secondWait = runtime.onVillageTimeAdvanced('Heights Gate', 12 * 60);
   assert.equal(secondWait.triggeredBattle, true);
   assert.equal(quest.children[0].objectiveData.defend.remainingBattles, 1);
+});
+
+test('GameQuestRuntime side-quest offers enforce per-villager cap and acceptance flow', () => {
+  const runtime = new GameQuestRuntime(1);
+  const questA = createSideQuest({ id: 'side-a' });
+  const questB = createSideQuest({ id: 'side-b' });
+
+  assert.equal(runtime.registerVillageSideQuestOffer(questA), true);
+  assert.equal(runtime.registerVillageSideQuestOffer(questB), false);
+  assert.equal(runtime.getVillageSideQuestOffers('Ashford', 'Mira').length, 1);
+
+  const accepted = runtime.acceptSideQuest('side-a');
+  assert.equal(accepted.accepted, true);
+  assert.equal(runtime.activeSideQuests.length, 1);
+  assert.equal(runtime.activeSideQuests[0].status, 'active');
+  assert.equal(runtime.getVillageSideQuestOffers('Ashford', 'Mira').length, 0);
+});
+
+test('GameQuestRuntime side-quest turn-in requires the original quest giver and ready status', () => {
+  const runtime = new GameQuestRuntime();
+  const sideQuest = createSideQuest({ id: 'side-turnin' });
+  runtime.registerVillageSideQuestOffer(sideQuest);
+  runtime.acceptSideQuest('side-turnin');
+
+  const wrongNpc = runtime.turnInSideQuest('side-turnin', 'Other NPC', 'Ashford');
+  assert.equal(wrongNpc.turnedIn, false);
+  assert.equal(wrongNpc.reason, 'not-ready');
+
+  assert.equal(runtime.markSideQuestReadyToTurnIn('side-turnin'), true);
+  const wrongVillage = runtime.turnInSideQuest('side-turnin', 'Mira', 'Riverbend');
+  assert.equal(wrongVillage.turnedIn, false);
+  assert.equal(wrongVillage.reason, 'wrong-giver');
+
+  const success = runtime.turnInSideQuest('side-turnin', 'Mira', 'Ashford');
+  assert.equal(success.turnedIn, true);
+  assert.equal(runtime.activeSideQuests[0].status, 'completed');
 });
