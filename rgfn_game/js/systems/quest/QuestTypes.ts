@@ -12,6 +12,8 @@ export type QuestObjectiveType =
 export type QuestNameDomain = 'location' | 'artifact' | 'character' | 'monster' | 'mainQuest';
 
 export type PackSourceType = 'local-pattern' | 'map-village' | 'remote-location' | 'remote-name' | 'echo';
+export type QuestTrack = 'main' | 'side';
+export type QuestStatus = 'available' | 'active' | 'readyToTurnIn' | 'completed';
 
 export type QuestNode = {
     id: string;
@@ -23,6 +25,11 @@ export type QuestNode = {
     objectiveData?: QuestObjectiveData;
     children: QuestNode[];
     isCompleted?: boolean;
+    track?: QuestTrack;
+    giverNpcName?: string;
+    giverVillageName?: string;
+    reward?: string;
+    status?: QuestStatus;
 };
 
 export type DeliverObjectiveData = {
@@ -121,6 +128,7 @@ export type DefendObjectiveData = {
     defenders?: DefendObjectiveDefender[];
     fallenDefenderNames?: string[];
     battleCooldownMinutes?: number;
+    remainingBattles?: number;
 };
 
 export type QuestObjectiveData = {

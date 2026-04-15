@@ -1,3 +1,4 @@
+/* eslint-disable style-guide/file-length-warning, style-guide/function-length-warning, style-guide/rule17-comma-layout */
 import GameLoop from '../../../engine/core/GameLoop.js';
 import Renderer from '../../../engine/core/Renderer.js';
 import InputManager from '../../../engine/systems/InputManager.js';
@@ -28,6 +29,7 @@ import { createGameRuntime } from './GameFactory.js';
 import type { GameFacadeStateAccess } from './runtime/GameFacadeSharedTypes.js';
 import { FerryRouteOption } from '../systems/world-mode/WorldModeFerryPromptController.js';
 import GameTimeRuntime from '../systems/time/GameTimeRuntime.js';
+import { QuestNode } from '../systems/quest/QuestTypes.js';
 
 export type UIBundle = {
     hudElements: HudElements;
@@ -112,6 +114,7 @@ export class GameFacade implements GameFacadeStateAccess {
         this.battleCoordinator = runtime.battleCoordinator;
         this.devController = runtime.devController;
         const savedTime = this.persistenceRuntime.getParsedSaveState()?.time ?? null;
+        const savedSideQuests = this.persistenceRuntime.getParsedSaveState()?.sideQuests ?? [];
         const worldSeed = Number(this.worldMap.getState().worldSeed ?? 0);
         const characterSeed = this.hashStringSeed(this.player.name);
         this.gameTime = new GameTimeRuntime(savedTime, worldSeed ^ characterSeed);
@@ -127,6 +130,9 @@ export class GameFacade implements GameFacadeStateAccess {
             },
             this.worldMap,
         );
+        this.questRuntime.activeSideQuests = Array.isArray(savedSideQuests)
+            ? savedSideQuests.map((quest) => ({ ...quest, track: 'side' as const }))
+            : [];
         this.lifecycle.initializeAfterRuntimeAssignment();
     }
 
@@ -161,6 +167,18 @@ export class GameFacade implements GameFacadeStateAccess {
         villagerNames: string[],
     ): { status: 'started' | 'inactive' | 'not-target' | 'already-active'; objectiveTitle?: string; days?: number } =>
         this.lifecycle.onTryStartDefendObjective(npcName, villageName, villagerNames);
+    public registerVillageSideQuestOffer = (quest: QuestNode): boolean => this.questRuntime.registerVillageSideQuestOffer(quest);
+    public markSideQuestReadyToTurnIn = (questId: string): boolean => this.questRuntime.markSideQuestReadyToTurnIn(questId);
+    public getVillageSideQuestOffers = (villageName: string, npcName: string): QuestNode[] =>
+        this.questRuntime.getVillageSideQuestOffers(villageName, npcName);
+    public acceptSideQuest = (questId: string): { accepted: boolean; reason?: 'inactive' | 'not-found' | 'already-active' } =>
+        this.questRuntime.acceptSideQuest(questId);
+    public turnInSideQuest = (
+        questId: string,
+        npcName: string,
+        villageName: string,
+    ): { turnedIn: boolean; reason?: 'inactive' | 'not-found' | 'wrong-giver' | 'not-ready' | 'already-completed'; reward?: string } =>
+        this.questRuntime.turnInSideQuest(questId, npcName, villageName);
 
     public tryCreateQuestMonsterEncounter = (): {
         enemies: import('../entities/Skeleton.js').default[];

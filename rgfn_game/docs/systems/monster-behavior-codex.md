@@ -14,8 +14,12 @@ This system is intentionally designed so players can gradually learn enemy patte
    - If a monster has no codex entry or gets an empty behavior pool, this is now treated as an error.
    - We do this deliberately so configuration gaps fail fast during development.
 2. **Every monster archetype participates** (skeleton, zombie, ninja, darkKnight, dragon).
-3. **Quest-spawned monsters and unique quest mutants use the same rolling model** when they are created in code.
-4. Behavior length is configurable and currently set to **1..5 moves**.
+3. **Humans use per-entity behavior pools.**
+   - Human combatants (`Wanderer`, defend quest combatants like hired blades/defenders, and recover-target humans) now receive directional pools at entity construction time.
+   - The pool is generated from the human move list, but is instance-scoped instead of shared codex-scoped.
+   - This prevents crashes where human entities reached directional combat without an assigned pool.
+4. **Quest-spawned monsters and unique quest mutants use the same rolling model** when they are created in code.
+5. Behavior length is configurable and currently set to **1..5 moves**.
 
 ## Configuration
 
@@ -36,10 +40,11 @@ Current knobs:
 
 ## Runtime Flow
 
-1. At runtime/world initialization, the game generates one codex for all monster archetypes.
-2. Whenever a monster instance is created, it receives the behavior pool matching its archetype.
-3. In directional combat, enemy move resolution uses the monster's next move from its active behavior.
-4. After a behavior finishes, the next behavior is selected with weighted random.
+1. At runtime/world initialization, the game generates one codex for non-human monster archetypes.
+2. Whenever a non-human monster instance is created, it receives the behavior pool matching its archetype.
+3. Human entities generate their own behavior pool immediately on spawn using the same generation knobs and the human move pool.
+4. In directional combat, enemy move resolution uses the monster's next move from its active behavior.
+5. After a behavior finishes, the next behavior is selected with weighted random.
 
 ## Developer Lore Visibility
 
@@ -61,4 +66,5 @@ If combat throws behavior-related errors:
 1. Verify all archetype IDs used by monster spawns exist in `monsterMovePools`.
 2. Verify each pool has at least one valid directional move token.
 3. Confirm runtime world initialization is calling codex generation before encounters/quests.
-4. In developer mode, open Lore panel and inspect generated codex entries.
+4. Confirm human move pool (`human`) exists and is non-empty; human entities now initialize their own pool in `Skeleton`.
+5. In developer mode, open Lore panel and inspect generated codex entries.

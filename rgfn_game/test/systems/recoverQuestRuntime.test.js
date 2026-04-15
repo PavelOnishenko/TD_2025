@@ -126,6 +126,24 @@ function createKnownDefendQuest() {
   };
 }
 
+function createSideQuest(overrides = {}) {
+  return {
+    id: 'side-1',
+    title: 'Find Lost Satchel',
+    description: 'Retrieve a satchel from the old road.',
+    conditionText: 'Return with the satchel.',
+    objectiveType: 'scout',
+    entities: [],
+    children: [],
+    track: 'side',
+    giverNpcName: 'Mira',
+    giverVillageName: 'Ashford',
+    reward: '18g',
+    status: 'available',
+    ...overrides,
+  };
+}
+
 test('GameQuestRuntime revealRecoverHolder confirms target person when speaking with another villager', () => {
   const runtime = new GameQuestRuntime();
   const quest = createRecoverQuest();
@@ -254,7 +272,7 @@ test('GameQuestRuntime records fallen defenders and exposes them in defend contr
   assert.deepEqual(defendContracts[0].activeDefenderNames, ['Tor']);
 });
 
-test('GameQuestRuntime spawns full-health defend allies at derived max HP and keeps wounded values', () => {
+test('GameQuestRuntime keeps defend ally maxHp fixed and preserves wounded values', () => {
   const runtime = new GameQuestRuntime();
   const defender = {
     name: 'Vara',
@@ -276,14 +294,15 @@ test('GameQuestRuntime spawns full-health defend allies at derived max HP and ke
   };
 
   const allyAtFullHp = runtime.createVillageCombatantFromDefender(defender);
-  assert.equal(allyAtFullHp.hp, allyAtFullHp.maxHp);
-  assert.equal(allyAtFullHp.maxHp > defender.maxHp, true);
+  assert.equal(allyAtFullHp.maxHp, defender.maxHp);
+  assert.equal(allyAtFullHp.hp, defender.maxHp);
 
   const woundedAlly = runtime.createVillageCombatantFromDefender({ ...defender, currentHp: 7 });
+  assert.equal(woundedAlly.maxHp, defender.maxHp);
   assert.equal(woundedAlly.hp, 7);
 });
 
-test('GameQuestRuntime persists defender maxHp from combat survivors after battle', () => {
+test('GameQuestRuntime keeps stored defender maxHp and clamps survivor hp after battle', () => {
   const runtime = new GameQuestRuntime();
   const quest = createKnownDefendQuest();
   runtime.activeQuest = quest;
@@ -295,6 +314,74 @@ test('GameQuestRuntime persists defender maxHp from combat survivors after battl
   ];
 
   runtime.applyDefenderBattleResults('Heights Gate', [{ name: 'Mara', hp: 14, maxHp: 16 }]);
-  assert.equal(quest.children[0].objectiveData.defend.defenders[0].maxHp, 16);
-  assert.equal(quest.children[0].objectiveData.defend.defenders[0].currentHp, 14);
+  assert.equal(quest.children[0].objectiveData.defend.defenders[0].maxHp, 10);
+  assert.equal(quest.children[0].objectiveData.defend.defenders[0].currentHp, 10);
+});
+
+test('GameQuestRuntime defend objective starts with randomized 2-6 battles and does not always trigger on 12h wait', () => {
+  const runtime = new GameQuestRuntime();
+  const quest = createKnownDefendQuest();
+  runtime.activeQuest = quest;
+  runtime.questUiController = { renderQuest: () => {} };
+  runtime.refreshContracts = () => {};
+  runtime.randomInt = (min, max) => {
+    if (min === 2 && max === 6) {
+      return 2;
+    }
+    if (min === 540 && max === 1620) {
+      return 1440;
+    }
+    if (min === 720 && max === 2160) {
+      return 1440;
+    }
+    return min;
+  };
+
+  const started = runtime.tryStartDefendObjective('Heights Gate', 'Quinn Evans', ['Mara', 'Tor']);
+  assert.equal(started.status, 'started');
+  assert.equal(quest.children[0].objectiveData.defend.remainingBattles, 2);
+  assert.equal(quest.children[0].objectiveData.defend.battleCooldownMinutes, 1440);
+
+  const firstWait = runtime.onVillageTimeAdvanced('Heights Gate', 12 * 60);
+  assert.equal(firstWait.triggeredBattle, false);
+
+  const secondWait = runtime.onVillageTimeAdvanced('Heights Gate', 12 * 60);
+  assert.equal(secondWait.triggeredBattle, true);
+  assert.equal(quest.children[0].objectiveData.defend.remainingBattles, 1);
+});
+
+test('GameQuestRuntime side-quest offers enforce per-villager cap and acceptance flow', () => {
+  const runtime = new GameQuestRuntime(1);
+  const questA = createSideQuest({ id: 'side-a' });
+  const questB = createSideQuest({ id: 'side-b' });
+
+  assert.equal(runtime.registerVillageSideQuestOffer(questA), true);
+  assert.equal(runtime.registerVillageSideQuestOffer(questB), false);
+  assert.equal(runtime.getVillageSideQuestOffers('Ashford', 'Mira').length, 1);
+
+  const accepted = runtime.acceptSideQuest('side-a');
+  assert.equal(accepted.accepted, true);
+  assert.equal(runtime.activeSideQuests.length, 1);
+  assert.equal(runtime.activeSideQuests[0].status, 'active');
+  assert.equal(runtime.getVillageSideQuestOffers('Ashford', 'Mira').length, 0);
+});
+
+test('GameQuestRuntime side-quest turn-in requires the original quest giver and ready status', () => {
+  const runtime = new GameQuestRuntime();
+  const sideQuest = createSideQuest({ id: 'side-turnin' });
+  runtime.registerVillageSideQuestOffer(sideQuest);
+  runtime.acceptSideQuest('side-turnin');
+
+  const wrongNpc = runtime.turnInSideQuest('side-turnin', 'Other NPC', 'Ashford');
+  assert.equal(wrongNpc.turnedIn, false);
+  assert.equal(wrongNpc.reason, 'not-ready');
+
+  assert.equal(runtime.markSideQuestReadyToTurnIn('side-turnin'), true);
+  const wrongVillage = runtime.turnInSideQuest('side-turnin', 'Mira', 'Riverbend');
+  assert.equal(wrongVillage.turnedIn, false);
+  assert.equal(wrongVillage.reason, 'wrong-giver');
+
+  const success = runtime.turnInSideQuest('side-turnin', 'Mira', 'Ashford');
+  assert.equal(success.turnedIn, true);
+  assert.equal(runtime.activeSideQuests[0].status, 'completed');
 });
