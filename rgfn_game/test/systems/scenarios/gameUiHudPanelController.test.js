@@ -555,3 +555,41 @@ test('GameUiHudPanelController keeps bottom-right resize corner behavior higher 
     global.requestAnimationFrame = originalRequestAnimationFrame;
   }
 });
+
+test('GameUiHudPanelController brings a toggled-open panel to front so overlapping panels stay independently accessible', () => {
+  const originalWindow = global.window;
+  const originalDocument = global.document;
+  const originalMutationObserver = global.MutationObserver;
+  const originalRequestAnimationFrame = global.requestAnimationFrame;
+
+  global.window = { localStorage: createLocalStorage(), innerWidth: 1280, innerHeight: 720 };
+  const hudElements = createHudElements();
+  hudElements.inventoryPanel.classList.add('hidden');
+  global.document = createMockDocument(hudElements);
+  global.requestAnimationFrame = (callback) => callback();
+  global.MutationObserver = class {
+    constructor() {}
+    observe() {}
+  };
+
+  try {
+    const controller = new GameUiHudPanelController(hudElements, {
+      onTogglePanel(panel) {
+        const key = `${panel}Panel`;
+        hudElements[key].classList.toggle('hidden');
+      },
+    });
+    controller.bind();
+
+    hudElements.skillsPanel.style.zIndex = '120';
+    hudElements.toggleInventoryPanelBtn.listeners.click();
+
+    assert.equal(hudElements.inventoryPanel.classList.contains('hidden'), false);
+    assert.ok(Number.parseInt(hudElements.inventoryPanel.style.zIndex, 10) > 120);
+  } finally {
+    global.window = originalWindow;
+    global.document = originalDocument;
+    global.MutationObserver = originalMutationObserver;
+    global.requestAnimationFrame = originalRequestAnimationFrame;
+  }
+});

@@ -134,9 +134,13 @@ export default class GameUiHudPanelController {
             if (event.button !== 0) {
                 return;
             }
+            this.elevatePanel(panel);
             this.startPanelDrag(event, panel, dragHandle);
         });
         panel.addEventListener('pointerdown', (event: PointerEvent) => {
+            if (event.button === 0) {
+                this.elevatePanel(panel);
+            }
             if (!this.shouldStartBorderDrag(event, panel, dragHandle)) {
                 return;
             }
@@ -225,6 +229,7 @@ export default class GameUiHudPanelController {
         this.callbacks.onTogglePanel(panel);
         const panelElement = this.getPanelElement(panel);
         if (panelElement && !panelElement.classList.contains('hidden')) {
+            this.elevatePanel(panelElement);
             requestAnimationFrame(() => this.ensurePanelDragHandleIsReachable(panelElement));
         }
         this.setHudMenuOpen(false);
@@ -274,6 +279,7 @@ export default class GameUiHudPanelController {
         const panelConfigs = this.getPanelConfigs();
         if (!storedLayout) {
             panelConfigs.forEach(({ element }, panelIndex) => this.resetPanelToSpawn(element, panelIndex));
+            this.synchronizeNextPanelZIndex();
             return;
         }
         panelConfigs.forEach(({ key, element, persistenceKey }, panelIndex) => {
@@ -318,6 +324,7 @@ export default class GameUiHudPanelController {
         this.enforceVillagePanelVisibility(this.hudElements.modeIndicator.textContent?.trim() ?? '');
         this.enforceSelectedPanelVisibility(this.hudElements.modeIndicator.textContent?.trim() ?? '');
         this.enforceCombatPanelVisibility(this.activeLayoutContext);
+        this.synchronizeNextPanelZIndex();
     }
     private resetPanelToSpawn(panel: HTMLElement, panelIndex: number): void {
         panel.dataset.offsetX = '0';
@@ -391,6 +398,19 @@ export default class GameUiHudPanelController {
         panel.dataset.spawnPositioned = 'true';
         panel.style.setProperty('--panel-offset-x', `${nextOffsetX}px`);
         panel.style.setProperty('--panel-offset-y', `${nextOffsetY}px`);
+    }
+    private elevatePanel(panel: HTMLElement): void {
+        panel.style.zIndex = String(this.nextPanelZIndex++);
+    }
+    private synchronizeNextPanelZIndex(): void {
+        const maxPanelZIndex = this.getPanelConfigs().reduce((maxZIndex, { element }) => {
+            const zIndex = Number.parseInt(element.style.zIndex || '', 10);
+            if (!Number.isFinite(zIndex)) {
+                return maxZIndex;
+            }
+            return Math.max(maxZIndex, zIndex);
+        }, 9);
+        this.nextPanelZIndex = maxPanelZIndex + 1;
     }
     private keepPanelReachableInViewport(panel: HTMLElement): void {
         if (panel.classList.contains('hidden')) {

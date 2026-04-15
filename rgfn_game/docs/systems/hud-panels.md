@@ -602,3 +602,38 @@ To align interaction behavior with existing HUD windows (`Stats`, `Skills`, etc.
    - drag lower-right corner to resize panel width/height.
 5. On mobile breakpoint (`<=920px`):
    - resize affordance should be disabled.
+
+## Skills/Inventory panel decoupling fix (April 14, 2026)
+
+### Reported symptoms
+
+- Resizing/using one panel could make the other appear behaviorally linked.
+- In some overlap states, `Inventory` looked like it would not open unless `Skills` was closed first.
+
+### Root cause
+
+- Panel visibility toggles did not elevate the reopened panel’s z-index.
+- If `Skills` had a previously elevated z-index (after drag/interaction), reopening `Inventory` could keep it visually behind `Skills`.
+- This created a “mutual dependency” illusion:
+  - `Inventory` was technically open, but hidden underneath `Skills`.
+  - User interactions near overlap regions could appear as if both panels were reacting.
+
+### Fix implemented
+
+- `GameUiHudPanelController` now elevates a panel whenever:
+  - the panel header drag begins,
+  - the panel body receives left-click/pointer interaction,
+  - a panel is toggled open from HUD menu buttons.
+- Added z-index synchronization after layout restore:
+  - controller now computes max restored panel z-index and advances `nextPanelZIndex` accordingly.
+  - prevents newly elevated/toggled panels from receiving stale low z-values.
+
+### Why this decouples Skills and Inventory
+
+- Each panel now gets independent stacking ownership on interaction/open.
+- Opening `Inventory` no longer depends on closing `Skills`; it is promoted to top layer immediately.
+- Resizing one panel no longer gets visually conflated with the other due to hidden-under overlap.
+
+### Regression test
+
+- Added scenario test: reopening `Inventory` while `Skills` has high z-index must bring `Inventory` to front.
