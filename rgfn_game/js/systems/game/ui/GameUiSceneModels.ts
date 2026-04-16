@@ -53,6 +53,8 @@ export class VillageUiModel {
     public dialogueCloseBtn!: HTMLButtonElement;
     public dialogueSelectedNpc!: HTMLElement;
     public dialogueLog!: HTMLElement;
+    public sideQuestPanel!: HTMLElement;
+    public sideQuestList!: HTMLElement;
     public enterBtn!: HTMLButtonElement;
     public skipBtn!: HTMLButtonElement;
     public doctorHealBtn!: HTMLButtonElement;

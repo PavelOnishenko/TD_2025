@@ -65,7 +65,7 @@ export default class GameQuestRuntime {
             defendContracts: this.collectDefendContracts(quest),
         });
         this.syncKnownQuestLocations();
-        questUiController.renderQuest(quest);
+        this.renderQuestUi();
         if (!savedQuest && getDeveloperModeConfig().questIntroEnabled) {
             questUiController.showIntro();
         }
@@ -91,6 +91,7 @@ export default class GameQuestRuntime {
         quest.track = 'side';
         quest.status = this.normalizeSideQuestStatus(quest.status);
         this.sideQuestOffersByNpc.set(npcKey, [...offers, quest]);
+        this.renderQuestUi();
         return true;
     }
 
@@ -98,6 +99,29 @@ export default class GameQuestRuntime {
         const npcKey = this.getVillagerQuestKey(villageName, npcName);
         const offers = this.sideQuestOffersByNpc.get(npcKey) ?? [];
         return offers.map((quest) => ({ ...quest }));
+    }
+
+    public getVillageNpcActiveSideQuests(villageName: string, npcName: string): QuestNode[] {
+        const normalizedVillage = villageName.trim().toLocaleLowerCase();
+        const normalizedNpc = npcName.trim().toLocaleLowerCase();
+        return this.activeSideQuests
+            .filter((quest) => quest.status !== 'completed')
+            .filter((quest) => quest.giverVillageName?.trim().toLocaleLowerCase() === normalizedVillage)
+            .filter((quest) => quest.giverNpcName?.trim().toLocaleLowerCase() === normalizedNpc)
+            .map((quest) => ({ ...quest }));
+    }
+
+    public clearVillageSideQuestOffers(villageName: string): void {
+        const normalizedVillage = villageName.trim().toLocaleLowerCase();
+        if (!normalizedVillage) {
+            return;
+        }
+        for (const npcKey of this.sideQuestOffersByNpc.keys()) {
+            if (!npcKey.startsWith(`${normalizedVillage}::`)) {
+                continue;
+            }
+            this.sideQuestOffersByNpc.delete(npcKey);
+        }
     }
 
     public acceptSideQuest(questId: string): { accepted: boolean; reason?: 'inactive' | 'not-found' | 'already-active' } {
@@ -125,6 +149,7 @@ export default class GameQuestRuntime {
             } else {
                 this.sideQuestOffersByNpc.set(npcKey, offers);
             }
+            this.renderQuestUi();
             return { accepted: true };
         }
         return { accepted: false, reason: 'not-found' };
@@ -154,6 +179,7 @@ export default class GameQuestRuntime {
         }
         quest.status = 'completed';
         quest.isCompleted = true;
+        this.renderQuestUi();
         return { turnedIn: true, reward: quest.reward };
     }
 
@@ -163,6 +189,7 @@ export default class GameQuestRuntime {
             return false;
         }
         quest.status = 'readyToTurnIn';
+        this.renderQuestUi();
         return true;
     }
 
@@ -175,7 +202,7 @@ export default class GameQuestRuntime {
         if (!locationChanged && !escortChanged) {
             return false;
         }
-        this.questUiController.renderQuest(this.activeQuest);
+        this.renderQuestUi();
         this.refreshContracts();
         return true;
     }
@@ -216,7 +243,7 @@ export default class GameQuestRuntime {
 
         if (didJoin) {
             this.questProgressTracker?.recomputeCompletion();
-            this.questUiController.renderQuest(this.activeQuest);
+            this.renderQuestUi();
         }
         return result;
     }
@@ -250,7 +277,7 @@ export default class GameQuestRuntime {
             recover.isPersonKnown = true;
             this.updateRecoverObjectiveText(node);
             this.refreshContracts();
-            this.questUiController?.renderQuest(this.activeQuest!);
+            this.renderQuestUi();
             revealed = { revealed: true, personName: recover.personName, itemName: recover.itemName };
         });
         return revealed;
@@ -314,7 +341,7 @@ export default class GameQuestRuntime {
             node.isCompleted = true;
             this.questProgressTracker?.recomputeCompletion();
             this.refreshContracts();
-            this.questUiController?.renderQuest(this.activeQuest);
+            this.renderQuestUi();
             player.addItemToInventory(this.createRecoverQuestItem(recover.itemName));
             return [`Quest tracker: ${recover.itemName} recovered from ${recover.personName}.`];
         }
@@ -324,7 +351,7 @@ export default class GameQuestRuntime {
         recover.currentVillage = this.pickDifferentVillage(recover.currentVillage, worldMap);
         this.updateRecoverObjectiveText(node);
         this.refreshContracts();
-        this.questUiController?.renderQuest(this.activeQuest);
+        this.renderQuestUi();
         return [
             `${recover.personName} fled with ${recover.itemName}.`,
             `Quest updated: hunt ${recover.personName}; latest lead points to ${recover.currentVillage}.`,
@@ -392,7 +419,7 @@ export default class GameQuestRuntime {
             target.hasJoined = false;
         }
         this.questProgressTracker?.recomputeCompletion();
-        this.questUiController?.renderQuest(this.activeQuest);
+        this.renderQuestUi();
         return { applied: true, targetName: target.personName, died };
     }
 
@@ -403,7 +430,7 @@ export default class GameQuestRuntime {
         if (!this.questProgressTracker.recordBarterCompletion(traderName, itemName, villageName)) {
             return 'no-objective';
         }
-        this.questUiController.renderQuest(this.activeQuest);
+        this.renderQuestUi();
         this.refreshContracts();
         return 'updated';
     }
@@ -415,7 +442,7 @@ export default class GameQuestRuntime {
         if (!this.questProgressTracker.recordMonsterKill(monsterName)) {
             return false;
         }
-        this.questUiController.renderQuest(this.activeQuest);
+        this.renderQuestUi();
         this.refreshContracts();
         return true;
     }
@@ -466,7 +493,7 @@ export default class GameQuestRuntime {
             return { status: 'already-active' };
         }
 
-        this.questUiController.renderQuest(this.activeQuest);
+        this.renderQuestUi();
         this.refreshContracts();
         return {
             status: 'started',
@@ -555,7 +582,7 @@ export default class GameQuestRuntime {
 
         if (stateChanged) {
             this.questProgressTracker?.recomputeCompletion();
-            this.questUiController.renderQuest(this.activeQuest);
+            this.renderQuestUi();
             this.refreshContracts();
         }
 
@@ -590,7 +617,7 @@ export default class GameQuestRuntime {
         });
         if (changed) {
             this.questProgressTracker?.recomputeCompletion();
-            this.questUiController?.renderQuest(this.activeQuest);
+            this.renderQuestUi();
         }
         return lines;
     }
@@ -625,7 +652,7 @@ export default class GameQuestRuntime {
             defend.defenders = (defend.defenders ?? []).filter((defender) => !defender.isDead);
         });
         if (lines.length > 0) {
-            this.questUiController?.renderQuest(this.activeQuest);
+            this.renderQuestUi();
             this.refreshContracts();
         }
         return lines;
@@ -1122,6 +1149,35 @@ export default class GameQuestRuntime {
 
     private rollDefenseBattleCount(): number {
         return this.randomInt(2, 6);
+    }
+
+    private renderQuestUi(): void {
+        if (!this.questUiController || !this.activeQuest) {
+            return;
+        }
+        this.questUiController.renderQuest(this.activeQuest, this.getKnownSideQuestsForUi());
+    }
+
+    private getKnownSideQuestsForUi(): QuestNode[] {
+        const known: QuestNode[] = [];
+        const seenIds = new Set<string>();
+        for (const offers of this.sideQuestOffersByNpc.values()) {
+            for (const offer of offers) {
+                if (seenIds.has(offer.id)) {
+                    continue;
+                }
+                seenIds.add(offer.id);
+                known.push(offer);
+            }
+        }
+        for (const sideQuest of this.activeSideQuests) {
+            if (seenIds.has(sideQuest.id)) {
+                continue;
+            }
+            seenIds.add(sideQuest.id);
+            known.push(sideQuest);
+        }
+        return known;
     }
 
     private randomInt(min: number, max: number): number {

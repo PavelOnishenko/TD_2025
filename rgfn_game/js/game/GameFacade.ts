@@ -86,6 +86,7 @@ export class GameFacade implements GameFacadeStateAccess {
     public gameTime!: GameTimeRuntime;
     private readonly lifecycle = new GameFacadeLifecycleCoordinator(this);
     private readonly worldInteractionCoordinator = new GameFacadeWorldInteractionCoordinator(this);
+    private questGenerator: QuestGenerator | null = null;
     private devController: DeveloperEventController | null = null;
 
     public constructor(canvas: HTMLCanvasElement) {
@@ -130,6 +131,7 @@ export class GameFacade implements GameFacadeStateAccess {
             },
             this.worldMap,
         );
+        this.questGenerator = runtime.questGenerator;
         this.questRuntime.activeSideQuests = Array.isArray(savedSideQuests)
             ? savedSideQuests.map((quest) => ({ ...quest, track: 'side' as const }))
             : [];
@@ -167,10 +169,22 @@ export class GameFacade implements GameFacadeStateAccess {
         villagerNames: string[],
     ): { status: 'started' | 'inactive' | 'not-target' | 'already-active'; objectiveTitle?: string; days?: number } =>
         this.lifecycle.onTryStartDefendObjective(npcName, villageName, villagerNames);
+    public initializeVillageSideQuestOffers = (
+        villageName: string,
+        npcQuestOfferRolls: Array<{ npcName: string; questCount: number }>,
+    ): void => {
+        if (!this.questGenerator) {
+            return;
+        }
+        this.questRuntime.clearVillageSideQuestOffers(villageName);
+        void this.generateVillageSideQuestOffers(villageName, npcQuestOfferRolls);
+    };
     public registerVillageSideQuestOffer = (quest: QuestNode): boolean => this.questRuntime.registerVillageSideQuestOffer(quest);
     public markSideQuestReadyToTurnIn = (questId: string): boolean => this.questRuntime.markSideQuestReadyToTurnIn(questId);
     public getVillageSideQuestOffers = (villageName: string, npcName: string): QuestNode[] =>
         this.questRuntime.getVillageSideQuestOffers(villageName, npcName);
+    public getVillageNpcActiveSideQuests = (villageName: string, npcName: string): QuestNode[] =>
+        this.questRuntime.getVillageNpcActiveSideQuests(villageName, npcName);
     public acceptSideQuest = (questId: string): { accepted: boolean; reason?: 'inactive' | 'not-found' | 'already-active' } =>
         this.questRuntime.acceptSideQuest(questId);
     public turnInSideQuest = (
@@ -249,6 +263,30 @@ export class GameFacade implements GameFacadeStateAccess {
             hash = Math.imul(hash, 16777619);
         }
         return hash >>> 0;
+    }
+
+    private async generateVillageSideQuestOffers(
+        villageName: string,
+        npcQuestOfferRolls: Array<{ npcName: string; questCount: number }>,
+    ): Promise<void> {
+        if (!this.questGenerator) {
+            return;
+        }
+        const timestamp = Date.now();
+        let sequence = 0;
+        for (const roll of npcQuestOfferRolls) {
+            const npcName = roll.npcName.trim();
+            const questCount = Math.max(0, Math.floor(roll.questCount));
+            if (!npcName || questCount <= 0) {
+                continue;
+            }
+            for (let index = 0; index < questCount; index += 1) {
+                sequence += 1;
+                const sideQuestId = `side.${villageName.trim().toLocaleLowerCase()}.${npcName.toLocaleLowerCase().replace(/\s+/g, '_')}.${timestamp}.${sequence}`;
+                const quest = await this.questGenerator.generateSideQuest(sideQuestId, npcName, villageName);
+                this.registerVillageSideQuestOffer(quest);
+            }
+        }
     }
 }
 

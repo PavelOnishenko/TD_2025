@@ -141,7 +141,7 @@
                                 <button id="weapon-slot-off" class="equipment-slot" title="Off hand">Off Hand: Empty</button>
                                 <button id="armor-slot" class="equipment-slot" title="Armor">Armor: Empty</button>
                             </div>
-                            <div class="equipment-hint">Click inventory gear to equip. Click equipped slots to unequip. Right-click any inventory item to drop it. Use Recover Last Dropped Item to undo your latest drop.</div>
+                            <div class="equipment-hint">Click inventory gear to equip. Shift+click weapon entries (inventory or equipped slots) to inspect exact enchantment values. Click equipped slots to unequip. Right-click any inventory item to drop it. Use Recover Last Dropped Item to undo your latest drop.</div>
                         </div>
                     </div>
                     <div id="magic-panel" class="hud-section stats overlay-panel hidden">
@@ -170,6 +170,10 @@
                     </div>
                     <div id="quests-panel" class="hud-section stats overlay-panel hidden">
                         <div id="quests-title" class="stat">Main Quest</div>
+                        <div class="quest-tabs" role="tablist" aria-label="Quest categories">
+                            <button id="quests-tab-main-btn" class="quest-tab is-active" type="button" role="tab" aria-selected="true">Main Quests</button>
+                            <button id="quests-tab-side-btn" class="quest-tab" type="button" role="tab" aria-selected="false">Side Quests</button>
+                        </div>
                         <label class="quest-mode-toggle" for="quests-known-only-toggle">
                             <input id="quests-known-only-toggle" type="checkbox" checked>
                             Show only known/current quests
@@ -318,6 +322,10 @@
                 </div>
                 <p id="village-dialogue-selected-npc" class="village-dialogue-selected-npc">Select an NPC in the village rumors panel first.</p>
                 <div id="village-dialogue-log" class="village-dialogue-log"></div>
+                <div id="village-side-quest-panel" class="village-side-quest-panel">
+                    <h3>Side quests</h3>
+                    <div id="village-side-quest-list" class="village-side-quest-list"></div>
+                </div>
                 <div class="village-dialogue-actions">
                     <select id="village-ask-settlement-input" class="village-ask-input"></select>
                     <button id="village-ask-settlement-btn" class="action-btn">Ask about location</button>

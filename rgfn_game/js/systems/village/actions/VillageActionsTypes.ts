@@ -16,6 +16,8 @@ export type VillageUI = {
     dialogueCloseBtn: HTMLButtonElement;
     dialogueSelectedNpc: HTMLElement;
     dialogueLog: HTMLElement;
+    sideQuestPanel: HTMLElement;
+    sideQuestList: HTMLElement;
     buyOffer1Btn: HTMLButtonElement;
     buyOffer2Btn: HTMLButtonElement;
     buyOffer3Btn: HTMLButtonElement;
@@ -41,6 +43,7 @@ export type VillageActionsCallbacks = {
     onAdvanceTime: (minutes: number, fatigueScale: number) => void;
     onLeaveVillage: () => void;
     getVillageDirectionHint: (settlementName: string) => VillageDirectionHint;
+    getNearbyVillageNames?: (villageName: string, maxDistanceCells: number) => string[];
     getKnownSettlementNames?: () => string[];
     getKnownQuestSettlementNames?: () => string[];
     onVillageBarterCompleted: (traderName: string, itemName: string, villageName: string) => void;
@@ -56,7 +59,9 @@ export type VillageActionsCallbacks = {
         villageName: string,
         villagerNames: string[],
     ) => { status: 'started' | 'inactive' | 'not-target' | 'already-active'; objectiveTitle?: string; days?: number };
+    initializeVillageSideQuestOffers?: (villageName: string, npcQuestOfferRolls: Array<{ npcName: string; questCount: number }>) => void;
     getVillageSideQuestOffers?: (villageName: string, npcName: string) => QuestNode[];
+    getVillageNpcActiveSideQuests?: (villageName: string, npcName: string) => QuestNode[];
     acceptSideQuest?: (questId: string) => { accepted: boolean; reason?: 'inactive' | 'not-found' | 'already-active' };
     turnInSideQuest?: (
         questId: string,
@@ -91,6 +96,7 @@ export type VillageOffer = {
     kindName: string;
     buyPrice: number;
     possibleItemIds: string[];
+    isEnchantedWeaponOffer?: boolean;
 };
 
 export type BarterItemCost = {

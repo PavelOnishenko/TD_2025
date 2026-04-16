@@ -33,6 +33,8 @@ type RuntimeControllers = ReturnType<typeof createRuntimeControllers>;
 
 const createQuestUiController = (game: GameFacade, ui: RuntimeUi): QuestUiController => new QuestUiController(
     ui.hudElements.questsTitle,
+    document.getElementById('quests-tab-main-btn')! as HTMLButtonElement,
+    document.getElementById('quests-tab-side-btn')! as HTMLButtonElement,
     ui.hudElements.questsKnownOnlyToggle,
     ui.hudElements.questsBody,
     ui.hudElements.questIntroModal,
@@ -43,8 +45,12 @@ const createQuestUiController = (game: GameFacade, ui: RuntimeUi): QuestUiContro
 
 const createQuestGenerator = (worldMap: WorldMap): QuestGenerator => new QuestGenerator({
     packService: new QuestPackService({ locationNamesProvider: () => worldMap.getAllVillageNames() }),
+    nearbyVillagesProvider: (villageName: string, maxDistanceCells: number) =>
+        worldMap.getNearbyVillagesFromVillage(villageName, maxDistanceCells),
+    villageDirectionHintProvider: (villageName: string) => worldMap.getVillageDirectionHintFromPlayer(villageName),
 });
 
+// eslint-disable-next-line style-guide/function-length-warning
 const createDevController = (
     ui: RuntimeUi,
     encounterSystem: EncounterSystem,

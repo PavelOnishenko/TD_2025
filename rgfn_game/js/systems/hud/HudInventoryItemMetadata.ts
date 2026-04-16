@@ -2,6 +2,7 @@ import { balanceConfig } from '../../config/balance/balanceConfig.js';
 import { calculateBowDamageBonus, calculateMeleeDamageBonus } from '../../config/levelConfig.js';
 import Item from '../../entities/Item.js';
 import Player from '../../entities/player/Player.js';
+import { buildEnchantmentDetailLine } from '../../entities/items/WeaponEnchantments.js';
 
 type LogHandler = (message: string) => void;
 
@@ -27,7 +28,7 @@ export default class HudInventoryItemMetadata {
     public buildInventoryTooltip(item: Item): string {
         const lines = [`${item.name} — right-click to drop`];
         if (item.type === 'weapon' || item.type === 'armor') {
-            lines[0] = `${item.name} — click to equip • right-click to drop`;
+            lines[0] = `${item.name} — click to equip • shift+click to inspect • right-click to drop`;
         }
 
         const requirements = this.getRequirementEntries(item);
@@ -36,9 +37,28 @@ export default class HudInventoryItemMetadata {
         }
         if (item.type === 'weapon') {
             lines.push(`Damage if requirements met: ${this.calculateWeaponDamageAtRequirements(item)}`);
+            this.appendWeaponEnchantmentDetails(lines, item);
         }
 
         return lines.join('\n');
+    }
+
+    public inspectWeaponEnchantments(item: Item): string[] {
+        if (item.type !== 'weapon') {
+            return [`${item.name} has no weapon enchantments.`];
+        }
+        if (item.enchantments.length === 0) {
+            return [`${item.name} has no enchantments.`];
+        }
+        return [`${item.name} enchantments:`, ...item.enchantments.map((enchantment) => buildEnchantmentDetailLine(enchantment))];
+    }
+
+    private appendWeaponEnchantmentDetails(lines: string[], item: Item): void {
+        if (item.enchantments.length === 0) {
+            return;
+        }
+        lines.push(`Enchantments: ${item.enchantments.map((enchantment) => enchantment.type).join(', ')}`);
+        lines.push(...item.enchantments.map((enchantment) => buildEnchantmentDetailLine(enchantment)));
     }
 
     private calculateWeaponDamageAtRequirements(item: Item): number {
@@ -50,7 +70,7 @@ export default class HudInventoryItemMetadata {
             ? calculateBowDamageBonus(effectiveStrength, effectiveAgility)
             : calculateMeleeDamageBonus(effectiveStrength, effectiveAgility);
         const offHandDamage = item.handsRequired === 1 ? balanceConfig.combat.fistDamagePerHand : 0;
-        return item.damageBonus + offHandDamage + statBonus;
+        return item.damageBonus + item.getPlasmaBonusDamage() + offHandDamage + statBonus;
     }
 
     private getRequirementEntries(item: Item): Array<{ label: 'AGI' | 'STR'; required: number; current: number }> {

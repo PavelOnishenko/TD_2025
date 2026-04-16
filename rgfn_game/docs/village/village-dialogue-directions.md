@@ -73,14 +73,15 @@ Village rumors now support asking about **people**, not only settlements.
 - Lists are deduplicated and sorted alphabetically.
 
 ### Button availability rule (RGFN UX)
-- Core dialogue actions remain available once an NPC is selected:
+- Core non-quest dialogue actions remain available once an NPC is selected:
   - **Ask about location**
   - **Ask about person**
-  - **Ask about barter**
 - Quest-only follow-up actions are now **context-sensitive and hidden by default**:
+  - **Ask about barter** appears only for selected NPCs with an unfinished barter contract in the current village.
   - **I have what you need, let's do our barter** appears only for selected NPCs with an unfinished barter contract in the current village.
   - **Confront for quest item** appears only when the selected NPC is the currently valid recover quest confrontation target and the target has already been revealed.
   - **Join my group** appears only when the selected NPC is currently recruitable for an active escort objective in this village.
+  - **I am ready to defend you** appears only for selected NPCs with an active defend contract in the current village.
 - Goal: prevent dead-end button clicks and show only actionable quest interactions per-NPC.
 
 ### Reliability model (intentionally lower than village directions)

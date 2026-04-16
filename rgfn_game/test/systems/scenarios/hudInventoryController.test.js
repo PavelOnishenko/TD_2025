@@ -119,3 +119,52 @@ test('HudInventoryController fails fast when drag index exists without dragged i
     global.document = originalDocument;
   }
 });
+
+test('HudInventoryController shift+click on weapon logs enchantment parameters instead of equipping', () => {
+  const originalDocument = global.document;
+  global.document = { createElement: () => createElement() };
+
+  try {
+    const player = new Player(0, 0);
+    const enchantedKnife = new Item({
+      id: 'knife',
+      name: 'Doubt Knife +2',
+      description: 'Enchanted blade',
+      type: 'weapon',
+      handsRequired: 1,
+      damageBonus: 2,
+      requirements: { agility: 0, strength: 0 },
+      enchantments: [{ type: 'doubt', doubtDamagePerSecond: 3, doubtDurationSeconds: 2 }],
+    });
+    player.addItemToInventory(enchantedKnife);
+
+    const hudElements = {
+      inventoryCount: createElement(),
+      inventoryCapacity: createElement(),
+      inventoryCapacityHint: createElement(),
+      undoLastDropBtn: createElement(),
+      inventoryGrid: createElement(),
+    };
+    const logs = [];
+    let equipCount = 0;
+
+    const controller = new HudInventoryController(
+      player,
+      hudElements,
+      () => { equipCount += 1; },
+      () => {},
+      (message) => logs.push(message),
+      () => null,
+      () => {},
+    );
+
+    controller.renderInventoryAndMeta();
+    const slot = hudElements.inventoryGrid.children[0];
+    slot.dispatch('click', { shiftKey: true });
+
+    assert.equal(equipCount, 0);
+    assert.equal(logs.some((line) => line.includes('Doubt') && line.includes('damage per turn') && line.includes('2 turns')), true);
+  } finally {
+    global.document = originalDocument;
+  }
+});

@@ -2,6 +2,7 @@ import { randomInt } from '../../../../engine/utils/MathUtils.js';
 import Skeleton, { EnemyConfig } from '../../entities/Skeleton.js';
 import Item, { DISCOVERABLE_ITEM_LIBRARY, HEALING_POTION_ITEM, MANA_POTION_ITEM } from '../../entities/Item.js';
 import { balanceConfig } from '../../config/balance/balanceConfig.js';
+import { applyRandomEnchantmentsToGeneratedItem } from '../../entities/items/WeaponEnchantments.js';
 import { assignMonsterBehaviorPool } from '../combat/MonsterBehaviorDirector.js';
 import type { EncounterResult, ForcedEncounterType, RandomEncounterType } from './EncounterSystem.js';
 import Wanderer from '../../entities/Wanderer.js';
@@ -91,7 +92,7 @@ export default class EncounterResolver {
             if (roll <= 0) {
                 const itemData = DISCOVERABLE_ITEM_LIBRARY.find((item) => item.id === candidate.id);
                 if (itemData) {
-                    return { type: 'item', item: new Item(itemData) };
+                    return { type: 'item', item: applyRandomEnchantmentsToGeneratedItem(new Item(itemData)) };
                 }
             }
         }

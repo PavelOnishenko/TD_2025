@@ -9,6 +9,7 @@ import VillageDialogueInteractionService from './actions/VillageDialogueInteract
 import { QuestBarterContract, QuestDefendContract, QuestEscortContract, VillageActionsCallbacks, VillageUI } from './actions/VillageActionsTypes.js';
 import { isDeveloperModeEnabled } from '../../utils/DeveloperModeConfig.js';
 import { QuestNode } from '../quest/QuestTypes.js';
+import { balanceConfig } from '../../config/balance/balanceConfig.js';
 export default class VillageActionsController {
     private readonly villageUI: VillageUI;
     private readonly callbacks: VillageActionsCallbacks;
@@ -25,6 +26,7 @@ export default class VillageActionsController {
     private escortContracts: QuestEscortContract[] = [];
     private defendContracts: QuestDefendContract[] = [];
     private activeNpcSideQuestIds: Set<string> = new Set();
+    private readySideQuestLogIds: Set<string> = new Set();
     private knownNpcNames: Set<string> = new Set();
     private joinedEscortNpcKeys: Set<string> = new Set();
 
@@ -41,6 +43,7 @@ export default class VillageActionsController {
         this.barterService.assignQuestBarterContractsIfNeeded(villageName);
         this.stockService.refreshVillageStock();
         this.npcRoster = this.getOrCreateVillageNpcRoster(villageName);
+        this.initializeVillageSideQuestOffers(villageName);
         this.selectedNpcId = null;
         this.prepareVillageUiForEntry(villageName);
         this.handleEnter(villageName);
@@ -107,8 +110,35 @@ export default class VillageActionsController {
         this.addLog(`You approach ${npc.name} the ${npc.role}.`, 'player');
         this.addLog(`${npc.name} looks ${npc.look} and speaks in a ${npc.speechStyle} manner.`, 'system-message');
         this.addRecoverLeadFromNpc(npc);
-        this.handleSelectedNpcSideQuests(npc);
+        this.refreshSelectedNpcSideQuestUi(npc);
         this.callbacks.onAdvanceTime(8, 0.12);
+    }
+
+    public handleAcceptSideQuest(questId: string): void {
+        const selectedNpc = this.getSelectedNpc();
+        if (!selectedNpc) {
+            this.addLog('Choose an NPC before accepting a side quest.', 'system');
+            return;
+        }
+        const result = this.callbacks.acceptSideQuest?.(questId) ?? { accepted: false, reason: 'inactive' as const };
+        if (!result.accepted && this.logSideQuestAcceptFailure(questId, result.reason)) {
+            return;
+        }
+        this.completeSideQuestAccept(selectedNpc, questId);
+    }
+
+    public handleTurnInSideQuest(questId: string): void {
+        const selectedNpc = this.getSelectedNpc();
+        if (!selectedNpc) {
+            this.addLog('Choose an NPC before turning in a side quest.', 'system');
+            return;
+        }
+        const result = this.callbacks.turnInSideQuest?.(questId, selectedNpc.name, this.currentVillageName)
+            ?? { turnedIn: false, reason: 'inactive' as const };
+        if (!result.turnedIn && this.logSideQuestTurnInFailure(questId, selectedNpc.name, result.reason)) {
+            return;
+        }
+        this.completeSideQuestTurnIn(selectedNpc, questId, result.reward);
     }
 
     public handleAskAboutSettlement(): void { this.dialogueInteraction.handleAskAboutSettlement(); this.callbacks.onAdvanceTime(14, 0.1); }
@@ -172,6 +202,7 @@ export default class VillageActionsController {
         this.villageUI.rumorsPanel.classList.remove('hidden');
         this.closeDialogueWindow();
         this.villageUI.dialogueLog.innerHTML = '';
+        this.villageUI.sideQuestList.innerHTML = '<p>Select an NPC to view side quests.</p>';
         this.addLog(`You arrive at ${villageName}.`, 'system');
     }
 
@@ -188,6 +219,7 @@ export default class VillageActionsController {
         getSelectedNpc: () => this.getSelectedNpc(),
         getSellPrice: (item) => this.stockService.getSellPrice(item),
         isInnkeeper: (role) => this.isInnkeeper(role),
+        shouldShowAskBarterAction: (npcName) => this.hasActiveBarterDealForNpc(npcName),
         shouldShowBarterNowAction: (npcName) => this.hasActiveBarterDealForNpc(npcName),
         shouldShowConfrontRecoverAction: (npcName, villageName) => this.canConfrontRecoverTarget(npcName, villageName),
         shouldShowRecruitEscortAction: (npcName, villageName) => this.canRecruitEscort(npcName, villageName),
@@ -240,6 +272,28 @@ export default class VillageActionsController {
         this.ensureQuestPeoplePresent(roster, villageName);
         this.villageNpcRosters.set(villageName, roster);
         return roster;
+    }
+
+    private initializeVillageSideQuestOffers(villageName: string): void {
+        const sideQuestOfferChance = Math.max(0, Math.min(1, Number(balanceConfig.quest?.sideQuestVillagerOfferChance ?? 0.2)));
+        const maxOffersPerVillager = Math.max(1, Math.min(3, Math.floor(balanceConfig.quest?.sideQuestMaxOffersPerVillager ?? 2)));
+        const npcQuestOfferRolls = this.npcRoster
+            .map((npc) => ({ npcName: npc.name, questCount: this.rollSideQuestOfferCount(sideQuestOfferChance, maxOffersPerVillager) }))
+            .filter((roll) => roll.questCount > 0);
+        this.callbacks.initializeVillageSideQuestOffers?.(villageName, npcQuestOfferRolls);
+    }
+
+    private rollSideQuestOfferCount(sideQuestOfferChance: number, maxOffersPerVillager: number): number {
+        if (maxOffersPerVillager <= 0 || Math.random() >= sideQuestOfferChance) {
+            return 0;
+        }
+        let offers = 1;
+        for (let index = 1; index < maxOffersPerVillager; index += 1) {
+            if (Math.random() < sideQuestOfferChance) {
+                offers += 1;
+            }
+        }
+        return offers;
     }
 
     private ensureQuestPeoplePresent(roster: VillageNpcProfile[], villageName: string): void {
@@ -410,59 +464,150 @@ export default class VillageActionsController {
         if (!npcName.trim() || !villageName.trim() || !this.callbacks.onTryStartDefend) {
             return false;
         }
-        return true;
+        const normalizedNpc = npcName.trim().toLocaleLowerCase();
+        const normalizedVillage = villageName.trim().toLocaleLowerCase();
+        return this.defendContracts.some((contract) =>
+            contract.personName.trim().toLocaleLowerCase() === normalizedNpc
+            && contract.villageName.trim().toLocaleLowerCase() === normalizedVillage,
+        );
     }
 
     // eslint-disable-next-line style-guide/function-length-warning
-    private handleSelectedNpcSideQuests(npc: VillageNpcProfile): void {
+    private refreshSelectedNpcSideQuestUi(npc: VillageNpcProfile): void {
         const offers = this.callbacks.getVillageSideQuestOffers?.(this.currentVillageName, npc.name) ?? [];
-        if (offers.length === 0) {
-            if (this.tryTurnInNpcSideQuest(npc)) {
-                this.updateButtons();
-            }
-            return;
-        }
+        const activeQuests = this.callbacks.getVillageNpcActiveSideQuests?.(this.currentVillageName, npc.name) ?? [];
+        const readyToTurnInCount = activeQuests.filter((quest) => quest.status === 'readyToTurnIn').length;
+        this.renderSideQuestUiForNpc(npc, offers, activeQuests);
         this.addLog(
-            `${npc.name} can offer ${offers.length} side quest${offers.length === 1 ? '' : 's'}.`,
+            `Side-quest board updated for ${npc.name}: ${offers.length} offer${offers.length === 1 ? '' : 's'}, `
+            + `${activeQuests.length} active, ${readyToTurnInCount} ready to turn in.`,
             'system-message',
         );
-        offers.forEach((offer) => this.addLog(this.formatSideQuestOfferLine(offer), 'system-message'));
-        const acceptedOffers = offers
-            .map((offer) => ({ offer, result: this.callbacks.acceptSideQuest?.(offer.id) ?? { accepted: false, reason: 'inactive' as const } }))
-            .filter(({ result }) => result.accepted)
-            .map(({ offer }) => offer);
-        acceptedOffers.forEach((quest) => {
+        if (offers.length === 0 && activeQuests.length > 0) {
+            this.addLog(
+                `No new side-quest offers from ${npc.name}. ${activeQuests.length} quest${activeQuests.length === 1 ? '' : 's'} `
+                + 'already in progress from earlier acceptance.',
+                'system-message',
+            );
+        }
+        activeQuests.forEach((quest) => {
             this.activeNpcSideQuestIds.add(quest.id);
-            this.addLog(`New side quest accepted: ${quest.title}.`, 'system');
-        });
-        if (acceptedOffers.length > 0) {
-            this.updateButtons();
-        }
-    }
-
-    private formatSideQuestOfferLine(quest: QuestNode): string {
-        const rewardSegment = quest.reward?.trim() ? ` Reward: ${quest.reward}.` : '';
-        return `Offer — ${quest.title}: ${quest.description}.${rewardSegment}`;
-    }
-
-    private tryTurnInNpcSideQuest(npc: VillageNpcProfile): boolean {
-        if (!this.callbacks.turnInSideQuest || this.activeNpcSideQuestIds.size === 0) {
-            return false;
-        }
-        let turnedInAny = false;
-        Array.from(this.activeNpcSideQuestIds).forEach((questId) => {
-            const result = this.callbacks.turnInSideQuest?.(questId, npc.name, this.currentVillageName);
-            if (!result?.turnedIn) {
+            this.injectSideQuestNpcReferencesIntoNearbyRosters(quest);
+            if (quest.status !== 'readyToTurnIn' || this.readySideQuestLogIds.has(quest.id)) {
                 return;
             }
-            turnedInAny = true;
-            this.activeNpcSideQuestIds.delete(questId);
-            this.addLog(
-                `${npc.name} accepts your side-quest handoff for ${questId}.${result.reward ? ` Reward received: ${result.reward}.` : ''}`,
-                'system',
-            );
+            this.readySideQuestLogIds.add(quest.id);
+            this.addLog(`Side quest ready to turn in: ${quest.title}.`, 'system');
         });
-        return turnedInAny;
+        this.updateButtons();
+    }
+
+    private renderSideQuestUiForNpc(npc: VillageNpcProfile, offers: QuestNode[], activeQuests: QuestNode[]): void {
+        this.villageUI.sideQuestList.innerHTML = '';
+        const entries = [...offers, ...activeQuests];
+        if (entries.length === 0) {
+            const empty = document.createElement('p');
+            empty.textContent = `No side quests from ${npc.name} right now.`;
+            this.villageUI.sideQuestList.appendChild(empty);
+            return;
+        }
+        entries.forEach((quest) => this.villageUI.sideQuestList.appendChild(this.createSideQuestCard(quest, offers.some((offer) => offer.id === quest.id))));
+    }
+
+    private createSideQuestCard(quest: QuestNode, isOffer: boolean): HTMLElement {
+        const card = document.createElement('div');
+        card.className = 'village-side-quest-card';
+        this.appendSideQuestCardText(card, quest, isOffer);
+        this.appendSideQuestCardAction(card, quest, isOffer);
+        return card;
+    }
+
+    private appendSideQuestCardText(card: HTMLElement, quest: QuestNode, isOffer: boolean): void {
+        const statusText = isOffer ? 'Offer available' : this.getSideQuestStatusText(quest.status);
+        [ `${quest.title} — ${statusText}`, quest.description, `Reward preview: ${quest.reward?.trim() ? quest.reward : 'Unknown reward'}` ]
+            .forEach((line) => {
+                const element = document.createElement('p');
+                element.textContent = line;
+                card.appendChild(element);
+            });
+    }
+
+    private appendSideQuestCardAction(card: HTMLElement, quest: QuestNode, isOffer: boolean): void {
+        if (isOffer) {
+            card.appendChild(this.createSideQuestActionButton('Accept quest', () => this.handleAcceptSideQuest(quest.id)));
+            return;
+        }
+        if (quest.status === 'readyToTurnIn') {
+            card.appendChild(this.createSideQuestActionButton('Turn in quest', () => this.handleTurnInSideQuest(quest.id)));
+        }
+    }
+
+    private createSideQuestActionButton(label: string, onClick: () => void): HTMLButtonElement {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'action-btn';
+        button.textContent = label;
+        button.addEventListener('click', onClick);
+        return button;
+    }
+
+    private completeSideQuestAccept(selectedNpc: VillageNpcProfile, questId: string): void {
+        this.activeNpcSideQuestIds.add(questId);
+        const quests = this.callbacks.getVillageNpcActiveSideQuests?.(this.currentVillageName, selectedNpc.name) ?? [];
+        const acceptedQuest = quests.find((quest) => quest.id === questId);
+        if (acceptedQuest) {
+            this.injectSideQuestNpcReferencesIntoNearbyRosters(acceptedQuest);
+            this.addLog(`Side quest accepted: ${acceptedQuest.title}.`, 'system');
+        } else {
+            this.addLog(`Side quest accepted: ${questId}.`, 'system');
+        }
+        this.addLog('Quest tracker updated with accepted side quest.', 'system-message');
+        this.refreshSelectedNpcSideQuestUi(selectedNpc);
+    }
+
+    private completeSideQuestTurnIn(selectedNpc: VillageNpcProfile, questId: string, reward?: string): void {
+        this.activeNpcSideQuestIds.delete(questId);
+        this.readySideQuestLogIds.delete(questId);
+        this.addLog(`${selectedNpc.name} accepts your side-quest turn-in for ${questId}.${reward ? ` Reward received: ${reward}.` : ''}`, 'system');
+        this.addLog('Quest tracker updated: side quest turned in.', 'system-message');
+        this.refreshSelectedNpcSideQuestUi(selectedNpc);
+    }
+
+    private logSideQuestAcceptFailure(questId: string, reason?: 'inactive' | 'not-found' | 'already-active'): boolean {
+        if (reason === 'already-active') {
+            this.addLog(`Side quest is already active: ${questId}.`, 'system-message');
+        } else if (reason === 'inactive') {
+            this.addLog('Side quest runtime is unavailable right now.', 'system-message');
+        } else {
+            this.addLog(`Side quest offer was not found: ${questId}.`, 'system-message');
+        }
+        return true;
+    }
+
+    private logSideQuestTurnInFailure(questId: string, npcName: string, reason?: 'inactive' | 'not-found' | 'wrong-giver' | 'not-ready' | 'already-completed'): boolean {
+        if (reason === 'not-ready') {
+            this.addLog(`Side quest is not ready to turn in yet: ${questId}.`, 'system-message');
+        } else if (reason === 'wrong-giver') {
+            this.addLog(`${npcName} cannot accept this side quest handoff.`, 'system-message');
+        } else if (reason === 'already-completed') {
+            this.addLog(`Side quest already completed: ${questId}.`, 'system-message');
+        } else {
+            this.addLog(`Unable to turn in side quest: ${questId}.`, 'system-message');
+        }
+        return true;
+    }
+
+    private getSideQuestStatusText(status: QuestNode['status']): string {
+        if (status === 'readyToTurnIn') {
+            return 'Ready to turn in';
+        }
+        if (status === 'completed') {
+            return 'Completed';
+        }
+        if (status === 'active') {
+            return 'In progress';
+        }
+        return 'Available';
     }
 
     private getKnownSettlementNames(): string[] {
@@ -480,7 +625,7 @@ export default class VillageActionsController {
     }
 
     private getKnownPersonNames(): string[] {
-        const knownSettlements = this.buildKnownSettlementSet();
+        const knownSettlements = this.buildNearbyKnownSettlementSet();
         const fromBarter = this.barterService.getKnownTraderNames().filter((traderName) => this.shouldIncludeTraderName(traderName, knownSettlements));
         const fromEscort = this.escortContracts.filter((contract) => this.shouldIncludeEscortContract(contract, knownSettlements)).map((contract) => contract.personName);
         const fromNpcRoster = Array.from(this.knownNpcNames);
@@ -520,7 +665,73 @@ export default class VillageActionsController {
         this.refreshDialogueTargetOptions();
     }
 
-    private buildKnownSettlementSet = (): Set<string> => new Set((this.callbacks.getKnownSettlementNames?.() ?? []).map((name) => name.trim().toLocaleLowerCase()));
+    private buildNearbyKnownSettlementSet = (): Set<string> => {
+        const knownSettlements = this.callbacks.getKnownSettlementNames?.() ?? [];
+        const nearbySettlements = this.getNearbyVillageSet(this.currentVillageName);
+        return new Set(
+            knownSettlements
+                .map((name) => name.trim().toLocaleLowerCase())
+                .filter((name) => nearbySettlements.has(name)),
+        );
+    };
+
+    private getNearbyVillageSet(villageName: string): Set<string> {
+        const normalizedVillage = villageName.trim().toLocaleLowerCase();
+        if (!normalizedVillage) {
+            return new Set();
+        }
+        const maxDistanceCells = Math.max(1, Math.floor(balanceConfig.quest?.sideQuestNearbyRosterDistanceCells ?? 4));
+        const nearby = this.callbacks.getNearbyVillageNames?.(villageName, maxDistanceCells) ?? [];
+        return new Set([normalizedVillage, ...nearby.map((name) => name.trim().toLocaleLowerCase()).filter((name) => name.length > 0)]);
+    }
+
+    private injectSideQuestNpcReferencesIntoNearbyRosters(quest: QuestNode): void {
+        const nearbyVillageSet = this.getNearbyVillageSet(this.currentVillageName);
+        this.injectNpcIntoNearbyVillageRoster(nearbyVillageSet, quest.giverVillageName, quest.giverNpcName, 'Side Quest Giver');
+        quest.children.forEach((child) => this.injectChildObjectiveNpcs(nearbyVillageSet, child));
+    }
+
+    private injectChildObjectiveNpcs(nearbyVillageSet: Set<string>, child: QuestNode): void {
+        const localDelivery = child.objectiveData?.localDelivery;
+        if (localDelivery) {
+            this.injectNpcIntoNearbyVillageRoster(nearbyVillageSet, localDelivery.villageName, localDelivery.sourceNpcName, 'Courier Handler');
+            this.injectNpcIntoNearbyVillageRoster(nearbyVillageSet, localDelivery.villageName, localDelivery.recipientNpcName, 'Delivery Recipient');
+        }
+        const recover = child.objectiveData?.recover;
+        if (recover) {
+            this.injectNpcIntoNearbyVillageRoster(nearbyVillageSet, recover.currentVillage, recover.personName, `Wanted for ${recover.itemName}`);
+        }
+        const escort = child.objectiveData?.escort;
+        if (escort) {
+            this.injectNpcIntoNearbyVillageRoster(nearbyVillageSet, escort.sourceVillage, escort.personName, `Escort to ${escort.destinationVillage}`);
+        }
+        const defend = child.objectiveData?.defend;
+        if (defend) {
+            this.injectNpcIntoNearbyVillageRoster(nearbyVillageSet, defend.villageName, defend.contactName, `Artifact Custodian (${defend.artifactName})`);
+        }
+    }
+
+    // eslint-disable-next-line style-guide/function-length-warning
+    private injectNpcIntoNearbyVillageRoster(nearbyVillageSet: Set<string>, villageName: string | undefined, npcName: string | undefined, role: string): void {
+        const normalizedVillage = villageName?.trim().toLocaleLowerCase();
+        const normalizedNpcName = npcName?.trim();
+        if (!normalizedVillage || !normalizedNpcName || !nearbyVillageSet.has(normalizedVillage)) {
+            return;
+        }
+        const roster = this.getOrCreateVillageNpcRoster(villageName.trim());
+        const exists = roster.some((npc) => npc.name.trim().toLocaleLowerCase() === normalizedNpcName.toLocaleLowerCase());
+        if (exists) {
+            return;
+        }
+        roster.unshift({
+            id: `${normalizedVillage}-${normalizedNpcName.toLocaleLowerCase()}-side`,
+            name: normalizedNpcName,
+            role,
+            look: 'travel-worn cloak, practical satchel, watchful gaze',
+            speechStyle: 'measured and direct',
+            disposition: 'truthful',
+        });
+    }
 
     private shouldIncludeTraderName(traderName: string, knownSettlements: Set<string>): boolean {
         if (isDeveloperModeEnabled()) {

@@ -62,7 +62,7 @@ export default class BattleTurnController {
 
     private executeAiTurn(actor: Skeleton): void {
         setTimeout(() => {
-            if (actor.shouldSkipTurnFromSlow()) {
+            if (actor.shouldSkipTurn()) {
                 const effectMessages = actor.consumeTurnEffects();
                 this.completeAiTurn(effectMessages);
                 return;

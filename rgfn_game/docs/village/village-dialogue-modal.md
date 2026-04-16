@@ -63,7 +63,8 @@ This keeps one shared source of dialogue events while showing NPC conversation i
 
 - open dialogue button,
 - close dialogue button,
-- backdrop click-to-close for dialogue modal.
+- backdrop click-to-close for dialogue modal,
+- Escape key close for dialogue modal while it is open.
 
 ## Test coverage added
 
@@ -101,6 +102,18 @@ File: `rgfn_game/test/systems/villageActionsController.test.js`.
 - Root cause: `worldMap.getKnownSettlementNames()` merged in `namedLocations` without checking tile discovery state.
 - Fix: `WorldMapNamedLocationAndVillageOverlays.getKnownSettlementNames()` now includes named locations only when their anchor cell is discovered.
 - Regression guard: `worldMap.test.js` now verifies undiscovered named location entries are excluded until discovered.
+
+## Follow-up pitfall fixed (April 16, 2026)
+
+- Symptom: NPC dialogue popup had no keyboard close path, forcing mouse interaction with close button or backdrop.
+- Root cause: `GameUiPrimaryEventBinder` only wired click events for modal close and had no Escape handler.
+- Fix:
+  - Added a `keydown` listener in village UI binding flow.
+  - Added `handleDialogueCloseHotkeys(...)` that closes the dialogue modal when `event.key === 'Escape'` and the modal is currently visible.
+  - Added `preventDefault()` for that specific Escape close path to keep behavior deterministic while the popup is open.
+- Regression guard:
+  - Escape handling exits early when the modal is hidden, avoiding redundant close calls.
+  - Existing world map keyboard zoom handling remains isolated in its own keydown branch.
 
 ## Notes for future extension
 
