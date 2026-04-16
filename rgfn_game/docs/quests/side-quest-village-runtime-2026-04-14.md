@@ -165,4 +165,27 @@
     - `No new side-quest offers from <NPC>. <N> quest(s) already in progress from earlier acceptance.`
 - Practical debugging tip:
   - If a quest card is **In progress** with no Accept button, check the log for the line above; this indicates an already-active quest rather than a newly spawned unaccepted offer.
+
+## 2026-04-16: Quests HUD tabs (Main Quests / Side Quests)
+
+- The HUD Quests window now has explicit tabs:
+  - **Main Quests**: renders the generated main-quest tree exactly as before.
+  - **Side Quests**: renders all side quests known by runtime (`available` offers + accepted `active`/`readyToTurnIn` + `completed`).
+- Side quests in the HUD are rendered as expandable cards (`<details>`):
+  - each card contains quest metadata (giver NPC + village + optional reward),
+  - each card contains the full nested quest objective tree under that side-quest root.
+- Status chips are shown in the Side Quests tab:
+  - `Available`, `Active`, `Ready to turn in`, `Completed`.
+- Main-tab-only UX:
+  - `Show only known/current quests` checkbox remains visible and active only on **Main Quests** tab,
+  - checkbox is hidden on **Side Quests** tab to avoid implying unknown-side-quest filtering.
+
+### Runtime/UI synchronization notes
+
+- `GameQuestRuntime` now re-renders the Quests HUD after side-quest state transitions:
+  - offer registration,
+  - accept,
+  - mark-ready-to-turn-in,
+  - turn-in completion.
+- This prevents stale HUD state where village-side quest cards update but HUD Quests panel does not.
   - Offer cards remain labeled **Offer available** and include an **Accept quest** button.
