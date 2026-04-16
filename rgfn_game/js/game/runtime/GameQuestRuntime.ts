@@ -110,6 +110,19 @@ export default class GameQuestRuntime {
             .map((quest) => ({ ...quest }));
     }
 
+    public clearVillageSideQuestOffers(villageName: string): void {
+        const normalizedVillage = villageName.trim().toLocaleLowerCase();
+        if (!normalizedVillage) {
+            return;
+        }
+        for (const npcKey of this.sideQuestOffersByNpc.keys()) {
+            if (!npcKey.startsWith(`${normalizedVillage}::`)) {
+                continue;
+            }
+            this.sideQuestOffersByNpc.delete(npcKey);
+        }
+    }
+
     public acceptSideQuest(questId: string): { accepted: boolean; reason?: 'inactive' | 'not-found' | 'already-active' } {
         const normalizedQuestId = questId.trim();
         if (!normalizedQuestId) {

@@ -210,6 +210,42 @@ test('VillageActionsController shows village actions + rumors on entry and hides
   assert.equal(villageUI.rumorsPanel.classList.contains('hidden'), true);
 }));
 
+test('VillageActionsController rolls side-quest offers per villager on village entry', () => withDocumentStub(() => {
+  const villageUI = createVillageUi();
+  const gameLog = createElement();
+  const sideQuestOfferRolls = [];
+  const controller = new VillageActionsController(createPlayerStub(), villageUI, gameLog, {
+    onUpdateHUD: () => {},
+    onAdvanceTime: () => {},
+    onLeaveVillage: () => {},
+    getVillageDirectionHint: (settlementName) => ({ settlementName, exists: false }),
+    onVillageBarterCompleted: () => {},
+    initializeVillageSideQuestOffers: (villageName, rolls) => sideQuestOfferRolls.push({ villageName, rolls }),
+  });
+
+  controller['dialogueEngine'] = {
+    createNpcRoster: () => [
+      { id: 'moss-0', name: 'Mara', role: 'Trader', look: 'satchel', speechStyle: 'calm', disposition: 'truthful' },
+      { id: 'moss-1', name: 'Tor', role: 'Hunter', look: 'boots', speechStyle: 'cold', disposition: 'liar' },
+    ],
+    buildLocationAnswer: () => ({ speech: '', tone: '', truthfulness: 'truth' }),
+  };
+
+  const originalMathRandom = Math.random;
+  const randomValues = [0.15, 0.11, 0.9];
+  Math.random = () => randomValues.shift() ?? 0.95;
+
+  try {
+    controller.enterVillage('Mossbrook');
+  } finally {
+    Math.random = originalMathRandom;
+  }
+
+  assert.equal(sideQuestOfferRolls.length, 1);
+  assert.equal(sideQuestOfferRolls[0].villageName, 'Mossbrook');
+  assert.deepEqual(sideQuestOfferRolls[0].rolls, [{ npcName: 'Mara', questCount: 2 }]);
+}));
+
 test('VillageActionsController stores separate rumor rosters for different villages', () => withDocumentStub(() => {
   const villageUI = createVillageUi();
   const gameLog = createElement();

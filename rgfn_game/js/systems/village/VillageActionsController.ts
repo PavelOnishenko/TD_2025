@@ -43,6 +43,7 @@ export default class VillageActionsController {
         this.barterService.assignQuestBarterContractsIfNeeded(villageName);
         this.stockService.refreshVillageStock();
         this.npcRoster = this.getOrCreateVillageNpcRoster(villageName);
+        this.initializeVillageSideQuestOffers(villageName);
         this.selectedNpcId = null;
         this.prepareVillageUiForEntry(villageName);
         this.handleEnter(villageName);
@@ -271,6 +272,28 @@ export default class VillageActionsController {
         this.ensureQuestPeoplePresent(roster, villageName);
         this.villageNpcRosters.set(villageName, roster);
         return roster;
+    }
+
+    private initializeVillageSideQuestOffers(villageName: string): void {
+        const sideQuestOfferChance = Math.max(0, Math.min(1, Number(balanceConfig.quest?.sideQuestVillagerOfferChance ?? 0.2)));
+        const maxOffersPerVillager = Math.max(1, Math.min(3, Math.floor(balanceConfig.quest?.sideQuestMaxOffersPerVillager ?? 2)));
+        const npcQuestOfferRolls = this.npcRoster
+            .map((npc) => ({ npcName: npc.name, questCount: this.rollSideQuestOfferCount(sideQuestOfferChance, maxOffersPerVillager) }))
+            .filter((roll) => roll.questCount > 0);
+        this.callbacks.initializeVillageSideQuestOffers?.(villageName, npcQuestOfferRolls);
+    }
+
+    private rollSideQuestOfferCount(sideQuestOfferChance: number, maxOffersPerVillager: number): number {
+        if (maxOffersPerVillager <= 0 || Math.random() >= sideQuestOfferChance) {
+            return 0;
+        }
+        let offers = 1;
+        for (let index = 1; index < maxOffersPerVillager; index += 1) {
+            if (Math.random() < sideQuestOfferChance) {
+                offers += 1;
+            }
+        }
+        return offers;
     }
 
     private ensureQuestPeoplePresent(roster: VillageNpcProfile[], villageName: string): void {
