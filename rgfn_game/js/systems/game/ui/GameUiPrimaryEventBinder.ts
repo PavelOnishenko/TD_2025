@@ -119,6 +119,7 @@ export default class GameUiPrimaryEventBinder {
         this.villageUI.openDialogueBtn.addEventListener('click', () => this.villageActionsController.openDialogueWindow());
         this.villageUI.dialogueCloseBtn.addEventListener('click', () => this.villageActionsController.closeDialogueWindow());
         this.villageUI.dialogueModal.addEventListener('click', (event: MouseEvent) => this.closeDialogueFromOverlay(event));
+        document.addEventListener('keydown', (event: KeyboardEvent) => this.handleDialogueCloseHotkeys(event));
         this.villageUI.askVillageBtn.addEventListener('click', () => this.villageActionsController.handleAskAboutSettlement());
         this.villageUI.askNearbySettlementsBtn.addEventListener('click', () => this.villageActionsController.handleAskAboutNearbySettlements());
         this.villageUI.askPersonInput.addEventListener('change', () => this.villageActionsController.updateButtons());
@@ -136,5 +137,14 @@ export default class GameUiPrimaryEventBinder {
         if (event.target === this.villageUI.dialogueModal) {
             this.villageActionsController.closeDialogueWindow();
         }
+    }
+
+    private handleDialogueCloseHotkeys(event: KeyboardEvent): void {
+        if (event.key !== 'Escape' || this.villageUI.dialogueModal.classList.contains('hidden')) {
+            return;
+        }
+
+        event.preventDefault();
+        this.villageActionsController.closeDialogueWindow();
     }
 }
