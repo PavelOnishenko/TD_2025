@@ -211,8 +211,8 @@ export default class GameQuestRuntime {
         const sideQuestProgress = this.progressSideQuestsOnLocationEntry(locationName, carriedItemNames, onRecoveredItemFound);
         const escortChanged = this.resolveEscortArrival(locationName);
         const sideQuestDeliveryChanged = this.updateSideQuestDeliveryProgress(locationName, carriedItemNames);
-        if (!locationChanged && !escortChanged && !sideQuestDeliveryChanged && !sideQuestChanged && !sideQuestProgress.changed) {
-            return false;
+        if (!locationChanged && !escortChanged && !sideQuestDeliveryChanged && !sideQuestProgress.changed) {
+            return { changed: false, logs: sideQuestProgress.logs };
         }
         this.renderQuestUi();
         this.refreshContracts();
