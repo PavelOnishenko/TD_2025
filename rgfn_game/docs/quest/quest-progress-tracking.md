@@ -1,5 +1,33 @@
 # Quest progress tracking notes
 
+## April 16, 2026 update: active side-quest objectives now progress from runtime events (including Scout village entry)
+
+- Side-quest progression is no longer passive/UI-only after acceptance.
+- `GameQuestRuntime` now applies runtime objective events to **active side quests** in the same event paths already used for the main quest:
+  - location entry,
+  - barter completion,
+  - monster kill.
+- When an active side quest becomes structurally completed (`isCompleted === true`) after one of these events, runtime now automatically flips side-quest status to:
+  - `readyToTurnIn`
+- This specifically fixes scout-type side quests where entering the target village did not previously advance the accepted quest.
+
+### Implementation details
+
+- Added side-quest progression helpers in `GameQuestRuntime`:
+  - `progressSideQuestsOnLocationEntry(...)`
+  - `progressSideQuestsOnBarterCompletion(...)`
+  - `progressSideQuestsOnMonsterKill(...)`
+  - shared `progressActiveSideQuests(...)` loop.
+- Each active side quest is evaluated with a dedicated `QuestProgressTracker` rooted at that side-quest tree, preserving existing objective-type logic and known-node gating behavior.
+- Existing render + contract refresh behavior remains centralized in the original event handlers (`recordLocationEntry`, `recordBarterCompletion`, `recordMonsterKill`).
+
+### Regression coverage
+
+- Added automated runtime test:
+  - entering the target village for an active scout side quest marks the scout leaf complete,
+  - marks the side-quest root complete,
+  - transitions side-quest status to `readyToTurnIn`.
+
 ## April 8, 2026 update: village dialogue contract visibility now follows known quest frontier
 
 - Non-developer mode village dialogue dropdowns are now aligned with quest knowledge progression:
