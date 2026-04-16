@@ -3,8 +3,8 @@ import Player from '../../../entities/player/Player.js';
 import Item from '../../../entities/Item.js';
 import VillageDialogueEngine, { VillageNpcProfile } from '../VillageDialogueEngine.js';
 import VillageBarterService from './VillageBarterService.js';
-import { VillageActionsCallbacks, VillageUI } from './VillageActionsTypes.js';
-import { LocalDeliveryObjectiveData } from '../../quest/QuestTypes.js';
+import { QuestCourierInteraction, VillageActionsCallbacks, VillageUI } from './VillageActionsTypes.js';
+import { DeliverObjectiveData, LocalDeliveryObjectiveData } from '../../quest/QuestTypes.js';
 
 type DialogueDeps = {
     player: Player;
@@ -17,7 +17,7 @@ type DialogueDeps = {
     addLog: (message: string, type?: string) => void;
     describeDistance: (distanceCells: number) => string;
     updateButtons: () => void;
-    getCourierObjectiveForNpc: (npcName: string, villageName: string) => { questId: string; objective: LocalDeliveryObjectiveData } | null;
+    getCourierObjectiveForNpc: (npcName: string, villageName: string) => QuestCourierInteraction | null;
     markSideQuestReadyToTurnIn: (questId: string) => boolean;
     refreshSelectedNpcSideQuestUi: () => void;
 };
@@ -171,9 +171,13 @@ export default class VillageDialogueInteractionService {
             return;
         }
 
+        if (courier.objectiveType === 'deliver') {
+            this.pickupDeliverObjectiveItem(selectedNpc.name, courier.objective);
+            return;
+        }
         const { objective, questId } = courier;
         if (!objective.isPickedUp) {
-            this.pickupCourierItem(selectedNpc.name, objective);
+            this.pickupLocalDeliveryItem(selectedNpc.name, objective);
             return;
         }
         this.deliverCourierItem(selectedNpc.name, questId, objective);
@@ -215,7 +219,7 @@ export default class VillageDialogueInteractionService {
         this.deps.updateButtons();
     }
 
-    private pickupCourierItem(npcName: string, objective: LocalDeliveryObjectiveData): void {
+    private pickupLocalDeliveryItem(npcName: string, objective: LocalDeliveryObjectiveData): void {
         const questItem = this.createCourierQuestItem(objective.itemName);
         if (!this.deps.player.addItemToInventory(questItem)) {
             this.deps.addLog(`Inventory full. ${objective.itemName} cannot be received. Free a slot and try again.`, 'system');
@@ -226,6 +230,20 @@ export default class VillageDialogueInteractionService {
         this.deps.addLog(`You ask ${npcName}: "I am here for ${objective.itemName}."`, 'player');
         this.deps.addLog(`${npcName} hands over ${objective.itemName}.`, 'system');
         this.deps.addLog(`Courier objective updated: carry ${objective.itemName} to ${objective.recipientNpcName}.`, 'system-message');
+        this.deps.callbacks.onUpdateHUD();
+        this.deps.refreshSelectedNpcSideQuestUi();
+    }
+
+    private pickupDeliverObjectiveItem(npcName: string, objective: DeliverObjectiveData): void {
+        const questItem = this.createCourierQuestItem(objective.itemName);
+        if (!this.deps.player.addItemToInventory(questItem)) {
+            this.deps.addLog(`Inventory full. ${objective.itemName} cannot be received. Free a slot and try again.`, 'system');
+            return;
+        }
+        objective.isPickedUp = true;
+        this.deps.addLog(`You ask ${npcName}: "Do you still have ${objective.itemName} for that courier contract?"`, 'player');
+        this.deps.addLog(`${npcName} gives you ${objective.itemName} for delivery to ${objective.destinationVillage}.`, 'system');
+        this.deps.addLog(`Courier objective updated: travel to ${objective.destinationVillage} while carrying ${objective.itemName}.`, 'system-message');
         this.deps.callbacks.onUpdateHUD();
         this.deps.refreshSelectedNpcSideQuestUi();
     }

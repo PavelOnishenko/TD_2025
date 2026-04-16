@@ -205,7 +205,8 @@ export default class GameQuestRuntime {
         }
         const locationChanged = this.questProgressTracker.recordLocationEntryWithInventory(locationName, carriedItemNames);
         const escortChanged = this.resolveEscortArrival(locationName);
-        if (!locationChanged && !escortChanged) {
+        const sideQuestDeliveryChanged = this.updateSideQuestDeliveryProgress(locationName, carriedItemNames);
+        if (!locationChanged && !escortChanged && !sideQuestDeliveryChanged) {
             return false;
         }
         this.renderQuestUi();
@@ -724,6 +725,35 @@ export default class GameQuestRuntime {
         if (changed) {
             this.questProgressTracker?.recomputeCompletion();
         }
+        return changed;
+    }
+
+    private updateSideQuestDeliveryProgress(locationName: string, carriedItemNames: string[]): boolean {
+        const normalizedLocation = locationName.trim().toLocaleLowerCase();
+        if (!normalizedLocation) {
+            return false;
+        }
+        const carriedItems = new Set(carriedItemNames.map((name) => name.trim().toLocaleLowerCase()).filter(Boolean));
+        let changed = false;
+        this.activeSideQuests.forEach((quest) => {
+            if (quest.status === 'readyToTurnIn' || quest.status === 'completed') {
+                return;
+            }
+            const hasSatisfiedDelivery = quest.children.some((child) => {
+                const deliverObjective = child.objectiveData?.deliver;
+                if (!deliverObjective?.isPickedUp || !deliverObjective.destinationVillage || !deliverObjective.itemName) {
+                    return false;
+                }
+                const isAtDestination = deliverObjective.destinationVillage.trim().toLocaleLowerCase() === normalizedLocation;
+                const hasItem = carriedItems.has(deliverObjective.itemName.trim().toLocaleLowerCase());
+                return isAtDestination && hasItem;
+            });
+            if (!hasSatisfiedDelivery) {
+                return;
+            }
+            quest.status = 'readyToTurnIn';
+            changed = true;
+        });
         return changed;
     }
 

@@ -761,6 +761,57 @@ test('VillageActionsController exposes courier dialogue action to pick up and de
   assert.equal(markedReadyQuestId, 'side-courier-1');
 }));
 
+test('VillageActionsController exposes courier pickup action for deliver side quests in source village', () => withDocumentStub(() => {
+  const villageUI = createVillageUi();
+  const gameLog = createElement();
+  const player = createPlayerStub();
+  const deliverSideQuest = {
+    id: 'side-deliver-1',
+    title: 'Courier: Eshdra Lorka',
+    description: 'Acquire Eshdra Lorka from Alisha Alondra in Selzen, then carry it to Golden Beacon.',
+    status: 'active',
+    children: [
+      {
+        objectiveType: 'deliver',
+        objectiveData: {
+          deliver: {
+            sourceVillage: 'Selzen',
+            sourceTrader: 'Alisha Alondra',
+            destinationVillage: 'Golden Beacon',
+            itemName: 'Eshdra Lorka',
+            isPickedUp: false,
+          },
+        },
+      },
+    ],
+  };
+  const controller = new VillageActionsController(player, villageUI, gameLog, {
+    onUpdateHUD: () => {},
+    onLeaveVillage: () => {},
+    onAdvanceTime: () => {},
+    getVillageDirectionHint: (settlementName) => ({ settlementName, exists: false }),
+    onVillageBarterCompleted: () => {},
+    getActiveSideQuests: () => [deliverSideQuest],
+    getVillageNpcActiveSideQuests: () => [deliverSideQuest],
+    getVillageSideQuestOffers: () => [],
+  });
+
+  controller['dialogueEngine'] = {
+    createNpcRoster: () => [{ id: 'selzen-0', name: 'Alisha Alondra', role: 'Herbalist', look: 'cloak', speechStyle: 'calm', disposition: 'truthful' }],
+    buildLocationAnswer: () => ({ speech: '', tone: '', truthfulness: 'truth' }),
+    buildPersonLocationAnswer: () => ({ speech: '', tone: '', truthfulness: 'truth' }),
+  };
+
+  controller.enterVillage('Selzen');
+  controller.handleSelectNpc(0);
+
+  assert.equal(villageUI.courierActionBtn.classList.contains('hidden'), false);
+  assert.equal(villageUI.courierActionBtn.textContent, 'Pick up Eshdra Lorka');
+  controller.handleCourierAction();
+  assert.equal(deliverSideQuest.children[0].objectiveData.deliver.isPickedUp, true);
+  assert.equal(player.getInventory().some((item) => item.name === 'Eshdra Lorka'), true);
+}));
+
 test('VillageActionsController requires explicit side-quest acceptance and exposes accept action in dialogue UI', () => withDocumentStub(() => {
   const villageUI = createVillageUi();
   const gameLog = createElement();

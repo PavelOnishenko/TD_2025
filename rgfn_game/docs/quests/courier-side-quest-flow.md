@@ -17,6 +17,19 @@ That made these side quests impossible to complete in normal play.
   - Marks local delivery objective `isDelivered = true`.
   - Marks side quest `readyToTurnIn` via side-quest runtime callback.
 
+## Important distinction: `localDelivery` vs `deliver`
+- `localDelivery` objectives are handoff-in-village objectives with explicit source NPC and recipient NPC in the same village.
+- `deliver` objectives are cross-village courier objectives (pickup from source NPC/village, then travel to destination village while carrying item).
+- The dialogue courier action now supports pickup for **both** objective types:
+  - local in-village pickup/handover (`localDelivery`)
+  - source-village pickup for travel courier contracts (`deliver`)
+
+## Side-quest readiness for travel courier contracts
+- Active side quests with `deliver` objectives now auto-transition to `readyToTurnIn` when:
+  1. the objective item has been picked up, and
+  2. the player enters the destination village while carrying that item.
+- This closes the gap where pickup worked but travel completion did not update side-quest readiness.
+
 ## Data model update
 `LocalDeliveryObjectiveData` now supports:
 - `isPickedUp?: boolean`

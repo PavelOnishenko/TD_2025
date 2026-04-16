@@ -1,7 +1,7 @@
 import Item from '../../../entities/Item.js';
 import Skeleton from '../../../entities/Skeleton.js';
 import { PersonDirectionHint, VillageDirectionHint, VillageNpcProfile } from '../VillageDialogueEngine.js';
-import { QuestNode } from '../../quest/QuestTypes.js';
+import { DeliverObjectiveData, LocalDeliveryObjectiveData, QuestNode } from '../../quest/QuestTypes.js';
 
 export type VillageUI = {
     sidebar: HTMLElement;
@@ -94,6 +94,13 @@ export type QuestBarterContract = {
     destinationVillage?: string;
     contractType: 'barter' | 'deliver' | 'recover';
 };
+
+export type QuestCourierInteraction = {
+    questId: string;
+} & (
+    { objectiveType: 'localDelivery'; objective: LocalDeliveryObjectiveData }
+    | { objectiveType: 'deliver'; objective: DeliverObjectiveData }
+);
 
 export type VillageOffer = {
     kindName: string;

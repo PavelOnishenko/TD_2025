@@ -6,9 +6,16 @@ import VillageStockService from './actions/VillageStockService.js';
 import VillageUiPresenter from './actions/VillageUiPresenter.js';
 import VillageTradeInteractionService from './actions/VillageTradeInteractionService.js';
 import VillageDialogueInteractionService from './actions/VillageDialogueInteractionService.js';
-import { QuestBarterContract, QuestDefendContract, QuestEscortContract, VillageActionsCallbacks, VillageUI } from './actions/VillageActionsTypes.js';
+import {
+    QuestBarterContract,
+    QuestCourierInteraction,
+    QuestDefendContract,
+    QuestEscortContract,
+    VillageActionsCallbacks,
+    VillageUI,
+} from './actions/VillageActionsTypes.js';
 import { isDeveloperModeEnabled } from '../../utils/DeveloperModeConfig.js';
-import { LocalDeliveryObjectiveData, QuestNode } from '../quest/QuestTypes.js';
+import { DeliverObjectiveData, QuestNode } from '../quest/QuestTypes.js';
 import { balanceConfig } from '../../config/balance/balanceConfig.js';
 export default class VillageActionsController {
     private readonly villageUI: VillageUI;
@@ -466,6 +473,10 @@ export default class VillageActionsController {
         if (!courierObjective) {
             return null;
         }
+        if (courierObjective.objectiveType === 'deliver') {
+            const deliverObjective = courierObjective.objective;
+            return deliverObjective.isPickedUp ? null : `Pick up ${deliverObjective.itemName}`;
+        }
         const { objective } = courierObjective;
         if (!objective.isPickedUp && this.matchesNpc(objective.sourceNpcName, npcName)) {
             return `Pick up ${objective.itemName}`;
@@ -476,7 +487,7 @@ export default class VillageActionsController {
         return null;
     }
 
-    private getActiveCourierObjectiveForNpc(npcName: string, villageName: string): { questId: string; objective: LocalDeliveryObjectiveData } | null {
+    private getActiveCourierObjectiveForNpc(npcName: string, villageName: string): QuestCourierInteraction | null {
         const normalizedNpc = npcName.trim().toLocaleLowerCase();
         const normalizedVillage = villageName.trim().toLocaleLowerCase();
         if (!normalizedNpc || !normalizedVillage) {
@@ -487,6 +498,13 @@ export default class VillageActionsController {
             for (const child of quest.children) {
                 const localDelivery = child.objectiveData?.localDelivery;
                 if (!localDelivery || localDelivery.isDelivered) {
+                    const deliverObjective = child.objectiveData?.deliver;
+                    if (!deliverObjective || deliverObjective.isPickedUp) {
+                        continue;
+                    }
+                    if (this.matchesDeliverPickupNpc(deliverObjective, normalizedNpc, normalizedVillage)) {
+                        return { questId: quest.id, objectiveType: 'deliver', objective: deliverObjective };
+                    }
                     continue;
                 }
                 const sameVillage = localDelivery.villageName.trim().toLocaleLowerCase() === normalizedVillage;
@@ -496,14 +514,22 @@ export default class VillageActionsController {
                     continue;
                 }
                 if (!localDelivery.isPickedUp && isSourceNpc) {
-                    return { questId: quest.id, objective: localDelivery };
+                    return { questId: quest.id, objectiveType: 'localDelivery', objective: localDelivery };
                 }
                 if (localDelivery.isPickedUp && isRecipientNpc) {
-                    return { questId: quest.id, objective: localDelivery };
+                    return { questId: quest.id, objectiveType: 'localDelivery', objective: localDelivery };
                 }
             }
         }
         return null;
+    }
+
+    private matchesDeliverPickupNpc(deliverObjective: DeliverObjectiveData, normalizedNpc: string, normalizedVillage: string): boolean {
+        if (deliverObjective.isPickedUp) {
+            return false;
+        }
+        return deliverObjective.sourceVillage.trim().toLocaleLowerCase() === normalizedVillage
+            && deliverObjective.sourceTrader.trim().toLocaleLowerCase() === normalizedNpc;
     }
 
     private matchesNpc = (expectedNpcName: string, actualNpcName: string): boolean =>
