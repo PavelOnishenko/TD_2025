@@ -111,6 +111,12 @@ export default class GameQuestRuntime {
             .map((quest) => ({ ...quest }));
     }
 
+    public getActiveSideQuests(): QuestNode[] {
+        return this.activeSideQuests
+            .filter((quest) => quest.status !== 'completed')
+            .map((quest) => ({ ...quest }));
+    }
+
     public clearVillageSideQuestOffers(villageName: string): void {
         const normalizedVillage = villageName.trim().toLocaleLowerCase();
         if (!normalizedVillage) {

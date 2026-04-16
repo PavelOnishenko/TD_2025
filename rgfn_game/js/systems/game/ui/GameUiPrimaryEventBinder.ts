@@ -126,6 +126,7 @@ export default class GameUiPrimaryEventBinder {
         this.villageUI.askPersonBtn.addEventListener('click', () => this.villageActionsController.handleAskAboutPerson());
         this.villageUI.askBarterBtn.addEventListener('click', () => this.villageActionsController.handleAskAboutBarter());
         this.villageUI.barterNowBtn.addEventListener('click', () => this.villageActionsController.handleConfirmBarter());
+        this.villageUI.courierActionBtn.addEventListener('click', () => this.villageActionsController.handleCourierAction());
         this.villageUI.confrontRecoverBtn.addEventListener('click', () => this.villageActionsController.handleConfrontRecoverTarget());
         this.villageUI.recruitEscortBtn.addEventListener('click', () => this.villageActionsController.handleRecruitEscort());
         this.villageUI.defendVillageBtn.addEventListener('click', () => this.villageActionsController.handleStartDefendObjective());
