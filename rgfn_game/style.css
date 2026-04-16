@@ -1136,6 +1136,29 @@ h1 {
     accent-color: var(--color-primary-accent);
 }
 
+.quest-tabs {
+    display: flex;
+    gap: 6px;
+    margin: 4px 0 8px;
+}
+
+.quest-tab {
+    border: 1px solid var(--color-secondary-accent);
+    border-radius: 6px;
+    background: color-mix(in srgb, var(--color-primary-bg) 80%, transparent);
+    color: var(--color-text-primary);
+    font: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 4px 10px;
+    cursor: pointer;
+}
+
+.quest-tab.is-active {
+    background: color-mix(in srgb, var(--color-primary-accent) 28%, var(--color-panel-highlight));
+    color: var(--color-primary-accent);
+}
+
 .quest-tree-root,
 .quest-tree-children {
     list-style: none;
@@ -1215,6 +1238,51 @@ button.quest-entity-name.location:hover {
 .quest-feedback.is-error {
     color: var(--color-enemy);
     font-weight: 700;
+}
+
+.side-quest-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.side-quest-card {
+    border: 1px solid var(--color-secondary-accent);
+    border-radius: 6px;
+    padding: 6px 8px;
+    background: color-mix(in srgb, var(--color-primary-bg) 30%, transparent);
+}
+
+.side-quest-card > summary {
+    cursor: pointer;
+    color: var(--color-primary-accent);
+    font-weight: 700;
+}
+
+.side-quest-status {
+    display: inline-block;
+    margin-left: 6px;
+    border-radius: 999px;
+    padding: 1px 7px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--color-text-primary);
+    background: color-mix(in srgb, var(--color-panel-highlight) 75%, transparent);
+}
+
+.side-quest-status.is-readytoturnin {
+    color: #0e5f89;
+}
+
+.side-quest-status.is-completed {
+    color: #2f6f39;
+}
+
+.side-quest-meta {
+    margin: 6px 0 0;
+    font-size: 12px;
+    color: var(--color-text-muted);
 }
 
 .quest-intro-modal {

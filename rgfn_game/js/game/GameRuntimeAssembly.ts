@@ -33,6 +33,8 @@ type RuntimeControllers = ReturnType<typeof createRuntimeControllers>;
 
 const createQuestUiController = (game: GameFacade, ui: RuntimeUi): QuestUiController => new QuestUiController(
     ui.hudElements.questsTitle,
+    document.getElementById('quests-tab-main-btn')! as HTMLButtonElement,
+    document.getElementById('quests-tab-side-btn')! as HTMLButtonElement,
     ui.hudElements.questsKnownOnlyToggle,
     ui.hudElements.questsBody,
     ui.hudElements.questIntroModal,
