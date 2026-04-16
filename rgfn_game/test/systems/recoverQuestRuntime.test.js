@@ -190,6 +190,34 @@ function createActiveScoutSideQuest(overrides = {}) {
   };
 }
 
+function createActiveRecoverSideQuest(overrides = {}) {
+  return {
+    id: 'side-recover',
+    title: 'Recover Torlys Eshlor',
+    description: 'Retrieve Torlys Eshlor from Golden Beacon.',
+    conditionText: 'Obtain Torlys Eshlor at Golden Beacon.',
+    objectiveType: 'recover',
+    entities: [{ text: 'Torlys Eshlor', type: 'item' }, { text: 'Golden Beacon', type: 'location' }],
+    objectiveData: {
+      recover: {
+        itemName: 'Torlys Eshlor',
+        personName: 'Unknown',
+        initialVillage: 'Golden Beacon',
+        currentVillage: 'Golden Beacon',
+        isPersonKnown: false,
+        hasFled: false,
+      },
+    },
+    children: [],
+    isCompleted: false,
+    track: 'side',
+    giverNpcName: 'Rica',
+    giverVillageName: 'Selzen',
+    status: 'active',
+    ...overrides,
+  };
+}
+
 test('GameQuestRuntime revealRecoverHolder confirms target person when speaking with another villager', () => {
   const runtime = new GameQuestRuntime();
   const quest = createRecoverQuest();
@@ -455,8 +483,31 @@ test('GameQuestRuntime marks active scout side quests ready to turn in after ent
 
   const updated = runtime.recordLocationEntry('Golden Beacon', []);
 
-  assert.equal(updated, true);
+  assert.equal(updated.changed, true);
   assert.equal(sideQuest.children[0].isCompleted, true);
+  assert.equal(sideQuest.isCompleted, true);
+  assert.equal(sideQuest.status, 'readyToTurnIn');
+});
+
+test('GameQuestRuntime auto-recovers side-quest recover items on village entry and marks quest ready to turn in', () => {
+  const runtime = new GameQuestRuntime();
+  const mainQuest = createQuestWithKnownAndUnknownContracts();
+  const sideQuest = createActiveRecoverSideQuest();
+  const foundItems = [];
+  runtime.activeQuest = mainQuest;
+  runtime.questProgressTracker = new QuestProgressTracker(mainQuest);
+  runtime.questUiController = { renderQuest: () => {} };
+  runtime.refreshContracts = () => {};
+  runtime.activeSideQuests = [sideQuest];
+
+  const updated = runtime.recordLocationEntry('Golden Beacon', [], (item) => {
+    foundItems.push(item.name);
+    return true;
+  });
+
+  assert.equal(updated.changed, true);
+  assert.equal(foundItems.includes('Torlys Eshlor'), true);
+  assert.equal(updated.logs.some((line) => line.includes('Found Torlys Eshlor lying on the ground in Golden Beacon')), true);
   assert.equal(sideQuest.isCompleted, true);
   assert.equal(sideQuest.status, 'readyToTurnIn');
 });

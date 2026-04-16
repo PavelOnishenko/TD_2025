@@ -203,11 +203,13 @@ export default class GameFacadeLifecycleCoordinator {
 
     public onVillageEntered(): void {
         const villageName = this.state.worldMap.getVillageNameAtPlayerPosition();
-        const questChanged = this.state.questRuntime.recordLocationEntry(
+        const questUpdate = this.state.questRuntime.recordLocationEntry(
             villageName,
             this.state.player.getInventory().map((item) => item.name),
+            (item) => this.state.player.addItemToInventory(item),
         );
-        if (questChanged) {
+        questUpdate.logs.forEach((line) => this.state.hudCoordinator.addBattleLog(line, 'system-message'));
+        if (questUpdate.changed) {
             this.state.hudCoordinator.addBattleLog(`Quest tracker: objectives updated at ${villageName}.`, 'system');
         }
         this.refreshGroupPanel();
