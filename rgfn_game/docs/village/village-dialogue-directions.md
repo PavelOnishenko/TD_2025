@@ -145,3 +145,21 @@ Village dialogue now includes a dedicated button: **Ask about nearby settlements
 - Adds a richer semi-text investigation loop: one question can reveal several leads.
 - Makes NPC choice matter more (personality + knowledge radius).
 - Encourages cross-checking rumors before committing long travel.
+
+## 2026-04-16 update: village NPC names now follow quest character-name generation
+
+### What changed
+- Village rumor NPC names are no longer picked only from the old short hardcoded list.
+- `VillageActionsController` now accepts `nextCharacterName()` and applies generated names onto new village rumor rosters.
+- Runtime wires this callback from a shared quest-name reservoir that draws names via `QuestPackService.generateName('character', ...)`.
+
+### Why this was done
+- Quest-linked persons and regular villagers now look like they belong to the same naming universe.
+- This reduces immersion breaks where quest contacts had pack-generated names but local villagers looked repetitive.
+
+### Runtime design notes
+- A new `QuestCharacterNameReservoir` prefetches quest-style character names in background batches.
+- Villager generation is still synchronous at village-entry time:
+  - if the reservoir has names, villagers consume those immediately;
+  - if not (early startup or temporary fetch/init lag), generation falls back to legacy local names to avoid UI stalls.
+- Quest generator and village NPC naming now share one `QuestPackService` instance in runtime assembly.
