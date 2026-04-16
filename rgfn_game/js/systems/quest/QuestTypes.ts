@@ -50,6 +50,7 @@ export type LocalDeliveryObjectiveData = {
     sourceNpcName: string;
     recipientNpcName: string;
     itemName: string;
+    isPickedUp?: boolean;
     isDelivered?: boolean;
 };
 

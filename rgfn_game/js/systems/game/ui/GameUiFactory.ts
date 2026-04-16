@@ -101,12 +101,20 @@ export default class GameUiFactory {
         askNearbySettlementsBtn: document.getElementById('village-ask-nearby-settlements-btn')! as HTMLButtonElement,
         askPersonInput: document.getElementById('village-ask-person-input')! as HTMLSelectElement,
         askPersonBtn: document.getElementById('village-ask-person-btn')! as HTMLButtonElement,
+        ...this.createVillageDialogueActionButtons(),
+        leaveBtn: document.getElementById('village-leave-btn')! as HTMLButtonElement,
+    });
+
+    private createVillageDialogueActionButtons = (): Pick<
+        VillageUI,
+        'askBarterBtn' | 'barterNowBtn' | 'courierActionBtn' | 'confrontRecoverBtn' | 'recruitEscortBtn' | 'defendVillageBtn'
+    > => ({
         askBarterBtn: document.getElementById('village-ask-barter-btn')! as HTMLButtonElement,
         barterNowBtn: document.getElementById('village-confirm-barter-btn')! as HTMLButtonElement,
+        courierActionBtn: document.getElementById('village-courier-action-btn')! as HTMLButtonElement,
         confrontRecoverBtn: document.getElementById('village-confront-recover-btn')! as HTMLButtonElement,
         recruitEscortBtn: document.getElementById('village-recruit-escort-btn')! as HTMLButtonElement,
         defendVillageBtn: document.getElementById('village-defend-objective-btn')! as HTMLButtonElement,
-        leaveBtn: document.getElementById('village-leave-btn')! as HTMLButtonElement,
     });
 
     private createGameLogUi(): GameLogUI {
