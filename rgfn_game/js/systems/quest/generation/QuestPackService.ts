@@ -20,6 +20,7 @@ export default class QuestPackService {
     private readonly sources: PackSource[] = [];
     private readonly targetSelector: QuestNameWordTargetSelector;
     private initialized = false;
+    private initializationPromise: Promise<void> | null = null;
 
     constructor(deps: QuestPackServiceDeps = {}) {
         this.fetchImpl = deps.fetchImpl ?? ((input: string) => globalThis.fetch(input));
@@ -33,10 +34,10 @@ export default class QuestPackService {
         if (this.initialized) {
             return;
         }
-        await this.loadAssets();
-        this.createSources();
-        await this.probeSources();
-        this.initialized = true;
+        if (!this.initializationPromise) {
+            this.initializationPromise = this.runInitialization();
+        }
+        await this.initializationPromise;
     }
 
     public async generateName(domain: QuestNameDomain, maxWords: number): Promise<GeneratedName> {
@@ -76,6 +77,17 @@ export default class QuestPackService {
         return { text: this.titleCase(words), domain, sourceTypes };
     }
 
+    private async runInitialization(): Promise<void> {
+        try {
+            await this.loadAssets();
+            this.createSources();
+            await this.probeSources();
+            this.initialized = true;
+        } finally {
+            this.initializationPromise = null;
+        }
+    }
+
     private async loadAssets(): Promise<void> {
         for (const [key, path] of Object.entries(ASSET_PATHS)) {
             const words = this.wordList(await this.fileReader(path));
@@ -87,6 +99,7 @@ export default class QuestPackService {
     }
 
     private createSources(): void {
+        this.sources.length = 0;
         const sourceFactory = new QuestPackSourceFactory({
             fetchImpl: this.fetchImpl,
             random: this.random,
@@ -121,9 +134,17 @@ export default class QuestPackService {
         }
     }
 
-    private pickSource = (domain: QuestNameDomain): PackSource => this.random.pick(
-        this.sources.filter((source) => source.domain === domain && source.available),
-    );
+    private pickSource = (domain: QuestNameDomain): PackSource => {
+        const availableSources = this.sources.filter((source) => source.domain === domain && source.available);
+        if (availableSources.length > 0) {
+            return this.random.pick(availableSources);
+        }
+        const localFallback = this.sources.find((source) => source.domain === domain && source.type === 'local-pattern');
+        if (!localFallback) {
+            throw new Error(`No available quest pack sources for domain "${domain}".`);
+        }
+        return localFallback;
+    };
 
     private titleCase = (words: string[]): string => words.map((word) => this.capitalizeWord(word)).join(' ');
 

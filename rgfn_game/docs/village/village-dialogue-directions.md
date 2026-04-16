@@ -163,3 +163,16 @@ Village dialogue now includes a dedicated button: **Ask about nearby settlements
   - if the reservoir has names, villagers consume those immediately;
   - if not (early startup or temporary fetch/init lag), generation falls back to legacy local names to avoid UI stalls.
 - Quest generator and village NPC naming now share one `QuestPackService` instance in runtime assembly.
+
+### 2026-04-16 incident + hardening follow-up
+- A regression was observed where browser console showed repeated CORS failures to `randomuser.me`, and in some runs quest panel bootstrap could fail (missing main quest tree).
+- Root cause: concurrent `generateName()` calls during startup (reservoir + quest generation) could race service initialization and over-probe remote sources.
+- Hardening applied:
+  - `QuestPackService.initialize()` is now guarded by a shared in-flight initialization promise.
+  - Source registry is rebuilt deterministically per initialization run (no duplicate source accumulation).
+  - Name selection has a local-pattern fallback if all probed sources are unavailable.
+  - Reservoir refill now generates sequentially and catches transient generation errors, avoiding cascading startup failures.
+- Expected runtime behavior after fix:
+  - transient remote CORS/network failures no longer break quest generation;
+  - main quest generation remains available from local/echo sources;
+  - villager naming still prefers quest-style person names when reservoir entries exist.

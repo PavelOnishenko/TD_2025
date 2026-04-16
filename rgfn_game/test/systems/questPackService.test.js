@@ -142,3 +142,36 @@ test('QuestPackService ignores HTML/error payload tokens in local asset files', 
   assert.equal(result.text.includes('Cannot'), false);
   assert.equal(result.text.includes('rgfn_game'), false);
 });
+
+test('QuestPackService performs initialization once when multiple generateName calls start concurrently', async () => {
+  const random = new ScriptedQuestRandom({
+    ints: [95, 95, 95],
+    picks: [
+      'local-pattern',
+      ['GIVEN'],
+      'lena',
+      'local-pattern',
+      ['GIVEN'],
+      'orik',
+      'local-pattern',
+      ['GIVEN'],
+      'tala',
+    ],
+  });
+  const fetchCalls = [];
+  const fetchImpl = async (input) => {
+    fetchCalls.push(String(input));
+    throw new Error('offline');
+  };
+  const service = new QuestPackService({ fetchImpl, random, fileReader: createFileReader() });
+
+  const results = await Promise.all([
+    service.generateName('character', 2),
+    service.generateName('character', 2),
+    service.generateName('character', 2),
+  ]);
+
+  assert.equal(results.length, 3);
+  assert.equal(service['sources'].length, 14);
+  assert.equal(fetchCalls.length >= 3 && fetchCalls.length <= 4, true);
+});
