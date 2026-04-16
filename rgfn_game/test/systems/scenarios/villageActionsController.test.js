@@ -210,6 +210,42 @@ test('VillageActionsController shows village actions + rumors on entry and hides
   assert.equal(villageUI.rumorsPanel.classList.contains('hidden'), true);
 }));
 
+test('VillageActionsController rolls side-quest offers per villager on village entry', () => withDocumentStub(() => {
+  const villageUI = createVillageUi();
+  const gameLog = createElement();
+  const sideQuestOfferRolls = [];
+  const controller = new VillageActionsController(createPlayerStub(), villageUI, gameLog, {
+    onUpdateHUD: () => {},
+    onAdvanceTime: () => {},
+    onLeaveVillage: () => {},
+    getVillageDirectionHint: (settlementName) => ({ settlementName, exists: false }),
+    onVillageBarterCompleted: () => {},
+    initializeVillageSideQuestOffers: (villageName, rolls) => sideQuestOfferRolls.push({ villageName, rolls }),
+  });
+
+  controller['dialogueEngine'] = {
+    createNpcRoster: () => [
+      { id: 'moss-0', name: 'Mara', role: 'Trader', look: 'satchel', speechStyle: 'calm', disposition: 'truthful' },
+      { id: 'moss-1', name: 'Tor', role: 'Hunter', look: 'boots', speechStyle: 'cold', disposition: 'liar' },
+    ],
+    buildLocationAnswer: () => ({ speech: '', tone: '', truthfulness: 'truth' }),
+  };
+
+  const originalMathRandom = Math.random;
+  const randomValues = [0.15, 0.11, 0.9];
+  Math.random = () => randomValues.shift() ?? 0.95;
+
+  try {
+    controller.enterVillage('Mossbrook');
+  } finally {
+    Math.random = originalMathRandom;
+  }
+
+  assert.equal(sideQuestOfferRolls.length, 1);
+  assert.equal(sideQuestOfferRolls[0].villageName, 'Mossbrook');
+  assert.deepEqual(sideQuestOfferRolls[0].rolls, [{ npcName: 'Mara', questCount: 2 }]);
+}));
+
 test('VillageActionsController stores separate rumor rosters for different villages', () => withDocumentStub(() => {
   const villageUI = createVillageUi();
   const gameLog = createElement();
@@ -694,6 +730,43 @@ test('VillageActionsController requires explicit side-quest acceptance and expos
   assert.equal(acceptCalls, 1);
   assert.equal(gameLog.children.some((child) => String(child.textContent ?? '').includes('Side quest accepted')), true);
 }));
+
+test('VillageActionsController does not auto-accept side quests in developer mode', () => withDeveloperMode(true, () => withDocumentStub(() => {
+  const villageUI = createVillageUi();
+  const gameLog = createElement();
+  let acceptCalls = 0;
+  const offerQuest = {
+    id: 'side-quest-offer-dev',
+    title: 'Count Grain Sacks',
+    description: 'Inspect missing grain sacks in the barn.',
+    reward: '10g',
+    status: 'available',
+    children: [],
+  };
+  const controller = new VillageActionsController(createPlayerStub(), villageUI, gameLog, {
+    onUpdateHUD: () => {},
+    onLeaveVillage: () => {},
+    onAdvanceTime: () => {},
+    getVillageDirectionHint: (settlementName) => ({ settlementName, exists: false }),
+    onVillageBarterCompleted: () => {},
+    getVillageSideQuestOffers: () => [offerQuest],
+    getVillageNpcActiveSideQuests: () => [],
+    acceptSideQuest: () => { acceptCalls += 1; return { accepted: true }; },
+  });
+  controller['dialogueEngine'] = {
+    createNpcRoster: () => [{ id: 'moss-0', name: 'Mara', role: 'Trader', look: 'cloak', speechStyle: 'calm', disposition: 'truthful' }],
+    buildLocationAnswer: () => ({ speech: '', tone: '', truthfulness: 'truth' }),
+    buildPersonLocationAnswer: () => ({ speech: '', tone: '', truthfulness: 'truth' }),
+  };
+
+  controller.enterVillage('Mossbrook');
+  controller.handleSelectNpc(0);
+
+  assert.equal(acceptCalls, 0);
+  const hasAcceptButton = villageUI.sideQuestList.children.some((child) => child.children?.some((entry) => entry.textContent === 'Accept quest'));
+  assert.equal(hasAcceptButton, true);
+  assert.equal(gameLog.children.some((child) => String(child.textContent ?? '').includes('Auto-accepted side quests')), false);
+})));
 
 test('VillageActionsController shows turn-in action for ready side quests and turn-in is explicit', () => withDocumentStub(() => {
   const villageUI = createVillageUi();

@@ -59,6 +59,7 @@ export type VillageActionsCallbacks = {
         villageName: string,
         villagerNames: string[],
     ) => { status: 'started' | 'inactive' | 'not-target' | 'already-active'; objectiveTitle?: string; days?: number };
+    initializeVillageSideQuestOffers?: (villageName: string, npcQuestOfferRolls: Array<{ npcName: string; questCount: number }>) => void;
     getVillageSideQuestOffers?: (villageName: string, npcName: string) => QuestNode[];
     getVillageNpcActiveSideQuests?: (villageName: string, npcName: string) => QuestNode[];
     acceptSideQuest?: (questId: string) => { accepted: boolean; reason?: 'inactive' | 'not-found' | 'already-active' };

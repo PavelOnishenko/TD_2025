@@ -43,6 +43,7 @@ export default class VillageActionsController {
         this.barterService.assignQuestBarterContractsIfNeeded(villageName);
         this.stockService.refreshVillageStock();
         this.npcRoster = this.getOrCreateVillageNpcRoster(villageName);
+        this.initializeVillageSideQuestOffers(villageName);
         this.selectedNpcId = null;
         this.prepareVillageUiForEntry(villageName);
         this.handleEnter(villageName);
@@ -273,6 +274,28 @@ export default class VillageActionsController {
         return roster;
     }
 
+    private initializeVillageSideQuestOffers(villageName: string): void {
+        const sideQuestOfferChance = Math.max(0, Math.min(1, Number(balanceConfig.quest?.sideQuestVillagerOfferChance ?? 0.2)));
+        const maxOffersPerVillager = Math.max(1, Math.min(3, Math.floor(balanceConfig.quest?.sideQuestMaxOffersPerVillager ?? 2)));
+        const npcQuestOfferRolls = this.npcRoster
+            .map((npc) => ({ npcName: npc.name, questCount: this.rollSideQuestOfferCount(sideQuestOfferChance, maxOffersPerVillager) }))
+            .filter((roll) => roll.questCount > 0);
+        this.callbacks.initializeVillageSideQuestOffers?.(villageName, npcQuestOfferRolls);
+    }
+
+    private rollSideQuestOfferCount(sideQuestOfferChance: number, maxOffersPerVillager: number): number {
+        if (maxOffersPerVillager <= 0 || Math.random() >= sideQuestOfferChance) {
+            return 0;
+        }
+        let offers = 1;
+        for (let index = 1; index < maxOffersPerVillager; index += 1) {
+            if (Math.random() < sideQuestOfferChance) {
+                offers += 1;
+            }
+        }
+        return offers;
+    }
+
     private ensureQuestPeoplePresent(roster: VillageNpcProfile[], villageName: string): void {
         const unavailableNpcNames = this.getUnavailableNpcNames(villageName);
         this.removeUnavailableNpcs(roster, unavailableNpcNames);
@@ -460,6 +483,13 @@ export default class VillageActionsController {
             + `${activeQuests.length} active, ${readyToTurnInCount} ready to turn in.`,
             'system-message',
         );
+        if (offers.length === 0 && activeQuests.length > 0) {
+            this.addLog(
+                `No new side-quest offers from ${npc.name}. ${activeQuests.length} quest${activeQuests.length === 1 ? '' : 's'} `
+                + 'already in progress from earlier acceptance.',
+                'system-message',
+            );
+        }
         activeQuests.forEach((quest) => {
             this.activeNpcSideQuestIds.add(quest.id);
             this.injectSideQuestNpcReferencesIntoNearbyRosters(quest);
@@ -469,14 +499,7 @@ export default class VillageActionsController {
             this.readySideQuestLogIds.add(quest.id);
             this.addLog(`Side quest ready to turn in: ${quest.title}.`, 'system');
         });
-        if (!this.shouldAutoAcceptVillageSideQuests() || offers.length === 0) {
-            this.updateButtons();
-            return;
-        }
-        offers.forEach((offer) => this.handleAcceptSideQuest(offer.id));
-        if (offers.length > 0) {
-            this.addLog('[DEV] Auto-accepted side quests for selected NPC.', 'system-message');
-        }
+        this.updateButtons();
     }
 
     private renderSideQuestUiForNpc(npc: VillageNpcProfile, offers: QuestNode[], activeQuests: QuestNode[]): void {
@@ -586,8 +609,6 @@ export default class VillageActionsController {
         }
         return 'Available';
     }
-
-    private shouldAutoAcceptVillageSideQuests = (): boolean => isDeveloperModeEnabled();
 
     private getKnownSettlementNames(): string[] {
         const knownFromMap = this.callbacks.getKnownSettlementNames?.() ?? [];
