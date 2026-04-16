@@ -13,7 +13,8 @@ import { balanceConfig } from '../../config/balance/balanceConfig.js';
 export default class VillageActionsController {
     private readonly villageUI: VillageUI;
     private readonly callbacks: VillageActionsCallbacks;
-    private readonly dialogueEngine = new VillageDialogueEngine();
+    private readonly dialogueEngine: VillageDialogueEngine;
+    private readonly nextCharacterName?: () => string;
     private readonly stockService = new VillageStockService();
     private readonly barterService = new VillageBarterService();
     private readonly uiPresenter: VillageUiPresenter;
@@ -30,9 +31,11 @@ export default class VillageActionsController {
     private knownNpcNames: Set<string> = new Set();
     private joinedEscortNpcKeys: Set<string> = new Set();
 
-    constructor(player: Player, villageUI: VillageUI, gameLog: HTMLElement, callbacks: VillageActionsCallbacks) {
+    constructor(player: Player, villageUI: VillageUI, gameLog: HTMLElement, callbacks: VillageActionsCallbacks, deps: { nextCharacterName?: () => string } = {}) {
         this.villageUI = villageUI;
         this.callbacks = callbacks;
+        this.dialogueEngine = new VillageDialogueEngine();
+        this.nextCharacterName = deps.nextCharacterName;
         this.uiPresenter = this.createVillageUiPresenter(player, villageUI, gameLog);
         this.tradeInteraction = this.createTradeInteraction(player, callbacks);
         this.dialogueInteraction = this.createDialogueInteraction(player, villageUI, callbacks);
@@ -268,10 +271,23 @@ export default class VillageActionsController {
             return cachedRoster;
         }
 
-        const roster = this.dialogueEngine.createNpcRoster(villageName);
+        const roster = this.applyQuestStyleNames(this.dialogueEngine.createNpcRoster(villageName));
         this.ensureQuestPeoplePresent(roster, villageName);
         this.villageNpcRosters.set(villageName, roster);
         return roster;
+    }
+
+    private applyQuestStyleNames(roster: VillageNpcProfile[]): VillageNpcProfile[] {
+        if (!this.nextCharacterName) {
+            return roster;
+        }
+        return roster.map((npc) => {
+            const generatedName = this.nextCharacterName?.().trim();
+            if (!generatedName?.length) {
+                return npc;
+            }
+            return { ...npc, name: generatedName };
+        });
     }
 
     private initializeVillageSideQuestOffers(villageName: string): void {

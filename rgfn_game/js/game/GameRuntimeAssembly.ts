@@ -10,6 +10,7 @@ import LoreBookController from '../systems/controllers/lore/LoreBookController.j
 import MagicSystem from '../systems/controllers/magic/MagicSystem.js';
 import QuestGenerator from '../systems/quest/QuestGenerator.js';
 import QuestPackService from '../systems/quest/generation/QuestPackService.js';
+import QuestCharacterNameReservoir from '../systems/quest/generation/QuestCharacterNameReservoir.js';
 import QuestUiController from '../systems/quest/ui/QuestUiController.js';
 import GameRenderRouter from '../systems/game/runtime/GameRenderRouter.js';
 import BattleCommandController from '../systems/game/BattleCommandController.js';
@@ -43,8 +44,8 @@ const createQuestUiController = (game: GameFacade, ui: RuntimeUi): QuestUiContro
     { onLocationClick: (locationName: string) => game.onQuestLocationClick(locationName) },
 );
 
-const createQuestGenerator = (worldMap: WorldMap): QuestGenerator => new QuestGenerator({
-    packService: new QuestPackService({ locationNamesProvider: () => worldMap.getAllVillageNames() }),
+const createQuestGenerator = (worldMap: WorldMap, packService: QuestPackService): QuestGenerator => new QuestGenerator({
+    packService,
     nearbyVillagesProvider: (villageName: string, maxDistanceCells: number) =>
         worldMap.getNearbyVillagesFromVillage(villageName, maxDistanceCells),
     villageDirectionHintProvider: (villageName: string) => worldMap.getVillageDirectionHintFromPlayer(villageName),
@@ -84,6 +85,7 @@ function createSharedRuntime(
     loreBookController: LoreBookController,
     magicSystem: MagicSystem,
     battleUiController: BattleUiController,
+    nextCharacterName: () => string,
 ) {
     const { player, ui, worldMap, villageLifeRenderer } = runtimeBase;
     let battleCommandControllerRef: BattleCommandController | null = null;
@@ -96,7 +98,7 @@ function createSharedRuntime(
         (action) => battleCommandControllerRef?.handleEquipmentAction(action) ?? true,
         () => game.getHudTimeSnapshot(),
     );
-    const villageRuntime = createVillageRuntime(game, ui, player, worldMap, villageLifeRenderer, hudCoordinator);
+    const villageRuntime = createVillageRuntime(game, ui, player, worldMap, villageLifeRenderer, hudCoordinator, nextCharacterName);
     return { hudCoordinator, battleCommandControllerRef, ...villageRuntime };
 }
 
@@ -142,14 +144,24 @@ const createWorldMode = (game: GameFacade, runtimeBase: RuntimeBase, shared: Sha
     return createWorldModeControllerRuntime(game, player, worldMap, encounterSystem, shared.stateMachine, ui, shared.hudCoordinator, loreBookController);
 };
 
+// eslint-disable-next-line style-guide/function-length-warning
 function createRuntimeControllers(game: GameFacade, runtimeBase: RuntimeBase) {
     const { player, worldMap, battleMap, turnManager, ui } = runtimeBase;
-    const questGenerator = createQuestGenerator(worldMap);
+    const packService = new QuestPackService({ locationNamesProvider: () => worldMap.getAllVillageNames() });
+    const questCharacterNameReservoir = new QuestCharacterNameReservoir(packService);
+    const questGenerator = createQuestGenerator(worldMap, packService);
     const questUiController = createQuestUiController(game, ui);
     const loreBookController = new LoreBookController({ loreBody: ui.hudElements.loreBody }, player, worldMap);
     const magicSystem = new MagicSystem(player);
     const battleUiController = new BattleUiController(ui.battleUI, battleMap, turnManager, player, ui.gameLogUI.log, magicSystem);
-    const shared = createSharedRuntime(game, runtimeBase, loreBookController, magicSystem, battleUiController);
+    const shared = createSharedRuntime(
+        game,
+        runtimeBase,
+        loreBookController,
+        magicSystem,
+        battleUiController,
+        () => questCharacterNameReservoir.nextName(),
+    );
     const combat = createBattleControllers(game, runtimeBase, shared, magicSystem, battleUiController);
     shared.battleCommandControllerRef = combat.battleCommandController;
     const worldModeController = createWorldMode(game, runtimeBase, shared, loreBookController);

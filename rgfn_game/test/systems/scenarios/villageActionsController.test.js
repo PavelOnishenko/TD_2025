@@ -806,3 +806,30 @@ test('VillageActionsController shows turn-in action for ready side quests and tu
   assert.equal(turnInCalls, 1);
   assert.equal(gameLog.children.some((child) => String(child.textContent ?? '').includes('turn-in')), true);
 }));
+
+test('VillageActionsController applies quest-style generated names to village NPC rosters when provided', () => withDocumentStub(() => {
+  const villageUI = createVillageUi();
+  const gameLog = createElement();
+  const generatedNames = ['Ari Vale', 'Miller Forge', 'Nora Reed'];
+  const controller = new VillageActionsController(createPlayerStub(), villageUI, gameLog, {
+    onUpdateHUD: () => {},
+    onAdvanceTime: () => {},
+    onLeaveVillage: () => {},
+    getVillageDirectionHint: (settlementName) => ({ settlementName, exists: false }),
+    onVillageBarterCompleted: () => {},
+  }, { nextCharacterName: () => generatedNames.shift() ?? '' });
+
+  controller['dialogueEngine'] = {
+    createNpcRoster: () => [
+      { id: 'moss-0', name: 'Mara', role: 'Trader', look: 'satchel', speechStyle: 'calm', disposition: 'truthful' },
+      { id: 'moss-1', name: 'Tor', role: 'Hunter', look: 'boots', speechStyle: 'cold', disposition: 'liar' },
+      { id: 'moss-2', name: 'Iven', role: 'Guard', look: 'hood', speechStyle: 'warm', disposition: 'imprecise' },
+    ],
+    buildLocationAnswer: () => ({ speech: '', tone: '', truthfulness: 'truth' }),
+    buildPersonLocationAnswer: () => ({ speech: '', tone: '', truthfulness: 'truth' }),
+  };
+
+  controller.enterVillage('Mossbrook');
+  const rosterNames = controller['npcRoster'].map((npc) => npc.name);
+  assert.deepEqual(rosterNames, ['Ari Vale', 'Miller Forge', 'Nora Reed']);
+}));

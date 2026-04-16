@@ -51,6 +51,7 @@ const createVillageActionsController = (
     player: Player,
     worldMap: WorldMap,
     hudCoordinator: GameHudCoordinator,
+    nextCharacterName: () => string,
 ): VillageActionsController => new VillageActionsController(player, ui.villageUI, ui.gameLogUI.log, {
     onUpdateHUD: () => hudCoordinator.updateHUD(),
     onAdvanceTime: (minutes, fatigueScale) => game.onVillageAdvanceTime(minutes, fatigueScale),
@@ -71,7 +72,7 @@ const createVillageActionsController = (
     getVillageNpcActiveSideQuests: (villageName, npcName) => game.getVillageNpcActiveSideQuests(villageName, npcName),
     acceptSideQuest: (questId) => game.acceptSideQuest(questId),
     turnInSideQuest: (questId, npcName, villageName) => game.turnInSideQuest(questId, npcName, villageName),
-});
+}, { nextCharacterName });
 
 // eslint-disable-next-line style-guide/function-length-warning
 export function createVillageRuntime(
@@ -81,8 +82,9 @@ export function createVillageRuntime(
     worldMap: WorldMap,
     villageLifeRenderer: VillageLifeRenderer,
     hudCoordinator: GameHudCoordinator,
+    nextCharacterName: () => string,
 ) {
-    const villageActionsController = createVillageActionsController(game, ui, player, worldMap, hudCoordinator);
+    const villageActionsController = createVillageActionsController(game, ui, player, worldMap, hudCoordinator, nextCharacterName);
     const villageCoordinator = new GameVillageCoordinator(
         ui.hudElements,
         ui.battleUI,
