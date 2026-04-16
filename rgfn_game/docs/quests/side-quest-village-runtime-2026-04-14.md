@@ -155,3 +155,14 @@
 
 - Previously there was side-quest offer storage + UI, but no village-entry generation hook guaranteed that NPCs would receive new offers.
 - With entry-time probabilistic generation wired into the runtime callback chain, villagers now reliably have a configurable chance to spawn offers whenever the player enters a village.
+
+## 2026-04-16: Clarification for "In progress" side quests shown before manual acceptance
+
+- Root cause observed: side quests could appear as **In progress** immediately for an NPC in some sessions because active side quests already existed in runtime state (from earlier acceptance/save), while UI also previously had a developer-mode auto-accept path.
+- UX/runtime adjustments made:
+  - Developer-mode auto-accept path was removed so side quests are always explicitly accepted by player action.
+  - Village dialogue now emits an explicit line when an NPC has no new offers but does have active quests:
+    - `No new side-quest offers from <NPC>. <N> quest(s) already in progress from earlier acceptance.`
+- Practical debugging tip:
+  - If a quest card is **In progress** with no Accept button, check the log for the line above; this indicates an already-active quest rather than a newly spawned unaccepted offer.
+  - Offer cards remain labeled **Offer available** and include an **Accept quest** button.

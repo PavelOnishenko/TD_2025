@@ -483,6 +483,13 @@ export default class VillageActionsController {
             + `${activeQuests.length} active, ${readyToTurnInCount} ready to turn in.`,
             'system-message',
         );
+        if (offers.length === 0 && activeQuests.length > 0) {
+            this.addLog(
+                `No new side-quest offers from ${npc.name}. ${activeQuests.length} quest${activeQuests.length === 1 ? '' : 's'} `
+                + 'already in progress from earlier acceptance.',
+                'system-message',
+            );
+        }
         activeQuests.forEach((quest) => {
             this.activeNpcSideQuestIds.add(quest.id);
             this.injectSideQuestNpcReferencesIntoNearbyRosters(quest);
@@ -492,14 +499,7 @@ export default class VillageActionsController {
             this.readySideQuestLogIds.add(quest.id);
             this.addLog(`Side quest ready to turn in: ${quest.title}.`, 'system');
         });
-        if (!this.shouldAutoAcceptVillageSideQuests() || offers.length === 0) {
-            this.updateButtons();
-            return;
-        }
-        offers.forEach((offer) => this.handleAcceptSideQuest(offer.id));
-        if (offers.length > 0) {
-            this.addLog('[DEV] Auto-accepted side quests for selected NPC.', 'system-message');
-        }
+        this.updateButtons();
     }
 
     private renderSideQuestUiForNpc(npc: VillageNpcProfile, offers: QuestNode[], activeQuests: QuestNode[]): void {
@@ -609,8 +609,6 @@ export default class VillageActionsController {
         }
         return 'Available';
     }
-
-    private shouldAutoAcceptVillageSideQuests = (): boolean => isDeveloperModeEnabled();
 
     private getKnownSettlementNames(): string[] {
         const knownFromMap = this.callbacks.getKnownSettlementNames?.() ?? [];

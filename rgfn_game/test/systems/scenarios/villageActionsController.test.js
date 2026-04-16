@@ -731,6 +731,43 @@ test('VillageActionsController requires explicit side-quest acceptance and expos
   assert.equal(gameLog.children.some((child) => String(child.textContent ?? '').includes('Side quest accepted')), true);
 }));
 
+test('VillageActionsController does not auto-accept side quests in developer mode', () => withDeveloperMode(true, () => withDocumentStub(() => {
+  const villageUI = createVillageUi();
+  const gameLog = createElement();
+  let acceptCalls = 0;
+  const offerQuest = {
+    id: 'side-quest-offer-dev',
+    title: 'Count Grain Sacks',
+    description: 'Inspect missing grain sacks in the barn.',
+    reward: '10g',
+    status: 'available',
+    children: [],
+  };
+  const controller = new VillageActionsController(createPlayerStub(), villageUI, gameLog, {
+    onUpdateHUD: () => {},
+    onLeaveVillage: () => {},
+    onAdvanceTime: () => {},
+    getVillageDirectionHint: (settlementName) => ({ settlementName, exists: false }),
+    onVillageBarterCompleted: () => {},
+    getVillageSideQuestOffers: () => [offerQuest],
+    getVillageNpcActiveSideQuests: () => [],
+    acceptSideQuest: () => { acceptCalls += 1; return { accepted: true }; },
+  });
+  controller['dialogueEngine'] = {
+    createNpcRoster: () => [{ id: 'moss-0', name: 'Mara', role: 'Trader', look: 'cloak', speechStyle: 'calm', disposition: 'truthful' }],
+    buildLocationAnswer: () => ({ speech: '', tone: '', truthfulness: 'truth' }),
+    buildPersonLocationAnswer: () => ({ speech: '', tone: '', truthfulness: 'truth' }),
+  };
+
+  controller.enterVillage('Mossbrook');
+  controller.handleSelectNpc(0);
+
+  assert.equal(acceptCalls, 0);
+  const hasAcceptButton = villageUI.sideQuestList.children.some((child) => child.children?.some((entry) => entry.textContent === 'Accept quest'));
+  assert.equal(hasAcceptButton, true);
+  assert.equal(gameLog.children.some((child) => String(child.textContent ?? '').includes('Auto-accepted side quests')), false);
+})));
+
 test('VillageActionsController shows turn-in action for ready side quests and turn-in is explicit', () => withDocumentStub(() => {
   const villageUI = createVillageUi();
   const gameLog = createElement();
