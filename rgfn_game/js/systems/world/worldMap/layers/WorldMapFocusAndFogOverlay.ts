@@ -28,7 +28,9 @@ export default class WorldMapFocusAndFogOverlay extends WorldMapPersistenceAndSe
         )
     );
 
-    private isDiscovered = (col: number, row: number): boolean => this.getFogState(col, row) !== FOG_STATE.UNKNOWN;
+    private isDiscovered = (col: number, row: number): boolean => (
+        this.mapDisplayConfig.everythingDiscovered || this.getFogState(col, row) !== FOG_STATE.UNKNOWN
+    );
 
     private drawNamedLocationFocus(ctx: CanvasRenderingContext2D): void {
         if (!this.focusedLocationName) {
@@ -65,22 +67,17 @@ export default class WorldMapFocusAndFogOverlay extends WorldMapPersistenceAndSe
         if (fogState === FOG_STATE.DISCOVERED) {
             return;
         }
-
-        const cell = this.grid.cells[this.getCellIndex(col, row)];
+        const cell = this.getCellAt(col, row);
         if (!cell) {
             return;
         }
-
-        this.renderer.drawCell(
-            ctx,
-            cell,
-            fogState,
-            fogState === FOG_STATE.HIDDEN ? this.getTerrain(col, row) : undefined,
-            undefined,
-            { showFogOverlay: this.mapDisplayConfig.fogOfWar, detailLevel },
-        );
+        const terrain = fogState === FOG_STATE.HIDDEN ? this.getTerrain(col, row) : undefined;
+        const drawOptions = { showFogOverlay: this.mapDisplayConfig.fogOfWar, detailLevel };
+        this.renderer.drawCell(ctx, cell, fogState, terrain, undefined, drawOptions);
         this.drawnTileCountThisFrame += 1;
         this.approxDrawCallsThisFrame += 1;
     }
+
+    private getCellAt = (col: number, row: number): GridCell | undefined => this.grid.cells[this.getCellIndex(col, row)];
 
 }

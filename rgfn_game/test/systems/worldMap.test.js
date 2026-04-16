@@ -538,6 +538,17 @@ test('WorldMap exposes village names and anchors matching quest locations to vil
   assert.equal(worldMap.revealNamedLocation(villageName), true);
 }));
 
+test('WorldMap revealNamedLocation works when everythingDiscovered map mode is enabled', () => withMockedRandom([0.11], () => {
+  const worldMap = new WorldMap(40, 30, 20);
+  const villageName = worldMap.getAllVillageNames()[0];
+  assert.ok(villageName);
+
+  worldMap.registerNamedLocation(villageName);
+  worldMap.setMapDisplayConfig({ everythingDiscovered: true, fogOfWar: false });
+
+  assert.equal(worldMap.revealNamedLocation(villageName), true);
+}));
+
 test('WorldMap getKnownSettlementNames excludes undiscovered named locations', () => withMockedRandom([0.11], () => {
   const worldMap = new WorldMap(40, 30, 20);
   worldMap.registerNamedLocation('Questspire');

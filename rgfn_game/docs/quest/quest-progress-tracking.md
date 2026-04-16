@@ -278,3 +278,43 @@
 ### Regression coverage added
 - `recoverQuestRuntime.test.js` now verifies known quest settlement extraction excludes unknown future contracts.
 - `villageActionsController.test.js` now verifies non-developer settlement dropdown merges discovered map names with known quest names.
+
+## April 16, 2026 update: side-quest village links respect developer map reveal mode
+
+### Problem observed
+- In the **Side Quests** tab, clicking a village link could show `"<Village> is not discovered yet."` even when developer mode map reveal (`everythingDiscovered`) was enabled and the village was visible on the world map.
+- Root cause: quest-link navigation used world-map discovery state (`fogStates`) only, while developer map reveal is a display override.
+
+### Fix implemented
+- World-map discovery checks used by named-location reveal now treat `mapDisplayConfig.everythingDiscovered === true` as discovered.
+- This makes side-quest village links navigate correctly while developer reveal mode is active, matching user-visible map state.
+
+### Regression coverage
+- Added world-map test coverage verifying `revealNamedLocation(...)` succeeds when `everythingDiscovered` is enabled.
+
+### Notes
+- This change keeps normal progression behavior unchanged when developer reveal is disabled.
+- In non-developer/non-reveal runs, undiscovered targets still correctly show the red warning feedback.
+
+## April 16, 2026 follow-up: side-quest location click now self-heals missing map registration
+
+### Additional root cause found
+- Some side-quest location entities were clickable in HUD but still failed map focus because the location name had not been registered in `WorldMap.namedLocations` yet.
+- This can happen when side-quest location knowledge is available in UI before world-map named-location registration catches up.
+
+### Runtime hardening
+- `GameFacadeLifecycleCoordinator.onQuestLocationClick(...)` now retries once:
+  1. first tries `revealNamedLocation(locationName)`,
+  2. if false, registers the location (`registerNamedLocation(locationName)`),
+  3. retries `revealNamedLocation(locationName)`.
+- Result: side-quest links can recover automatically from stale/missing registration state.
+
+### Knowledge synchronization improvement
+- `GameQuestRuntime.getKnownQuestLocationNames()` now returns a union of:
+  - known main-quest locations,
+  - visible/known side-quest locations (offers + active side quests shown in UI).
+- `syncKnownQuestLocations()` now uses that merged set.
+
+### Added regression tests
+- New scenario test verifies lifecycle retry behavior and ensures registration is only attempted when needed.
+- New runtime test verifies known side-quest locations are included in dialogue/map knowledge export.

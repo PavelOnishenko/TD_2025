@@ -208,10 +208,15 @@ export default class GameQuestRuntime {
     }
 
     public getKnownQuestLocationNames(): string[] {
-        if (!this.activeQuest) {
-            return [];
+        const locationNames = new Set<string>();
+        if (this.activeQuest) {
+            this.collectKnownQuestLocationNames(this.activeQuest)
+                .forEach((locationName) => locationNames.add(locationName));
         }
-        return this.collectKnownQuestLocationNames(this.activeQuest);
+        this.getKnownSideQuestsForUi()
+            .flatMap((quest) => this.collectQuestLocationNames(quest))
+            .forEach((locationName) => locationNames.add(locationName));
+        return Array.from(locationNames).sort((left, right) => left.localeCompare(right));
     }
 
     public recruitEscort(personName: string, villageName: string): 'joined' | 'inactive' | 'already-joined' | 'not-available' {
@@ -717,10 +722,10 @@ export default class GameQuestRuntime {
     }
 
     private syncKnownQuestLocations(): void {
-        if (!this.worldMap || !this.activeQuest) {
+        if (!this.worldMap) {
             return;
         }
-        this.collectKnownQuestLocationNames(this.activeQuest)
+        this.getKnownQuestLocationNames()
             .forEach((locationName) => this.worldMap?.registerNamedLocation(locationName));
     }
 
@@ -739,6 +744,20 @@ export default class GameQuestRuntime {
         };
         visit(quest);
         return Array.from(locationNames).sort((left, right) => left.localeCompare(right));
+    }
+
+    private collectQuestLocationNames(quest: QuestNode): string[] {
+        const locationNames = new Set<string>();
+        const visit = (node: QuestNode): void => {
+            node.entities
+                .filter((entity) => entity.type === 'location')
+                .map((entity) => entity.text.trim())
+                .filter((name) => name.length > 0)
+                .forEach((name) => locationNames.add(name));
+            node.children.forEach((child) => visit(child));
+        };
+        visit(quest);
+        return Array.from(locationNames);
     }
 
     private collectBarterContracts(quest: QuestNode): Array<{ traderName: string; itemName: string; sourceVillage?: string; destinationVillage?: string; contractType: 'barter' | 'deliver' | 'recover' }> {

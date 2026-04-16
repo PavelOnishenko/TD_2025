@@ -107,7 +107,11 @@ export default class GameFacadeLifecycleCoordinator {
     }
 
     public onQuestLocationClick(locationName: string): boolean {
-        const shown = this.state.worldMap.revealNamedLocation(locationName);
+        let shown = this.state.worldMap.revealNamedLocation(locationName);
+        if (!shown) {
+            this.state.worldMap.registerNamedLocation(locationName);
+            shown = this.state.worldMap.revealNamedLocation(locationName);
+        }
         if (shown) {
             this.state.stateMachine.transition(MODES.WORLD_MAP);
         }
