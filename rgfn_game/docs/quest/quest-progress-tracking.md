@@ -278,3 +278,20 @@
 ### Regression coverage added
 - `recoverQuestRuntime.test.js` now verifies known quest settlement extraction excludes unknown future contracts.
 - `villageActionsController.test.js` now verifies non-developer settlement dropdown merges discovered map names with known quest names.
+
+## April 16, 2026 update: side-quest village links respect developer map reveal mode
+
+### Problem observed
+- In the **Side Quests** tab, clicking a village link could show `"<Village> is not discovered yet."` even when developer mode map reveal (`everythingDiscovered`) was enabled and the village was visible on the world map.
+- Root cause: quest-link navigation used world-map discovery state (`fogStates`) only, while developer map reveal is a display override.
+
+### Fix implemented
+- World-map discovery checks used by named-location reveal now treat `mapDisplayConfig.everythingDiscovered === true` as discovered.
+- This makes side-quest village links navigate correctly while developer reveal mode is active, matching user-visible map state.
+
+### Regression coverage
+- Added world-map test coverage verifying `revealNamedLocation(...)` succeeds when `everythingDiscovered` is enabled.
+
+### Notes
+- This change keeps normal progression behavior unchanged when developer reveal is disabled.
+- In non-developer/non-reveal runs, undiscovered targets still correctly show the red warning feedback.
