@@ -126,6 +126,23 @@ function createKnownDefendQuest() {
   };
 }
 
+function createSideQuestWithLocation(id = 'side-1', locationName = 'Silver Ridge') {
+  return {
+    id,
+    title: 'Recover artifact',
+    description: `Retrieve the relic from ${locationName}.`,
+    conditionText: `Obtain the relic at ${locationName}.`,
+    objectiveType: 'recover',
+    entities: [{ text: locationName, type: 'location' }],
+    children: [],
+    isCompleted: false,
+    track: 'side',
+    status: 'active',
+    giverNpcName: 'Ysolde',
+    giverVillageName: locationName,
+  };
+}
+
 function createSideQuest(overrides = {}) {
   return {
     id: 'side-1',
@@ -233,6 +250,17 @@ test('GameQuestRuntime exposes only known quest location names for dialogue know
   const locations = runtime.getKnownQuestLocationNames();
 
   assert.deepEqual(locations, ['Farwatch']);
+});
+
+test('GameQuestRuntime includes known side-quest locations in dialogue knowledge', () => {
+  const runtime = new GameQuestRuntime();
+  const quest = createQuestWithKnownAndUnknownContracts();
+
+  runtime.activeQuest = quest;
+  runtime.activeSideQuests = [createSideQuestWithLocation()];
+  const locations = runtime.getKnownQuestLocationNames();
+
+  assert.deepEqual(locations, ['Farwatch', 'Silver Ridge']);
 });
 
 test('GameQuestRuntime exposes defend contracts for known active defend objectives', () => {
