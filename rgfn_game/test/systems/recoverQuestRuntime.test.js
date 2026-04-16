@@ -161,6 +161,35 @@ function createSideQuest(overrides = {}) {
   };
 }
 
+function createActiveScoutSideQuest(overrides = {}) {
+  return {
+    id: 'side-scout',
+    title: 'Scout Golden Beacon',
+    description: 'Travel to Golden Beacon and secure the path.',
+    conditionText: 'Complete the listed task and return to the quest giver.',
+    objectiveType: 'scout',
+    entities: [],
+    children: [
+      {
+        id: 'side-scout.1',
+        title: 'Scout Golden Beacon',
+        description: 'Travel to Golden Beacon and secure the path.',
+        conditionText: 'Enter Golden Beacon.',
+        objectiveType: 'scout',
+        entities: [{ text: 'Golden Beacon', type: 'location' }],
+        children: [],
+        isCompleted: false,
+      },
+    ],
+    isCompleted: false,
+    track: 'side',
+    giverNpcName: 'Rica',
+    giverVillageName: 'Selzen',
+    status: 'active',
+    ...overrides,
+  };
+}
+
 test('GameQuestRuntime revealRecoverHolder confirms target person when speaking with another villager', () => {
   const runtime = new GameQuestRuntime();
   const quest = createRecoverQuest();
@@ -448,4 +477,22 @@ test('GameQuestRuntime marks deliver side quests ready when reaching destination
   const changed = runtime.recordLocationEntry('Golden Beacon', ['Eshdra Lorka']);
   assert.equal(changed, true);
   assert.equal(runtime.activeSideQuests[0].status, 'readyToTurnIn');
+});
+
+test('GameQuestRuntime marks active scout side quests ready to turn in after entering objective village', () => {
+  const runtime = new GameQuestRuntime();
+  const mainQuest = createQuestWithKnownAndUnknownContracts();
+  const sideQuest = createActiveScoutSideQuest();
+  runtime.activeQuest = mainQuest;
+  runtime.questProgressTracker = new QuestProgressTracker(mainQuest);
+  runtime.questUiController = { renderQuest: () => {} };
+  runtime.refreshContracts = () => {};
+  runtime.activeSideQuests = [sideQuest];
+
+  const updated = runtime.recordLocationEntry('Golden Beacon', []);
+
+  assert.equal(updated, true);
+  assert.equal(sideQuest.children[0].isCompleted, true);
+  assert.equal(sideQuest.isCompleted, true);
+  assert.equal(sideQuest.status, 'readyToTurnIn');
 });

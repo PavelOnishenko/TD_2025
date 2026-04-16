@@ -204,9 +204,10 @@ export default class GameQuestRuntime {
             return false;
         }
         const locationChanged = this.questProgressTracker.recordLocationEntryWithInventory(locationName, carriedItemNames);
+        const sideQuestChanged = this.progressSideQuestsOnLocationEntry(locationName, carriedItemNames);
         const escortChanged = this.resolveEscortArrival(locationName);
         const sideQuestDeliveryChanged = this.updateSideQuestDeliveryProgress(locationName, carriedItemNames);
-        if (!locationChanged && !escortChanged && !sideQuestDeliveryChanged) {
+        if (!locationChanged && !escortChanged && !sideQuestDeliveryChanged && !sideQuestChanged) {
             return false;
         }
         this.renderQuestUi();
@@ -439,7 +440,9 @@ export default class GameQuestRuntime {
         if (!this.questProgressTracker || !this.questUiController || !this.activeQuest) {
             return 'inactive';
         }
-        if (!this.questProgressTracker.recordBarterCompletion(traderName, itemName, villageName)) {
+        const mainQuestChanged = this.questProgressTracker.recordBarterCompletion(traderName, itemName, villageName);
+        const sideQuestChanged = this.progressSideQuestsOnBarterCompletion(traderName, itemName, villageName);
+        if (!mainQuestChanged && !sideQuestChanged) {
             return 'no-objective';
         }
         this.renderQuestUi();
@@ -451,7 +454,9 @@ export default class GameQuestRuntime {
         if (!this.questProgressTracker || !this.questUiController || !this.activeQuest) {
             return false;
         }
-        if (!this.questProgressTracker.recordMonsterKill(monsterName)) {
+        const mainQuestChanged = this.questProgressTracker.recordMonsterKill(monsterName);
+        const sideQuestChanged = this.progressSideQuestsOnMonsterKill(monsterName);
+        if (!mainQuestChanged && !sideQuestChanged) {
             return false;
         }
         this.renderQuestUi();
@@ -1233,6 +1238,37 @@ export default class GameQuestRuntime {
             known.push(sideQuest);
         }
         return known;
+    }
+
+    private progressSideQuestsOnLocationEntry(locationName: string, carriedItemNames: string[]): boolean {
+        return this.progressActiveSideQuests((tracker) => tracker.recordLocationEntryWithInventory(locationName, carriedItemNames));
+    }
+
+    private progressSideQuestsOnBarterCompletion(traderName: string, itemName: string, villageName: string): boolean {
+        return this.progressActiveSideQuests((tracker) => tracker.recordBarterCompletion(traderName, itemName, villageName));
+    }
+
+    private progressSideQuestsOnMonsterKill(monsterName: string): boolean {
+        return this.progressActiveSideQuests((tracker) => tracker.recordMonsterKill(monsterName));
+    }
+
+    private progressActiveSideQuests(progressFn: (tracker: QuestProgressTracker) => boolean): boolean {
+        let changed = false;
+        for (const sideQuest of this.activeSideQuests) {
+            if (sideQuest.status !== 'active') {
+                continue;
+            }
+            const tracker = new QuestProgressTracker(sideQuest);
+            const questChanged = progressFn(tracker);
+            if (!questChanged) {
+                continue;
+            }
+            changed = true;
+            if (sideQuest.isCompleted) {
+                sideQuest.status = 'readyToTurnIn';
+            }
+        }
+        return changed;
     }
 
     private randomInt(min: number, max: number): number {
