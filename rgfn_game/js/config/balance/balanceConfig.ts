@@ -11,6 +11,7 @@ import { itemBalance, encounterBalance } from './itemsEncountersBalance.js';
 
 export const balanceConfig = {
     worldMap: worldMapBalance,
+    quest: { sideQuestMaxVillageDistanceCells: 8, sideQuestNearbyRosterDistanceCells: 4, sideQuestVillagerOfferChance: 0.5, sideQuestMaxOffersPerVillager: 5 },
     survival: {
         awakeHoursPerDay: 16,
         requiredSleepHours: 8,
