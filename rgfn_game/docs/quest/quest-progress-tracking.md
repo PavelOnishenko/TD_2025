@@ -28,6 +28,23 @@
   - marks the side-quest root complete,
   - transitions side-quest status to `readyToTurnIn`.
 
+## April 16, 2026 update: recover side quests now complete through village-entry item discovery
+
+- Recover-type **side quests** now use one completion path: entering the objective village auto-discovers the recover item as a ground find.
+- Runtime now emits explicit village-entry logs for this path:
+  - item acquisition context (`Found <item> lying on the ground in <village>`),
+  - side-quest readiness (`Side quest ready to turn in: <title>`).
+- `GameQuestRuntime.recordLocationEntry(...)` now accepts an optional recovered-item callback so discovered recover items are immediately granted to player inventory.
+- Main quest recover confrontation flow remains unchanged in this update; this change targets side-quest recover playability/completion.
+
+### Regression coverage
+
+- Added automated runtime test:
+  - entering a recover side-quest village auto-completes the objective,
+  - grants the recover item through callback,
+  - emits acquisition log text,
+  - sets side-quest status to `readyToTurnIn`.
+
 ## April 8, 2026 update: village dialogue contract visibility now follows known quest frontier
 
 - Non-developer mode village dialogue dropdowns are now aligned with quest knowledge progression:

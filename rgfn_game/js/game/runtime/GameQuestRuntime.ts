@@ -199,20 +199,24 @@ export default class GameQuestRuntime {
         return true;
     }
 
-    public recordLocationEntry(locationName: string, carriedItemNames: string[]): boolean {
+    public recordLocationEntry(
+        locationName: string,
+        carriedItemNames: string[],
+        onRecoveredItemFound?: (item: Item) => boolean,
+    ): { changed: boolean; logs: string[] } {
         if (!this.questProgressTracker || !this.questUiController || !this.activeQuest) {
-            return false;
+            return { changed: false, logs: [] };
         }
         const locationChanged = this.questProgressTracker.recordLocationEntryWithInventory(locationName, carriedItemNames);
-        const sideQuestChanged = this.progressSideQuestsOnLocationEntry(locationName, carriedItemNames);
+        const sideQuestProgress = this.progressSideQuestsOnLocationEntry(locationName, carriedItemNames, onRecoveredItemFound);
         const escortChanged = this.resolveEscortArrival(locationName);
         const sideQuestDeliveryChanged = this.updateSideQuestDeliveryProgress(locationName, carriedItemNames);
-        if (!locationChanged && !escortChanged && !sideQuestDeliveryChanged && !sideQuestChanged) {
-            return false;
+        if (!locationChanged && !escortChanged && !sideQuestDeliveryChanged && !sideQuestProgress.changed) {
+            return { changed: false, logs: sideQuestProgress.logs };
         }
         this.renderQuestUi();
         this.refreshContracts();
-        return true;
+        return { changed: true, logs: sideQuestProgress.logs };
     }
 
     public getKnownQuestLocationNames(): string[] {
@@ -1240,8 +1244,42 @@ export default class GameQuestRuntime {
         return known;
     }
 
-    private progressSideQuestsOnLocationEntry(locationName: string, carriedItemNames: string[]): boolean {
-        return this.progressActiveSideQuests((tracker) => tracker.recordLocationEntryWithInventory(locationName, carriedItemNames));
+    private progressSideQuestsOnLocationEntry(
+        locationName: string,
+        carriedItemNames: string[],
+        onRecoveredItemFound?: (item: Item) => boolean,
+    ): { changed: boolean; logs: string[] } {
+        const normalizedLocation = locationName.trim();
+        const lines: string[] = [];
+        let changed = false;
+
+        for (const sideQuest of this.activeSideQuests) {
+            if (sideQuest.status !== 'active') {
+                continue;
+            }
+
+            const tracker = new QuestProgressTracker(sideQuest);
+            let sideQuestChanged = false;
+            const recoverLogs = this.autoRecoverSideQuestItems(sideQuest, normalizedLocation, onRecoveredItemFound);
+            if (recoverLogs.length > 0) {
+                recoverLogs.forEach((line) => lines.push(line));
+                tracker.recomputeCompletion();
+                sideQuestChanged = true;
+            }
+            if (tracker.recordLocationEntryWithInventory(locationName, carriedItemNames)) {
+                sideQuestChanged = true;
+            }
+            if (!sideQuestChanged) {
+                continue;
+            }
+            changed = true;
+            if (sideQuest.isCompleted) {
+                sideQuest.status = 'readyToTurnIn';
+                lines.push(`Side quest ready to turn in: ${sideQuest.title}.`);
+            }
+        }
+
+        return { changed, logs: lines };
     }
 
     private progressSideQuestsOnBarterCompletion(traderName: string, itemName: string, villageName: string): boolean {
@@ -1250,6 +1288,37 @@ export default class GameQuestRuntime {
 
     private progressSideQuestsOnMonsterKill(monsterName: string): boolean {
         return this.progressActiveSideQuests((tracker) => tracker.recordMonsterKill(monsterName));
+    }
+
+    private autoRecoverSideQuestItems(
+        sideQuest: QuestNode,
+        locationName: string,
+        onRecoveredItemFound?: (item: Item) => boolean,
+    ): string[] {
+        const normalizedLocation = locationName.trim().toLocaleLowerCase();
+        if (!normalizedLocation) {
+            return [];
+        }
+        const logs: string[] = [];
+        this.visitQuestNodes(sideQuest, (node) => {
+            if (node.objectiveType !== 'recover' || node.children.length > 0 || node.isCompleted) {
+                return;
+            }
+            const recover = node.objectiveData?.recover;
+            if (!recover || recover.currentVillage.trim().toLocaleLowerCase() !== normalizedLocation) {
+                return;
+            }
+            node.isCompleted = true;
+            recover.isPersonKnown = true;
+            const recoverItem = this.createRecoverQuestItem(recover.itemName);
+            const wasAdded = onRecoveredItemFound ? onRecoveredItemFound(recoverItem) : true;
+            if (wasAdded) {
+                logs.push(`Quest tracker: Found ${recover.itemName} lying on the ground in ${recover.currentVillage}.`);
+                return;
+            }
+            logs.push(`Quest tracker: Found ${recover.itemName} in ${recover.currentVillage}, but your inventory is full.`);
+        });
+        return logs;
     }
 
     private progressActiveSideQuests(progressFn: (tracker: QuestProgressTracker) => boolean): boolean {
