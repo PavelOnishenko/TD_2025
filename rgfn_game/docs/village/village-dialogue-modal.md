@@ -115,6 +115,17 @@ File: `rgfn_game/test/systems/villageActionsController.test.js`.
   - Escape handling exits early when the modal is hidden, avoiding redundant close calls.
   - Existing world map keyboard zoom handling remains isolated in its own keydown branch.
 
+## Follow-up pitfall fixed (April 16, 2026, layout/overflow)
+
+- Symptom: when side-quest cards grew in count/height, the dialogue popup content could overflow beyond viewport bounds with inaccessible controls.
+- Root cause: modal panel had fixed max-height but no own vertical scrolling, so inner sections could extend outside visible area.
+- Fix:
+  - `village-dialogue-panel` now uses `overflow-y: auto`, making the whole NPC dialogue panel scroll like other HUD/panel surfaces.
+  - Side-quest offer cards now use a compact two-button row (`Accept quest` + `Refuse`) to reduce vertical pressure per card.
+- Result:
+  - all dialogue sections remain reachable,
+  - modal behaves consistently with other scrollable panels under high-content scenarios.
+
 ## Notes for future extension
 
 - If needed, next step is to render only NPC conversation lines in modal (filter by tags), while keeping full system log in main log panel.
