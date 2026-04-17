@@ -77,6 +77,21 @@
   - ready-to-turn-in logs (once per quest id),
   - turn-in completion logs with reward text.
 
+## 2026-04-16: Side-quest offer cards now show concrete task details before acceptance
+
+- The side-quest card renderer now includes a **Task details** line when the quest has child objective descriptions.
+- This line is sourced from the first non-empty child objective description that is different from the root quest description.
+- Result: players can inspect the actual objective scope directly in the NPC dialogue side-quest block before clicking **Accept quest**, instead of needing to open the quest panel after accepting.
+- Existing card fields remain unchanged:
+  - title + status,
+  - root quest description,
+  - reward preview,
+  - accept/turn-in action button depending on status.
+
+### Regression guard added
+
+- `villageActionsController` scenario tests now assert that offer cards surface the new `Task details: ...` line when objective child text exists.
+
 ### Verification checklist used for this change
 
 1. Enter village.

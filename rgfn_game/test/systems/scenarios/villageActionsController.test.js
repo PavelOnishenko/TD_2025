@@ -699,10 +699,10 @@ test('VillageActionsController requires explicit side-quest acceptance and expos
   const offerQuest = {
     id: 'side-quest-offer',
     title: 'Patch the Mill Wheel',
-    description: 'Bring repair tools to the village mill.',
+    description: 'Assist Mara with a local task in Mossbrook.',
     reward: '20g',
     status: 'available',
-    children: [],
+    children: [{ description: 'Carry repair tools from the smithy to the mill wheel before sunset.' }],
   };
   const controller = new VillageActionsController(createPlayerStub(), villageUI, gameLog, {
     onUpdateHUD: () => {},
@@ -726,6 +726,10 @@ test('VillageActionsController requires explicit side-quest acceptance and expos
   assert.equal(acceptCalls, 0);
   const acceptButton = villageUI.sideQuestList.children.find((child) => child.children?.some((entry) => entry.textContent === 'Accept quest'));
   assert.ok(acceptButton);
+  assert.equal(
+    acceptButton.children.some((entry) => String(entry.textContent ?? '').includes('Task details: Carry repair tools from the smithy to the mill wheel before sunset.')),
+    true,
+  );
   controller.handleAcceptSideQuest('side-quest-offer');
   assert.equal(acceptCalls, 1);
   assert.equal(gameLog.children.some((child) => String(child.textContent ?? '').includes('Side quest accepted')), true);
