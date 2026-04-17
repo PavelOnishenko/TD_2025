@@ -639,12 +639,25 @@ export default class VillageActionsController {
 
     private appendSideQuestCardText(card: HTMLElement, quest: QuestNode, isOffer: boolean): void {
         const statusText = isOffer ? 'Offer available' : this.getSideQuestStatusText(quest.status);
-        [ `${quest.title} — ${statusText}`, quest.description, `Reward preview: ${quest.reward?.trim() ? quest.reward : 'Unknown reward'}` ]
+        const lines = [`${quest.title} — ${statusText}`, quest.description];
+        const taskDetails = this.getSideQuestTaskDetails(quest);
+        if (taskDetails) {
+            lines.push(`Task details: ${taskDetails}`);
+        }
+        lines.push(`Reward preview: ${quest.reward?.trim() ? quest.reward : 'Unknown reward'}`);
+        lines
             .forEach((line) => {
                 const element = document.createElement('p');
                 element.textContent = line;
                 card.appendChild(element);
             });
+    }
+
+    private getSideQuestTaskDetails(quest: QuestNode): string {
+        const detail = quest.children
+            .map((child) => child.description.trim())
+            .find((description) => description.length > 0 && description !== quest.description.trim());
+        return detail ?? '';
     }
 
     private appendSideQuestCardAction(card: HTMLElement, quest: QuestNode, isOffer: boolean): void {
