@@ -11,6 +11,7 @@ import { balanceConfig } from '../../config/balance/balanceConfig.js';
 import { getDeveloperModeConfig } from '../../utils/DeveloperModeConfig.js';
 import { collectKnownQuestNodes } from '../../systems/quest/QuestKnowledge.js';
 import { assignMonsterBehaviorPool } from '../../systems/combat/MonsterBehaviorDirector.js';
+import type { ActiveMonsterObjective } from '../../systems/quest/QuestMonsterProgress.js';
 
 type QuestContractsReadyPayload = {
     barterContracts: Array<{
@@ -682,16 +683,17 @@ export default class GameQuestRuntime {
         if (!this.questProgressTracker) {
             return null;
         }
-        for (const objective of this.questProgressTracker.getActiveMonsterObjectives()) {
+        const maxDistanceCells = Math.max(1, Math.floor(balanceConfig.quest?.monsterObjectiveEncounterMaxDistanceCells ?? 7));
+        const encounterChance = Math.min(1, Math.max(0, balanceConfig.quest?.monsterObjectiveEncounterChance ?? 0.35));
+        for (const objective of this.collectActiveMonsterObjectives()) {
             if (!objective.villageName) {
                 continue;
             }
             const hint = worldMap.getVillageDirectionHintFromPlayer(objective.villageName);
-            if (!hint.exists || typeof hint.distanceCells !== 'number' || hint.distanceCells > 7) {
+            if (!hint.exists || typeof hint.distanceCells !== 'number' || hint.distanceCells > maxDistanceCells) {
                 continue;
             }
-            const chance = hint.distanceCells <= 2 ? 0.42 : 0.2;
-            if (Math.random() >= chance) {
+            if (Math.random() >= encounterChance) {
                 continue;
             }
             const spawnCount = Math.max(1, Math.min(3, objective.remainingKills));
@@ -700,6 +702,18 @@ export default class GameQuestRuntime {
             return { enemies, hint: `Scouts report ${objective.targetName} tracks near ${objective.villageName} (${hint.direction ?? 'nearby'}).` };
         }
         return null;
+    }
+
+    private collectActiveMonsterObjectives(): ActiveMonsterObjective[] {
+        const objectives: ActiveMonsterObjective[] = [];
+        objectives.push(...(this.questProgressTracker?.getActiveMonsterObjectives() ?? []));
+        this.activeSideQuests
+            .filter((quest) => quest.status === 'active')
+            .forEach((quest) => {
+                const tracker = new QuestProgressTracker(quest);
+                objectives.push(...tracker.getActiveMonsterObjectives());
+            });
+        return objectives;
     }
 
 

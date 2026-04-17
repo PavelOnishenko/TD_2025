@@ -11,7 +11,6 @@ type SideQuestConstraints = {
     nearbyVillageNames?: string[];
     villageDirectionHints?: Record<string, WorldVillageDirectionHint>;
 };
-
 type LeafGenerationContext = {
     localVillageName?: string;
     localNpcName?: string;
@@ -58,7 +57,7 @@ export default class QuestLeafFactory {
     }
 
     private createFromType(id: string, type: QuestObjectiveType, context?: LeafGenerationContext): Promise<QuestNode> {
-        if (type === 'eliminate') { return this.createEliminateNode(id); }
+        if (type === 'eliminate') { return this.createEliminateNode(id, context); }
         if (type === 'deliver') { return this.createDeliverNode(id, context); }
         if (type === 'travel') { return this.createTravelNode(id, context); }
         if (type === 'barter') { return this.createBarterNode(id, context); }
@@ -73,11 +72,12 @@ export default class QuestLeafFactory {
         return this.createPatrolNode(id, context);
     }
 
-    private async createEliminateNode(id: string): Promise<QuestNode> {
+    private async createEliminateNode(id: string, context?: LeafGenerationContext): Promise<QuestNode> {
         const target = await this.generateName('monster');
         const amount = this.random.nextInt(1, 4);
-        const location = await this.generateName('location');
-        const where = ` near ${location.text}`;
+        const location = await this.resolveVillage(context);
+        const locationLabel = this.withVillageHint(location.text, context);
+        const where = ` near ${locationLabel}`;
         const mutatedFrom = this.contentBuilder.randomMutatedSpecies();
         const mutations = this.contentBuilder.randomMutations(this.random.nextBool(0.5) ? 2 : 3);
         const details = `Origin: mutated from ${mutatedFrom}. Traits observed: ${mutations.join(', ')}.`;

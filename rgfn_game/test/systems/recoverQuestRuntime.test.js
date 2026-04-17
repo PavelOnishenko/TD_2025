@@ -218,6 +218,33 @@ function createActiveRecoverSideQuest(overrides = {}) {
   };
 }
 
+function createActivePurgeSideQuest(overrides = {}) {
+  return {
+    id: 'side-purge',
+    title: 'Purge Eshmorn Mornva',
+    description: 'Remove the mutant near Selzen.',
+    conditionText: 'Kill 1 Eshmorn Mornva near Selzen.',
+    objectiveType: 'eliminate',
+    entities: [{ text: 'Eshmorn Mornva', type: 'monster' }, { text: 'Selzen', type: 'location' }],
+    objectiveData: {
+      monster: {
+        targetName: 'Eshmorn Mornva',
+        requiredKills: 1,
+        currentKills: 0,
+        villageName: 'Selzen',
+        mutations: ['blink speed', 'acid blood', 'void armor'],
+      },
+    },
+    children: [],
+    isCompleted: false,
+    track: 'side',
+    giverNpcName: 'Kadra Zentor',
+    giverVillageName: 'Distant Ridge',
+    status: 'active',
+    ...overrides,
+  };
+}
+
 test('GameQuestRuntime revealRecoverHolder confirms target person when speaking with another villager', () => {
   const runtime = new GameQuestRuntime();
   const quest = createRecoverQuest();
@@ -503,7 +530,7 @@ test('GameQuestRuntime marks deliver side quests ready when reaching destination
   ];
 
   const changed = runtime.recordLocationEntry('Golden Beacon', ['Eshdra Lorka']);
-  assert.equal(changed, true);
+  assert.equal(changed.changed, true);
   assert.equal(runtime.activeSideQuests[0].status, 'readyToTurnIn');
 });
 
@@ -564,4 +591,49 @@ test('GameQuestRuntime does not complete recover side quest when inventory rejec
   assert.equal(updated.logs.some((line) => line.includes('inventory is full')), true);
   assert.equal(sideQuest.isCompleted, false);
   assert.equal(sideQuest.status, 'active');
+});
+
+test('GameQuestRuntime can spawn monster encounter for active purge side quest near objective village', () => {
+  const runtime = new GameQuestRuntime();
+  const mainQuest = createRecoverQuest();
+  const sideQuest = createActivePurgeSideQuest();
+  runtime.activeQuest = mainQuest;
+  runtime.questProgressTracker = new QuestProgressTracker(mainQuest);
+  runtime.questUiController = { renderQuest: () => {} };
+  runtime.activeSideQuests = [sideQuest];
+
+  const randomOriginal = Math.random;
+  Math.random = () => 0.1;
+
+  try {
+    const encounter = runtime.tryCreateQuestMonsterEncounter({
+      getVillageDirectionHintFromPlayer: () => ({ exists: true, villageName: 'Selzen', direction: 'east', distanceCells: 2 }),
+    });
+
+    assert.notEqual(encounter, null);
+    assert.equal(encounter.enemies.length, 1);
+    assert.equal(encounter.enemies[0].name, 'Eshmorn Mornva');
+  } finally {
+    Math.random = randomOriginal;
+  }
+});
+
+test('GameQuestRuntime marks purge side quest ready to turn in and blocks further encounters after required kills', () => {
+  const runtime = new GameQuestRuntime();
+  const mainQuest = createRecoverQuest();
+  const sideQuest = createActivePurgeSideQuest();
+  runtime.activeQuest = mainQuest;
+  runtime.questProgressTracker = new QuestProgressTracker(mainQuest);
+  runtime.questUiController = { renderQuest: () => {} };
+  runtime.activeSideQuests = [sideQuest];
+
+  const changed = runtime.recordMonsterKill('Eshmorn Mornva');
+  assert.equal(changed, true);
+  assert.equal(sideQuest.isCompleted, true);
+  assert.equal(sideQuest.status, 'readyToTurnIn');
+
+  const encounter = runtime.tryCreateQuestMonsterEncounter({
+    getVillageDirectionHintFromPlayer: () => ({ exists: true, villageName: 'Selzen', direction: 'east', distanceCells: 2 }),
+  });
+  assert.equal(encounter, null);
 });
