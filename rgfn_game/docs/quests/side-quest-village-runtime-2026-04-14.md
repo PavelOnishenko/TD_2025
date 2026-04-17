@@ -191,9 +191,26 @@
   - each card contains the full nested quest objective tree under that side-quest root.
 - Status chips are shown in the Side Quests tab:
   - `Available`, `Active`, `Ready to turn in`, `Completed`.
-- Main-tab-only UX:
-  - `Show only known/current quests` checkbox remains visible and active only on **Main Quests** tab,
-  - checkbox is hidden on **Side Quests** tab to avoid implying unknown-side-quest filtering.
+- Side-tab status filter UX:
+  - **Main Quests** tab keeps the existing checkbox `Show only known/current quests`.
+  - **Side Quests** tab now shows a dedicated **Filter statuses** button.
+  - Clicking **Filter statuses** opens a popup list with checkboxes for:
+    - `Active`
+    - `Available`
+    - `Ready to turn in`
+    - `Completed`
+  - Popup applies changes only after clicking **Apply**.
+  - Default side-tab filter set is:
+    - `Active` ✅
+    - `Ready to turn in` ✅
+    - `Completed` ✅
+    - `Available` ❌
+  - Side-tab filter is persisted in local storage as comma-separated statuses:
+    - key: `rgfn_side_quests_status_filter_v1`
+    - example: `active,readyToTurnIn,completed`
+  - UI wiring note:
+    - `#quests-side-filter-controls` must not keep the global `hidden` utility class in markup.
+    - Visibility is controlled by `QuestUiController` via tab-aware `style.display`; leaving `hidden` on the container will keep the button invisible even on Side Quests tab.
 
 ### Runtime/UI synchronization notes
 

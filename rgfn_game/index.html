@@ -174,10 +174,33 @@
                             <button id="quests-tab-main-btn" class="quest-tab is-active" type="button" role="tab" aria-selected="true">Main Quests</button>
                             <button id="quests-tab-side-btn" class="quest-tab" type="button" role="tab" aria-selected="false">Side Quests</button>
                         </div>
-                        <label class="quest-mode-toggle" for="quests-known-only-toggle">
+                        <label id="quests-mode-toggle" class="quest-mode-toggle" for="quests-known-only-toggle">
                             <input id="quests-known-only-toggle" type="checkbox" checked>
-                            Show only known/current quests
+                            <span id="quests-mode-toggle-label">Show only known/current quests</span>
                         </label>
+                        <div id="quests-side-filter-controls" class="quest-side-filter-controls">
+                            <button id="quests-side-filter-btn" class="quest-side-filter-btn" type="button">Filter statuses</button>
+                            <div id="quests-side-filter-popup" class="quest-side-filter-popup">
+                                <div class="quest-side-filter-title">Show statuses</div>
+                                <label class="quest-side-filter-option">
+                                    <input id="quests-side-filter-status-active" type="checkbox" checked>
+                                    Active
+                                </label>
+                                <label class="quest-side-filter-option">
+                                    <input id="quests-side-filter-status-available" type="checkbox">
+                                    Available
+                                </label>
+                                <label class="quest-side-filter-option">
+                                    <input id="quests-side-filter-status-ready" type="checkbox" checked>
+                                    Ready to turn in
+                                </label>
+                                <label class="quest-side-filter-option">
+                                    <input id="quests-side-filter-status-completed" type="checkbox" checked>
+                                    Completed
+                                </label>
+                                <button id="quests-side-filter-apply-btn" class="quest-side-filter-apply-btn" type="button">Apply</button>
+                            </div>
+                        </div>
                         <div id="quests-body" class="quests-body"></div>
                     </div>
                     <div id="group-panel" class="hud-section stats overlay-panel hidden">

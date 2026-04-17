@@ -32,17 +32,53 @@ type RuntimeBase = {
 type SharedRuntime = ReturnType<typeof createSharedRuntime>;
 type RuntimeControllers = ReturnType<typeof createRuntimeControllers>;
 
-const createQuestUiController = (game: GameFacade, ui: RuntimeUi): QuestUiController => new QuestUiController(
-    ui.hudElements.questsTitle,
-    document.getElementById('quests-tab-main-btn')! as HTMLButtonElement,
-    document.getElementById('quests-tab-side-btn')! as HTMLButtonElement,
-    ui.hudElements.questsKnownOnlyToggle,
-    ui.hudElements.questsBody,
-    ui.hudElements.questIntroModal,
-    ui.hudElements.questIntroBody,
-    ui.hudElements.questIntroCloseBtn,
-    { onLocationClick: (locationName: string) => game.onQuestLocationClick(locationName) },
-);
+// eslint-disable-next-line style-guide/function-length-warning
+const getSideQuestFilterElements = (): {
+    sideFilterContainer: HTMLElement;
+    sideFilterButton: HTMLButtonElement;
+    sideFilterPopup: HTMLElement;
+    sideFilterApplyButton: HTMLButtonElement;
+    sideStatusFilterCheckboxes: {
+        active: HTMLInputElement;
+        available: HTMLInputElement;
+        readyToTurnIn: HTMLInputElement;
+        completed: HTMLInputElement;
+    };
+} => ({
+    sideFilterContainer: document.getElementById('quests-side-filter-controls')! as HTMLElement,
+    sideFilterButton: document.getElementById('quests-side-filter-btn')! as HTMLButtonElement,
+    sideFilterPopup: document.getElementById('quests-side-filter-popup')! as HTMLElement,
+    sideFilterApplyButton: document.getElementById('quests-side-filter-apply-btn')! as HTMLButtonElement,
+    sideStatusFilterCheckboxes: {
+        active: document.getElementById('quests-side-filter-status-active')! as HTMLInputElement,
+        available: document.getElementById('quests-side-filter-status-available')! as HTMLInputElement,
+        readyToTurnIn: document.getElementById('quests-side-filter-status-ready')! as HTMLInputElement,
+        completed: document.getElementById('quests-side-filter-status-completed')! as HTMLInputElement,
+    },
+});
+
+// eslint-disable-next-line style-guide/function-length-warning
+const createQuestUiController = (game: GameFacade, ui: RuntimeUi): QuestUiController => {
+    const sideFilterElements = getSideQuestFilterElements();
+    return new QuestUiController(
+        ui.hudElements.questsTitle,
+        document.getElementById('quests-tab-main-btn')! as HTMLButtonElement,
+        document.getElementById('quests-tab-side-btn')! as HTMLButtonElement,
+        ui.hudElements.questsKnownOnlyToggle,
+        document.getElementById('quests-mode-toggle')! as HTMLElement,
+        document.getElementById('quests-mode-toggle-label')! as HTMLElement,
+        sideFilterElements.sideFilterContainer,
+        sideFilterElements.sideFilterButton,
+        sideFilterElements.sideFilterPopup,
+        sideFilterElements.sideFilterApplyButton,
+        sideFilterElements.sideStatusFilterCheckboxes,
+        ui.hudElements.questsBody,
+        ui.hudElements.questIntroModal,
+        ui.hudElements.questIntroBody,
+        ui.hudElements.questIntroCloseBtn,
+        { onLocationClick: (locationName: string) => game.onQuestLocationClick(locationName) },
+    );
+};
 
 const createQuestGenerator = (worldMap: WorldMap, packService: QuestPackService): QuestGenerator => new QuestGenerator({
     packService,

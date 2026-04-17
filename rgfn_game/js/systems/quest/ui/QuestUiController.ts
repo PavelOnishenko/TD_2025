@@ -5,7 +5,14 @@ import QuestUiFeedbackPresenter from './QuestUiFeedbackPresenter.js';
 
 const KNOWN_ONLY_TOGGLE_STORAGE_KEY = 'rgfn_quests_known_only_toggle_v1';
 const KNOWN_ONLY_TOGGLE_DEFAULT = true;
+const SIDE_STATUS_FILTER_STORAGE_KEY = 'rgfn_side_quests_status_filter_v1';
+const MAIN_TOGGLE_LABEL = 'Show only known/current quests';
+const SIDE_FILTER_BUTTON_LABEL_PREFIX = 'Filter statuses';
+const SIDE_STATUS_ORDER = ['active', 'available', 'readyToTurnIn', 'completed'] as const;
+const SIDE_STATUS_DEFAULT_FILTER = new Set<SideQuestStatus>(['active', 'readyToTurnIn', 'completed']);
 type QuestTab = 'main' | 'side';
+type SideQuestStatus = typeof SIDE_STATUS_ORDER[number];
+type SideStatusFilterCheckboxes = Record<SideQuestStatus, HTMLInputElement>;
 
 type QuestUiCallbacks = {
     onLocationClick: (locationName: string) => boolean;
@@ -16,6 +23,13 @@ export default class QuestUiController {
     private readonly mainTabBtn: HTMLButtonElement;
     private readonly sideTabBtn: HTMLButtonElement;
     private readonly knownOnlyToggle: HTMLInputElement;
+    private readonly modeToggleContainer: HTMLElement;
+    private readonly modeToggleLabel: HTMLElement;
+    private sideFilterContainer: HTMLElement;
+    private sideFilterButton: HTMLButtonElement;
+    private sideFilterPopup: HTMLElement;
+    private sideFilterApplyButton: HTMLButtonElement;
+    private sideStatusFilterCheckboxes: SideStatusFilterCheckboxes;
     private readonly questBody: HTMLElement;
     private readonly introModal: HTMLElement;
     private readonly introBody: HTMLElement;
@@ -27,12 +41,21 @@ export default class QuestUiController {
     private lastRenderedQuest: QuestNode | null = null;
     private lastRenderedSideQuests: QuestNode[] = [];
     private activeTab: QuestTab = 'main';
+    private mainKnownOnlyEnabled = KNOWN_ONLY_TOGGLE_DEFAULT;
+    private sideStatusFilter: Set<SideQuestStatus> = new Set(SIDE_STATUS_DEFAULT_FILTER);
 
     constructor(
         questTitle: HTMLElement,
         mainTabBtn: HTMLButtonElement,
         sideTabBtn: HTMLButtonElement,
         knownOnlyToggle: HTMLInputElement,
+        modeToggleContainer: HTMLElement,
+        modeToggleLabel: HTMLElement,
+        sideFilterContainer: HTMLElement,
+        sideFilterButton: HTMLButtonElement,
+        sideFilterPopup: HTMLElement,
+        sideFilterApplyButton: HTMLButtonElement,
+        sideStatusFilterCheckboxes: SideStatusFilterCheckboxes,
         questBody: HTMLElement,
         introModal: HTMLElement,
         introBody: HTMLElement,
@@ -43,15 +66,19 @@ export default class QuestUiController {
         this.mainTabBtn = mainTabBtn;
         this.sideTabBtn = sideTabBtn;
         this.knownOnlyToggle = knownOnlyToggle;
+        this.modeToggleContainer = modeToggleContainer;
+        this.modeToggleLabel = modeToggleLabel;
+        this.assignSideFilterElements(sideFilterContainer, sideFilterButton, sideFilterPopup, sideFilterApplyButton, sideStatusFilterCheckboxes);
         this.questBody = questBody;
         this.introModal = introModal;
         this.introBody = introBody;
         this.introCloseBtn = introCloseBtn;
         this.callbacks = callbacks;
-        this.markupBuilder = new QuestUiMarkupBuilder({ isKnownOnlyEnabled: () => this.knownOnlyToggle.checked });
+        this.markupBuilder = new QuestUiMarkupBuilder({ isKnownOnlyEnabled: () => this.mainKnownOnlyEnabled });
         this.feedbackPresenter = new QuestUiFeedbackPresenter({ containers: [this.questBody, this.introBody] });
         this.feedbackElements = this.feedbackPresenter.feedbackElements;
         this.introModal.classList.add('hidden');
+        this.hideSideFilterPopup();
         this.switchTab('main');
         this.applyPersistedKnownOnlyState();
         this.bindEvents();
@@ -76,6 +103,8 @@ export default class QuestUiController {
     private bindEvents(): void {
         this.introCloseBtn.addEventListener('click', () => this.introModal.classList.add('hidden'));
         this.knownOnlyToggle.addEventListener('change', () => this.handleKnownOnlyToggleChange());
+        this.sideFilterButton.addEventListener('click', () => this.handleSideFilterButtonClick());
+        this.sideFilterApplyButton.addEventListener('click', () => this.handleSideFilterApplyClick());
         this.mainTabBtn.addEventListener('click', () => this.switchTab('main'));
         this.sideTabBtn.addEventListener('click', () => this.switchTab('side'));
         this.introModal.addEventListener('click', (event: MouseEvent) => this.handleIntroModalClick(event));
@@ -83,7 +112,26 @@ export default class QuestUiController {
         this.bindLocationClicks(this.introBody);
     }
 
+    private assignSideFilterElements(
+        sideFilterContainer: HTMLElement,
+        sideFilterButton: HTMLButtonElement,
+        sideFilterPopup: HTMLElement,
+        sideFilterApplyButton: HTMLButtonElement,
+        sideStatusFilterCheckboxes: SideStatusFilterCheckboxes,
+    ): void {
+        this.sideFilterContainer = sideFilterContainer;
+        this.sideFilterButton = sideFilterButton;
+        this.sideFilterPopup = sideFilterPopup;
+        this.sideFilterApplyButton = sideFilterApplyButton;
+        this.sideStatusFilterCheckboxes = sideStatusFilterCheckboxes;
+    }
+
     private handleKnownOnlyToggleChange(): void {
+        if (this.activeTab !== 'main') {
+            return;
+        }
+
+        this.mainKnownOnlyEnabled = this.knownOnlyToggle.checked;
         this.persistKnownOnlyState();
         if (this.lastRenderedQuest) {
             this.renderCurrentTab();
@@ -97,8 +145,9 @@ export default class QuestUiController {
     }
 
     private applyPersistedKnownOnlyState(): void {
-        const savedState = this.readKnownOnlyState();
-        this.knownOnlyToggle.checked = savedState ?? KNOWN_ONLY_TOGGLE_DEFAULT;
+        this.mainKnownOnlyEnabled = this.readKnownOnlyState() ?? KNOWN_ONLY_TOGGLE_DEFAULT;
+        this.sideStatusFilter = this.readSideStatusFilter();
+        this.updateModeToggleUi();
     }
 
     private persistKnownOnlyState(): void {
@@ -126,6 +175,40 @@ export default class QuestUiController {
         return null;
     }
 
+    private persistSideStatusFilter(): void {
+        const storage = this.getLocalStorage();
+        if (!storage) {
+            return;
+        }
+
+        const serializedFilter = SIDE_STATUS_ORDER
+            .filter((status) => this.sideStatusFilter.has(status))
+            .join(',');
+        storage.setItem(SIDE_STATUS_FILTER_STORAGE_KEY, serializedFilter);
+    }
+
+    private readSideStatusFilter(): Set<SideQuestStatus> {
+        const storage = this.getLocalStorage();
+        if (!storage) {
+            return new Set(SIDE_STATUS_DEFAULT_FILTER);
+        }
+
+        const rawValue = storage.getItem(SIDE_STATUS_FILTER_STORAGE_KEY);
+        if (!rawValue) {
+            return new Set(SIDE_STATUS_DEFAULT_FILTER);
+        }
+
+        const statuses = rawValue
+            .split(',')
+            .map((value) => value.trim())
+            .filter((value): value is SideQuestStatus => SIDE_STATUS_ORDER.includes(value as SideQuestStatus));
+        if (statuses.length === 0) {
+            return new Set(SIDE_STATUS_DEFAULT_FILTER);
+        }
+
+        return new Set(statuses);
+    }
+
     private getLocalStorage(): Storage | null {
         if (typeof window === 'undefined') {
             return null;
@@ -148,8 +231,24 @@ export default class QuestUiController {
         this.sideTabBtn.classList.toggle('is-active', tab === 'side');
         this.mainTabBtn.setAttribute('aria-selected', String(tab === 'main'));
         this.sideTabBtn.setAttribute('aria-selected', String(tab === 'side'));
-        this.knownOnlyToggle.style.display = tab === 'main' ? '' : 'none';
+        if (tab === 'main') {
+            this.hideSideFilterPopup();
+        }
+        this.updateModeToggleUi();
         this.renderCurrentTab();
+    }
+
+    private updateModeToggleUi(): void {
+        this.modeToggleContainer.style.display = this.activeTab === 'main' ? '' : 'none';
+        this.sideFilterContainer.style.display = this.activeTab === 'side' ? '' : 'none';
+        if (this.activeTab === 'main') {
+            this.modeToggleLabel.textContent = MAIN_TOGGLE_LABEL;
+            this.knownOnlyToggle.checked = this.mainKnownOnlyEnabled;
+            this.sideFilterButton.textContent = SIDE_FILTER_BUTTON_LABEL_PREFIX;
+            return;
+        }
+        this.syncSideFilterCheckboxesFromState();
+        this.sideFilterButton.textContent = this.buildSideFilterButtonLabel();
     }
 
     private renderCurrentTab(): void {
@@ -171,12 +270,13 @@ export default class QuestUiController {
 
     private renderSideQuestTab(sideQuests: QuestNode[]): void {
         this.questTitle.textContent = 'Side Quests';
-        if (sideQuests.length === 0) {
+        const filteredQuests = sideQuests.filter((quest) => this.sideStatusFilter.has(this.toSideQuestStatus(quest.status)));
+        if (filteredQuests.length === 0) {
             this.questBody.innerHTML = '<p>No known side quests yet.</p>';
             return;
         }
 
-        const cards = sideQuests
+        const cards = filteredQuests
             .map((quest) => this.buildSideQuestCardMarkup(quest))
             .join('');
         this.questBody.innerHTML = `<div class="side-quest-list">${cards}</div>`;
@@ -200,6 +300,57 @@ export default class QuestUiController {
     }
 
     private formatStatus = (status: string): string => status === 'readyToTurnIn' ? 'Ready to turn in' : status.charAt(0).toUpperCase() + status.slice(1);
+
+    private handleSideFilterButtonClick(): void {
+        if (this.activeTab !== 'side') {
+            return;
+        }
+        if (this.sideFilterPopup.style.display === 'none') {
+            this.showSideFilterPopup();
+            return;
+        }
+        this.hideSideFilterPopup();
+    }
+
+    private handleSideFilterApplyClick(): void {
+        const selectedStatuses = SIDE_STATUS_ORDER.filter((status) => this.sideStatusFilterCheckboxes[status].checked);
+        if (selectedStatuses.length === 0) {
+            this.syncSideFilterCheckboxesFromState();
+            this.setFeedback('Select at least one side-quest status before applying filter.', true);
+            return;
+        }
+
+        this.sideStatusFilter = new Set(selectedStatuses);
+        this.persistSideStatusFilter();
+        this.sideFilterButton.textContent = this.buildSideFilterButtonLabel();
+        this.hideSideFilterPopup();
+        this.renderSideQuestTab(this.lastRenderedSideQuests);
+    }
+
+    private syncSideFilterCheckboxesFromState(): void {
+        SIDE_STATUS_ORDER.forEach((status) => {
+            this.sideStatusFilterCheckboxes[status].checked = this.sideStatusFilter.has(status);
+        });
+    }
+
+    private buildSideFilterButtonLabel(): string {
+        const visibleCount = SIDE_STATUS_ORDER.filter((status) => this.sideStatusFilter.has(status)).length;
+        return `${SIDE_FILTER_BUTTON_LABEL_PREFIX} (${visibleCount}/${SIDE_STATUS_ORDER.length})`;
+    }
+
+    private showSideFilterPopup(): void {
+        this.syncSideFilterCheckboxesFromState();
+        this.sideFilterPopup.style.display = '';
+    }
+
+    private hideSideFilterPopup = (): void => { this.sideFilterPopup.style.display = 'none'; };
+
+    private toSideQuestStatus(status: string | undefined): SideQuestStatus {
+        if (status === 'available' || status === 'readyToTurnIn' || status === 'completed') {
+            return status;
+        }
+        return 'active';
+    }
 
     private escapeHtml = (text: string): string => text
         .split('&').join('&amp;')

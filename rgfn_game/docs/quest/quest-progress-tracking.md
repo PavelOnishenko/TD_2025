@@ -179,6 +179,24 @@
   - verifies known-only defaults to checked when there is no saved preference,
   - verifies stored `'0'`/`'1'` values are restored and updated as user toggles the checkbox.
 
+## April 17, 2026 update: side-quest status filter popup with Apply flow
+
+- Side Quests tab no longer uses the quest-mode checkbox.
+- New side-tab control is a **Filter statuses** button with popup checklist + **Apply** button.
+- Available statuses:
+  - `Active`
+  - `Available`
+  - `Ready to turn in`
+  - `Completed`
+- Apply behavior:
+  - checkbox changes in popup are staged until **Apply** is clicked,
+  - at least one status must remain selected; applying zero statuses is blocked with an error message.
+- Default visible set:
+  - `Active`, `Ready to turn in`, `Completed` (with `Available` hidden by default).
+- Persistence:
+  - main-tab known-only checkbox continues to use `rgfn_quests_known_only_toggle_v1`,
+  - side-tab status selection is stored in `rgfn_side_quests_status_filter_v1` as CSV (e.g. `active,readyToTurnIn,completed`).
+
 ## March 28, 2026 update: "is not discovered yet" quest-panel warning now auto-hides
 
 ### What changed
