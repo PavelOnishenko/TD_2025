@@ -193,6 +193,9 @@
   - Side-tab filter is persisted in local storage as comma-separated statuses:
     - key: `rgfn_side_quests_status_filter_v1`
     - example: `active,readyToTurnIn,completed`
+  - UI wiring note:
+    - `#quests-side-filter-controls` must not keep the global `hidden` utility class in markup.
+    - Visibility is controlled by `QuestUiController` via tab-aware `style.display`; leaving `hidden` on the container will keep the button invisible even on Side Quests tab.
 
 ### Runtime/UI synchronization notes
 
