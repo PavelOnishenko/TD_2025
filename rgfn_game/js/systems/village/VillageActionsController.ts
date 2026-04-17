@@ -706,6 +706,7 @@ export default class VillageActionsController {
         this.readySideQuestLogIds.delete(questId);
         this.addLog(`${selectedNpc.name} accepts your side-quest turn-in for ${questId}.${reward ? ` Reward received: ${reward}.` : ''}`, 'system');
         this.addLog('Quest tracker updated: side quest turned in.', 'system-message');
+        this.callbacks.onUpdateHUD();
         this.refreshSelectedNpcSideQuestUi(selectedNpc);
     }
 

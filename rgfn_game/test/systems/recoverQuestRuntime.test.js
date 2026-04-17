@@ -156,6 +156,7 @@ function createSideQuest(overrides = {}) {
     giverNpcName: 'Mira',
     giverVillageName: 'Ashford',
     reward: '18g',
+    rewardMetadata: { xp: 18, gold: 18, itemName: 'Scout Charm', requiresTurnIn: true },
     status: 'available',
     ...overrides,
   };
@@ -468,6 +469,8 @@ test('GameQuestRuntime side-quest turn-in requires the original quest giver and 
 
   const success = runtime.turnInSideQuest('side-turnin', 'Mira', 'Ashford');
   assert.equal(success.turnedIn, true);
+  assert.equal(success.rewardMetadata?.xp, 18);
+  assert.equal(success.rewardMetadata?.gold, 18);
   assert.equal(runtime.activeSideQuests[0].status, 'completed');
 });
 

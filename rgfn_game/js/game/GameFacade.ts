@@ -29,7 +29,8 @@ import { createGameRuntime } from './GameFactory.js';
 import type { GameFacadeStateAccess } from './runtime/GameFacadeSharedTypes.js';
 import { FerryRouteOption } from '../systems/world-mode/WorldModeFerryPromptController.js';
 import GameTimeRuntime from '../systems/time/GameTimeRuntime.js';
-import { QuestNode } from '../systems/quest/QuestTypes.js';
+import { QuestNode, QuestRewardMetadata } from '../systems/quest/QuestTypes.js';
+import { resolveSideQuestRewardMetadata } from '../systems/quest/QuestRewardResolver.js';
 
 export type UIBundle = {
     hudElements: HudElements;
@@ -192,8 +193,21 @@ export class GameFacade implements GameFacadeStateAccess {
         questId: string,
         npcName: string,
         villageName: string,
-    ): { turnedIn: boolean; reason?: 'inactive' | 'not-found' | 'wrong-giver' | 'not-ready' | 'already-completed'; reward?: string } =>
-        this.questRuntime.turnInSideQuest(questId, npcName, villageName);
+    ): {
+        turnedIn: boolean;
+        reason?: 'inactive' | 'not-found' | 'wrong-giver' | 'not-ready' | 'already-completed';
+        reward?: string;
+        rewardMetadata?: QuestRewardMetadata;
+    } => {
+        const result = this.questRuntime.turnInSideQuest(questId, npcName, villageName);
+        const rewardMetadata = resolveSideQuestRewardMetadata(result.rewardMetadata, result.reward);
+        if (!result.turnedIn || !rewardMetadata) {
+            return result;
+        }
+        this.player.gold += Math.max(0, Math.floor(rewardMetadata.gold));
+        this.player.addXp(Math.max(0, Math.floor(rewardMetadata.xp)));
+        return result;
+    };
 
     public tryCreateQuestMonsterEncounter = (): {
         enemies: import('../entities/Skeleton.js').default[];

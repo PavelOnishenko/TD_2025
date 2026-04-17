@@ -2,7 +2,15 @@
 /* eslint-disable style-guide/rule17-comma-layout, style-guide/arrow-function-style */
 import QuestProgressTracker from '../../systems/quest/QuestProgressTracker.js';
 import Item, { DISCOVERABLE_ITEM_LIBRARY } from '../../entities/Item.js';
-import { DefendObjectiveData, DefendObjectiveDefender, EscortObjectiveData, QuestNode, QuestStatus, RecoverObjectiveData } from '../../systems/quest/QuestTypes.js';
+import {
+    DefendObjectiveData,
+    DefendObjectiveDefender,
+    EscortObjectiveData,
+    QuestNode,
+    QuestRewardMetadata,
+    QuestStatus,
+    RecoverObjectiveData,
+} from '../../systems/quest/QuestTypes.js';
 import QuestUiController from '../../systems/quest/ui/QuestUiController.js';
 import QuestGenerator from '../../systems/quest/QuestGenerator.js';
 import WorldMap from '../../systems/world/worldMap/WorldMap.js';
@@ -165,7 +173,12 @@ export default class GameQuestRuntime {
         questId: string,
         npcName: string,
         villageName: string,
-    ): { turnedIn: boolean; reason?: 'inactive' | 'not-found' | 'wrong-giver' | 'not-ready' | 'already-completed'; reward?: string } {
+    ): {
+        turnedIn: boolean;
+        reason?: 'inactive' | 'not-found' | 'wrong-giver' | 'not-ready' | 'already-completed';
+        reward?: string;
+        rewardMetadata?: QuestRewardMetadata;
+    } {
         const normalizedQuestId = questId.trim();
         if (!normalizedQuestId) {
             return { turnedIn: false, reason: 'not-found' };
@@ -186,7 +199,8 @@ export default class GameQuestRuntime {
         quest.status = 'completed';
         quest.isCompleted = true;
         this.renderQuestUi();
-        return { turnedIn: true, reward: quest.reward };
+        const rewardMetadata = quest.rewardMetadata ? { ...quest.rewardMetadata } : undefined;
+        return { turnedIn: true, reward: quest.reward, rewardMetadata };
     }
 
     public markSideQuestReadyToTurnIn(questId: string): boolean {

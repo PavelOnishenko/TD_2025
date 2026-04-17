@@ -950,6 +950,7 @@ test('VillageActionsController shows turn-in action for ready side quests and tu
   const villageUI = createVillageUi();
   const gameLog = createElement();
   let turnInCalls = 0;
+  let hudUpdates = 0;
   const readyQuest = {
     id: 'side-quest-ready',
     title: 'Deliver Herbs',
@@ -959,7 +960,7 @@ test('VillageActionsController shows turn-in action for ready side quests and tu
     children: [],
   };
   const controller = new VillageActionsController(createPlayerStub(), villageUI, gameLog, {
-    onUpdateHUD: () => {},
+    onUpdateHUD: () => { hudUpdates += 1; },
     onLeaveVillage: () => {},
     onAdvanceTime: () => {},
     getVillageDirectionHint: (settlementName) => ({ settlementName, exists: false }),
@@ -982,6 +983,7 @@ test('VillageActionsController shows turn-in action for ready side quests and tu
   assert.equal(hasTurnInButton, true);
   controller.handleTurnInSideQuest('side-quest-ready');
   assert.equal(turnInCalls, 1);
+  assert.equal(hudUpdates, 1);
   assert.equal(gameLog.children.some((child) => String(child.textContent ?? '').includes('turn-in')), true);
 }));
 
