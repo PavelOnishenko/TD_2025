@@ -1,66 +1,41 @@
-import createFormationManagerJs, {
-    createFormationManager as createFormationManagerUntyped,
-    parseFormationText as parseFormationTextUntyped,
-} from './formations.js';
+import FormationManagerRuntime from './formations/FormationManager.js';
+import FormationParser from './formations/FormationParser.js';
+import {
+    FormationDefinition,
+    FormationManagerConfig,
+    FormationPlan,
+    FormationShipDescriptor,
+    FormationEvent,
+    WaveScheduleEntry,
+} from './formations/FormationTypes.js';
 
-export type FormationShipDescriptor = {
-    type: string;
-    time?: number;
-    y?: number;
-    x?: number;
-    color?: string;
-    groupSize?: number;
-    spacing?: number;
-    offsets?: number[];
-    colors?: string[];
-};
+const DEFAULTS = { formationGap: 0.75, minimumWeight: 0 };
 
-export type FormationDefinition = {
-    id: string;
-    label: string;
-    difficulty: number;
-    ships: FormationShipDescriptor[];
-    minWave?: number;
-    gap?: number;
-};
-
-export type FormationEvent = FormationShipDescriptor & {
-    time: number;
-    formationId: string;
-};
-
-export type FormationPlan = {
-    wave: number;
-    totalDifficulty: number;
-    remainingDifficulty: number;
-    totalEnemies: number;
-    events: FormationEvent[];
-    selections: FormationDefinition[];
+export type {
+    FormationDefinition,
+    FormationEvent,
+    FormationManagerConfig,
+    FormationPlan,
+    FormationShipDescriptor,
 };
 
 export type FormationManager = {
     defaults: { formationGap: number; minimumWeight: number };
     formations: FormationDefinition[];
     planWave: (wave: number, options?: { totalDifficulty?: number; random?: () => number; iterationLimit?: number }) => FormationPlan | null;
-    hasFormations?: () => boolean;
+    hasFormations: () => boolean;
 };
 
-export type FormationManagerConfig = {
-    definitions?: string;
-    defaults?: Partial<{ formationGap: number; minimumWeight: number }>;
-    formations?: FormationDefinition[];
-    endlessDifficulty?: { startWave?: number; base?: number; growth?: number; max?: number };
-    difficultyMultiplier?: number;
+export const parseFormationText = (definitions: string, defaults: FormationManagerConfig['defaults'] = {}): FormationDefinition[] => {
+    const parser = new FormationParser();
+    return parser.parseFormationText(definitions, { ...DEFAULTS, ...(defaults ?? {}) });
 };
-
-export const parseFormationText = (definitions: string, defaults: FormationManagerConfig['defaults'] = {}) =>
-    parseFormationTextUntyped(definitions, defaults) as FormationDefinition[];
 
 export const createFormationManager = (
     config: FormationManagerConfig = {},
-    waveSchedule: Array<{ difficulty?: number }> = []
-) => createFormationManagerUntyped(config, waveSchedule) as FormationManager | null;
+    waveSchedule: WaveScheduleEntry[] = [],
+): FormationManager | null => FormationManagerRuntime.create(config, waveSchedule);
 
-type FormationFactory = (config?: FormationManagerConfig, waveSchedule?: Array<{ difficulty?: number }>) => FormationManager | null;
+type FormationFactory = (config?: FormationManagerConfig, waveSchedule?: WaveScheduleEntry[]) => FormationManager | null;
 
-export default createFormationManagerJs as FormationFactory;
+export default createFormationManager as FormationFactory;

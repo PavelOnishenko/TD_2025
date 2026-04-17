@@ -1158,3 +1158,16 @@ Good luck with the migration! 🚀
 - Keep parser/planner/resolver in separate files to satisfy style-guide limits (file/function length).
 - Migrate with compatibility adapters first; remove JS adapters only when all importers use TS-compatible entrypoints.
 - Validate at each step with `npm run build`, targeted tests (`test/game/formations.test.js`), and per-file ESLint checks.
+
+### 2026-04-17
+- Completed the planned “full OOP migration of formation runtime logic into TS classes split by responsibility”.
+- Added class modules under `js/core/game/formations/` and rewired `js/core/game/formations.ts` to use typed runtime classes directly.
+- Maintained mixed-mode compatibility by keeping `formations.js` as the current JS runtime path.
+- Verified with:
+  - `npx eslint js/core/game/formations.ts js/core/game/formations/*.ts`
+  - `npm run build`
+  - `node --test test/game/formations.test.js`
+
+### Updated immediate next step (after 2026-04-17 checkpoint)
+- Add parser/planner edge-case tests for malformed tokens and probability expression fallback.
+- Start migrating one high-coupling caller from JS to TS using `formations.ts` typed runtime API to validate end-to-end adoption path.
