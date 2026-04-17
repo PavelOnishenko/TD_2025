@@ -77,6 +77,21 @@
   - ready-to-turn-in logs (once per quest id),
   - turn-in completion logs with reward text.
 
+## 2026-04-16: Side-quest offer cards now show concrete task details before acceptance
+
+- The side-quest card renderer now includes a **Task details** line when the quest has child objective descriptions.
+- This line is sourced from the first non-empty child objective description that is different from the root quest description.
+- Result: players can inspect the actual objective scope directly in the NPC dialogue side-quest block before clicking **Accept quest**, instead of needing to open the quest panel after accepting.
+- Existing card fields remain unchanged:
+  - title + status,
+  - root quest description,
+  - reward preview,
+  - accept/turn-in action button depending on status.
+
+### Regression guard added
+
+- `villageActionsController` scenario tests now assert that offer cards surface the new `Task details: ...` line when objective child text exists.
+
 ### Verification checklist used for this change
 
 1. Enter village.
@@ -189,3 +204,18 @@
   - turn-in completion.
 - This prevents stale HUD state where village-side quest cards update but HUD Quests panel does not.
   - Offer cards remain labeled **Offer available** and include an **Accept quest** button.
+
+## 2026-04-16: Side-quest offer refusal (hide clutter without accepting)
+
+- Village NPC dialogue side-quest cards now expose a second explicit offer action:
+  - **Accept quest** (existing behavior),
+  - **Refuse** (new behavior).
+- Refuse behavior is intentionally non-destructive:
+  - the offer is **hidden from the selected NPC side-quest panel** to reduce clutter,
+  - no runtime acceptance occurs,
+  - no quest progress/status mutation occurs.
+- Scope/identity of hidden offers:
+  - hides a **specific offer ID** only,
+  - does **not** block future offers from that same NPC.
+- Practical UX effect:
+  - if multiple offers exist, player can decline noisy ones and keep only relevant cards visible in the dialogue panel.
