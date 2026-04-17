@@ -2,6 +2,7 @@
 import { MODES } from '../../systems/game/runtime/GameModeStateMachine.js';
 import type { GameFacadeStateAccess } from './GameFacadeSharedTypes.js';
 import { getDeveloperModeConfig } from '../../utils/DeveloperModeConfig.js';
+import Item from '../../entities/Item.js';
 
 export default class GameFacadeLifecycleCoordinator {
     private readonly state: GameFacadeStateAccess;
@@ -203,12 +204,15 @@ export default class GameFacadeLifecycleCoordinator {
 
     public onVillageEntered(): void {
         const villageName = this.state.worldMap.getVillageNameAtPlayerPosition();
-        const questChanged = this.state.questRuntime.recordLocationEntry(
+        const questUpdate = this.state.questRuntime.recordLocationEntry(
             villageName,
             this.state.player.getInventory().map((item) => item.name),
+            (item) => this.awardRecoveredQuestItem(item, villageName),
         );
-        if (questChanged) {
+        questUpdate.logs.forEach((line) => this.state.hudCoordinator.addBattleLog(line, 'system-message'));
+        if (questUpdate.changed) {
             this.state.hudCoordinator.addBattleLog(`Quest tracker: objectives updated at ${villageName}.`, 'system');
+            this.refreshHud();
         }
         this.refreshGroupPanel();
         this.state.villageCoordinator.enterVillageMode(
@@ -240,6 +244,23 @@ export default class GameFacadeLifecycleCoordinator {
         const members = this.state.questRuntime.getGroupMembers();
         const lines = members.map((member) => `${member.name} — HP ${member.hp}/${member.maxHp} (${member.status})`);
         this.state.hudCoordinator.updateGroupPanel(lines);
+    }
+
+    private awardRecoveredQuestItem(item: Item, villageName: string): boolean {
+        const beforeInventory = this.state.player.getInventory();
+        const hadItemBefore = beforeInventory.some((entry) => entry.name === item.name);
+        const wasAdded = this.state.player.addItemToInventory(item);
+        const hasItemAfterFirstAttempt = this.state.player.getInventory().some((entry) => entry.name === item.name);
+        if (!hadItemBefore && wasAdded && !hasItemAfterFirstAttempt) {
+            const fallbackAdded = this.state.player.addItemToInventory(item);
+            const hasItemAfterFallback = this.state.player.getInventory().some((entry) => entry.name === item.name);
+            if (!fallbackAdded || !hasItemAfterFallback) {
+                this.state.hudCoordinator.addBattleLog(`Quest tracker: failed to persist recovered item ${item.name} at ${villageName}.`, 'system-message');
+                return false;
+            }
+            return true;
+        }
+        return wasAdded && hasItemAfterFirstAttempt;
     }
 
     private refreshHud(): void {
