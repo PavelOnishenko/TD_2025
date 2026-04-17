@@ -28,6 +28,54 @@
   - marks the side-quest root complete,
   - transitions side-quest status to `readyToTurnIn`.
 
+## April 16, 2026 update: recover side quests now complete through village-entry item discovery
+
+- Recover-type **side quests** now use one completion path: entering the objective village auto-discovers the recover item as a ground find.
+- Runtime now emits explicit village-entry logs for this path:
+  - item acquisition context (`Found <item> lying on the ground in <village>`),
+  - side-quest readiness (`Side quest ready to turn in: <title>`).
+- `GameQuestRuntime.recordLocationEntry(...)` now accepts an optional recovered-item callback so discovered recover items are immediately granted to player inventory.
+- Main quest recover confrontation flow remains unchanged in this update; this change targets side-quest recover playability/completion.
+
+### Regression coverage
+
+- Added automated runtime test:
+  - entering a recover side-quest village auto-completes the objective,
+  - grants the recover item through callback,
+  - emits acquisition log text,
+  - sets side-quest status to `readyToTurnIn`.
+
+## April 17, 2026 hotfix: recover side quest completion now strictly requires successful inventory award
+
+- Fixed a completion-order issue: recover side-quest objectives are now marked complete **only after** item award callback confirms the item was added to inventory.
+- If inventory award fails (e.g., capacity constraints), quest completion is blocked and runtime logs the failure (`inventory is full`).
+- If inventory award callback is unavailable, runtime logs a callback-unavailable error and does not complete the recover objective.
+- Village-entry flow now refreshes HUD immediately when quest state changes so inventory panel reflects newly awarded recover items without waiting for later UI refresh triggers.
+
+### Regression coverage
+
+- Added runtime test to verify recover side quests remain active when item award callback returns `false`.
+- Added lifecycle-coordinator scenario test to verify:
+  - village-entry recover callback is invoked,
+  - recovered item is handed to player inventory callback,
+  - HUD refresh is triggered after changed quest state,
+  - village-entry logs remain visible.
+
+## April 17, 2026 follow-up: inventory-visible recover-item guarantee on village entry
+
+- Additional hardening was added for side-quest recover item awards because log-confirmed pickup could still be perceived as missing in inventory in live gameplay.
+- Village-entry item award now uses a verification+retry contract in lifecycle runtime:
+  1. attempt to add recover item to player inventory,
+  2. verify the recover item is visible in current inventory snapshot by name,
+  3. if add reported success but inventory does not reflect item, retry one additional add,
+  4. if still not visible, fail objective award and emit a persistence-failure log line.
+- This establishes a stronger invariant: recover-side-quest completion should only proceed when inventory actually reflects the recovered item.
+
+### Regression coverage
+
+- Added a lifecycle test that simulates an inconsistent inventory update path where first add returns success but does not materialize in inventory.
+- Test verifies second-chance retry is executed and item becomes visible in inventory state.
+
 ## April 8, 2026 update: village dialogue contract visibility now follows known quest frontier
 
 - Non-developer mode village dialogue dropdowns are now aligned with quest knowledge progression:
