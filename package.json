@@ -8,12 +8,24 @@
     "watch": "tsc --watch",
     "clean": "rm -rf dist",
     "build:rgfn": "tsc -p rgfn_game/tsconfig.json",
+    "test:rgfn": "npm run build:rgfn && node --test rgfn_game/test/**/*.test.js",
     "watch:rgfn": "tsc -p rgfn_game/tsconfig.json --watch",
     "build:eva": "tsc -p eva_game/tsconfig.json",
     "watch:eva": "tsc -p eva_game/tsconfig.json --watch",
-    "test:eva": "node --test eva_game/test/*.test.js "
+    "test:eva": "node --test eva_game/test/*.test.js ",
+    "lint:ts": "eslint . --ext .ts",
+    "lint:ts:fix": "eslint . --ext .ts --fix",
+    "lint:ts:rgfn:eslint": "eslint rgfn_game --ext .ts",
+    "lint:ts:rgfn": "npm run lint:ts:rgfn:eslint && npm run style-guide:audit:rgfn",
+    "lint:ts:rgfn:fix": "eslint rgfn_game --ext .ts --fix && npm run style-guide:audit:rgfn",
+    "style-guide:audit": "node scripts/style-guide-audit.mjs",
+    "style-guide:audit:rgfn": "node scripts/style-guide-audit.mjs --scope rgfn_game",
+    "check:ts-style": "npm run lint:ts && npm run style-guide:audit"
   },
   "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^8.28.0",
+    "@typescript-eslint/parser": "^8.28.0",
+    "eslint": "^9.39.4",
     "typescript": "^5.9.3"
   }
 }

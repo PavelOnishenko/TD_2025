@@ -1,42 +1,30 @@
 /**
  * Item - Represents items that can be discovered and equipped by the player
  */
-export type ItemId = 'bow' | 'healingPotion' | 'manaPotion';
 
-export type EquipmentHands = 1 | 2;
+import type {
+    EquipmentHands,
+    ItemData,
+    ItemEffects,
+    ItemRequirements,
+    WeaponEnchantment,
+} from './ItemDeclarations.js';
+import { getAllItemData, getDiscoverableItemData, getItemDataById } from './items/ItemRegistry.js';
 
-export interface ItemRequirements {
-    agility?: number;
-    strength?: number;
-}
-
-export interface ItemEffects {
-    flatArmor?: number;
-    damageReductionPercent?: number;
-    maxAbsorbHp?: number;
-}
-
-export interface ItemData {
-    id: string;
-    name: string;
-    description: string;
-    type: 'weapon' | 'armor' | 'consumable';
-    attackRange?: number;
-    handsRequired?: EquipmentHands;
-    damageBonus?: number;
-    requirements?: ItemRequirements;
-    goldValue?: number;
-    findWeight?: number;
-    isRanged?: boolean;
-    spriteClass?: string;
-    effects?: ItemEffects;
-}
+export type { ItemId } from './ItemDeclarations.js';
+export type {
+    EquipmentHands,
+    ItemData,
+    ItemEffects,
+    ItemRequirements,
+    WeaponEnchantment,
+} from './ItemDeclarations.js';
 
 export default class Item {
     public id: string;
     public name: string;
     public description: string;
-    public type: 'weapon' | 'armor' | 'consumable';
+    public type: 'weapon' | 'armor' | 'consumable' | 'quest' | 'misc';
     public attackRange: number;
     public handsRequired: EquipmentHands;
     public damageBonus: number;
@@ -46,6 +34,7 @@ export default class Item {
     public isRanged: boolean;
     public spriteClass: string;
     public effects: ItemEffects;
+    public enchantments: WeaponEnchantment[];
 
     constructor(data: ItemData) {
         this.id = data.id;
@@ -61,137 +50,47 @@ export default class Item {
         this.isRanged = data.isRanged ?? false;
         this.spriteClass = data.spriteClass ?? 'unknown-item-sprite';
         this.effects = data.effects ?? {};
+        this.enchantments = Array.isArray(data.enchantments) ? data.enchantments.map((enchantment) => ({ ...enchantment })) : [];
     }
+
+    public getPlasmaBonusDamage = (): number =>
+        this.enchantments
+            .filter((enchantment) => enchantment.type === 'plasma')
+            .reduce((sum, enchantment) => sum + (enchantment.plasmaBonusDamage ?? 0), 0);
+
+    public toItemData = (): ItemData => ({
+        id: this.id,
+        name: this.name,
+        description: this.description,
+        type: this.type,
+        attackRange: this.attackRange,
+        handsRequired: this.handsRequired,
+        damageBonus: this.damageBonus,
+        requirements: { ...this.requirements },
+        goldValue: this.goldValue,
+        findWeight: this.findWeight,
+        isRanged: this.isRanged,
+        spriteClass: this.spriteClass,
+        effects: { ...this.effects },
+        enchantments: this.enchantments.map((enchantment) => ({ ...enchantment })),
+    });
 }
 
-const WEAPON_VARIANTS: Array<{
-    key: string;
-    baseName: string;
-    damageBonuses: number[];
-    handsRequired: EquipmentHands;
-    requirements: ItemRequirements;
-    goldValue: number;
-    findWeight: number;
-    isRanged?: boolean;
-    attackRange?: number;
-}> = [
-    { key: 'knife', baseName: 'Knife', damageBonuses: [1, 2, 3, 4], handsRequired: 1, requirements: { agility: 2 }, goldValue: 2, findWeight: 10 },
-    { key: 'shortSword', baseName: 'Short Sword', damageBonuses: [2, 3, 4, 5], handsRequired: 1, requirements: { agility: 4, strength: 2 }, goldValue: 5, findWeight: 9 },
-    { key: 'axe', baseName: 'Axe', damageBonuses: [3, 4, 5, 6], handsRequired: 1, requirements: { agility: 4, strength: 6 }, goldValue: 7, findWeight: 7 },
-    { key: 'twoHandedSword', baseName: 'Two-Handed Sword', damageBonuses: [9, 11, 13, 14], handsRequired: 2, requirements: { agility: 4, strength: 12 }, goldValue: 18, findWeight: 5 },
-    { key: 'bow', baseName: 'Bow', damageBonuses: [1, 2, 3, 4], handsRequired: 2, requirements: { agility: 8, strength: 2 }, goldValue: 12, findWeight: 3, isRanged: true, attackRange: 2 },
-    { key: 'crossbow', baseName: 'Crossbow', damageBonuses: [3, 4, 5, 6], handsRequired: 2, requirements: { agility: 10, strength: 6 }, goldValue: 20, findWeight: 2, isRanged: true, attackRange: 3 },
-];
+export const ITEM_LIBRARY: ItemData[] = getAllItemData();
 
-const ARMOR_VARIANTS: Array<{
-    id: string;
-    name: string;
-    description: string;
-    effects: ItemEffects;
-    findWeight: number;
-    goldValue: number;
-    spriteClass: string;
-}> = [
-    {
-        id: 'armor_t1',
-        name: 'Armor +1',
-        description: '+1 armor',
-        effects: { flatArmor: 1 },
-        findWeight: 1,
-        goldValue: 12,
-        spriteClass: 'armor-t1-sprite'
-    },
-    {
-        id: 'armor_t2',
-        name: 'Armor +1 Guarded',
-        description: '+1 armor and 20% damage decrease',
-        effects: { flatArmor: 1, damageReductionPercent: 0.2 },
-        findWeight: 1,
-        goldValue: 16,
-        spriteClass: 'armor-t2-sprite'
-    },
-    {
-        id: 'armor_t3',
-        name: 'Armor +2 Fragile',
-        description: '+2 armor, but can only absorb 20 HP',
-        effects: { flatArmor: 2, maxAbsorbHp: 20 },
-        findWeight: 1,
-        goldValue: 18,
-        spriteClass: 'armor-t3-sprite'
-    },
-    {
-        id: 'armor_t4',
-        name: 'Armor Bulwark',
-        description: '50% damage decrease, can only absorb 20 HP',
-        effects: { damageReductionPercent: 0.5, maxAbsorbHp: 20 },
-        findWeight: 1,
-        goldValue: 20,
-        spriteClass: 'armor-t4-sprite'
-    },
-];
+export const DISCOVERABLE_ITEM_LIBRARY: ItemData[] = getDiscoverableItemData();
 
-const generatedWeapons: ItemData[] = WEAPON_VARIANTS.flatMap((variant) => (
-    variant.damageBonuses.map((damageBonus, index) => {
-        const tier = index + 1;
-        return {
-            id: `${variant.key}_t${tier}`,
-            name: `${variant.baseName} +${damageBonus}`,
-            description: `${variant.handsRequired === 2 ? 'Two-handed' : 'One-handed'} weapon (+${damageBonus} damage)`,
-            type: 'weapon' as const,
-            damageBonus,
-            handsRequired: variant.handsRequired,
-            requirements: variant.requirements,
-            goldValue: variant.goldValue,
-            findWeight: variant.findWeight,
-            isRanged: variant.isRanged ?? false,
-            attackRange: variant.attackRange ?? 1,
-            spriteClass: `${variant.key}-t${tier}-sprite`,
-        };
-    })
-));
-
-export const BOW_ITEM: ItemData = {
-    ...generatedWeapons.find((item) => item.id === 'bow_t1')!,
-    id: 'bow',
-    name: 'Bow',
-};
-
-export const HEALING_POTION_ITEM: ItemData = {
-    id: 'healingPotion',
-    name: 'Healing Potion',
-    description: 'A restorative potion that heals 5 HP when used',
-    type: 'consumable',
-    goldValue: 4,
+export const HEALING_POTION_ITEM: ItemData = getItemDataById('healingPotion') ?? {
+    id: 'healingPotion', name: 'Healing Potion', description: 'A restorative potion that heals 5 HP when used', type: 'consumable', goldValue: 4,
     spriteClass: 'potion-sprite',
 };
 
-export const MANA_POTION_ITEM: ItemData = {
-    id: 'manaPotion',
-    name: 'Mana Potion',
-    description: 'A restorative potion that recovers mana when used',
-    type: 'consumable'
+export const MANA_POTION_ITEM: ItemData = getItemDataById('manaPotion') ?? {
+    id: 'manaPotion', name: 'Mana Potion', description: 'A restorative potion that recovers mana when used', type: 'consumable',
 };
-export const ITEM_LIBRARY: ItemData[] = [
-    HEALING_POTION_ITEM,
-    MANA_POTION_ITEM,
-    BOW_ITEM,
-    ...generatedWeapons.filter((item) => item.id !== 'bow_t1'),
-    ...ARMOR_VARIANTS.map((armor) => ({
-        id: armor.id,
-        name: armor.name,
-        description: armor.description,
-        type: 'armor' as const,
-        effects: armor.effects,
-        goldValue: armor.goldValue,
-        findWeight: armor.findWeight,
-        spriteClass: armor.spriteClass,
-    })),
-];
-
-export const DISCOVERABLE_ITEM_LIBRARY: ItemData[] = ITEM_LIBRARY;
 
 export function createItemById(id: string): Item | null {
-    const data = ITEM_LIBRARY.find((item) => item.id === id);
+    const data = getItemDataById(id);
     if (!data) {
         return null;
     }

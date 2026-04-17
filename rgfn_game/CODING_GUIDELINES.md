@@ -209,6 +209,14 @@ Note: Semi-transparent overlays can use fixed colors, but all UI elements must u
 
 ## Common Patterns
 
+### Pattern -1: Remove Dead Helpers Immediately
+
+If a config/system helper is no longer used in production code, remove it instead of keeping "maybe useful later" exports.
+
+- Prefer deleting unused helpers in the same task where they become unused.
+- Verify usage with `rg -n "functionOrSymbolName" rgfn_game/js rgfn_game/test`.
+- If a helper is intentionally test-only, document that in the test file where it is used.
+
 ### Pattern 0: Selected Tile Labels Must Use Entity Display Names
 
 When filling "Selected Tile" details in battle mode, do **not** rely on `constructor.name` for enemy labels.
@@ -218,6 +226,23 @@ When filling "Selected Tile" details in battle mode, do **not** rely on `constru
 - Continue to use `"Hero"` for the player-facing label.
 
 Why: several enemy archetypes reuse shared classes (for example Ninja can be implemented via the `Skeleton` class), so constructor-based UI labels can be wrong even when combat data is correct.
+
+## HUD panel layout persistence by game mode
+
+- HUD panel positions/sizes/visibility are persisted separately for world-map mode and battle mode via `localStorage`.
+- Storage keys:
+  - `rgfn_hud_panel_layout_world_v1`
+  - `rgfn_hud_panel_layout_battle_v1`
+- The current context is resolved from the HUD mode indicator text (`Battle!` => battle layout; any other mode => world layout).
+- On each panel drag/toggle/style change, the active context layout is immediately saved.
+- On mode switches, the previous context is saved first, then the target context is restored.
+- If no saved layout exists for the target context, panels reset to default spawn positions instead of reusing positions from the previous mode.
+- Draggable HUD windows support two drag-entry surfaces:
+  - The panel title bar (`.panel-drag-handle`), as before.
+  - Any edge border strip of the panel (top/right/bottom/left), so partially off-screen windows can still be recovered.
+- Bottom-right resize affordance remains the highest-priority interaction area:
+  - The resize corner does **not** start drag handling.
+  - Native CSS `resize: both` behavior should continue to work unchanged on desktop panels.
 
 ### Pattern 1: Canvas Drawing
 
@@ -377,7 +402,7 @@ When in doubt, look at existing features like `BattleSplash.ts`, `ThemeEditor.ts
 
 ---
 
-*Last Updated: 2026-01-06*
+*Last Updated: 2026-03-29*
 *Maintainer: RGFN Development Team*
 
 ## Quest objective state and courier contracts (March 26, 2026)
@@ -388,3 +413,19 @@ When in doubt, look at existing features like `BattleSplash.ts`, `ThemeEditor.ts
   - include source trader, source village, destination village, and item in metadata;
   - do not mark complete on location entry unless required item is present in inventory and pickup source was validated.
 - Contract systems that bind quest objectives to runtime NPC/village behavior must preserve deterministic assignment when objective metadata specifies a source location.
+
+## TODO semantics and object literal formatting (March 29, 2026)
+
+- TODO comments apply to the immediately following line or the block that starts right after the TODO, unless the TODO text explicitly declares a wider scope.
+- Resolve TODO comments as part of the same task whenever possible; do not keep stale TODOs after implementation is complete.
+- For dense object literals (variant tables, config arrays, item declarations), prefer one property per line when a single-line object is hard to scan or exceeds normal line length.
+- Keep trailing commas in multiline object literals and arrays to reduce diff noise.
+
+## Arrow-function TODO resolution style (March 29, 2026)
+
+- When resolving TODOs that ask for arrow methods, prefer concise single-expression bodies:
+  - ✅ `public canUseMagic = (): boolean => this.magicPoints > 0 && this.mana >= this.getMagicManaCost();`
+  - ❌ `public canUseMagic = (): boolean => { return this.magicPoints > 0 && this.mana >= this.getMagicManaCost(); };`
+- Apply this rule whenever it is type-safe and keeps readability intact.
+- For `void`-typed methods that still fit a single expression, use `void (...)` to preserve concise form without changing the signature:
+  - `public spendMana = (amount: number): void => void (this.mana = Math.max(0, this.mana - amount));`

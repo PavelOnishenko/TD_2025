@@ -24,41 +24,18 @@ export class ItemDiscoverySplash {
      * Creates the overlay UI structure
      */
     private createUI(): void {
-        // Create overlay container
-        const overlay = document.createElement('div');
-        overlay.className = 'item-discovery-overlay';
-        overlay.style.display = 'none';
-
-        // Create modal content
-        const modal = document.createElement('div');
-        modal.className = 'item-discovery-modal';
-
-        // Decorative border element
-        const decorativeBorder = document.createElement('div');
-        decorativeBorder.className = 'item-discovery-border';
-
-        // Title element
-        const title = document.createElement('h1');
-        title.className = 'item-discovery-title';
-        title.textContent = '🎁 ITEM DISCOVERED! 🎁';
-
-        // Item name element
-        const itemName = document.createElement('h2');
-        itemName.className = 'item-discovery-name';
-
-        // Item description element
-        const itemDescription = document.createElement('p');
-        itemDescription.className = 'item-discovery-description';
-
-        // Assemble structure
+        const overlay = this.createOverlay();
+        const modal = this.createModal();
+        const decorativeBorder = this.createDiv('item-discovery-border');
+        const title = this.createTitle();
+        const itemName = this.createHeading('h2', 'item-discovery-name');
+        const itemDescription = this.createHeading('p', 'item-discovery-description');
         modal.appendChild(decorativeBorder);
         modal.appendChild(title);
         modal.appendChild(itemName);
         modal.appendChild(itemDescription);
         overlay.appendChild(modal);
         document.body.appendChild(overlay);
-
-        // Store references
         this.overlay = overlay;
         this.modal = modal;
         this.title = title;
@@ -67,13 +44,41 @@ export class ItemDiscoverySplash {
         this.decorativeBorder = decorativeBorder;
     }
 
+    private createOverlay(): HTMLDivElement {
+        const overlay = this.createDiv('item-discovery-overlay');
+        overlay.style.display = 'none';
+        return overlay;
+    }
+
+    private createModal(): HTMLDivElement {
+        return this.createDiv('item-discovery-modal');
+    }
+
+    private createTitle(): HTMLHeadingElement {
+        const title = this.createHeading('h1', 'item-discovery-title');
+        title.textContent = '🎁 ITEM DISCOVERED! 🎁';
+        return title;
+    }
+
+    private createDiv(className: string): HTMLDivElement {
+        const element = document.createElement('div');
+        element.className = className;
+        return element;
+    }
+
+    private createHeading<K extends keyof HTMLElementTagNameMap>(tag: K, className: string): HTMLElementTagNameMap[K] {
+        const element = document.createElement(tag);
+        element.className = className;
+        return element;
+    }
+
     /**
      * Shows item discovery splash screen
      * @param item - The discovered item
      * @param callback - Function to call when splash is done
      */
     showItemDiscovery(item: Item, callback: () => void): void {
-        if (!this.overlay || !this.title || !this.itemName || !this.itemDescription) return;
+        if (!this.overlay || !this.title || !this.itemName || !this.itemDescription) {return;}
 
         // Set content
         this.itemName.textContent = item.name;
@@ -93,7 +98,7 @@ export class ItemDiscoverySplash {
      * Schedules splash dismissal and allows left-click skipping
      */
     private scheduleDismiss(callback: () => void, duration: number): void {
-        if (!this.overlay) return;
+        if (!this.overlay) {return;}
 
         this.clearDismissTimeout();
         this.overlay.addEventListener('click', this.onOverlayClickBound);
@@ -108,7 +113,7 @@ export class ItemDiscoverySplash {
      * Handles skip via left mouse click
      */
     private handleOverlayClick(event: MouseEvent): void {
-        if (event.button !== 0) return;
+        if (event.button !== 0) {return;}
 
         this.dismiss();
     }
@@ -117,7 +122,7 @@ export class ItemDiscoverySplash {
      * Dismisses splash safely exactly once
      */
     private dismiss(): void {
-        if (!this.overlay || this.overlay.style.display === 'none' || !this.dismissCallback) return;
+        if (!this.overlay || this.overlay.style.display === 'none' || !this.dismissCallback) {return;}
 
         const callback = this.dismissCallback;
         this.dismissCallback = null;
@@ -141,7 +146,7 @@ export class ItemDiscoverySplash {
      * Applies theme colors to splash screen elements
      */
     private applyThemeColors(): void {
-        if (!this.modal || !this.title || !this.itemName || !this.itemDescription || !this.decorativeBorder) return;
+        if (!this.modal || !this.title || !this.itemName || !this.itemDescription || !this.decorativeBorder) {return;}
 
         // Base styling - use theme colors
         this.modal.style.backgroundColor = theme.ui.primaryBg;
@@ -159,7 +164,7 @@ export class ItemDiscoverySplash {
      * Shows the splash screen with animation
      */
     private show(callback: () => void): void {
-        if (!this.overlay || !this.modal) return;
+        if (!this.overlay || !this.modal) {return;}
 
         // Reset animation
         this.modal.style.animation = 'none';
@@ -179,7 +184,7 @@ export class ItemDiscoverySplash {
      * Hides the splash screen with animation
      */
     private hide(callback: () => void): void {
-        if (!this.overlay || !this.modal) return;
+        if (!this.overlay || !this.modal) {return;}
 
         // Exit animation
         this.modal.style.animation = 'item-discovery-exit 0.5s ease-in';

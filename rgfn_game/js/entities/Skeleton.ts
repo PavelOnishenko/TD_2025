@@ -1,16 +1,29 @@
+/* eslint-disable style-guide/file-length-warning */
 import Entity from '../../../engine/core/Entity.js';
 import { withDamageable } from '../../../engine/core/Damageable.js';
-import { balanceConfig } from '../config/balanceConfig.js';
-import { theme } from '../config/ThemeConfig.js';
+import { balanceConfig } from '../config/balance/balanceConfig.js';
 import { cloneBaseStats, deriveCreatureStats, normalizeCreatureSkills } from '../config/creatureStats.js';
 import { CreatureBaseStats, CreatureSkill, CreatureSkills } from '../config/creatureTypes.js';
-import { CombatBuffSnapshot, CombatStatusState } from '../systems/combat/DirectionalCombat.js';
+import { CombatBuffSnapshot, CombatMove, CombatStatusState } from '../systems/combat/DirectionalCombat.js';
+import { generateDirectionalBehaviorPool } from '../systems/combat/MonsterBehaviorCodex.js';
+import { MonsterDirectionalBehavior, selectWeightedBehavior } from '../systems/combat/MonsterBehaviorCodex.js';
+import { MonsterMutationEngine } from './monster/MonsterMutationEngine.js';
+import { MonsterStatusEffects } from './monster/MonsterStatusEffects.js';
+import { MonsterVisualRenderer } from './monster/MonsterVisualRenderer.js';
 
 export interface EnemyBehavior {
     avoidHitChance?: number;
     doubleDamageChance?: number;
     passEncounterChance?: number;
 }
+
+export type MonsterMutationTrait =
+    | 'feral strength'
+    | 'void armor'
+    | 'acid blood'
+    | 'blink speed'
+    | 'barbed hide'
+    | 'grave intellect';
 
 export interface EnemyConfig {
     archetypeId?: keyof typeof balanceConfig.creatureArchetypes;
@@ -24,13 +37,12 @@ export interface EnemyConfig {
     mutations?: MonsterMutationTrait[];
 }
 
-export type MonsterMutationTrait =
-    | 'feral strength'
-    | 'void armor'
-    | 'acid blood'
-    | 'blink speed'
-    | 'barbed hide'
-    | 'grave intellect';
+type SkeletonInitialization = {
+    config: EnemyConfig;
+    archetypeId: keyof typeof balanceConfig.creatureArchetypes;
+    baseStats: CreatureBaseStats;
+    skills: CreatureSkills;
+};
 
 const DamageableEntity = withDamageable(Entity);
 
@@ -69,315 +81,185 @@ export default class Skeleton extends DamageableEntity {
     public magicPoints: number;
     public mana: number;
     public readonly mutations: MonsterMutationTrait[];
-    private cursedArmorReduction: number = 0;
-    private curseTurns: number = 0;
-    private slowTurns: number = 0;
-    private blockAdvantage: boolean = false;
-    private successfulDodgeMultiplier: number | null = null;
 
+    private directionalBehaviorPool: MonsterDirectionalBehavior[];
+    private activeDirectionalBehavior: { id: string; moves: CombatMove[]; nextMoveIndex: number } | null;
+
+    private readonly monsterStatusEffects: MonsterStatusEffects;
+    private readonly monsterVisualRenderer: MonsterVisualRenderer;
+
+    // eslint-disable-next-line style-guide/function-length-warning
     constructor(x: number, y: number, enemyConfig?: EnemyConfig) {
         super(x, y);
-        const config: EnemyConfig = enemyConfig ?? balanceConfig.enemies.skeleton;
-        const archetypeId = config.archetypeId ?? 'skeleton';
-        const archetype = balanceConfig.creatureArchetypes[archetypeId] ?? balanceConfig.creatureArchetypes.skeleton;
-        const mergedBaseStats = {
-            ...cloneBaseStats(archetype.baseStats),
-            ...(config.baseStats ?? {}),
-        };
-        const mergedSkills = normalizeCreatureSkills({
-            ...archetype.skills,
-            ...(config.skills ?? {}),
-        });
-        const derivedStats = deriveCreatureStats(mergedBaseStats, mergedSkills);
-
+        const { config, archetypeId, baseStats, skills } = this.buildInitialization(enemyConfig);
+        const derivedStats = deriveCreatureStats(baseStats, skills);
         this.width = config.width;
         this.height = config.height;
         this.name = config.name;
         this.xpValue = config.xpValue;
         this.behavior = config.behavior ?? {};
         this.archetypeId = archetypeId;
-        this.baseStats = mergedBaseStats;
-        this.skills = mergedSkills;
+        this.baseStats = baseStats;
+        this.skills = skills;
+        this.assignDerivedCombatStats(derivedStats);
+        this.mutations = [...(config.mutations ?? [])];
+        this.directionalBehaviorPool = [];
+        this.activeDirectionalBehavior = null;
+        MonsterMutationEngine.applyMutations(this);
+        this.monsterStatusEffects = new MonsterStatusEffects();
+        this.monsterVisualRenderer = new MonsterVisualRenderer();
+        this.initializeHp(derivedStats.maxHp);
+        this.initializeHumanDirectionalBehaviorPool();
+    }
+
+    private buildInitialization(enemyConfig?: EnemyConfig): SkeletonInitialization {
+        const config: EnemyConfig = enemyConfig ?? balanceConfig.enemies.skeleton;
+        const archetypeId = config.archetypeId ?? 'skeleton';
+        const archetype = this.resolveArchetype(archetypeId);
+        const baseStats = this.mergeBaseStats(archetype.baseStats, config.baseStats);
+        const skills = this.mergeSkills(archetype.skills, config.skills);
+        return { config, archetypeId, baseStats, skills };
+    }
+
+    private resolveArchetype = (archetypeId: keyof typeof balanceConfig.creatureArchetypes) =>
+        balanceConfig.creatureArchetypes[archetypeId] ?? balanceConfig.creatureArchetypes.skeleton;
+
+    private mergeBaseStats = (baseStats: CreatureBaseStats, overrides?: Partial<CreatureBaseStats>): CreatureBaseStats =>
+        ({ ...cloneBaseStats(baseStats), ...(overrides ?? {}) });
+
+    private mergeSkills = (skills: Partial<Record<CreatureSkill, number>>, overrides?: Partial<Record<CreatureSkill, number>>): CreatureSkills =>
+        normalizeCreatureSkills({ ...skills, ...(overrides ?? {}) });
+
+    private assignDerivedCombatStats(derivedStats: ReturnType<typeof deriveCreatureStats>): void {
         this.damage = derivedStats.physicalDamage;
         this.armor = derivedStats.armor;
         this.avoidChance = derivedStats.avoidChance;
         this.maxMana = derivedStats.maxMana;
         this.magicPoints = derivedStats.magicPoints;
         this.mana = derivedStats.maxMana;
-        this.mutations = [...(config.mutations ?? [])];
-        this.applyMutations();
+    }
+
+    private initializeHp(maxHp: number): void {
         const hpMultiplier = Math.max(0, balanceConfig.enemies.hpMultiplier ?? 1);
-        this.initDamageable(Math.round(derivedStats.maxHp * hpMultiplier));
+        (this as any).initDamageable(Math.round(maxHp * hpMultiplier));
+    }
+
+    private initializeHumanDirectionalBehaviorPool(): void {
+        if (this.archetypeId !== 'human') {
+            return;
+        }
+
+        const behaviorGeneration = balanceConfig.combat.enemyBehaviorGeneration;
+        const movePool = behaviorGeneration.monsterMovePools.human;
+        if (!movePool || movePool.length === 0) {
+            throw new Error('Missing directional move pool for human archetype.');
+        }
+        const behaviorPoolId = `human-${this.name.toLocaleLowerCase().replace(/[^a-z0-9]+/g, '-')}-${this.id}`;
+        const behaviorPool = generateDirectionalBehaviorPool(behaviorPoolId, movePool, behaviorGeneration);
+        this.setDirectionalBehaviorPool(behaviorPool);
     }
 
     public takeDamage(amount: number): boolean {
-        const effectiveArmor = Math.max(0, this.armor - this.cursedArmorReduction);
-        const damageAfterArmor = amount <= 0
-            ? 0
-            : Math.max(balanceConfig.combat.minDamageAfterArmor, amount - effectiveArmor);
-        const died = super.takeDamage(damageAfterArmor);
-        if (died) {
-            this.active = false;
-        }
-        return died;
+        const damageAfterArmor = this.monsterStatusEffects.calculatePhysicalDamage(amount, this.armor);
+        return this.applyIncomingDamage(damageAfterArmor);
     }
 
-    public takeMagicDamage(amount: number): boolean {
-        const died = super.takeDamage(Math.max(0, amount));
-        if (died) {
-            this.active = false;
-        }
-        return died;
-    }
+    public takeMagicDamage = (amount: number): boolean => this.applyIncomingDamage(Math.max(0, amount));
 
     public applyCurse(armorReduction: number, duration: number): void {
-        this.cursedArmorReduction = Math.max(this.cursedArmorReduction, armorReduction);
-        this.curseTurns = Math.max(this.curseTurns, duration);
+        this.monsterStatusEffects.applyCurse(armorReduction, duration);
     }
 
     public applySlow(duration: number): void {
-        this.slowTurns = Math.max(this.slowTurns, duration);
+        this.monsterStatusEffects.applySlow(duration);
     }
 
-    public shouldSkipTurnFromSlow(): boolean {
-        return this.slowTurns > 0;
+    public shouldSkipTurnFromSlow = (): boolean => this.monsterStatusEffects.shouldSkipTurnFromSlow();
+
+    public shouldSkipTurn = (): boolean => this.monsterStatusEffects.shouldSkipTurn();
+
+    public applyStun(duration: number): void {
+        this.monsterStatusEffects.applyStun(duration);
     }
 
-    public getDirectionalCombatBuffSnapshot(): CombatBuffSnapshot {
-        return {
-            hasBlockAdvantage: this.blockAdvantage,
-            hasSuccessfulDodgeMultiplier: this.successfulDodgeMultiplier !== null,
-            successfulDodgeMultiplier: this.successfulDodgeMultiplier ?? 1,
-        };
+    public applyDamageOverTime(damagePerTurn: number, duration: number, sourceLabel: string): void {
+        this.monsterStatusEffects.applyDamageOverTime(damagePerTurn, duration, sourceLabel);
     }
 
-    public applyDirectionalCombatRewards(rewards: CombatStatusState): string[] {
-        const events: string[] = [];
+    public getDirectionalCombatBuffSnapshot = (): CombatBuffSnapshot => this.monsterStatusEffects.getDirectionalCombatBuffSnapshot();
 
-        if (rewards.blockAdvantage) {
-            this.blockAdvantage = true;
-            events.push(`${this.name} gains Block Advantage for the next turn. If the next turn is not an attack, it expires.`);
-        }
+    public applyDirectionalCombatRewards = (rewards: CombatStatusState): string[] => this.monsterStatusEffects.applyDirectionalCombatRewards(rewards, this.name);
 
-        if (rewards.successfulDodgeMultiplier !== null) {
-            this.successfulDodgeMultiplier = rewards.successfulDodgeMultiplier;
-            events.push(`${this.name} gains a successful dodge damage multiplier for the next attack (x${rewards.successfulDodgeMultiplier.toFixed(2)}).`);
-        }
+    public consumeDirectionalAttackBonuses = (): string[] => this.monsterStatusEffects.consumeDirectionalAttackBonuses(this.name);
 
-        return events;
+    public expireDirectionalBonusesWithoutAttack = (): string[] => this.monsterStatusEffects.expireDirectionalBonusesWithoutAttack(this.name);
+
+    public consumeTurnEffects = (): string[] => this.monsterStatusEffects.consumeTurnEffects(this.name, (amount) => void this.applyIncomingDamage(Math.max(0, amount)));
+
+    public getSkillRecord = (): CreatureSkills => normalizeCreatureSkills(this.skills);
+
+    public getBaseStatsRecord = (): CreatureBaseStats => cloneBaseStats(this.baseStats);
+
+    public draw(ctx: CanvasRenderingContext2D, _viewport?: any): void {
+        this.monsterVisualRenderer.drawEntity(ctx, this.name, this.x, this.y, this.width, this.height);
+        this.monsterVisualRenderer.drawHealthBar(ctx, this.x, this.y, this.width, this.height, this.hp, this.maxHp);
     }
 
-    public consumeDirectionalAttackBonuses(): string[] {
-        const events: string[] = [];
 
-        if (this.blockAdvantage) {
-            this.blockAdvantage = false;
-            events.push(`${this.name}'s Block Advantage is consumed by this attack.`);
+    public setDirectionalBehaviorPool(behaviorPool: MonsterDirectionalBehavior[]): void {
+        this.directionalBehaviorPool = behaviorPool
+            .filter((behavior) => behavior.moves.length > 0)
+            .map((behavior) => ({ id: behavior.id, weight: behavior.weight, moves: [...behavior.moves] }));
+        this.activeDirectionalBehavior = null;
+        if (this.directionalBehaviorPool.length === 0) {
+            throw new Error(`Monster "${this.name}" received an empty directional behavior pool.`);
         }
-
-        if (this.successfulDodgeMultiplier !== null) {
-            this.successfulDodgeMultiplier = null;
-            events.push(`${this.name}'s successful dodge damage multiplier is consumed by this attack.`);
-        }
-
-        return events;
     }
 
-    public expireDirectionalBonusesWithoutAttack(): string[] {
-        const events: string[] = [];
-
-        if (this.blockAdvantage) {
-            this.blockAdvantage = false;
-            events.push(`${this.name}'s Block Advantage expires because no attack was used this turn.`);
-        }
-
-        if (this.successfulDodgeMultiplier !== null) {
-            this.successfulDodgeMultiplier = null;
-            events.push(`${this.name}'s successful dodge damage multiplier expires because no attack was used this turn.`);
-        }
-
-        return events;
-    }
-
-    public consumeTurnEffects(): string[] {
-        const events: string[] = [];
-
-        if (this.slowTurns > 0) {
-            this.slowTurns -= 1;
-            events.push(`${this.name} is slowed and skips this turn.`);
-        }
-
-        if (this.curseTurns > 0) {
-            this.curseTurns -= 1;
-            if (this.curseTurns === 0) {
-                this.cursedArmorReduction = 0;
-                events.push(`${this.name} shakes off the curse.`);
+    // eslint-disable-next-line style-guide/function-length-warning
+    public rollDirectionalCombatMove(): CombatMove {
+        if (!this.activeDirectionalBehavior || this.activeDirectionalBehavior.nextMoveIndex >= this.activeDirectionalBehavior.moves.length) {
+            const nextBehavior = selectWeightedBehavior(this.directionalBehaviorPool);
+            if (!nextBehavior) {
+                throw new Error(`Monster "${this.name}" has no directional behavior to execute.`);
             }
+
+            this.activeDirectionalBehavior = { id: nextBehavior.id, moves: [...nextBehavior.moves], nextMoveIndex: 0 };
         }
 
-        return events;
-    }
-
-    public getSkillRecord(): CreatureSkills {
-        return normalizeCreatureSkills(this.skills);
-    }
-
-    public getBaseStatsRecord(): CreatureBaseStats {
-        return cloneBaseStats(this.baseStats);
-    }
-
-    public draw(ctx: CanvasRenderingContext2D, viewport?: any): void {
-        const x = this.x;
-        const y = this.y;
-        const left = x - this.width / 2;
-        const top = y - this.height / 2;
-
-        switch (this.name) {
-            case 'Zombie':
-                this.drawZombie(ctx, left, top);
-                break;
-            case 'Ninja':
-                this.drawNinja(ctx, left, top);
-                break;
-            case 'Dark Knight':
-                this.drawDarkKnight(ctx, left, top);
-                break;
-            case 'Dragon':
-                this.drawDragon(ctx, left, top);
-                break;
-            default:
-                this.drawSkeleton(ctx, left, top);
-                break;
+        const nextMove = this.activeDirectionalBehavior.moves[this.activeDirectionalBehavior.nextMoveIndex];
+        if (!nextMove) {
+            throw new Error(`Monster "${this.name}" attempted to execute an invalid directional behavior move.`);
+        }
+        this.activeDirectionalBehavior.nextMoveIndex += 1;
+        if (this.activeDirectionalBehavior.nextMoveIndex >= this.activeDirectionalBehavior.moves.length) {
+            this.activeDirectionalBehavior = null;
         }
 
-        this.drawHealthBar(ctx, x, y);
+        return nextMove;
     }
 
-    private drawSkeleton(ctx: CanvasRenderingContext2D, left: number, top: number): void {
-        ctx.fillStyle = theme.entities.skeleton.body;
-        ctx.beginPath();
-        ctx.ellipse(left + this.width / 2, top + this.height / 2, this.width * 0.34, this.height * 0.4, 0, 0, Math.PI * 2);
-        ctx.fill();
 
-        ctx.fillStyle = theme.entities.skeleton.features;
-        ctx.fillRect(left + 8, top + 7, 4, 4);
-        ctx.fillRect(left + this.width - 12, top + 7, 4, 4);
-        ctx.fillRect(left + this.width / 2 - 2, top + 13, 4, 3);
-    }
-
-    private drawZombie(ctx: CanvasRenderingContext2D, left: number, top: number): void {
-        ctx.fillStyle = theme.worldMap.terrain.forest;
-        ctx.fillRect(left + 5, top + 4, this.width - 10, this.height - 7);
-        ctx.fillStyle = theme.entities.player.face;
-        ctx.fillRect(left + 8, top + 7, this.width - 16, 9);
-        ctx.fillStyle = theme.ui.enemyColor;
-        ctx.fillRect(left + 10, top + 10, 3, 2);
-        ctx.fillRect(left + this.width - 13, top + 10, 3, 2);
-    }
-
-    private drawNinja(ctx: CanvasRenderingContext2D, left: number, top: number): void {
-        ctx.fillStyle = theme.ui.primaryAccent;
-        ctx.fillRect(left + 5, top + 5, this.width - 10, this.height - 8);
-        ctx.fillStyle = theme.entities.player.face;
-        ctx.fillRect(left + 8, top + 10, this.width - 16, 5);
-        ctx.fillStyle = theme.ui.enemyColor;
-        ctx.fillRect(left + 9, top + 11, 2, 2);
-        ctx.fillRect(left + this.width - 11, top + 11, 2, 2);
-    }
-
-    private drawDarkKnight(ctx: CanvasRenderingContext2D, left: number, top: number): void {
-        ctx.fillStyle = theme.ui.textMuted;
-        ctx.fillRect(left + 4, top + 4, this.width - 8, this.height - 4);
-        ctx.fillStyle = theme.ui.secondaryAccent;
-        ctx.fillRect(left + this.width / 2 - 1, top + 6, 2, this.height - 8);
-        ctx.fillStyle = theme.ui.enemyColor;
-        ctx.fillRect(left + this.width / 2 - 3, top + 9, 6, 4);
-    }
-
-    private drawDragon(ctx: CanvasRenderingContext2D, left: number, top: number): void {
-        ctx.fillStyle = theme.ui.enemyColor;
-        ctx.beginPath();
-        ctx.moveTo(left + 4, top + this.height - 6);
-        ctx.lineTo(left + this.width / 2, top + 4);
-        ctx.lineTo(left + this.width - 4, top + this.height - 6);
-        ctx.closePath();
-        ctx.fill();
-
-        ctx.fillStyle = theme.ui.warningColor;
-        ctx.fillRect(left + this.width / 2 - 2, top + 10, 4, 4);
-        ctx.fillStyle = theme.ui.primaryAccent;
-        ctx.fillRect(left + this.width / 2 - 5, top + this.height - 9, 10, 3);
-    }
 
     public shouldAvoidHit(): boolean {
         const behaviorChance = this.behavior.avoidHitChance ?? 0;
-        const totalChance = Math.min(0.95, behaviorChance + this.avoidChance);
-        return totalChance > 0 && Math.random() < totalChance;
+        return MonsterMutationEngine.shouldAvoidHit(behaviorChance, this.avoidChance);
     }
 
-    public getAttackDamage(): number {
-        const chance = this.behavior.doubleDamageChance ?? 0;
-        if (chance > 0 && Math.random() < chance) {
-            return this.damage * 2;
+    public getAttackDamage = (): number => MonsterMutationEngine.getAttackDamage(this.damage, this.behavior.doubleDamageChance ?? 0);
+
+    public shouldPassEncounter = (): boolean => MonsterMutationEngine.shouldPassEncounter(this.behavior.passEncounterChance ?? 0);
+
+    public onDamagedByPlayer = (
+        isMelee: boolean,
+    ): { retaliationDamage: number; logs: string[] } =>
+        MonsterMutationEngine.onDamagedByPlayer(this.name, this.mutations, isMelee);
+
+    private applyIncomingDamage(amount: number): boolean {
+        const died = super.takeDamage(amount);
+        if (died) {
+            this.active = false;
         }
-
-        return this.damage;
-    }
-
-    public shouldPassEncounter(): boolean {
-        const chance = this.behavior.passEncounterChance ?? 0;
-        return chance > 0 && Math.random() < chance;
-    }
-
-    public onDamagedByPlayer(isMelee: boolean): { retaliationDamage: number; logs: string[] } {
-        const logs: string[] = [];
-        let retaliationDamage = 0;
-
-        if (this.mutations.includes('acid blood')) {
-            retaliationDamage += 1;
-            logs.push(`${this.name}'s acid blood splashes back for 1 damage.`);
-        }
-
-        if (isMelee && this.mutations.includes('barbed hide')) {
-            retaliationDamage += 1;
-            logs.push(`${this.name}'s barbed hide cuts the attacker for 1 damage.`);
-        }
-
-        return { retaliationDamage, logs };
-    }
-
-    private applyMutations(): void {
-        if (this.mutations.includes('feral strength')) {
-            this.damage = Math.max(1, Math.round(this.damage * 1.35));
-        }
-
-        if (this.mutations.includes('void armor')) {
-            this.armor += 3;
-        }
-
-        if (this.mutations.includes('blink speed')) {
-            this.avoidChance = Math.min(0.8, this.avoidChance + 0.12);
-        }
-
-        if (this.mutations.includes('grave intellect')) {
-            this.magicPoints += 3;
-            this.maxMana += 8;
-            this.mana = this.maxMana;
-            this.behavior.doubleDamageChance = Math.max(this.behavior.doubleDamageChance ?? 0, 0.12);
-        }
-    }
-
-    private drawHealthBar(ctx: CanvasRenderingContext2D, screenX: number, screenY: number): void {
-        const barWidth = this.width;
-        const barHeight = 3;
-        const barY = screenY - this.height / 2 - 6;
-
-        ctx.fillStyle = theme.entities.skeleton.healthBg;
-        ctx.fillRect(screenX - barWidth / 2, barY, barWidth, barHeight);
-
-        const healthPercent = this.hp / this.maxHp;
-        const healthBarWidth = barWidth * healthPercent;
-        ctx.fillStyle = theme.entities.skeleton.healthBar;
-        ctx.fillRect(screenX - barWidth / 2, barY, healthBarWidth, barHeight);
+        return died;
     }
 }

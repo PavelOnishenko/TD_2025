@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import Player from '../../dist/entities/Player.js';
+import Player from '../../dist/entities/player/Player.js';
 import Item from '../../dist/entities/Item.js';
-import { balanceConfig } from '../../dist/config/balanceConfig.js';
+import { balanceConfig } from '../../dist/config/balance/balanceConfig.js';
 import { levelConfig } from '../../dist/config/levelConfig.js';
 import { createEmptyNextCharacterRollAllocation } from '../../dist/utils/NextCharacterRollConfig.js';
 
@@ -18,7 +18,7 @@ test('Player initializes with randomized starting allocation and name', () => {
   assert.equal(player.skillPoints, balanceConfig.player.initialSkillPoints);
   assert.equal(typeof player.name, 'string');
   assert.equal(player.name.length > 0, true);
-  assert.equal(player.gold >= 0 && player.gold <= 5, true);
+  assert.equal(player.gold, balanceConfig.player.initialGold);
   assert.equal(player.fatigue, 0);
 });
 
@@ -232,6 +232,20 @@ test('Equipped items are removed from inventory and return on unequip', () => {
   player.unequipArmor();
 
   assert.deepEqual(player.getInventory().map((item) => item.id).sort(), ['armor_t2', 'buckler_2', 'shortSword_3']);
+});
+
+test('Player exposes equippedOffhandWeapon getter after equipping offhand slot', () => {
+  const player = new Player(0, 0);
+  const mainKnife = new Item({ id: 'knife_main', name: 'Knife +3', description: 'Main hand', type: 'weapon', handsRequired: 1, damageBonus: 3, requirements: { agility: 0, strength: 0 } });
+  const offKnife = new Item({ id: 'knife_off', name: 'Knife +1', description: 'Off hand', type: 'weapon', handsRequired: 1, damageBonus: 1, requirements: { agility: 0, strength: 0 } });
+
+  player.addItemToInventory(mainKnife);
+  player.addItemToInventory(offKnife);
+  player.equipWeaponToSlot(mainKnife, 'main');
+  player.equipWeaponToSlot(offKnife, 'offhand');
+
+  assert.equal(player.equippedMainWeapon, mainKnife);
+  assert.equal(player.equippedOffhandWeapon, offKnife);
 });
 
 

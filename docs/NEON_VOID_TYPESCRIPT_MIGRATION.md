@@ -1123,3 +1123,38 @@ To begin migration:
 5. **Commit progress regularly**
 
 Good luck with the migration! 🚀
+
+---
+
+## Progress Log (incremental)
+
+### 2026-04-08
+- Migrated `js/core/game/statePersistence.js` logic into typed source file `js/core/game/statePersistence.ts`.
+- Confirmed compile and targeted persistence regression test pass.
+- Migration remains incremental: runtime JS entrypoints are still in use while TS coverage expands module-by-module.
+
+### OOP-first rule for future phases (added 2026-04-08)
+- Future migrations should prioritize class-based decomposition for stateful systems.
+- File conversion without architecture uplift is considered incomplete.
+- Preferred pattern: typed classes for core logic + thin compatibility adapter for legacy call sites.
+
+---
+
+## Progress Update (2026-04-08)
+
+### Completed in this checkpoint
+- Added typed API facade for formation subsystem: `js/core/game/formations.ts`.
+- Defined reusable TS contracts for formation parsing and wave planning outputs.
+- Preserved runtime compatibility by continuing to serve JS runtime path (`formations.js`) during mixed-language stage.
+
+### Updated recommended order
+1. **Done:** Foundation setup (`tsconfig`, declaration files).
+2. **Done:** State persistence TS migration (`statePersistence.ts` + service classes).
+3. **Done (typed facade):** Formation API contract (`formations.ts`).
+4. **Next:** Full OOP migration of formation runtime logic into TS classes split by responsibility.
+5. **After that:** Projectile/tower/wave systems based on dependency coupling and test coverage.
+
+### Practical guidance for upcoming formation runtime migration
+- Keep parser/planner/resolver in separate files to satisfy style-guide limits (file/function length).
+- Migrate with compatibility adapters first; remove JS adapters only when all importers use TS-compatible entrypoints.
+- Validate at each step with `npm run build`, targeted tests (`test/game/formations.test.js`), and per-file ESLint checks.

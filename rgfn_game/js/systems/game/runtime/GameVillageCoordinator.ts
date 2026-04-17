@@ -1,7 +1,7 @@
 import { ForcedEncounterType } from '../../encounter/EncounterSystem.js';
 import VillageActionsController from '../../village/VillageActionsController.js';
-import VillageLifeRenderer from '../../village/VillageLifeRenderer.js';
-import { BattleUI, HudElements, VillageUI, WorldUI } from '../GameUiTypes.js';
+import VillageLifeRenderer from '../../village/life/VillageLifeRenderer.js';
+import { BattleUI, HudElements, VillageUI, WorldUI } from '../ui/GameUiTypes.js';
 
 export default class GameVillageCoordinator {
     private readonly hudElements: HudElements;
@@ -39,9 +39,7 @@ export default class GameVillageCoordinator {
         this.villageActionsController.exitVillage();
     }
 
-    public getVillageName(): string {
-        return this.villageLifeRenderer.getVillageName();
-    }
+    public getVillageName = (): string => this.villageLifeRenderer.getVillageName();
 
     public getDeveloperEventLabel(type: ForcedEncounterType): string {
         const labels: Record<ForcedEncounterType, string> = {

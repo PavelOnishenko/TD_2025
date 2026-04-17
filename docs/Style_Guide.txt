@@ -15,3 +15,24 @@ Here are code style rules:
 14. One-liner ifs are not allowed.
 15. The fewer lines for a statement, the better, in most cases. If possible to write in 1 line, most of the time it's better to do it this way.
 16. No folder should contain more than 10 files/folders as its immediate children. 
+
+17. Put all members of collection or initialization on the same line with braces (parentheses) if length doesn't exceed max line length from p. 1. All in one line.
+Example: { Width = 100, Height = 200 }
+If it comes out too long, place curly braces on 2 surrounding lines. Example: 
+{
+   Width = 100, Height = 200, IsRound = isRound     
+}
+If it's still too long, split members into 2 lines instead of 1. Example:
+{
+   Width = 100, Height = 200, 
+   IsRound = isRound     
+}
+If it's still too long, place each member on dedicated line. Example:
+{
+   Width = 100, 
+   Height = 200, 
+   IsRound = isRound     
+}
+
+18. We allow no dead code!
+19. We love arrow functions and use it whenever we can if it's not absurd ofc.

@@ -1,8 +1,8 @@
-﻿import Player from '../../../entities/Player.js';
-import BattleUiController from '../../BattleUiController.js';
-import HudController from '../../HudController.js';
+import Player from '../../../entities/player/Player.js';
+import BattleUiController from '../../controllers/BattleUiController.js';
+import HudController from '../../controllers/HudController.js';
 import Skeleton from '../../../entities/Skeleton.js';
-import MagicSystem, { BaseSpellId } from '../../magic/MagicSystem.js';
+import MagicSystem, { BaseSpellId } from '../../controllers/magic/MagicSystem.js';
 import { SelectedCellInfo } from '../../../types/game.js';
 
 type PlayerStat = 'vitality' | 'toughness' | 'strength' | 'agility' | 'connection' | 'intelligence';
@@ -40,17 +40,19 @@ export default class GameHudCoordinator {
         this.battleUiController.clearBattleLog();
     }
 
-    public describeEncounter(enemies: Skeleton[]): string {
-        return this.battleUiController.describeEncounter(enemies);
-    }
+    public describeEncounter = (enemies: Skeleton[]): string => this.battleUiController.describeEncounter(enemies);
 
 
-    public togglePanel(panel: 'stats' | 'skills' | 'inventory' | 'magic' | 'quests' | 'lore' | 'selected' | 'worldMap' | 'log'): void {
+    public togglePanel(panel: 'stats' | 'skills' | 'inventory' | 'magic' | 'quests' | 'group' | 'lore' | 'selected' | 'worldMap' | 'log'): void {
         this.hudController.togglePanel(panel);
     }
 
     public updateSelectedCell(selectedCell: SelectedCellInfo | null): void {
         this.hudController.updateSelectedCellInfo(selectedCell);
+    }
+
+    public updateGroupPanel(lines: string[]): void {
+        this.hudController.updateGroupPanel(lines);
     }
 
     public handleAddStat(stat: PlayerStat): void {

@@ -1,9 +1,9 @@
 import TurnManager from '../combat/TurnManager.js';
-import BattleUiController from '../BattleUiController.js';
+import BattleUiController from '../controllers/BattleUiController.js';
 import Skeleton from '../../entities/Skeleton.js';
 import timingConfig from '../../config/timingConfig.js';
 import { Direction } from '../../types/game.js';
-import Player from '../../entities/Player.js';
+import Player from '../../entities/player/Player.js';
 
 type BattlePlayerActionCallbacks = {
     onAddBattleLog: (message: string, type?: string) => void;
@@ -27,13 +27,11 @@ export default class BattlePlayerActionController {
         this.selectedEnemy = null;
     }
 
-    public setSelectedEnemy(enemy: Skeleton | null): void {
+    public setSelectedEnemy = (enemy: Skeleton | null): void => {
         this.selectedEnemy = enemy;
-    }
+    };
 
-    public getSelectedEnemy(): Skeleton | null {
-        return this.selectedEnemy;
-    }
+    public getSelectedEnemy = (): Skeleton | null => this.selectedEnemy;
 
     public handleMovementOrSelection(direction: Direction): boolean {
         const result = this.battleUiController.handleMovementOrSelection(direction, this.selectedEnemy);
@@ -79,11 +77,9 @@ export default class BattlePlayerActionController {
         this.callbacks.onAddBattleLog(`Selected ${selectedEnemy.name}`, 'system');
     }
 
-    public updateBattleUI(): void {
+    public updateBattleUI = (): void => {
         this.selectedEnemy = this.battleUiController.updateEnemyDisplay(this.selectedEnemy);
-    }
+    };
 
-    private canUseBattleTurnInput(): boolean {
-        return this.turnManager.isPlayerTurn() && this.turnManager.waitingForPlayer;
-    }
+    private canUseBattleTurnInput = (): boolean => this.turnManager.isPlayerTurn() && this.turnManager.waitingForPlayer;
 }

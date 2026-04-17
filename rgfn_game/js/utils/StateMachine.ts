@@ -20,11 +20,7 @@ export default class StateMachine {
     }
 
     addState(name: string, callbacks: StateMachineCallbacks = {}): this {
-        this.states.set(name, {
-            enter: callbacks.enter ?? null,
-            update: callbacks.update ?? null,
-            exit: callbacks.exit ?? null,
-        });
+        this.states.set(name, { enter: callbacks.enter ?? null, update: callbacks.update ?? null, exit: callbacks.exit ?? null });
         return this;
     }
 
@@ -70,11 +66,7 @@ export default class StateMachine {
         }
     }
 
-    getCurrentState(): string | null {
-        return this.currentState;
-    }
+    readonly getCurrentState = (): string | null => this.currentState;
 
-    isInState(stateName: string): boolean {
-        return this.currentState === stateName;
-    }
+    readonly isInState = (stateName: string): boolean => this.currentState === stateName;
 }

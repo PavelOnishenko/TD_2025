@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import QuestPackService from '../../dist/systems/quest/QuestPackService.js';
+import QuestPackService from '../../dist/systems/quest/generation/QuestPackService.js';
 import { createFetchStub, ScriptedQuestRandom } from '../helpers/questTestDoubles.js';
 
 const FILES = {
@@ -117,4 +117,61 @@ test('QuestPackService applies configured weighted word lengths so 4-word names 
 
   assert.equal(result.text.split(' ').length, 4);
   assert.equal(result.sourceTypes.every(type => type === 'local-pattern'), true);
+});
+
+test('QuestPackService ignores HTML/error payload tokens in local asset files', async () => {
+  const random = new ScriptedQuestRandom({
+    ints: [95],
+    picks: ['local-pattern', ['ROLE'], 'courier'],
+  });
+  const fetchImpl = createFetchStub({
+    'restcountries.com': new Error('offline'),
+    'randomuser.me': new Error('offline'),
+  });
+  const fileReader = async (path) => {
+    if (path.includes('trader_roles')) {
+      return '<pre>Cannot\\nAcquire <pre>Cannot from /rgfn_game/dist/data/quest-Packs/people/given.txt</pre> courier';
+    }
+    return createFileReader()(path);
+  };
+  const service = new QuestPackService({ fetchImpl, random, fileReader });
+
+  const result = await service.generateName('character', 1);
+
+  assert.equal(result.text, 'Courier');
+  assert.equal(result.text.includes('Cannot'), false);
+  assert.equal(result.text.includes('rgfn_game'), false);
+});
+
+test('QuestPackService performs initialization once when multiple generateName calls start concurrently', async () => {
+  const random = new ScriptedQuestRandom({
+    ints: [95, 95, 95],
+    picks: [
+      'local-pattern',
+      ['GIVEN'],
+      'lena',
+      'local-pattern',
+      ['GIVEN'],
+      'orik',
+      'local-pattern',
+      ['GIVEN'],
+      'tala',
+    ],
+  });
+  const fetchCalls = [];
+  const fetchImpl = async (input) => {
+    fetchCalls.push(String(input));
+    throw new Error('offline');
+  };
+  const service = new QuestPackService({ fetchImpl, random, fileReader: createFileReader() });
+
+  const results = await Promise.all([
+    service.generateName('character', 2),
+    service.generateName('character', 2),
+    service.generateName('character', 2),
+  ]);
+
+  assert.equal(results.length, 3);
+  assert.equal(service['sources'].length, 14);
+  assert.equal(fetchCalls.length >= 3 && fetchCalls.length <= 4, true);
 });

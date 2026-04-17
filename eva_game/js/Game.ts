@@ -442,7 +442,7 @@ export default class Game {
         }
     }
 
-    private handleEnemyAttackHit(enemy: Enemy): void {
+    private handleEnemyAttackHit(_enemy: Enemy): void {
         if (!this.player) {
             return;
         }
@@ -504,9 +504,9 @@ export default class Game {
         const scoreElement = document.getElementById('score-value');
         const levelElement = document.getElementById('level-value');
 
-        if (healthElement) healthElement.textContent = String(this.player.health);
-        if (scoreElement) scoreElement.textContent = String(this.scoreManager.getCurrentScore());
-        if (levelElement) levelElement.textContent = String(this.level);
+        if (healthElement) {healthElement.textContent = String(this.player.health);}
+        if (scoreElement) {scoreElement.textContent = String(this.scoreManager.getCurrentScore());}
+        if (levelElement) {levelElement.textContent = String(this.level);}
     }
 
     private render(): void {

@@ -1,11 +1,11 @@
 import Renderer from '../../../../../engine/core/Renderer.js';
 import BattleMap from '../../combat/BattleMap.js';
-import WorldMap from '../../world/WorldMap.js';
-import Player from '../../../entities/Player.js';
+import WorldMap from '../../world/worldMap/WorldMap.js';
+import Player from '../../../entities/player/Player.js';
 import Skeleton from '../../../entities/Skeleton.js';
 import TurnManager from '../../combat/TurnManager.js';
 import VillageEnvironmentRenderer from '../../village/VillageEnvironmentRenderer.js';
-import VillageLifeRenderer from '../../village/VillageLifeRenderer.js';
+import VillageLifeRenderer from '../../village/life/VillageLifeRenderer.js';
 import { theme } from '../../../config/ThemeConfig.js';
 
 type RenderDependencies = {
@@ -48,7 +48,7 @@ export default class GameRenderRouter {
         ctx.textBaseline = 'alphabetic';
     }
 
-    public renderBattleMode(enemies: Skeleton[], selectedEnemy: Skeleton | null): void {
+    public renderBattleMode(enemies: Skeleton[], allies: Skeleton[], selectedEnemy: Skeleton | null): void {
         const currentEntity = this.deps.turnManager.getCurrentEntity();
         this.deps.battleMap.draw(
             this.deps.renderer.ctx,
@@ -56,7 +56,8 @@ export default class GameRenderRouter {
             currentEntity,
             selectedEnemy,
         );
-        const activeEntities = enemies.filter((enemy) => enemy.active);
-        this.deps.renderer.drawEntities([this.deps.player, ...activeEntities]);
+        const activeEnemies = enemies.filter((enemy) => enemy.active);
+        const activeAllies = allies.filter((ally) => ally.active);
+        this.deps.renderer.drawEntities([this.deps.player, ...activeAllies, ...activeEnemies]);
     }
 }

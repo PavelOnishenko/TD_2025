@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 
 import EncounterSystem from '../../dist/systems/encounter/EncounterSystem.js';
 import Skeleton from '../../dist/entities/Skeleton.js';
-import { balanceConfig } from '../../dist/config/balanceConfig.js';
+import { MonsterMutationEngine } from '../../dist/entities/monster/MonsterMutationEngine.js';
+import { balanceConfig } from '../../dist/config/balance/balanceConfig.js';
 import { withPatchedProperty, withPatchedMethod, withFixedRandom } from '../helpers/testUtils.js';
 
 function setupEventType(encounters, eventType) {
@@ -15,7 +16,7 @@ function setupEncounterType(encounters, encounterType) {
 }
 
 function setupDragonPassingCheck(doesPass) {
-  return withPatchedMethod(Skeleton.prototype, 'shouldPassEncounter', () => doesPass);
+  return withPatchedMethod(MonsterMutationEngine, 'shouldPassEncounter', () => doesPass);
 }
 
 test('EncounterSystem checkEncounter uses discovered tile rate override', () => {

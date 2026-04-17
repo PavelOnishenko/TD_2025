@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import Player from '../../dist/entities/Player.js';
-import MagicSystem from '../../dist/systems/magic/MagicSystem.js';
+import Player from '../../dist/entities/player/Player.js';
+import MagicSystem from '../../dist/systems/controllers/magic/MagicSystem.js';
 
 test('MagicSystem exposes highest defined spell tier when invested level exceeds spellbook', () => {
   const player = new Player(0, 0);

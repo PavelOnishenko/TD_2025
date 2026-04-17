@@ -58,9 +58,7 @@ function pickWeightedPattern(seed: number): NamePattern {
     return NAME_PATTERNS[0];
 }
 
-function capitalizePart(word: string): string {
-    return word.charAt(0).toUpperCase() + word.slice(1);
-}
+const capitalizePart = (word: string): string => word.charAt(0).toUpperCase() + word.slice(1);
 
 function buildEchoWord(seed: number): string {
     const complexityRoll = seededRandom(seed + 37);

@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { applyThemeToCSS, theme } from '../../dist/config/ThemeConfig.js';
-import { balanceConfig } from '../../dist/config/balanceConfig.js';
+import { balanceConfig } from '../../dist/config/balance/balanceConfig.js';
 
 test('applyThemeToCSS writes expected CSS custom properties', () => {
   const applied = new Map();

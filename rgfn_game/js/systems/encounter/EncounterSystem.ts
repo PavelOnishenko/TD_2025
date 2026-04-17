@@ -1,5 +1,5 @@
 import { randomInt } from '../../../../engine/utils/MathUtils.js';
-import { balanceConfig } from '../../config/balanceConfig.js';
+import { balanceConfig } from '../../config/balance/balanceConfig.js';
 import Item from '../../entities/Item.js';
 import Skeleton from '../../entities/Skeleton.js';
 import Wanderer from '../../entities/Wanderer.js';
@@ -61,20 +61,14 @@ export default class EncounterSystem {
         return this.encounterResolver.generateEncounter(this.itemDiscoveryChance, {
             rollEncounterEventType: () => this.rollEncounterEventType(),
             rollEncounterType: () => this.rollEncounterType(),
-        }, {
-            canDiscoverItems: canDiscoverItems && this.isEncounterTypeEnabled('item'),
-            enabledEventTypes: this.getEnabledEncounterTypes(),
-        });
+        }, { canDiscoverItems: canDiscoverItems && this.isEncounterTypeEnabled('item'), enabledEventTypes: this.getEnabledEncounterTypes() });
     }
 
     public generateMonsterBattleEncounter(): { type: 'battle'; enemies: Skeleton[] } {
         const encounter = this.encounterResolver.generateEncounter(this.itemDiscoveryChance, {
             rollEncounterEventType: () => 'monster',
-            rollEncounterType: () => this.rollEncounterType(),
-        }, {
-            canDiscoverItems: false,
-            enabledEventTypes: ['monster'],
-        });
+            rollEncounterType: () => this.rollNonPassingMonsterEncounterType(),
+        }, { canDiscoverItems: false, enabledEventTypes: ['monster'] });
 
         if (encounter.type === 'battle') {
             return encounter;
@@ -91,13 +85,11 @@ export default class EncounterSystem {
         this.encounterResolver.clearForcedEncounters();
     }
 
-    public getForcedEncounterQueue(): ForcedEncounterType[] {
-        return this.encounterResolver.getForcedEncounterQueue();
-    }
+    public getForcedEncounterQueue = (): ForcedEncounterType[] => this.encounterResolver.getForcedEncounterQueue();
 
-    public setEncounterTypeEnabled(type: RandomEncounterType, enabled: boolean): void {
+    public setEncounterTypeEnabled = (type: RandomEncounterType, enabled: boolean): void => {
         this.encounterTypeStates[type] = enabled;
-    }
+    };
 
     public setAllEncounterTypesEnabled(enabled: boolean): void {
         RANDOM_ENCOUNTER_TYPES.forEach((type) => {
@@ -105,29 +97,15 @@ export default class EncounterSystem {
         });
     }
 
-    public isEncounterTypeEnabled(type: RandomEncounterType): boolean {
-        return this.encounterTypeStates[type];
-    }
+    public isEncounterTypeEnabled = (type: RandomEncounterType): boolean => this.encounterTypeStates[type];
 
-    public getEncounterTypeStates(): Record<RandomEncounterType, boolean> {
-        return { ...this.encounterTypeStates };
-    }
+    public getEncounterTypeStates = (): Record<RandomEncounterType, boolean> => ({ ...this.encounterTypeStates });
 
-    private createInitialEncounterTypeStates(): Record<RandomEncounterType, boolean> {
-        return {
-            monster: true,
-            item: true,
-            traveler: true,
-        };
-    }
+    private createInitialEncounterTypeStates = (): Record<RandomEncounterType, boolean> => ({ monster: true, item: true, traveler: true });
 
-    private shouldSkipRandomEncounter(): boolean {
-        return this.getEnabledEncounterTypes().length === 0 && this.getForcedEncounterQueue().length === 0;
-    }
+    private shouldSkipRandomEncounter = (): boolean => this.getEnabledEncounterTypes().length === 0 && this.getForcedEncounterQueue().length === 0;
 
-    private getEnabledEncounterTypes(): RandomEncounterType[] {
-        return RANDOM_ENCOUNTER_TYPES.filter((type) => this.encounterTypeStates[type]);
-    }
+    private getEnabledEncounterTypes = (): RandomEncounterType[] => RANDOM_ENCOUNTER_TYPES.filter((type) => this.encounterTypeStates[type]);
 
     private rollEncounterEventType(): RandomEncounterType {
         const enabledTypes = this.getEnabledEncounterTypes();
@@ -173,6 +151,18 @@ export default class EncounterSystem {
         }
 
         return entries[entries.length - 1].type;
+    }
+
+
+    private rollNonPassingMonsterEncounterType(): string {
+        for (let attempt = 0; attempt < 8; attempt++) {
+            const encounterType = this.rollEncounterType();
+            if (encounterType !== 'dragon') {
+                return encounterType;
+            }
+        }
+
+        return 'skeleton';
     }
 
     private rollEncounterType(): string {

@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import Skeleton from '../../dist/entities/Skeleton.js';
-import { balanceConfig } from '../../dist/config/balanceConfig.js';
+import { balanceConfig } from '../../dist/config/balance/balanceConfig.js';
 import { createMockCanvasContext } from '../helpers/testUtils.js';
 
 function createEnemyWithBehavior(baseConfig, behavior) {
@@ -29,6 +29,7 @@ test('Skeleton initializes from config and deactivates on death', () => {
 test('Skeleton behavior checks follow configured avoid/damage/pass semantics', () => {
   const ninjaAlwaysAvoids = createEnemyWithBehavior(balanceConfig.enemies.ninja, { avoidHitChance: 1 });
   const ninjaNeverAvoids = createEnemyWithBehavior(balanceConfig.enemies.ninja, { avoidHitChance: 0 });
+  ninjaNeverAvoids.avoidChance = 0;
 
   const knightAlwaysCrits = createEnemyWithBehavior(balanceConfig.enemies.darkKnight, { doubleDamageChance: 1 });
   const knightNeverCrits = createEnemyWithBehavior(balanceConfig.enemies.darkKnight, { doubleDamageChance: 0 });

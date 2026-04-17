@@ -62,7 +62,7 @@ export default class Enemy extends Entity {
     constructor(x: number, y: number, color: string = '#ff6b6b') {
         super(x, y);
         const config = balanceConfig.enemy;
-
+        
         this.width = config.width;
         this.height = config.height;
         // Use either health or maxHealth (they're kept in sync in config)
@@ -301,8 +301,7 @@ export default class Enemy extends Entity {
         }
 
         let separationCount = 0;
-        const config = balanceConfig.enemy;
-
+        
         for (const other of otherEnemies) {
             // Skip self and dead enemies
             if (other === this || other.animationState === 'death') {
@@ -530,7 +529,7 @@ export default class Enemy extends Entity {
         this.justDied = true; // Set flag for score tracking
     }
 
-    public draw(ctx: CanvasRenderingContext2D, viewport?: Viewport): void {
+    public draw(ctx: CanvasRenderingContext2D, _viewport?: Viewport): void {
         // Don't draw enemies outside the visible game arena (in the "darkness" beyond the edges)
         // They still exist as physical objects but are invisible until they enter the playable area
         const halfWidth = this.width / 2;

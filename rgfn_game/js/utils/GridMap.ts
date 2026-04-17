@@ -31,17 +31,15 @@ export default class GridMap {
         }
     }
 
-    createCell(col: number, row: number): GridCell {
-        return {
-            col,
-            row,
-            x: this.offsetX + (col * this.cellSize),
-            y: this.offsetY + (row * this.cellSize),
-            width: this.cellSize,
-            height: this.cellSize,
-            data: {},
-        };
-    }
+    createCell = (col: number, row: number): GridCell => ({
+        col,
+        row,
+        x: this.offsetX + (col * this.cellSize),
+        y: this.offsetY + (row * this.cellSize),
+        width: this.cellSize,
+        height: this.cellSize,
+        data: {},
+    });
 
 
     public updateLayout(cellSize: number, offsetX: number = this.offsetX, offsetY: number = this.offsetY): void {
@@ -84,9 +82,7 @@ export default class GridMap {
         return this.cells[index] ?? null;
     }
 
-    isValidPosition(col: number, row: number): boolean {
-        return col >= 0 && col < this.columns && row >= 0 && row < this.rows;
-    }
+    isValidPosition = (col: number, row: number): boolean => col >= 0 && col < this.columns && row >= 0 && row < this.rows;
 
     pixelToGrid(pixelX: number, pixelY: number): [number, number] {
         const col = Math.floor((pixelX - this.offsetX) / this.cellSize);
@@ -121,17 +117,13 @@ export default class GridMap {
         }
     }
 
-    getAllCells(): GridCell[] {
-        return [...this.cells];
-    }
+    getAllCells = (): GridCell[] => [...this.cells];
 
-    getDistance(col1: number, row1: number, col2: number, row2: number): number {
-        return Math.abs(col2 - col1) + Math.abs(row2 - row1);
-    }
+    getDistance = (col1: number, row1: number, col2: number, row2: number): number => Math.abs(col2 - col1) + Math.abs(row2 - row1);
 
-    areAdjacent(col1: number, row1: number, col2: number, row2: number): boolean {
-        return this.getDistance(col1, row1, col2, row2) === 1;
-    }
+    areAdjacent = (col1: number, row1: number, col2: number, row2: number): boolean => (
+        this.getDistance(col1, row1, col2, row2) === 1
+    );
 
     clearCellData(): void {
         this.forEachCell(cell => {
@@ -139,12 +131,10 @@ export default class GridMap {
         });
     }
 
-    getDimensions(): { columns: number; rows: number; width: number; height: number } {
-        return {
-            columns: this.columns,
-            rows: this.rows,
-            width: this.columns * this.cellSize,
-            height: this.rows * this.cellSize,
-        };
-    }
+    getDimensions = (): { columns: number; rows: number; width: number; height: number } => ({
+        columns: this.columns,
+        rows: this.rows,
+        width: this.columns * this.cellSize,
+        height: this.rows * this.cellSize,
+    });
 }

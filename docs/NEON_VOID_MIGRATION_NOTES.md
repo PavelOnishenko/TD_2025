@@ -24,3 +24,57 @@ When converting a module from `*.js` to `*.ts`, always complete this checklist i
 
 A previous migration removed `js/config/*.js` while many JS modules and tests still imported `config/*.js`,
 causing runtime module resolution errors. This checklist prevents that regression.
+
+## 2026-04-08: statePersistence migration checkpoint
+
+### What was migrated
+- Added TypeScript source for state persistence at `js/core/game/statePersistence.ts`.
+- Kept runtime compatibility by preserving existing JS imports/entrypoints (no breaking import path changes in this step).
+
+### Type safety improvements added
+- Added explicit saved-state types (`SavedGameState`, `SavedTowerState`) to encode accepted persisted payload shape.
+- Added `GridCell` typing in persistence helpers to make cell resolution and tower restore flows clearer.
+- Added helper split for restore flow (`applyScoreState`, `applyWaveState`, `resetWaveObjects`) so future migrations can type each part independently.
+
+### Verification performed
+- `npm run build` (root TypeScript compile) passed after the migration.
+- `node --test test/game/stateManagement.test.js` passed (10/10).
+- `npx eslint js/core/game/statePersistence.ts` passed with zero warnings.
+
+### Useful follow-ups
+1. Migrate `js/core/game/formations.js` next; it is already isolated by unit tests (`test/game/formations.test.js`) and has low runtime coupling.
+2. Introduce a shared `GameLike` interface slice for persistence/tower/wave state to remove remaining `any` usage.
+3. Expand `SavedGameState.version` handling to explicit migration map when version 2 format is introduced.
+
+## OOP-first migration clarification (added 2026-04-08)
+
+For Neon Void TS migration steps, a "meaningful migration" now means more than adding `*.ts` extension:
+
+- Prefer class-based architecture when migrating modules with stateful behavior (services, coordinators, managers, mappers).
+- Introduce explicit domain types and use them in class method signatures; avoid leaving business logic in untyped free functions.
+- Keep backward-compatible module adapters only as thin shells over typed classes.
+- In PR descriptions, explicitly mention which classes were introduced and what responsibilities were split.
+
+This requirement should be treated as default guidance for all future Neon Void migration PRs unless a task explicitly asks for a different style.
+
+## 2026-04-08: formations typed API checkpoint
+
+### What was migrated
+- Added `js/core/game/formations.ts` as a TypeScript compatibility layer over existing runtime module `formations.js`.
+- Introduced explicit TS types for formation entities (`FormationShipDescriptor`, `FormationDefinition`, `FormationEvent`, `FormationPlan`) and manager contract (`FormationManager`, `FormationManagerConfig`).
+- Kept runtime stability by preserving `formations.js` unchanged so all current JS imports/tests continue to work while TS code can adopt typed imports immediately.
+
+### Why this step is useful
+- Unblocks typed callers from using formation planning without waiting for full runtime rewrite.
+- Establishes a single TS contract that can be reused when `formations.js` is later split into class-based TS services.
+- Reduces migration risk: type adoption can proceed independently from behavior changes.
+
+### Verification performed
+- `npm run build` passed (TypeScript compile).
+- `npx eslint js/core/game/formations.ts` passed with zero warnings.
+- `node --test test/game/formations.test.js` passed (4/4).
+
+### Follow-up implementation plan (next PR)
+1. Introduce `FormationParser`, `WaveDifficultyResolver`, and `FormationPlanner` TS classes in separate files under `js/core/game/formations/` to satisfy OOP-first migration guidance while staying within style-guide length limits.
+2. Make `formations.js` a thin adapter over the compiled TS implementation once all direct JS dependencies are migrated.
+3. Add focused tests for parser failure modes (bad probability expressions, malformed ship tokens, minWave + endless interactions).

@@ -4,32 +4,32 @@
  */
 
 export const decorationConfig = {
-  grid: {
+    grid: {
     // Grid cell size in pixels
-    cellSize: 50,
+        cellSize: 50,
 
-    // Grid line appearance
-    strokeColor: 'rgba(100, 100, 150, 0.3)',
-    lineWidth: 1,
+        // Grid line appearance
+        strokeColor: 'rgba(100, 100, 150, 0.3)',
+        lineWidth: 1,
 
-    // Perspective settings
-    perspective: {
-      // How much the grid narrows at the top (0.0 to 1.0)
-      // 0.3 means the top will be 30% of the full width
-      factor: 0.45
+        // Perspective settings
+        perspective: {
+            // How much the grid narrows at the top (0.0 to 1.0)
+            // 0.3 means the top will be 30% of the full width
+            factor: 0.45
+        },
     },
-  },
 
 
-  stickFigure: {
+    stickFigure: {
     // Base line width for limbs (arms + legs)
-    limbLineWidth: 3,
+        limbLineWidth: 3,
 
-    // Width for core skeleton bones (neck, shoulders, torso, hips)
-    coreBoneLineWidth: 5,
+        // Width for core skeleton bones (neck, shoulders, torso, hips)
+        coreBoneLineWidth: 5,
 
-    // Strong body border around all figure parts for readability
-    outlineColor: '#111111',
-    outlineWidth: 2,
-  },
+        // Strong body border around all figure parts for readability
+        outlineColor: '#111111',
+        outlineWidth: 2,
+    },
 };

@@ -1,9 +1,10 @@
+/* eslint-disable style-guide/function-length-warning */
 import BattleMap from '../combat/BattleMap.js';
 import TurnManager from '../combat/TurnManager.js';
-import Player from '../../entities/Player.js';
+import Player from '../../entities/player/Player.js';
 import Skeleton from '../../entities/Skeleton.js';
 import timingConfig from '../../config/timingConfig.js';
-import { balanceConfig } from '../../config/balanceConfig.js';
+import { balanceConfig } from '../../config/balance/balanceConfig.js';
 
 type BattleTurnControllerCallbacks = {
     onAddBattleLog: (message: string, type?: string) => void;
@@ -11,6 +12,7 @@ type BattleTurnControllerCallbacks = {
     onEnableBattleButtons: (enabled: boolean) => void;
     onBattleEnd: (result: 'victory' | 'defeat') => void;
     onPlayerTurnReady: () => void;
+    onTryApplyEscortDamage?: (enemyName: string, damage: number) => { applied: boolean; targetName?: string; died?: boolean };
 };
 
 export default class BattleTurnController {
@@ -48,50 +50,59 @@ export default class BattleTurnController {
         if (this.turnManager.isPlayerTurn()) {
             const playerEffectMessages = this.player.consumePlayerTurnEffects();
             playerEffectMessages.forEach((message) => this.callbacks.onAddBattleLog(message, 'system'));
-            setTimeout(() => {
-                this.callbacks.onPlayerTurnReady();
-                this.callbacks.onEnableBattleButtons(true);
-            }, timingConfig.battle.turnStartInputDelay);
+            this.turnManager.waitingForPlayer = true;
+            this.callbacks.onPlayerTurnReady();
+            this.callbacks.onEnableBattleButtons(true);
             return;
         }
 
         this.callbacks.onEnableBattleButtons(false);
-        this.executeEnemyTurn(currentEntity as Skeleton);
+        this.executeAiTurn(currentEntity as Skeleton);
     }
 
-    private executeEnemyTurn(enemy: Skeleton): void {
+    private executeAiTurn(actor: Skeleton): void {
         setTimeout(() => {
-            if (enemy.shouldSkipTurnFromSlow()) {
-                const effectMessages = enemy.consumeTurnEffects();
-                effectMessages.forEach((message) => this.callbacks.onAddBattleLog(message, 'system'));
-                this.turnManager.nextTurn();
-                setTimeout(() => this.processTurn(), timingConfig.battle.enemyTurnDelay);
+            if (actor.shouldSkipTurn()) {
+                const effectMessages = actor.consumeTurnEffects();
+                this.completeAiTurn(effectMessages);
                 return;
             }
 
-            const effectMessages = enemy.consumeTurnEffects();
+            const effectMessages = actor.consumeTurnEffects();
             effectMessages
                 .filter((message) => !message.includes('skips this turn'))
                 .forEach((message) => this.callbacks.onAddBattleLog(message, 'system'));
 
-            const attackRange = this.getEnemyAttackRange(enemy);
-            const inRange = this.battleMap.isInAttackRange(enemy, this.player, attackRange);
+            const target = this.selectAiTarget(actor);
+            if (!target) {
+                this.completeAiTurn();
+                return;
+            }
+
+            const attackRange = this.getEnemyAttackRange(actor);
+            const inRange = this.battleMap.isInAttackRange(actor, target, attackRange);
 
             if (inRange) {
-                this.performEnemyAttack(enemy);
+                this.performAiAttack(actor, target);
                 if (this.player.isDead()) {
                     this.callbacks.onAddBattleLog('You have been defeated!', 'system');
                     setTimeout(() => this.callbacks.onBattleEnd('defeat'), timingConfig.battle.defeatEndDelay);
                     return;
                 }
             } else {
-                this.battleMap.moveEntityToward(enemy, this.player, attackRange);
-                this.callbacks.onAddBattleLog(`${enemy.name} moves closer...`, 'enemy');
+                this.battleMap.moveEntityToward(actor, target, attackRange);
+                this.callbacks.onAddBattleLog(`${actor.name} moves closer...`, this.turnManager.isAlly(actor) ? 'system-message' : 'enemy');
             }
 
             this.turnManager.nextTurn();
             setTimeout(() => this.processTurn(), timingConfig.battle.enemyTurnDelay);
         }, timingConfig.battle.enemyActionStartDelay);
+    }
+
+    private completeAiTurn(logs: string[] = []): void {
+        logs.forEach((message) => this.callbacks.onAddBattleLog(message, 'system'));
+        this.turnManager.nextTurn();
+        setTimeout(() => this.processTurn(), timingConfig.battle.enemyTurnDelay);
     }
 
 
@@ -100,42 +111,77 @@ export default class BattleTurnController {
         return rangedEnemy.getAttackRange ? rangedEnemy.getAttackRange() : 1;
     }
 
-    private performEnemyAttack(enemy: Skeleton): void {
-        const caster = enemy as Skeleton & { canUseMagic?: () => boolean; getMagicManaCost?: () => number; getMagicDamage?: () => number; spendMana?: (amount: number) => void };
-        if (caster.canUseMagic && caster.canUseMagic() && Math.random() < 0.35) {
-            enemy.expireDirectionalBonusesWithoutAttack().forEach((message) => this.callbacks.onAddBattleLog(message, 'system'));
-            const magicDamage = caster.getMagicDamage ? caster.getMagicDamage() : enemy.damage;
-            const manaCost = caster.getMagicManaCost ? caster.getMagicManaCost() : 0;
-            if (caster.spendMana) {
-                caster.spendMana(manaCost);
+    private performAiAttack(attacker: Skeleton, target: Player | Skeleton): void {
+        if (this.tryPerformEnemyMagicAttack(attacker, target)) {
+            return;
+        }
+
+        const logType = this.turnManager.isAlly(attacker) ? 'system-message' : 'enemy';
+        this.callbacks.onAddBattleLog(`${attacker.name} attacks!`, logType);
+        attacker.consumeDirectionalAttackBonuses().forEach((message) => this.callbacks.onAddBattleLog(message, 'system'));
+        if (Math.random() < (target instanceof Player ? this.player.avoidChance : target.avoidChance)) {
+            this.callbacks.onAddBattleLog(`${target instanceof Player ? 'You' : target.name} evade${target instanceof Player ? '' : 's'} the hit!`, 'system');
+            return;
+        }
+
+        const damageBeforeArmor = attacker.getAttackDamage();
+        if (target instanceof Player) {
+            const escortResult = this.callbacks.onTryApplyEscortDamage?.(attacker.name, damageBeforeArmor) ?? { applied: false };
+            if (escortResult.applied) {
+                this.callbacks.onAddBattleLog(`${attacker.name} strikes ${escortResult.targetName} for ${damageBeforeArmor} damage!`, 'enemy');
+                if (escortResult.died) {
+                    this.callbacks.onAddBattleLog(`${escortResult.targetName} falls in battle. Escort objective failed.`, 'system');
+                }
+                this.callbacks.onUpdateHUD();
+                return;
             }
-            this.player.takeMagicDamage(magicDamage);
-            this.callbacks.onAddBattleLog(`${enemy.name} casts a spell for ${magicDamage} damage!`, 'enemy');
-            this.callbacks.onUpdateHUD();
-            return;
         }
-
-        this.callbacks.onAddBattleLog(`${enemy.name} attacks!`, 'enemy');
-        enemy.consumeDirectionalAttackBonuses().forEach((message) => this.callbacks.onAddBattleLog(message, 'system'));
-        if (Math.random() < this.player.avoidChance) {
-            this.callbacks.onAddBattleLog('You swiftly evade the hit!', 'system');
-            return;
-        }
-
-        const damageBeforeArmor = enemy.getAttackDamage();
-        const damageAfterArmor = damageBeforeArmor <= 0 ? 0 : Math.max(balanceConfig.combat.minDamageAfterArmor, damageBeforeArmor - this.player.armor);
-        this.player.takeDamage(damageBeforeArmor);
-
-        if (damageBeforeArmor > enemy.damage) {
-            this.callbacks.onAddBattleLog(`${enemy.name} lands a devastating strike!`, 'enemy');
-        }
-
-        if (this.player.armor > 0 && damageAfterArmor < damageBeforeArmor) {
-            this.callbacks.onAddBattleLog(`Player takes ${damageAfterArmor} damage (${damageBeforeArmor - damageAfterArmor} blocked by armor)!`, 'damage');
+        const targetArmor = target instanceof Player ? this.player.armor : target.armor;
+        const damageAfterArmor = damageBeforeArmor <= 0 ? 0 : Math.max(balanceConfig.combat.minDamageAfterArmor, damageBeforeArmor - targetArmor);
+        target.takeDamage(damageBeforeArmor);
+        if (targetArmor > 0 && damageAfterArmor < damageBeforeArmor) {
+            this.callbacks.onAddBattleLog(`${target instanceof Player ? 'Player' : target.name} takes ${damageAfterArmor} damage (${damageBeforeArmor - damageAfterArmor} blocked by armor)!`, 'damage');
         } else {
-            this.callbacks.onAddBattleLog(`Player takes ${damageAfterArmor} damage!`, 'damage');
+            this.callbacks.onAddBattleLog(`${target instanceof Player ? 'Player' : target.name} takes ${damageAfterArmor} damage!`, 'damage');
         }
 
         this.callbacks.onUpdateHUD();
+    }
+
+    private tryPerformEnemyMagicAttack(attacker: Skeleton, target: Player | Skeleton): boolean {
+        const caster = attacker as Skeleton & {
+            canUseMagic?: () => boolean;
+            getMagicManaCost?: () => number;
+            getMagicDamage?: () => number;
+            spendMana?: (amount: number) => void;
+        };
+        if (!caster.canUseMagic || !caster.canUseMagic() || Math.random() >= 0.35) {
+            return false;
+        }
+        attacker.expireDirectionalBonusesWithoutAttack().forEach((message) => this.callbacks.onAddBattleLog(message, 'system'));
+        const magicDamage = caster.getMagicDamage ? caster.getMagicDamage() : attacker.damage;
+        const manaCost = caster.getMagicManaCost ? caster.getMagicManaCost() : 0;
+        caster.spendMana?.(manaCost);
+        target.takeMagicDamage ? target.takeMagicDamage(magicDamage) : target.takeDamage(magicDamage);
+        this.callbacks.onAddBattleLog(`${attacker.name} casts a spell for ${magicDamage} damage!`, this.turnManager.isAlly(attacker) ? 'system-message' : 'enemy');
+        this.callbacks.onUpdateHUD();
+        return true;
+    }
+
+    private selectAiTarget(actor: Skeleton): Player | Skeleton | null {
+        const opponents = this.turnManager.getOpponentsOf(actor) as Array<Player | Skeleton>;
+        if (opponents.length === 0) {
+            return null;
+        }
+        return opponents
+            .map((candidate) => ({ candidate, distance: this.distanceBetween(actor, candidate) }))
+            .sort((left, right) => left.distance - right.distance)[0]?.candidate ?? null;
+    }
+
+    private distanceBetween(source: Skeleton, target: Player | Skeleton): number {
+        if (source.gridCol === undefined || source.gridRow === undefined || target.gridCol === undefined || target.gridRow === undefined) {
+            return Number.MAX_SAFE_INTEGER;
+        }
+        return Math.abs(source.gridCol - target.gridCol) + Math.abs(source.gridRow - target.gridRow);
     }
 }
