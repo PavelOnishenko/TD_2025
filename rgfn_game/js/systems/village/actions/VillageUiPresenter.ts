@@ -99,6 +99,9 @@ export default class VillageUiPresenter {
             button.type = 'button';
             button.className = 'action-btn village-npc-btn';
             button.textContent = `${npc.name} (${npc.role})`;
+            if (npc.role.includes('[DEAD]')) {
+                button.disabled = true;
+            }
             if (selectedNpcId === npc.id) {
                 button.classList.add('active');
             }
