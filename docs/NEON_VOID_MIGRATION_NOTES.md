@@ -78,3 +78,40 @@ This requirement should be treated as default guidance for all future Neon Void 
 1. Introduce `FormationParser`, `WaveDifficultyResolver`, and `FormationPlanner` TS classes in separate files under `js/core/game/formations/` to satisfy OOP-first migration guidance while staying within style-guide length limits.
 2. Make `formations.js` a thin adapter over the compiled TS implementation once all direct JS dependencies are migrated.
 3. Add focused tests for parser failure modes (bad probability expressions, malformed ship tokens, minWave + endless interactions).
+
+## 2026-04-17: formation runtime OOP TS migration checkpoint
+
+### What was migrated
+- Implemented formation runtime logic as typed class modules under `js/core/game/formations/`:
+  - `FormationManager` (orchestration and wave planning API)
+  - `FormationParser` (definition parsing flow)
+  - `FormationPlanner` (selection and timeline building)
+  - `WaveDifficultyResolver` (scheduled + endless difficulty resolution)
+  - `FormationParserUtils` and `FormationNormalization` (focused helper logic)
+  - `FormationTypes` (shared contracts)
+- Updated `js/core/game/formations.ts` to use the new TS runtime classes instead of casting results from legacy `formations.js`.
+- Kept legacy runtime path `js/core/game/formations.js` unchanged so existing JS importers/tests remain stable during mixed migration.
+
+### Why this checkpoint matters
+- This is the first full OOP runtime uplift for formations (not just typed facade contracts).
+- Future migration work can move caller modules to TS without relying on `as` casts around formation planner behavior.
+- Internal responsibilities are now split into smaller files, reducing future lint/style churn when changing individual formation concerns.
+
+### Validation performed in this checkpoint
+- `npx eslint js/core/game/formations.ts js/core/game/formations/*.ts` passed with zero warnings.
+- `npm run build` passed (TypeScript compile).
+- `node --test test/game/formations.test.js` passed (4/4).
+
+### Important test-environment note
+- Running root `npm test` currently fails for pre-existing reasons outside this checkpoint:
+  - multiple `eva_game` and `rgfn_game` tests import from missing `dist/` outputs unless those project-specific builds run first;
+  - several unrelated root projectile tests fail with `enemy.takeDamage is not a function`.
+- Recommended scoped commands for Neon Void migration validation:
+  1. `npm run build`
+  2. `node --test test/game/formations.test.js`
+  3. targeted lint for touched files.
+
+### Follow-up opportunities
+1. Add dedicated tests for parser edge-cases (invalid probability expression fallback, malformed ship tokens, offset parsing).
+2. Add TS-native tests that import from `js/core/game/formations.ts` once TS test harness is introduced.
+3. In a later migration step, move `js/core/game/formations.js` to a thin adapter over compiled output and retire duplicate runtime logic.
