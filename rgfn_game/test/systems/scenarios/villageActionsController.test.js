@@ -105,6 +105,14 @@ function createVillageUi() {
   };
 }
 
+function containsTextInTree(element, text) {
+  if (element.textContent === text) {
+    return true;
+  }
+  const children = Array.isArray(element.children) ? element.children : [];
+  return children.some((child) => containsTextInTree(child, text));
+}
+
 function createPlayerStub() {
   const inventory = [];
   return {
@@ -844,11 +852,57 @@ test('VillageActionsController requires explicit side-quest acceptance and expos
   controller.handleSelectNpc(0);
 
   assert.equal(acceptCalls, 0);
-  const acceptButton = villageUI.sideQuestList.children.find((child) => child.children?.some((entry) => entry.textContent === 'Accept quest'));
+  const acceptButton = villageUI.sideQuestList.children.find((child) => containsTextInTree(child, 'Accept quest'));
   assert.ok(acceptButton);
+  const hasRefuseButton = villageUI.sideQuestList.children.some((child) => containsTextInTree(child, 'Refuse'));
+  assert.equal(hasRefuseButton, true);
   controller.handleAcceptSideQuest('side-quest-offer');
   assert.equal(acceptCalls, 1);
   assert.equal(gameLog.children.some((child) => String(child.textContent ?? '').includes('Side quest accepted')), true);
+}));
+
+test('VillageActionsController allows refusing a side-quest offer and keeps other offers visible', () => withDocumentStub(() => {
+  const villageUI = createVillageUi();
+  const gameLog = createElement();
+  const firstOffer = {
+    id: 'side-quest-offer-1',
+    title: 'Patch the Mill Wheel',
+    description: 'Bring repair tools to the village mill.',
+    reward: '20g',
+    status: 'available',
+    children: [],
+  };
+  const secondOffer = {
+    id: 'side-quest-offer-2',
+    title: 'Track Missing Cart',
+    description: 'Follow wheel marks east of the ford.',
+    reward: '18g',
+    status: 'available',
+    children: [],
+  };
+  const controller = new VillageActionsController(createPlayerStub(), villageUI, gameLog, {
+    onUpdateHUD: () => {},
+    onLeaveVillage: () => {},
+    onAdvanceTime: () => {},
+    getVillageDirectionHint: (settlementName) => ({ settlementName, exists: false }),
+    onVillageBarterCompleted: () => {},
+    getVillageSideQuestOffers: () => [firstOffer, secondOffer],
+    getVillageNpcActiveSideQuests: () => [],
+  });
+  controller['dialogueEngine'] = {
+    createNpcRoster: () => [{ id: 'moss-0', name: 'Mara', role: 'Trader', look: 'cloak', speechStyle: 'calm', disposition: 'truthful' }],
+    buildLocationAnswer: () => ({ speech: '', tone: '', truthfulness: 'truth' }),
+    buildPersonLocationAnswer: () => ({ speech: '', tone: '', truthfulness: 'truth' }),
+  };
+
+  controller.enterVillage('Mossbrook');
+  controller.handleSelectNpc(0);
+  assert.equal(villageUI.sideQuestList.children.length, 2);
+
+  controller.handleDismissSideQuestOffer('side-quest-offer-1');
+  assert.equal(villageUI.sideQuestList.children.length, 1);
+  assert.equal(villageUI.sideQuestList.children[0].children.some((entry) => entry.textContent?.includes('Track Missing Cart')), true);
+  assert.equal(gameLog.children.some((child) => String(child.textContent ?? '').includes('Side-quest offer hidden')), true);
 }));
 
 test('VillageActionsController does not auto-accept side quests in developer mode', () => withDeveloperMode(true, () => withDocumentStub(() => {
@@ -883,7 +937,7 @@ test('VillageActionsController does not auto-accept side quests in developer mod
   controller.handleSelectNpc(0);
 
   assert.equal(acceptCalls, 0);
-  const hasAcceptButton = villageUI.sideQuestList.children.some((child) => child.children?.some((entry) => entry.textContent === 'Accept quest'));
+  const hasAcceptButton = villageUI.sideQuestList.children.some((child) => containsTextInTree(child, 'Accept quest'));
   assert.equal(hasAcceptButton, true);
   assert.equal(gameLog.children.some((child) => String(child.textContent ?? '').includes('Auto-accepted side quests')), false);
 })));

@@ -35,6 +35,7 @@ export default class VillageActionsController {
     private defendContracts: QuestDefendContract[] = [];
     private activeNpcSideQuestIds: Set<string> = new Set();
     private readySideQuestLogIds: Set<string> = new Set();
+    private dismissedSideQuestOfferIds: Set<string> = new Set();
     private knownNpcNames: Set<string> = new Set();
     private joinedEscortNpcKeys: Set<string> = new Set();
 
@@ -149,6 +150,22 @@ export default class VillageActionsController {
             return;
         }
         this.completeSideQuestTurnIn(selectedNpc, questId, result.reward);
+    }
+
+    public handleDismissSideQuestOffer(questId: string): void {
+        const selectedNpc = this.getSelectedNpc();
+        if (!selectedNpc) {
+            this.addLog('Choose an NPC before refusing a side quest offer.', 'system');
+            return;
+        }
+        if (this.dismissedSideQuestOfferIds.has(questId)) {
+            return;
+        }
+        const offers = this.callbacks.getVillageSideQuestOffers?.(this.currentVillageName, selectedNpc.name) ?? [];
+        const questTitle = offers.find((quest) => quest.id === questId)?.title ?? questId;
+        this.dismissedSideQuestOfferIds.add(questId);
+        this.addLog(`Side-quest offer hidden: ${questTitle}.`, 'system-message');
+        this.refreshSelectedNpcSideQuestUi(selectedNpc);
     }
 
     public handleAskAboutSettlement(): void { this.dialogueInteraction.handleAskAboutSettlement(); this.callbacks.onAdvanceTime(14, 0.1); }
@@ -572,15 +589,16 @@ export default class VillageActionsController {
 
     private refreshSelectedNpcSideQuestUi(npc: VillageNpcProfile): void {
         const offers = this.callbacks.getVillageSideQuestOffers?.(this.currentVillageName, npc.name) ?? [];
+        const visibleOffers = offers.filter((offer) => !this.dismissedSideQuestOfferIds.has(offer.id));
         const activeQuests = this.callbacks.getVillageNpcActiveSideQuests?.(this.currentVillageName, npc.name) ?? [];
         const readyToTurnInCount = activeQuests.filter((quest) => quest.status === 'readyToTurnIn').length;
-        this.renderSideQuestUiForNpc(npc, offers, activeQuests);
+        this.renderSideQuestUiForNpc(npc, visibleOffers, activeQuests);
         this.addLog(
-            `Side-quest board updated for ${npc.name}: ${offers.length} offer${offers.length === 1 ? '' : 's'}, `
+            `Side-quest board updated for ${npc.name}: ${visibleOffers.length} offer${visibleOffers.length === 1 ? '' : 's'}, `
             + `${activeQuests.length} active, ${readyToTurnInCount} ready to turn in.`,
             'system-message',
         );
-        if (offers.length === 0 && activeQuests.length > 0) {
+        if (visibleOffers.length === 0 && activeQuests.length > 0) {
             this.addLog(
                 `No new side-quest offers from ${npc.name}. ${activeQuests.length} quest${activeQuests.length === 1 ? '' : 's'} `
                 + 'already in progress from earlier acceptance.',
@@ -631,7 +649,11 @@ export default class VillageActionsController {
 
     private appendSideQuestCardAction(card: HTMLElement, quest: QuestNode, isOffer: boolean): void {
         if (isOffer) {
-            card.appendChild(this.createSideQuestActionButton('Accept quest', () => this.handleAcceptSideQuest(quest.id)));
+            const actionRow = document.createElement('div');
+            actionRow.className = 'village-side-quest-actions';
+            actionRow.appendChild(this.createSideQuestActionButton('Accept quest', () => this.handleAcceptSideQuest(quest.id)));
+            actionRow.appendChild(this.createSideQuestActionButton('Refuse', () => this.handleDismissSideQuestOffer(quest.id), 'Refuse and hide this offer'));
+            card.appendChild(actionRow);
             return;
         }
         if (quest.status === 'readyToTurnIn') {
@@ -639,16 +661,20 @@ export default class VillageActionsController {
         }
     }
 
-    private createSideQuestActionButton(label: string, onClick: () => void): HTMLButtonElement {
+    private createSideQuestActionButton(label: string, onClick: () => void, ariaLabel?: string): HTMLButtonElement {
         const button = document.createElement('button');
         button.type = 'button';
         button.className = 'action-btn';
         button.textContent = label;
+        if (ariaLabel) {
+            button.ariaLabel = ariaLabel;
+        }
         button.addEventListener('click', onClick);
         return button;
     }
 
     private completeSideQuestAccept(selectedNpc: VillageNpcProfile, questId: string): void {
+        this.dismissedSideQuestOfferIds.delete(questId);
         this.activeNpcSideQuestIds.add(questId);
         const quests = this.callbacks.getVillageNpcActiveSideQuests?.(this.currentVillageName, selectedNpc.name) ?? [];
         const acceptedQuest = quests.find((quest) => quest.id === questId);
