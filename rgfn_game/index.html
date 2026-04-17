@@ -178,6 +178,29 @@
                             <input id="quests-known-only-toggle" type="checkbox" checked>
                             <span id="quests-mode-toggle-label">Show only known/current quests</span>
                         </label>
+                        <div id="quests-side-filter-controls" class="quest-side-filter-controls hidden">
+                            <button id="quests-side-filter-btn" class="quest-side-filter-btn" type="button">Filter statuses</button>
+                            <div id="quests-side-filter-popup" class="quest-side-filter-popup hidden">
+                                <div class="quest-side-filter-title">Show statuses</div>
+                                <label class="quest-side-filter-option">
+                                    <input id="quests-side-filter-status-active" type="checkbox" checked>
+                                    Active
+                                </label>
+                                <label class="quest-side-filter-option">
+                                    <input id="quests-side-filter-status-available" type="checkbox">
+                                    Available
+                                </label>
+                                <label class="quest-side-filter-option">
+                                    <input id="quests-side-filter-status-ready" type="checkbox" checked>
+                                    Ready to turn in
+                                </label>
+                                <label class="quest-side-filter-option">
+                                    <input id="quests-side-filter-status-completed" type="checkbox" checked>
+                                    Completed
+                                </label>
+                                <button id="quests-side-filter-apply-btn" class="quest-side-filter-apply-btn" type="button">Apply</button>
+                            </div>
+                        </div>
                         <div id="quests-body" class="quests-body"></div>
                     </div>
                     <div id="group-panel" class="hud-section stats overlay-panel hidden">
