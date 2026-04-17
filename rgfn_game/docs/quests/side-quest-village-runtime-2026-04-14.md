@@ -176,9 +176,13 @@
   - each card contains the full nested quest objective tree under that side-quest root.
 - Status chips are shown in the Side Quests tab:
   - `Available`, `Active`, `Ready to turn in`, `Completed`.
-- Main-tab-only UX:
-  - `Show only known/current quests` checkbox remains visible and active only on **Main Quests** tab,
-  - checkbox is hidden on **Side Quests** tab to avoid implying unknown-side-quest filtering.
+- Tab-aware checkbox UX:
+  - **Main Quests** tab keeps the existing checkbox label: `Show only known/current quests`.
+  - **Side Quests** tab now reuses the same checkbox control but changes label to: `Show only active side quests`.
+  - Side-tab checkbox defaults to checked and filters out `available` side-quest offers in the HUD list.
+  - Side-tab checkbox state is persisted separately from main-tab known/current state:
+    - `rgfn_quests_known_only_toggle_v1` for main quests
+    - `rgfn_side_quests_active_only_toggle_v1` for side quests
 
 ### Runtime/UI synchronization notes
 

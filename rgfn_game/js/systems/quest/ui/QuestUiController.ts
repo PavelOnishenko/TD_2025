@@ -5,6 +5,10 @@ import QuestUiFeedbackPresenter from './QuestUiFeedbackPresenter.js';
 
 const KNOWN_ONLY_TOGGLE_STORAGE_KEY = 'rgfn_quests_known_only_toggle_v1';
 const KNOWN_ONLY_TOGGLE_DEFAULT = true;
+const SIDE_ACTIVE_ONLY_TOGGLE_STORAGE_KEY = 'rgfn_side_quests_active_only_toggle_v1';
+const SIDE_ACTIVE_ONLY_TOGGLE_DEFAULT = true;
+const MAIN_TOGGLE_LABEL = 'Show only known/current quests';
+const SIDE_TOGGLE_LABEL = 'Show only active side quests';
 type QuestTab = 'main' | 'side';
 
 type QuestUiCallbacks = {
@@ -16,6 +20,8 @@ export default class QuestUiController {
     private readonly mainTabBtn: HTMLButtonElement;
     private readonly sideTabBtn: HTMLButtonElement;
     private readonly knownOnlyToggle: HTMLInputElement;
+    private readonly modeToggleContainer: HTMLElement;
+    private readonly modeToggleLabel: HTMLElement;
     private readonly questBody: HTMLElement;
     private readonly introModal: HTMLElement;
     private readonly introBody: HTMLElement;
@@ -27,12 +33,16 @@ export default class QuestUiController {
     private lastRenderedQuest: QuestNode | null = null;
     private lastRenderedSideQuests: QuestNode[] = [];
     private activeTab: QuestTab = 'main';
+    private mainKnownOnlyEnabled = KNOWN_ONLY_TOGGLE_DEFAULT;
+    private sideActiveOnlyEnabled = SIDE_ACTIVE_ONLY_TOGGLE_DEFAULT;
 
     constructor(
         questTitle: HTMLElement,
         mainTabBtn: HTMLButtonElement,
         sideTabBtn: HTMLButtonElement,
         knownOnlyToggle: HTMLInputElement,
+        modeToggleContainer: HTMLElement,
+        modeToggleLabel: HTMLElement,
         questBody: HTMLElement,
         introModal: HTMLElement,
         introBody: HTMLElement,
@@ -43,12 +53,14 @@ export default class QuestUiController {
         this.mainTabBtn = mainTabBtn;
         this.sideTabBtn = sideTabBtn;
         this.knownOnlyToggle = knownOnlyToggle;
+        this.modeToggleContainer = modeToggleContainer;
+        this.modeToggleLabel = modeToggleLabel;
         this.questBody = questBody;
         this.introModal = introModal;
         this.introBody = introBody;
         this.introCloseBtn = introCloseBtn;
         this.callbacks = callbacks;
-        this.markupBuilder = new QuestUiMarkupBuilder({ isKnownOnlyEnabled: () => this.knownOnlyToggle.checked });
+        this.markupBuilder = new QuestUiMarkupBuilder({ isKnownOnlyEnabled: () => this.mainKnownOnlyEnabled });
         this.feedbackPresenter = new QuestUiFeedbackPresenter({ containers: [this.questBody, this.introBody] });
         this.feedbackElements = this.feedbackPresenter.feedbackElements;
         this.introModal.classList.add('hidden');
@@ -84,7 +96,13 @@ export default class QuestUiController {
     }
 
     private handleKnownOnlyToggleChange(): void {
-        this.persistKnownOnlyState();
+        if (this.activeTab === 'main') {
+            this.mainKnownOnlyEnabled = this.knownOnlyToggle.checked;
+            this.persistKnownOnlyState();
+        } else {
+            this.sideActiveOnlyEnabled = this.knownOnlyToggle.checked;
+            this.persistSideActiveOnlyState();
+        }
         if (this.lastRenderedQuest) {
             this.renderCurrentTab();
         }
@@ -97,8 +115,9 @@ export default class QuestUiController {
     }
 
     private applyPersistedKnownOnlyState(): void {
-        const savedState = this.readKnownOnlyState();
-        this.knownOnlyToggle.checked = savedState ?? KNOWN_ONLY_TOGGLE_DEFAULT;
+        this.mainKnownOnlyEnabled = this.readKnownOnlyState() ?? KNOWN_ONLY_TOGGLE_DEFAULT;
+        this.sideActiveOnlyEnabled = this.readSideActiveOnlyState() ?? SIDE_ACTIVE_ONLY_TOGGLE_DEFAULT;
+        this.updateModeToggleUi();
     }
 
     private persistKnownOnlyState(): void {
@@ -117,6 +136,31 @@ export default class QuestUiController {
         }
 
         const rawValue = storage.getItem(KNOWN_ONLY_TOGGLE_STORAGE_KEY);
+        if (rawValue === '1') {
+            return true;
+        }
+        if (rawValue === '0') {
+            return false;
+        }
+        return null;
+    }
+
+    private persistSideActiveOnlyState(): void {
+        const storage = this.getLocalStorage();
+        if (!storage) {
+            return;
+        }
+
+        storage.setItem(SIDE_ACTIVE_ONLY_TOGGLE_STORAGE_KEY, this.sideActiveOnlyEnabled ? '1' : '0');
+    }
+
+    private readSideActiveOnlyState(): boolean | null {
+        const storage = this.getLocalStorage();
+        if (!storage) {
+            return null;
+        }
+
+        const rawValue = storage.getItem(SIDE_ACTIVE_ONLY_TOGGLE_STORAGE_KEY);
         if (rawValue === '1') {
             return true;
         }
@@ -148,8 +192,19 @@ export default class QuestUiController {
         this.sideTabBtn.classList.toggle('is-active', tab === 'side');
         this.mainTabBtn.setAttribute('aria-selected', String(tab === 'main'));
         this.sideTabBtn.setAttribute('aria-selected', String(tab === 'side'));
-        this.knownOnlyToggle.style.display = tab === 'main' ? '' : 'none';
+        this.updateModeToggleUi();
         this.renderCurrentTab();
+    }
+
+    private updateModeToggleUi(): void {
+        this.modeToggleContainer.style.display = '';
+        if (this.activeTab === 'main') {
+            this.modeToggleLabel.textContent = MAIN_TOGGLE_LABEL;
+            this.knownOnlyToggle.checked = this.mainKnownOnlyEnabled;
+            return;
+        }
+        this.modeToggleLabel.textContent = SIDE_TOGGLE_LABEL;
+        this.knownOnlyToggle.checked = this.sideActiveOnlyEnabled;
     }
 
     private renderCurrentTab(): void {
@@ -171,12 +226,15 @@ export default class QuestUiController {
 
     private renderSideQuestTab(sideQuests: QuestNode[]): void {
         this.questTitle.textContent = 'Side Quests';
-        if (sideQuests.length === 0) {
+        const filteredQuests = this.sideActiveOnlyEnabled
+            ? sideQuests.filter((quest) => (quest.status ?? 'active') !== 'available')
+            : sideQuests;
+        if (filteredQuests.length === 0) {
             this.questBody.innerHTML = '<p>No known side quests yet.</p>';
             return;
         }
 
-        const cards = sideQuests
+        const cards = filteredQuests
             .map((quest) => this.buildSideQuestCardMarkup(quest))
             .join('');
         this.questBody.innerHTML = `<div class="side-quest-list">${cards}</div>`;

@@ -36,17 +36,23 @@ function createCheckbox(checked = false) {
 }
 
 function createStorageMock(initial = null) {
-  const state = { value: initial };
+  const state = { known: initial, side: initial };
   return {
     getItem(key) {
-      if (key !== 'rgfn_quests_known_only_toggle_v1') {
-        return null;
+      if (key === 'rgfn_quests_known_only_toggle_v1') {
+        return state.known;
       }
-      return state.value;
+      if (key === 'rgfn_side_quests_active_only_toggle_v1') {
+        return state.side;
+      }
+      return null;
     },
     setItem(key, value) {
       if (key === 'rgfn_quests_known_only_toggle_v1') {
-        state.value = value;
+        state.known = value;
+      }
+      if (key === 'rgfn_side_quests_active_only_toggle_v1') {
+        state.side = value;
       }
     },
     state,
@@ -60,7 +66,7 @@ test('QuestUiController hides the default boilerplate on the root quest but keep
   const modal = createElement();
   const intro = createElement();
   const closeBtn = createElement();
-  const controller = new QuestUiController(title, createElement(), createElement(), knownOnlyToggle, body, modal, intro, closeBtn, { onLocationClick: () => false });
+  const controller = new QuestUiController(title, createElement(), createElement(), knownOnlyToggle, createElement(), createElement(), body, modal, intro, closeBtn, { onLocationClick: () => false });
   const quest = {
     id: 'main',
     title: 'Signal Dawn',
@@ -99,7 +105,7 @@ test('QuestUiController hides the default boilerplate on the root quest but keep
 });
 
 test('QuestUiController opens and closes the intro modal through bound events', () => {
-  const controller = new QuestUiController(createElement(), createElement(), createElement(), createCheckbox(false), createElement(), createElement(), createElement(), createElement(), { onLocationClick: () => false });
+  const controller = new QuestUiController(createElement(), createElement(), createElement(), createCheckbox(false), createElement(), createElement(), createElement(), createElement(), createElement(), createElement(), { onLocationClick: () => false });
   const modal = controller['introModal'];
   const closeBtn = controller['introCloseBtn'];
 
@@ -112,7 +118,7 @@ test('QuestUiController opens and closes the intro modal through bound events', 
 });
 
 test('QuestUiController keeps intro modal hidden by default until explicitly opened', () => {
-  const controller = new QuestUiController(createElement(), createElement(), createElement(), createCheckbox(false), createElement(), createElement(), createElement(), createElement(), { onLocationClick: () => false });
+  const controller = new QuestUiController(createElement(), createElement(), createElement(), createCheckbox(false), createElement(), createElement(), createElement(), createElement(), createElement(), createElement(), { onLocationClick: () => false });
   const modal = controller['introModal'];
 
   assert.deepEqual(modal.classList.added, ['hidden']);
@@ -120,7 +126,7 @@ test('QuestUiController keeps intro modal hidden by default until explicitly ope
 });
 
 test('QuestUiController renders completion styling and checkmark for completed quest nodes', () => {
-  const controller = new QuestUiController(createElement(), createElement(), createElement(), createCheckbox(false), createElement(), createElement(), createElement(), createElement(), { onLocationClick: () => false });
+  const controller = new QuestUiController(createElement(), createElement(), createElement(), createCheckbox(false), createElement(), createElement(), createElement(), createElement(), createElement(), createElement(), { onLocationClick: () => false });
   const quest = {
     id: 'main',
     title: 'Signal Dawn',
@@ -156,7 +162,7 @@ test('QuestUiController clears quest feedback after configured timeout', () => {
   };
 
   try {
-    const controller = new QuestUiController(createElement(), createElement(), createElement(), createCheckbox(false), createElement(), createElement(), createElement(), createElement(), { onLocationClick: () => false });
+    const controller = new QuestUiController(createElement(), createElement(), createElement(), createCheckbox(false), createElement(), createElement(), createElement(), createElement(), createElement(), createElement(), { onLocationClick: () => false });
 
     controller['setFeedback']('Oakcross is not discovered yet.', true);
     assert.equal(scheduledDelay, 5000);
@@ -178,7 +184,7 @@ test('QuestUiController known-only mode hides quests below the first incomplete 
   const title = createElement();
   const knownOnlyToggle = createCheckbox(true);
   const body = createElement();
-  const controller = new QuestUiController(title, createElement(), createElement(), knownOnlyToggle, body, createElement(), createElement(), createElement(), { onLocationClick: () => false });
+  const controller = new QuestUiController(title, createElement(), createElement(), knownOnlyToggle, createElement(), createElement(), body, createElement(), createElement(), createElement(), { onLocationClick: () => false });
   const quest = {
     id: 'main',
     title: 'Signal Dawn',
@@ -235,7 +241,7 @@ test('QuestUiController defaults known-only toggle to checked when no saved pref
 
   try {
     const knownOnlyToggle = createCheckbox(false);
-    new QuestUiController(createElement(), createElement(), createElement(), knownOnlyToggle, createElement(), createElement(), createElement(), createElement(), { onLocationClick: () => false });
+    new QuestUiController(createElement(), createElement(), createElement(), knownOnlyToggle, createElement(), createElement(), createElement(), createElement(), createElement(), createElement(), { onLocationClick: () => false });
     assert.equal(knownOnlyToggle.checked, true);
   } finally {
     global.window = originalWindow;
@@ -249,16 +255,16 @@ test('QuestUiController persists and restores known-only toggle state via localS
 
   try {
     const knownOnlyToggle = createCheckbox(true);
-    const controller = new QuestUiController(createElement(), createElement(), createElement(), knownOnlyToggle, createElement(), createElement(), createElement(), createElement(), { onLocationClick: () => false });
+    const controller = new QuestUiController(createElement(), createElement(), createElement(), knownOnlyToggle, createElement(), createElement(), createElement(), createElement(), createElement(), createElement(), { onLocationClick: () => false });
     assert.equal(knownOnlyToggle.checked, false);
 
     knownOnlyToggle.checked = true;
     knownOnlyToggle.listeners.change();
-    assert.equal(storage.state.value, '1');
+    assert.equal(storage.state.known, '1');
 
     knownOnlyToggle.checked = false;
     knownOnlyToggle.listeners.change();
-    assert.equal(storage.state.value, '0');
+    assert.equal(storage.state.known, '0');
 
     assert.ok(controller);
   } finally {
@@ -277,6 +283,8 @@ test('QuestUiController renders known side quests in side tab with nested object
     mainTabBtn,
     sideTabBtn,
     knownOnlyToggle,
+    createElement(),
+    createElement(),
     body,
     createElement(),
     createElement(),
@@ -317,8 +325,52 @@ test('QuestUiController renders known side quests in side tab with nested object
   sideTabBtn.listeners.click();
 
   assert.equal(title.textContent, 'Side Quests');
-  assert.equal(knownOnlyToggle.style.display, 'none');
+  assert.equal(knownOnlyToggle.checked, true);
   assert.equal(body.innerHTML.includes('Village Supplies'), true);
   assert.equal(body.innerHTML.includes('Gather Resin Bundles'), true);
   assert.equal(body.innerHTML.includes('side-quest-status'), true);
+});
+
+test('QuestUiController filters available side quests by default and persists side-tab preference', () => {
+  const originalWindow = global.window;
+  const storage = createStorageMock(null);
+  global.window = { localStorage: storage };
+
+  try {
+    const sideTabBtn = createElement();
+    const knownOnlyToggle = createCheckbox(false);
+    const modeToggleLabel = createElement();
+    const body = createElement();
+    const controller = new QuestUiController(
+      createElement(),
+      createElement(),
+      sideTabBtn,
+      knownOnlyToggle,
+      createElement(),
+      modeToggleLabel,
+      body,
+      createElement(),
+      createElement(),
+      createElement(),
+      { onLocationClick: () => false },
+    );
+    const mainQuest = { id: 'main', title: 'Signal Dawn', description: '', conditionText: '', objectiveType: 'scout', entities: [], children: [] };
+    const activeQuest = { id: 'side.1', title: 'Active Quest', description: '', conditionText: '', objectiveType: 'gather', entities: [], status: 'active', children: [] };
+    const availableQuest = { id: 'side.2', title: 'Available Quest', description: '', conditionText: '', objectiveType: 'gather', entities: [], status: 'available', children: [] };
+
+    controller.renderQuest(mainQuest, [activeQuest, availableQuest]);
+    sideTabBtn.listeners.click();
+
+    assert.equal(modeToggleLabel.textContent, 'Show only active side quests');
+    assert.equal(knownOnlyToggle.checked, true);
+    assert.equal(body.innerHTML.includes('Active Quest'), true);
+    assert.equal(body.innerHTML.includes('Available Quest'), false);
+
+    knownOnlyToggle.checked = false;
+    knownOnlyToggle.listeners.change();
+    assert.equal(storage.state.side, '0');
+    assert.equal(body.innerHTML.includes('Available Quest'), true);
+  } finally {
+    global.window = originalWindow;
+  }
 });

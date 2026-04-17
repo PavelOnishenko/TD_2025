@@ -131,6 +131,19 @@
   - verifies known-only defaults to checked when there is no saved preference,
   - verifies stored `'0'`/`'1'` values are restored and updated as user toggles the checkbox.
 
+## April 16, 2026 update: side-quest tab "active only" filter toggle
+
+- The quest-mode checkbox is now tab-aware instead of being effectively main-only:
+  - **Main Quests** tab label remains `Show only known/current quests`.
+  - **Side Quests** tab label switches to `Show only active side quests`.
+- Side-tab behavior:
+  - checkbox is ON by default,
+  - when ON, side-quest cards with status `available` are hidden,
+  - accepted/known side quests remain visible.
+- Persistence:
+  - main-tab state still uses `rgfn_quests_known_only_toggle_v1`,
+  - side-tab state now uses `rgfn_side_quests_active_only_toggle_v1`.
+
 ## March 28, 2026 update: "is not discovered yet" quest-panel warning now auto-hides
 
 ### What changed

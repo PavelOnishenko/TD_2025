@@ -37,6 +37,8 @@ const createQuestUiController = (game: GameFacade, ui: RuntimeUi): QuestUiContro
     document.getElementById('quests-tab-main-btn')! as HTMLButtonElement,
     document.getElementById('quests-tab-side-btn')! as HTMLButtonElement,
     ui.hudElements.questsKnownOnlyToggle,
+    document.getElementById('quests-mode-toggle')! as HTMLElement,
+    document.getElementById('quests-mode-toggle-label')! as HTMLElement,
     ui.hudElements.questsBody,
     ui.hudElements.questIntroModal,
     ui.hudElements.questIntroBody,
