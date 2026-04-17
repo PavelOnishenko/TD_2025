@@ -1,4 +1,4 @@
-/* eslint-disable style-guide/file-length-error */
+/* eslint-disable style-guide/file-length-error, style-guide/function-length-warning */
 import Player from '../../entities/player/Player.js';
 import VillageDialogueEngine, { VillageNpcProfile } from './VillageDialogueEngine.js';
 import VillageBarterService from './actions/VillageBarterService.js';
@@ -6,9 +6,16 @@ import VillageStockService from './actions/VillageStockService.js';
 import VillageUiPresenter from './actions/VillageUiPresenter.js';
 import VillageTradeInteractionService from './actions/VillageTradeInteractionService.js';
 import VillageDialogueInteractionService from './actions/VillageDialogueInteractionService.js';
-import { QuestBarterContract, QuestDefendContract, QuestEscortContract, VillageActionsCallbacks, VillageUI } from './actions/VillageActionsTypes.js';
+import {
+    QuestBarterContract,
+    QuestCourierInteraction,
+    QuestDefendContract,
+    QuestEscortContract,
+    VillageActionsCallbacks,
+    VillageUI,
+} from './actions/VillageActionsTypes.js';
 import { isDeveloperModeEnabled } from '../../utils/DeveloperModeConfig.js';
-import { QuestNode } from '../quest/QuestTypes.js';
+import { DeliverObjectiveData, QuestNode } from '../quest/QuestTypes.js';
 import { balanceConfig } from '../../config/balance/balanceConfig.js';
 export default class VillageActionsController {
     private readonly villageUI: VillageUI;
@@ -28,6 +35,7 @@ export default class VillageActionsController {
     private defendContracts: QuestDefendContract[] = [];
     private activeNpcSideQuestIds: Set<string> = new Set();
     private readySideQuestLogIds: Set<string> = new Set();
+    private dismissedSideQuestOfferIds: Set<string> = new Set();
     private knownNpcNames: Set<string> = new Set();
     private joinedEscortNpcKeys: Set<string> = new Set();
 
@@ -144,13 +152,29 @@ export default class VillageActionsController {
         this.completeSideQuestTurnIn(selectedNpc, questId, result.reward);
     }
 
+    public handleDismissSideQuestOffer(questId: string): void {
+        const selectedNpc = this.getSelectedNpc();
+        if (!selectedNpc) {
+            this.addLog('Choose an NPC before refusing a side quest offer.', 'system');
+            return;
+        }
+        if (this.dismissedSideQuestOfferIds.has(questId)) {
+            return;
+        }
+        const offers = this.callbacks.getVillageSideQuestOffers?.(this.currentVillageName, selectedNpc.name) ?? [];
+        const questTitle = offers.find((quest) => quest.id === questId)?.title ?? questId;
+        this.dismissedSideQuestOfferIds.add(questId);
+        this.addLog(`Side-quest offer hidden: ${questTitle}.`, 'system-message');
+        this.refreshSelectedNpcSideQuestUi(selectedNpc);
+    }
+
     public handleAskAboutSettlement(): void { this.dialogueInteraction.handleAskAboutSettlement(); this.callbacks.onAdvanceTime(14, 0.1); }
     public handleAskAboutNearbySettlements(): void { this.dialogueInteraction.handleAskAboutNearbySettlements(); }
     public handleAskAboutPerson(): void { this.dialogueInteraction.handleAskAboutPerson(); this.callbacks.onAdvanceTime(14, 0.1); }
     public handleAskAboutBarter(): void { this.dialogueInteraction.handleAskAboutBarter(); this.callbacks.onAdvanceTime(16, 0.12); }
     public handleConfirmBarter(): void { this.dialogueInteraction.handleConfirmBarter(); this.callbacks.onAdvanceTime(18, 0.15); }
+    public handleCourierAction(): void { this.dialogueInteraction.handleCourierAction(); this.callbacks.onAdvanceTime(16, 0.12); }
     public handleConfrontRecoverTarget(): void { this.dialogueInteraction.handleConfrontRecoverTarget(); this.callbacks.onAdvanceTime(18, 0.15); }
-    // eslint-disable-next-line style-guide/function-length-warning
     public handleStartDefendObjective(): void {
         const npc = this.getSelectedNpc();
         if (!npc) {
@@ -172,7 +196,6 @@ export default class VillageActionsController {
         }
         this.addLog(`${npc.name} has no defense assignment for you in this village.`, 'system-message');
     }
-    // eslint-disable-next-line style-guide/function-length-warning
     public handleRecruitEscort(): void {
         const npc = this.getSelectedNpc();
         if (!npc) {
@@ -224,6 +247,7 @@ export default class VillageActionsController {
         isInnkeeper: (role) => this.isInnkeeper(role),
         shouldShowAskBarterAction: (npcName) => this.hasActiveBarterDealForNpc(npcName),
         shouldShowBarterNowAction: (npcName) => this.hasActiveBarterDealForNpc(npcName),
+        getCourierActionLabel: (npcName, villageName) => this.getCourierActionLabel(npcName, villageName),
         shouldShowConfrontRecoverAction: (npcName, villageName) => this.canConfrontRecoverTarget(npcName, villageName),
         shouldShowRecruitEscortAction: (npcName, villageName) => this.canRecruitEscort(npcName, villageName),
         shouldShowDefendAction: (npcName, villageName) => this.canStartDefendObjective(npcName, villageName),
@@ -254,6 +278,14 @@ export default class VillageActionsController {
         addLog: (message, type) => this.addLog(message, type),
         describeDistance: (distanceCells) => this.describeDistance(distanceCells),
         updateButtons: () => this.updateButtons(),
+        getCourierObjectiveForNpc: (npcName, villageName) => this.getActiveCourierObjectiveForNpc(npcName, villageName),
+        markSideQuestReadyToTurnIn: (questId) => this.callbacks.markSideQuestReadyToTurnIn?.(questId) ?? false,
+        refreshSelectedNpcSideQuestUi: () => {
+            const npc = this.getSelectedNpc();
+            if (npc) {
+                this.refreshSelectedNpcSideQuestUi(npc);
+            }
+        },
     });
 
     private refreshNpcUi(): void {
@@ -453,6 +485,73 @@ export default class VillageActionsController {
         return Boolean(deal && !deal.isCompleted);
     }
 
+    private getCourierActionLabel(npcName: string, villageName: string): string | null {
+        const courierObjective = this.getActiveCourierObjectiveForNpc(npcName, villageName);
+        if (!courierObjective) {
+            return null;
+        }
+        if (courierObjective.objectiveType === 'deliver') {
+            const deliverObjective = courierObjective.objective;
+            return deliverObjective.isPickedUp ? null : `Pick up ${deliverObjective.itemName}`;
+        }
+        const { objective } = courierObjective;
+        if (!objective.isPickedUp && this.matchesNpc(objective.sourceNpcName, npcName)) {
+            return `Pick up ${objective.itemName}`;
+        }
+        if (objective.isPickedUp && !objective.isDelivered && this.matchesNpc(objective.recipientNpcName, npcName)) {
+            return `Hand over ${objective.itemName}`;
+        }
+        return null;
+    }
+
+    private getActiveCourierObjectiveForNpc(npcName: string, villageName: string): QuestCourierInteraction | null {
+        const normalizedNpc = npcName.trim().toLocaleLowerCase();
+        const normalizedVillage = villageName.trim().toLocaleLowerCase();
+        if (!normalizedNpc || !normalizedVillage) {
+            return null;
+        }
+        const sideQuests = this.callbacks.getActiveSideQuests?.() ?? [];
+        for (const quest of sideQuests) {
+            for (const child of quest.children) {
+                const localDelivery = child.objectiveData?.localDelivery;
+                if (!localDelivery || localDelivery.isDelivered) {
+                    const deliverObjective = child.objectiveData?.deliver;
+                    if (!deliverObjective || deliverObjective.isPickedUp) {
+                        continue;
+                    }
+                    if (this.matchesDeliverPickupNpc(deliverObjective, normalizedNpc, normalizedVillage)) {
+                        return { questId: quest.id, objectiveType: 'deliver', objective: deliverObjective };
+                    }
+                    continue;
+                }
+                const sameVillage = localDelivery.villageName.trim().toLocaleLowerCase() === normalizedVillage;
+                const isSourceNpc = localDelivery.sourceNpcName.trim().toLocaleLowerCase() === normalizedNpc;
+                const isRecipientNpc = localDelivery.recipientNpcName.trim().toLocaleLowerCase() === normalizedNpc;
+                if (!sameVillage || (!isSourceNpc && !isRecipientNpc)) {
+                    continue;
+                }
+                if (!localDelivery.isPickedUp && isSourceNpc) {
+                    return { questId: quest.id, objectiveType: 'localDelivery', objective: localDelivery };
+                }
+                if (localDelivery.isPickedUp && isRecipientNpc) {
+                    return { questId: quest.id, objectiveType: 'localDelivery', objective: localDelivery };
+                }
+            }
+        }
+        return null;
+    }
+
+    private matchesDeliverPickupNpc(deliverObjective: DeliverObjectiveData, normalizedNpc: string, normalizedVillage: string): boolean {
+        if (deliverObjective.isPickedUp) {
+            return false;
+        }
+        return deliverObjective.sourceVillage.trim().toLocaleLowerCase() === normalizedVillage
+            && deliverObjective.sourceTrader.trim().toLocaleLowerCase() === normalizedNpc;
+    }
+
+    private matchesNpc = (expectedNpcName: string, actualNpcName: string): boolean =>
+        expectedNpcName.trim().toLocaleLowerCase() === actualNpcName.trim().toLocaleLowerCase();
+
     private canConfrontRecoverTarget(npcName: string, villageName: string): boolean {
         const selectedNpc = this.getSelectedNpc();
         if (!npcName.trim() || !villageName.trim() || !selectedNpc) {
@@ -488,18 +587,18 @@ export default class VillageActionsController {
         );
     }
 
-    // eslint-disable-next-line style-guide/function-length-warning
     private refreshSelectedNpcSideQuestUi(npc: VillageNpcProfile): void {
         const offers = this.callbacks.getVillageSideQuestOffers?.(this.currentVillageName, npc.name) ?? [];
+        const visibleOffers = offers.filter((offer) => !this.dismissedSideQuestOfferIds.has(offer.id));
         const activeQuests = this.callbacks.getVillageNpcActiveSideQuests?.(this.currentVillageName, npc.name) ?? [];
         const readyToTurnInCount = activeQuests.filter((quest) => quest.status === 'readyToTurnIn').length;
-        this.renderSideQuestUiForNpc(npc, offers, activeQuests);
+        this.renderSideQuestUiForNpc(npc, visibleOffers, activeQuests);
         this.addLog(
-            `Side-quest board updated for ${npc.name}: ${offers.length} offer${offers.length === 1 ? '' : 's'}, `
+            `Side-quest board updated for ${npc.name}: ${visibleOffers.length} offer${visibleOffers.length === 1 ? '' : 's'}, `
             + `${activeQuests.length} active, ${readyToTurnInCount} ready to turn in.`,
             'system-message',
         );
-        if (offers.length === 0 && activeQuests.length > 0) {
+        if (visibleOffers.length === 0 && activeQuests.length > 0) {
             this.addLog(
                 `No new side-quest offers from ${npc.name}. ${activeQuests.length} quest${activeQuests.length === 1 ? '' : 's'} `
                 + 'already in progress from earlier acceptance.',
@@ -563,7 +662,11 @@ export default class VillageActionsController {
 
     private appendSideQuestCardAction(card: HTMLElement, quest: QuestNode, isOffer: boolean): void {
         if (isOffer) {
-            card.appendChild(this.createSideQuestActionButton('Accept quest', () => this.handleAcceptSideQuest(quest.id)));
+            const actionRow = document.createElement('div');
+            actionRow.className = 'village-side-quest-actions';
+            actionRow.appendChild(this.createSideQuestActionButton('Accept quest', () => this.handleAcceptSideQuest(quest.id)));
+            actionRow.appendChild(this.createSideQuestActionButton('Refuse', () => this.handleDismissSideQuestOffer(quest.id), 'Refuse and hide this offer'));
+            card.appendChild(actionRow);
             return;
         }
         if (quest.status === 'readyToTurnIn') {
@@ -571,16 +674,20 @@ export default class VillageActionsController {
         }
     }
 
-    private createSideQuestActionButton(label: string, onClick: () => void): HTMLButtonElement {
+    private createSideQuestActionButton(label: string, onClick: () => void, ariaLabel?: string): HTMLButtonElement {
         const button = document.createElement('button');
         button.type = 'button';
         button.className = 'action-btn';
         button.textContent = label;
+        if (ariaLabel) {
+            button.ariaLabel = ariaLabel;
+        }
         button.addEventListener('click', onClick);
         return button;
     }
 
     private completeSideQuestAccept(selectedNpc: VillageNpcProfile, questId: string): void {
+        this.dismissedSideQuestOfferIds.delete(questId);
         this.activeNpcSideQuestIds.add(questId);
         const quests = this.callbacks.getVillageNpcActiveSideQuests?.(this.currentVillageName, selectedNpc.name) ?? [];
         const acceptedQuest = quests.find((quest) => quest.id === questId);
@@ -740,7 +847,6 @@ export default class VillageActionsController {
         }
     }
 
-    // eslint-disable-next-line style-guide/function-length-warning
     private injectNpcIntoNearbyVillageRoster(nearbyVillageSet: Set<string>, villageName: string | undefined, npcName: string | undefined, role: string): void {
         const normalizedVillage = villageName?.trim().toLocaleLowerCase();
         const normalizedNpcName = npcName?.trim();

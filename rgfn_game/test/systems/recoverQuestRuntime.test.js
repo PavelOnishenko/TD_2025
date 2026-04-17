@@ -443,6 +443,42 @@ test('GameQuestRuntime side-quest turn-in requires the original quest giver and 
   assert.equal(runtime.activeSideQuests[0].status, 'completed');
 });
 
+test('GameQuestRuntime marks deliver side quests ready when reaching destination with carried courier item', () => {
+  const runtime = new GameQuestRuntime();
+  const mainQuest = createRecoverQuest();
+  runtime.activeQuest = mainQuest;
+  runtime.questProgressTracker = new QuestProgressTracker(mainQuest);
+  runtime.questUiController = { renderQuest: () => {} };
+  runtime.activeSideQuests = [
+    createSideQuest({
+      id: 'side-deliver-quest',
+      status: 'active',
+      children: [{
+        id: 'side-deliver-quest.1',
+        title: 'Courier objective',
+        description: '',
+        conditionText: '',
+        objectiveType: 'deliver',
+        entities: [],
+        objectiveData: {
+          deliver: {
+            sourceVillage: 'Selzen',
+            sourceTrader: 'Alisha Alondra',
+            destinationVillage: 'Golden Beacon',
+            itemName: 'Eshdra Lorka',
+            isPickedUp: true,
+          },
+        },
+        children: [],
+      }],
+    }),
+  ];
+
+  const changed = runtime.recordLocationEntry('Golden Beacon', ['Eshdra Lorka']);
+  assert.equal(changed, true);
+  assert.equal(runtime.activeSideQuests[0].status, 'readyToTurnIn');
+});
+
 test('GameQuestRuntime marks active scout side quests ready to turn in after entering objective village', () => {
   const runtime = new GameQuestRuntime();
   const mainQuest = createQuestWithKnownAndUnknownContracts();

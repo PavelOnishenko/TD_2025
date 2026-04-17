@@ -204,3 +204,18 @@
   - turn-in completion.
 - This prevents stale HUD state where village-side quest cards update but HUD Quests panel does not.
   - Offer cards remain labeled **Offer available** and include an **Accept quest** button.
+
+## 2026-04-16: Side-quest offer refusal (hide clutter without accepting)
+
+- Village NPC dialogue side-quest cards now expose a second explicit offer action:
+  - **Accept quest** (existing behavior),
+  - **Refuse** (new behavior).
+- Refuse behavior is intentionally non-destructive:
+  - the offer is **hidden from the selected NPC side-quest panel** to reduce clutter,
+  - no runtime acceptance occurs,
+  - no quest progress/status mutation occurs.
+- Scope/identity of hidden offers:
+  - hides a **specific offer ID** only,
+  - does **not** block future offers from that same NPC.
+- Practical UX effect:
+  - if multiple offers exist, player can decline noisy ones and keep only relevant cards visible in the dialogue panel.

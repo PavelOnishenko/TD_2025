@@ -1,7 +1,10 @@
+/* eslint-disable style-guide/file-length-warning, style-guide/function-length-warning */
 import Player from '../../../entities/player/Player.js';
+import Item from '../../../entities/Item.js';
 import VillageDialogueEngine, { VillageNpcProfile } from '../VillageDialogueEngine.js';
 import VillageBarterService from './VillageBarterService.js';
-import { VillageActionsCallbacks, VillageUI } from './VillageActionsTypes.js';
+import { QuestCourierInteraction, VillageActionsCallbacks, VillageUI } from './VillageActionsTypes.js';
+import { DeliverObjectiveData, LocalDeliveryObjectiveData } from '../../quest/QuestTypes.js';
 
 type DialogueDeps = {
     player: Player;
@@ -14,6 +17,9 @@ type DialogueDeps = {
     addLog: (message: string, type?: string) => void;
     describeDistance: (distanceCells: number) => string;
     updateButtons: () => void;
+    getCourierObjectiveForNpc: (npcName: string, villageName: string) => QuestCourierInteraction | null;
+    markSideQuestReadyToTurnIn: (questId: string) => boolean;
+    refreshSelectedNpcSideQuestUi: () => void;
 };
 
 export default class VillageDialogueInteractionService {
@@ -152,6 +158,31 @@ export default class VillageDialogueInteractionService {
         this.deps.addLog(`${selectedNpc.name} is not the recover target for your current quest.`, 'system-message');
     }
 
+    public handleCourierAction(): void {
+        const selectedNpc = this.deps.getSelectedNpc();
+        if (!selectedNpc) {
+            this.deps.addLog('Choose an NPC before handling courier handoff.', 'system');
+            return;
+        }
+
+        const courier = this.deps.getCourierObjectiveForNpc(selectedNpc.name, this.deps.getCurrentVillageName());
+        if (!courier) {
+            this.deps.addLog(`${selectedNpc.name} has no courier handoff for your active side quests.`, 'system-message');
+            return;
+        }
+
+        if (courier.objectiveType === 'deliver') {
+            this.pickupDeliverObjectiveItem(selectedNpc.name, courier.objective);
+            return;
+        }
+        const { objective, questId } = courier;
+        if (!objective.isPickedUp) {
+            this.pickupLocalDeliveryItem(selectedNpc.name, objective);
+            return;
+        }
+        this.deliverCourierItem(selectedNpc.name, questId, objective);
+    }
+
     private getActiveBarterDeal(npcName: string): ReturnType<VillageBarterService['getBarterDealForNpc']> {
         const deal = this.deps.barterService.getBarterDealForNpc(this.deps.getCurrentVillageName(), npcName);
         if (!deal) {
@@ -186,5 +217,74 @@ export default class VillageDialogueInteractionService {
         this.deps.callbacks.onVillageBarterCompleted(npcName, deal.rewardItem.name, this.deps.getCurrentVillageName());
         this.deps.callbacks.onUpdateHUD();
         this.deps.updateButtons();
+    }
+
+    private pickupLocalDeliveryItem(npcName: string, objective: LocalDeliveryObjectiveData): void {
+        const questItem = this.createCourierQuestItem(objective.itemName);
+        if (!this.deps.player.addItemToInventory(questItem)) {
+            this.deps.addLog(`Inventory full. ${objective.itemName} cannot be received. Free a slot and try again.`, 'system');
+            return;
+        }
+
+        objective.isPickedUp = true;
+        this.deps.addLog(`You ask ${npcName}: "I am here for ${objective.itemName}."`, 'player');
+        this.deps.addLog(`${npcName} hands over ${objective.itemName}.`, 'system');
+        this.deps.addLog(`Courier objective updated: carry ${objective.itemName} to ${objective.recipientNpcName}.`, 'system-message');
+        this.deps.callbacks.onUpdateHUD();
+        this.deps.refreshSelectedNpcSideQuestUi();
+    }
+
+    private pickupDeliverObjectiveItem(npcName: string, objective: DeliverObjectiveData): void {
+        const questItem = this.createCourierQuestItem(objective.itemName);
+        if (!this.deps.player.addItemToInventory(questItem)) {
+            this.deps.addLog(`Inventory full. ${objective.itemName} cannot be received. Free a slot and try again.`, 'system');
+            return;
+        }
+        objective.isPickedUp = true;
+        this.deps.addLog(`You ask ${npcName}: "Do you still have ${objective.itemName} for that courier contract?"`, 'player');
+        this.deps.addLog(`${npcName} gives you ${objective.itemName} for delivery to ${objective.destinationVillage}.`, 'system');
+        this.deps.addLog(`Courier objective updated: travel to ${objective.destinationVillage} while carrying ${objective.itemName}.`, 'system-message');
+        this.deps.callbacks.onUpdateHUD();
+        this.deps.refreshSelectedNpcSideQuestUi();
+    }
+
+    private deliverCourierItem(npcName: string, questId: string, objective: LocalDeliveryObjectiveData): void {
+        const itemIndex = this.findInventoryItemIndexByName(objective.itemName);
+        if (itemIndex < 0) {
+            this.deps.addLog(`You are not carrying ${objective.itemName}. Retrieve it before delivery.`, 'system-message');
+            return;
+        }
+
+        this.deps.player.removeInventoryItemAt(itemIndex);
+        objective.isDelivered = true;
+        const markedReady = this.deps.markSideQuestReadyToTurnIn(questId);
+        this.deps.addLog(`You tell ${npcName}: "Delivery for you — ${objective.itemName}."`, 'player');
+        this.deps.addLog(`${npcName} accepts ${objective.itemName} and confirms delivery.`, 'system');
+        this.deps.addLog(
+            markedReady
+                ? 'Side quest objective complete. Return to the quest giver for turn-in.'
+                : 'Delivery recorded, but quest state did not update automatically. Re-open side quests.',
+            'system-message',
+        );
+        this.deps.callbacks.onUpdateHUD();
+        this.deps.refreshSelectedNpcSideQuestUi();
+    }
+
+    private findInventoryItemIndexByName(itemName: string): number {
+        const normalizedItemName = itemName.trim().toLocaleLowerCase();
+        return this.deps.player.getInventory().findIndex((item) => item.name.trim().toLocaleLowerCase() === normalizedItemName);
+    }
+
+    private createCourierQuestItem(itemName: string): Item {
+        const normalized = itemName.trim().toLocaleLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+        return new Item({
+            id: `quest-local-delivery-${normalized || 'package'}`,
+            name: itemName,
+            description: `Courier package for local delivery: ${itemName}.`,
+            type: 'quest',
+            goldValue: 0,
+            findWeight: 0,
+            spriteClass: 'quest-item-sprite',
+        });
     }
 }

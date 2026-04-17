@@ -1464,6 +1464,7 @@ button.quest-entity-name.location:hover {
     max-height: min(82vh, 760px);
     display: flex;
     flex-direction: column;
+    overflow-y: auto;
     gap: 10px;
     padding: 12px;
     border-radius: 8px;
@@ -1537,6 +1538,15 @@ button.quest-entity-name.location:hover {
 .village-side-quest-card p {
     margin: 0;
     font-size: 12px;
+}
+
+.village-side-quest-actions {
+    display: flex;
+    gap: 6px;
+}
+
+.village-side-quest-actions .action-btn {
+    flex: 1;
 }
 
 .village-dialogue-actions {

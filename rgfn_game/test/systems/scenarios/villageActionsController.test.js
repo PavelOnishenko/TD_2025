@@ -97,11 +97,20 @@ function createVillageUi() {
     askPersonBtn: createElement('button'),
     askBarterBtn: createElement('button'),
     barterNowBtn: createElement('button'),
+    courierActionBtn: createElement('button'),
     confrontRecoverBtn: createElement('button'),
     recruitEscortBtn: createElement('button'),
     defendVillageBtn: createElement('button'),
     leaveBtn: createElement('button'),
   };
+}
+
+function containsTextInTree(element, text) {
+  if (element.textContent === text) {
+    return true;
+  }
+  const children = Array.isArray(element.children) ? element.children : [];
+  return children.some((child) => containsTextInTree(child, text));
 }
 
 function createPlayerStub() {
@@ -692,6 +701,125 @@ test('VillageActionsController shows defend dialogue action only for NPCs with d
   assert.equal(villageUI.defendVillageBtn.classList.contains('hidden'), true);
 }));
 
+test('VillageActionsController exposes courier dialogue action to pick up and deliver local side-quest packages', () => withDocumentStub(() => {
+  const villageUI = createVillageUi();
+  const gameLog = createElement();
+  const player = createPlayerStub();
+  let markedReadyQuestId = '';
+  const localDeliveryQuest = {
+    id: 'side-courier-1',
+    title: 'Local Delivery: Ration Crate',
+    description: 'Collect and deliver ration crate in Mossbrook.',
+    status: 'active',
+    children: [
+      {
+        objectiveType: 'localDelivery',
+        objectiveData: {
+          localDelivery: {
+            villageName: 'Mossbrook',
+            sourceNpcName: 'Olive',
+            recipientNpcName: 'Mara',
+            itemName: 'Ration Crate',
+            isPickedUp: false,
+            isDelivered: false,
+          },
+        },
+      },
+    ],
+  };
+  const controller = new VillageActionsController(player, villageUI, gameLog, {
+    onUpdateHUD: () => {},
+    onLeaveVillage: () => {},
+    onAdvanceTime: () => {},
+    getVillageDirectionHint: (settlementName) => ({ settlementName, exists: false }),
+    onVillageBarterCompleted: () => {},
+    getActiveSideQuests: () => [localDeliveryQuest],
+    getVillageNpcActiveSideQuests: () => [],
+    getVillageSideQuestOffers: () => [],
+    markSideQuestReadyToTurnIn: (questId) => { markedReadyQuestId = questId; return true; },
+  });
+
+  controller['dialogueEngine'] = {
+    createNpcRoster: () => [
+      { id: 'moss-0', name: 'Mara', role: 'Trader', look: 'cloak', speechStyle: 'calm', disposition: 'truthful' },
+      { id: 'moss-1', name: 'Olive', role: 'Courier Handler', look: 'satchel', speechStyle: 'brisk', disposition: 'truthful' },
+    ],
+    buildLocationAnswer: () => ({ speech: '', tone: '', truthfulness: 'truth' }),
+    buildPersonLocationAnswer: () => ({ speech: '', tone: '', truthfulness: 'truth' }),
+  };
+
+  controller.enterVillage('Mossbrook');
+
+  const oliveIndex = controller['npcRoster'].findIndex((npc) => npc.name === 'Olive');
+  controller.handleSelectNpc(oliveIndex);
+  assert.equal(villageUI.courierActionBtn.classList.contains('hidden'), false);
+  assert.equal(villageUI.courierActionBtn.textContent, 'Pick up Ration Crate');
+  controller.handleCourierAction();
+  assert.equal(localDeliveryQuest.children[0].objectiveData.localDelivery.isPickedUp, true);
+  assert.equal(player.getInventory().some((item) => item.name === 'Ration Crate'), true);
+
+  const maraIndex = controller['npcRoster'].findIndex((npc) => npc.name === 'Mara');
+  controller.handleSelectNpc(maraIndex);
+  assert.equal(villageUI.courierActionBtn.classList.contains('hidden'), false);
+  assert.equal(villageUI.courierActionBtn.textContent, 'Hand over Ration Crate');
+  controller.handleCourierAction();
+
+  assert.equal(localDeliveryQuest.children[0].objectiveData.localDelivery.isDelivered, true);
+  assert.equal(player.getInventory().some((item) => item.name === 'Ration Crate'), false);
+  assert.equal(markedReadyQuestId, 'side-courier-1');
+}));
+
+test('VillageActionsController exposes courier pickup action for deliver side quests in source village', () => withDocumentStub(() => {
+  const villageUI = createVillageUi();
+  const gameLog = createElement();
+  const player = createPlayerStub();
+  const deliverSideQuest = {
+    id: 'side-deliver-1',
+    title: 'Courier: Eshdra Lorka',
+    description: 'Acquire Eshdra Lorka from Alisha Alondra in Selzen, then carry it to Golden Beacon.',
+    status: 'active',
+    children: [
+      {
+        objectiveType: 'deliver',
+        objectiveData: {
+          deliver: {
+            sourceVillage: 'Selzen',
+            sourceTrader: 'Alisha Alondra',
+            destinationVillage: 'Golden Beacon',
+            itemName: 'Eshdra Lorka',
+            isPickedUp: false,
+          },
+        },
+      },
+    ],
+  };
+  const controller = new VillageActionsController(player, villageUI, gameLog, {
+    onUpdateHUD: () => {},
+    onLeaveVillage: () => {},
+    onAdvanceTime: () => {},
+    getVillageDirectionHint: (settlementName) => ({ settlementName, exists: false }),
+    onVillageBarterCompleted: () => {},
+    getActiveSideQuests: () => [deliverSideQuest],
+    getVillageNpcActiveSideQuests: () => [deliverSideQuest],
+    getVillageSideQuestOffers: () => [],
+  });
+
+  controller['dialogueEngine'] = {
+    createNpcRoster: () => [{ id: 'selzen-0', name: 'Alisha Alondra', role: 'Herbalist', look: 'cloak', speechStyle: 'calm', disposition: 'truthful' }],
+    buildLocationAnswer: () => ({ speech: '', tone: '', truthfulness: 'truth' }),
+    buildPersonLocationAnswer: () => ({ speech: '', tone: '', truthfulness: 'truth' }),
+  };
+
+  controller.enterVillage('Selzen');
+  controller.handleSelectNpc(0);
+
+  assert.equal(villageUI.courierActionBtn.classList.contains('hidden'), false);
+  assert.equal(villageUI.courierActionBtn.textContent, 'Pick up Eshdra Lorka');
+  controller.handleCourierAction();
+  assert.equal(deliverSideQuest.children[0].objectiveData.deliver.isPickedUp, true);
+  assert.equal(player.getInventory().some((item) => item.name === 'Eshdra Lorka'), true);
+}));
+
 test('VillageActionsController requires explicit side-quest acceptance and exposes accept action in dialogue UI', () => withDocumentStub(() => {
   const villageUI = createVillageUi();
   const gameLog = createElement();
@@ -724,15 +852,61 @@ test('VillageActionsController requires explicit side-quest acceptance and expos
   controller.handleSelectNpc(0);
 
   assert.equal(acceptCalls, 0);
-  const acceptButton = villageUI.sideQuestList.children.find((child) => child.children?.some((entry) => entry.textContent === 'Accept quest'));
+  const acceptButton = villageUI.sideQuestList.children.find((child) => containsTextInTree(child, 'Accept quest'));
   assert.ok(acceptButton);
   assert.equal(
     acceptButton.children.some((entry) => String(entry.textContent ?? '').includes('Task details: Carry repair tools from the smithy to the mill wheel before sunset.')),
     true,
   );
+  const hasRefuseButton = villageUI.sideQuestList.children.some((child) => containsTextInTree(child, 'Refuse'));
+  assert.equal(hasRefuseButton, true);
   controller.handleAcceptSideQuest('side-quest-offer');
   assert.equal(acceptCalls, 1);
   assert.equal(gameLog.children.some((child) => String(child.textContent ?? '').includes('Side quest accepted')), true);
+}));
+
+test('VillageActionsController allows refusing a side-quest offer and keeps other offers visible', () => withDocumentStub(() => {
+  const villageUI = createVillageUi();
+  const gameLog = createElement();
+  const firstOffer = {
+    id: 'side-quest-offer-1',
+    title: 'Patch the Mill Wheel',
+    description: 'Bring repair tools to the village mill.',
+    reward: '20g',
+    status: 'available',
+    children: [],
+  };
+  const secondOffer = {
+    id: 'side-quest-offer-2',
+    title: 'Track Missing Cart',
+    description: 'Follow wheel marks east of the ford.',
+    reward: '18g',
+    status: 'available',
+    children: [],
+  };
+  const controller = new VillageActionsController(createPlayerStub(), villageUI, gameLog, {
+    onUpdateHUD: () => {},
+    onLeaveVillage: () => {},
+    onAdvanceTime: () => {},
+    getVillageDirectionHint: (settlementName) => ({ settlementName, exists: false }),
+    onVillageBarterCompleted: () => {},
+    getVillageSideQuestOffers: () => [firstOffer, secondOffer],
+    getVillageNpcActiveSideQuests: () => [],
+  });
+  controller['dialogueEngine'] = {
+    createNpcRoster: () => [{ id: 'moss-0', name: 'Mara', role: 'Trader', look: 'cloak', speechStyle: 'calm', disposition: 'truthful' }],
+    buildLocationAnswer: () => ({ speech: '', tone: '', truthfulness: 'truth' }),
+    buildPersonLocationAnswer: () => ({ speech: '', tone: '', truthfulness: 'truth' }),
+  };
+
+  controller.enterVillage('Mossbrook');
+  controller.handleSelectNpc(0);
+  assert.equal(villageUI.sideQuestList.children.length, 2);
+
+  controller.handleDismissSideQuestOffer('side-quest-offer-1');
+  assert.equal(villageUI.sideQuestList.children.length, 1);
+  assert.equal(villageUI.sideQuestList.children[0].children.some((entry) => entry.textContent?.includes('Track Missing Cart')), true);
+  assert.equal(gameLog.children.some((child) => String(child.textContent ?? '').includes('Side-quest offer hidden')), true);
 }));
 
 test('VillageActionsController does not auto-accept side quests in developer mode', () => withDeveloperMode(true, () => withDocumentStub(() => {
@@ -767,7 +941,7 @@ test('VillageActionsController does not auto-accept side quests in developer mod
   controller.handleSelectNpc(0);
 
   assert.equal(acceptCalls, 0);
-  const hasAcceptButton = villageUI.sideQuestList.children.some((child) => child.children?.some((entry) => entry.textContent === 'Accept quest'));
+  const hasAcceptButton = villageUI.sideQuestList.children.some((child) => containsTextInTree(child, 'Accept quest'));
   assert.equal(hasAcceptButton, true);
   assert.equal(gameLog.children.some((child) => String(child.textContent ?? '').includes('Auto-accepted side quests')), false);
 })));

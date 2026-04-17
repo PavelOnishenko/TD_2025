@@ -70,7 +70,9 @@ const createVillageActionsController = (
     initializeVillageSideQuestOffers: (villageName, npcQuestOfferRolls) => game.initializeVillageSideQuestOffers(villageName, npcQuestOfferRolls),
     getVillageSideQuestOffers: (villageName, npcName) => game.getVillageSideQuestOffers(villageName, npcName),
     getVillageNpcActiveSideQuests: (villageName, npcName) => game.getVillageNpcActiveSideQuests(villageName, npcName),
+    getActiveSideQuests: () => game.getActiveSideQuests(),
     acceptSideQuest: (questId) => game.acceptSideQuest(questId),
+    markSideQuestReadyToTurnIn: (questId) => game.markSideQuestReadyToTurnIn(questId),
     turnInSideQuest: (questId, npcName, villageName) => game.turnInSideQuest(questId, npcName, villageName),
 }, { nextCharacterName });
 
