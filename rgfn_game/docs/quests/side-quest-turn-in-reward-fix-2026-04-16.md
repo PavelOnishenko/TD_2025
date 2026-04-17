@@ -8,14 +8,17 @@
 - `GameQuestRuntime.turnInSideQuest()` changed quest status to `completed` and returned reward text only.
 - `GameFacade.turnInSideQuest()` forwarded runtime results without applying `rewardMetadata` to the player state.
 - Result: reward messaging existed, but no gameplay state mutation happened for XP/gold.
+- After first fix, another gap remained for legacy/in-flight side quests that had reward text but no `rewardMetadata` (for example from older saves). Those quests still logged rewards without applying XP/gold.
 
 ## Fix
 - `GameQuestRuntime.turnInSideQuest()` now returns `rewardMetadata` alongside reward text for successful turn-ins.
 - `GameFacade.turnInSideQuest()` now applies:
   - `player.gold += rewardMetadata.gold`
   - `player.addXp(rewardMetadata.xp)`
+- Added reward metadata resolver fallback that parses legacy reward text (`"<xp> XP, <gold>g, <item>"`) whenever structured metadata is absent, so side-quest rewards apply consistently across existing and newly generated quests.
 - This ensures quest rewards are actually granted during hand-in, matching the log output and design intent.
 
 ## Notes
 - Reward item names generated for side quests (`Repair Kit`, `Hunter Tonic`, `Scout Charm`, `Trail Rations`) are currently descriptive reward text, not wired to concrete inventory item IDs.
 - XP and gold are now authoritative reward effects at turn-in.
+- Resolver supports all side-quest types because reward application happens centrally in `GameFacade.turnInSideQuest()` after any successful side-quest hand-in, independent of objective type (`scout`, `deliver`, `recover`, etc.).

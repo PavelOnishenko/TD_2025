@@ -30,6 +30,7 @@ import type { GameFacadeStateAccess } from './runtime/GameFacadeSharedTypes.js';
 import { FerryRouteOption } from '../systems/world-mode/WorldModeFerryPromptController.js';
 import GameTimeRuntime from '../systems/time/GameTimeRuntime.js';
 import { QuestNode, QuestRewardMetadata } from '../systems/quest/QuestTypes.js';
+import { resolveSideQuestRewardMetadata } from '../systems/quest/QuestRewardResolver.js';
 
 export type UIBundle = {
     hudElements: HudElements;
@@ -199,11 +200,12 @@ export class GameFacade implements GameFacadeStateAccess {
         rewardMetadata?: QuestRewardMetadata;
     } => {
         const result = this.questRuntime.turnInSideQuest(questId, npcName, villageName);
-        if (!result.turnedIn || !result.rewardMetadata) {
+        const rewardMetadata = resolveSideQuestRewardMetadata(result.rewardMetadata, result.reward);
+        if (!result.turnedIn || !rewardMetadata) {
             return result;
         }
-        this.player.gold += Math.max(0, Math.floor(result.rewardMetadata.gold));
-        this.player.addXp(Math.max(0, Math.floor(result.rewardMetadata.xp)));
+        this.player.gold += Math.max(0, Math.floor(rewardMetadata.gold));
+        this.player.addXp(Math.max(0, Math.floor(rewardMetadata.xp)));
         return result;
     };
 
