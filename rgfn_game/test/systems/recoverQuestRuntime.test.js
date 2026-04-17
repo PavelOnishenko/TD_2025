@@ -502,8 +502,9 @@ test('GameQuestRuntime marks deliver side quests ready when reaching destination
     }),
   ];
 
-  const changed = runtime.recordLocationEntry('Golden Beacon', ['Eshdra Lorka']);
-  assert.equal(changed, true);
+  const updated = runtime.recordLocationEntry('Golden Beacon', ['Eshdra Lorka']);
+  assert.equal(updated.changed, true);
+  assert.equal(updated.logs.some((line) => line.includes('Find Lost Satchel')), true);
   assert.equal(runtime.activeSideQuests[0].status, 'readyToTurnIn');
 });
 

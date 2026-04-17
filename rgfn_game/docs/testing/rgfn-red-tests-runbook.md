@@ -48,3 +48,16 @@ That command performs:
 
 - Running repo-wide `npm test` may still fail for non-RGFN suites unless other build prerequisites are satisfied.
 - For RGFN-specific validation, prefer `npm run test:rgfn`.
+
+## Behavior contract reminder: `recordLocationEntry` return value
+
+Current `GameQuestRuntime.recordLocationEntry(...)` behavior returns a structured object, not a bare boolean:
+
+```js
+{ changed: boolean, logs: string[] }
+```
+
+- `changed` indicates whether quest state advanced.
+- `logs` contains user-facing messages generated during objective/side-quest state updates.
+
+When writing or updating tests around location-entry quest progression (especially side-quest delivery/recover flows), assert on `result.changed` and optionally on log content instead of asserting `result === true`.
