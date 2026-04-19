@@ -47,7 +47,6 @@ export class VillageUiModel {
     public title!: HTMLElement;
     public prompt!: HTMLElement;
     public actions!: HTMLElement;
-    public openDialogueBtn!: HTMLButtonElement;
     public sleepRoomBtn!: HTMLButtonElement;
     public dialogueModal!: HTMLElement;
     public dialogueCloseBtn!: HTMLButtonElement;

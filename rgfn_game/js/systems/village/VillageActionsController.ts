@@ -118,6 +118,7 @@ export default class VillageActionsController {
         this.selectedNpcId = npc.id;
         this.knownNpcNames.add(npc.name);
         this.refreshNpcUi();
+        this.uiPresenter.openDialogueWindow();
         this.addLog(`You approach ${npc.name} the ${npc.role}.`, 'player');
         this.addLog(`${npc.name} looks ${npc.look} and speaks in a ${npc.speechStyle} manner.`, 'system-message');
         this.addRecoverLeadFromNpc(npc);

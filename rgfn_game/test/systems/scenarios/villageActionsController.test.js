@@ -73,7 +73,6 @@ function createVillageUi() {
     title: createElement(),
     prompt: createElement(),
     actions: createElement(),
-    openDialogueBtn: createElement('button'),
     sleepRoomBtn: createElement('button'),
     villageWaitBtn: createElement('button'),
     dialogueModal: createElement(),
@@ -473,10 +472,8 @@ test('VillageActionsController mirrors dialogue lines into modal log and toggles
 
   controller.enterVillage('Mossbrook');
   controller.handleEnter('Mossbrook');
-  assert.equal(villageUI.openDialogueBtn.disabled, true);
+  assert.equal(villageUI.dialogueModal.classList.contains('hidden'), true);
   controller.handleSelectNpc(0);
-  assert.equal(villageUI.openDialogueBtn.disabled, false);
-  controller.openDialogueWindow();
   assert.equal(villageUI.dialogueModal.classList.removed.includes('hidden'), true);
 
   controller.addLog('Modal mirror check', 'system');

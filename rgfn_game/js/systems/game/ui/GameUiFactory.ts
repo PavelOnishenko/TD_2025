@@ -75,7 +75,6 @@ export default class GameUiFactory {
         title: document.getElementById('village-title')!,
         prompt: document.getElementById('village-prompt')!,
         actions: document.getElementById('village-actions')!,
-        openDialogueBtn: document.getElementById('village-open-dialogue-btn')! as HTMLButtonElement,
         sleepRoomBtn: document.getElementById('village-sleep-room-btn')! as HTMLButtonElement,
         dialogueModal: document.getElementById('village-dialogue-modal')!,
         dialogueCloseBtn: document.getElementById('village-dialogue-close-btn')! as HTMLButtonElement,

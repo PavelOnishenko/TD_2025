@@ -12,7 +12,7 @@ Move NPC conversations into a dedicated popup dialogue window (classic RPG style
   - `#village-dialogue-selected-npc`
   - `#village-dialogue-close-btn`
 - Kept NPC list selection in the village rumors block, but moved talk actions into the modal.
-- Added `Open NPC dialogue window` button in village rumors section.
+- Removed the extra open button from rumors section; NPC click now opens dialogue popup immediately.
 - Integrated existing conversation controls into modal:
   - ask about location
   - ask about person
@@ -26,7 +26,7 @@ Move NPC conversations into a dedicated popup dialogue window (classic RPG style
 ## Runtime behavior
 
 - Player selects NPC from village rumors list.
-- Player opens dialogue popup.
+- Dialogue popup opens immediately.
 - The popup displays:
   1. selected NPC summary,
   2. dialogue log,
@@ -61,7 +61,6 @@ This keeps one shared source of dialogue events while showing NPC conversation i
 
 `GameUiEventBinder` now binds:
 
-- open dialogue button,
 - close dialogue button,
 - backdrop click-to-close for dialogue modal,
 - Escape key close for dialogue modal while it is open.
@@ -130,3 +129,15 @@ File: `rgfn_game/test/systems/villageActionsController.test.js`.
 
 - If needed, next step is to render only NPC conversation lines in modal (filter by tags), while keeping full system log in main log panel.
 - Optional follow-up: keyboard shortcut (e.g. `T` or `Enter`) to open dialogue modal when NPC selected.
+
+## Follow-up pitfall fixed (April 19, 2026)
+
+- Symptom: opening NPC dialogue required two clicks (`select NPC` -> `Open NPC dialogue window`).
+- UX impact: extra redundant step in village rumors flow.
+- Fix:
+  - Removed `Open NPC dialogue window` button from village UI markup and UI models.
+  - Removed binder wiring and presenter logic that toggled that button.
+  - Updated `handleSelectNpc(...)` to open the dialogue modal immediately after selection.
+- Regression guard:
+  - Scenario test now verifies modal is hidden before selection and shown right after clicking NPC.
+
