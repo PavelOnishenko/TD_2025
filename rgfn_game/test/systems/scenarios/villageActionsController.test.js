@@ -865,6 +865,52 @@ test('VillageActionsController requires explicit side-quest acceptance and expos
   assert.equal(gameLog.children.some((child) => String(child.textContent ?? '').includes('Side quest accepted')), true);
 }));
 
+test('VillageActionsController refreshSelectedNpcSideQuestUi re-renders selected NPC offer details after regeneration', () => withDocumentStub(() => {
+  const villageUI = createVillageUi();
+  const gameLog = createElement();
+  let currentOffers = [{
+    id: 'side-old',
+    title: 'Old Offer',
+    description: 'Old quest details.',
+    reward: '11g',
+    status: 'available',
+    children: [{ description: 'Old task.' }],
+  }];
+  const controller = new VillageActionsController(createPlayerStub(), villageUI, gameLog, {
+    onUpdateHUD: () => {},
+    onLeaveVillage: () => {},
+    onAdvanceTime: () => {},
+    getVillageDirectionHint: (settlementName) => ({ settlementName, exists: false }),
+    onVillageBarterCompleted: () => {},
+    getVillageSideQuestOffers: () => currentOffers,
+    getVillageNpcActiveSideQuests: () => [],
+  });
+  controller['dialogueEngine'] = {
+    createNpcRoster: () => [{ id: 'hollow-0', name: 'Kadra Zentor', role: 'Miller', look: 'braided hair', speechStyle: 'direct', disposition: 'truthful' }],
+    buildLocationAnswer: () => ({ speech: '', tone: '', truthfulness: 'truth' }),
+    buildPersonLocationAnswer: () => ({ speech: '', tone: '', truthfulness: 'truth' }),
+  };
+
+  controller.enterVillage('Hollow Reach');
+  controller.handleSelectNpc(0);
+  assert.equal(containsTextInTree(villageUI.sideQuestList, 'Old Offer — Offer available'), true);
+
+  currentOffers = [{
+    id: 'side-new',
+    title: 'Regenerated Offer',
+    description: 'New quest details.',
+    reward: '27g',
+    status: 'available',
+    children: [{ description: 'New task.' }],
+  }];
+  controller.refreshSelectedNpcSideQuestUi();
+
+  const latestCard = villageUI.sideQuestList.children.at(-1);
+  assert.ok(latestCard);
+  assert.equal(containsTextInTree(latestCard, 'Regenerated Offer — Offer available'), true);
+  assert.equal(containsTextInTree(latestCard, 'Reward preview: 27g'), true);
+}));
+
 test('VillageActionsController allows refusing a side-quest offer and keeps other offers visible', () => withDocumentStub(() => {
   const villageUI = createVillageUi();
   const gameLog = createElement();

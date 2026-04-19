@@ -205,7 +205,11 @@ export class GameFacade implements GameFacadeStateAccess {
         regeneratedQuest.track = 'side';
         regeneratedQuest.status = currentQuest.status === 'available' ? 'available' : 'active';
         regeneratedQuest.isCompleted = false;
-        return this.questRuntime.replaceKnownSideQuest(questId, regeneratedQuest);
+        const replaced = this.questRuntime.replaceKnownSideQuest(questId, regeneratedQuest);
+        if (replaced) {
+            this.villageActionsController?.refreshSelectedNpcSideQuestUi();
+        }
+        return replaced;
     };
     public acceptSideQuest = (questId: string): { accepted: boolean; reason?: 'inactive' | 'not-found' | 'already-active' } =>
         this.questRuntime.acceptSideQuest(questId);
