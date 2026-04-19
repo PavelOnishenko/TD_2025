@@ -18,6 +18,7 @@ function createCoordinatorState({ firstRevealResult = false, secondRevealResult 
         registerNamedLocation: (name) => {
           worldMapCalls.register.push(name);
         },
+        getSelectedCellInfo: () => null,
       },
       stateMachine: { transition: (mode) => transitions.push(mode) },
     }),
@@ -56,6 +57,7 @@ test('GameFacadeLifecycleCoordinator village entry forwards recover item callbac
   const coordinator = new GameFacadeLifecycleCoordinator({
     worldMap: {
       getVillageNameAtPlayerPosition: () => 'Golden Beacon',
+      getSelectedCellInfo: () => null,
     },
     questRuntime: {
       recordLocationEntry: (_village, _carried, onRecoveredItemFound) => {
@@ -80,6 +82,7 @@ test('GameFacadeLifecycleCoordinator village entry forwards recover item callbac
     hudCoordinator: {
       addBattleLog: (line) => battleLogs.push(line),
       updateHUD: () => { hudRefreshes += 1; },
+      updateSelectedCell: () => {},
       updateGroupPanel: (lines) => groupUpdates.push(lines),
     },
     villageCoordinator: {
@@ -106,6 +109,7 @@ test('GameFacadeLifecycleCoordinator retries recovered item award when add repor
   const coordinator = new GameFacadeLifecycleCoordinator({
     worldMap: {
       getVillageNameAtPlayerPosition: () => 'Golden Beacon',
+      getSelectedCellInfo: () => null,
     },
     questRuntime: {
       recordLocationEntry: (_village, _carried, onRecoveredItemFound) => ({
@@ -127,6 +131,7 @@ test('GameFacadeLifecycleCoordinator retries recovered item award when add repor
     hudCoordinator: {
       addBattleLog: (line) => battleLogs.push(line),
       updateHUD: () => {},
+      updateSelectedCell: () => {},
       updateGroupPanel: () => {},
     },
     villageCoordinator: {
