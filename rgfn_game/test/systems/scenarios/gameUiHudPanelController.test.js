@@ -86,6 +86,7 @@ function createHudElements() {
   const battleActionsPanel = createElement('battleActions');
   const villageActionsPanel = createElement('villageActions');
   const villageRumorsPanel = createElement('villageRumors');
+  const villageRosterPanel = createElement('villageRoster');
 
   const modeIndicator = createElement('mode');
   modeIndicator.textContent = 'World Map';
@@ -104,6 +105,7 @@ function createHudElements() {
     toggleSelectedPanelBtn: createElement('toggle-selected'),
     toggleWorldMapPanelBtn: createElement('toggle-world-map'),
     toggleLogPanelBtn: createElement('toggle-log'),
+    toggleRosterPanelBtn: createElement('toggle-roster'),
     statsPanel,
     skillsPanel,
     inventoryPanel,
@@ -117,6 +119,7 @@ function createHudElements() {
     battleActionsPanel,
     villageActionsPanel,
     villageRumorsPanel,
+    villageRosterPanel,
   };
 }
 
@@ -125,6 +128,7 @@ function createMockDocument(hudElements) {
     'battle-sidebar': hudElements.battleActionsPanel,
     'village-actions': hudElements.villageActionsPanel,
     'village-rumors-section': hudElements.villageRumorsPanel,
+    'village-roster-panel': hudElements.villageRosterPanel,
   };
 
   return {
@@ -257,6 +261,7 @@ test('GameUiHudPanelController repositions off-screen village panels back into v
 
   global.window = { localStorage: storage, innerWidth: 1280, innerHeight: 720 };
   const hudElements = createHudElements();
+  hudElements.modeIndicator.textContent = 'Village';
   hudElements.villageActionsPanel.getBoundingClientRect = () => ({ left: -1600, top: -900, width: 320, height: 260, right: -1280, bottom: -640 });
   global.document = createMockDocument(hudElements);
   global.requestAnimationFrame = (callback) => callback();

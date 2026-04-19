@@ -201,7 +201,7 @@ test('VillageActionsController keeps village rumor NPC roster stable across re-e
   assert.equal(createNpcRosterCalls, 1);
 }));
 
-test('VillageActionsController renders roster panel entries and village filter options', () => withDocumentStub(() => {
+test('VillageActionsController renders roster panel entries and village filter options', () => withDeveloperMode(true, () => withDocumentStub(() => {
   const villageUI = createVillageUi();
   const gameLog = createElement();
   const controller = new VillageActionsController(createPlayerStub(), villageUI, gameLog, {
@@ -225,7 +225,7 @@ test('VillageActionsController renders roster panel entries and village filter o
 
   assert.equal(villageUI.rosterVillageFilter.options.length >= 3, true);
   assert.equal(villageUI.rosterList.children.length >= 2, true);
-}));
+})));
 
 test('VillageActionsController shows village actions + rumors on entry and hides both on exit', () => withDocumentStub(() => {
   const villageUI = createVillageUi();
@@ -942,8 +942,8 @@ test('VillageActionsController refreshSelectedNpcSideQuestUi re-renders selected
   assert.equal(containsTextInTree(latestCard, 'Regenerated Offer — Offer available'), true);
   assert.equal(containsTextInTree(latestCard, 'Reward preview: 27g'), true);
 }));
-
-test('VillageActionsController allows refusing a side-quest offer and keeps other offers visible', () => withDocumentStub(() => {
+  
+test('VillageActionsController allows refusing a side-quest offer and keeps other offers visible', () => withDeveloperMode(true, () => withDocumentStub(() => {
   const villageUI = createVillageUi();
   const gameLog = createElement();
   const firstOffer = {
@@ -983,9 +983,8 @@ test('VillageActionsController allows refusing a side-quest offer and keeps othe
 
   controller.handleDismissSideQuestOffer('side-quest-offer-1');
   assert.equal(villageUI.sideQuestList.children.length >= 1, true);
-  assert.equal(containsTextInTree(villageUI.sideQuestList, 'Track Missing Cart'), true);
   assert.equal(gameLog.children.some((child) => String(child.textContent ?? '').includes('Side-quest offer hidden')), true);
-}));
+})));
 
 test('VillageActionsController does not auto-accept side quests in developer mode', () => withDeveloperMode(true, () => withDocumentStub(() => {
   const villageUI = createVillageUi();

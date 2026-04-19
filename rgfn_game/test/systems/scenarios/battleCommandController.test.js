@@ -19,11 +19,15 @@ function createController(logs, lootedNames) {
     },
   };
 
+  const turnManager = {
+    getPlayerSideParticipantCount: () => 1,
+  };
+
   return new BattleCommandController(
     {},
     player,
     {},
-    {},
+    turnManager,
     {},
     {
       onUpdateHUD: () => {},

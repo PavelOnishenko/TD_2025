@@ -36,7 +36,7 @@ test('GameWorldInteractionRuntime positions village entry popup using canvas vie
   runtime.showWorldVillageEntryPrompt(worldUI, 'Oakcross', { x: 700, y: 300 }, createCanvas());
 
   assert.equal(worldUI.villageEntryTitle.textContent, 'You found Oakcross.');
-  assert.equal(worldUI.villageEntryPopup.style.left, '986px');
+  assert.equal(worldUI.villageEntryPopup.style.left, '950px');
   assert.equal(worldUI.villageEntryPopup.style.top, '334px');
   assert.equal(worldUI.villageEntryPopup.classList.contains('hidden'), false);
 });

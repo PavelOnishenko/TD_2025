@@ -137,7 +137,7 @@ export default class VillageActionsController {
         this.addLog(`You approach ${npc.name} the ${npc.role}.`, 'player');
         this.addLog(`${npc.name} looks ${npc.look} and speaks in a ${npc.speechStyle} manner.`, 'system-message');
         this.addRecoverLeadFromNpc(npc);
-        this.refreshSelectedNpcSideQuestUi(npc);
+        this.refreshSelectedNpcSideQuestUi();
         this.callbacks.onAdvanceTime?.(8, 0.12);
         this.runRosterIntegrityCheck('handleSelectNpc:end');
     }
@@ -635,7 +635,8 @@ export default class VillageActionsController {
     private appendSideQuestCardText(card: HTMLElement, quest: QuestNode, isOffer: boolean): void {
         const statusText = isOffer ? 'Offer available' : this.getSideQuestStatusText(quest.status);
         const sideQuestType = this.getSideQuestTypeLabel(quest);
-        const lines = [`${quest.title} — ${statusText} (${sideQuestType})`];
+        const headerText = sideQuestType ? `${quest.title} — ${statusText} (${sideQuestType})` : `${quest.title} — ${statusText}`;
+        const lines = [headerText];
         if (!this.isBoilerplateSideQuestDescription(quest.description)) {
             lines.push(quest.description);
         }
@@ -654,6 +655,9 @@ export default class VillageActionsController {
 
     private getSideQuestTypeLabel(quest: QuestNode): string {
         const primaryObjectiveType = quest.children[0]?.objectiveType ?? quest.objectiveType;
+        if (!primaryObjectiveType) {
+            return '';
+        }
         return this.getObjectiveTypeLabel(primaryObjectiveType);
     }
 
@@ -753,7 +757,7 @@ export default class VillageActionsController {
         this.addLog(`${selectedNpc.name} accepts your side-quest turn-in for ${questId}.${reward ? ` Reward received: ${reward}.` : ''}`, 'system');
         this.addLog('Quest tracker updated: side quest turned in.', 'system-message');
         this.callbacks.onUpdateHUD();
-        this.refreshSelectedNpcSideQuestUi(selectedNpc);
+        this.refreshSelectedNpcSideQuestUi();
     }
 
     private logSideQuestAcceptFailure(questId: string, reason?: 'inactive' | 'not-found' | 'already-active'): boolean {
