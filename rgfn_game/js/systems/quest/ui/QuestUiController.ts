@@ -257,7 +257,7 @@ export default class QuestUiController {
     private buildSideQuestCardMarkup(quest: QuestNode): string {
         const status = quest.status ?? 'active';
         const giverNpc = this.escapeHtml(quest.giverNpcName ?? 'Unknown giver');
-        const giverVillage = this.escapeHtml(quest.giverVillageName ?? 'Unknown village');
+        const giverVillage = this.buildLocationLinkMarkup(quest.giverVillageName ?? 'Unknown village');
         const rewardMarkup = quest.reward ? `<div class="side-quest-meta">Reward: ${this.escapeHtml(quest.reward)}</div>` : '';
         const treeMarkup = this.markupBuilder.buildQuestTreeMarkup(quest);
         const title = this.escapeHtml(quest.title);
@@ -274,6 +274,11 @@ export default class QuestUiController {
         </details>`;
     }
     private formatStatus = (status: string): string => status === 'readyToTurnIn' ? 'Ready to turn in' : status.charAt(0).toUpperCase() + status.slice(1);
+
+    private buildLocationLinkMarkup(locationName: string): string {
+        const escapedLocationName = this.escapeHtml(locationName);
+        return `<button type="button" class="quest-entity-name location" data-location-name="${escapedLocationName}">${escapedLocationName}</button>`;
+    }
     private handleSideFilterButtonClick(): void {
         if (this.activeTab !== 'side') {
             return;
