@@ -1649,6 +1649,23 @@ button.quest-entity-name.location:hover {
     color: var(--color-warning);
 }
 
+.village-world-info-section-title {
+    margin: 2px 0 4px;
+    font-size: 12px;
+    color: var(--color-text-muted);
+}
+
+.village-world-info-json {
+    border: 1px solid color-mix(in srgb, var(--color-secondary-accent) 70%, transparent);
+    border-radius: 6px;
+    padding: 6px;
+    margin: 0;
+    white-space: pre-wrap;
+    word-break: break-word;
+    background: color-mix(in srgb, var(--color-secondary-bg) 82%, transparent);
+    color: var(--color-text-primary);
+}
+
 .village-integrity-panel {
     width: min(680px, calc(100vw - 24px));
 }

@@ -19,7 +19,12 @@ export default class GameFacadeLifecycleCoordinator {
             this.state.worldMap.centerOnPlayer();
         }
         this.syncPlayerToWorldMap();
-        this.state.persistenceRuntime.loadGame(this.state.worldMap, this.state.player, this.state.magicSystem);
+        this.state.persistenceRuntime.loadGame(
+            this.state.worldMap,
+            this.state.player,
+            this.state.magicSystem,
+            (villageState) => this.state.villageActionsController.restorePersistentState(villageState),
+        );
         const developerMode = getDeveloperModeConfig();
         if (!hasSavedGame && developerMode.enabled && developerMode.autoGodBoostOnCharacterCreation) {
             this.state.hudCoordinator.handleGodSkillsBoost();
@@ -33,6 +38,7 @@ export default class GameFacadeLifecycleCoordinator {
             this.state.questRuntime.activeQuest,
             this.state.questRuntime.activeSideQuests,
             this.state.gameTime?.getState(),
+            this.state.villageActionsController.getPersistentState(),
         );
     }
 
@@ -55,6 +61,7 @@ export default class GameFacadeLifecycleCoordinator {
             this.state.questRuntime.activeQuest,
             this.state.questRuntime.activeSideQuests,
             this.state.gameTime?.getState(),
+            this.state.villageActionsController.getPersistentState(),
         );
         this.state.worldMap?.setLastUpdateMs(performance.now() - updateStart);
     }
@@ -104,6 +111,7 @@ export default class GameFacadeLifecycleCoordinator {
             this.state.questRuntime.activeQuest,
             this.state.questRuntime.activeSideQuests,
             this.state.gameTime?.getState(),
+            this.state.villageActionsController.getPersistentState(),
         );
     }
 

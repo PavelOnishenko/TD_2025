@@ -202,6 +202,46 @@ test('VillageActionsController keeps village rumor NPC roster stable across re-e
   assert.equal(createNpcRosterCalls, 1);
 }));
 
+test('VillageActionsController restores persisted NPC roster and village stock after reload', () => withDocumentStub(() => {
+  const createController = () => {
+    const villageUI = createVillageUi();
+    const gameLog = createElement();
+    const controller = new VillageActionsController(createPlayerStub(), villageUI, gameLog, {
+      onUpdateHUD: () => {},
+      onAdvanceTime: () => {},
+      onLeaveVillage: () => {},
+      getVillageDirectionHint: (settlementName) => ({ settlementName, exists: false }),
+      onVillageBarterCompleted: () => {},
+    });
+    controller['dialogueEngine'] = {
+      createNpcRoster: () => ([
+        { id: 'mossbrook-0', name: 'Mara', role: 'Innkeeper', look: 'patched vest', speechStyle: 'calm', disposition: 'truthful' },
+      ]),
+      buildLocationAnswer: () => ({ speech: '', tone: '', truthfulness: 'truth' }),
+      buildPersonLocationAnswer: () => ({ speech: '', tone: '', truthfulness: 'truth' }),
+    };
+    return { controller, villageUI };
+  };
+
+  const first = createController();
+  first.controller.enterVillage('Mossbrook');
+  const savedState = first.controller.getPersistentState();
+  const firstRoster = first.controller['npcRoster'].map((npc) => `${npc.name}:${npc.role}:${npc.look}`);
+  const firstOffers = first.controller['stockService'].getCurrentOffers().map((offer) => `${offer.kindName}:${offer.buyPrice}:${offer.isEnchantedWeaponOffer ? 'enchanted' : 'normal'}`);
+
+  const second = createController();
+  second.controller.restorePersistentState(savedState);
+  second.controller['stockService'].refreshVillageStock = () => {
+    throw new Error('refreshVillageStock should not be called when persisted stock exists.');
+  };
+  second.controller.enterVillage('Mossbrook');
+  const secondRoster = second.controller['npcRoster'].map((npc) => `${npc.name}:${npc.role}:${npc.look}`);
+  const secondOffers = second.controller['stockService'].getCurrentOffers().map((offer) => `${offer.kindName}:${offer.buyPrice}:${offer.isEnchantedWeaponOffer ? 'enchanted' : 'normal'}`);
+
+  assert.deepEqual(secondRoster, firstRoster);
+  assert.deepEqual(secondOffers, firstOffers);
+}));
+
 test('VillageActionsController renders roster panel entries and village filter options', () => withDocumentStub(() => {
   const villageUI = createVillageUi();
   const gameLog = createElement();
@@ -226,6 +266,52 @@ test('VillageActionsController renders roster panel entries and village filter o
 
   assert.equal(villageUI.rosterVillageFilter.options.length >= 3, true);
   assert.equal(villageUI.rosterList.children.length >= 2, true);
+}));
+
+test('VillageActionsController world info panel shows saved localStorage payload and runtime village payload', () => withDocumentStub(() => {
+  const villageUI = createVillageUi();
+  const gameLog = createElement();
+  const originalWindow = globalThis.window;
+  globalThis.window = {
+    localStorage: {
+      getItem: () => JSON.stringify({
+        version: 1,
+        worldMap: { worldSeed: 12345 },
+        village: {
+          villageStockByName: {
+            Mossbrook: [{ kindName: 'Knife', buyPrice: 4, possibleItemIds: ['knife_t1'] }],
+          },
+        },
+      }),
+      setItem: () => {},
+    },
+  };
+
+  try {
+    const controller = new VillageActionsController(createPlayerStub(), villageUI, gameLog, {
+      onUpdateHUD: () => {},
+      onAdvanceTime: () => {},
+      onLeaveVillage: () => {},
+      getVillageDirectionHint: (settlementName) => ({ settlementName, exists: false }),
+      onVillageBarterCompleted: () => {},
+    });
+    controller['dialogueEngine'] = {
+      createNpcRoster: () => ([
+        { id: 'mossbrook-0', name: 'Mara', role: 'Innkeeper', look: 'patched vest', speechStyle: 'calm', disposition: 'truthful' },
+      ]),
+      buildLocationAnswer: () => ({ speech: '', tone: '', truthfulness: 'truth' }),
+      buildPersonLocationAnswer: () => ({ speech: '', tone: '', truthfulness: 'truth' }),
+    };
+
+    controller.enterVillage('Mossbrook');
+    const serializedWorldInfo = JSON.stringify(villageUI.rosterList);
+    assert.equal(serializedWorldInfo.includes('Saved localStorage payload (world + village)'), true);
+    assert.equal(serializedWorldInfo.includes('Current runtime village payload (what will be saved)'), true);
+    assert.equal(serializedWorldInfo.includes('Mossbrook'), true);
+    assert.equal(serializedWorldInfo.includes('villageStockByName'), true);
+  } finally {
+    globalThis.window = originalWindow;
+  }
 }));
 
 test('VillageActionsController shows village actions + rumors on entry and hides both on exit', () => withDocumentStub(() => {

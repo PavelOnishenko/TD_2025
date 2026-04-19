@@ -19,6 +19,14 @@ import { DeliverObjectiveData, QuestNode } from '../quest/QuestTypes.js';
 import { balanceConfig } from '../../config/balance/balanceConfig.js';
 import VillageIntegrityAlert from './VillageIntegrityAlert.js';
 import VillageNpcRoster from './VillageNpcRoster.js';
+import { VillageOffer } from './actions/VillageActionsTypes.js';
+
+export type VillageActionsPersistentState = {
+    npcPassportRoster: ReturnType<VillageNpcRoster['getState']>;
+    villageStockByName: Record<string, VillageOffer[]>;
+};
+
+const WORLD_SAVE_KEY = 'rgfn_game_save_v1';
 export default class VillageActionsController {
     private readonly villageUI: VillageUI;
     private readonly callbacks: VillageActionsCallbacks;
@@ -41,6 +49,7 @@ export default class VillageActionsController {
     private dismissedSideQuestOfferIds: Set<string> = new Set();
     private knownNpcNames: Set<string> = new Set();
     private joinedEscortNpcKeys: Set<string> = new Set();
+    private villageStockByName: Map<string, VillageOffer[]> = new Map();
 
     constructor(player: Player, villageUI: VillageUI, gameLog: HTMLElement, callbacks: VillageActionsCallbacks, deps: { nextCharacterName?: () => string } = {}) {
         this.villageUI = villageUI;
@@ -55,7 +64,7 @@ export default class VillageActionsController {
     public enterVillage(villageName: string): void {
         this.currentVillageName = villageName;
         this.barterService.assignQuestBarterContractsIfNeeded(villageName);
-        this.stockService.refreshVillageStock();
+        this.ensureVillageStock(villageName);
         this.npcRoster = this.getOrCreateVillageNpcRoster(villageName);
         this.initializeVillageSideQuestOffers(villageName);
         this.selectedNpcId = null;
@@ -136,7 +145,7 @@ export default class VillageActionsController {
         this.addLog(`You approach ${npc.name} the ${npc.role}.`, 'player');
         this.addLog(`${npc.name} looks ${npc.look} and speaks in a ${npc.speechStyle} manner.`, 'system-message');
         this.addRecoverLeadFromNpc(npc);
-        this.refreshSelectedNpcSideQuestUi(npc);
+        this.refreshSelectedNpcSideQuestUi();
         this.callbacks.onAdvanceTime?.(8, 0.12);
         this.runRosterIntegrityCheck('handleSelectNpc:end');
     }
@@ -243,6 +252,44 @@ export default class VillageActionsController {
     public handleLeave(): void { this.addLog('You leave the village.', 'system'); this.callbacks.onAdvanceTime(5, 0.08); this.callbacks.onLeaveVillage(); }
     public addLog(message: string, type: string = 'system'): void { this.uiPresenter.addLog(message, type); }
     public updateButtons(): void { this.uiPresenter.updateButtons(); }
+    public getPersistentState = (): VillageActionsPersistentState => ({
+        npcPassportRoster: this.npcPassportRoster.getState(),
+        villageStockByName: Object.fromEntries(
+            Array.from(this.villageStockByName.entries()).map(([villageName, offers]) => [
+                villageName,
+                offers.map((offer) => ({ ...offer, possibleItemIds: [...offer.possibleItemIds] })),
+            ]),
+        ),
+    });
+
+    public restorePersistentState(state: unknown): void {
+        if (!state || typeof state !== 'object') {
+            return;
+        }
+        const record = state as { npcPassportRoster?: unknown; villageStockByName?: unknown };
+        this.npcPassportRoster.restoreState(record.npcPassportRoster);
+        this.knownNpcNames = new Set(
+            this.npcPassportRoster
+                .getAllEntries()
+                .map((entry) => entry.passport.name),
+        );
+        const rawStockByName = record.villageStockByName;
+        this.villageStockByName = new Map();
+        if (rawStockByName && typeof rawStockByName === 'object') {
+            Object.entries(rawStockByName).forEach(([villageName, offers]) => {
+                const sanitizedOffers = VillageStockService.sanitizeOffers(offers);
+                if (!villageName.trim() || sanitizedOffers.length === 0) {
+                    return;
+                }
+                this.villageStockByName.set(villageName, sanitizedOffers);
+            });
+        }
+        if (this.currentVillageName.trim()) {
+            this.ensureVillageStock(this.currentVillageName);
+            this.npcRoster = this.getOrCreateVillageNpcRoster(this.currentVillageName);
+            this.refreshNpcUi();
+        }
+    }
 
     private prepareVillageUiForEntry(villageName: string): void {
         this.villageUI.title.textContent = `Village: ${villageName}`;
@@ -258,6 +305,19 @@ export default class VillageActionsController {
 
     private logVillageContractHints(villageName: string): void {
         this.barterService.getVillageContractHints(villageName).forEach((hint) => this.addLog(`Rumor update: ${hint}`, 'system-message'));
+    }
+
+    private ensureVillageStock(villageName: string): void {
+        const cached = this.villageStockByName.get(villageName);
+        if (cached && cached.length > 0) {
+            this.stockService.setCurrentOffers(cached);
+            return;
+        }
+        this.stockService.refreshVillageStock();
+        this.villageStockByName.set(
+            villageName,
+            this.stockService.getCurrentOffers().map((offer) => ({ ...offer, possibleItemIds: [...offer.possibleItemIds] })),
+        );
     }
 
     private createVillageUiPresenter = (player: Player, villageUI: VillageUI, gameLog: HTMLElement): VillageUiPresenter => new VillageUiPresenter({
@@ -701,7 +761,7 @@ export default class VillageActionsController {
         this.addLog(`${selectedNpc.name} accepts your side-quest turn-in for ${questId}.${reward ? ` Reward received: ${reward}.` : ''}`, 'system');
         this.addLog('Quest tracker updated: side quest turned in.', 'system-message');
         this.callbacks.onUpdateHUD();
-        this.refreshSelectedNpcSideQuestUi(selectedNpc);
+        this.refreshSelectedNpcSideQuestUi();
     }
 
     private logSideQuestAcceptFailure(questId: string, reason?: 'inactive' | 'not-found' | 'already-active'): boolean {
@@ -906,11 +966,14 @@ export default class VillageActionsController {
     private renderRosterEntries(listElement: HTMLElement, selectedVillage: string): void {
         const entries = this.npcPassportRoster.getAllEntries(selectedVillage);
         listElement.innerHTML = '';
+        const rosterSectionTitle = document.createElement('p');
+        rosterSectionTitle.className = 'village-world-info-section-title';
+        rosterSectionTitle.textContent = 'NPC passports (runtime source of truth)';
+        listElement.appendChild(rosterSectionTitle);
         if (entries.length === 0) {
             const empty = document.createElement('p');
             empty.textContent = 'No NPC passports registered yet.';
             listElement.appendChild(empty);
-            return;
         }
         entries.forEach((entry) => {
             const row = document.createElement('div');
@@ -919,6 +982,51 @@ export default class VillageActionsController {
                 + `Personality: ${entry.passport.personality} · Status: ${entry.lifeStatus}`;
             listElement.appendChild(row);
         });
+        listElement.appendChild(this.createWorldInfoJsonBlock(
+            'Saved localStorage payload (world + village)',
+            this.getSavedWorldInfoSnapshot(),
+        ));
+        listElement.appendChild(this.createWorldInfoJsonBlock(
+            'Current runtime village payload (what will be saved)',
+            this.getPersistentState(),
+        ));
+    }
+
+    private createWorldInfoJsonBlock(title: string, payload: unknown): HTMLElement {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'village-roster-entry';
+        const heading = document.createElement('p');
+        heading.className = 'village-world-info-section-title';
+        heading.textContent = title;
+        const json = document.createElement('pre');
+        json.className = 'village-world-info-json';
+        json.textContent = this.formatJsonPayload(payload);
+        wrapper.appendChild(heading);
+        wrapper.appendChild(json);
+        return wrapper;
+    }
+
+    private getSavedWorldInfoSnapshot(): unknown {
+        if (typeof window === 'undefined' || !window.localStorage) {
+            return { storage: 'window.localStorage unavailable' };
+        }
+        const raw = window.localStorage.getItem(WORLD_SAVE_KEY);
+        if (!raw) {
+            return { storage: 'No saved world found in localStorage', key: WORLD_SAVE_KEY };
+        }
+        try {
+            return JSON.parse(raw);
+        } catch {
+            return { storage: 'Saved world exists but JSON parse failed', key: WORLD_SAVE_KEY, rawPreview: raw.slice(0, 240) };
+        }
+    }
+
+    private formatJsonPayload(payload: unknown): string {
+        try {
+            return JSON.stringify(payload, null, 2) ?? 'null';
+        } catch {
+            return 'Unable to stringify payload.';
+        }
     }
 
     private shouldIncludeTraderName(traderName: string, knownSettlements: Set<string>): boolean {

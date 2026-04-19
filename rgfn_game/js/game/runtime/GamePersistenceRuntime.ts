@@ -2,6 +2,7 @@ import WorldMap from '../../systems/world/worldMap/WorldMap.js';
 import Player from '../../entities/player/Player.js';
 import MagicSystem from '../../systems/controllers/magic/MagicSystem.js';
 import { QuestNode } from '../../systems/quest/QuestTypes.js';
+import type { VillageActionsPersistentState } from '../../systems/village/VillageActionsController.js';
 
 export type GameSaveState = {
     version: 1;
@@ -11,6 +12,7 @@ export type GameSaveState = {
     quest: QuestNode | null;
     sideQuests?: QuestNode[];
     time?: Record<string, unknown>;
+    village?: VillageActionsPersistentState;
 };
 
 export default class GamePersistenceRuntime {
@@ -26,6 +28,7 @@ export default class GamePersistenceRuntime {
         activeQuest: QuestNode | null,
         activeSideQuests: QuestNode[] = [],
         timeState?: Record<string, unknown>,
+        villageState?: VillageActionsPersistentState,
     ): void {
         const snapshot = JSON.stringify({
             version: 1,
@@ -35,6 +38,7 @@ export default class GamePersistenceRuntime {
             quest: activeQuest,
             sideQuests: activeSideQuests,
             time: timeState,
+            village: villageState,
         } as GameSaveState);
         if (snapshot === this.lastSavedSnapshot) {
             return;
@@ -43,7 +47,12 @@ export default class GamePersistenceRuntime {
         window.localStorage.setItem(this.saveKey, snapshot);
     }
 
-    public loadGame(worldMap: WorldMap, player: Player, magicSystem: MagicSystem): void {
+    public loadGame(
+        worldMap: WorldMap,
+        player: Player,
+        magicSystem: MagicSystem,
+        restoreVillageState?: (state: VillageActionsPersistentState | undefined) => void,
+    ): void {
         const parsed = this.getParsedSaveState();
         if (!parsed || !parsed.player || !parsed.worldMap || !parsed.spellLevels) {
             return;
@@ -51,6 +60,7 @@ export default class GamePersistenceRuntime {
         worldMap.restoreState(parsed.worldMap);
         player.restoreState(parsed.player);
         magicSystem.restoreSpellLevels(parsed.spellLevels);
+        restoreVillageState?.(parsed.village as VillageActionsPersistentState | undefined);
         const [x, y] = worldMap.getPlayerPixelPosition();
         player.x = x;
         player.y = y;

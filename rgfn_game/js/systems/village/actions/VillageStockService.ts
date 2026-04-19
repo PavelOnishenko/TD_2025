@@ -17,6 +17,9 @@ export default class VillageStockService {
     }
 
     public getCurrentOffers = (): VillageOffer[] => this.currentOffers;
+    public setCurrentOffers = (offers: VillageOffer[]): void => {
+        this.currentOffers = offers.map((offer) => ({ ...offer, possibleItemIds: [...offer.possibleItemIds] }));
+    };
 
     public getOffer = (index: number): VillageOffer | undefined => this.currentOffers[index];
 
@@ -50,5 +53,26 @@ export default class VillageStockService {
         }
 
         return copy.slice(0, Math.min(count, copy.length));
+    }
+
+    public static sanitizeOffers(offers: unknown): VillageOffer[] {
+        if (!Array.isArray(offers)) {
+            return [];
+        }
+        return offers
+            .filter((offer): offer is VillageOffer => VillageStockService.isVillageOffer(offer))
+            .map((offer) => ({ ...offer, possibleItemIds: [...offer.possibleItemIds] }));
+    }
+
+    private static isVillageOffer(offer: unknown): offer is VillageOffer {
+        if (!offer || typeof offer !== 'object') {
+            return false;
+        }
+        const record = offer as Record<string, unknown>;
+        return typeof record.kindName === 'string'
+            && typeof record.buyPrice === 'number'
+            && Array.isArray(record.possibleItemIds)
+            && record.possibleItemIds.every((itemId) => typeof itemId === 'string')
+            && (record.isEnchantedWeaponOffer === undefined || typeof record.isEnchantedWeaponOffer === 'boolean');
     }
 }

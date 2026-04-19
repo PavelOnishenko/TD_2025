@@ -1,4 +1,4 @@
-/* eslint-disable style-guide/function-length-error, style-guide/arrow-function-style */
+/* eslint-disable style-guide/function-length-error, style-guide/arrow-function-style, style-guide/file-length-warning, style-guide/function-length-warning */
 import { NpcDisposition, VillageNpcProfile } from './VillageDialogueEngine.js';
 
 export type VillageNpcLifeStatus = 'alive' | 'dead';
@@ -20,6 +20,11 @@ export type VillageNpcRosterEntry = {
     firstSeenAtTick: number;
     lastUpdatedAtTick: number;
     sourceTag: string;
+};
+
+export type VillageNpcRosterState = {
+    entries: VillageNpcRosterEntry[];
+    tickCounter: number;
 };
 
 export class VillageRosterIntegrityError extends Error {
@@ -137,6 +142,23 @@ export default class VillageNpcRoster {
             .sort((left, right) => left.localeCompare(right));
     }
 
+    public getState(): VillageNpcRosterState {
+        return { entries: this.getAllEntries(), tickCounter: this.tickCounter };
+    }
+
+    public restoreState(state: unknown): void {
+        if (!state || typeof state !== 'object') {
+            return;
+        }
+        const record = state as { entries?: unknown; tickCounter?: unknown };
+        const rawEntries = Array.isArray(record.entries) ? record.entries : [];
+        const entries = rawEntries
+            .filter((entry): entry is VillageNpcRosterEntry => this.isRosterEntry(entry))
+            .map((entry) => ({ ...entry, passport: { ...entry.passport } }));
+        this.entriesByKey = new Map(entries.map((entry) => [entry.passport.key, entry]));
+        this.tickCounter = typeof record.tickCounter === 'number' && Number.isFinite(record.tickCounter) ? Math.max(0, Math.floor(record.tickCounter)) : entries.reduce((max, entry) => Math.max(max, entry.lastUpdatedAtTick), 0);
+    }
+
     public assertNpcExistsInVillage(villageName: string, npcName: string, context: string): void {
         const key = this.getKey(villageName, npcName);
         const entry = this.entriesByKey.get(key);
@@ -167,5 +189,30 @@ export default class VillageNpcRoster {
     private nextTick(): number {
         this.tickCounter += 1;
         return this.tickCounter;
+    }
+
+    private isRosterEntry(entry: unknown): entry is VillageNpcRosterEntry {
+        if (!entry || typeof entry !== 'object') {
+            return false;
+        }
+        const record = entry as Record<string, unknown>;
+        const passport = record.passport;
+        if (!passport || typeof passport !== 'object') {
+            return false;
+        }
+        const passportRecord = passport as Record<string, unknown>;
+        const lifeStatus = record.lifeStatus;
+        return typeof passportRecord.id === 'string'
+            && typeof passportRecord.key === 'string'
+            && typeof passportRecord.name === 'string'
+            && typeof passportRecord.villageName === 'string'
+            && typeof passportRecord.occupation === 'string'
+            && typeof passportRecord.personality === 'string'
+            && typeof passportRecord.speechStyle === 'string'
+            && typeof passportRecord.look === 'string'
+            && (lifeStatus === 'alive' || lifeStatus === 'dead')
+            && typeof record.firstSeenAtTick === 'number'
+            && typeof record.lastUpdatedAtTick === 'number'
+            && typeof record.sourceTag === 'string';
     }
 }

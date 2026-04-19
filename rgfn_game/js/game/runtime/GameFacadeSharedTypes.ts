@@ -15,6 +15,7 @@ import type GameQuestRuntime from '../runtime/GameQuestRuntime.js';
 import type GamePersistenceRuntime from '../runtime/GamePersistenceRuntime.js';
 import type GameWorldInteractionRuntime from '../runtime/GameWorldInteractionRuntime.js';
 import type GameTimeRuntime from '../../systems/time/GameTimeRuntime.js';
+import type VillageActionsController from '../../systems/village/VillageActionsController.js';
 
 export type GameFacadeStateAccess = {
     canvas: HTMLCanvasElement;
@@ -36,5 +37,6 @@ export type GameFacadeStateAccess = {
     persistenceRuntime: GamePersistenceRuntime;
     worldInteractionRuntime: GameWorldInteractionRuntime;
     gameTime: GameTimeRuntime;
+    villageActionsController: VillageActionsController;
     advanceTime: (minutes: number, fatigueScale: number) => void;
 };
