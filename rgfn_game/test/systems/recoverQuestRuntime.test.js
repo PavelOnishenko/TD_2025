@@ -506,7 +506,7 @@ test('GameQuestRuntime marks deliver side quests ready when reaching destination
   ];
 
   const changed = runtime.recordLocationEntry('Golden Beacon', ['Eshdra Lorka']);
-  assert.equal(changed, true);
+  assert.equal(changed.changed, true);
   assert.equal(runtime.activeSideQuests[0].status, 'readyToTurnIn');
 });
 

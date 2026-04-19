@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import QuestUiController from '../../../dist/systems/quest/QuestUiController.js';
+import QuestUiController from '../../../dist/systems/quest/ui/QuestUiController.js';
 
 function createElement() {
   return {
