@@ -137,7 +137,7 @@ export default class VillageActionsController {
         this.addLog(`You approach ${npc.name} the ${npc.role}.`, 'player');
         this.addLog(`${npc.name} looks ${npc.look} and speaks in a ${npc.speechStyle} manner.`, 'system-message');
         this.addRecoverLeadFromNpc(npc);
-        this.refreshSelectedNpcSideQuestUi(npc);
+        this.refreshSelectedNpcSideQuestUi();
         this.callbacks.onAdvanceTime?.(8, 0.12);
         this.runRosterIntegrityCheck('handleSelectNpc:end');
     }
@@ -753,7 +753,7 @@ export default class VillageActionsController {
         this.addLog(`${selectedNpc.name} accepts your side-quest turn-in for ${questId}.${reward ? ` Reward received: ${reward}.` : ''}`, 'system');
         this.addLog('Quest tracker updated: side quest turned in.', 'system-message');
         this.callbacks.onUpdateHUD();
-        this.refreshSelectedNpcSideQuestUi(selectedNpc);
+        this.refreshSelectedNpcSideQuestUi();
     }
 
     private logSideQuestAcceptFailure(questId: string, reason?: 'inactive' | 'not-found' | 'already-active'): boolean {
