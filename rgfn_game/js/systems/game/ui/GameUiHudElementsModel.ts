@@ -82,6 +82,7 @@ export class HudElementsModel {
     public groupPanel!: HTMLElement;
     public worldMapPanel!: HTMLElement;
     public logPanel!: HTMLElement;
+    public rosterPanel!: HTMLElement;
     public questsTitle!: HTMLElement;
     public questsKnownOnlyToggle!: HTMLInputElement;
     public questsBody!: HTMLElement;
@@ -106,6 +107,7 @@ export class HudElementsModel {
     public toggleSelectedPanelBtn!: HTMLButtonElement;
     public toggleWorldMapPanelBtn!: HTMLButtonElement;
     public toggleLogPanelBtn!: HTMLButtonElement;
+    public toggleRosterPanelBtn!: HTMLButtonElement;
     public questIntroModal!: HTMLElement;
     public questIntroBody!: HTMLElement;
     public questIntroCloseBtn!: HTMLButtonElement;

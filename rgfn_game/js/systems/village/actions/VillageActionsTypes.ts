@@ -26,6 +26,8 @@ export type VillageUI = {
     sellSelectedBtn: HTMLButtonElement;
     npcList: HTMLElement;
     npcTitle: HTMLElement;
+    rosterVillageFilter: HTMLSelectElement;
+    rosterList: HTMLElement;
     askVillageInput: HTMLSelectElement;
     askVillageBtn: HTMLButtonElement;
     askNearbySettlementsBtn: HTMLButtonElement;

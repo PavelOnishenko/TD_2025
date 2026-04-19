@@ -17,6 +17,8 @@ import {
 import { isDeveloperModeEnabled } from '../../utils/DeveloperModeConfig.js';
 import { DeliverObjectiveData, QuestNode } from '../quest/QuestTypes.js';
 import { balanceConfig } from '../../config/balance/balanceConfig.js';
+import VillageIntegrityAlert from './VillageIntegrityAlert.js';
+import VillageNpcRoster from './VillageNpcRoster.js';
 export default class VillageActionsController {
     private readonly villageUI: VillageUI;
     private readonly callbacks: VillageActionsCallbacks;
@@ -29,7 +31,8 @@ export default class VillageActionsController {
     private readonly dialogueInteraction: VillageDialogueInteractionService;
     private currentVillageName = '';
     private npcRoster: VillageNpcProfile[] = [];
-    private villageNpcRosters: Map<string, VillageNpcProfile[]> = new Map();
+    private readonly npcPassportRoster = new VillageNpcRoster();
+    private readonly integrityAlert = new VillageIntegrityAlert();
     private selectedNpcId: string | null = null;
     private escortContracts: QuestEscortContract[] = [];
     private defendContracts: QuestDefendContract[] = [];
@@ -60,6 +63,7 @@ export default class VillageActionsController {
         this.handleEnter(villageName);
         this.logVillageContractHints(villageName);
         this.refreshDialogueTargetOptions();
+        this.runRosterIntegrityCheck('enterVillage');
     }
 
     public configureQuestBarterContracts(contracts: QuestBarterContract[]): void {
@@ -72,7 +76,7 @@ export default class VillageActionsController {
     };
     public configureQuestDefendContracts = (contracts: QuestDefendContract[]): void => {
         this.defendContracts = contracts;
-        this.villageNpcRosters.forEach((roster, villageName) => this.ensureQuestPeoplePresent(roster, villageName));
+        this.npcPassportRoster.getVillageNames().forEach((villageName) => this.ensureQuestPeoplePresent(villageName));
         if (this.currentVillageName.trim()) {
             this.npcRoster = this.getOrCreateVillageNpcRoster(this.currentVillageName);
             this.refreshNpcUi();
@@ -114,6 +118,17 @@ export default class VillageActionsController {
             this.addLog('No one with that description is nearby.', 'system');
             return;
         }
+        this.runRosterIntegrityCheck('handleSelectNpc:start');
+        if (npc.role.includes('[DEAD]')) {
+            this.addLog(`${npc.name} is listed as dead in the roster and cannot hold a dialogue.`, 'system-message');
+            return;
+        }
+        try {
+            this.npcPassportRoster.assertNpcExistsInVillage(this.currentVillageName, npc.name, 'handleSelectNpc');
+        } catch (error) {
+            this.integrityAlert.show(error, 'handleSelectNpc');
+            return;
+        }
 
         this.selectedNpcId = npc.id;
         this.knownNpcNames.add(npc.name);
@@ -122,7 +137,8 @@ export default class VillageActionsController {
         this.addLog(`${npc.name} looks ${npc.look} and speaks in a ${npc.speechStyle} manner.`, 'system-message');
         this.addRecoverLeadFromNpc(npc);
         this.refreshSelectedNpcSideQuestUi(npc);
-        this.callbacks.onAdvanceTime(8, 0.12);
+        this.callbacks.onAdvanceTime?.(8, 0.12);
+        this.runRosterIntegrityCheck('handleSelectNpc:end');
     }
 
     public handleAcceptSideQuest(questId: string): void {
@@ -292,21 +308,22 @@ export default class VillageActionsController {
         this.uiPresenter.renderNpcButtons(this.npcRoster, this.selectedNpcId);
         this.uiPresenter.updateNpcPanel(this.getSelectedNpc());
         this.npcRoster.forEach((npc) => this.knownNpcNames.add(npc.name));
+        this.renderRosterPanel();
         this.refreshDialogueTargetOptions();
         this.updateButtons();
+        this.runRosterIntegrityCheck('refreshNpcUi');
     }
 
     private getOrCreateVillageNpcRoster(villageName: string): VillageNpcProfile[] {
-        const cachedRoster = this.villageNpcRosters.get(villageName);
-        if (cachedRoster) {
-            this.ensureQuestPeoplePresent(cachedRoster, villageName);
-            return cachedRoster;
+        if (this.npcPassportRoster.hasVillage(villageName)) {
+            this.ensureQuestPeoplePresent(villageName);
+            return this.npcPassportRoster.getVillageProfiles(villageName);
         }
 
         const roster = this.applyQuestStyleNames(this.dialogueEngine.createNpcRoster(villageName));
-        this.ensureQuestPeoplePresent(roster, villageName);
-        this.villageNpcRosters.set(villageName, roster);
-        return roster;
+        roster.forEach((npc) => this.npcPassportRoster.upsert(villageName, npc, 'generated-on-village-entry'));
+        this.ensureQuestPeoplePresent(villageName);
+        return this.npcPassportRoster.getVillageProfiles(villageName);
     }
 
     private applyQuestStyleNames(roster: VillageNpcProfile[]): VillageNpcProfile[] {
@@ -344,81 +361,63 @@ export default class VillageActionsController {
         return offers;
     }
 
-    private ensureQuestPeoplePresent(roster: VillageNpcProfile[], villageName: string): void {
+    private ensureQuestPeoplePresent(villageName: string): void {
         const unavailableNpcNames = this.getUnavailableNpcNames(villageName);
-        this.removeUnavailableNpcs(roster, unavailableNpcNames);
-        this.barterService.getVillageContractTraders(villageName).forEach((traderName) => this.appendTraderIfMissing(roster, villageName, traderName));
+        this.markUnavailableNpcs(villageName, unavailableNpcNames);
+        this.barterService.getVillageContractTraders(villageName).forEach((traderName) => this.appendTraderIfMissing(villageName, traderName));
         this.escortContracts
             .filter((contract) => contract.sourceVillage.trim().toLocaleLowerCase() === villageName.trim().toLocaleLowerCase())
-            .forEach((contract) => this.appendEscortIfMissing(roster, villageName, contract));
+            .forEach((contract) => this.appendEscortIfMissing(villageName, contract));
         this.defendContracts
             .filter((contract) => contract.villageName.trim().toLocaleLowerCase() === villageName.trim().toLocaleLowerCase())
-            .forEach((contract) => this.appendDefendContactIfMissing(roster, villageName, contract, unavailableNpcNames));
+            .forEach((contract) => this.appendDefendContactIfMissing(villageName, contract, unavailableNpcNames));
     }
 
-    private appendEscortIfMissing(roster: VillageNpcProfile[], villageName: string, contract: QuestEscortContract): void {
-        const exists = roster.some((npc) => npc.name.toLocaleLowerCase() === contract.personName.toLocaleLowerCase());
-        if (exists) {
-            return;
-        }
-        roster.unshift({
+    private appendEscortIfMissing(villageName: string, contract: QuestEscortContract): void {
+        this.npcPassportRoster.upsert(villageName, {
             id: `${villageName.toLowerCase()}-${contract.personName.toLocaleLowerCase()}-escort`,
             name: contract.personName,
             role: `Escort to ${contract.destinationVillage}`,
             look: 'travel cloak, packed satchel, alert posture',
             speechStyle: 'focused and practical',
             disposition: 'truthful',
-        });
+        }, 'quest-escort');
     }
 
-    private appendTraderIfMissing(roster: VillageNpcProfile[], villageName: string, traderName: string): void {
-        const exists = roster.some((npc) => npc.name.toLocaleLowerCase() === traderName.toLocaleLowerCase());
-        if (exists) {
-            return;
-        }
-
-        roster.unshift({
+    private appendTraderIfMissing(villageName: string, traderName: string): void {
+        this.npcPassportRoster.upsert(villageName, {
             id: `${villageName.toLowerCase()}-${traderName.toLocaleLowerCase()}`,
             name: traderName,
             role: 'Barter Broker',
             look: 'emerald scarf, ledger satchel, watchful eyes',
             speechStyle: 'steady and transactional',
             disposition: 'truthful',
-        });
+        }, 'quest-barter');
     }
 
-    private appendDefendContactIfMissing(roster: VillageNpcProfile[], villageName: string, contract: QuestDefendContract, unavailableNpcNames: Set<string>): void {
+    private appendDefendContactIfMissing(villageName: string, contract: QuestDefendContract, unavailableNpcNames: Set<string>): void {
         if (unavailableNpcNames.has(contract.personName.trim().toLocaleLowerCase())) {
             return;
         }
-        const exists = roster.some((npc) => npc.name.toLocaleLowerCase() === contract.personName.toLocaleLowerCase());
-        if (exists) {
-            return;
-        }
-        roster.unshift({
+        this.npcPassportRoster.upsert(villageName, {
             id: `${villageName.toLowerCase()}-${contract.personName.toLocaleLowerCase()}-defend`,
             name: contract.personName,
             role: `Artifact Custodian (${contract.artifactName})`,
             look: 'dusty gloves, encrypted satchel, sleepless eyes',
             speechStyle: 'urgent and strategic',
             disposition: 'truthful',
-        });
+        }, 'quest-defend');
     }
 
-    private appendRecoverHolderIfMissing(roster: VillageNpcProfile[], villageName: string, personName: string, itemName: string): void {
-        const exists = roster.some((npc) => npc.name.toLocaleLowerCase() === personName.toLocaleLowerCase());
-        if (exists) {
-            return;
-        }
-
-        roster.unshift({
+    private appendRecoverHolderIfMissing(villageName: string, personName: string, itemName: string): void {
+        this.npcPassportRoster.upsert(villageName, {
             id: `${villageName.toLowerCase()}-${personName.toLocaleLowerCase()}-recover`,
             name: personName,
             role: `Wanted for ${itemName}`,
             look: 'hidden satchel, tense posture, restless eyes',
             speechStyle: 'guarded and hostile',
             disposition: 'liar',
-        });
+        }, 'quest-recover');
     }
 
     private getUnavailableNpcNames(villageName: string): Set<string> {
@@ -432,19 +431,11 @@ export default class VillageActionsController {
         );
     }
 
-    private removeUnavailableNpcs(roster: VillageNpcProfile[], unavailableNpcNames: Set<string>): void {
+    private markUnavailableNpcs(villageName: string, unavailableNpcNames: Set<string>): void {
         if (unavailableNpcNames.size === 0) {
             return;
         }
-        for (let index = roster.length - 1; index >= 0; index -= 1) {
-            if (unavailableNpcNames.has(roster[index].name.trim().toLocaleLowerCase())) {
-                roster.splice(index, 1);
-            }
-        }
-        const selectedNpc = this.getSelectedNpc();
-        if (selectedNpc && unavailableNpcNames.has(selectedNpc.name.trim().toLocaleLowerCase())) {
-            this.selectedNpcId = null;
-        }
+        unavailableNpcNames.forEach((npcName) => this.npcPassportRoster.markDead(villageName, npcName));
     }
 
     private getSelectedNpc(): VillageNpcProfile | null {
@@ -655,7 +646,7 @@ export default class VillageActionsController {
 
     private getSideQuestTaskDetails(quest: QuestNode): string {
         const detail = quest.children
-            .map((child) => child.description.trim())
+            .map((child) => child.description?.trim() ?? '')
             .find((description) => description.length > 0 && description !== quest.description.trim());
         return detail ?? '';
     }
@@ -772,6 +763,9 @@ export default class VillageActionsController {
     private populateSelectWithOptions(select: HTMLSelectElement, values: string[], placeholder: string): void {
         const existingValue = select.value;
         select.innerHTML = '';
+        if (Array.isArray(select.options)) {
+            select.options.length = 0;
+        }
 
         if (values.length === 0) {
             this.createAndAppendOption(select, '', placeholder);
@@ -793,7 +787,8 @@ export default class VillageActionsController {
         if (!recoverLead.revealed || !recoverLead.personName || !recoverLead.itemName) {
             return;
         }
-        this.appendRecoverHolderIfMissing(this.npcRoster, this.currentVillageName, recoverLead.personName, recoverLead.itemName);
+        this.appendRecoverHolderIfMissing(this.currentVillageName, recoverLead.personName, recoverLead.itemName);
+        this.npcRoster = this.getOrCreateVillageNpcRoster(this.currentVillageName);
         this.addLog(
             `${npc.name} lowers their voice: "${recoverLead.personName} is carrying ${recoverLead.itemName}. You'll find them in this village."`,
             'system-message',
@@ -854,18 +849,72 @@ export default class VillageActionsController {
         if (!normalizedVillage || !normalizedNpcName || !nearbyVillageSet.has(normalizedVillage)) {
             return;
         }
-        const roster = this.getOrCreateVillageNpcRoster(villageName.trim());
-        const exists = roster.some((npc) => npc.name.trim().toLocaleLowerCase() === normalizedNpcName.toLocaleLowerCase());
-        if (exists) {
-            return;
-        }
-        roster.unshift({
+        this.npcPassportRoster.upsert(villageName.trim(), {
             id: `${normalizedVillage}-${normalizedNpcName.toLocaleLowerCase()}-side`,
             name: normalizedNpcName,
             role,
             look: 'travel-worn cloak, practical satchel, watchful gaze',
             speechStyle: 'measured and direct',
             disposition: 'truthful',
+        }, 'side-quest');
+    }
+
+    private runRosterIntegrityCheck(context: string): void {
+        if (!this.currentVillageName.trim()) {
+            return;
+        }
+        try {
+            const villagers = this.npcPassportRoster.getVillageProfiles(this.currentVillageName);
+            villagers.forEach((npc) => this.npcPassportRoster.assertNpcExistsInVillage(this.currentVillageName, npc.name, context));
+        } catch (error) {
+            this.integrityAlert.show(error, context);
+        }
+    }
+
+    private renderRosterPanel(): void {
+        const filterElement = this.villageUI.rosterVillageFilter;
+        const listElement = this.villageUI.rosterList;
+        if (!isDeveloperModeEnabled()) {
+            this.renderRosterDisabledState(filterElement, listElement);
+            return;
+        }
+        const villages = this.npcPassportRoster.getVillageNames();
+        const previousValue = filterElement.value;
+        filterElement.innerHTML = '';
+        this.createAndAppendOption(filterElement, '', 'All villages');
+        villages.forEach((villageName) => this.createAndAppendOption(filterElement, villageName, villageName));
+        const nextValue = villages.includes(previousValue) || previousValue === '' ? previousValue : this.currentVillageName;
+        filterElement.value = nextValue;
+        if (!filterElement.dataset.boundRosterFilter) {
+            filterElement.dataset.boundRosterFilter = '1';
+            filterElement.addEventListener('change', () => this.renderRosterPanel());
+        }
+        const selectedVillage = filterElement.value;
+        this.renderRosterEntries(listElement, selectedVillage);
+    }
+
+    private renderRosterDisabledState(filterElement: HTMLSelectElement, listElement: HTMLElement): void {
+        filterElement.innerHTML = '';
+        this.createAndAppendOption(filterElement, '', 'Developer mode disabled');
+        filterElement.value = '';
+        listElement.innerHTML = '';
+    }
+
+    private renderRosterEntries(listElement: HTMLElement, selectedVillage: string): void {
+        const entries = this.npcPassportRoster.getAllEntries(selectedVillage);
+        listElement.innerHTML = '';
+        if (entries.length === 0) {
+            const empty = document.createElement('p');
+            empty.textContent = 'No NPC passports registered yet.';
+            listElement.appendChild(empty);
+            return;
+        }
+        entries.forEach((entry) => {
+            const row = document.createElement('div');
+            row.className = `village-roster-entry${entry.lifeStatus === 'dead' ? ' is-dead' : ''}`;
+            row.textContent = `${entry.passport.name} (${entry.passport.occupation}) · Village: ${entry.passport.villageName} · `
+                + `Personality: ${entry.passport.personality} · Status: ${entry.lifeStatus}`;
+            listElement.appendChild(row);
         });
     }
 
