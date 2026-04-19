@@ -102,8 +102,10 @@ export default class QuestUiController {
         this.mainTabBtn.addEventListener('click', () => this.switchTab('main'));
         this.sideTabBtn.addEventListener('click', () => this.switchTab('side'));
         this.introModal.addEventListener('click', (event: MouseEvent) => this.handleIntroModalClick(event));
-        this.questBody.addEventListener('click', (event: MouseEvent) => { void this.handleRegenerateButtonClick(event); });
-        this.bindLocationClicks(this.questBody);
+        this.questBody.addEventListener('click', (event: MouseEvent) => {
+            void this.handleRegenerateButtonClick(event);
+            this.handleLocationClick(event);
+        });
         this.bindLocationClicks(this.introBody);
     }
     private assignSideFilterElements(

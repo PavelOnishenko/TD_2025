@@ -635,7 +635,8 @@ export default class VillageActionsController {
     private appendSideQuestCardText(card: HTMLElement, quest: QuestNode, isOffer: boolean): void {
         const statusText = isOffer ? 'Offer available' : this.getSideQuestStatusText(quest.status);
         const sideQuestType = this.getSideQuestTypeLabel(quest);
-        const lines = [`${quest.title} — ${statusText} (${sideQuestType})`];
+        const headerText = sideQuestType ? `${quest.title} — ${statusText} (${sideQuestType})` : `${quest.title} — ${statusText}`;
+        const lines = [headerText];
         if (!this.isBoilerplateSideQuestDescription(quest.description)) {
             lines.push(quest.description);
         }
@@ -654,6 +655,9 @@ export default class VillageActionsController {
 
     private getSideQuestTypeLabel(quest: QuestNode): string {
         const primaryObjectiveType = quest.children[0]?.objectiveType ?? quest.objectiveType;
+        if (!primaryObjectiveType) {
+            return '';
+        }
         return this.getObjectiveTypeLabel(primaryObjectiveType);
     }
 
