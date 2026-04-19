@@ -946,6 +946,54 @@ test('VillageActionsController does not auto-accept side quests in developer mod
   assert.equal(gameLog.children.some((child) => String(child.textContent ?? '').includes('Auto-accepted side quests')), false);
 })));
 
+test('VillageActionsController labels side-quest type in card header and omits boilerplate offer description', () => withDocumentStub(() => {
+  const villageUI = createVillageUi();
+  const gameLog = createElement();
+  const offerQuest = {
+    id: 'side-quest-offer-type',
+    title: 'Kadra Zentor\'s Request',
+    description: 'Assist Kadra Zentor with a local task in Selzen.',
+    reward: '29g',
+    status: 'available',
+    objectiveType: 'scout',
+    children: [
+      {
+        id: 'side-quest-offer-type-leaf',
+        title: 'Purge Sproutlings',
+        description: 'Track and purge rare mutant targets.',
+        reward: '29g',
+        status: 'available',
+        objectiveType: 'eliminate',
+        children: [],
+      },
+    ],
+  };
+  const controller = new VillageActionsController(createPlayerStub(), villageUI, gameLog, {
+    onUpdateHUD: () => {},
+    onLeaveVillage: () => {},
+    onAdvanceTime: () => {},
+    getVillageDirectionHint: (settlementName) => ({ settlementName, exists: false }),
+    onVillageBarterCompleted: () => {},
+    getVillageSideQuestOffers: () => [offerQuest],
+    getVillageNpcActiveSideQuests: () => [],
+    acceptSideQuest: () => ({ accepted: true }),
+  });
+  controller['dialogueEngine'] = {
+    createNpcRoster: () => [{ id: 'sel-0', name: 'Kadra Zentor', role: 'Scout', look: 'cloak', speechStyle: 'calm', disposition: 'truthful' }],
+    buildLocationAnswer: () => ({ speech: '', tone: '', truthfulness: 'truth' }),
+    buildPersonLocationAnswer: () => ({ speech: '', tone: '', truthfulness: 'truth' }),
+  };
+
+  controller.enterVillage('Selzen');
+  controller.handleSelectNpc(0);
+
+  const offerCard = villageUI.sideQuestList.children[0];
+  assert.equal(Boolean(offerCard), true);
+  assert.equal(offerCard.children.some((entry) => entry.textContent?.includes('Offer available (Purge)')), true);
+  assert.equal(offerCard.children.some((entry) => entry.textContent === 'Assist Kadra Zentor with a local task in Selzen.'), false);
+  assert.equal(offerCard.children.some((entry) => entry.textContent?.includes('Task details: Track and purge rare mutant targets.')), true);
+}));
+
 test('VillageActionsController shows turn-in action for ready side quests and turn-in is explicit', () => withDocumentStub(() => {
   const villageUI = createVillageUi();
   const gameLog = createElement();

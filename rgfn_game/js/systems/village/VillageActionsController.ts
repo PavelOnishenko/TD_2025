@@ -15,7 +15,7 @@ import {
     VillageUI,
 } from './actions/VillageActionsTypes.js';
 import { isDeveloperModeEnabled } from '../../utils/DeveloperModeConfig.js';
-import { DeliverObjectiveData, QuestNode } from '../quest/QuestTypes.js';
+import { DeliverObjectiveData, QuestNode, QuestObjectiveType } from '../quest/QuestTypes.js';
 import { balanceConfig } from '../../config/balance/balanceConfig.js';
 export default class VillageActionsController {
     private readonly villageUI: VillageUI;
@@ -639,7 +639,11 @@ export default class VillageActionsController {
 
     private appendSideQuestCardText(card: HTMLElement, quest: QuestNode, isOffer: boolean): void {
         const statusText = isOffer ? 'Offer available' : this.getSideQuestStatusText(quest.status);
-        const lines = [`${quest.title} — ${statusText}`, quest.description];
+        const sideQuestType = this.getSideQuestTypeLabel(quest);
+        const lines = [`${quest.title} — ${statusText} (${sideQuestType})`];
+        if (!this.isBoilerplateSideQuestDescription(quest.description)) {
+            lines.push(quest.description);
+        }
         const taskDetails = this.getSideQuestTaskDetails(quest);
         if (taskDetails) {
             lines.push(`Task details: ${taskDetails}`);
@@ -651,6 +655,53 @@ export default class VillageActionsController {
                 element.textContent = line;
                 card.appendChild(element);
             });
+    }
+
+    private getSideQuestTypeLabel(quest: QuestNode): string {
+        const primaryObjectiveType = quest.children[0]?.objectiveType ?? quest.objectiveType;
+        return this.getObjectiveTypeLabel(primaryObjectiveType);
+    }
+
+    private getObjectiveTypeLabel(objectiveType: QuestObjectiveType): string {
+        if (objectiveType === 'deliver' || objectiveType === 'localDelivery') {
+            return 'Courier';
+        }
+        if (objectiveType === 'eliminate' || objectiveType === 'hunt') {
+            return 'Purge';
+        }
+        if (objectiveType === 'travel') {
+            return 'Travel';
+        }
+        if (objectiveType === 'barter') {
+            return 'Barter';
+        }
+        if (objectiveType === 'scout') {
+            return 'Scout';
+        }
+        if (objectiveType === 'recover') {
+            return 'Recover';
+        }
+        if (objectiveType === 'escort') {
+            return 'Escort';
+        }
+        if (objectiveType === 'defend') {
+            return 'Defend';
+        }
+        if (objectiveType === 'gather') {
+            return 'Gather';
+        }
+        if (objectiveType === 'repair') {
+            return 'Repair';
+        }
+        return 'Patrol';
+    }
+
+    private isBoilerplateSideQuestDescription(description: string): boolean {
+        const normalizedDescription = description.trim();
+        if (/^Assist .+ with a local task in .+\.$/u.test(normalizedDescription)) {
+            return true;
+        }
+        return false;
     }
 
     private getSideQuestTaskDetails(quest: QuestNode): string {
