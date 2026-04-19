@@ -68,6 +68,8 @@ export class VillageUiModel {
     public sellSelectedBtn!: HTMLButtonElement;
     public npcList!: HTMLElement;
     public npcTitle!: HTMLElement;
+    public rosterVillageFilter!: HTMLSelectElement;
+    public rosterList!: HTMLElement;
     public askVillageInput!: HTMLSelectElement;
     public askVillageBtn!: HTMLButtonElement;
     public askNearbySettlementsBtn!: HTMLButtonElement;

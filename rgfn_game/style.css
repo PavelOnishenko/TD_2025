@@ -360,7 +360,7 @@ h1 {
 }
 
 #magic-panel, #inventory-panel, #skills-panel, #quests-panel, #lore-panel, #stats-panel, #selected-panel, #group-panel,
-#world-sidebar, #battle-sidebar, #game-log-container, #village-actions, #village-rumors-section {
+#world-sidebar, #battle-sidebar, #game-log-container, #village-actions, #village-rumors-section, #village-roster-panel {
     width: min(340px, calc(100vw - 48px));
     max-width: calc(100vw - 32px);
     max-inline-size: calc(100vw - 32px);
@@ -712,7 +712,7 @@ h1 {
     }
 
     #magic-panel, #inventory-panel, #skills-panel, #quests-panel, #lore-panel, #stats-panel, #selected-panel, #group-panel,
-    #world-sidebar, #battle-sidebar, #game-log-container, #village-actions, #village-rumors-section {
+    #world-sidebar, #battle-sidebar, #game-log-container, #village-actions, #village-rumors-section, #village-roster-panel {
         margin-top: 0;
         height: 260px;
         max-height: 260px;
@@ -1620,4 +1620,46 @@ button.quest-entity-name.location:hover {
     display: flex;
     flex-direction: column;
     gap: 6px;
+}
+
+.village-roster-panel {
+    border: 1px solid var(--color-secondary-accent);
+    border-radius: 6px;
+    padding: 8px;
+    background: color-mix(in srgb, var(--color-panel-highlight) 66%, transparent);
+}
+
+.village-roster-list {
+    max-height: 200px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 12px;
+}
+
+.village-roster-entry {
+    border: 1px solid color-mix(in srgb, var(--color-secondary-accent) 70%, transparent);
+    border-radius: 6px;
+    padding: 6px;
+    background: color-mix(in srgb, var(--color-secondary-bg) 84%, transparent);
+}
+
+.village-roster-entry.is-dead {
+    color: var(--color-warning);
+}
+
+.village-integrity-panel {
+    width: min(680px, calc(100vw - 24px));
+}
+
+.village-integrity-text {
+    min-height: 92px;
+    width: 100%;
+    border: 1px solid var(--color-secondary-accent);
+    border-radius: 6px;
+    padding: 8px;
+    resize: vertical;
+    background: color-mix(in srgb, var(--color-panel-highlight) 74%, transparent);
+    color: var(--color-text-primary);
 }

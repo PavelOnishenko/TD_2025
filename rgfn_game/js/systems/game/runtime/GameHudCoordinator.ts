@@ -4,6 +4,7 @@ import HudController from '../../controllers/HudController.js';
 import Skeleton from '../../../entities/Skeleton.js';
 import MagicSystem, { BaseSpellId } from '../../controllers/magic/MagicSystem.js';
 import { SelectedCellInfo } from '../../../types/game.js';
+import { HudPanel } from '../../hud/HudTypes.js';
 
 type PlayerStat = 'vitality' | 'toughness' | 'strength' | 'agility' | 'connection' | 'intelligence';
 const PLAYER_STATS: PlayerStat[] = ['vitality', 'toughness', 'strength', 'agility', 'connection', 'intelligence'];
@@ -43,7 +44,7 @@ export default class GameHudCoordinator {
     public describeEncounter = (enemies: Skeleton[]): string => this.battleUiController.describeEncounter(enemies);
 
 
-    public togglePanel(panel: 'stats' | 'skills' | 'inventory' | 'magic' | 'quests' | 'group' | 'lore' | 'selected' | 'worldMap' | 'log'): void {
+    public togglePanel(panel: HudPanel): void {
         this.hudController.togglePanel(panel);
     }
 

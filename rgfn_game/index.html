@@ -28,6 +28,7 @@
                     <button id="toggle-selected-panel-btn" class="action-btn" type="button">Selected</button>
                     <button id="toggle-world-map-panel-btn" class="action-btn" type="button">World Map</button>
                     <button id="toggle-log-panel-btn" class="action-btn" type="button">Log</button>
+                    <button id="toggle-roster-panel-btn" class="action-btn dev-only-btn hidden" type="button">NPC Roster</button>
                 </div>
                 <div class="hud-menu-actions">
                     <button id="use-potion-btn" class="action-btn">Use HP Potion</button>
@@ -333,6 +334,14 @@
                             <button id="village-sleep-room-btn" class="action-btn">Sleep in room</button>
                         </div>
                     </div>
+                    <div id="village-roster-panel" class="overlay-panel hidden">
+                        <h2>NPC Roster</h2>
+                        <div class="village-section village-roster-panel">
+                            <p class="village-section-title">Source of truth (developer mode only)</p>
+                            <select id="village-roster-filter-select" class="village-ask-input"></select>
+                            <div id="village-roster-list" class="village-roster-list"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -361,6 +370,25 @@
                     <button id="village-confront-recover-btn" class="action-btn hidden">Confront for quest item</button>
                     <button id="village-recruit-escort-btn" class="action-btn hidden">Join my group</button>
                     <button id="village-defend-objective-btn" class="action-btn hidden">I am ready to defend you</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="village-integrity-error-modal" class="village-dialogue-modal hidden" role="dialog" aria-modal="true" aria-labelledby="village-integrity-error-title">
+            <div class="village-dialogue-panel village-integrity-panel">
+                <div class="village-dialogue-header">
+                    <h2 id="village-integrity-error-title">Roster Integrity Error</h2>
+                    <button id="village-integrity-error-close-btn" class="action-btn" type="button">Close</button>
+                </div>
+                <p id="village-integrity-error-short" class="village-dialogue-selected-npc"></p>
+                <label for="village-integrity-error-full">Full message</label>
+                <textarea id="village-integrity-error-full" class="village-integrity-text" readonly></textarea>
+                <button id="village-integrity-copy-full-btn" class="action-btn" type="button">Copy full message</button>
+                <label for="village-integrity-error-stack">Stack trace</label>
+                <textarea id="village-integrity-error-stack" class="village-integrity-text" readonly></textarea>
+                <div class="village-side-quest-actions">
+                    <button id="village-integrity-copy-short-btn" class="action-btn" type="button">Copy short message</button>
+                    <button id="village-integrity-copy-stack-btn" class="action-btn" type="button">Copy stack trace</button>
                 </div>
             </div>
         </div>
