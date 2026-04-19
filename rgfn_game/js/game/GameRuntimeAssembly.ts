@@ -18,6 +18,7 @@ import GameRuntimeUiBinder from './runtime/GameRuntimeUiBinder.js';
 import { GameFacade } from './GameFacade.js';
 import { RuntimeUi, createHudCoordinator, createRenderRouter, createRuntimeBase, createVillageRuntime } from './GameFactoryHelpers.js';
 import { createBattleCommandController, createBattleCoordinator, createBattlePlayerActionController, createBattleTurnController, createWorldModeControllerRuntime } from './GameFactoryBattleHelpers.js';
+import { isDeveloperModeEnabled } from '../utils/DeveloperModeConfig.js';
 
 type RuntimeBase = {
     player: any;
@@ -76,7 +77,11 @@ const createQuestUiController = (game: GameFacade, ui: RuntimeUi): QuestUiContro
         ui.hudElements.questIntroModal,
         ui.hudElements.questIntroBody,
         ui.hudElements.questIntroCloseBtn,
-        { onLocationClick: (locationName: string) => game.onQuestLocationClick(locationName) },
+        {
+            onLocationClick: (locationName: string) => game.onQuestLocationClick(locationName),
+            isDeveloperModeEnabled,
+            onRegenerateSideQuest: (questId: string) => game.regenerateSideQuest(questId),
+        },
     );
 };
 

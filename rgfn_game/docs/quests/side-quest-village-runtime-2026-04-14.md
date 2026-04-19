@@ -218,6 +218,30 @@
   - offer registration,
   - accept,
   - mark-ready-to-turn-in,
+
+## 2026-04-19: Offer-card header now includes side-quest type and trims boilerplate line
+
+- Village side-quest cards now expose the **side-quest type directly in the first line**:
+  - Format: `<Quest Title> — <Status> (<Type>)`
+  - Example: `Kadra Zentor's Request — Offer available (Purge)`.
+- Type label resolution prioritizes the first leaf objective type when present (the actionable objective), then falls back to the root quest objective type.
+- Type labels are normalized for readability:
+  - `deliver` / `localDelivery` → `Courier`
+  - `eliminate` / `hunt` → `Purge`
+  - others map 1:1 (`Scout`, `Recover`, `Escort`, `Defend`, `Gather`, `Repair`, `Patrol`, `Travel`, `Barter`).
+- The old root-description boilerplate line is now suppressed when it matches:
+  - `Assist <NPC> with a local task in <Village>.`
+- Practical result:
+  - players can scan offer lists by quest category immediately (Courier/Purge/etc.),
+  - redundant introductory copy is removed from the card body,
+  - concrete objective context remains available through the existing `Task details: ...` line.
+
+### Regression coverage
+
+- `villageActionsController` scenario tests now assert:
+  - offer card header includes the normalized type label,
+  - boilerplate root description is omitted,
+  - task-details line still renders for leaf objective descriptions.
   - turn-in completion.
 - This prevents stale HUD state where village-side quest cards update but HUD Quests panel does not.
   - Offer cards remain labeled **Offer available** and include an **Accept quest** button.

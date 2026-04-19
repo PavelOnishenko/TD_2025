@@ -116,7 +116,6 @@ export default class GameUiPrimaryEventBinder {
         this.villageUI.sellSelect.addEventListener('change', () => this.villageActionsController.updateButtons());
         this.villageUI.sellSelectedBtn.addEventListener('click', () => this.villageActionsController.handleSellSelected());
         this.villageUI.askVillageInput.addEventListener('change', () => this.villageActionsController.updateButtons());
-        this.villageUI.openDialogueBtn.addEventListener('click', () => this.villageActionsController.openDialogueWindow());
         this.villageUI.dialogueCloseBtn.addEventListener('click', () => this.villageActionsController.closeDialogueWindow());
         this.villageUI.dialogueModal.addEventListener('click', (event: MouseEvent) => this.closeDialogueFromOverlay(event));
         document.addEventListener('keydown', (event: KeyboardEvent) => this.handleDialogueCloseHotkeys(event));

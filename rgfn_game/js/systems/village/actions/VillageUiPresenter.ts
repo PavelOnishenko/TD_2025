@@ -50,7 +50,6 @@ export default class VillageUiPresenter {
         this.deps.villageUI.sellSelectedBtn.disabled = this.deps.villageUI.sellSelect.disabled;
         const selectedNpc = this.deps.getSelectedNpc();
         const hasSelectedNpc = selectedNpc !== null;
-        this.deps.villageUI.openDialogueBtn.disabled = !hasSelectedNpc;
         this.deps.villageUI.askVillageBtn.disabled = !hasSelectedNpc;
         this.deps.villageUI.askPersonBtn.disabled = !hasSelectedNpc;
         const selectedNpcName = selectedNpc?.name ?? '';
