@@ -48,3 +48,48 @@ That command performs:
 
 - Running repo-wide `npm test` may still fail for non-RGFN suites unless other build prerequisites are satisfied.
 - For RGFN-specific validation, prefer `npm run test:rgfn`.
+
+## Behavior contract reminder: `recordLocationEntry` return value
+
+Current `GameQuestRuntime.recordLocationEntry(...)` behavior returns a structured object, not a bare boolean:
+
+```js
+{ changed: boolean, logs: string[] }
+```
+
+- `changed` indicates whether quest state advanced.
+- `logs` contains user-facing messages generated during objective/side-quest state updates.
+
+When writing or updating tests around location-entry quest progression (especially side-quest delivery/recover flows), assert on `result.changed` and optionally on log content instead of asserting `result === true`.
+
+## Scenario-suite command (high signal for runtime wiring regressions)
+
+If unit-level suites pass but integration-like behavior still looks broken, run scenario tests directly:
+
+```bash
+npm run build:rgfn && node --test rgfn_game/test/systems/scenarios/*.test.js
+```
+
+This catches contract drift in controller wiring/mocks (callbacks, world-map accessors, turn-manager helpers, UI adapter behavior).
+
+## Common scenario test stub contracts to keep in sync
+
+When tests use lightweight stubs instead of full game runtime objects, these methods are currently expected by production controllers:
+
+- `BattleCommandController` turn manager:
+  - `getPlayerSideParticipantCount()`
+- `BattleTurnController` AI actor stubs:
+  - `shouldSkipTurn()`
+- `GameBattleRuntimeFlow` callbacks:
+  - `onBattleEnded(result)`
+- `GameFacadeLifecycleCoordinator` HUD/world-map wiring:
+  - `worldMap.getSelectedCellInfo()`
+  - `hudCoordinator.updateSelectedCell(info)`
+- `VillageActionsController` callbacks used from NPC selection flow:
+  - `onAdvanceTime(minutes, fatigueScale)`
+
+Keeping test doubles aligned with these runtime contracts avoids false-red failures caused by outdated mock shapes.
+
+## DOM-stub parity notes for UI-heavy tests
+
+For DOM-lite test objects, mimic browser behavior for `innerHTML` writes (clear existing children/options) before repopulating UI collections. Without this, list/select assertions can accumulate stale entries across re-renders and fail even when runtime logic is correct.

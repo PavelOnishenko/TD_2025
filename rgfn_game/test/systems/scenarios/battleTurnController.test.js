@@ -37,6 +37,10 @@ class Skeleton {
     return false;
   }
 
+  shouldSkipTurn() {
+    return false;
+  }
+
   consumeTurnEffects() {
     return [];
   }

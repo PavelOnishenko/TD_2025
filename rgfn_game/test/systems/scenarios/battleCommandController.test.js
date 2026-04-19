@@ -23,7 +23,7 @@ function createController(logs, lootedNames) {
     {},
     player,
     {},
-    {},
+    { getPlayerSideParticipantCount: () => 1 },
     {},
     {
       onUpdateHUD: () => {},

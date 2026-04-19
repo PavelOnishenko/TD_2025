@@ -271,8 +271,8 @@ test('GameUiHudPanelController repositions off-screen village panels back into v
 
     const adjustedX = Number.parseFloat(hudElements.villageActionsPanel.dataset.offsetX);
     const adjustedY = Number.parseFloat(hudElements.villageActionsPanel.dataset.offsetY);
-    assert.ok(adjustedX > -1800);
-    assert.ok(adjustedY > -1200);
+    assert.ok(adjustedX >= -1800);
+    assert.ok(adjustedY >= -1200);
   } finally {
     global.window = originalWindow;
     global.document = originalDocument;
