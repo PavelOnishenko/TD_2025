@@ -186,6 +186,27 @@ export class GameFacade implements GameFacadeStateAccess {
     public getVillageNpcActiveSideQuests = (villageName: string, npcName: string): QuestNode[] =>
         this.questRuntime.getVillageNpcActiveSideQuests(villageName, npcName);
     public getActiveSideQuests = (): QuestNode[] => this.questRuntime.getActiveSideQuests();
+    public regenerateSideQuest = async (questId: string): Promise<boolean> => {
+        if (!this.questGenerator) {
+            return false;
+        }
+        const currentQuest = this.questRuntime.getKnownSideQuest(questId);
+        if (!currentQuest) {
+            return false;
+        }
+        const giverNpcName = currentQuest.giverNpcName?.trim();
+        const giverVillageName = currentQuest.giverVillageName?.trim();
+        if (!giverNpcName || !giverVillageName) {
+            return false;
+        }
+
+        const regeneratedQuestId = this.createSideQuestId(giverVillageName, giverNpcName);
+        const regeneratedQuest = await this.questGenerator.generateSideQuest(regeneratedQuestId, giverNpcName, giverVillageName);
+        regeneratedQuest.track = 'side';
+        regeneratedQuest.status = currentQuest.status === 'available' ? 'available' : 'active';
+        regeneratedQuest.isCompleted = false;
+        return this.questRuntime.replaceKnownSideQuest(questId, regeneratedQuest);
+    };
     public acceptSideQuest = (questId: string): { accepted: boolean; reason?: 'inactive' | 'not-found' | 'already-active' } =>
         this.questRuntime.acceptSideQuest(questId);
     public turnInSideQuest = (
@@ -264,6 +285,12 @@ export class GameFacade implements GameFacadeStateAccess {
             hash = Math.imul(hash, 16777619);
         }
         return hash >>> 0;
+    }
+
+    private createSideQuestId(villageName: string, npcName: string): string {
+        const normalizedVillage = villageName.trim().toLocaleLowerCase();
+        const normalizedNpc = npcName.trim().toLocaleLowerCase().replace(/\s+/g, '_');
+        return `side.${normalizedVillage}.${normalizedNpc}.${Date.now()}.${Math.floor(Math.random() * 10000)}`;
     }
 
     private async generateVillageSideQuestOffers(

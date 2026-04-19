@@ -117,6 +117,49 @@ export default class GameQuestRuntime {
             .map((quest) => ({ ...quest }));
     }
 
+    public getKnownSideQuest(questId: string): QuestNode | null {
+        const normalizedQuestId = questId.trim();
+        if (!normalizedQuestId) {
+            return null;
+        }
+
+        for (const offers of this.sideQuestOffersByNpc.values()) {
+            const offer = offers.find((entry) => entry.id === normalizedQuestId);
+            if (offer) {
+                return { ...offer };
+            }
+        }
+
+        const activeQuest = this.activeSideQuests.find((entry) => entry.id === normalizedQuestId);
+        return activeQuest ? { ...activeQuest } : null;
+    }
+
+    public replaceKnownSideQuest(questId: string, replacement: QuestNode): boolean {
+        const normalizedQuestId = questId.trim();
+        if (!normalizedQuestId || !replacement.id.trim()) {
+            return false;
+        }
+
+        for (const [npcKey, offers] of this.sideQuestOffersByNpc.entries()) {
+            const offerIndex = offers.findIndex((entry) => entry.id === normalizedQuestId);
+            if (offerIndex < 0) {
+                continue;
+            }
+            offers[offerIndex] = replacement;
+            this.sideQuestOffersByNpc.set(npcKey, offers);
+            this.renderQuestUi();
+            return true;
+        }
+
+        const activeIndex = this.activeSideQuests.findIndex((entry) => entry.id === normalizedQuestId);
+        if (activeIndex < 0) {
+            return false;
+        }
+        this.activeSideQuests[activeIndex] = replacement;
+        this.renderQuestUi();
+        return true;
+    }
+
     public clearVillageSideQuestOffers(villageName: string): void {
         const normalizedVillage = villageName.trim().toLocaleLowerCase();
         if (!normalizedVillage) {

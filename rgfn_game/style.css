@@ -1303,6 +1303,9 @@ button.quest-entity-name.location:hover {
 }
 
 .side-quest-card > summary {
+    display: flex;
+    align-items: center;
+    gap: 8px;
     cursor: pointer;
     color: var(--color-primary-accent);
     font-weight: 700;
@@ -1326,6 +1329,21 @@ button.quest-entity-name.location:hover {
 
 .side-quest-status.is-completed {
     color: #2f6f39;
+}
+
+.side-quest-regenerate-btn {
+    margin-left: auto;
+    padding: 2px 6px;
+    font-size: 10px;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--color-highlight) 55%, transparent);
+    background: color-mix(in srgb, var(--color-primary-bg) 55%, transparent);
+    color: var(--color-highlight);
+    cursor: pointer;
+}
+
+.side-quest-regenerate-btn:hover {
+    background: color-mix(in srgb, var(--color-highlight) 20%, transparent);
 }
 
 .side-quest-meta {
