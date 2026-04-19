@@ -1,3 +1,8 @@
+/* eslint-disable
+    style-guide/arrow-function-style,
+    style-guide/function-length-warning,
+    style-guide/rule17-comma-layout
+*/
 import { HudElements } from '../ui/GameUiTypes.js';
 
 const el = (id: string): HTMLElement => document.getElementById(id)!;
@@ -23,6 +28,7 @@ export class GameHudElementsFactory {
             newCharacterBtn: btn('new-character-btn'),
             worldMapPanel: el('world-sidebar'),
             logPanel: el('game-log-container'),
+            rosterPanel: el('village-roster-panel'),
             questIntroModal: el('quest-intro-modal'),
             questIntroBody: el('quest-intro-body'),
             questIntroCloseBtn: btn('quest-intro-close-btn'),
@@ -143,6 +149,7 @@ export class GameHudElementsFactory {
             toggleSelectedPanelBtn: btn('toggle-selected-panel-btn'),
             toggleWorldMapPanelBtn: btn('toggle-world-map-panel-btn'),
             toggleLogPanelBtn: btn('toggle-log-panel-btn'),
+            toggleRosterPanelBtn: btn('toggle-roster-panel-btn'),
         };
     }
 

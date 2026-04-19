@@ -28,6 +28,7 @@
                     <button id="toggle-selected-panel-btn" class="action-btn" type="button">Selected</button>
                     <button id="toggle-world-map-panel-btn" class="action-btn" type="button">World Map</button>
                     <button id="toggle-log-panel-btn" class="action-btn" type="button">Log</button>
+                    <button id="toggle-roster-panel-btn" class="action-btn dev-only-btn hidden" type="button">NPC Roster</button>
                 </div>
                 <div class="hud-menu-actions">
                     <button id="use-potion-btn" class="action-btn">Use HP Potion</button>
@@ -309,8 +310,11 @@
                             <button id="village-open-dialogue-btn" class="action-btn">Open NPC dialogue window</button>
                             <button id="village-sleep-room-btn" class="action-btn">Sleep in room</button>
                         </div>
+                    </div>
+                    <div id="village-roster-panel" class="overlay-panel hidden">
+                        <h2>NPC Roster</h2>
                         <div class="village-section village-roster-panel">
-                            <p class="village-section-title">NPC Roster (source of truth)</p>
+                            <p class="village-section-title">Source of truth (developer mode only)</p>
                             <select id="village-roster-filter-select" class="village-ask-input"></select>
                             <div id="village-roster-list" class="village-roster-list"></div>
                         </div>

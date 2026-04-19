@@ -30,6 +30,7 @@ export default class GameUiHudPanelController {
     private static readonly COMBAT_PANEL_PERSISTENCE_KEY = 'battleActions';
     private static readonly VILLAGE_ACTIONS_PANEL_PERSISTENCE_KEY = 'villageActions';
     private static readonly VILLAGE_RUMORS_PANEL_PERSISTENCE_KEY = 'villageRumors';
+    private static readonly VILLAGE_ROSTER_PANEL_PERSISTENCE_KEY = 'villageRoster';
     private static readonly MODE_TEXT = {
         battle: 'Battle!',
         village: 'Village',
@@ -74,6 +75,7 @@ export default class GameUiHudPanelController {
         this.hudElements.toggleSelectedPanelBtn.addEventListener('click', () => this.handlePanelToggle('selected'));
         this.hudElements.toggleWorldMapPanelBtn.addEventListener('click', () => this.handlePanelToggle('worldMap'));
         this.hudElements.toggleLogPanelBtn.addEventListener('click', () => this.handlePanelToggle('log'));
+        this.hudElements.toggleRosterPanelBtn.addEventListener('click', () => this.handlePanelToggle('roster'));
     }
     private initializeHudPanelWindows(): void {
         this.getPanelConfigs().forEach(({ key, title, element, closable }, panelIndex) => this.decorateHudPanelWindow(key, title, element, panelIndex, closable ?? true));
@@ -82,6 +84,26 @@ export default class GameUiHudPanelController {
         const battleActionsPanel = document.getElementById('battle-sidebar');
         const villageActionsPanel = document.getElementById('village-actions');
         const villageRumorsPanel = document.getElementById('village-rumors-section');
+        const villageRosterPanel = document.getElementById('village-roster-panel');
+        const runtimePanels: PanelConfig[] = [
+            ...(battleActionsPanel
+                ? [{ key: null, title: 'Combat Actions', element: battleActionsPanel, closable: false, persistenceKey: 'battleActions' }]
+                : []),
+            ...(villageActionsPanel
+                ? [{ key: null, title: 'Village Actions', element: villageActionsPanel, closable: false, persistenceKey: 'villageActions' }]
+                : []),
+            ...(villageRumorsPanel
+                ? [{ key: null, title: 'Village Rumors', element: villageRumorsPanel, closable: false, persistenceKey: 'villageRumors' }]
+                : []),
+            ...(villageRosterPanel
+                ? [{
+                    key: 'roster' as const,
+                    title: 'NPC Roster',
+                    element: villageRosterPanel,
+                    persistenceKey: GameUiHudPanelController.VILLAGE_ROSTER_PANEL_PERSISTENCE_KEY,
+                }]
+                : []),
+        ];
         return [
             { key: 'stats', title: 'Stats', element: this.hudElements.statsPanel },
             { key: 'skills', title: 'Skills', element: this.hudElements.skillsPanel },
@@ -93,9 +115,7 @@ export default class GameUiHudPanelController {
             { key: 'selected', title: 'Selected', element: this.hudElements.selectedPanel },
             { key: 'worldMap', title: 'World Map', element: this.hudElements.worldMapPanel },
             { key: 'log', title: 'Log', element: this.hudElements.logPanel },
-            ...(battleActionsPanel ? [{ key: null, title: 'Combat Actions', element: battleActionsPanel, closable: false, persistenceKey: 'battleActions' }] : []),
-            ...(villageActionsPanel ? [{ key: null, title: 'Village Actions', element: villageActionsPanel, closable: false, persistenceKey: 'villageActions' }] : []),
-            ...(villageRumorsPanel ? [{ key: null, title: 'Village Rumors', element: villageRumorsPanel, closable: false, persistenceKey: 'villageRumors' }] : []),
+            ...runtimePanels,
         ];
     };
     private decorateHudPanelWindow(panelKey: HudPanelToggle | null, title: string, panel: HTMLElement, panelIndex: number, closable: boolean): void {

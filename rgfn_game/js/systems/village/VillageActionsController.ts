@@ -871,9 +871,13 @@ export default class VillageActionsController {
     }
 
     private renderRosterPanel(): void {
-        const villages = this.npcPassportRoster.getVillageNames();
         const filterElement = this.villageUI.rosterVillageFilter;
         const listElement = this.villageUI.rosterList;
+        if (!isDeveloperModeEnabled()) {
+            this.renderRosterDisabledState(filterElement, listElement);
+            return;
+        }
+        const villages = this.npcPassportRoster.getVillageNames();
         const previousValue = filterElement.value;
         filterElement.innerHTML = '';
         this.createAndAppendOption(filterElement, '', 'All villages');
@@ -884,8 +888,18 @@ export default class VillageActionsController {
             filterElement.dataset.boundRosterFilter = '1';
             filterElement.addEventListener('change', () => this.renderRosterPanel());
         }
-
         const selectedVillage = filterElement.value;
+        this.renderRosterEntries(listElement, selectedVillage);
+    }
+
+    private renderRosterDisabledState(filterElement: HTMLSelectElement, listElement: HTMLElement): void {
+        filterElement.innerHTML = '';
+        this.createAndAppendOption(filterElement, '', 'Developer mode disabled');
+        filterElement.value = '';
+        listElement.innerHTML = '';
+    }
+
+    private renderRosterEntries(listElement: HTMLElement, selectedVillage: string): void {
         const entries = this.npcPassportRoster.getAllEntries(selectedVillage);
         listElement.innerHTML = '';
         if (entries.length === 0) {
@@ -894,7 +908,6 @@ export default class VillageActionsController {
             listElement.appendChild(empty);
             return;
         }
-
         entries.forEach((entry) => {
             const row = document.createElement('div');
             row.className = `village-roster-entry${entry.lifeStatus === 'dead' ? ' is-dead' : ''}`;
