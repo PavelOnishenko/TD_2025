@@ -39,6 +39,13 @@ Roster inspection is now moved out of the regular Village Rumors panel into a de
 - If developer mode is disabled, the roster panel toggle is hidden.
 - Existing roster data remains intact in runtime storage; only visibility is restricted.
 - Re-enable developer mode to inspect the full source-of-truth roster again.
+- The **NPC Roster panel is resizable** in desktop HUD mode (`resize: both`) so long passport entries can be inspected without scrolling each row.
+- On small/mobile breakpoints (`max-width: 920px`), panel resize is intentionally disabled to keep layout stable.
+
+### UI behavior details (for debugging)
+- The roster panel uses the same draggable/decorated HUD window pipeline as other overlay panels (`GameUiHudPanelController`), including saved panel position/size between sessions.
+- Roster panel visibility and active state are synchronized by `HudPanelStateController`; when developer mode is switched off, the panel is force-hidden.
+- Village-side rendering still refreshes roster entries from `VillageNpcRoster`; the panel visibility flag does not mutate roster data.
 
 ## Dead NPC behavior
 Defenders marked as fallen are no longer removed from the world roster; they stay in roster and are marked `[DEAD]`.

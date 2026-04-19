@@ -360,7 +360,7 @@ h1 {
 }
 
 #magic-panel, #inventory-panel, #skills-panel, #quests-panel, #lore-panel, #stats-panel, #selected-panel, #group-panel,
-#world-sidebar, #battle-sidebar, #game-log-container, #village-actions, #village-rumors-section {
+#world-sidebar, #battle-sidebar, #game-log-container, #village-actions, #village-rumors-section, #village-roster-panel {
     width: min(340px, calc(100vw - 48px));
     max-width: calc(100vw - 32px);
     max-inline-size: calc(100vw - 32px);
@@ -712,7 +712,7 @@ h1 {
     }
 
     #magic-panel, #inventory-panel, #skills-panel, #quests-panel, #lore-panel, #stats-panel, #selected-panel, #group-panel,
-    #world-sidebar, #battle-sidebar, #game-log-container, #village-actions, #village-rumors-section {
+    #world-sidebar, #battle-sidebar, #game-log-container, #village-actions, #village-rumors-section, #village-roster-panel {
         margin-top: 0;
         height: 260px;
         max-height: 260px;
