@@ -37,4 +37,4 @@ export type GameUiEventCallbacks = {
 
 export type StatName = 'vitality' | 'toughness' | 'strength' | 'agility' | 'connection' | 'intelligence';
 
-export type HudPanelToggle = 'stats' | 'skills' | 'inventory' | 'magic' | 'quests' | 'group' | 'lore' | 'selected' | 'worldMap' | 'log';
+export type HudPanelToggle = 'stats' | 'skills' | 'inventory' | 'magic' | 'quests' | 'group' | 'lore' | 'selected' | 'worldMap' | 'log' | 'roster';

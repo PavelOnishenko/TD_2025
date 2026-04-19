@@ -1,7 +1,7 @@
 import Item from '../../../entities/Item.js';
 import Skeleton from '../../../entities/Skeleton.js';
 import { PersonDirectionHint, VillageDirectionHint, VillageNpcProfile } from '../VillageDialogueEngine.js';
-import { DeliverObjectiveData, LocalDeliveryObjectiveData, QuestNode } from '../../quest/QuestTypes.js';
+import { DeliverObjectiveData, LocalDeliveryObjectiveData, QuestNode, QuestRewardMetadata } from '../../quest/QuestTypes.js';
 
 export type VillageUI = {
     sidebar: HTMLElement;
@@ -26,6 +26,8 @@ export type VillageUI = {
     sellSelectedBtn: HTMLButtonElement;
     npcList: HTMLElement;
     npcTitle: HTMLElement;
+    rosterVillageFilter: HTMLSelectElement;
+    rosterList: HTMLElement;
     askVillageInput: HTMLSelectElement;
     askVillageBtn: HTMLButtonElement;
     askNearbySettlementsBtn: HTMLButtonElement;
@@ -66,11 +68,12 @@ export type VillageActionsCallbacks = {
     getActiveSideQuests?: () => QuestNode[];
     acceptSideQuest?: (questId: string) => { accepted: boolean; reason?: 'inactive' | 'not-found' | 'already-active' };
     markSideQuestReadyToTurnIn?: (questId: string) => boolean;
-    turnInSideQuest?: (
-        questId: string,
-        npcName: string,
-        villageName: string,
-    ) => { turnedIn: boolean; reason?: 'inactive' | 'not-found' | 'wrong-giver' | 'not-ready' | 'already-completed'; reward?: string };
+    turnInSideQuest?: (questId: string, npcName: string, villageName: string) => {
+        turnedIn: boolean;
+        reason?: 'inactive' | 'not-found' | 'wrong-giver' | 'not-ready' | 'already-completed';
+        reward?: string;
+        rewardMetadata?: QuestRewardMetadata;
+    };
 };
 
 export type QuestEscortContract = {

@@ -1,4 +1,5 @@
 import { HudElements, HudPanel } from './HudTypes.js';
+import { isDeveloperModeEnabled } from '../../utils/DeveloperModeConfig.js';
 
 export default class HudPanelStateController {
     private readonly hudElements: HudElements;
@@ -8,24 +9,15 @@ export default class HudPanelStateController {
     }
 
     public togglePanel(panel: HudPanel): void {
-        const panelMap: Record<HudPanel, HTMLElement> = {
-            stats: this.hudElements.statsPanel,
-            skills: this.hudElements.skillsPanel,
-            inventory: this.hudElements.inventoryPanel,
-            magic: this.hudElements.magicPanel,
-            quests: this.hudElements.questsPanel,
-            group: this.hudElements.groupPanel,
-            lore: this.hudElements.lorePanel,
-            selected: this.hudElements.selectedPanel,
-            worldMap: this.hudElements.worldMapPanel,
-            log: this.hudElements.logPanel,
-        };
-
-        panelMap[panel].classList.toggle('hidden');
+        if (panel === 'roster' && !isDeveloperModeEnabled()) {
+            return;
+        }
+        this.getPanelMap()[panel].classList.toggle('hidden');
         this.updateToggleButtons();
     }
 
     public updateToggleButtons(): void {
+        this.syncDeveloperRosterVisibility();
         this.hudElements.toggleStatsPanelBtn.classList.toggle('active', !this.hudElements.statsPanel.classList.contains('hidden'));
         this.hudElements.toggleSkillsPanelBtn.classList.toggle('active', !this.hudElements.skillsPanel.classList.contains('hidden'));
         this.hudElements.toggleInventoryPanelBtn.classList.toggle('active', !this.hudElements.inventoryPanel.classList.contains('hidden'));
@@ -36,5 +28,28 @@ export default class HudPanelStateController {
         this.hudElements.toggleSelectedPanelBtn.classList.toggle('active', !this.hudElements.selectedPanel.classList.contains('hidden'));
         this.hudElements.toggleWorldMapPanelBtn.classList.toggle('active', !this.hudElements.worldMapPanel.classList.contains('hidden'));
         this.hudElements.toggleLogPanelBtn.classList.toggle('active', !this.hudElements.logPanel.classList.contains('hidden'));
+        this.hudElements.toggleRosterPanelBtn.classList.toggle('active', !this.hudElements.rosterPanel.classList.contains('hidden'));
+    }
+
+    private getPanelMap = (): Record<HudPanel, HTMLElement> => ({
+        stats: this.hudElements.statsPanel,
+        skills: this.hudElements.skillsPanel,
+        inventory: this.hudElements.inventoryPanel,
+        magic: this.hudElements.magicPanel,
+        quests: this.hudElements.questsPanel,
+        group: this.hudElements.groupPanel,
+        lore: this.hudElements.lorePanel,
+        selected: this.hudElements.selectedPanel,
+        worldMap: this.hudElements.worldMapPanel,
+        log: this.hudElements.logPanel,
+        roster: this.hudElements.rosterPanel,
+    });
+
+    private syncDeveloperRosterVisibility(): void {
+        const developerModeEnabled = isDeveloperModeEnabled();
+        this.hudElements.toggleRosterPanelBtn.classList.toggle('hidden', !developerModeEnabled);
+        if (!developerModeEnabled) {
+            this.hudElements.rosterPanel.classList.add('hidden');
+        }
     }
 }
