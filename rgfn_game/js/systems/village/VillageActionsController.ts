@@ -141,6 +141,14 @@ export default class VillageActionsController {
         this.runRosterIntegrityCheck('handleSelectNpc:end');
     }
 
+    public refreshSelectedNpcSideQuestUi(): void {
+        const selectedNpc = this.getSelectedNpc();
+        if (!selectedNpc) {
+            return;
+        }
+        this.refreshSelectedNpcSideQuestBoard(selectedNpc);
+    }
+
     public handleAcceptSideQuest(questId: string): void {
         const selectedNpc = this.getSelectedNpc();
         if (!selectedNpc) {
@@ -181,7 +189,7 @@ export default class VillageActionsController {
         const questTitle = offers.find((quest) => quest.id === questId)?.title ?? questId;
         this.dismissedSideQuestOfferIds.add(questId);
         this.addLog(`Side-quest offer hidden: ${questTitle}.`, 'system-message');
-        this.refreshSelectedNpcSideQuestUi(selectedNpc);
+        this.refreshSelectedNpcSideQuestBoard(selectedNpc);
     }
 
     public handleAskAboutSettlement(): void { this.dialogueInteraction.handleAskAboutSettlement(); this.callbacks.onAdvanceTime(14, 0.1); }
@@ -296,12 +304,7 @@ export default class VillageActionsController {
         updateButtons: () => this.updateButtons(),
         getCourierObjectiveForNpc: (npcName, villageName) => this.getActiveCourierObjectiveForNpc(npcName, villageName),
         markSideQuestReadyToTurnIn: (questId) => this.callbacks.markSideQuestReadyToTurnIn?.(questId) ?? false,
-        refreshSelectedNpcSideQuestUi: () => {
-            const npc = this.getSelectedNpc();
-            if (npc) {
-                this.refreshSelectedNpcSideQuestUi(npc);
-            }
-        },
+        refreshSelectedNpcSideQuestUi: () => this.refreshSelectedNpcSideQuestUi(),
     });
 
     private refreshNpcUi(): void {
@@ -578,7 +581,7 @@ export default class VillageActionsController {
         );
     }
 
-    private refreshSelectedNpcSideQuestUi(npc: VillageNpcProfile): void {
+    private refreshSelectedNpcSideQuestBoard(npc: VillageNpcProfile): void {
         const offers = this.callbacks.getVillageSideQuestOffers?.(this.currentVillageName, npc.name) ?? [];
         const visibleOffers = offers.filter((offer) => !this.dismissedSideQuestOfferIds.has(offer.id));
         const activeQuests = this.callbacks.getVillageNpcActiveSideQuests?.(this.currentVillageName, npc.name) ?? [];
@@ -689,7 +692,7 @@ export default class VillageActionsController {
             this.addLog(`Side quest accepted: ${questId}.`, 'system');
         }
         this.addLog('Quest tracker updated with accepted side quest.', 'system-message');
-        this.refreshSelectedNpcSideQuestUi(selectedNpc);
+        this.refreshSelectedNpcSideQuestUi();
     }
 
     private completeSideQuestTurnIn(selectedNpc: VillageNpcProfile, questId: string, reward?: string): void {

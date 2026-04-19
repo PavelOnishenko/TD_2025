@@ -474,6 +474,28 @@ test('GameQuestRuntime side-quest turn-in requires the original quest giver and 
   assert.equal(runtime.activeSideQuests[0].status, 'completed');
 });
 
+test('GameQuestRuntime exposes and replaces known side quests across offers and active lists', () => {
+  const runtime = new GameQuestRuntime();
+  const offeredQuest = createSideQuest({ id: 'side-offer', status: 'available' });
+  const activeQuest = createSideQuest({ id: 'side-active', status: 'active' });
+  runtime.questUiController = { renderQuest: () => {} };
+  runtime.registerVillageSideQuestOffer(offeredQuest);
+  runtime.registerVillageSideQuestOffer(activeQuest);
+  runtime.acceptSideQuest('side-active');
+
+  assert.equal(runtime.getKnownSideQuest('side-offer')?.id, 'side-offer');
+  assert.equal(runtime.getKnownSideQuest('side-active')?.id, 'side-active');
+
+  const replacementOffer = createSideQuest({ id: 'side-offer-2', title: 'Fresh Offer', status: 'available' });
+  const replacementActive = createSideQuest({ id: 'side-active-2', title: 'Fresh Active', status: 'active' });
+  assert.equal(runtime.replaceKnownSideQuest('side-offer', replacementOffer), true);
+  assert.equal(runtime.replaceKnownSideQuest('side-active', replacementActive), true);
+
+  assert.equal(runtime.getKnownSideQuest('side-offer'), null);
+  assert.equal(runtime.getKnownSideQuest('side-offer-2')?.title, 'Fresh Offer');
+  assert.equal(runtime.activeSideQuests[0].id, 'side-active-2');
+});
+
 test('GameQuestRuntime marks deliver side quests ready when reaching destination with carried courier item', () => {
   const runtime = new GameQuestRuntime();
   const mainQuest = createRecoverQuest();
@@ -506,7 +528,7 @@ test('GameQuestRuntime marks deliver side quests ready when reaching destination
   ];
 
   const changed = runtime.recordLocationEntry('Golden Beacon', ['Eshdra Lorka']);
-  assert.equal(changed, true);
+  assert.equal(changed.changed, true);
   assert.equal(runtime.activeSideQuests[0].status, 'readyToTurnIn');
 });
 

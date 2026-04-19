@@ -68,6 +68,15 @@ function createStorageMock(initial = null) {
   };
 }
 
+function createCallbacks(overrides = {}) {
+  return {
+    onLocationClick: () => false,
+    isDeveloperModeEnabled: () => false,
+    onRegenerateSideQuest: async () => false,
+    ...overrides,
+  };
+}
+
 test('QuestUiController hides the default boilerplate on the root quest but keeps unique child text', () => {
   const title = createElement();
   const knownOnlyToggle = createCheckbox(false);
@@ -75,7 +84,7 @@ test('QuestUiController hides the default boilerplate on the root quest but keep
   const modal = createElement();
   const intro = createElement();
   const closeBtn = createElement();
-  const controller = new QuestUiController(title, createElement(), createElement(), knownOnlyToggle, createElement(), createElement(), createElement(), createElement(), createElement(), createElement(), createSideStatusFilterCheckboxes(), body, modal, intro, closeBtn, { onLocationClick: () => false });
+  const controller = new QuestUiController(title, createElement(), createElement(), knownOnlyToggle, createElement(), createElement(), createElement(), createElement(), createElement(), createElement(), createSideStatusFilterCheckboxes(), body, modal, intro, closeBtn, createCallbacks());
   const quest = {
     id: 'main',
     title: 'Signal Dawn',
@@ -114,7 +123,7 @@ test('QuestUiController hides the default boilerplate on the root quest but keep
 });
 
 test('QuestUiController opens and closes the intro modal through bound events', () => {
-  const controller = new QuestUiController(createElement(), createElement(), createElement(), createCheckbox(false), createElement(), createElement(), createElement(), createElement(), createElement(), createElement(), createSideStatusFilterCheckboxes(), createElement(), createElement(), createElement(), createElement(), { onLocationClick: () => false });
+  const controller = new QuestUiController(createElement(), createElement(), createElement(), createCheckbox(false), createElement(), createElement(), createElement(), createElement(), createElement(), createElement(), createSideStatusFilterCheckboxes(), createElement(), createElement(), createElement(), createElement(), createCallbacks());
   const modal = controller['introModal'];
   const closeBtn = controller['introCloseBtn'];
 
@@ -127,7 +136,7 @@ test('QuestUiController opens and closes the intro modal through bound events', 
 });
 
 test('QuestUiController keeps intro modal hidden by default until explicitly opened', () => {
-  const controller = new QuestUiController(createElement(), createElement(), createElement(), createCheckbox(false), createElement(), createElement(), createElement(), createElement(), createElement(), createElement(), createSideStatusFilterCheckboxes(), createElement(), createElement(), createElement(), createElement(), { onLocationClick: () => false });
+  const controller = new QuestUiController(createElement(), createElement(), createElement(), createCheckbox(false), createElement(), createElement(), createElement(), createElement(), createElement(), createElement(), createSideStatusFilterCheckboxes(), createElement(), createElement(), createElement(), createElement(), createCallbacks());
   const modal = controller['introModal'];
 
   assert.deepEqual(modal.classList.added, ['hidden']);
@@ -135,7 +144,7 @@ test('QuestUiController keeps intro modal hidden by default until explicitly ope
 });
 
 test('QuestUiController renders completion styling and checkmark for completed quest nodes', () => {
-  const controller = new QuestUiController(createElement(), createElement(), createElement(), createCheckbox(false), createElement(), createElement(), createElement(), createElement(), createElement(), createElement(), createSideStatusFilterCheckboxes(), createElement(), createElement(), createElement(), createElement(), { onLocationClick: () => false });
+  const controller = new QuestUiController(createElement(), createElement(), createElement(), createCheckbox(false), createElement(), createElement(), createElement(), createElement(), createElement(), createElement(), createSideStatusFilterCheckboxes(), createElement(), createElement(), createElement(), createElement(), createCallbacks());
   const quest = {
     id: 'main',
     title: 'Signal Dawn',
@@ -171,7 +180,7 @@ test('QuestUiController clears quest feedback after configured timeout', () => {
   };
 
   try {
-    const controller = new QuestUiController(createElement(), createElement(), createElement(), createCheckbox(false), createElement(), createElement(), createElement(), createElement(), createElement(), createElement(), createSideStatusFilterCheckboxes(), createElement(), createElement(), createElement(), createElement(), { onLocationClick: () => false });
+    const controller = new QuestUiController(createElement(), createElement(), createElement(), createCheckbox(false), createElement(), createElement(), createElement(), createElement(), createElement(), createElement(), createSideStatusFilterCheckboxes(), createElement(), createElement(), createElement(), createElement(), createCallbacks());
 
     controller['setFeedback']('Oakcross is not discovered yet.', true);
     assert.equal(scheduledDelay, 5000);
@@ -193,7 +202,7 @@ test('QuestUiController known-only mode hides quests below the first incomplete 
   const title = createElement();
   const knownOnlyToggle = createCheckbox(true);
   const body = createElement();
-  const controller = new QuestUiController(title, createElement(), createElement(), knownOnlyToggle, createElement(), createElement(), createElement(), createElement(), createElement(), createElement(), createSideStatusFilterCheckboxes(), body, createElement(), createElement(), createElement(), { onLocationClick: () => false });
+  const controller = new QuestUiController(title, createElement(), createElement(), knownOnlyToggle, createElement(), createElement(), createElement(), createElement(), createElement(), createElement(), createSideStatusFilterCheckboxes(), body, createElement(), createElement(), createElement(), createCallbacks());
   const quest = {
     id: 'main',
     title: 'Signal Dawn',
@@ -250,7 +259,7 @@ test('QuestUiController defaults known-only toggle to checked when no saved pref
 
   try {
     const knownOnlyToggle = createCheckbox(false);
-    new QuestUiController(createElement(), createElement(), createElement(), knownOnlyToggle, createElement(), createElement(), createElement(), createElement(), createElement(), createElement(), createSideStatusFilterCheckboxes(), createElement(), createElement(), createElement(), createElement(), { onLocationClick: () => false });
+    new QuestUiController(createElement(), createElement(), createElement(), knownOnlyToggle, createElement(), createElement(), createElement(), createElement(), createElement(), createElement(), createSideStatusFilterCheckboxes(), createElement(), createElement(), createElement(), createElement(), createCallbacks());
     assert.equal(knownOnlyToggle.checked, true);
   } finally {
     global.window = originalWindow;
@@ -264,7 +273,7 @@ test('QuestUiController persists and restores known-only toggle state via localS
 
   try {
     const knownOnlyToggle = createCheckbox(true);
-    const controller = new QuestUiController(createElement(), createElement(), createElement(), knownOnlyToggle, createElement(), createElement(), createElement(), createElement(), createElement(), createElement(), createSideStatusFilterCheckboxes(), createElement(), createElement(), createElement(), createElement(), { onLocationClick: () => false });
+    const controller = new QuestUiController(createElement(), createElement(), createElement(), knownOnlyToggle, createElement(), createElement(), createElement(), createElement(), createElement(), createElement(), createSideStatusFilterCheckboxes(), createElement(), createElement(), createElement(), createElement(), createCallbacks());
     assert.equal(knownOnlyToggle.checked, false);
 
     knownOnlyToggle.checked = true;
@@ -303,7 +312,7 @@ test('QuestUiController renders known side quests in side tab with nested object
     createElement(),
     createElement(),
     createElement(),
-    { onLocationClick: () => false },
+    createCallbacks(),
   );
   const mainQuest = {
     id: 'main',
@@ -373,7 +382,7 @@ test('QuestUiController applies side quest status filter popup selections and pe
       createElement(),
       createElement(),
       createElement(),
-      { onLocationClick: () => false },
+      createCallbacks(),
     );
     const mainQuest = { id: 'main', title: 'Signal Dawn', description: '', conditionText: '', objectiveType: 'scout', entities: [], children: [] };
     const activeQuest = { id: 'side.1', title: 'Active Quest', description: '', conditionText: '', objectiveType: 'gather', entities: [], status: 'active', children: [] };
@@ -394,5 +403,97 @@ test('QuestUiController applies side quest status filter popup selections and pe
     assert.equal(body.innerHTML.includes('Available Quest'), true);
   } finally {
     global.window = originalWindow;
+  }
+});
+
+test('QuestUiController renders side quest regenerate buttons only when developer mode is enabled', () => {
+  const sideTabBtn = createElement();
+  const body = createElement();
+  const controller = new QuestUiController(
+    createElement(),
+    createElement(),
+    sideTabBtn,
+    createCheckbox(true),
+    createElement(),
+    createElement(),
+    createElement(),
+    createElement(),
+    createElement(),
+    createElement(),
+    createSideStatusFilterCheckboxes(),
+    body,
+    createElement(),
+    createElement(),
+    createElement(),
+    createCallbacks({ isDeveloperModeEnabled: () => true }),
+  );
+  const mainQuest = { id: 'main', title: 'Signal Dawn', description: '', conditionText: '', objectiveType: 'scout', entities: [], children: [] };
+  const sideQuest = { id: 'side.dev', title: 'Developer Quest', description: '', conditionText: '', objectiveType: 'gather', entities: [], status: 'active', children: [] };
+
+  controller.renderQuest(mainQuest, [sideQuest]);
+  sideTabBtn.listeners.click();
+
+  assert.equal(body.innerHTML.includes('data-side-quest-regenerate-id=\"side.dev\"'), true);
+});
+
+test('QuestUiController triggers side quest regeneration callback when clicking regenerate in developer mode', async () => {
+  const originalHTMLElement = global.HTMLElement;
+  const originalHTMLButtonElement = global.HTMLButtonElement;
+  class FakeElement {}
+  class FakeButton extends FakeElement {}
+  global.HTMLElement = FakeElement;
+  global.HTMLButtonElement = FakeButton;
+
+  const sideTabBtn = createElement();
+  const body = createElement();
+  const regenerateCalls = [];
+  try {
+    const controller = new QuestUiController(
+      createElement(),
+      createElement(),
+      sideTabBtn,
+      createCheckbox(true),
+      createElement(),
+      createElement(),
+      createElement(),
+      createElement(),
+      createElement(),
+      createElement(),
+      createSideStatusFilterCheckboxes(),
+      body,
+      createElement(),
+      createElement(),
+      createElement(),
+      createCallbacks({
+        isDeveloperModeEnabled: () => true,
+        onRegenerateSideQuest: async (questId) => {
+          regenerateCalls.push(questId);
+          return true;
+        },
+      }),
+    );
+    const mainQuest = { id: 'main', title: 'Signal Dawn', description: '', conditionText: '', objectiveType: 'scout', entities: [], children: [] };
+    const sideQuest = { id: 'side.regen', title: 'Regenerate Me', description: '', conditionText: '', objectiveType: 'gather', entities: [], status: 'active', children: [] };
+
+    controller.renderQuest(mainQuest, [sideQuest]);
+    sideTabBtn.listeners.click();
+
+    const button = new FakeButton();
+    button.dataset = { sideQuestRegenerateId: 'side.regen' };
+    button.disabled = false;
+    const target = new FakeElement();
+    target.closest = () => button;
+    const event = {
+      target,
+      preventDefault() {},
+      stopPropagation() {},
+    };
+    await body.listeners.click(event);
+
+    assert.deepEqual(regenerateCalls, ['side.regen']);
+    assert.equal(controller['feedbackElements'][0].textContent, 'Side quest regenerated.');
+  } finally {
+    global.HTMLElement = originalHTMLElement;
+    global.HTMLButtonElement = originalHTMLButtonElement;
   }
 });
