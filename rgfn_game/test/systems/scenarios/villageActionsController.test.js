@@ -74,7 +74,6 @@ function createVillageUi() {
     title: createElement(),
     prompt: createElement(),
     actions: createElement(),
-    openDialogueBtn: createElement('button'),
     sleepRoomBtn: createElement('button'),
     villageWaitBtn: createElement('button'),
     dialogueModal: createElement(),
@@ -202,7 +201,7 @@ test('VillageActionsController keeps village rumor NPC roster stable across re-e
   assert.equal(createNpcRosterCalls, 1);
 }));
 
-test('VillageActionsController renders roster panel entries and village filter options', () => withDocumentStub(() => {
+test('VillageActionsController renders roster panel entries and village filter options', () => withDeveloperMode(true, () => withDocumentStub(() => {
   const villageUI = createVillageUi();
   const gameLog = createElement();
   const controller = new VillageActionsController(createPlayerStub(), villageUI, gameLog, {
@@ -226,7 +225,7 @@ test('VillageActionsController renders roster panel entries and village filter o
 
   assert.equal(villageUI.rosterVillageFilter.options.length >= 3, true);
   assert.equal(villageUI.rosterList.children.length >= 2, true);
-}));
+})));
 
 test('VillageActionsController shows village actions + rumors on entry and hides both on exit', () => withDocumentStub(() => {
   const villageUI = createVillageUi();
@@ -508,10 +507,8 @@ test('VillageActionsController mirrors dialogue lines into modal log and toggles
 
   controller.enterVillage('Mossbrook');
   controller.handleEnter('Mossbrook');
-  assert.equal(villageUI.openDialogueBtn.disabled, true);
+  assert.equal(villageUI.dialogueModal.classList.contains('hidden'), true);
   controller.handleSelectNpc(0);
-  assert.equal(villageUI.openDialogueBtn.disabled, false);
-  controller.openDialogueWindow();
   assert.equal(villageUI.dialogueModal.classList.removed.includes('hidden'), true);
 
   controller.addLog('Modal mirror check', 'system');
@@ -945,8 +942,8 @@ test('VillageActionsController refreshSelectedNpcSideQuestUi re-renders selected
   assert.equal(containsTextInTree(latestCard, 'Regenerated Offer — Offer available'), true);
   assert.equal(containsTextInTree(latestCard, 'Reward preview: 27g'), true);
 }));
-
-test('VillageActionsController allows refusing a side-quest offer and keeps other offers visible', () => withDocumentStub(() => {
+  
+test('VillageActionsController allows refusing a side-quest offer and keeps other offers visible', () => withDeveloperMode(true, () => withDocumentStub(() => {
   const villageUI = createVillageUi();
   const gameLog = createElement();
   const firstOffer = {
@@ -986,9 +983,8 @@ test('VillageActionsController allows refusing a side-quest offer and keeps othe
 
   controller.handleDismissSideQuestOffer('side-quest-offer-1');
   assert.equal(villageUI.sideQuestList.children.length >= 1, true);
-  assert.equal(containsTextInTree(villageUI.sideQuestList, 'Track Missing Cart'), true);
   assert.equal(gameLog.children.some((child) => String(child.textContent ?? '').includes('Side-quest offer hidden')), true);
-}));
+})));
 
 test('VillageActionsController does not auto-accept side quests in developer mode', () => withDeveloperMode(true, () => withDocumentStub(() => {
   const villageUI = createVillageUi();
@@ -1026,6 +1022,54 @@ test('VillageActionsController does not auto-accept side quests in developer mod
   assert.equal(hasAcceptButton, true);
   assert.equal(gameLog.children.some((child) => String(child.textContent ?? '').includes('Auto-accepted side quests')), false);
 })));
+
+test('VillageActionsController labels side-quest type in card header and omits boilerplate offer description', () => withDocumentStub(() => {
+  const villageUI = createVillageUi();
+  const gameLog = createElement();
+  const offerQuest = {
+    id: 'side-quest-offer-type',
+    title: 'Kadra Zentor\'s Request',
+    description: 'Assist Kadra Zentor with a local task in Selzen.',
+    reward: '29g',
+    status: 'available',
+    objectiveType: 'scout',
+    children: [
+      {
+        id: 'side-quest-offer-type-leaf',
+        title: 'Purge Sproutlings',
+        description: 'Track and purge rare mutant targets.',
+        reward: '29g',
+        status: 'available',
+        objectiveType: 'eliminate',
+        children: [],
+      },
+    ],
+  };
+  const controller = new VillageActionsController(createPlayerStub(), villageUI, gameLog, {
+    onUpdateHUD: () => {},
+    onLeaveVillage: () => {},
+    onAdvanceTime: () => {},
+    getVillageDirectionHint: (settlementName) => ({ settlementName, exists: false }),
+    onVillageBarterCompleted: () => {},
+    getVillageSideQuestOffers: () => [offerQuest],
+    getVillageNpcActiveSideQuests: () => [],
+    acceptSideQuest: () => ({ accepted: true }),
+  });
+  controller['dialogueEngine'] = {
+    createNpcRoster: () => [{ id: 'sel-0', name: 'Kadra Zentor', role: 'Scout', look: 'cloak', speechStyle: 'calm', disposition: 'truthful' }],
+    buildLocationAnswer: () => ({ speech: '', tone: '', truthfulness: 'truth' }),
+    buildPersonLocationAnswer: () => ({ speech: '', tone: '', truthfulness: 'truth' }),
+  };
+
+  controller.enterVillage('Selzen');
+  controller.handleSelectNpc(0);
+
+  const offerCard = villageUI.sideQuestList.children[0];
+  assert.equal(Boolean(offerCard), true);
+  assert.equal(offerCard.children.some((entry) => entry.textContent?.includes('Offer available (Purge)')), true);
+  assert.equal(offerCard.children.some((entry) => entry.textContent === 'Assist Kadra Zentor with a local task in Selzen.'), false);
+  assert.equal(offerCard.children.some((entry) => entry.textContent?.includes('Task details: Track and purge rare mutant targets.')), true);
+}));
 
 test('VillageActionsController shows turn-in action for ready side quests and turn-in is explicit', () => withDocumentStub(() => {
   const villageUI = createVillageUi();

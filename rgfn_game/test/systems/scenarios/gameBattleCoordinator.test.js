@@ -54,6 +54,7 @@ function createCoordinator() {
       onUpdateHUD: () => {},
       onDescribeEncounter: () => 'a test enemy',
       onGameOver: () => {},
+      onBattleEnded: () => {},
     },
   );
 

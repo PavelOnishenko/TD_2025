@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import QuestUiController from '../../../dist/systems/quest/QuestUiController.js';
+import QuestUiController from '../../../dist/systems/quest/ui/QuestUiController.js';
 
 function createElement() {
   return {
@@ -352,6 +352,8 @@ test('QuestUiController renders known side quests in side tab with nested object
   assert.equal(body.innerHTML.includes('Village Supplies'), true);
   assert.equal(body.innerHTML.includes('Gather Resin Bundles'), true);
   assert.equal(body.innerHTML.includes('side-quest-status'), true);
+  assert.equal(body.innerHTML.includes('data-location-name="Oakcross"'), true);
+  assert.equal(body.innerHTML.includes('quest-entity-name location'), true);
 });
 
 test('QuestUiController applies side quest status filter popup selections and persists status list', () => {

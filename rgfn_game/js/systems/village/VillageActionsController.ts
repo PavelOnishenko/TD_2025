@@ -15,7 +15,7 @@ import {
     VillageUI,
 } from './actions/VillageActionsTypes.js';
 import { isDeveloperModeEnabled } from '../../utils/DeveloperModeConfig.js';
-import { DeliverObjectiveData, QuestNode } from '../quest/QuestTypes.js';
+import { DeliverObjectiveData, QuestNode, QuestObjectiveType } from '../quest/QuestTypes.js';
 import { balanceConfig } from '../../config/balance/balanceConfig.js';
 import VillageIntegrityAlert from './VillageIntegrityAlert.js';
 import VillageNpcRoster from './VillageNpcRoster.js';
@@ -133,6 +133,7 @@ export default class VillageActionsController {
         this.selectedNpcId = npc.id;
         this.knownNpcNames.add(npc.name);
         this.refreshNpcUi();
+        this.uiPresenter.openDialogueWindow();
         this.addLog(`You approach ${npc.name} the ${npc.role}.`, 'player');
         this.addLog(`${npc.name} looks ${npc.look} and speaks in a ${npc.speechStyle} manner.`, 'system-message');
         this.addRecoverLeadFromNpc(npc);
@@ -633,7 +634,12 @@ export default class VillageActionsController {
 
     private appendSideQuestCardText(card: HTMLElement, quest: QuestNode, isOffer: boolean): void {
         const statusText = isOffer ? 'Offer available' : this.getSideQuestStatusText(quest.status);
-        const lines = [`${quest.title} — ${statusText}`, quest.description];
+        const sideQuestType = this.getSideQuestTypeLabel(quest);
+        const headerText = sideQuestType ? `${quest.title} — ${statusText} (${sideQuestType})` : `${quest.title} — ${statusText}`;
+        const lines = [headerText];
+        if (!this.isBoilerplateSideQuestDescription(quest.description)) {
+            lines.push(quest.description);
+        }
         const taskDetails = this.getSideQuestTaskDetails(quest);
         if (taskDetails) {
             lines.push(`Task details: ${taskDetails}`);
@@ -645,6 +651,56 @@ export default class VillageActionsController {
                 element.textContent = line;
                 card.appendChild(element);
             });
+    }
+
+    private getSideQuestTypeLabel(quest: QuestNode): string {
+        const primaryObjectiveType = quest.children[0]?.objectiveType ?? quest.objectiveType;
+        if (!primaryObjectiveType) {
+            return '';
+        }
+        return this.getObjectiveTypeLabel(primaryObjectiveType);
+    }
+
+    private getObjectiveTypeLabel(objectiveType: QuestObjectiveType): string {
+        if (objectiveType === 'deliver' || objectiveType === 'localDelivery') {
+            return 'Courier';
+        }
+        if (objectiveType === 'eliminate' || objectiveType === 'hunt') {
+            return 'Purge';
+        }
+        if (objectiveType === 'travel') {
+            return 'Travel';
+        }
+        if (objectiveType === 'barter') {
+            return 'Barter';
+        }
+        if (objectiveType === 'scout') {
+            return 'Scout';
+        }
+        if (objectiveType === 'recover') {
+            return 'Recover';
+        }
+        if (objectiveType === 'escort') {
+            return 'Escort';
+        }
+        if (objectiveType === 'defend') {
+            return 'Defend';
+        }
+        if (objectiveType === 'gather') {
+            return 'Gather';
+        }
+        if (objectiveType === 'repair') {
+            return 'Repair';
+        }
+        return 'Patrol';
+    }
+
+    private isBoilerplateSideQuestDescription(description: string): boolean {
+        const normalizedDescription = description.trim();
+        if (/^Assist .+ with a local task in .+\.$/u.test(normalizedDescription)) {
+            return true;
+        }
+        return false;
     }
 
     private getSideQuestTaskDetails(quest: QuestNode): string {
