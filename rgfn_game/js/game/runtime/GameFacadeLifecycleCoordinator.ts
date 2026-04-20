@@ -33,6 +33,7 @@ export default class GameFacadeLifecycleCoordinator {
             this.state.questRuntime.activeQuest,
             this.state.questRuntime.activeSideQuests,
             this.state.gameTime?.getState(),
+            this.state.worldSimulationRuntime.getState(),
         );
     }
 
@@ -55,6 +56,7 @@ export default class GameFacadeLifecycleCoordinator {
             this.state.questRuntime.activeQuest,
             this.state.questRuntime.activeSideQuests,
             this.state.gameTime?.getState(),
+            this.state.worldSimulationRuntime.getState(),
         );
         this.state.worldMap?.setLastUpdateMs(performance.now() - updateStart);
     }
@@ -104,6 +106,7 @@ export default class GameFacadeLifecycleCoordinator {
             this.state.questRuntime.activeQuest,
             this.state.questRuntime.activeSideQuests,
             this.state.gameTime?.getState(),
+            this.state.worldSimulationRuntime.getState(),
         );
     }
 

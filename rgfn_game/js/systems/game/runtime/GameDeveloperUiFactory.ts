@@ -1,9 +1,9 @@
 import { DeveloperUI } from '../ui/GameUiTypes.js';
 
 export class GameDeveloperUiFactory {
-    public create = (): DeveloperUI => ({ ...this.createBaseDeveloperUi(), ...this.createProfilingUi() });
+    public create = (): DeveloperUI => ({ ...this.createBaseDeveloperUi(), ...this.createProfilingUi(), ...this.createWorldInfoUi() });
 
-    private readonly createBaseDeveloperUi = (): Omit<DeveloperUI, 'worldMapProfilingToggle' | 'worldMapProfilingOpenBtn' | 'worldMapProfilingPanel' | 'worldMapProfilingDragHandle' | 'worldMapProfilingCloseBtn' | 'worldMapProfilingRefreshBtn' | 'worldMapProfilingAutoRefreshToggle' | 'worldMapProfilingRenderLayerToggles' | 'worldMapProfilingFpsCapSelect' | 'worldMapProfilingDevicePixelRatioClampSelect' | 'worldMapProfilingOutput'> => ({
+    private readonly createBaseDeveloperUi = (): Omit<DeveloperUI, 'worldMapProfilingToggle' | 'worldMapProfilingOpenBtn' | 'worldMapProfilingPanel' | 'worldMapProfilingDragHandle' | 'worldMapProfilingCloseBtn' | 'worldMapProfilingRefreshBtn' | 'worldMapProfilingAutoRefreshToggle' | 'worldMapProfilingRenderLayerToggles' | 'worldMapProfilingFpsCapSelect' | 'worldMapProfilingDevicePixelRatioClampSelect' | 'worldMapProfilingOutput' | 'worldInfoOverviewTabBtn' | 'worldInfoOverviewPanel' | 'worldInfoOverviewOutput'> => ({
         ...this.createQueueAndEncounterUi(),
         ...this.createNextRollAndRandomUi(),
         ...this.createModeAndMapDisplayUi(),
@@ -80,5 +80,11 @@ export class GameDeveloperUiFactory {
         locations: document.getElementById('dev-world-map-render-locations')! as HTMLInputElement,
         roads: document.getElementById('dev-world-map-render-roads')! as HTMLInputElement,
         selectionCursor: document.getElementById('dev-world-map-render-selection-cursor')! as HTMLInputElement,
+    });
+
+    private readonly createWorldInfoUi = (): Pick<DeveloperUI, 'worldInfoOverviewTabBtn' | 'worldInfoOverviewPanel' | 'worldInfoOverviewOutput'> => ({
+        worldInfoOverviewTabBtn: document.getElementById('dev-world-info-tab-overview')! as HTMLButtonElement,
+        worldInfoOverviewPanel: document.getElementById('dev-world-info-panel-overview')!,
+        worldInfoOverviewOutput: document.getElementById('dev-world-info-overview-output')!,
     });
 }

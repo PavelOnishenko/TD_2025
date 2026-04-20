@@ -15,6 +15,7 @@ import type GameQuestRuntime from '../runtime/GameQuestRuntime.js';
 import type GamePersistenceRuntime from '../runtime/GamePersistenceRuntime.js';
 import type GameWorldInteractionRuntime from '../runtime/GameWorldInteractionRuntime.js';
 import type GameTimeRuntime from '../../systems/time/GameTimeRuntime.js';
+import type WorldSimulationRuntime from '../../systems/world-sim/WorldSimulationRuntime.js';
 
 export type GameFacadeStateAccess = {
     canvas: HTMLCanvasElement;
@@ -35,6 +36,7 @@ export type GameFacadeStateAccess = {
     questRuntime: GameQuestRuntime;
     persistenceRuntime: GamePersistenceRuntime;
     worldInteractionRuntime: GameWorldInteractionRuntime;
+    worldSimulationRuntime: WorldSimulationRuntime;
     gameTime: GameTimeRuntime;
     advanceTime: (minutes: number, fatigueScale: number) => void;
 };

@@ -27,6 +27,7 @@ export default class DeveloperEventController {
         this.worldMapProfilingIntervalId = null;
         this.lastProfilingPayloadCacheKey = '';
         this.bindWorldMapProfilingPanelDrag();
+        this.bindWorldInfoControls();
     }
 
     public toggleModal(forceVisible?: boolean): void {
@@ -50,6 +51,7 @@ export default class DeveloperEventController {
         this.syncWorldMapRenderLayerTogglesFromMap();
         this.syncWorldMapRuntimeControlSelections();
         this.renderWorldMapProfilingPanel();
+        this.renderWorldInfoOverview();
     }
 
     public applyDeveloperModeOnStartup(): void {
@@ -233,6 +235,17 @@ export default class DeveloperEventController {
         }, null, 2);
     }
 
+    public renderWorldInfoOverview(): void {
+        const overview = this.callbacks.getWorldSimulationOverview();
+        this.developerUI.worldInfoOverviewOutput.textContent = JSON.stringify({
+            worldTick: overview.worldTick,
+            lastDelta: overview.lastDelta,
+            pendingEvents: overview.pendingEvents,
+            pendingEventsCount: overview.pendingEvents.length,
+            capturedAt: new Date().toISOString(),
+        }, null, 2);
+    }
+
     private syncWorldMapRenderLayerTogglesFromMap(): void {
         const toggles = this.callbacks.getWorldMapRenderLayerToggles();
         this.developerUI.worldMapProfilingRenderLayerToggles.terrain.checked = toggles.terrain;
@@ -263,6 +276,15 @@ export default class DeveloperEventController {
         const panel = this.developerUI.worldMapProfilingPanel;
         const dragHandle = this.developerUI.worldMapProfilingDragHandle;
         dragHandle.addEventListener('pointerdown', (event: PointerEvent) => this.handleProfilingPanelPointerDown(event, panel, dragHandle));
+    }
+
+    private bindWorldInfoControls(): void {
+        this.developerUI.worldInfoOverviewTabBtn.addEventListener('click', () => {
+            this.developerUI.worldInfoOverviewTabBtn.classList.add('is-active');
+            this.developerUI.worldInfoOverviewTabBtn.setAttribute('aria-selected', 'true');
+            this.developerUI.worldInfoOverviewPanel.classList.remove('hidden');
+            this.renderWorldInfoOverview();
+        });
     }
 
     private handleProfilingPanelPointerDown(event: PointerEvent, panel: HTMLElement, dragHandle: HTMLElement): void {

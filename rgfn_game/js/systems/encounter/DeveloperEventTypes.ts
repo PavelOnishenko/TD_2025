@@ -37,6 +37,9 @@ export type DeveloperUI = {
     worldMapProfilingFpsCapSelect: HTMLSelectElement;
     worldMapProfilingDevicePixelRatioClampSelect: HTMLSelectElement;
     worldMapProfilingOutput: HTMLElement;
+    worldInfoOverviewTabBtn: HTMLButtonElement;
+    worldInfoOverviewPanel: HTMLElement;
+    worldInfoOverviewOutput: HTMLElement;
 };
 
 export type WorldMapDrawProfilingSnapshot = Record<string, { frames: number; avgMs: number; maxMs: number; lastFrameMs: number }>;
@@ -70,6 +73,7 @@ export type DeveloperCallbacks = {
     getWorldMapRenderFpsCap: () => 'uncapped' | '60' | '30';
     setWorldMapDevicePixelRatioClamp: (clamp: 'auto' | '1' | '1.5') => void;
     getWorldMapDevicePixelRatioClamp: () => 'auto' | '1' | '1.5';
+    getWorldSimulationOverview: () => { worldTick: number; lastDelta: number; pendingEvents: string[] };
 };
 
 export const ENCOUNTER_LABELS: Record<RandomEncounterType, string> = { monster: 'Monster', item: 'Item', traveler: 'Traveler' };

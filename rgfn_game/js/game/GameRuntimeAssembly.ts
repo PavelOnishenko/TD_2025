@@ -98,6 +98,7 @@ const createDevController = (
     encounterSystem: EncounterSystem,
     worldMap: WorldMap,
     worldInteractionRuntime: GameFacade['worldInteractionRuntime'],
+    getWorldSimulationOverview: () => ReturnType<GameFacade['getWorldSimulationState']>,
     villageActionsController: { addLog: (message: string, type?: string) => void },
     villageCoordinator: { getDeveloperEventLabel: (type: string) => string },
 ): DeveloperEventController => new DeveloperEventController(ui.developerUI, encounterSystem, {
@@ -117,6 +118,7 @@ const createDevController = (
     getWorldMapRenderFpsCap: () => worldMap.getRenderFpsCap(),
     setWorldMapDevicePixelRatioClamp: (clamp) => worldMap.setDevicePixelRatioClamp(clamp),
     getWorldMapDevicePixelRatioClamp: () => worldMap.getDevicePixelRatioClamp(),
+    getWorldSimulationOverview,
 });
 
 // eslint-disable-next-line style-guide/function-length-warning
@@ -268,6 +270,7 @@ export function buildGameRuntime(
         runtimeBase.encounterSystem,
         runtimeBase.worldMap,
         game.worldInteractionRuntime,
+        () => game.getWorldSimulationState(),
         runtime.villageActionsController,
         runtime.villageCoordinator,
     );

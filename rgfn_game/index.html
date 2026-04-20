@@ -471,6 +471,16 @@
                     </div>
                 </div>
                 <div class="dev-events-queue-wrap">
+                    <h3>World Info</h3>
+                    <p class="dev-events-hint dev-events-hint-tight">Developer-only world simulation snapshot (updates when panel is opened or tab is clicked).</p>
+                    <div class="quest-tabs" role="tablist" aria-label="World info tabs">
+                        <button id="dev-world-info-tab-overview" class="quest-tab is-active" type="button" role="tab" aria-selected="true">Overview</button>
+                    </div>
+                    <section id="dev-world-info-panel-overview" role="tabpanel">
+                        <pre id="dev-world-info-overview-output" class="dev-world-map-profiling-output">{}</pre>
+                    </section>
+                </div>
+                <div class="dev-events-queue-wrap">
                     <h3>World map profiling window</h3>
                     <p class="dev-events-hint dev-events-hint-tight">Open a standalone draggable/resizable profiling window (like HUD panels) for live map draw metrics.</p>
                     <div class="dev-roll-actions">

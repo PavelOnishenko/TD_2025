@@ -31,6 +31,7 @@ import { FerryRouteOption } from '../systems/world-mode/WorldModeFerryPromptCont
 import GameTimeRuntime from '../systems/time/GameTimeRuntime.js';
 import { QuestNode, QuestRewardMetadata } from '../systems/quest/QuestTypes.js';
 import { resolveSideQuestRewardMetadata } from '../systems/quest/QuestRewardResolver.js';
+import WorldSimulationRuntime, { WorldSimulationState } from '../systems/world-sim/WorldSimulationRuntime.js';
 
 export type UIBundle = {
     hudElements: HudElements;
@@ -84,6 +85,7 @@ export class GameFacade implements GameFacadeStateAccess {
     public readonly questRuntime = new GameQuestRuntime();
     public readonly persistenceRuntime = new GamePersistenceRuntime(SAVE_KEY);
     public readonly worldInteractionRuntime = new GameWorldInteractionRuntime();
+    public readonly worldSimulationRuntime = new WorldSimulationRuntime();
     public gameTime!: GameTimeRuntime;
     private readonly lifecycle = new GameFacadeLifecycleCoordinator(this);
     private readonly worldInteractionCoordinator = new GameFacadeWorldInteractionCoordinator(this);
@@ -121,6 +123,7 @@ export class GameFacade implements GameFacadeStateAccess {
         const characterSeed = this.hashStringSeed(this.player.name);
         this.gameTime = new GameTimeRuntime(savedTime, worldSeed ^ characterSeed);
         this.worldMap.setDaylightFactor(this.gameTime.getDaylightFactor());
+        this.worldSimulationRuntime.initialize(this.persistenceRuntime.getParsedSaveState()?.worldSimulation);
         this.questRuntime.initialize(
             runtime.questGenerator,
             runtime.questUiController,
@@ -264,7 +267,10 @@ export class GameFacade implements GameFacadeStateAccess {
         this.gameTime.advanceMinutes(minutes);
         this.player.addTravelFatigue(Math.max(0, fatigueScale));
         this.worldMap.setDaylightFactor(this.gameTime.getDaylightFactor());
+        this.worldSimulationRuntime.tick(minutes);
     }
+
+    public readonly getWorldSimulationState = (): WorldSimulationState => this.worldSimulationRuntime.getState();
 
     public getHudTimeSnapshot(): { clock: string; date: string; calendarTitle: string; calendarLines: string[] } {
         if (!this.gameTime) {
