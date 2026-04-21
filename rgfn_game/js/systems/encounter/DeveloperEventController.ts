@@ -237,11 +237,20 @@ export default class DeveloperEventController {
 
     public renderWorldInfoOverview(): void {
         const overview = this.callbacks.getWorldSimulationOverview();
+        const persistence = this.callbacks.getPersistenceOverview();
         this.developerUI.worldInfoOverviewOutput.textContent = JSON.stringify({
             worldTick: overview.worldTick,
             lastDelta: overview.lastDelta,
             pendingEvents: overview.pendingEvents,
             pendingEventsCount: overview.pendingEvents.length,
+            persistence: {
+                key: persistence.key,
+                version: persistence.version,
+                loadedVersion: persistence.loadedVersion,
+                snapshotHash: persistence.snapshotHash,
+                lastSavedAt: persistence.lastSavedAt,
+                lastLoadedAt: persistence.lastLoadedAt,
+            },
             capturedAt: new Date().toISOString(),
         }, null, 2);
     }
