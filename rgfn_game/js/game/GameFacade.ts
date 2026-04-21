@@ -60,7 +60,8 @@ export type GameRuntimeAssignment = {
     devController: DeveloperEventController;
 };
 
-const SAVE_KEY = 'rgfn_game_save_v1';
+const SAVE_KEY = 'rgfn_game_save_v2';
+const LEGACY_SAVE_KEYS = ['rgfn_game_save_v1'];
 const WORLD_MAP_COLUMNS = balanceConfig.worldMap.dimensions.columns ?? theme.worldMap.gridDimensions.columns;
 const WORLD_MAP_ROWS = balanceConfig.worldMap.dimensions.rows ?? theme.worldMap.gridDimensions.rows;
 const WORLD_MAP_CELL_SIZE = theme.worldMap.cellSize.default;
@@ -83,7 +84,7 @@ export class GameFacade implements GameFacadeStateAccess {
     public player!: Player;
     public magicSystem!: MagicSystem;
     public readonly questRuntime = new GameQuestRuntime();
-    public readonly persistenceRuntime = new GamePersistenceRuntime(SAVE_KEY);
+    public readonly persistenceRuntime = new GamePersistenceRuntime(SAVE_KEY, LEGACY_SAVE_KEYS);
     public readonly worldInteractionRuntime = new GameWorldInteractionRuntime();
     public readonly worldSimulationRuntime = new WorldSimulationRuntime();
     public gameTime!: GameTimeRuntime;
@@ -271,6 +272,7 @@ export class GameFacade implements GameFacadeStateAccess {
     }
 
     public readonly getWorldSimulationState = (): WorldSimulationState => this.worldSimulationRuntime.getState();
+    public readonly getPersistenceOverview = (): ReturnType<GamePersistenceRuntime['getOverview']> => this.persistenceRuntime.getOverview();
 
     public getHudTimeSnapshot(): { clock: string; date: string; calendarTitle: string; calendarLines: string[] } {
         if (!this.gameTime) {

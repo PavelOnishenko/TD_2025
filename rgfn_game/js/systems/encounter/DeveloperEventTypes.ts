@@ -74,6 +74,14 @@ export type DeveloperCallbacks = {
     setWorldMapDevicePixelRatioClamp: (clamp: 'auto' | '1' | '1.5') => void;
     getWorldMapDevicePixelRatioClamp: () => 'auto' | '1' | '1.5';
     getWorldSimulationOverview: () => { worldTick: number; lastDelta: number; pendingEvents: string[] };
+    getPersistenceOverview: () => {
+        key: string;
+        version: number;
+        loadedVersion: number | null;
+        snapshotHash: string | null;
+        lastSavedAt: string | null;
+        lastLoadedAt: string | null;
+    };
 };
 
 export const ENCOUNTER_LABELS: Record<RandomEncounterType, string> = { monster: 'Monster', item: 'Item', traveler: 'Traveler' };

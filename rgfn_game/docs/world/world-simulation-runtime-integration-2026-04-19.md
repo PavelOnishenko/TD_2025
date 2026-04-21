@@ -14,6 +14,12 @@
   4. `conflicts`
   5. `villages`
 - Added persistence support for world simulation snapshot in save payload.
+- Save format upgraded to **v2** (`rgfn_game_save_v2`) with automatic migration from legacy key/format (`rgfn_game_save_v1`, version `1` payloads).
+- Legacy migration now lifts old top-level world simulation fields into `worldSimulation` so the following categories are preserved on reload without data loss:
+  - `npcs`
+  - `monsters`
+  - `conflicts`
+  - `factionControl`
 - Added world simulation ticking from gameplay time progression (`advanceTime`), which is triggered by world/village player actions.
 - Added a developer-only World Info section with an `Overview` tab in the Developer Event Queue modal.
 
@@ -58,6 +64,13 @@ A new block was added to Developer Event Queue modal:
   - `lastDelta`
   - `pendingEvents`
   - `pendingEventsCount`
+  - `persistence`:
+    - `key`
+    - `version`
+    - `loadedVersion`
+    - `snapshotHash`
+    - `lastSavedAt`
+    - `lastLoadedAt`
   - `capturedAt`
 
 ## Automated test coverage
@@ -66,10 +79,13 @@ Added minimal automated checks for:
 
 1. `worldTick` growth across sequential ticks.
 2. exact stage order execution in one tick.
+3. save/load roundtrip keeps `worldSimulation` snapshot byte-for-byte for critical world-state domains.
+4. migration from legacy save format upgrades payload to v2 and preserves `npcs/monsters/conflicts/factionControl`.
 
 These tests live in:
 
 - `rgfn_game/test/systems/worldSimulationRuntime.test.js`
+- `rgfn_game/test/game/runtime/gamePersistenceRuntime.test.js`
 
 ## UI manual verification checklist (issue checklist)
 
@@ -78,6 +94,10 @@ These tests live in:
 - [ ] Confirm new **World Info** section is visible.
 - [ ] Confirm **Overview** tab exists and is active.
 - [ ] Verify initial snapshot shows numeric `worldTick` and `lastDelta`.
+- [ ] In the same snapshot verify **Persistence** block exists and displays:
+  - [ ] `version: 2`
+  - [ ] non-empty `snapshotHash` after first auto-save event
+  - [ ] ISO timestamps in `lastSavedAt`/`lastLoadedAt`
 - [ ] Perform one action that advances time (e.g., move on world map to trigger travel time).
 - [ ] Re-open/refresh World Info Overview and verify `worldTick` increased.
 - [ ] Perform another distinct time-advancing action (e.g., village interaction / ferry travel / wait/rest).
@@ -85,6 +105,28 @@ These tests live in:
 - [ ] Verify `lastDelta` updates according to action time cost.
 - [ ] Verify `pendingEvents` is non-empty and includes stage-tagged entries.
 - [ ] Save/reload (if using persistent save flow) and verify simulation snapshot restores without reset when save exists.
+
+## Step-by-step reload validation scenario (for issue QA)
+
+1. **Prepare legacy save fixture**
+   1. Open DevTools Console.
+   2. Write a synthetic v1 save:
+      - key: `rgfn_game_save_v1`
+      - include top-level `npcs`, `monsters`, `conflicts`, `factionControl`.
+2. **Hard reload page** (`Ctrl+Shift+R`).
+3. **Open World Info → Overview** and verify:
+   - `persistence.loadedVersion === 1` (first boot after migration),
+   - runtime data is present (`worldTick`, `pendingEvents`),
+   - migrated data is active (NPC/monster/conflict/faction-control-driven behavior appears unchanged in debug panels/gameplay).
+4. **Confirm rewritten save key**
+   - In Local Storage, verify `rgfn_game_save_v2` exists.
+   - Inspect JSON and confirm migrated `worldSimulation` contains the four world-domain fields above.
+5. **Trigger at least one more save**
+   - Perform a time-advancing action.
+   - Re-open Overview and verify `snapshotHash` changed and `lastSavedAt` updated.
+6. **Reload again**
+   - After second reload, verify `persistence.loadedVersion === 2`.
+   - Confirm no regression/loss in NPC/monster/conflict/faction-control data.
 
 ## Extra implementation notes for future phases
 
