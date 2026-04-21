@@ -11,6 +11,7 @@ export type GameSaveState = {
     quest: QuestNode | null;
     sideQuests?: QuestNode[];
     time?: Record<string, unknown>;
+    worldSimulation?: Record<string, unknown>;
 };
 
 export default class GamePersistenceRuntime {
@@ -26,6 +27,7 @@ export default class GamePersistenceRuntime {
         activeQuest: QuestNode | null,
         activeSideQuests: QuestNode[] = [],
         timeState?: Record<string, unknown>,
+        worldSimulationState?: Record<string, unknown>,
     ): void {
         const snapshot = JSON.stringify({
             version: 1,
@@ -35,6 +37,7 @@ export default class GamePersistenceRuntime {
             quest: activeQuest,
             sideQuests: activeSideQuests,
             time: timeState,
+            worldSimulation: worldSimulationState,
         } as GameSaveState);
         if (snapshot === this.lastSavedSnapshot) {
             return;
