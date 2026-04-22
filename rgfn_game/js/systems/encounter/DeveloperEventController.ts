@@ -28,6 +28,7 @@ export default class DeveloperEventController {
         this.lastProfilingPayloadCacheKey = '';
         this.bindWorldMapProfilingPanelDrag();
         this.bindWorldInfoControls();
+        this.renderWorldInfoOverview();
     }
 
     public toggleModal(forceVisible?: boolean): void {
@@ -288,12 +289,7 @@ export default class DeveloperEventController {
     }
 
     private bindWorldInfoControls(): void {
-        this.developerUI.worldInfoOverviewTabBtn.addEventListener('click', () => {
-            this.developerUI.worldInfoOverviewTabBtn.classList.add('is-active');
-            this.developerUI.worldInfoOverviewTabBtn.setAttribute('aria-selected', 'true');
-            this.developerUI.worldInfoOverviewPanel.classList.remove('hidden');
-            this.renderWorldInfoOverview();
-        });
+        document.getElementById('toggle-world-info-panel-btn')?.addEventListener('click', () => this.renderWorldInfoOverview());
     }
 
     private handleProfilingPanelPointerDown(event: PointerEvent, panel: HTMLElement, dragHandle: HTMLElement): void {

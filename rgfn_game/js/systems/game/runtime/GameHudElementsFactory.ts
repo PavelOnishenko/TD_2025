@@ -28,6 +28,7 @@ export class GameHudElementsFactory {
             newCharacterBtn: btn('new-character-btn'),
             worldMapPanel: el('world-sidebar'),
             logPanel: el('game-log-container'),
+            worldInfoPanel: el('world-info-panel'),
             rosterPanel: el('village-roster-panel'),
             questIntroModal: el('quest-intro-modal'),
             questIntroBody: el('quest-intro-body'),
@@ -149,6 +150,7 @@ export class GameHudElementsFactory {
             toggleSelectedPanelBtn: btn('toggle-selected-panel-btn'),
             toggleWorldMapPanelBtn: btn('toggle-world-map-panel-btn'),
             toggleLogPanelBtn: btn('toggle-log-panel-btn'),
+            toggleWorldInfoPanelBtn: btn('toggle-world-info-panel-btn'),
             toggleRosterPanelBtn: btn('toggle-roster-panel-btn'),
         };
     }

@@ -37,8 +37,6 @@ export type DeveloperUI = {
     worldMapProfilingFpsCapSelect: HTMLSelectElement;
     worldMapProfilingDevicePixelRatioClampSelect: HTMLSelectElement;
     worldMapProfilingOutput: HTMLElement;
-    worldInfoOverviewTabBtn: HTMLButtonElement;
-    worldInfoOverviewPanel: HTMLElement;
     worldInfoOverviewOutput: HTMLElement;
 };
 
