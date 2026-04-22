@@ -45,6 +45,7 @@ export type VillageActionsCallbacks = {
     onAdvanceTime: (minutes: number, fatigueScale: number) => void;
     onLeaveVillage: () => void;
     getVillageDirectionHint: (settlementName: string) => VillageDirectionHint;
+    getAllVillagePlacements?: () => Array<{ name: string; col: number; row: number }>;
     getNearbyVillageNames?: (villageName: string, maxDistanceCells: number) => string[];
     getKnownSettlementNames?: () => string[];
     getKnownQuestSettlementNames?: () => string[];

@@ -41,6 +41,7 @@ export default class VillageActionsController {
     private dismissedSideQuestOfferIds: Set<string> = new Set();
     private knownNpcNames: Set<string> = new Set();
     private joinedEscortNpcKeys: Set<string> = new Set();
+    private hasPreGeneratedWorldNpcs = false;
 
     constructor(player: Player, villageUI: VillageUI, gameLog: HTMLElement, callbacks: VillageActionsCallbacks, deps: { nextCharacterName?: () => string } = {}) {
         this.villageUI = villageUI;
@@ -50,6 +51,14 @@ export default class VillageActionsController {
         this.uiPresenter = this.createVillageUiPresenter(player, villageUI, gameLog);
         this.tradeInteraction = this.createTradeInteraction(player, callbacks);
         this.dialogueInteraction = this.createDialogueInteraction(player, villageUI, callbacks);
+    }
+
+    public preGenerateWorldNpcRoster(): void {
+        if (this.hasPreGeneratedWorldNpcs) {
+            return;
+        }
+        this.preGenerateVillageNpcs();
+        this.hasPreGeneratedWorldNpcs = true;
     }
 
     public enterVillage(villageName: string): void {
@@ -323,9 +332,9 @@ export default class VillageActionsController {
             this.ensureQuestPeoplePresent(villageName);
             return this.npcPassportRoster.getVillageProfiles(villageName);
         }
-
+        const villageTile = this.getVillageTilePosition(villageName);
         const roster = this.applyQuestStyleNames(this.dialogueEngine.createNpcRoster(villageName));
-        roster.forEach((npc) => this.npcPassportRoster.upsert(villageName, npc, 'generated-on-village-entry'));
+        roster.forEach((npc) => this.npcPassportRoster.upsert(villageName, npc, 'generated-on-village-entry', villageTile));
         this.ensureQuestPeoplePresent(villageName);
         return this.npcPassportRoster.getVillageProfiles(villageName);
     }
@@ -971,10 +980,36 @@ export default class VillageActionsController {
         entries.forEach((entry) => {
             const row = document.createElement('div');
             row.className = `village-roster-entry${entry.lifeStatus === 'dead' ? ' is-dead' : ''}`;
+            const tileText = entry.passport.tileCol !== null && entry.passport.tileRow !== null
+                ? `Tile: (${entry.passport.tileCol}, ${entry.passport.tileRow})`
+                : 'Tile: unknown';
             row.textContent = `${entry.passport.name} (${entry.passport.occupation}) · Village: ${entry.passport.villageName} · `
-                + `Personality: ${entry.passport.personality} · Status: ${entry.lifeStatus}`;
+                + `${tileText} · Personality: ${entry.passport.personality} · Status: ${entry.lifeStatus}`;
             listElement.appendChild(row);
         });
+    }
+
+    private preGenerateVillageNpcs(): void {
+        const villagePlacements = this.callbacks.getAllVillagePlacements?.() ?? [];
+        villagePlacements.forEach((placement) => {
+            const roster = this.applyQuestStyleNames(this.dialogueEngine.createNpcRoster(placement.name));
+            roster.forEach((npc) => this.npcPassportRoster.upsert(
+                placement.name,
+                npc,
+                'generated-on-world-generation',
+                { col: placement.col, row: placement.row },
+            ));
+        });
+    }
+
+    private getVillageTilePosition(villageName: string): { col: number; row: number } | undefined {
+        const normalizedName = villageName.trim().toLocaleLowerCase();
+        const matchingPlacement = (this.callbacks.getAllVillagePlacements?.() ?? [])
+            .find((placement) => placement.name.trim().toLocaleLowerCase() === normalizedName);
+        if (!matchingPlacement) {
+            return undefined;
+        }
+        return { col: matchingPlacement.col, row: matchingPlacement.row };
     }
 
     private shouldIncludeTraderName(traderName: string, knownSettlements: Set<string>): boolean {

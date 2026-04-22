@@ -28,6 +28,7 @@
                     <button id="toggle-selected-panel-btn" class="action-btn" type="button">Selected</button>
                     <button id="toggle-world-map-panel-btn" class="action-btn" type="button">World Map</button>
                     <button id="toggle-log-panel-btn" class="action-btn" type="button">Log</button>
+                    <button id="toggle-world-info-panel-btn" class="action-btn dev-only-btn hidden" type="button">World Info</button>
                     <button id="toggle-roster-panel-btn" class="action-btn dev-only-btn hidden" type="button">NPC Roster</button>
                 </div>
                 <div class="hud-menu-actions">
@@ -334,11 +335,19 @@
                         </div>
                     </div>
                     <div id="village-roster-panel" class="overlay-panel hidden">
-                        <h2>NPC Roster</h2>
+                        <h2>NPC List</h2>
                         <div class="village-section village-roster-panel">
                             <p class="village-section-title">Source of truth (developer mode only)</p>
                             <select id="village-roster-filter-select" class="village-ask-input"></select>
                             <div id="village-roster-list" class="village-roster-list"></div>
+                        </div>
+                    </div>
+                    <div id="world-info-panel" class="overlay-panel hidden">
+                        <h2>World Info</h2>
+                        <div class="village-section village-roster-panel">
+                            <p class="village-section-title">Developer-only world simulation snapshot</p>
+                            <pre id="world-info-overview-output" class="dev-world-map-profiling-output">{}</pre>
+                            <button id="world-info-open-roster-btn" class="action-btn" type="button">Open NPC List</button>
                         </div>
                     </div>
                 </div>
@@ -469,16 +478,6 @@
                         <label class="dev-events-toggle" for="dev-map-display-everything-discovered"><input id="dev-map-display-everything-discovered" type="checkbox"> Everything discovered</label>
                         <label class="dev-events-toggle" for="dev-map-display-fog-of-war"><input id="dev-map-display-fog-of-war" type="checkbox" checked> Fog of war</label>
                     </div>
-                </div>
-                <div class="dev-events-queue-wrap">
-                    <h3>World Info</h3>
-                    <p class="dev-events-hint dev-events-hint-tight">Developer-only world simulation snapshot (updates when panel is opened or tab is clicked).</p>
-                    <div class="quest-tabs" role="tablist" aria-label="World info tabs">
-                        <button id="dev-world-info-tab-overview" class="quest-tab is-active" type="button" role="tab" aria-selected="true">Overview</button>
-                    </div>
-                    <section id="dev-world-info-panel-overview" role="tabpanel">
-                        <pre id="dev-world-info-overview-output" class="dev-world-map-profiling-output">{}</pre>
-                    </section>
                 </div>
                 <div class="dev-events-queue-wrap">
                     <h3>World map profiling window</h3>

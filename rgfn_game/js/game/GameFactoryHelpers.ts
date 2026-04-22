@@ -57,6 +57,7 @@ const createVillageActionsController = (
     onAdvanceTime: (minutes, fatigueScale) => game.onVillageAdvanceTime(minutes, fatigueScale),
     onLeaveVillage: () => game.onVillageLeave(),
     getVillageDirectionHint: (name: string) => worldMap.getVillageDirectionHintFromPlayer(name),
+    getAllVillagePlacements: () => worldMap.getAllVillagePlacements(),
     getNearbyVillageNames: (villageName: string, maxDistanceCells: number) =>
         worldMap.getNearbyVillagesFromVillage(villageName, maxDistanceCells).map((entry) => entry.name),
     getKnownSettlementNames: () => worldMap.getKnownSettlementNames(),
@@ -87,6 +88,7 @@ export function createVillageRuntime(
     nextCharacterName: () => string,
 ) {
     const villageActionsController = createVillageActionsController(game, ui, player, worldMap, hudCoordinator, nextCharacterName);
+    villageActionsController.preGenerateWorldNpcRoster();
     const villageCoordinator = new GameVillageCoordinator(
         ui.hudElements,
         ui.battleUI,
