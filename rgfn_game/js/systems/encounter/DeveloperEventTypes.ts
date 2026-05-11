@@ -71,7 +71,15 @@ export type DeveloperCallbacks = {
     getWorldMapRenderFpsCap: () => 'uncapped' | '60' | '30';
     setWorldMapDevicePixelRatioClamp: (clamp: 'auto' | '1' | '1.5') => void;
     getWorldMapDevicePixelRatioClamp: () => 'auto' | '1' | '1.5';
-    getWorldSimulationOverview: () => { worldTick: number; lastDelta: number; pendingEvents: string[] };
+    getWorldSimulationOverview: () => {
+        worldTick: number;
+        lastDelta: number;
+        pendingEvents: string[];
+        factions: Record<string, { factionId: string; territoryCellIds: string[]; activeSquadIds: string[] }>;
+        raids: Array<{ raidId: string; attackerFactionId: string; defenderFactionId: string; fromCellId: string; targetCellId: string; status: string }>;
+        captureTimers: Record<string, { attackerFactionId: string; defenderPresent: boolean; progressHours: number }>;
+        intercepts: string[];
+    };
     getPersistenceOverview: () => {
         key: string;
         version: number;

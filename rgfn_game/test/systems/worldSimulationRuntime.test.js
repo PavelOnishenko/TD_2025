@@ -27,3 +27,33 @@ test('WorldSimulationRuntime runs stages in the expected pipeline order', () => 
     'villages',
   ]);
 });
+
+test('WorldSimulationRuntime switches control after 24h undefended capture timer', () => {
+  const runtime = new WorldSimulationRuntime();
+  runtime.initialize();
+
+  const targetCell = runtime.getState().factions.blue.territoryCellIds[0];
+  runtime.tick(60);
+  assert.ok(runtime.getState().captureTimers[targetCell]);
+  runtime.tick(22 * 60);
+  assert.ok(runtime.getState().captureTimers[targetCell]);
+  runtime.tick(60);
+
+  const state = runtime.getState();
+  assert.ok(state.factions.red.territoryCellIds.includes(targetCell));
+  assert.ok(!state.factions.blue.territoryCellIds.includes(targetCell));
+  assert.equal(state.captureTimers[targetCell], undefined);
+});
+
+test('WorldSimulationRuntime keeps capture timer below 24h before control switch', () => {
+  const runtime = new WorldSimulationRuntime();
+  runtime.initialize();
+
+  const targetCell = runtime.getState().factions.blue.territoryCellIds[0];
+  runtime.tick(60);
+  runtime.tick(22 * 60);
+  const timer = runtime.getState().captureTimers[targetCell];
+
+  assert.ok(timer.progressHours < 24);
+  assert.ok(runtime.getState().factions.blue.territoryCellIds.includes(targetCell));
+});

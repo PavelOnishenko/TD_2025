@@ -244,6 +244,15 @@ export default class DeveloperEventController {
             lastDelta: overview.lastDelta,
             pendingEvents: overview.pendingEvents,
             pendingEventsCount: overview.pendingEvents.length,
+            tabs: {
+                overview: { worldTick: overview.worldTick, lastDelta: overview.lastDelta },
+                factions: {
+                    territories: overview.factions,
+                    raids: overview.raids,
+                    captureTimers: overview.captureTimers,
+                    intercepts: overview.intercepts,
+                },
+            },
             persistence: {
                 key: persistence.key,
                 version: persistence.version,
