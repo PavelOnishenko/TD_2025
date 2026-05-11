@@ -59,6 +59,7 @@ export default class VillageActionsController {
         }
         this.preGenerateVillageNpcs();
         this.hasPreGeneratedWorldNpcs = true;
+        this.renderRosterPanel();
     }
 
     public enterVillage(villageName: string): void {

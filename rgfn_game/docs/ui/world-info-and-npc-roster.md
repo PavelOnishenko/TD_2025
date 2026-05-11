@@ -21,6 +21,7 @@
   3. `createVillageRuntime(...)` immediately calls `villageActionsController.preGenerateWorldNpcRoster()`.
   4. `preGenerateWorldNpcRoster()` iterates `getAllVillagePlacements()` and generates/upserts roster entries for each village.
 - The pre-generation call is guarded with `hasPreGeneratedWorldNpcs` to avoid accidental duplicate full-world generation if called more than once in a runtime.
+- Immediately after pre-generation completes, `renderRosterPanel()` is called so the NPC roster UI is populated before entering any village.
 - Village entry no longer creates first-time villagers for those villages; it pulls from the global roster generated at world generation time.
 - Quest-specific NPC injections still upsert into the same global roster and remain compatible with the pre-generated data.
 - Pre-generation intentionally runs for every world village placement without short-circuiting per-village existence checks, so a partial prefilled roster cannot prevent generation for later villages.
