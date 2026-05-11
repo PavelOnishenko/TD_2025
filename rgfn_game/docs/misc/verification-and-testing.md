@@ -1316,3 +1316,45 @@ This prints:
   - inventory weapon click equips,
   - equipped slot click unequips,
   - right-click inventory still drops item.
+
+## 2026-05-11 World Factions attack→intercept/capture manual checklist
+
+### What was added
+- `WorldSimulationRuntime` now tracks `factions` (`red`, `blue`) with:
+  - `territoryCellIds[]`
+  - `activeSquadIds[]`
+- Runtime now resolves:
+  - nearest-target raid assignment,
+  - defender intercept scheduling,
+  - intercept conflict event logging,
+  - capture timer progression,
+  - control switch after 24h undefended hold.
+- World Info (dev-only) now includes a logical `tabs.factions` block with:
+  - territories,
+  - raids,
+  - capture timers,
+  - intercept traces.
+
+### Manual UI checklist (dev-only)
+1. Enable Developer Mode.
+2. Open **World Info** panel.
+3. Confirm `tabs.factions.territories` has `red` and `blue` entries.
+4. Advance simulation by one world tick (any in-game action causing world tick).
+5. In `tabs.factions.raids`, verify raid exists and has nearest blue target cell.
+6. In `tabs.factions.intercepts`, verify intercept trace appears.
+7. In `tabs.factions.captureTimers`, verify timer appears for target cell.
+8. Continue advancing time and observe timer growth in hours.
+9. At `>= 24` hours with no defenders (`defenderPresent=false`), verify:
+   - target cell removed from blue territory,
+   - target cell added to red territory,
+   - capture timer for that cell removed,
+   - capture resolution event emitted in pending events.
+10. Capture screenshots for the chain:
+   - before raid,
+   - during intercept/capture timer,
+   - after ownership switch.
+
+### Notes for debugging
+- If timer does not progress, inspect `lastDelta` and ensure world ticks are happening.
+- If no raid appears, ensure no unresolved raid already exists.
+- If ownership does not switch at 24h, inspect `captureTimers[target].defenderPresent` and `progressHours`.
