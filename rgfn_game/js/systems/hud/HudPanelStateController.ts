@@ -9,7 +9,7 @@ export default class HudPanelStateController {
     }
 
     public togglePanel(panel: HudPanel): void {
-        if (panel === 'roster' && !isDeveloperModeEnabled()) {
+        if ((panel === 'roster' || panel === 'worldInfo') && !isDeveloperModeEnabled()) {
             return;
         }
         this.getPanelMap()[panel].classList.toggle('hidden');
@@ -28,6 +28,7 @@ export default class HudPanelStateController {
         this.hudElements.toggleSelectedPanelBtn.classList.toggle('active', !this.hudElements.selectedPanel.classList.contains('hidden'));
         this.hudElements.toggleWorldMapPanelBtn.classList.toggle('active', !this.hudElements.worldMapPanel.classList.contains('hidden'));
         this.hudElements.toggleLogPanelBtn.classList.toggle('active', !this.hudElements.logPanel.classList.contains('hidden'));
+        this.hudElements.toggleWorldInfoPanelBtn.classList.toggle('active', !this.hudElements.worldInfoPanel.classList.contains('hidden'));
         this.hudElements.toggleRosterPanelBtn.classList.toggle('active', !this.hudElements.rosterPanel.classList.contains('hidden'));
     }
 
@@ -42,13 +43,16 @@ export default class HudPanelStateController {
         selected: this.hudElements.selectedPanel,
         worldMap: this.hudElements.worldMapPanel,
         log: this.hudElements.logPanel,
+        worldInfo: this.hudElements.worldInfoPanel,
         roster: this.hudElements.rosterPanel,
     });
 
     private syncDeveloperRosterVisibility(): void {
         const developerModeEnabled = isDeveloperModeEnabled();
+        this.hudElements.toggleWorldInfoPanelBtn.classList.toggle('hidden', !developerModeEnabled);
         this.hudElements.toggleRosterPanelBtn.classList.toggle('hidden', !developerModeEnabled);
         if (!developerModeEnabled) {
+            this.hudElements.worldInfoPanel.classList.add('hidden');
             this.hudElements.rosterPanel.classList.add('hidden');
         }
     }

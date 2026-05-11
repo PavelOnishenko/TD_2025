@@ -30,6 +30,7 @@ export default class GameUiHudPanelController {
     private static readonly COMBAT_PANEL_PERSISTENCE_KEY = 'battleActions';
     private static readonly VILLAGE_ACTIONS_PANEL_PERSISTENCE_KEY = 'villageActions';
     private static readonly VILLAGE_RUMORS_PANEL_PERSISTENCE_KEY = 'villageRumors';
+    private static readonly WORLD_INFO_PANEL_PERSISTENCE_KEY = 'worldInfo';
     private static readonly VILLAGE_ROSTER_PANEL_PERSISTENCE_KEY = 'villageRoster';
     private static readonly MODE_TEXT = {
         battle: 'Battle!',
@@ -75,7 +76,9 @@ export default class GameUiHudPanelController {
         this.hudElements.toggleSelectedPanelBtn.addEventListener('click', () => this.handlePanelToggle('selected'));
         this.hudElements.toggleWorldMapPanelBtn.addEventListener('click', () => this.handlePanelToggle('worldMap'));
         this.hudElements.toggleLogPanelBtn.addEventListener('click', () => this.handlePanelToggle('log'));
+        this.hudElements.toggleWorldInfoPanelBtn.addEventListener('click', () => this.handlePanelToggle('worldInfo'));
         this.hudElements.toggleRosterPanelBtn.addEventListener('click', () => this.handlePanelToggle('roster'));
+        document.getElementById('world-info-open-roster-btn')?.addEventListener('click', () => this.handlePanelToggle('roster'));
     }
     private initializeHudPanelWindows(): void {
         this.getPanelConfigs().forEach(({ key, title, element, closable }, panelIndex) => this.decorateHudPanelWindow(key, title, element, panelIndex, closable ?? true));
@@ -94,6 +97,14 @@ export default class GameUiHudPanelController {
                 : []),
             ...(villageRumorsPanel
                 ? [{ key: null, title: 'Village Rumors', element: villageRumorsPanel, closable: false, persistenceKey: 'villageRumors' }]
+                : []),
+            ...(this.hudElements.worldInfoPanel
+                ? [{
+                    key: 'worldInfo' as const,
+                    title: 'World Info',
+                    element: this.hudElements.worldInfoPanel,
+                    persistenceKey: GameUiHudPanelController.WORLD_INFO_PANEL_PERSISTENCE_KEY,
+                }]
                 : []),
             ...(villageRosterPanel
                 ? [{

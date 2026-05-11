@@ -184,6 +184,15 @@ export default class WorldMapVillageNavigationAndRender extends WorldMapMovement
         })
         .sort((left, right) => left.localeCompare(right));
 
+    public getAllVillagePlacements = (): Array<{ name: string; col: number; row: number }> => Array.from(this.villages.values())
+        .map((key) => {
+            const [colText, rowText] = key.split(',');
+            const col = Number(colText);
+            const row = Number(rowText);
+            return { name: this.getVillageName(col, row), col, row };
+        })
+        .sort((left, right) => left.name.localeCompare(right.name));
+
     private getVillageName(col: number, row: number): string {
         const seed = this.hashSeed((col + 11) * 92837111, (row + 17) * 689287499, 14057);
         return generateVillageName(seed);

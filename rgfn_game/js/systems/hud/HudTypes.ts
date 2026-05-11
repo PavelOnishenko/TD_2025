@@ -84,6 +84,7 @@ export type HudElements = {
     groupPanel: HTMLElement;
     worldMapPanel: HTMLElement;
     logPanel: HTMLElement;
+    worldInfoPanel: HTMLElement;
     rosterPanel: HTMLElement;
     questsBody: HTMLElement;
     groupBody: HTMLElement;
@@ -107,10 +108,11 @@ export type HudElements = {
     toggleSelectedPanelBtn: HTMLButtonElement;
     toggleWorldMapPanelBtn: HTMLButtonElement;
     toggleLogPanelBtn: HTMLButtonElement;
+    toggleWorldInfoPanelBtn: HTMLButtonElement;
     toggleRosterPanelBtn: HTMLButtonElement;
 };
 
-export type HudPanel = 'stats' | 'skills' | 'inventory' | 'magic' | 'quests' | 'group' | 'lore' | 'selected' | 'worldMap' | 'log' | 'roster';
+export type HudPanel = 'stats' | 'skills' | 'inventory' | 'magic' | 'quests' | 'group' | 'lore' | 'selected' | 'worldMap' | 'log' | 'worldInfo' | 'roster';
 
 export type BattleUiHudElements = {
     usePotionBtn: HTMLButtonElement;

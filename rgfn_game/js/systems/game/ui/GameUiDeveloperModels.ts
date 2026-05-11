@@ -47,8 +47,6 @@ export class DeveloperUiModel {
     public worldMapProfilingFpsCapSelect!: HTMLSelectElement;
     public worldMapProfilingDevicePixelRatioClampSelect!: HTMLSelectElement;
     public worldMapProfilingOutput!: HTMLElement;
-    public worldInfoOverviewTabBtn!: HTMLButtonElement;
-    public worldInfoOverviewPanel!: HTMLElement;
     public worldInfoOverviewOutput!: HTMLElement;
 }
 

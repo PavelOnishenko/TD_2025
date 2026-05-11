@@ -12,6 +12,8 @@ export type VillageNpcPassport = {
     personality: NpcDisposition;
     speechStyle: string;
     look: string;
+    tileCol: number | null;
+    tileRow: number | null;
 };
 
 export type VillageNpcRosterEntry = {
@@ -58,7 +60,7 @@ export default class VillageNpcRoster {
         return false;
     }
 
-    public upsert(villageName: string, npc: VillageNpcProfile, sourceTag: string): VillageNpcRosterEntry {
+    public upsert(villageName: string, npc: VillageNpcProfile, sourceTag: string, villageTile?: { col: number; row: number }): VillageNpcRosterEntry {
         const key = this.getKey(villageName, npc.name);
         const nowTick = this.nextTick();
         const existing = this.entriesByKey.get(key);
@@ -72,6 +74,8 @@ export default class VillageNpcRoster {
                 personality: npc.disposition,
                 speechStyle: npc.speechStyle,
                 look: npc.look,
+                tileCol: villageTile?.col ?? existing.passport.tileCol,
+                tileRow: villageTile?.row ?? existing.passport.tileRow,
             };
             existing.lastUpdatedAtTick = nowTick;
             existing.sourceTag = sourceTag;
@@ -89,6 +93,8 @@ export default class VillageNpcRoster {
                 personality: npc.disposition,
                 speechStyle: npc.speechStyle,
                 look: npc.look,
+                tileCol: villageTile?.col ?? null,
+                tileRow: villageTile?.row ?? null,
             },
             lifeStatus: 'alive',
             firstSeenAtTick: nowTick,
