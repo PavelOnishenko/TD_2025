@@ -1383,3 +1383,34 @@ Added additional tests to cover non-capture logic that was previously under-test
 - The original tests validated pipeline order and 24h capture handover, but did not validate raid targeting and intercept conflict emissions.
 - These additions make behavior changes explicit and safer for future refactors.
 - Tests now encode current branch semantics for defender-present vs defender-absent paths.
+
+## 2026-05-11 World Info tabs UI fix (actual DOM rendering)
+
+### Problem observed
+- Factions "tab" data was only embedded as JSON fields inside a single `<pre>` payload.
+- No real tab buttons/panels existed in DOM, so UI looked unchanged and users could not switch views.
+
+### Fix implemented
+- Added concrete World Info tab controls in HTML:
+  - `#world-info-tab-overview-btn`
+  - `#world-info-tab-factions-btn`
+- Added dedicated content outputs:
+  - `#world-info-overview-output`
+  - `#world-info-factions-output`
+- Updated developer controller logic:
+  - `renderWorldInfoOverview()` now writes separate Overview and Factions payloads.
+  - New `setWorldInfoTab('overview' | 'factions')` toggles visibility and active button state.
+  - Click handlers wired so tabs are usable in panel UI.
+
+### Verification checklist
+1. Start new character in developer mode.
+2. Open **World Info**.
+3. Confirm **Overview** and **Factions** buttons are visible.
+4. Click **Factions** and verify factions JSON is shown.
+5. Click **Overview** and verify overview JSON returns.
+6. Re-open panel and verify default tab remains consistent and usable.
+
+### Regression coverage added
+- DeveloperEventController scenario test now verifies:
+  - world-info overview output renders expected top-level fields,
+  - factions output renders territories/intercepts blocks.

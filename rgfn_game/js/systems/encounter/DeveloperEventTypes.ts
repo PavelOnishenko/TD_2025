@@ -38,6 +38,9 @@ export type DeveloperUI = {
     worldMapProfilingDevicePixelRatioClampSelect: HTMLSelectElement;
     worldMapProfilingOutput: HTMLElement;
     worldInfoOverviewOutput: HTMLElement;
+    worldInfoFactionsOutput: HTMLElement;
+    worldInfoTabOverviewBtn: HTMLButtonElement;
+    worldInfoTabFactionsBtn: HTMLButtonElement;
 };
 
 export type WorldMapDrawProfilingSnapshot = Record<string, { frames: number; avgMs: number; maxMs: number; lastFrameMs: number }>;

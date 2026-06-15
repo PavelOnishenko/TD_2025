@@ -3,7 +3,7 @@ import { DeveloperUI } from '../ui/GameUiTypes.js';
 export class GameDeveloperUiFactory {
     public create = (): DeveloperUI => ({ ...this.createBaseDeveloperUi(), ...this.createProfilingUi(), ...this.createWorldInfoUi() });
 
-    private readonly createBaseDeveloperUi = (): Omit<DeveloperUI, 'worldMapProfilingToggle' | 'worldMapProfilingOpenBtn' | 'worldMapProfilingPanel' | 'worldMapProfilingDragHandle' | 'worldMapProfilingCloseBtn' | 'worldMapProfilingRefreshBtn' | 'worldMapProfilingAutoRefreshToggle' | 'worldMapProfilingRenderLayerToggles' | 'worldMapProfilingFpsCapSelect' | 'worldMapProfilingDevicePixelRatioClampSelect' | 'worldMapProfilingOutput' | 'worldInfoOverviewOutput'> => ({
+    private readonly createBaseDeveloperUi = (): Omit<DeveloperUI, 'worldMapProfilingToggle' | 'worldMapProfilingOpenBtn' | 'worldMapProfilingPanel' | 'worldMapProfilingDragHandle' | 'worldMapProfilingCloseBtn' | 'worldMapProfilingRefreshBtn' | 'worldMapProfilingAutoRefreshToggle' | 'worldMapProfilingRenderLayerToggles' | 'worldMapProfilingFpsCapSelect' | 'worldMapProfilingDevicePixelRatioClampSelect' | 'worldMapProfilingOutput' | 'worldInfoOverviewOutput' | 'worldInfoFactionsOutput' | 'worldInfoTabOverviewBtn' | 'worldInfoTabFactionsBtn'> => ({
         ...this.createQueueAndEncounterUi(),
         ...this.createNextRollAndRandomUi(),
         ...this.createModeAndMapDisplayUi(),
@@ -82,7 +82,10 @@ export class GameDeveloperUiFactory {
         selectionCursor: document.getElementById('dev-world-map-render-selection-cursor')! as HTMLInputElement,
     });
 
-    private readonly createWorldInfoUi = (): Pick<DeveloperUI, 'worldInfoOverviewOutput'> => ({
+    private readonly createWorldInfoUi = (): Pick<DeveloperUI, 'worldInfoOverviewOutput' | 'worldInfoFactionsOutput' | 'worldInfoTabOverviewBtn' | 'worldInfoTabFactionsBtn'> => ({
         worldInfoOverviewOutput: document.getElementById('world-info-overview-output')!,
+        worldInfoFactionsOutput: document.getElementById('world-info-factions-output')!,
+        worldInfoTabOverviewBtn: document.getElementById('world-info-tab-overview-btn')! as HTMLButtonElement,
+        worldInfoTabFactionsBtn: document.getElementById('world-info-tab-factions-btn')! as HTMLButtonElement,
     });
 }

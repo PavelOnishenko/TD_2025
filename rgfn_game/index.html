@@ -346,7 +346,12 @@
                         <h2>World Info</h2>
                         <div class="village-section village-roster-panel">
                             <p class="village-section-title">Developer-only world simulation snapshot</p>
+                            <div id="world-info-tabs" class="world-info-tabs">
+                                <button id="world-info-tab-overview-btn" class="action-btn world-info-tab-btn active" type="button">Overview</button>
+                                <button id="world-info-tab-factions-btn" class="action-btn world-info-tab-btn" type="button">Factions</button>
+                            </div>
                             <pre id="world-info-overview-output" class="dev-world-map-profiling-output">{}</pre>
+                            <pre id="world-info-factions-output" class="dev-world-map-profiling-output hidden">{}</pre>
                             <button id="world-info-open-roster-btn" class="action-btn" type="button">Open NPC List</button>
                         </div>
                     </div>

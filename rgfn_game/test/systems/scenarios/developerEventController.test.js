@@ -31,6 +31,7 @@ function createClassList(initial = []) {
 function createDeveloperUi() {
   const createInput = () => ({ value: '0', checked: true });
   const createEventTarget = () => ({ addEventListener: () => {} });
+  const createTabButton = () => ({ classList: createClassList(), addEventListener: () => {} });
 
   return {
     modal: { classList: createClassList(['hidden']) },
@@ -79,6 +80,10 @@ function createDeveloperUi() {
       selectionCursor: createInput(),
     },
     worldMapProfilingOutput: { textContent: '' },
+    worldInfoOverviewOutput: { textContent: '', classList: createClassList() },
+    worldInfoFactionsOutput: { textContent: '', classList: createClassList(['hidden']) },
+    worldInfoTabOverviewBtn: createTabButton(),
+    worldInfoTabFactionsBtn: createTabButton(),
   };
 }
 
@@ -118,6 +123,23 @@ function createController(logs, encounterSystem, developerUI) {
     setWorldMapRenderFpsCap: (cap) => { worldMapRenderFpsCap = cap; },
     getWorldMapDevicePixelRatioClamp: () => worldMapDprClamp,
     setWorldMapDevicePixelRatioClamp: (clamp) => { worldMapDprClamp = clamp; },
+    getWorldSimulationOverview: () => ({
+      worldTick: 3,
+      lastDelta: 12,
+      pendingEvents: ['movement:12.00'],
+      factions: { red: { factionId: 'red', territoryCellIds: ['0,0'], activeSquadIds: ['red-1'] } },
+      raids: [{ raidId: 'raid-1', attackerFactionId: 'red', defenderFactionId: 'blue', fromCellId: '0,0', targetCellId: '1,0', status: 'moving' }],
+      captureTimers: { '1,0': { attackerFactionId: 'red', defenderPresent: false, progressHours: 2 } },
+      intercepts: ['raid-1:blue-intercept'],
+    }),
+    getPersistenceOverview: () => ({
+      key: 'k',
+      version: 1,
+      loadedVersion: 1,
+      snapshotHash: 'hash',
+      lastSavedAt: null,
+      lastLoadedAt: null,
+    }),
   });
 }
 
@@ -234,4 +256,17 @@ test('DeveloperEventController opens standalone world-map profiling panel from h
   assert.equal(developerUI.worldMapProfilingPanel.classList.contains('hidden'), false);
   assert.equal(developerUI.worldMapProfilingPanel.dataset.spawnPositioned, 'true');
   assert.match(developerUI.worldMapProfilingOutput.textContent, /\"sections\"/);
+});
+
+test('DeveloperEventController renders overview and factions outputs for world info tabs', () => {
+  const logs = [];
+  const encounterSystem = new EncounterSystem(1);
+  const developerUI = createDeveloperUi();
+  const controller = createController(logs, encounterSystem, developerUI);
+
+  controller.renderWorldInfoOverview();
+
+  assert.match(developerUI.worldInfoOverviewOutput.textContent, /\"worldTick\": 3/);
+  assert.match(developerUI.worldInfoFactionsOutput.textContent, /\"territories\"/);
+  assert.match(developerUI.worldInfoFactionsOutput.textContent, /\"intercepts\"/);
 });

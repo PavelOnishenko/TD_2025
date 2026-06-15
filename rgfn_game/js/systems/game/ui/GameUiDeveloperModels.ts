@@ -48,6 +48,9 @@ export class DeveloperUiModel {
     public worldMapProfilingDevicePixelRatioClampSelect!: HTMLSelectElement;
     public worldMapProfilingOutput!: HTMLElement;
     public worldInfoOverviewOutput!: HTMLElement;
+    public worldInfoFactionsOutput!: HTMLElement;
+    public worldInfoTabOverviewBtn!: HTMLButtonElement;
+    public worldInfoTabFactionsBtn!: HTMLButtonElement;
 }
 
 export type DeveloperUI = DeveloperUiModel;

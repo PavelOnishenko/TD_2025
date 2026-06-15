@@ -244,15 +244,6 @@ export default class DeveloperEventController {
             lastDelta: overview.lastDelta,
             pendingEvents: overview.pendingEvents,
             pendingEventsCount: overview.pendingEvents.length,
-            tabs: {
-                overview: { worldTick: overview.worldTick, lastDelta: overview.lastDelta },
-                factions: {
-                    territories: overview.factions,
-                    raids: overview.raids,
-                    captureTimers: overview.captureTimers,
-                    intercepts: overview.intercepts,
-                },
-            },
             persistence: {
                 key: persistence.key,
                 version: persistence.version,
@@ -261,6 +252,13 @@ export default class DeveloperEventController {
                 lastSavedAt: persistence.lastSavedAt,
                 lastLoadedAt: persistence.lastLoadedAt,
             },
+            capturedAt: new Date().toISOString(),
+        }, null, 2);
+        this.developerUI.worldInfoFactionsOutput.textContent = JSON.stringify({
+            territories: overview.factions,
+            raids: overview.raids,
+            captureTimers: overview.captureTimers,
+            intercepts: overview.intercepts,
             capturedAt: new Date().toISOString(),
         }, null, 2);
     }
@@ -298,7 +296,20 @@ export default class DeveloperEventController {
     }
 
     private bindWorldInfoControls(): void {
-        document.getElementById('toggle-world-info-panel-btn')?.addEventListener('click', () => this.renderWorldInfoOverview());
+        if (typeof document !== 'undefined') {
+            document.getElementById('toggle-world-info-panel-btn')?.addEventListener('click', () => this.renderWorldInfoOverview());
+        }
+        this.developerUI.worldInfoTabOverviewBtn.addEventListener('click', () => this.setWorldInfoTab('overview'));
+        this.developerUI.worldInfoTabFactionsBtn.addEventListener('click', () => this.setWorldInfoTab('factions'));
+        this.setWorldInfoTab('overview');
+    }
+
+    private setWorldInfoTab(tab: 'overview' | 'factions'): void {
+        const isOverview = tab === 'overview';
+        this.developerUI.worldInfoOverviewOutput.classList.toggle('hidden', !isOverview);
+        this.developerUI.worldInfoFactionsOutput.classList.toggle('hidden', isOverview);
+        this.developerUI.worldInfoTabOverviewBtn.classList.toggle('active', isOverview);
+        this.developerUI.worldInfoTabFactionsBtn.classList.toggle('active', !isOverview);
     }
 
     private handleProfilingPanelPointerDown(event: PointerEvent, panel: HTMLElement, dragHandle: HTMLElement): void {
