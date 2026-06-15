@@ -1358,3 +1358,28 @@ This prints:
 - If timer does not progress, inspect `lastDelta` and ensure world ticks are happening.
 - If no raid appears, ensure no unresolved raid already exists.
 - If ownership does not switch at 24h, inspect `captureTimers[target].defenderPresent` and `progressHours`.
+
+## 2026-05-11 WorldSimulationRuntime expanded automated coverage
+
+Added additional tests to cover non-capture logic that was previously under-tested:
+
+1. **Nearest-target raid assignment**
+   - Confirms the runtime picks the nearest blue territory cell by Manhattan distance.
+   - Guards against accidental changes in targeting heuristic.
+
+2. **Intercept and conflict emission**
+   - Confirms active blue defenders produce an intercept trace.
+   - Confirms conflict event entries are emitted into `pendingEvents`.
+
+3. **No-defender path behavior**
+   - Confirms intercept list remains empty when defender squads are absent.
+   - Confirms capture timers are not started in this branch (current behavior snapshot).
+
+4. **Event queue bound**
+   - Confirms `pendingEvents` never grows beyond 64 entries.
+   - Protects against unbounded memory growth in long sessions.
+
+### Why this matters
+- The original tests validated pipeline order and 24h capture handover, but did not validate raid targeting and intercept conflict emissions.
+- These additions make behavior changes explicit and safer for future refactors.
+- Tests now encode current branch semantics for defender-present vs defender-absent paths.
