@@ -9,6 +9,8 @@ const DEFAULT_PLACEMENT_ANCHOR = Object.freeze({
     x: -0.5,
     y: 0,
 });
+const DEFAULT_TOWER_DIRECTION_INDEX = 2;
+const DIRECTION_INDEX_BY_OCTANT = Object.freeze([4, 3, 2, 1, 8, 7, 6, 5]);
 export default class Tower {
     constructor(x, y, color = 'red', level = 1) {
         this.x = x;
@@ -40,6 +42,7 @@ export default class Tower {
         this.mergeSelected = false;
         this.hovered = false;
         this.hoverAmount = 0;
+        this.aimDirectionIndex = DEFAULT_TOWER_DIRECTION_INDEX;
         this.updateStats();
     }
     getLevelConfig(level = this.level) {
@@ -149,6 +152,17 @@ export default class Tower {
     }
     static getPlacementAnchor() {
         return DEFAULT_PLACEMENT_ANCHOR;
+    }
+    static getDirectionIndexFromAngle(angle) {
+        if (!Number.isFinite(angle)) {
+            return DEFAULT_TOWER_DIRECTION_INDEX;
+        }
+        const normalizedDegrees = ((angle * 180 / Math.PI) + 360) % 360;
+        const octant = Math.round(normalizedDegrees / 45) % 8;
+        return DIRECTION_INDEX_BY_OCTANT[octant] ?? DEFAULT_TOWER_DIRECTION_INDEX;
+    }
+    setAimFromAngle(angle) {
+        this.aimDirectionIndex = Tower.getDirectionIndexFromAngle(angle);
     }
     beginRemovalCharge() {
         if (this.removalChargePending) {
@@ -260,13 +274,23 @@ export default class Tower {
         ctx.restore();
     }
     drawBody(ctx, assets) {
-        const propertyName = `tower_${this.level}${this.color.charAt(0)}`;
+        const propertyName = this.getSpriteKey();
         const sprite = assets[propertyName];
         if (!sprite) {
             console.warn(`No sprite found for property name: ${propertyName}`);
             return;
         }
         ctx.drawImage(sprite, this.x, this.y, this.w, this.h);
+    }
+    getSpriteKey() {
+        const colorKey = (this.color.charAt(0) || 'r').toLowerCase();
+        if (this.level === 1) {
+            const directionIndex = Number.isFinite(this.aimDirectionIndex)
+                ? Math.max(1, Math.min(8, Math.round(this.aimDirectionIndex)))
+                : DEFAULT_TOWER_DIRECTION_INDEX;
+            return `tower_1${colorKey}_${directionIndex}`;
+        }
+        return `tower_${this.level}${colorKey}`;
     }
     drawMergeHint(ctx, center) {
         if (this.mergeHint <= 0) {

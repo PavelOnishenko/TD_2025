@@ -24,6 +24,16 @@ test('spawnProjectile creates projectile with tower stats', () => {
     assert.equal(tower.flashTimer, tower.flashDuration);
 });
 
+test('spawnProjectile updates level 1 tower aim direction', () => {
+    const game = createGame();
+    const tower = new Tower(100, 200, 'red', 1);
+
+    game.spawnProjectile(Math.PI / 4, tower);
+
+    assert.equal(tower.aimDirectionIndex, 3);
+    assert.equal(tower.getSpriteKey(), 'tower_1r_3');
+});
+
 test('spawnProjectile clamps projectile radius at level 3', () => {
     const game = createGame();
     const tower = new Tower(0, 0, 'red', 6);
@@ -62,6 +72,7 @@ test('towerAttacks fires projectile when enemy is in range', () => {
 
     assert.equal(game.projectiles.length, 1);
     assert.equal(tower.lastShot, fireInterval + 1);
+    assert.equal(tower.getSpriteKey(), 'tower_1r_7');
 });
 
 test('towerAttacks respects firing cooldown', () => {

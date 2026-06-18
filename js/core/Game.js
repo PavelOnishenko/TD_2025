@@ -679,7 +679,9 @@ class Game {
         const color = targetTower.color ?? 'red';
         const fromLevel = Math.max(1, consumedTower.level ?? 1);
         const colorKey = (color[0] ?? 'r').toLowerCase();
-        const spriteKey = `tower_${fromLevel}${colorKey}`;
+        const spriteKey = typeof consumedTower.getSpriteKey === 'function'
+            ? consumedTower.getSpriteKey()
+            : `tower_${fromLevel}${colorKey}`;
         const width = consumedTower.w ?? targetTower.w ?? 0;
         const height = consumedTower.h ?? targetTower.h ?? 0;
         const maxDimension = Math.max(width, height);

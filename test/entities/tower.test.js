@@ -39,7 +39,7 @@ test('draw renders sprite and level text without range circle', () => {
     tower.glowTime = 0;
     const ctx = makeFakeCtx();
     const sprite = {};
-    const assets = { tower_1r: sprite };
+    const assets = { tower_1r_2: sprite };
 
     tower.draw(ctx, assets);
 
@@ -95,14 +95,14 @@ test('draw warns and skips sprite rendering when asset missing', () => {
     }
 
     assert.equal(findOp(ctx.ops, 'drawImage'), undefined);
-    assert.ok(warnings[0].includes('tower_1r'));
+    assert.ok(warnings[0].includes('tower_1r_2'));
 });
 
 test('triggerFlash draws muzzle glow while active', () => {
     const tower = new Tower(10, 10);
     tower.glowTime = 0;
     const ctx = makeFakeCtx();
-    const assets = { tower_1r: {} };
+    const assets = { tower_1r_2: {} };
 
     tower.triggerFlash();
     tower.draw(ctx, assets);
@@ -147,12 +147,36 @@ test('placement flash draws glow when intensity present', () => {
     const tower = new Tower(10, 20);
     tower.glowTime = 0;
     const ctx = makeFakeCtx();
-    const assets = { tower_1r: {} };
+    const assets = { tower_1r_2: {} };
 
     tower.triggerPlacementFlash();
     tower.draw(ctx, assets);
 
     assert.ok(ctx.ops.some(op => op[0] === 'globalAlpha'));
+});
+
+test('level 1 tower uses last shot direction for sprite frame', () => {
+    const tower = new Tower(0, 0, 'red', 1);
+
+    assert.equal(tower.getSpriteKey(), 'tower_1r_2');
+
+    tower.setAimFromAngle(Math.PI);
+    assert.equal(tower.getSpriteKey(), 'tower_1r_8');
+
+    tower.setAimFromAngle(-Math.PI / 2);
+    assert.equal(tower.getSpriteKey(), 'tower_1r_6');
+
+    tower.color = 'blue';
+    tower.setAimFromAngle(Math.PI / 4);
+    assert.equal(tower.getSpriteKey(), 'tower_1b_3');
+});
+
+test('levels 2 through 6 keep static tower sprite keys', () => {
+    const tower = new Tower(0, 0, 'blue', 2);
+
+    tower.setAimFromAngle(Math.PI);
+
+    assert.equal(tower.getSpriteKey(), 'tower_2b');
 });
 
 function makeFakeCtx() {

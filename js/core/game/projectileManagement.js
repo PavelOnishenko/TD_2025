@@ -39,6 +39,22 @@ function playTowerFireSound(audio, towerLevel) {
     }
 }
 
+function updateTowerAimDirection(tower, angle) {
+    if (!tower || tower.level !== 1) {
+        return;
+    }
+    if (typeof tower.setAimFromAngle === 'function') {
+        tower.setAimFromAngle(angle);
+        return;
+    }
+    if (Number.isFinite(angle)) {
+        const normalizedDegrees = ((angle * 180 / Math.PI) + 360) % 360;
+        const directionIndexByOctant = [4, 3, 2, 1, 8, 7, 6, 5];
+        const octant = Math.round(normalizedDegrees / 45) % 8;
+        tower.aimDirectionIndex = directionIndexByOctant[octant] ?? 2;
+    }
+}
+
 function createProjectile(game, angle, tower, radius, overrides = {}) {
     const {
         speed = game.projectileSpeed,
@@ -272,6 +288,7 @@ const projectileManagement = {
     },
 
     spawnProjectile(angle, tower) {
+        updateTowerAimDirection(tower, angle);
         const weaponType = resolveWeaponType(tower?.level ?? 1);
         switch (weaponType) {
             case 'minigun':

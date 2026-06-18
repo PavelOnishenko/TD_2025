@@ -238,7 +238,7 @@ const nonBalanceConfig = {
                 highlightTargets: [],
                 text: 'Click on a glowing platform to build your first tower. Each tower costs 120 energy harvested from our living crystals.',
                 textKey: 'tutorial.buildTower.text',
-                picture: 'assets/images/Towers/tower_1B.png',
+                picture: 'assets/images/Towers/T1B_2.png',
                 sound: { src: 'assets/sound/placement.mp3', volume: 0.4 },
                 checkComplete(game) {
                     return Array.isArray(game?.towers) && game.towers.length > 0;
@@ -252,7 +252,7 @@ const nonBalanceConfig = {
                 highlightTargets: [],
                 text: 'Build 4 towers to create a solid defensive line before the first wave arrives. Position them strategically to cover both lanes.',
                 textKey: 'tutorial.buildFourTowers.text',
-                picture: 'assets/images/Towers/tower_1B.png',
+                picture: 'assets/images/Towers/T1B_2.png',
                 sound: { src: 'assets/sound/placement.mp3', volume: 0.4 },
                 checkComplete(game) {
                     return Array.isArray(game?.towers) && game.towers.length >= 4;
@@ -266,7 +266,7 @@ const nonBalanceConfig = {
                 highlightTargets: [],
                 text: 'Select a tower to toggle its color. Matching enemies take full damage while mismatched shots only hit with 30% power.',
                 textKey: 'tutorial.switchColor.text',
-                picture: 'assets/images/Towers/tower_1R.png',
+                picture: 'assets/images/Towers/T1R_2.png',
                 sound: { src: 'assets/sound/color_switch.mp3', volume: 0.5 },
                 checkComplete(game, context) {
                     if ((context?.colorSwitches ?? 0) > 0) {
@@ -323,7 +323,7 @@ const nonBalanceConfig = {
                 highlightTargets: [],
                 text: 'Build two adjacent towers of the same color and level. When they\'re ready, you\'ll be able to merge them!',
                 textKey: 'tutorial.prepareMerge.text',
-                picture: 'assets/images/Towers/tower_1B.png',
+                picture: 'assets/images/Towers/T1B_2.png',
                 sound: { src: 'assets/sound/placement.mp3', volume: 0.4 },
                 checkComplete(game, context) {
                     return hasAcknowledged(context, 'prepare-merge') || hasMergeableTowers(game);
@@ -380,7 +380,7 @@ const nonBalanceConfig = {
                 highlightTargets: [],
                 text: 'Press and hold on a tower to scrap it. Long presses free the platform whenever you need room or the wrong color.',
                 textKey: 'tutorial.removeTower.text',
-                picture: 'assets/images/Towers/tower_1R.png',
+                picture: 'assets/images/Towers/T1R_2.png',
                 sound: { src: 'assets/sound/tower_remove_charge.mp3', volume: 0.5 },
                 checkComplete(game, context) {
                     return hasAcknowledged(context, 'remove-tower') || hasRemovals(context);

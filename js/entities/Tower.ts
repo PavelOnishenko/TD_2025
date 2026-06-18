@@ -78,6 +78,9 @@ const DEFAULT_PLACEMENT_ANCHOR = Object.freeze({
     y: 0,
 });
 
+const DEFAULT_TOWER_DIRECTION_INDEX = 2;
+const DIRECTION_INDEX_BY_OCTANT = Object.freeze([4, 3, 2, 1, 8, 7, 6, 5]);
+
 export default class Tower {
     public x: number;
     public y: number;
@@ -110,6 +113,7 @@ export default class Tower {
     public mergeSelected: boolean;
     public hovered: boolean;
     public hoverAmount: number;
+    public aimDirectionIndex: number;
 
     constructor(x: number, y: number, color = 'red', level = 1) {
         this.x = x;
@@ -141,6 +145,7 @@ export default class Tower {
         this.mergeSelected = false;
         this.hovered = false;
         this.hoverAmount = 0;
+        this.aimDirectionIndex = DEFAULT_TOWER_DIRECTION_INDEX;
         this.updateStats();
     }
 
@@ -266,6 +271,19 @@ export default class Tower {
         return DEFAULT_PLACEMENT_ANCHOR;
     }
 
+    static getDirectionIndexFromAngle(angle: number): number {
+        if (!Number.isFinite(angle)) {
+            return DEFAULT_TOWER_DIRECTION_INDEX;
+        }
+        const normalizedDegrees = ((angle * 180 / Math.PI) + 360) % 360;
+        const octant = Math.round(normalizedDegrees / 45) % 8;
+        return DIRECTION_INDEX_BY_OCTANT[octant] ?? DEFAULT_TOWER_DIRECTION_INDEX;
+    }
+
+    setAimFromAngle(angle: number): void {
+        this.aimDirectionIndex = Tower.getDirectionIndexFromAngle(angle);
+    }
+
     beginRemovalCharge(): boolean {
         if (this.removalChargePending) {
             return false;
@@ -389,13 +407,24 @@ export default class Tower {
     }
 
     drawBody(ctx: CanvasRenderingContext2D, assets: TowerAssets): void {
-        const propertyName = `tower_${this.level}${this.color.charAt(0)}`;
+        const propertyName = this.getSpriteKey();
         const sprite = assets[propertyName];
         if (!sprite) {
             console.warn(`No sprite found for property name: ${propertyName}`);
             return;
         }
         ctx.drawImage(sprite, this.x, this.y, this.w, this.h);
+    }
+
+    getSpriteKey(): string {
+        const colorKey = (this.color.charAt(0) || 'r').toLowerCase();
+        if (this.level === 1) {
+            const directionIndex = Number.isFinite(this.aimDirectionIndex)
+                ? Math.max(1, Math.min(8, Math.round(this.aimDirectionIndex)))
+                : DEFAULT_TOWER_DIRECTION_INDEX;
+            return `tower_1${colorKey}_${directionIndex}`;
+        }
+        return `tower_${this.level}${colorKey}`;
     }
 
     drawMergeHint(ctx: CanvasRenderingContext2D, center: Point): void {
