@@ -53,6 +53,9 @@ declare global {
         Howl: typeof Howl;
         Howler: typeof Howler;
     }
+
+    var Howl: typeof Howl;
+    var Howler: typeof Howler;
 }
 
 export {};
