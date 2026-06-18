@@ -1,139 +1,143 @@
 import { createSound, isAudioSupported } from './audio.js';
 
+const IMAGE_DIR = 'assets/images';
+const TOWER_IMAGE_DIR = `${IMAGE_DIR}/Towers`;
+const SOUND_DIR = 'assets/sound';
+
 const IMAGE_SOURCES = {
-    cell: 'assets/cell_cut.png',
-    platform: 'assets/platform.png',
-    tower_1r: 'assets/tower_1R.png',
-    tower_1b: 'assets/tower_1B.png',
-    tower_2r: 'assets/tower_2R.png',
-    tower_2b: 'assets/tower_2B.png',
-    tower_3r: 'assets/tower_3R.png',
-    tower_3b: 'assets/tower_3B.png',
-    tower_4r: 'assets/tower_4R.png',
-    tower_4b: 'assets/tower_4B.png',
-    tower_5r: 'assets/tower_5R.png',
-    tower_5b: 'assets/tower_5B.png',
-    tower_6r: 'assets/tower_6R.png',
-    tower_6b: 'assets/tower_6B.png',
-    tank_r: 'assets/tank_R.png',
-    tank_b: 'assets/tank_B.png',
-    swarm_r: 'assets/swarm_R.png',
-    swarm_b: 'assets/swarm_B.png'
+    cell: `${IMAGE_DIR}/cell_cut.png`,
+    platform: `${IMAGE_DIR}/platform.png`,
+    tower_1r: `${TOWER_IMAGE_DIR}/tower_1R.png`,
+    tower_1b: `${TOWER_IMAGE_DIR}/tower_1B.png`,
+    tower_2r: `${TOWER_IMAGE_DIR}/tower_2R.png`,
+    tower_2b: `${TOWER_IMAGE_DIR}/tower_2B.png`,
+    tower_3r: `${TOWER_IMAGE_DIR}/tower_3R.png`,
+    tower_3b: `${TOWER_IMAGE_DIR}/tower_3B.png`,
+    tower_4r: `${TOWER_IMAGE_DIR}/tower_4R.png`,
+    tower_4b: `${TOWER_IMAGE_DIR}/tower_4B.png`,
+    tower_5r: `${TOWER_IMAGE_DIR}/tower_5R.png`,
+    tower_5b: `${TOWER_IMAGE_DIR}/tower_5B.png`,
+    tower_6r: `${TOWER_IMAGE_DIR}/tower_6R.png`,
+    tower_6b: `${TOWER_IMAGE_DIR}/tower_6B.png`,
+    tank_r: `${IMAGE_DIR}/tank_R.png`,
+    tank_b: `${IMAGE_DIR}/tank_B.png`,
+    swarm_r: `${IMAGE_DIR}/swarm_R.png`,
+    swarm_b: `${IMAGE_DIR}/swarm_B.png`
 };
 
 const SOUND_OPTIONS = {
     tower_fire_1: {
-        src: ['assets/tower_fire_1.mp3'],
+        src: [`${SOUND_DIR}/tower_fire_1.mp3`],
         volume: 0.3,
         preload: true,
     },
     tower_fire_2: {
-        src: ['assets/tower_fire_2.mp3'],
+        src: [`${SOUND_DIR}/tower_fire_2.mp3`],
         volume: 0.28,
         preload: true,
     },
     tower_fire_3: {
-        src: ['assets/tower_fire_3.mp3'],
+        src: [`${SOUND_DIR}/tower_fire_3.mp3`],
         volume: 0.14,
         preload: true,
     },
     tower_fire_4: {
-        src: ['assets/tower_fire_4.mp3'],
+        src: [`${SOUND_DIR}/tower_fire_4.mp3`],
         volume: 0.66,
         preload: true,
     },
     tower_fire_5: {
-        src: ['assets/tower_fire_5.mp3'],
+        src: [`${SOUND_DIR}/tower_fire_5.mp3`],
         volume: 0.58,
         preload: true,
     },
     tower_fire_6: {
-        src: ['assets/tower_fire_6.mp3'],
+        src: [`${SOUND_DIR}/tower_fire_6.mp3`],
         volume: 0.2,
         preload: true,
     },
     tower_hit_1: {
-        src: ['assets/tower_hit_1.mp3'],
+        src: [`${SOUND_DIR}/tower_hit_1.mp3`],
         volume: 0.2,
         preload: true,
     },
     tower_hit_2: {
-        src: ['assets/tower_hit_2.mp3'],
+        src: [`${SOUND_DIR}/tower_hit_2.mp3`],
         volume: 0.2,
         preload: true,
     },
     tower_hit_3: {
-        src: ['assets/tower_hit_3.mp3'],
+        src: [`${SOUND_DIR}/tower_hit_3.mp3`],
         volume: 0.24,
         preload: true,
     },
     tower_hit_4: {
-        src: ['assets/tower_hit_4.mp3'],
+        src: [`${SOUND_DIR}/tower_hit_4.mp3`],
         volume: 0.03,
         preload: true,
     },
     tower_hit_5: {
-        src: ['assets/tower_hit_5.mp3'],
+        src: [`${SOUND_DIR}/tower_hit_5.mp3`],
         volume: 0.48,
         preload: true,
     },
     tower_hit_6: {
-        src: ['assets/tower_hit_6.mp3'],
+        src: [`${SOUND_DIR}/tower_hit_6.mp3`],
         volume: 0.1,
         preload: true,
     },
     explosion: {
-        src: ['assets/explosion.wav'],
+        src: [`${SOUND_DIR}/explosion.wav`],
         volume: 0.25,
         preload: true
     },
     placement: {
-        src: ['assets/placement.mp3'],
+        src: [`${SOUND_DIR}/placement.mp3`],
         volume: 0.4,
         preload: true
     },
     merge: {
-        src: ['assets/merge.mp3'],
+        src: [`${SOUND_DIR}/merge.mp3`],
         volume: 1,
         rate: 1.6,
         preload: true
     },
     colorSwitch: {
-        src: ['assets/color_switch.mp3'],
+        src: [`${SOUND_DIR}/color_switch.mp3`],
         volume: 1,
     },
     baseHit: {
-        src: ['assets/explosion.wav'],
+        src: [`${SOUND_DIR}/explosion.wav`],
         volume: 0.18,
         preload: true
     },
     error: {
-        src: ['assets/error.wav'],
+        src: [`${SOUND_DIR}/error.wav`],
         volume: 0.5,
         preload: true
     },
     towerRemoveCharge: {
-        src: ['assets/tower_remove_charge.mp3'],
+        src: [`${SOUND_DIR}/tower_remove_charge.mp3`],
         volume: 0.8,
         preload: true
     },
     towerRemoveCancel: {
-        src: ['assets/tower_remove_cancel.mp3'],
+        src: [`${SOUND_DIR}/tower_remove_cancel.mp3`],
         volume: 0.35,
         preload: true
     },
     towerRemoveExplosion: {
-        src: ['assets/tower_remove_explosion.mp3'],
+        src: [`${SOUND_DIR}/tower_remove_explosion.mp3`],
         volume: 0.45,
         preload: true
     },
     portalSpawn: {
-        src: ['assets/portal_spawn.mp3'],
+        src: [`${SOUND_DIR}/portal_spawn.mp3`],
         volume: 0.1,
         preload: true
     },
     backgroundMusic: {
-        src: ['assets/background_music.mp3'],
+        src: [`${SOUND_DIR}/background_music.mp3`],
         volume: 0.35,
         preload: true,
         loop: true

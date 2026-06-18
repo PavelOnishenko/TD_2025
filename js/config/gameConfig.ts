@@ -224,8 +224,8 @@ const nonBalanceConfig = {
                 highlightTargets: [],
                 text: 'A portal ripped open beside the gateway to the Neon Empire capital world. Deploy living crystal defences and stop the alien scouts before they pour through.',
                 textKey: 'tutorial.storyIntro.text',
-                picture: 'assets/swarm_B.png',
-                sound: { src: 'assets/portal_spawn.mp3', volume: 0.15 },
+                picture: 'assets/images/swarm_B.png',
+                sound: { src: 'assets/sound/portal_spawn.mp3', volume: 0.15 },
                 checkComplete(game, context) {
                     return hasAcknowledged(context, 'story-intro');
                 },
@@ -238,8 +238,8 @@ const nonBalanceConfig = {
                 highlightTargets: [],
                 text: 'Click on a glowing platform to build your first tower. Each tower costs 120 energy harvested from our living crystals.',
                 textKey: 'tutorial.buildTower.text',
-                picture: 'assets/tower_1B.png',
-                sound: { src: 'assets/placement.mp3', volume: 0.4 },
+                picture: 'assets/images/Towers/tower_1B.png',
+                sound: { src: 'assets/sound/placement.mp3', volume: 0.4 },
                 checkComplete(game) {
                     return Array.isArray(game?.towers) && game.towers.length > 0;
                 },
@@ -252,8 +252,8 @@ const nonBalanceConfig = {
                 highlightTargets: [],
                 text: 'Build 4 towers to create a solid defensive line before the first wave arrives. Position them strategically to cover both lanes.',
                 textKey: 'tutorial.buildFourTowers.text',
-                picture: 'assets/tower_1B.png',
-                sound: { src: 'assets/placement.mp3', volume: 0.4 },
+                picture: 'assets/images/Towers/tower_1B.png',
+                sound: { src: 'assets/sound/placement.mp3', volume: 0.4 },
                 checkComplete(game) {
                     return Array.isArray(game?.towers) && game.towers.length >= 4;
                 },
@@ -266,8 +266,8 @@ const nonBalanceConfig = {
                 highlightTargets: [],
                 text: 'Select a tower to toggle its color. Matching enemies take full damage while mismatched shots only hit with 30% power.',
                 textKey: 'tutorial.switchColor.text',
-                picture: 'assets/tower_1R.png',
-                sound: { src: 'assets/color_switch.mp3', volume: 0.5 },
+                picture: 'assets/images/Towers/tower_1R.png',
+                sound: { src: 'assets/sound/color_switch.mp3', volume: 0.5 },
                 checkComplete(game, context) {
                     if ((context?.colorSwitches ?? 0) > 0) {
                         return true;
@@ -292,8 +292,8 @@ const nonBalanceConfig = {
                 highlightTargets: ['nextWaveButton'],
                 text: 'Press "Next Wave" when you are ready. Destroy all ships to protect the base!',
                 textKey: 'tutorial.startWave.text',
-                picture: 'assets/swarm_R.png',
-                sound: { src: 'assets/merge.mp3', volume: 0.6 },
+                picture: 'assets/images/swarm_R.png',
+                sound: { src: 'assets/sound/merge.mp3', volume: 0.6 },
                 checkComplete(game, context) {
                     if ((context?.wavesStarted ?? 0) > 0) {
                         return true;
@@ -309,8 +309,8 @@ const nonBalanceConfig = {
                 highlightTargets: ['energyPanel'],
                 text: 'Every destroyed ship and completed wave feeds more energy into your reserves. Watch the meter to afford new towers and color switches.',
                 textKey: 'tutorial.energyEconomy.text',
-                picture: 'assets/energy_sign.png',
-                sound: { src: 'assets/placement.mp3', volume: 0.4 },
+                picture: 'assets/images/energy_sign.png',
+                sound: { src: 'assets/sound/placement.mp3', volume: 0.4 },
                 checkComplete(game, context) {
                     return hasAcknowledged(context, 'energy-economy');
                 },
@@ -323,8 +323,8 @@ const nonBalanceConfig = {
                 highlightTargets: [],
                 text: 'Build two adjacent towers of the same color and level. When they\'re ready, you\'ll be able to merge them!',
                 textKey: 'tutorial.prepareMerge.text',
-                picture: 'assets/tower_1B.png',
-                sound: { src: 'assets/tower_place.mp3', volume: 0.4 },
+                picture: 'assets/images/Towers/tower_1B.png',
+                sound: { src: 'assets/sound/placement.mp3', volume: 0.4 },
                 checkComplete(game, context) {
                     return hasAcknowledged(context, 'prepare-merge') || hasMergeableTowers(game);
                 },
@@ -337,8 +337,8 @@ const nonBalanceConfig = {
                 highlightTargets: ['mergeButton'],
                 text: 'Great! Now press the Merge Towers button to fuse them into a stronger tower with a different weapon!',
                 textKey: 'tutorial.mergeTowers.text',
-                picture: 'assets/tower_2B.png',
-                sound: { src: 'assets/merge.mp3', volume: 0.6 },
+                picture: 'assets/images/Towers/tower_2B.png',
+                sound: { src: 'assets/sound/merge.mp3', volume: 0.6 },
                 checkComplete(game, context) {
                     return hasAcknowledged(context, 'merge-towers') || game.mergeModeActive;
                 },
@@ -351,8 +351,8 @@ const nonBalanceConfig = {
                 highlightTargets: [],
                 text: 'Now select two adjacent towers of the same color and level to merge them into a powerful upgraded tower!',
                 textKey: 'tutorial.selectMergeTowers.text',
-                picture: 'assets/tower_2B.png',
-                sound: { src: 'assets/merge.mp3', volume: 0.6 },
+                picture: 'assets/images/Towers/tower_2B.png',
+                sound: { src: 'assets/sound/merge.mp3', volume: 0.6 },
                 checkComplete(game, context) {
                     return hasAcknowledged(context, 'select-merge-towers') || hasMerges(context);
                 },
@@ -365,8 +365,8 @@ const nonBalanceConfig = {
                 highlightTargets: ['mergeButton'],
                 text: 'Great merge! Now press the Merge button again to exit merge mode and return to normal tower controls.',
                 textKey: 'tutorial.exitMergeMode.text',
-                picture: 'assets/tower_2B.png',
-                sound: { src: 'assets/merge.mp3', volume: 0.6 },
+                picture: 'assets/images/Towers/tower_2B.png',
+                sound: { src: 'assets/sound/merge.mp3', volume: 0.6 },
                 checkComplete(game, context) {
                     // Only complete if this step is currently being shown and merge mode is off
                     return context?.currentStepId === 'exit-merge-mode' && !game.mergeModeActive;
@@ -380,8 +380,8 @@ const nonBalanceConfig = {
                 highlightTargets: [],
                 text: 'Press and hold on a tower to scrap it. Long presses free the platform whenever you need room or the wrong color.',
                 textKey: 'tutorial.removeTower.text',
-                picture: 'assets/tower_1R.png',
-                sound: { src: 'assets/tower_remove_charge.mp3', volume: 0.5 },
+                picture: 'assets/images/Towers/tower_1R.png',
+                sound: { src: 'assets/sound/tower_remove_charge.mp3', volume: 0.5 },
                 checkComplete(game, context) {
                     return hasAcknowledged(context, 'remove-tower') || hasRemovals(context);
                 },
@@ -394,8 +394,8 @@ const nonBalanceConfig = {
                 highlightTargets: ['scorePanel', 'pauseButton'],
                 text: 'You earn score for every kill and for clearing waves. The HUD tracks your local best, and the Pause menu links to the global top 20 leaderboard.',
                 textKey: 'tutorial.scoreSystem.text',
-                picture: 'assets/swarm_R.png',
-                sound: { src: 'assets/color_switch.mp3', volume: 0.5 },
+                picture: 'assets/images/swarm_R.png',
+                sound: { src: 'assets/sound/color_switch.mp3', volume: 0.5 },
                 checkComplete(game, context) {
                     return hasAcknowledged(context, 'score-system');
                 },
@@ -408,8 +408,8 @@ const nonBalanceConfig = {
                 highlightTargets: [],
                 text: 'By wave 10 scientists re-arm old war relics—machineguns, railguns, and rockets—to bolster the line. Hold the portal at all costs!',
                 textKey: 'tutorial.storyWave10.text',
-                picture: 'assets/tank_R.png',
-                sound: { src: 'assets/portal_spawn.mp3', volume: 0.3 },
+                picture: 'assets/images/tank_R.png',
+                sound: { src: 'assets/sound/portal_spawn.mp3', volume: 0.3 },
                 checkComplete(game, context) {
                     return hasAcknowledged(context, 'story-wave10');
                 },
@@ -422,8 +422,8 @@ const nonBalanceConfig = {
                 highlightTargets: [],
                 text: 'Now there is a way to upgrade your towers without merging! Use the Upgrade button. Keep in mind hat upgrading towers this way is very expensive and should be used when merging cannot help.',
                 textKey: 'tutorial.upgradeTower.text',
-                picture: 'assets/tower_6B.png',
-                sound: { src: 'assets/placement.mp3', volume: 0.4 },
+                picture: 'assets/images/Towers/tower_6B.png',
+                sound: { src: 'assets/sound/placement.mp3', volume: 0.4 },
                 checkComplete(game, context) {
                     return hasAcknowledged(context, 'upgrade-tower');
                 },

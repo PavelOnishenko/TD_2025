@@ -19,8 +19,8 @@ import { registerBackquoteToggle } from '../../engine/systems/developerHotkeys.j
 const SUPPORTED_LANGUAGES = ['en', 'ru'];
 const DEFAULT_LANGUAGE = SUPPORTED_LANGUAGES[0];
 
-const HEART_FILLED_SRC = 'assets/heart_filled.png';
-const HEART_EMPTY_SRC = 'assets/heart_empty.png';
+const HEART_FILLED_SRC = 'assets/images/heart_filled.png';
+const HEART_EMPTY_SRC = 'assets/images/heart_empty.png';
 const TIME_SLIDER_STEPS = 100;
 const TIME_SCALE_SPAN = MAX_TIME_SCALE / MIN_TIME_SCALE;
 
@@ -1494,7 +1494,7 @@ function renderEnergy(game) {
         value.textContent = `${amount}`;
         const icon = document.createElement('img');
         icon.className = 'resource-icon';
-        icon.src = 'assets/energy_sign.png';
+        icon.src = 'assets/images/energy_sign.png';
         icon.alt = '';
         icon.setAttribute('aria-hidden', 'true');
         if (fragment) {

@@ -73,49 +73,49 @@ test('loadAssets returns sounds only when audio is supported', async () => {
     });
 
     assert.deepEqual(createdImages, [
-        'assets/cell_cut.png',
-        'assets/platform.png',
-        'assets/tower_1R.png',
-        'assets/tower_1B.png',
-        'assets/tower_2R.png',
-        'assets/tower_2B.png',
-        'assets/tower_3R.png',
-        'assets/tower_3B.png',
-        'assets/tower_4R.png',
-        'assets/tower_4B.png',
-        'assets/tower_5R.png',
-        'assets/tower_5B.png',
-        'assets/tower_6R.png',
-        'assets/tower_6B.png',
-        'assets/tank_R.png',
-        'assets/tank_B.png',
-        'assets/swarm_R.png',
-        'assets/swarm_B.png'
+        'assets/images/cell_cut.png',
+        'assets/images/platform.png',
+        'assets/images/Towers/tower_1R.png',
+        'assets/images/Towers/tower_1B.png',
+        'assets/images/Towers/tower_2R.png',
+        'assets/images/Towers/tower_2B.png',
+        'assets/images/Towers/tower_3R.png',
+        'assets/images/Towers/tower_3B.png',
+        'assets/images/Towers/tower_4R.png',
+        'assets/images/Towers/tower_4B.png',
+        'assets/images/Towers/tower_5R.png',
+        'assets/images/Towers/tower_5B.png',
+        'assets/images/Towers/tower_6R.png',
+        'assets/images/Towers/tower_6B.png',
+        'assets/images/tank_R.png',
+        'assets/images/tank_B.png',
+        'assets/images/swarm_R.png',
+        'assets/images/swarm_B.png'
     ]);
     assert.deepEqual(soundCreatorCalls, [
-        'assets/tower_fire_1.mp3',
-        'assets/tower_fire_2.mp3',
-        'assets/tower_fire_3.mp3',
-        'assets/tower_fire_4.mp3',
-        'assets/tower_fire_5.mp3',
-        'assets/tower_fire_6.mp3',
-        'assets/tower_hit_1.mp3',
-        'assets/tower_hit_2.mp3',
-        'assets/tower_hit_3.mp3',
-        'assets/tower_hit_4.mp3',
-        'assets/tower_hit_5.mp3',
-        'assets/tower_hit_6.mp3',
-        'assets/explosion.wav',
-        'assets/placement.mp3',
-        'assets/merge.mp3',
-        'assets/color_switch.mp3',
-        'assets/explosion.wav',
-        'assets/error.wav',
-        'assets/tower_remove_charge.mp3',
-        'assets/tower_remove_cancel.mp3',
-        'assets/tower_remove_explosion.mp3',
-        'assets/portal_spawn.mp3',
-        'assets/background_music.mp3'
+        'assets/sound/tower_fire_1.mp3',
+        'assets/sound/tower_fire_2.mp3',
+        'assets/sound/tower_fire_3.mp3',
+        'assets/sound/tower_fire_4.mp3',
+        'assets/sound/tower_fire_5.mp3',
+        'assets/sound/tower_fire_6.mp3',
+        'assets/sound/tower_hit_1.mp3',
+        'assets/sound/tower_hit_2.mp3',
+        'assets/sound/tower_hit_3.mp3',
+        'assets/sound/tower_hit_4.mp3',
+        'assets/sound/tower_hit_5.mp3',
+        'assets/sound/tower_hit_6.mp3',
+        'assets/sound/explosion.wav',
+        'assets/sound/placement.mp3',
+        'assets/sound/merge.mp3',
+        'assets/sound/color_switch.mp3',
+        'assets/sound/explosion.wav',
+        'assets/sound/error.wav',
+        'assets/sound/tower_remove_charge.mp3',
+        'assets/sound/tower_remove_cancel.mp3',
+        'assets/sound/tower_remove_explosion.mp3',
+        'assets/sound/portal_spawn.mp3',
+        'assets/sound/background_music.mp3'
     ]);
     assert.equal(typeof assets.sounds, 'object');
     assert.deepEqual(Object.keys(assets.sounds), [
@@ -144,15 +144,15 @@ test('loadAssets returns sounds only when audio is supported', async () => {
         'backgroundMusic'
     ]);
     for (let level = 1; level <= 6; level++) {
-        assert.deepEqual(assets.sounds[`tower_fire_${level}`], { sound: `assets/tower_fire_${level}.mp3` });
-        assert.deepEqual(assets.sounds[`tower_hit_${level}`], { sound: `assets/tower_hit_${level}.mp3` });
+        assert.deepEqual(assets.sounds[`tower_fire_${level}`], { sound: `assets/sound/tower_fire_${level}.mp3` });
+        assert.deepEqual(assets.sounds[`tower_hit_${level}`], { sound: `assets/sound/tower_hit_${level}.mp3` });
     }
-    assert.deepEqual(assets.sounds.baseHit, { sound: 'assets/explosion.wav' });
-    assert.deepEqual(assets.sounds.merge, { sound: 'assets/merge.mp3' });
-    assert.deepEqual(assets.sounds.towerRemoveCharge, { sound: 'assets/tower_remove_charge.mp3' });
-    assert.deepEqual(assets.sounds.towerRemoveCancel, { sound: 'assets/tower_remove_cancel.mp3' });
-    assert.deepEqual(assets.sounds.towerRemoveExplosion, { sound: 'assets/tower_remove_explosion.mp3' });
-    assert.deepEqual(assets.sounds.portalSpawn, { sound: 'assets/portal_spawn.mp3' });
+    assert.deepEqual(assets.sounds.baseHit, { sound: 'assets/sound/explosion.wav' });
+    assert.deepEqual(assets.sounds.merge, { sound: 'assets/sound/merge.mp3' });
+    assert.deepEqual(assets.sounds.towerRemoveCharge, { sound: 'assets/sound/tower_remove_charge.mp3' });
+    assert.deepEqual(assets.sounds.towerRemoveCancel, { sound: 'assets/sound/tower_remove_cancel.mp3' });
+    assert.deepEqual(assets.sounds.towerRemoveExplosion, { sound: 'assets/sound/tower_remove_explosion.mp3' });
+    assert.deepEqual(assets.sounds.portalSpawn, { sound: 'assets/sound/portal_spawn.mp3' });
 });
 
 test('loadAssets skips sounds when audio is not supported', async () => {
@@ -179,7 +179,7 @@ test('loadAssets uses transparent fallback image and warns once when an image fa
 
     try {
         const loadImageFn = (url) => {
-            if (url === 'assets/platform.png') {
+            if (url === 'assets/images/platform.png') {
                 return Promise.reject(new Error('Missing platform texture'));
             }
             return Promise.resolve({ src: url });
@@ -205,7 +205,7 @@ test('loadAssets skips sounds that fail to initialize and warns once', async () 
     try {
         const loadImageFn = (url) => Promise.resolve({ src: url });
         const soundCreator = (options) => {
-            if (options.src[0] === 'assets/merge.mp3') {
+            if (options.src[0] === 'assets/sound/merge.mp3') {
                 throw new Error('Missing merge sound');
             }
             return { sound: options.src[0] };
