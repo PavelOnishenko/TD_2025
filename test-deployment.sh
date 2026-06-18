@@ -7,6 +7,7 @@ echo ""
 
 # Test builds
 echo "📦 Step 1: Building TypeScript games..."
+npm run build
 npm run build:eva
 npm run build:rgfn
 echo "✓ Builds successful"
@@ -17,7 +18,7 @@ echo "📁 Step 2: Creating test deployment structure..."
 rm -rf deploy-test
 mkdir -p deploy-test/{neon-void,eva-game,rgfn-game}
 
-cp -r js assets style.css deploy-test/neon-void/
+cp -r dist assets engine style.css deploy-test/neon-void/
 cp index.html deploy-test/neon-void/
 
 cp -r eva_game/dist eva_game/assets eva_game/style.css deploy-test/eva-game/
@@ -161,7 +162,7 @@ test -f deploy-test/neon-void/index.html || (echo "✗ Neon Void missing" && exi
 test -f deploy-test/eva-game/index.html || (echo "✗ Eva Game missing" && exit 1)
 test -f deploy-test/rgfn-game/index.html || (echo "✗ RGFN missing" && exit 1)
 test -d deploy-test/engine || (echo "✗ Engine missing" && exit 1)
-test -d deploy-test/neon-void/js || (echo "✗ Neon Void JS missing" && exit 1)
+test -d deploy-test/neon-void/dist || (echo "✗ Neon Void dist missing" && exit 1)
 test -d deploy-test/eva-game/dist || (echo "✗ Eva Game dist missing" && exit 1)
 test -d deploy-test/rgfn-game/dist || (echo "✗ RGFN dist missing" && exit 1)
 echo "✓ All critical files present"
@@ -179,6 +180,13 @@ echo ""
 
 # Check for engine imports
 echo "🔗 Step 5: Verifying engine imports..."
+if grep -q "../../engine" deploy-test/neon-void/dist/core/Game.js; then
+    echo "âœ“ Neon Void imports engine correctly"
+else
+    echo "âœ— Neon Void engine imports not found"
+    exit 1
+fi
+
 if grep -q "../../engine" deploy-test/eva-game/dist/main.js; then
     echo "✓ Eva Game imports engine correctly"
 else

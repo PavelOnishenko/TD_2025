@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { drawEntities, draw } from '../js/core/render.js';
+import { drawEntities, draw } from '../dist/core/render.js';
 
 function makeFakeCtx() {
     const ops = [];

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import tankSchedule from '../../js/core/game/tankSchedule.js';
+import tankSchedule from '../../dist/core/game/tankSchedule.js';
 
 test('tank schedule follows tanks present in active formation plan', () => {
     const plan = {

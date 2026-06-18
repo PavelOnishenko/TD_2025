@@ -10,7 +10,7 @@ import {
     saveGameState,
     loadBestScore,
     saveBestScore
-} from '../js/systems/dataStore.js';
+} from '../dist/systems/dataStore.js';
 
 function createDataClient(overrides = {}) {
     const store = new Map();

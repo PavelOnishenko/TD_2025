@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createTutorial } from '../js/systems/tutorial.js';
+import { createTutorial } from '../dist/systems/tutorial.js';
 import {
   registerTutorialTarget,
   clearTutorialTargets,
-} from '../js/systems/tutorialTargets.js';
+} from '../dist/systems/tutorialTargets.js';
 
 function createClassList() {
   const classes = new Set();

@@ -5,6 +5,10 @@ import { DEFAULT_TIME_SCALE } from './game/world.js';
 import { trackLifeLost } from '../systems/balanceTracking.js';
 
 export const enemyActions = {
+    chooseEnemyColor() {
+        return Math.random() < 0.5 ? 'red' : 'blue';
+    },
+
     determineEnemyHp() {
         if (typeof this.getEnemyHpForWave === 'function') {
             return this.getEnemyHpForWave(this.wave);
@@ -103,6 +107,19 @@ export const enemyActions = {
             const entryColor = spawnColors[0] ?? overrides.color ?? null;
             this.triggerPortalEntry({ y: entryY, groupSize, color: entryColor });
         }
+    },
+
+    spawnEnemy(type) {
+        const enemyType = this.determineEnemyType(type);
+        const baseHp = this.determineEnemyHp();
+        if (enemyType === 'tank') {
+            this.spawnTankEnemy(baseHp, { color: this.chooseEnemyColor() });
+        } else {
+            const groupSize = Math.max(1, Math.floor(gameConfig.enemies.swarm.groupSize));
+            const colors = Array.from({ length: groupSize }, () => this.chooseEnemyColor());
+            this.spawnSwarmGroup(baseHp, { groupSize, colors });
+        }
+        this.spawned += 1;
     },
 
     spawnEnemiesIfNeeded(dt) {

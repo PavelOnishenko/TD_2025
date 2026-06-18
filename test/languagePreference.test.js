@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { loadLanguagePreference, saveLanguagePreference } from '../js/systems/dataStore.js';
+import { loadLanguagePreference, saveLanguagePreference } from '../dist/systems/dataStore.js';
 
 function createStorageStub() {
     const store = new Map();

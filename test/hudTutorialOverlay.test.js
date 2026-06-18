@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { bindUI } from '../js/systems/ui.js';
-import { clearTutorialTargets } from '../js/systems/tutorialTargets.js';
+import { bindUI } from '../dist/systems/ui.js';
+import { clearTutorialTargets } from '../dist/systems/tutorialTargets.js';
 
 function createStubElement(tagName = 'div') {
   const children = [];

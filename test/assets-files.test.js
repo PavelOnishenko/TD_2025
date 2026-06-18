@@ -11,11 +11,10 @@ const projectRoot = path.resolve(__dirname, '..');
 const ASSET_PATTERN = /['"`](assets\/[^'"`]+)['"`]/g;
 const SOURCE_FILES = [
     'index.html',
-    'js/config/gameConfig.js',
     'js/config/gameConfig.ts',
-    'js/systems/assets.js',
-    'js/systems/ui.js',
-    'js/systems/localization.js',
+    'js/systems/assets.ts',
+    'js/systems/ui.ts',
+    'js/systems/localization.ts',
 ];
 
 async function listAssetFiles(relativeDir = 'assets') {

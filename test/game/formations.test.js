@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { parseFormationText, createFormationManager } from '../../js/core/game/formations.js';
+import { parseFormationText, createFormationManager } from '../../dist/core/game/formations.js';
 
 const sampleDefinitions = `
 # Alpha Sweep | difficulty=2 | probability=2
@@ -100,4 +100,45 @@ test('difficulty multiplier scales scheduled and endless waves', () => {
     assert.ok(endlessPlan);
     assert.equal(endlessPlan.totalDifficulty, 9);
     assert.equal(endlessPlan.totalEnemies, 9);
+});
+
+test('parser tolerates malformed ship tokens with safe defaults', () => {
+    const formations = parseFormationText(`
+# Broken But Recoverable | difficulty=1 | probability=1
+swarm @bad y=nope color=RED group=nope offset=bad unknown=value
+`);
+
+    assert.equal(formations.length, 1);
+    const ship = formations[0].ships[0];
+    assert.equal(ship.type, 'swarm');
+    assert.equal(ship.time, 0);
+    assert.equal(ship.y, undefined);
+    assert.equal(ship.color, 'red');
+    assert.equal(ship.groupSize, 1);
+    assert.deepEqual(ship.offsets, [0]);
+});
+
+test('invalid probability expressions fall back to minimum weight', () => {
+    const manager = createFormationManager({
+        definitions: `
+# Broken Weight | difficulty=1 | probability=(
+swarm @0 color=red
+---
+# Valid Weight | difficulty=1 | probability=1
+swarm @0 color=blue
+`,
+        defaults: { minimumWeight: 0 },
+    }, [{ difficulty: 1 }]);
+
+    const plan = manager.planWave(1, { random: () => 0.5 });
+
+    assert.ok(plan);
+    assert.equal(plan.selections[0].label, 'Valid Weight');
+    assert.equal(plan.events[0].color, 'blue');
+});
+
+test('formation manager returns null when no plan can be built', () => {
+    const manager = createFormationManager({ definitions: '' }, [{ difficulty: 3 }]);
+
+    assert.equal(manager, null);
 });

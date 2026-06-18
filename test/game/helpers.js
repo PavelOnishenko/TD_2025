@@ -1,5 +1,5 @@
-import Game from '../../js/core/Game.js';
-import Tower from '../../js/entities/Tower.js';
+import Game from '../../dist/core/Game.js';
+import Tower from '../../dist/entities/Tower.js';
 
 function createContextStub() {
     return {

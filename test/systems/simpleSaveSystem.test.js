@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createGame, placeTowerOnCell } from '../game/helpers.js';
-import { createSimpleSavePayload, applySimpleSaveState } from '../../js/systems/simpleSaveSystem.js';
+import { createSimpleSavePayload, applySimpleSaveState } from '../../dist/systems/simpleSaveSystem.js';
 
 function withDocumentStub(run) {
     if (typeof document !== 'undefined') {

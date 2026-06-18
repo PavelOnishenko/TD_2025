@@ -6,7 +6,7 @@ import {
     createViewport,
     getCrazyGamesUser,
     resizeCanvas,
-} from '../js/main.js';
+} from '../dist/main.js';
 
 test('computeDisplaySize multiplies viewport metrics by dpr', () => {
     const metrics = { width: 123.4, height: 567.8, dpr: 1.75 };

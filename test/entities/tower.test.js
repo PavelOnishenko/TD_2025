@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import Tower from '../../js/entities/Tower.js';
-import gameConfig from '../../js/config/gameConfig.js';
+import Tower from '../../dist/entities/Tower.js';
+import gameConfig from '../../dist/config/gameConfig.js';
 
 test('constructor applies defaults and derives stats', () => {
     const tower = new Tower(12, 18);

@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "test": "node --test",
+    "test:neon": "npm run build && node --test test/*.test.js test/game/*.test.js test/entities/*.test.js test/systems/*.test.js",
     "build": "tsc",
     "watch": "tsc --watch",
     "clean": "rm -rf dist",

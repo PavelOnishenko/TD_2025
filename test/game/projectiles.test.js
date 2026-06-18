@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import Tower from '../../js/entities/Tower.js';
-import { hitEnemy } from '../../js/core/projectiles.js';
+import Tower from '../../dist/entities/Tower.js';
+import { hitEnemy } from '../../dist/core/projectiles.js';
 import { createGame, placeTowerOnCell, withReplacedMethod } from './helpers.js';
 
 function createTower(game, cellIndex = 0, options = {}) {

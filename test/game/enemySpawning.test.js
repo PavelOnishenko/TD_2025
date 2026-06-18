@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { TankEnemy, SwarmEnemy } from '../../js/entities/Enemy.js';
+import { TankEnemy, SwarmEnemy } from '../../dist/entities/Enemy.js';
 import { createGame, withMockedRandom, withReplacedMethod } from './helpers.js';
-import gameConfig from '../../js/config/gameConfig.js';
+import gameConfig from '../../dist/config/gameConfig.js';
 
 function spawnAndCollect(game, type) {
     game.spawnEnemy(type);

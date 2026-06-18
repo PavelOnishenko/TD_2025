@@ -77,6 +77,21 @@ function getImpactPosition(projectile, enemy, options = {}) {
     return { x: centerX, y: centerY };
 }
 
+function damageEnemy(enemy, damage) {
+    if (typeof enemy.takeDamage === 'function') {
+        enemy.takeDamage(damage);
+        return;
+    }
+    enemy.hp = Math.max(0, (enemy.hp ?? 0) - damage);
+}
+
+function isEnemyDead(enemy) {
+    if (typeof enemy.isDead === 'function') {
+        return enemy.isDead();
+    }
+    return (enemy.hp ?? 0) <= 0;
+}
+
 export function moveProjectiles(game, dt) {
     game.projectiles.forEach(p => {
         if (p.type === 'railgun-beam') {
@@ -120,7 +135,7 @@ export function applyProjectileDamage(game, projectile, enemyIndex, options = {}
 
     const { spawnImpactEffect = true, spawnKillEffect = true, hitVariant = null, killVariant = null, impactX = null, impactY = null } = options;
     const damage = calculateDamage(projectile, enemy);
-    enemy.takeDamage(damage);
+    damageEnemy(enemy, damage);
     const isColorMatch = projectile.color === enemy.color;
     playHitSound(game.audio, projectile);
 
@@ -152,7 +167,7 @@ export function applyProjectileDamage(game, projectile, enemyIndex, options = {}
     }
 
     let enemyRemoved = false;
-    if (enemy.isDead()) {
+    if (isEnemyDead(enemy)) {
         enemyRemoved = true;
         game.enemies.splice(enemyIndex, 1);
         const energyGain = getEnergyGainForKill(game, enemy);

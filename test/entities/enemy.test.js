@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import Enemy, { TankEnemy, SwarmEnemy } from '../../js/entities/Enemy.js';
-import gameConfig from '../../js/config/gameConfig.js';
+import Enemy, { TankEnemy, SwarmEnemy } from '../../dist/entities/Enemy.js';
+import gameConfig from '../../dist/config/gameConfig.js';
 
 test('update moves enemy based on dt and both speed components', () => {
     const enemy = new Enemy(3, 'red', 0, 100, 120, 80);

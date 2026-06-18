@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { loadAssets, loadImage } from '../js/systems/assets.js';
+import { loadAssets, loadImage } from '../dist/systems/assets.js';
 
 class StubImage {
     constructor() {

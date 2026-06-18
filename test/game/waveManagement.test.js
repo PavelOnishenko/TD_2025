@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createGame, placeTowerOnCell, withMockedRandom } from './helpers.js';
-import gameConfig from '../../js/config/gameConfig.js';
-import { getWaveEnergyMultiplier } from '../../js/utils/energyScaling.js';
+import gameConfig from '../../dist/config/gameConfig.js';
+import { getWaveEnergyMultiplier } from '../../dist/utils/energyScaling.js';
 
 test('startWave initializes counters and spawns first enemies', () => {
     const game = createGame({ attachDom: true });
@@ -24,7 +24,7 @@ test('startWave initializes counters and spawns first enemies', () => {
     if (game.activeFormationPlan) {
         assert.equal(game.enemiesPerWave, game.activeFormationPlan.totalEnemies);
     }
-    assert.ok(Math.abs(game.colorProbStart - game.colorProbEnd) > 0.35);
+    assert.ok(enemies.every(enemy => ['red', 'blue'].includes(enemy.color)));
 });
 
 test('startWave restarts current wave state when already in progress', () => {
