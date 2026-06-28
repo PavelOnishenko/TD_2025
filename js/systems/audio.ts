@@ -1,4 +1,4 @@
-const globalScope = typeof globalThis !== 'undefined' ? globalThis : window;
+const globalScope: any = typeof globalThis !== 'undefined' ? globalThis : window;
 
 const NOOP_AUDIO = {
     playTowerFire() {},
@@ -101,7 +101,7 @@ export function isAudioSupported() {
     return hasHowler();
 }
 
-export function initializeAudio({ volume = null, autoSuspend = false } = {}) {
+export function initializeAudio({ volume = null, autoSuspend = false }: any = {}) {
     if (!hasHowler()) {
         console.warn('Howler.js library is not available. Audio features are disabled.');
         return false;
@@ -127,7 +127,7 @@ export function createSound(options) {
     return new globalScope.Howl(options);
 }
 
-export function createGameAudio(sounds = {}) {
+export function createGameAudio(sounds: any = {}) {
     if (!hasHowler()) {
         return NOOP_AUDIO;
     }

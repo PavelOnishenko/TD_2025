@@ -6,7 +6,7 @@ import {
 } from './crazyGamesIntegration.js';
 import { translate } from './localization.js';
 
-export async function getCrazyGamesUser(options = {}) {
+export async function getCrazyGamesUser(options: any = {}) {
     const { crazyGamesActive = crazyGamesWorks } = options;
     const crazyGamesWindow = resolveCrazyGamesWindow(options.crazyGamesWindow);
     if (!crazyGamesActive) {

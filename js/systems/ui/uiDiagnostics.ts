@@ -200,7 +200,7 @@ export function bindDiagnosticsOverlay(game) {
     updateVisibility();
 }
 
-export function refreshDiagnosticsOverlay(game, options = {}) {
+export function refreshDiagnosticsOverlay(game, options: any = {}) {
     const overlay = game?.diagnosticsOverlay;
     const state = game?.diagnosticsState;
     if (!overlay || !state || (!state.visible && !options.force)) {

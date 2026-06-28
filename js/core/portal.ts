@@ -43,7 +43,7 @@ function createIdleWisps(count, radiusX, radiusY) {
     return wisps;
 }
 
-function createPalette(customPalette = {}) {
+function createPalette(customPalette: any = {}) {
     return {
         rim: customPalette.rim ?? 'rgba(140, 220, 255, 0.85)',
         rimSecondary: customPalette.rimSecondary ?? 'rgba(90, 170, 255, 0.35)',
@@ -103,7 +103,7 @@ function createParticle({
     };
 }
 
-export function createPortalState(options = {}) {
+export function createPortalState(options: any = {}) {
     const spawn = options.spawn ?? { x: 0, y: 0 };
     const anchor = options.anchor ?? spawn;
     const offset = {
@@ -157,7 +157,7 @@ export function createPortalState(options = {}) {
     return portal;
 }
 
-export function updatePortalState(portal, dt, { spawn } = {}) {
+export function updatePortalState(portal, dt, { spawn }: any = {}) {
     if (!portal || !Number.isFinite(dt)) {
         return;
     }

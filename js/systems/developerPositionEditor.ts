@@ -233,155 +233,174 @@ function toggleModal(modalEl, open) {
     modalEl.classList.toggle('dev-modal--hidden', !open);
 }
 
-export function initDeveloperPositionEditor(game) {
-    if (!game) {
-        return;
-    }
-    const openBtn = document.getElementById('openPositionEditor');
-    const modal = document.getElementById('positionEditor');
-    const closeBtn = document.getElementById('closePositionEditor');
-    const waveInput = document.getElementById('positionWave');
-    const energyInput = document.getElementById('positionEnergy');
-    const towerListEl = document.getElementById('towerEntryList');
-    const addTowerBtn = document.getElementById('addTowerEntry');
-    const useLiveBtn = document.getElementById('useLivePosition');
-    const applyBtn = document.getElementById('applyPosition');
-    const slotNameInput = document.getElementById('positionSlotName');
-    const saveSlotBtn = document.getElementById('savePositionSlot');
-    const slotListEl = document.getElementById('positionSlotList');
-    const storage = getStorage();
+function getEditorElements() {
+    return {
+        openBtn: document.getElementById('openPositionEditor'),
+        modal: document.getElementById('positionEditor'),
+        closeBtn: document.getElementById('closePositionEditor'),
+        waveInput: document.getElementById('positionWave'),
+        energyInput: document.getElementById('positionEnergy'),
+        towerListEl: document.getElementById('towerEntryList'),
+        addTowerBtn: document.getElementById('addTowerEntry'),
+        useLiveBtn: document.getElementById('useLivePosition'),
+        applyBtn: document.getElementById('applyPosition'),
+        slotNameInput: document.getElementById('positionSlotName'),
+        saveSlotBtn: document.getElementById('savePositionSlot'),
+        slotListEl: document.getElementById('positionSlotList'),
+    };
+}
 
-    if (!openBtn || !modal) {
-        return;
-    }
-
-    const state = {
+function createEditorState(storage) {
+    return {
         slots: readSavedSlots(storage),
         draft: clonePayload(DEFAULT_DRAFT),
     };
+}
 
-    const updateDraft = (next, options = {}) => {
+function createDraftUpdater(elements, state) {
+    function updateDraft(next, options: any = {}) {
         state.draft = sanitizeDraft(next);
-        if (waveInput) {
-            waveInput.value = String(state.draft.wave ?? 1);
+        if (elements.waveInput) {
+            elements.waveInput.value = String(state.draft.wave ?? 1);
         }
-        if (energyInput) {
-            energyInput.value = String(state.draft.energy ?? 0);
+        if (elements.energyInput) {
+            elements.energyInput.value = String(state.draft.energy ?? 0);
         }
         if (!options.skipTowerRender) {
-            renderTowerEntries(towerListEl, state, updateDraft);
+            renderTowerEntries(elements.towerListEl, state, updateDraft);
         }
-    };
+    }
+    return updateDraft;
+}
 
+function createSlotActions(game, storage, state, updateDraft, refreshSlots) {
+    return {
+        onLoad: (name) => {
+            const slot = state.slots?.[name];
+            if (slot) {
+                updateDraft(clonePayload(slot));
+            }
+        },
+        onApply: (name) => {
+            const slot = state.slots?.[name];
+            if (slot) {
+                updateDraft(clonePayload(slot));
+                applySimpleSaveState(game, sanitizeDraft(slot));
+            }
+        },
+        onDelete: (name) => {
+            const nextSlots = { ...state.slots };
+            delete nextSlots[name];
+            state.slots = nextSlots;
+            writeSavedSlots(storage, state.slots);
+            refreshSlots();
+        },
+    };
+}
+
+function createSlotRefresher(game, storage, elements, state, updateDraft) {
     const refreshSlots = () => {
-        renderSlotList(slotListEl, state.slots, {
-            onLoad: (name) => {
-                const slot = state.slots?.[name];
-                if (slot) {
-                    updateDraft(clonePayload(slot));
-                }
-            },
-            onApply: (name) => {
-                const slot = state.slots?.[name];
-                if (slot) {
-                    updateDraft(clonePayload(slot));
-                    applySimpleSaveState(game, sanitizeDraft(slot));
-                }
-            },
-            onDelete: (name) => {
-                const nextSlots = { ...state.slots };
-                delete nextSlots[name];
-                state.slots = nextSlots;
-                writeSavedSlots(storage, state.slots);
-                refreshSlots();
-            },
+        const actions = createSlotActions(game, storage, state, updateDraft, refreshSlots);
+        renderSlotList(elements.slotListEl, state.slots, actions);
+    };
+    return refreshSlots;
+}
+
+function getDraftFromInputs(elements, state) {
+    return sanitizeDraft({
+        wave: elements.waveInput ? elements.waveInput.value : state.draft.wave,
+        energy: elements.energyInput ? elements.energyInput.value : state.draft.energy,
+        towers: state.draft.towers,
+    });
+}
+
+function bindDraftInputs(elements, state, updateDraft) {
+    if (elements.waveInput) {
+        elements.waveInput.addEventListener('input', () => {
+            updateDraft({ ...state.draft, wave: elements.waveInput.value });
         });
-    };
+    }
+    if (elements.energyInput) {
+        elements.energyInput.addEventListener('input', () => {
+            updateDraft({ ...state.draft, energy: elements.energyInput.value });
+        });
+    }
+}
 
-    const hydrateFromGame = () => {
-        const payload = createSimpleSavePayload(game);
-        updateDraft(payload);
-    };
-
+function bindEditorActions(game, storage, elements, state, updateDraft, refreshSlots) {
+    const hydrateFromGame = () => updateDraft(createSimpleSavePayload(game));
     const applyDraftToGame = () => {
-        const payload = sanitizeDraft({
-            wave: waveInput ? waveInput.value : state.draft.wave,
-            energy: energyInput ? energyInput.value : state.draft.energy,
-            towers: state.draft.towers,
-        });
+        const payload = getDraftFromInputs(elements, state);
         applySimpleSaveState(game, payload);
         updateDraft(payload);
     };
-
-    if (waveInput) {
-        waveInput.addEventListener('input', () => {
-            updateDraft({ ...state.draft, wave: waveInput.value });
-        });
-    }
-
-    if (energyInput) {
-        energyInput.addEventListener('input', () => {
-            updateDraft({ ...state.draft, energy: energyInput.value });
-        });
-    }
-
-    if (addTowerBtn) {
-        addTowerBtn.addEventListener('click', () => {
+    if (elements.addTowerBtn) {
+        elements.addTowerBtn.addEventListener('click', () => {
             const next = [...(state.draft.towers ?? [])];
             next.push({ cellId: 'top:0', color: 'red', level: 1 });
             updateDraft({ ...state.draft, towers: next });
         });
     }
+    elements.useLiveBtn?.addEventListener('click', hydrateFromGame);
+    elements.applyBtn?.addEventListener('click', applyDraftToGame);
+    bindSlotSaveButton(storage, elements, state, refreshSlots);
+    return hydrateFromGame;
+}
 
-    if (useLiveBtn) {
-        useLiveBtn.addEventListener('click', hydrateFromGame);
+function bindSlotSaveButton(storage, elements, state, refreshSlots) {
+    if (!elements.saveSlotBtn) {
+        return;
     }
+    elements.saveSlotBtn.addEventListener('click', () => {
+        const name = normalizeSlotName(elements.slotNameInput?.value ?? '');
+        if (!name) {
+            return;
+        }
+        const payload = getDraftFromInputs(elements, state);
+        state.slots = { ...state.slots, [name]: payload };
+        writeSavedSlots(storage, state.slots);
+        refreshSlots();
+    });
+}
 
-    if (applyBtn) {
-        applyBtn.addEventListener('click', applyDraftToGame);
-    }
-
-    if (saveSlotBtn) {
-        saveSlotBtn.addEventListener('click', () => {
-            const name = normalizeSlotName(slotNameInput?.value ?? '');
-            if (!name) {
-                return;
-            }
-            const payload = sanitizeDraft({
-                wave: waveInput ? waveInput.value : state.draft.wave,
-                energy: energyInput ? energyInput.value : state.draft.energy,
-                towers: state.draft.towers,
-            });
-            state.slots = { ...state.slots, [name]: payload };
-            writeSavedSlots(storage, state.slots);
-            refreshSlots();
-        });
-    }
-
-    if (openBtn) {
-        openBtn.addEventListener('click', () => toggleModal(modal, true));
-    }
-    if (closeBtn) {
-        closeBtn.addEventListener('click', () => toggleModal(modal, false));
-    }
-    modal.addEventListener('click', (event) => {
+function bindModalControls(elements) {
+    elements.openBtn.addEventListener('click', () => toggleModal(elements.modal, true));
+    elements.closeBtn?.addEventListener('click', () => toggleModal(elements.modal, false));
+    elements.modal.addEventListener('click', (event) => {
         const target = event.target;
-        const clickedBackdrop = target === modal || (target instanceof HTMLElement && target.classList.contains('dev-modal__backdrop'));
+        const clickedBackdrop = target === elements.modal
+            || (target instanceof HTMLElement && target.classList.contains('dev-modal__backdrop'));
         if (clickedBackdrop) {
-            toggleModal(modal, false);
+            toggleModal(elements.modal, false);
         }
     });
 
-    const handleKeydown = (event) => {
-        if (event.key === 'Escape' && !modal.classList.contains('dev-modal--hidden')) {
-            toggleModal(modal, false);
+    window.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && !elements.modal.classList.contains('dev-modal--hidden')) {
+            toggleModal(elements.modal, false);
         }
-    };
-    window.addEventListener('keydown', handleKeydown);
+    });
+}
 
+export function initDeveloperPositionEditor(game) {
+    if (!game) {
+        return;
+    }
+    const elements = getEditorElements();
+    const storage = getStorage();
+    if (!elements.openBtn || !elements.modal) {
+        return;
+    }
+    const state = createEditorState(storage);
+    const updateDraft = createDraftUpdater(elements, state);
+    const refreshSlots = createSlotRefresher(game, storage, elements, state, updateDraft);
+    const hydrateFromGame = bindEditorActions(game, storage, elements, state, updateDraft, refreshSlots);
+
+    bindDraftInputs(elements, state, updateDraft);
+    bindModalControls(elements);
     hydrateFromGame();
     refreshSlots();
-    toggleModal(modal, false);
+    toggleModal(elements.modal, false);
 }
 
 export default initDeveloperPositionEditor;

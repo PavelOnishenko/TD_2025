@@ -51,7 +51,7 @@ function prepareSchedule(game, cfg, waveNumber, totalEnemies, plan) {
     game.tankScheduleWave = waveNumber;
 }
 
-const tankSchedule = {
+const tankSchedule: any = {
     getWaveConfigs() {
         return cloneWaveConfigs();
     },

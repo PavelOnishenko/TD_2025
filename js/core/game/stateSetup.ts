@@ -118,7 +118,7 @@ function resetGame(game) {
     }
 }
 
-const stateSetup = {
+const stateSetup: any = {
     initStats() {
         const { player, scoring } = gameConfig;
         this.initialLives = player.initialLives;

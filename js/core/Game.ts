@@ -49,7 +49,9 @@ function createBaseHitFlashState() {
 }
 
 class Game {
-    constructor(canvas, options = {}) {
+    [key: string]: any;
+
+    constructor(canvas, options: any = {}) {
         const {
             width = gameConfig.world.logicalSize.width,
             height = gameConfig.world.logicalSize.height,
@@ -377,7 +379,7 @@ class Game {
         return !wasPaused || previousReason !== reason;
     }
 
-    resume(options = {}) {
+    resume(options: any = {}) {
         const { expectedReason = null, force = false, reason = null } = options;
         const wasPaused = this.isPaused;
         const previousReason = this.pauseReason;
@@ -527,7 +529,7 @@ class Game {
         updatePortalState(this.portal, dt, { spawn });
     }
 
-    triggerPortalEntry(options = {}) {
+    triggerPortalEntry(options: any = {}) {
         if (!this.portal) {
             return;
         }
@@ -557,7 +559,7 @@ class Game {
         }
     }
 
-    removeTower(tower, options = {}) {
+    removeTower(tower, options: any = {}) {
         if (!tower) {
             return false;
         }
@@ -626,7 +628,7 @@ class Game {
         return true;
     }
 
-    addEnergyPopup(text, x, y, options = {}) {
+    addEnergyPopup(text, x, y, options: any = {}) {
         if (!Array.isArray(this.energyPopups)) {
             this.energyPopups = [];
         }

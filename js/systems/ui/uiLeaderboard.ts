@@ -25,6 +25,8 @@ const formatScore = (score) => {
 };
 
 class LeaderboardController {
+    [key: string]: any;
+
     constructor(game, toggleBtn, panel) {
         this.game = game;
         this.toggleBtn = toggleBtn;
@@ -76,7 +78,7 @@ class LeaderboardController {
     };
 
     exposeRefreshHandlers = () => {
-        this.game.refreshLeaderboard = (options = {}) => {
+        this.game.refreshLeaderboard = (options: any = {}) => {
             const key = options?.key ?? (this.state.loadedOnce ? 'leaderboard.refresh' : 'leaderboard.loading');
             const fallback = options?.fallback ?? (this.state.loadedOnce ? 'Refreshing leaderboardâ€¦' : 'Loading leaderboardâ€¦');
             return this.loadLeaderboard({ key, fallback });
@@ -136,7 +138,7 @@ class LeaderboardController {
         this.state.loadingMessageFallback = '';
     };
 
-    setLoading = (loading, options = {}) => {
+    setLoading = (loading, options: any = {}) => {
         this.state.loading = loading;
         const key = options?.key ?? 'leaderboard.loading';
         const fallback = options?.fallback ?? 'Loading leaderboardâ€¦';
@@ -178,7 +180,7 @@ class LeaderboardController {
         this.errorEl.classList.toggle('hidden', !text);
     };
 
-    showError = ({ key = null, fallback = '', params = null } = {}) => {
+    showError = ({ key = null, fallback = '', params = null }: any = {}) => {
         this.state.errorKey = key;
         this.state.errorFallback = fallback;
         this.state.errorParams = params;
@@ -313,7 +315,7 @@ class LeaderboardController {
         this.showEmpty(false);
     };
 
-    loadLeaderboard = (options = {}) => {
+    loadLeaderboard = (options: any = {}) => {
         if (this.state.loadPromise) {
             return this.state.loadPromise;
         }

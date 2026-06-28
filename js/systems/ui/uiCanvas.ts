@@ -21,6 +21,8 @@ const createPointerState = () => ({
 const getPointerId = (event) => (typeof event.pointerId === 'number' ? event.pointerId : 0);
 
 class CanvasInteractionController {
+    [key: string]: any;
+
     constructor(game, updateHUD) {
         this.game = game;
         this.updateHUD = updateHUD;

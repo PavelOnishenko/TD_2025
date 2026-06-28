@@ -1,7 +1,9 @@
 import gameConfig from '../config/gameConfig.js';
 
 class GameGrid {
-    constructor(config = gameConfig.world.grid) {
+    [key: string]: any;
+
+    constructor(config: any = gameConfig.world.grid) {
         const {
             cellSize = { w: 120, h: 160 },
             topOrigin = { x: -300, y: 400 },

@@ -19,7 +19,7 @@ function getTowerLevelConfig(level) {
     return config && typeof config === 'object' ? config : null;
 }
 
-const towerManagement = {
+const towerManagement: any = {
     getUpgradeCost(level) {
         if (!Number.isFinite(level)) {
             return null;

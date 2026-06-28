@@ -245,7 +245,7 @@ function applyHudProfile(hudElement, profile) {
     }
 }
 
-export function initializeHudController(options = {}) {
+export function initializeHudController(options: any = {}) {
     const { windowRef = window } = options;
     if (typeof document === 'undefined') {
         return null;

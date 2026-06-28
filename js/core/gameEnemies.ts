@@ -4,7 +4,7 @@ import gameConfig from '../config/gameConfig.js';
 import { DEFAULT_TIME_SCALE } from './game/world.js';
 import { trackLifeLost } from '../systems/balanceTracking.js';
 
-export const enemyActions = {
+export const enemyActions: any = {
     chooseEnemyColor() {
         return Math.random() < 0.5 ? 'red' : 'blue';
     },
@@ -36,7 +36,7 @@ export const enemyActions = {
         return { ...gameConfig.enemies.defaultSpawn };
     },
 
-    spawnTankEnemy(baseHp, overrides = {}) {
+    spawnTankEnemy(baseHp, overrides: any = {}) {
         const coords = this.getDefaultEnemyCoords();
         if (Number.isFinite(overrides.x)) {
             coords.x = overrides.x;
@@ -61,7 +61,7 @@ export const enemyActions = {
         }
     },
 
-    spawnSwarmGroup(baseHp, overrides = {}) {
+    spawnSwarmGroup(baseHp, overrides: any = {}) {
         const groupSize = Math.max(1, Math.floor(overrides.groupSize ?? gameConfig.enemies.swarm.groupSize));
         const swarmHp = Math.max(1, Math.floor(baseHp * gameConfig.enemies.swarm.hpMultiplier));
         const spacing = Number.isFinite(overrides.spacing)

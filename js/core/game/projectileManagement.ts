@@ -55,7 +55,7 @@ function updateTowerAimDirection(tower, angle) {
     }
 }
 
-function createProjectile(game, angle, tower, radius, overrides = {}) {
+function createProjectile(game, angle, tower, radius, overrides: any = {}) {
     const {
         speed = game.projectileSpeed,
         damage = tower.damage,
@@ -277,7 +277,7 @@ function spawnRocket(game, angle, tower) {
     return rocket;
 }
 
-const projectileManagement = {
+const projectileManagement: any = {
     getProjectileRadiusForLevel(level) {
         const base = Number.isFinite(this.projectileRadius)
             ? this.projectileRadius

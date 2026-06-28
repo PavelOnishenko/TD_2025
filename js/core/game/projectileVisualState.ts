@@ -2,7 +2,7 @@ function randomPhase() {
     return Math.random() * Math.PI * 2;
 }
 
-export function createProjectileVisualState(options = {}) {
+export function createProjectileVisualState(options: any = {}) {
     const {
         pulseOffset = randomPhase(),
         sparkleOffset = randomPhase(),

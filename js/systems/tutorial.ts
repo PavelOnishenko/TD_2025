@@ -303,253 +303,266 @@ function createDisplayStep(step) {
     };
 }
 
-export function createTutorial(game, options = {}) {
-    const doc = options.document ?? (typeof document !== 'undefined' ? document : null);
-    const overlay = options.ui ?? createDomOverlay(doc);
-    const scheduleCheck = options.scheduleCheck ?? createIntervalScheduler(options.checkInterval);
-    const playSound = typeof options.playSound === 'function' ? options.playSound : defaultPlaySound;
-    const onComplete = options.onComplete ?? markTutorialComplete;
-    const steps = normalizeSteps(options.steps ?? getDefaultSteps());
+const createInitialTutorialContext = () => ({
+    towersPlaced: 0,
+    colorSwitches: 0,
+    wavesStarted: 0,
+    merges: 0,
+    removals: 0,
+    enemyKills: 0,
+    matchingKills: 0,
+    energyGained: 0,
+    energyEvents: 0,
+    scoreGained: 0,
+    scoreEvents: 0,
+    scoreTotal: 0,
+    wavesCleared: 0,
+    currentStepId: null,
+    stepShownAt: 0,
+    lastAcknowledgedStepId: null,
+    lastAcknowledgedAt: 0,
+    acknowledgedSteps: new Set(),
+});
 
-    const createInitialContext = () => ({
-        towersPlaced: 0,
-        colorSwitches: 0,
-        wavesStarted: 0,
-        merges: 0,
-        removals: 0,
-        enemyKills: 0,
-        matchingKills: 0,
-        energyGained: 0,
-        energyEvents: 0,
-        scoreGained: 0,
-        scoreEvents: 0,
-        scoreTotal: 0,
-        wavesCleared: 0,
-        currentStepId: null,
-        stepShownAt: 0,
-        lastAcknowledgedStepId: null,
-        lastAcknowledgedAt: 0,
-        acknowledgedSteps: new Set(),
-    });
+class TutorialRuntime {
+    [key: string]: any;
 
-    const state = {
-        steps,
-        started: false,
-        currentStep: null,
-        currentDisplayStep: null,
-        currentWave: Number.isFinite(game?.wave) ? game.wave : 1,
-        waveInProgress: Boolean(game?.waveInProgress),
-        persistentComplete: Boolean(options.initiallyComplete),
-        highlighted: [],
-        context: createInitialContext(),
-    };
-
-    if (state.persistentComplete) {
-        state.steps.forEach(step => {
-            step.done = true;
-        });
+    constructor(game, dependencies) {
+        this.game = game;
+        this.overlay = dependencies.overlay;
+        this.scheduleCheck = dependencies.scheduleCheck;
+        this.playSound = dependencies.playSound;
+        this.onComplete = dependencies.onComplete;
+        this.cancelCheck = null;
+        this._state = {
+            steps: dependencies.steps,
+            started: false,
+            currentStep: null,
+            currentDisplayStep: null,
+            currentWave: Number.isFinite(game?.wave) ? game.wave : 1,
+            waveInProgress: Boolean(game?.waveInProgress),
+            persistentComplete: Boolean(dependencies.initiallyComplete),
+            highlighted: [],
+            context: createInitialTutorialContext(),
+        };
+        if (this._state.persistentComplete) {
+            this._state.steps.forEach(step => {
+                step.done = true;
+            });
+        }
+        this.bindOverlayAcknowledgement();
     }
 
-    let cancelCheck = null;
-
-    const ensureAcknowledgedSteps = () => {
-        if (!(state.context?.acknowledgedSteps instanceof Set)) {
-            state.context.acknowledgedSteps = new Set();
-        }
-        return state.context.acknowledgedSteps;
-    };
-
-    const acknowledgeCurrentStep = () => {
-        const step = state.currentStep;
-        if (!step || !step.id) {
+    bindOverlayAcknowledgement() {
+        const element = this.overlay?.element;
+        if (!element || typeof element.addEventListener !== 'function') {
             return;
         }
-        const acknowledged = ensureAcknowledgedSteps();
-        if (!acknowledged.has(step.id)) {
-            acknowledged.add(step.id);
-            state.context.lastAcknowledgedStepId = step.id;
-            state.context.lastAcknowledgedAt = Date.now();
-        }
-        evaluateCurrentStep();
-    };
-
-    if (overlay?.element && typeof overlay.element.addEventListener === 'function') {
         const handlePointer = () => {
             if (Date.now() - lastTutorialAcknowledgedAt < 300) {
                 return;
             }
-
             lastTutorialAcknowledgedAt = Date.now();
-            acknowledgeCurrentStep();
+            this.acknowledgeCurrentStep();
         };
         const handleKey = (event) => {
-            if (!event) {
-                return;
-            }
-            const key = event.key;
+            const key = event?.key;
             if (key === 'Enter' || key === ' ' || key === 'Spacebar') {
-                acknowledgeCurrentStep();
+                this.acknowledgeCurrentStep();
             }
         };
-        overlay.element.addEventListener('click', handlePointer);
-        overlay.element.addEventListener('pointerdown', handlePointer);
-        overlay.element.addEventListener('keydown', handleKey);
+        element.addEventListener('click', handlePointer);
+        element.addEventListener('pointerdown', handlePointer);
+        element.addEventListener('keydown', handleKey);
     }
 
-    function stopCheckLoop() {
-        if (typeof cancelCheck === 'function') {
-            cancelCheck();
+    ensureAcknowledgedSteps() {
+        if (!(this._state.context?.acknowledgedSteps instanceof Set)) {
+            this._state.context.acknowledgedSteps = new Set();
         }
-        cancelCheck = null;
+        return this._state.context.acknowledgedSteps;
     }
 
-    function clearHighlights() {
-        if (!Array.isArray(state.highlighted)) {
-            state.highlighted = [];
-            overlay?.setHighlightState?.(false);
+    acknowledgeCurrentStep() {
+        const step = this._state.currentStep;
+        if (!step?.id) {
             return;
         }
-        state.highlighted.forEach(element => {
-            element?.classList?.remove?.('tutorial-highlighted');
-        });
-        state.highlighted = [];
-        overlay?.setHighlightState?.(false);
+        const acknowledged = this.ensureAcknowledgedSteps();
+        if (!acknowledged.has(step.id)) {
+            acknowledged.add(step.id);
+            this._state.context.lastAcknowledgedStepId = step.id;
+            this._state.context.lastAcknowledgedAt = Date.now();
+        }
+        this.evaluateCurrentStep();
     }
 
-    function applyHighlights(step) {
-        clearHighlights();
+    stopCheckLoop() {
+        if (typeof this.cancelCheck === 'function') {
+            this.cancelCheck();
+        }
+        this.cancelCheck = null;
+    }
+
+    clearHighlights() {
+        if (!Array.isArray(this._state.highlighted)) {
+            this._state.highlighted = [];
+            this.overlay?.setHighlightState?.(false);
+            return;
+        }
+        this._state.highlighted.forEach(element => {
+            element?.classList?.remove?.('tutorial-highlighted');
+        });
+        this._state.highlighted = [];
+        this.overlay?.setHighlightState?.(false);
+    }
+
+    applyHighlights(step) {
+        this.clearHighlights();
         if (!step || !Array.isArray(step.highlightTargets) || step.highlightTargets.length === 0) {
             return;
         }
         const elements = resolveTutorialTargets(step.highlightTargets);
-        elements.forEach(element => {
+        elements.forEach((element: any) => {
             element?.classList?.add?.('tutorial-highlighted');
         });
-        state.highlighted = elements;
-        overlay?.setHighlightState?.(elements.length > 0);
+        this._state.highlighted = elements;
+        this.overlay?.setHighlightState?.(elements.length > 0);
     }
 
-    function hideOverlay() {
-        overlay?.hide?.();
-        overlay?.setBackdropActive?.(false);
-        clearHighlights();
-        stopCheckLoop();
-        if (state.context) {
-            state.context.currentStepId = null;
+    hideOverlay() {
+        this.overlay?.hide?.();
+        this.overlay?.setBackdropActive?.(false);
+        this.clearHighlights();
+        this.stopCheckLoop();
+        if (this._state.context) {
+            this._state.context.currentStepId = null;
         }
-        state.currentDisplayStep = null;
+        this._state.currentDisplayStep = null;
     }
 
-    function ensureCheckLoop() {
-        if (cancelCheck || typeof scheduleCheck !== 'function') {
+    ensureCheckLoop() {
+        if (this.cancelCheck || typeof this.scheduleCheck !== 'function') {
             return;
         }
-        cancelCheck = scheduleCheck(() => evaluateCurrentStep());
+        this.cancelCheck = this.scheduleCheck(() => this.evaluateCurrentStep());
     }
 
-    function getNextAvailableStep() {
-        return state.steps.find(step => !step.done && step.wave <= state.currentWave) ?? null;
+    getNextAvailableStep() {
+        return this._state.steps.find(step => !step.done && step.wave <= this._state.currentWave) ?? null;
     }
 
-    function finalizeCompletion() {
-        const complete = state.steps.length > 0
-            ? state.steps.every(step => step.done)
+    finalizeCompletion() {
+        const complete = this._state.steps.length > 0
+            ? this._state.steps.every(step => step.done)
             : true;
-        if (complete) {
-            if (!state.persistentComplete) {
-                state.persistentComplete = true;
-                try {
-                    onComplete?.(state.steps);
-                } catch (error) {
-                    console.warn('Tutorial completion callback failed', error);
-                }
-            }
-            hideOverlay();
+        if (!complete) {
+            return false;
         }
-        return complete;
+        if (!this._state.persistentComplete) {
+            this._state.persistentComplete = true;
+            try {
+                this.onComplete?.(this._state.steps);
+            } catch (error) {
+                console.warn('Tutorial completion callback failed', error);
+            }
+        }
+        this.hideOverlay();
+        return true;
     }
 
-    function showStep(step) {
+    showStep(step) {
         if (!step) {
             return;
         }
-        state.currentStep = step;
+        this._state.currentStep = step;
         const displayStep = createDisplayStep(step);
-        state.currentDisplayStep = displayStep;
-        overlay?.setBackdropActive?.(hasHighlightTargets(step));
-        overlay?.show?.(displayStep);
-        applyHighlights(step);
-        playSound(step.sound);
-        ensureCheckLoop();
-        ensureAcknowledgedSteps().delete(step.id);
-        state.context.currentStepId = step.id;
-        state.context.stepShownAt = Date.now();
-        evaluateCurrentStep();
+        this._state.currentDisplayStep = displayStep;
+        this.overlay?.setBackdropActive?.(hasHighlightTargets(step));
+        this.overlay?.show?.(displayStep);
+        this.applyHighlights(step);
+        this.playSound(step.sound);
+        this.ensureCheckLoop();
+        this.ensureAcknowledgedSteps().delete(step.id);
+        this._state.context.currentStepId = step.id;
+        this._state.context.stepShownAt = Date.now();
+        this.evaluateCurrentStep();
     }
 
-    function maybeShowNextStep() {
-        if (!state.started || state.persistentComplete) {
+    maybeShowNextStep() {
+        if (!this._state.started || this._state.persistentComplete) {
             return;
         }
-        if (state.waveInProgress) {
-            hideOverlay();
+        if (this._state.waveInProgress) {
+            this.hideOverlay();
             return;
         }
-        if (state.currentStep && !state.currentStep.done) {
+        if (this._state.currentStep && !this._state.currentStep.done) {
             return;
         }
-        const next = getNextAvailableStep();
+        const next = this.getNextAvailableStep();
         if (!next) {
-            hideOverlay();
+            this.hideOverlay();
             return;
         }
-        showStep(next);
+        this.showStep(next);
     }
 
-    function refreshCurrentStepLocalization() {
-        if (!state.currentStep || !state.currentDisplayStep) {
+    refreshCurrentStepLocalization() {
+        if (!this._state.currentStep || !this._state.currentDisplayStep) {
             return;
         }
-        const displayStep = createDisplayStep(state.currentStep);
-        state.currentDisplayStep = displayStep;
-        overlay?.setBackdropActive?.(hasHighlightTargets(state.currentStep));
-        overlay?.show?.(displayStep);
-        applyHighlights(state.currentStep);
+        const displayStep = createDisplayStep(this._state.currentStep);
+        this._state.currentDisplayStep = displayStep;
+        this.overlay?.setBackdropActive?.(hasHighlightTargets(this._state.currentStep));
+        this.overlay?.show?.(displayStep);
+        this.applyHighlights(this._state.currentStep);
     }
 
-    function evaluateCurrentStep() {
-        const step = state.currentStep;
+    evaluateCurrentStep() {
+        const step = this._state.currentStep;
         if (!step || step.done) {
             return false;
         }
         let complete = false;
         if (typeof step.checkComplete === 'function') {
             try {
-                complete = Boolean(step.checkComplete(game, state.context));
+                complete = Boolean(step.checkComplete(this.game, this._state.context));
             } catch (error) {
                 console.warn(`Tutorial step "${step.id}" check failed`, error);
-                complete = false;
             }
         }
         if (!complete) {
             return false;
         }
         step.done = true;
-        hideOverlay();
-        const finished = finalizeCompletion();
-        if (!finished) {
-            maybeShowNextStep();
+        this.hideOverlay();
+        if (!this.finalizeCompletion()) {
+            this.maybeShowNextStep();
         }
         return true;
     }
 
-    function syncProgressWithGame(currentGame = game) {
+    syncWithGame(currentGame = this.game) {
         if (!currentGame) {
             return;
         }
-        const context = state.context ?? createInitialContext();
-        state.context = context;
+        const context = this._state.context ?? createInitialTutorialContext();
+        this._state.context = context;
+        this.syncPlacementAndWaveContext(currentGame, context);
+        this.syncRewardContext(currentGame, context);
+        this.completeEligibleSteps(currentGame, context);
+        if (this.finalizeCompletion()) {
+            return;
+        }
+        if (this._state.started && !this._state.waveInProgress) {
+            this.maybeShowNextStep();
+        } else if (this._state.waveInProgress) {
+            this.hideOverlay();
+        }
+    }
 
+    syncPlacementAndWaveContext(currentGame, context) {
         const towersCount = Array.isArray(currentGame.towers) ? currentGame.towers.length : 0;
         context.towersPlaced = Math.max(context.towersPlaced, towersCount);
         const waveStarted = Boolean(currentGame.waveInProgress)
@@ -559,10 +572,14 @@ export function createTutorial(game, options = {}) {
             context.wavesStarted = Math.max(context.wavesStarted, 1);
             context.colorSwitches = Math.max(context.colorSwitches, 1);
         }
-        const currentWave = Number.isFinite(currentGame.wave) ? currentGame.wave : state.currentWave;
-        state.currentWave = currentWave;
-        state.waveInProgress = Boolean(currentGame.waveInProgress);
+        const currentWave = Number.isFinite(currentGame.wave) ? currentGame.wave : this._state.currentWave;
+        this._state.currentWave = currentWave;
+        this._state.waveInProgress = Boolean(currentGame.waveInProgress);
+        const clearedWaves = Math.max(0, Math.floor(currentWave) - 1);
+        context.wavesCleared = Math.max(context.wavesCleared, clearedWaves);
+    }
 
+    syncRewardContext(currentGame, context) {
         const currentEnergy = Number.isFinite(currentGame.energy) ? currentGame.energy : 0;
         const initialEnergy = Number.isFinite(currentGame.initialEnergy) ? currentGame.initialEnergy : currentEnergy;
         const energyDelta = Math.max(0, currentEnergy - initialEnergy);
@@ -570,191 +587,178 @@ export function createTutorial(game, options = {}) {
         if (context.energyGained > 0) {
             context.energyEvents = Math.max(context.energyEvents, 1);
         }
-
         const score = Number.isFinite(currentGame.score) ? Math.max(0, Math.floor(currentGame.score)) : 0;
         const bestScore = Number.isFinite(currentGame.bestScore) ? Math.max(0, Math.floor(currentGame.bestScore)) : 0;
         context.scoreTotal = Math.max(context.scoreTotal, score, bestScore);
         if (context.scoreTotal > 0) {
             context.scoreEvents = Math.max(context.scoreEvents, 1);
         }
+    }
 
-        const clearedWaves = Math.max(0, Math.floor(currentWave) - 1);
-        context.wavesCleared = Math.max(context.wavesCleared, clearedWaves);
-
-        state.steps.forEach(step => {
+    completeEligibleSteps(currentGame, context) {
+        this._state.steps.forEach(step => {
             if (step.done || typeof step.checkComplete !== 'function') {
                 return;
             }
-            let shouldComplete = false;
             try {
-                shouldComplete = Boolean(step.checkComplete(currentGame, context));
+                if (step.checkComplete(currentGame, context)) {
+                    step.done = true;
+                }
             } catch (error) {
                 console.warn(`Tutorial step "${step.id}" sync failed`, error);
             }
-            if (shouldComplete) {
-                step.done = true;
-            }
         });
-        if (finalizeCompletion()) {
+    }
+
+    resetContext() {
+        this._state.context = createInitialTutorialContext();
+    }
+
+    start() {
+        if (this._state.persistentComplete) {
+            this._state.started = false;
+            this.hideOverlay();
             return;
         }
-        if (state.started && !state.waveInProgress) {
-            maybeShowNextStep();
-        } else if (state.waveInProgress) {
-            hideOverlay();
+        this._state.started = true;
+        this._state.currentWave = Number.isFinite(this.game?.wave) ? this.game.wave : this._state.currentWave;
+        this._state.waveInProgress = Boolean(this.game?.waveInProgress);
+        this.maybeShowNextStep();
+    }
+
+    reset(options: any = {}) {
+        const force = Boolean(options.force);
+        this.hideOverlay();
+        this.stopCheckLoop();
+        this._state.started = false;
+        this._state.currentStep = null;
+        this._state.waveInProgress = Boolean(this.game?.waveInProgress);
+        this._state.currentWave = Number.isFinite(this.game?.wave) ? this.game.wave : 1;
+        this.resetContext();
+        this._state.steps.forEach(step => {
+            step.done = force || !this._state.persistentComplete ? false : true;
+        });
+        if (force) {
+            this._state.persistentComplete = false;
         }
     }
 
-    function resetContext() {
-        state.context = createInitialContext();
+    handleTowerPlaced() {
+        this._state.context.towersPlaced += 1;
+        this.evaluateCurrentStep();
     }
 
-    return {
-        start() {
-            if (state.persistentComplete) {
-                state.started = false;
-                hideOverlay();
-                return;
-            }
-            state.started = true;
-            state.currentWave = Number.isFinite(game?.wave) ? game.wave : state.currentWave;
-            state.waveInProgress = Boolean(game?.waveInProgress);
-            maybeShowNextStep();
-        },
+    handleColorSwitch() {
+        this._state.context.colorSwitches += 1;
+        this.evaluateCurrentStep();
+    }
 
-        reset(options = {}) {
-            const force = Boolean(options.force);
-            hideOverlay();
-            stopCheckLoop();
-            state.started = false;
-            state.currentStep = null;
-            state.waveInProgress = Boolean(game?.waveInProgress);
-            state.currentWave = Number.isFinite(game?.wave) ? game.wave : 1;
-            resetContext();
-            if (force || !state.persistentComplete) {
-                state.steps.forEach(step => {
-                    step.done = false;
-                });
-                if (force) {
-                    state.persistentComplete = false;
-                }
-            } else {
-                state.steps.forEach(step => {
-                    step.done = true;
-                });
-            }
-        },
+    handleTowerMerged(details: any = {}) {
+        this._state.context.merges += 1;
+        if (details?.color) {
+            this._state.context.lastMergeColor = details.color;
+        }
+        this.evaluateCurrentStep();
+    }
 
-        handleTowerPlaced() {
-            state.context.towersPlaced += 1;
-            evaluateCurrentStep();
-        },
+    handleTowerRemoved(details: any = {}) {
+        this._state.context.removals += 1;
+        if (details?.cause) {
+            this._state.context.lastRemovalCause = details.cause;
+        }
+        this.evaluateCurrentStep();
+    }
 
-        handleColorSwitch() {
-            state.context.colorSwitches += 1;
-            evaluateCurrentStep();
-        },
+    handleEnemyKilled(details: any = {}) {
+        this._state.context.enemyKills += 1;
+        if (details?.match) {
+            this._state.context.matchingKills += 1;
+        }
+        this.evaluateCurrentStep();
+    }
 
-        handleTowerMerged(details = {}) {
-            state.context.merges += 1;
-            if (details?.color) {
-                state.context.lastMergeColor = details.color;
-            }
-            evaluateCurrentStep();
-        },
+    handleEnergyGained(amount = 0) {
+        const gain = Number.isFinite(amount) ? Math.max(0, amount) : 0;
+        if (gain > 0) {
+            this._state.context.energyGained += gain;
+            this._state.context.energyEvents += 1;
+        }
+        this.evaluateCurrentStep();
+    }
 
-        handleTowerRemoved(details = {}) {
-            state.context.removals += 1;
-            if (details?.cause) {
-                state.context.lastRemovalCause = details.cause;
-            }
-            evaluateCurrentStep();
-        },
+    handleScoreChanged(total = 0, details: any = {}) {
+        const normalizedTotal = Number.isFinite(total) ? Math.max(0, Math.floor(total)) : 0;
+        this._state.context.scoreTotal = Math.max(this._state.context.scoreTotal, normalizedTotal);
+        const delta = Number.isFinite(details?.delta) ? details.delta : 0;
+        if (delta > 0) {
+            this._state.context.scoreGained += delta;
+            this._state.context.scoreEvents += 1;
+        } else if (normalizedTotal > 0) {
+            this._state.context.scoreEvents = Math.max(this._state.context.scoreEvents, 1);
+        }
+        this.evaluateCurrentStep();
+    }
 
-        handleEnemyKilled(details = {}) {
-            state.context.enemyKills += 1;
-            if (details?.match) {
-                state.context.matchingKills += 1;
-            }
-            evaluateCurrentStep();
-        },
+    handleWaveCompleted(waveNumber) {
+        if (Number.isFinite(waveNumber)) {
+            this._state.context.wavesCleared = Math.max(this._state.context.wavesCleared, waveNumber);
+        }
+        this.evaluateCurrentStep();
+    }
 
-        handleEnergyGained(amount = 0) {
-            const gain = Number.isFinite(amount) ? Math.max(0, amount) : 0;
-            if (gain > 0) {
-                state.context.energyGained += gain;
-                state.context.energyEvents += 1;
-            }
-            evaluateCurrentStep();
-        },
+    handleWaveStarted() {
+        this._state.context.wavesStarted += 1;
+        this._state.waveInProgress = true;
+        if (!this.evaluateCurrentStep()) {
+            this.hideOverlay();
+        }
+    }
 
-        handleScoreChanged(total = 0, details = {}) {
-            const normalizedTotal = Number.isFinite(total) ? Math.max(0, Math.floor(total)) : 0;
-            state.context.scoreTotal = Math.max(state.context.scoreTotal, normalizedTotal);
-            const delta = Number.isFinite(details?.delta) ? details.delta : 0;
-            if (delta > 0) {
-                state.context.scoreGained += delta;
-                state.context.scoreEvents += 1;
-            } else if (normalizedTotal > 0) {
-                state.context.scoreEvents = Math.max(state.context.scoreEvents, 1);
-            }
-            evaluateCurrentStep();
-        },
+    handleWavePreparation(waveNumber) {
+        if (Number.isFinite(waveNumber)) {
+            this._state.currentWave = waveNumber;
+        }
+        this._state.waveInProgress = false;
+        if (this._state.started) {
+            this.maybeShowNextStep();
+        }
+    }
 
-        handleWaveCompleted(waveNumber) {
-            if (Number.isFinite(waveNumber)) {
-                state.context.wavesCleared = Math.max(state.context.wavesCleared, waveNumber);
-            }
-            evaluateCurrentStep();
-        },
+    isComplete() {
+        return this._state.steps.every(step => step.done);
+    }
 
-        handleWaveStarted() {
-            state.context.wavesStarted += 1;
-            state.waveInProgress = true;
-            const completed = evaluateCurrentStep();
-            if (!completed) {
-                hideOverlay();
-            }
-        },
+    getCurrentStep() {
+        return this._state.currentStep;
+    }
 
-        handleWavePreparation(waveNumber) {
-            if (Number.isFinite(waveNumber)) {
-                state.currentWave = waveNumber;
-            }
-            state.waveInProgress = false;
-            if (state.started) {
-                maybeShowNextStep();
-            }
-        },
+    clearProgress() {
+        this._state.persistentComplete = false;
+        this._state.steps.forEach(step => {
+            step.done = false;
+        });
+        this.resetContext();
+        this.hideOverlay();
+    }
 
-        syncWithGame: syncProgressWithGame,
-
-        isComplete() {
-            return state.steps.every(step => step.done);
-        },
-
-        getCurrentStep() {
-            return state.currentStep;
-        },
-
-        clearProgress() {
-            state.persistentComplete = false;
-            state.steps.forEach(step => {
-                step.done = false;
-            });
-            resetContext();
-            hideOverlay();
-        },
-
-        refreshLocalization() {
-            refreshCurrentStepLocalization();
-        },
-
-        _state: state,
-    };
+    refreshLocalization() {
+        this.refreshCurrentStepLocalization();
+    }
 }
 
-export function attachTutorial(game, options = {}) {
+export function createTutorial(game, options: any = {}) {
+    const doc = options.document ?? (typeof document !== 'undefined' ? document : null);
+    return new TutorialRuntime(game, {
+        overlay: options.ui ?? createDomOverlay(doc),
+        scheduleCheck: options.scheduleCheck ?? createIntervalScheduler(options.checkInterval),
+        playSound: typeof options.playSound === 'function' ? options.playSound : defaultPlaySound,
+        onComplete: options.onComplete ?? markTutorialComplete,
+        steps: normalizeSteps(options.steps ?? getDefaultSteps()),
+        initiallyComplete: options.initiallyComplete,
+    });
+}
+
+export function attachTutorial(game, options: any = {}) {
     const doc = options.document ?? (typeof document !== 'undefined' ? document : null);
     const alreadyComplete = isTutorialMarkedComplete();
     const tutorial = createTutorial(game, {

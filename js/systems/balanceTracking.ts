@@ -257,7 +257,7 @@ function printBalanceData(game) {
 function exportBalanceCSV(game) {
     if (!game.balanceData || !game.balanceData.waves.length) {
         console.log('No balance data to export.');
-        return;
+        return null;
     }
 
     const headers = [

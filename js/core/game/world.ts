@@ -142,7 +142,7 @@ function computeBoundsForGame(game) {
     return applyMargin(finite, margin);
 }
 
-const world = {
+const world: any = {
     computeWorldBounds() {
         return computeBoundsForGame(this);
     },

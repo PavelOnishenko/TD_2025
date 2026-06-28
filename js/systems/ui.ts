@@ -2,7 +2,7 @@ import { callCrazyGamesEvent } from './crazyGamesIntegration.js';
 import { saveAudioSettings, loadLanguagePreference, saveLanguagePreference } from './dataStore.js';
 import { attachTutorial } from './tutorial.js';
 import { bindHUD } from './ui/uiHud.js';
-import { updateHUD, updateWavePhaseIndicator, showWaveClearedBanner } from './ui/uiHudRender.js';
+import { updateHUD, updateWavePhaseIndicator, showWaveClearedBanner, resolveScorePair } from './ui/uiHudRender.js';
 import { bindCanvasInteractions } from './ui/uiCanvas.js';
 import { bindPauseSystem } from './ui/uiPause.js';
 import { bindLeaderboard, submitScoreToLeaderboard } from './ui/uiLeaderboard.js';

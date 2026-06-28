@@ -4,7 +4,7 @@ import { updateUpgradeAvailability } from './uiButtons.js';
 const HEART_FILLED_SRC = 'assets/images/heart_filled.png';
 const HEART_EMPTY_SRC = 'assets/images/heart_empty.png';
 
-function resolveScorePair(game) {
+export function resolveScorePair(game) {
     const current = game.scoreManager ? game.scoreManager.getCurrentScore() : 0;
     const bestCandidate = game.scoreManager ? game.scoreManager.getBestScore() : 0;
     const best = Math.max(current, bestCandidate);

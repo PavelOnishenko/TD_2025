@@ -15,9 +15,7 @@ interface HowlOptions {
 }
 
 declare global {
-    class Howl {
-        constructor(options: HowlOptions);
-
+    interface Howl {
         play(spriteOrId?: string | number): number;
         pause(id?: number): this;
         stop(id?: number): this;
@@ -37,25 +35,30 @@ declare global {
         off(event?: string, callback?: Function, id?: number): this;
     }
 
-    class Howler {
-        static mute(muted: boolean): void;
-        static volume(volume?: number): number | void;
-        static codecs(ext: string): boolean;
-        static unload(): void;
-        static usingWebAudio: boolean;
-        static noAudio: boolean;
-        static autoSuspend: boolean;
-        static ctx: AudioContext | null;
-        static masterGain: GainNode | null;
+    interface HowlConstructor {
+        constructor(options: HowlOptions);
+        new(options: HowlOptions): Howl;
+    }
+
+    interface HowlerGlobal {
+        mute(muted: boolean): void;
+        volume(volume?: number): number | void;
+        codecs(ext: string): boolean;
+        unload(): void;
+        usingWebAudio: boolean;
+        noAudio: boolean;
+        autoSuspend: boolean;
+        ctx: AudioContext | null;
+        masterGain: GainNode | null;
     }
 
     interface Window {
-        Howl: typeof Howl;
-        Howler: typeof Howler;
+        Howl: HowlConstructor;
+        Howler: HowlerGlobal;
     }
 
-    var Howl: typeof Howl;
-    var Howler: typeof Howler;
+    var Howl: HowlConstructor;
+    var Howler: HowlerGlobal;
 }
 
 export {};

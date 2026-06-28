@@ -64,7 +64,7 @@ function resumeGameAfterAd(game) {
     }
 }
 
-export async function showCrazyGamesAdWithPause(game, options = {}) {
+export async function showCrazyGamesAdWithPause(game, options: any = {}) {
     const { adType = 'midgame', windowRef = null } = options;
     if (!isAdSdkAvailable(windowRef)) {
         return { shown: false, reason: 'unavailable' };

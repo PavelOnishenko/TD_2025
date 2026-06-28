@@ -64,7 +64,7 @@ function getRocketImpactRadius(projectile) {
     return Math.max(config.min, projectile.explosionRadius);
 }
 
-function getImpactPosition(projectile, enemy, options = {}) {
+function getImpactPosition(projectile, enemy, options: any = {}) {
     if (Number.isFinite(options.impactX) && Number.isFinite(options.impactY)) {
         return { x: options.impactX, y: options.impactY };
     }
@@ -90,6 +90,117 @@ function isEnemyDead(enemy) {
         return enemy.isDead();
     }
     return (enemy.hp ?? 0) <= 0;
+}
+
+function recordProjectileDamage(game, projectile, damage) {
+    const diagnosticsState = game?.diagnosticsState;
+    if (!diagnosticsState?.collectTowerDps || !projectile?.sourceTowerId) {
+        return;
+    }
+    const eventsByTower = diagnosticsState.towerDamageEvents;
+    if (!eventsByTower) {
+        return;
+    }
+    const now = typeof performance !== 'undefined' && typeof performance.now === 'function'
+        ? performance.now()
+        : Date.now();
+    const cutoff = now - 10000;
+    const events = Array.isArray(eventsByTower.get(projectile.sourceTowerId))
+        ? eventsByTower.get(projectile.sourceTowerId)
+        : [];
+    const prunedEvents = events.filter((event) => event.time >= cutoff);
+    prunedEvents.push({ time: now, damage });
+    eventsByTower.set(projectile.sourceTowerId, prunedEvents);
+}
+
+function spawnProjectileImpact(game, projectile, enemy, options, isColorMatch) {
+    if (!options.spawnImpactEffect || !game.explosions) {
+        return;
+    }
+    const impactPos = getImpactPosition(projectile, enemy, {
+        impactX: options.impactX,
+        impactY: options.impactY,
+    });
+    const variant = options.hitVariant ?? (isColorMatch ? 'match' : 'mismatch');
+    game.explosions.push(createExplosion(impactPos.x, impactPos.y, {
+        color: projectile.color,
+        variant,
+    }));
+}
+
+function getEnemyCenter(enemy, projectile) {
+    const width = Number.isFinite(enemy.w) ? enemy.w : 0;
+    const height = Number.isFinite(enemy.h) ? enemy.h : 0;
+    return {
+        x: Number.isFinite(enemy.x) ? enemy.x + width / 2 : projectile.x,
+        y: Number.isFinite(enemy.y) ? enemy.y + height / 2 : projectile.y,
+    };
+}
+
+function notifyTutorialKill(game, energyGain, isColorMatch) {
+    if (!game.tutorial) {
+        return;
+    }
+    try {
+        if (typeof game.tutorial.handleEnergyGained === 'function') {
+            game.tutorial.handleEnergyGained(energyGain);
+        }
+        if (typeof game.tutorial.handleEnemyKilled === 'function') {
+            game.tutorial.handleEnemyKilled({ match: isColorMatch });
+        }
+    } catch (error) {
+        console.warn('Tutorial kill handler failed', error);
+    }
+}
+
+function updateKillCounters(game, enemy, energyGain) {
+    if (enemy?.spriteKey === 'tank') {
+        game.tankKills = (game.tankKills || 0) + 1;
+    } else {
+        game.swarmKills = (game.swarmKills || 0) + 1;
+    }
+    game.energyGained = (game.energyGained || 0) + energyGain;
+    trackEnemyKill(game, enemy, energyGain);
+}
+
+function addKillScore(game) {
+    if (typeof game.addScore !== 'function') {
+        return;
+    }
+    const scoreValue = Number.isFinite(game.scorePerKill)
+        ? game.scorePerKill
+        : gameConfig.scoring.perKill;
+    game.addScore(scoreValue);
+}
+
+function spawnKillEffect(game, projectile, enemy, options) {
+    if (!options.spawnKillEffect || !game.explosions) {
+        return;
+    }
+    const center = getEnemyCenter(enemy, projectile);
+    let variant = options.killVariant ?? 'kill';
+    if (!options.killVariant && enemy?.spriteKey === 'tank') {
+        variant = 'tank-kill';
+    }
+    game.explosions.push(createExplosion(center.x, center.y, {
+        color: enemy.color ?? projectile.color ?? 'default',
+        variant,
+    }));
+}
+
+function handleEnemyRemoved(game, projectile, enemy, options, isColorMatch) {
+    const energyGain = getEnergyGainForKill(game, enemy);
+    game.energy += energyGain;
+    updateKillCounters(game, enemy, energyGain);
+
+    const center = getEnemyCenter(enemy, projectile);
+    if (Array.isArray(game.flyingEnergy)) {
+        game.flyingEnergy.push(createFlyingEnergyParticle(center.x, center.y, energyGain, game));
+    }
+    notifyTutorialKill(game, energyGain, isColorMatch);
+    addKillScore(game);
+    spawnKillEffect(game, projectile, enemy, options);
+    updateHUD(game);
 }
 
 export function moveProjectiles(game, dt) {
@@ -127,103 +238,32 @@ export function moveProjectiles(game, dt) {
     });
 }
 
-export function applyProjectileDamage(game, projectile, enemyIndex, options = {}) {
+export function applyProjectileDamage(game, projectile, enemyIndex, options: any = {}) {
     const enemy = game.enemies[enemyIndex];
     if (!enemy) {
         return { enemyRemoved: false, isColorMatch: false, damage: 0 };
     }
 
-    const { spawnImpactEffect = true, spawnKillEffect = true, hitVariant = null, killVariant = null, impactX = null, impactY = null } = options;
+    const effectOptions = {
+        spawnImpactEffect: options.spawnImpactEffect ?? true,
+        spawnKillEffect: options.spawnKillEffect ?? true,
+        hitVariant: options.hitVariant ?? null,
+        killVariant: options.killVariant ?? null,
+        impactX: options.impactX ?? null,
+        impactY: options.impactY ?? null,
+    };
     const damage = calculateDamage(projectile, enemy);
     damageEnemy(enemy, damage);
     const isColorMatch = projectile.color === enemy.color;
     playHitSound(game.audio, projectile);
-
-    const diagnosticsState = game?.diagnosticsState;
-    if (diagnosticsState?.collectTowerDps && projectile?.sourceTowerId) {
-        const eventsByTower = diagnosticsState.towerDamageEvents;
-        if (eventsByTower) {
-            const now = typeof performance !== 'undefined' && typeof performance.now === 'function'
-                ? performance.now()
-                : Date.now();
-            const windowMs = 10000;
-            const cutoff = now - windowMs;
-            const events = Array.isArray(eventsByTower.get(projectile.sourceTowerId))
-                ? eventsByTower.get(projectile.sourceTowerId)
-                : [];
-            const prunedEvents = events.filter((event) => event.time >= cutoff);
-            prunedEvents.push({ time: now, damage });
-            eventsByTower.set(projectile.sourceTowerId, prunedEvents);
-        }
-    }
-
-    if (spawnImpactEffect && game.explosions) {
-        const impactPos = getImpactPosition(projectile, enemy, { impactX, impactY });
-        const variant = hitVariant ?? (isColorMatch ? 'match' : 'mismatch');
-        game.explosions.push(createExplosion(impactPos.x, impactPos.y, {
-            color: projectile.color,
-            variant,
-        }));
-    }
+    recordProjectileDamage(game, projectile, damage);
+    spawnProjectileImpact(game, projectile, enemy, effectOptions, isColorMatch);
 
     let enemyRemoved = false;
     if (isEnemyDead(enemy)) {
         enemyRemoved = true;
         game.enemies.splice(enemyIndex, 1);
-        const energyGain = getEnergyGainForKill(game, enemy);
-        game.energy += energyGain;
-
-        // Track kills by type and energy gained
-        if (enemy?.spriteKey === 'tank') {
-            game.tankKills = (game.tankKills || 0) + 1;
-        } else {
-            game.swarmKills = (game.swarmKills || 0) + 1;
-        }
-        game.energyGained = (game.energyGained || 0) + energyGain;
-        trackEnemyKill(game, enemy, energyGain);
-
-        const width = Number.isFinite(enemy.w) ? enemy.w : 0;
-        const height = Number.isFinite(enemy.h) ? enemy.h : 0;
-        const centerX = Number.isFinite(enemy.x) ? enemy.x + width / 2 : projectile.x;
-        const centerY = Number.isFinite(enemy.y) ? enemy.y + height / 2 : projectile.y;
-
-        if (Array.isArray(game.flyingEnergy)) {
-            const particle = createFlyingEnergyParticle(centerX, centerY, energyGain, game);
-            game.flyingEnergy.push(particle);
-        }
-        if (game.tutorial) {
-            try {
-                if (typeof game.tutorial.handleEnergyGained === 'function') {
-                    game.tutorial.handleEnergyGained(energyGain);
-                }
-                if (typeof game.tutorial.handleEnemyKilled === 'function') {
-                    game.tutorial.handleEnemyKilled({ match: isColorMatch });
-                }
-            } catch (error) {
-                console.warn('Tutorial kill handler failed', error);
-            }
-        }
-        if (typeof game.addScore === 'function') {
-            const scoreValue = Number.isFinite(game.scorePerKill)
-                ? game.scorePerKill
-                : gameConfig.scoring.perKill;
-            game.addScore(scoreValue);
-        }
-        if (spawnKillEffect && game.explosions) {
-            const width = Number.isFinite(enemy.w) ? enemy.w : 0;
-            const height = Number.isFinite(enemy.h) ? enemy.h : 0;
-            const centerX = Number.isFinite(enemy.x) ? enemy.x + width / 2 : projectile.x;
-            const centerY = Number.isFinite(enemy.y) ? enemy.y + height / 2 : projectile.y;
-            let variant = killVariant ?? 'kill';
-            if (!killVariant && enemy?.spriteKey === 'tank') {
-                variant = 'tank-kill';
-            }
-            game.explosions.push(createExplosion(centerX, centerY, {
-                color: enemy.color ?? projectile.color ?? 'default',
-                variant,
-            }));
-        }
-        updateHUD(game);
+        handleEnemyRemoved(game, projectile, enemy, effectOptions, isColorMatch);
     }
 
     return { enemyRemoved, isColorMatch, damage };

@@ -1,7 +1,7 @@
 import Platform from '../entities/Platform.js';
 import gameConfig from '../config/gameConfig.js';
 
-export function createPlatforms({ width, height, platformConfigs = gameConfig.world.platforms } = {}) {
+export function createPlatforms({ width, height, platformConfigs = gameConfig.world.platforms }: any = {}) {
     if (!Array.isArray(platformConfigs)) {
         return [];
     }

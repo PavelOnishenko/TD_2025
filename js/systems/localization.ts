@@ -2,7 +2,7 @@ const FALLBACK_LANGUAGE = 'en';
 const LANGUAGE_PATH = 'assets/locales';
 const localeCache = new Map();
 const pendingLoads = new Map();
-const listeners = new Set();
+const listeners = new Set<any>();
 let currentLanguage = FALLBACK_LANGUAGE;
 
 function sanitizeLanguage(language) {

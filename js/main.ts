@@ -52,7 +52,7 @@ function updateLoadingProgress({ loaded, total, percent, stage }) {
 
 function hideLoadingProgress() {
     const loadingProgress = document.getElementById('loadingProgress');
-    const startButton = document.getElementById('startGame');
+    const startButton = document.getElementById('startGame') as HTMLButtonElement | null;
 
     if (loadingProgress) {
         loadingProgress.classList.add('hidden');
@@ -108,7 +108,7 @@ function registerGlobalGameReference(game) {
 }
 
 function initializeSimpleSaveIfEnabled(game) {
-    const simpleSaveConfig = featureFlags?.simpleSaveSystem ?? {};
+    const simpleSaveConfig: any = featureFlags?.simpleSaveSystem ?? {};
     const simpleSaveEnabled = typeof simpleSaveConfig === 'object'
         ? Boolean(simpleSaveConfig.enabled ?? true)
         : Boolean(simpleSaveConfig);

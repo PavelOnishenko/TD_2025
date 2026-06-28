@@ -192,10 +192,11 @@ function createTransparentImage() {
 }
 
 function getTransparentImage() {
-    if (!getTransparentImage.cached) {
-        getTransparentImage.cached = createTransparentImage();
+    const cache = getTransparentImage as typeof getTransparentImage & { cached?: any };
+    if (!cache.cached) {
+        cache.cached = createTransparentImage();
     }
-    return getTransparentImage.cached;
+    return cache.cached;
 }
 
 function handleImageLoadFailure(key, error) {

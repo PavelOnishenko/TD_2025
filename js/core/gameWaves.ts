@@ -4,7 +4,7 @@ import { showCrazyGamesAdWithPause } from '../systems/ads.js';
 import { getWaveEnergyMultiplier } from '../utils/energyScaling.js';
 import { startWaveTracking, completeWaveTracking } from '../systems/balanceTracking.js';
 
-export const waveActions = {
+export const waveActions: any = {
     startWave() {
         this.setupWaveStuff();
         startWaveTracking(this, this.wave);

@@ -152,7 +152,7 @@ function hideControlElement(element) {
     element.tabIndex = -1;
 }
 
-function ensureControls(container, options = {}, controls = {}) {
+function ensureControls(container, options: any = {}, controls: any = {}) {
     if (!container) {
         return false;
     }
@@ -294,7 +294,7 @@ export function applySimpleSaveState(game, rawState) {
     return sanitized;
 }
 
-export function initSimpleSaveSystem(game, options = {}) {
+export function initSimpleSaveSystem(game, options: any = {}) {
     const resolvedOptions = {
         storageKey: resolveOption(options, 'storageKey', DEFAULT_STORAGE_KEY),
         enabled: resolveOption(options, 'enabled', true),

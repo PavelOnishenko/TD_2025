@@ -11,7 +11,7 @@ export function computeDisplaySize(metrics) {
     return ViewportManagerEngine.computeDisplaySize(metrics);
 }
 
-export function createViewport(displaySize, options = {}) {
+export function createViewport(displaySize, options: any = {}) {
     const logicalWidth = options.logicalWidth ?? LOGICAL_W;
     const logicalHeight = options.logicalHeight ?? LOGICAL_H;
     return ViewportManagerEngine.createViewport(displaySize, {

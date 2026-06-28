@@ -29,10 +29,10 @@ interface MergeGame {
 }
 
 interface GameConfig {
-    [key: string]: unknown;
-    towers: Record<string, unknown>;
-    projectiles: Record<string, unknown>;
-    enemies: Record<string, unknown>;
+    [key: string]: any;
+    towers: Record<string, any>;
+    projectiles: Record<string, any>;
+    enemies: Record<string, any>;
 }
 
 const hasAcknowledged = (context: TutorialContext | undefined, id: string): boolean => Boolean(context?.acknowledgedSteps?.has?.(id));

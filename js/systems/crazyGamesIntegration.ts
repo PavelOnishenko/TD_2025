@@ -56,7 +56,7 @@ function loadCrazyGamesSdk() {
 }
 
 function findExistingCrazyGamesScript(handleResult) {
-    const script = document.querySelector('script[data-crazygames-sdk]');
+    const script = document.querySelector('script[data-crazygames-sdk]') as HTMLScriptElement | null;
     if (!script) return false;
 
     if (script.dataset.crazygamesSdkLoaded === 'true') {
