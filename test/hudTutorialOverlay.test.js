@@ -175,7 +175,8 @@ test('bindUI wires HUD elements and tutorial overlay', () => {
 
   const ids = [
     'lives', 'energy', 'scorePanel', 'score', 'bestScore', 'wavePanel', 'wave', 'wavePhase',
-    'endlessIndicator', 'status', 'nextWave', 'restart', 'muteToggle', 'musicToggle',
+    'endlessIndicator', 'status', 'nextWave', 'restart', 'settings', 'speedUpBattle',
+    'muteToggle', 'musicToggle',
     'mergeTowers', 'pause', 'startOverlay', 'startGame', 'endOverlay', 'endMenu', 'endMessage',
     'endDetail', 'endScore', 'endBestScore', 'endRestart', 'pauseOverlay', 'pauseMessage',
     'resumeGame', 'diagnosticsOverlay', 'saveControls', 'saveGame', 'loadGame', 'deleteSave',

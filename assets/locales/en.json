@@ -50,12 +50,12 @@
     "endlessIndicator": "Endless Mode",
     "wavePhase": {
       "prep": "Preparation phase",
-      "active": "Wave in progress"
+      "active": "Combat phase"
     },
     "statusWin": "All waves cleared!",
     "statusLose": "Base destroyed!",
-    "waveLabel": "Wave: {current}/{max}",
-    "waveLabelEndless": "Wave: {current}",
+    "waveLabel": "Wave {current}/{max}",
+    "waveLabelEndless": "Wave {current}",
     "waveAria": "Wave {current} of {max}",
     "waveAriaEndless": "Wave {current}, endless mode",
     "waveClearedBanner": "WAVE #{wave} CLEARED",
@@ -66,8 +66,10 @@
     "bestLabel": "Best: {value}",
     "bestAria": "Best score: {value}",
     "buttons": {
-      "nextWave": "Next Wave",
+      "nextWave": "Next level",
       "merge": "Merge Towers",
+      "settings": "Settings",
+      "speedUp": "Speed Up Battle",
       "restart": "Restart",
       "save": "Save Game",
       "load": "Load Game",

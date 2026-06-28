@@ -185,30 +185,36 @@ export function showWaveClearedBanner(game, waveNumber) {
     hide();
 }
 
-const createHeart = (filled) => {
+const createHeart = () => {
     const heart = document.createElement('img');
     heart.src = UI_ASSET_PATHS.heart;
     heart.alt = '';
-    heart.className = filled ? 'life-heart life-heart--filled' : 'life-heart life-heart--empty';
+    heart.className = 'life-heart';
     heart.setAttribute('aria-hidden', 'true');
     heart.draggable = false;
     return heart;
 };
 
-const renderHeartLives = (game, totalLives) => {
-    const hearts = [];
-    for (let i = 0; i < totalLives; i++) {
-        hearts.push(createHeart(i < game.lives));
-    }
+const createLivesValue = (amount) => {
+    const value = document.createElement('span');
+    value.className = 'lives-value';
+    value.textContent = `${amount}`;
+    return value;
+};
+
+const renderHeartLives = (game) => {
+    const heart = createHeart();
+    const value = createLivesValue(game.lives);
     const fragment = typeof document.createDocumentFragment === 'function'
         ? document.createDocumentFragment()
         : null;
     if (fragment) {
-        hearts.forEach(heart => fragment.appendChild(heart));
+        fragment.appendChild(heart);
+        fragment.appendChild(value);
         game.livesEl.replaceChildren(fragment);
         return;
     }
-    game.livesEl.replaceChildren(...hearts);
+    game.livesEl.replaceChildren(heart, value);
 };
 
 const updateLivesAria = (game) => {
@@ -222,13 +228,11 @@ function renderLives(game) {
     if (!game.livesEl) {
         return;
     }
-    const configuredLives = Number.isFinite(game.initialLives) ? game.initialLives : game.lives;
-    const totalLives = Math.max(configuredLives, game.lives);
     const canRenderHearts = typeof document !== 'undefined'
         && typeof document.createElement === 'function'
         && typeof game.livesEl.replaceChildren === 'function';
     if (canRenderHearts) {
-        renderHeartLives(game, totalLives);
+        renderHeartLives(game);
     } else {
         game.livesEl.textContent = translate('hud.livesAria', { value: game.lives }, `Lives: ${game.lives}`);
     }
@@ -272,11 +276,11 @@ function renderEnergy(game) {
     }
     const { fragment, value, icon } = createEnergyFragment(amount);
     if (fragment) {
-        fragment.appendChild(value);
         fragment.appendChild(icon);
+        fragment.appendChild(value);
         game.energyEl.replaceChildren(fragment);
     } else {
-        game.energyEl.replaceChildren(value, icon);
+        game.energyEl.replaceChildren(icon, value);
     }
     setEnergyAria(game, amount);
 }

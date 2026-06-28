@@ -285,6 +285,10 @@ function setupStartMenu(game) {
         game.nextWaveBtn.disabled = true;
     if (game.restartBtn)
         game.restartBtn.disabled = true;
+    if (game.settingsBtn)
+        game.settingsBtn.disabled = true;
+    if (game.speedUpBtn)
+        game.speedUpBtn.disabled = true;
     if (game.mergeBtn)
         game.mergeBtn.disabled = true;
     if (game.pauseBtn)
@@ -371,6 +375,9 @@ export function endGame(game, text) {
     }
     if (game.pauseBtn) {
         game.pauseBtn.disabled = true;
+    }
+    if (game.speedUpBtn) {
+        game.speedUpBtn.disabled = true;
     }
     game.gameOver = true;
     updateUpgradeAvailability(game);

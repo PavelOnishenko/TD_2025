@@ -111,51 +111,61 @@
     <main id="gameContainer">
         <canvas id="game" width="907" height="510"></canvas>
         <section id="hud" aria-label="Game controls and stats" data-l10n-attrs="aria-label:hud.sectionLabel">
-            <div class="hud-top-left">
-                <div id="lives" class="lives" aria-label="Lives"></div>
-                <div id="crazyGamesUser" class="user-info hidden" aria-live="polite">
-                    <img id="crazyGamesUserAvatar" alt="CrazyGames profile picture" data-l10n-attrs="alt:crazyGames.avatarAlt" />
-                    <span id="crazyGamesUsername"></span>
-                </div>
-            </div>
-            <div class="hud-live-region" aria-live="polite">
-                <div id="energy" class="resource" aria-label="Energy: 100">
-                    <span class="resource-value">100</span>
-                    <img class="resource-icon" src="assets/images/UI/icon_energy_lightning.png" alt="" aria-hidden="true" />
-                </div>
-            </div>
-            <div id="scorePanel" class="score-panel" aria-live="polite">
-                <span id="score" class="score-value">Score: 0</span>
-                <span id="bestScore" class="score-best">Best: 0</span>
-            </div>
-            <div class="wave-controls">
-                <div class="hud-live-region" aria-live="polite">
-                    <div id="wavePanel">
-                        <span id="wave" class="wave-label">Wave: 1/10</span>
-                        <span id="wavePhase" class="wave-phase wave-phase--prep">Preparation phase</span>
-                        <span id="endlessIndicator" class="wave-endless hidden" aria-hidden="true" data-l10n="hud.endlessIndicator">
-                            Endless Mode
-                        </span>
+            <div class="hud-top-strip">
+                <div class="hud-top-block hud-top-block--resources">
+                    <div id="lives" class="lives" aria-label="Lives"></div>
+                    <div id="energy" class="resource" aria-label="Energy: 100">
+                        <img class="resource-icon" src="assets/images/UI/icon_energy_lightning.png" alt="" aria-hidden="true" />
+                        <span class="resource-value">100</span>
+                    </div>
+                    <div id="crazyGamesUser" class="user-info hidden" aria-live="polite">
+                        <img id="crazyGamesUserAvatar" alt="CrazyGames profile picture" data-l10n-attrs="alt:crazyGames.avatarAlt" />
+                        <span id="crazyGamesUsername"></span>
                     </div>
                 </div>
+                <div id="wavePanel" class="hud-top-block hud-top-block--wave">
+                    <span id="wave" class="wave-label">Wave: 1/10</span>
+                    <span id="endlessIndicator" class="wave-endless hidden" aria-hidden="true" data-l10n="hud.endlessIndicator">
+                        Endless Mode
+                    </span>
+                </div>
+                <div id="scorePanel" class="hud-top-block hud-top-block--score" aria-live="polite">
+                    <span id="bestScore" class="score-best">Best: 0</span>
+                    <span id="score" class="score-value">Score: 0</span>
+                </div>
+            </div>
+            <div class="wave-controls">
+                <span id="wavePhase" class="wave-phase wave-phase--prep">Preparation phase</span>
                 <div class="wave-controls__buttons" role="group" aria-label="Wave actions" data-l10n-attrs="aria-label:hud.waveActions">
-                    <button id="nextWave" class="hud-button" type="button">
+                    <button id="speedUpBattle" class="hud-button hud-button--square" type="button" aria-pressed="false" aria-label="Speed up battle">
                         <span class="hud-button__icon" aria-hidden="true">
-                            <img src="assets/images/UI/button_next_level.png" alt="" draggable="false" />
+                            <img src="assets/images/UI/button_speed_up_battle.png" alt="" draggable="false" />
                         </span>
-                        <span class="hud-button__label" data-l10n="hud.buttons.nextWave">Next Wave</span>
+                        <span class="hud-button__label" data-l10n="hud.buttons.speedUp">Speed Up</span>
                     </button>
-                    <button id="mergeTowers" class="hud-button" type="button" disabled>
+                    <button id="pause" class="hud-button hud-button--square" type="button" aria-pressed="false">
+                        <span class="hud-button__icon" aria-hidden="true">
+                            <img src="assets/images/UI/button_pause.png" alt="" draggable="false" />
+                        </span>
+                        <span class="hud-button__label">Pause</span>
+                    </button>
+                    <button id="mergeTowers" class="hud-button hud-button--square" type="button" disabled>
                         <span class="hud-button__icon" aria-hidden="true">
                             <img src="assets/images/UI/button_merge_towers.png" alt="" draggable="false" />
                         </span>
                         <span class="hud-button__label" data-l10n="hud.buttons.merge">Merge Towers</span>
                     </button>
-                    <button id="upgradeTowers" class="hud-button" type="button" disabled hidden aria-hidden="true">
+                    <button id="upgradeTowers" class="hud-button hud-button--square" type="button" disabled hidden aria-hidden="true">
                         <span class="hud-button__icon" aria-hidden="true">
                             <img src="assets/images/UI/button_upgrade_towers.png" alt="" draggable="false" />
                         </span>
                         <span class="hud-button__label" data-l10n="hud.buttons.upgrade">Upgrade Towers</span>
+                    </button>
+                    <button id="nextWave" class="hud-button" type="button">
+                        <span class="hud-button__icon" aria-hidden="true">
+                            <img src="assets/images/UI/button_next_level.png" alt="" draggable="false" />
+                        </span>
+                        <span class="hud-button__label" data-l10n="hud.buttons.nextWave">Next level</span>
                     </button>
                 </div>
             </div>
@@ -180,12 +190,20 @@
                 </div>
             </div>
             <div class="hud-controls">
-                <button id="restart" class="hud-button" type="button">
-                    <span class="hud-button__icon" aria-hidden="true">
-                        <img src="assets/images/UI/button_restart.png" alt="" draggable="false" />
-                    </span>
-                    <span class="hud-button__label" data-l10n="hud.buttons.restart">Restart</span>
-                </button>
+                <div class="hud-bottom-left-controls">
+                    <button id="settings" class="hud-button hud-button--square" type="button" aria-label="Settings">
+                        <span class="hud-button__icon" aria-hidden="true">
+                            <img src="assets/images/UI/button_settings.png" alt="" draggable="false" />
+                        </span>
+                        <span class="hud-button__label" data-l10n="hud.buttons.settings">Settings</span>
+                    </button>
+                    <button id="restart" class="hud-button hud-button--square" type="button">
+                        <span class="hud-button__icon" aria-hidden="true">
+                            <img src="assets/images/UI/button_restart.png" alt="" draggable="false" />
+                        </span>
+                        <span class="hud-button__label" data-l10n="hud.buttons.restart">Restart</span>
+                    </button>
+                </div>
                 <div
                     id="saveControls"
                     class="save-controls save-controls--hidden"
@@ -251,12 +269,6 @@
                             <span class="hud-button__label">Music On</span>
                         </button>
                     </div>
-                    <button id="pause" class="hud-button" type="button" aria-pressed="false">
-                        <span class="hud-button__icon" aria-hidden="true">
-                            <img src="assets/images/UI/button_pause.png" alt="" draggable="false" />
-                        </span>
-                        <span class="hud-button__label">Pause</span>
-                    </button>
                 </div>
             </div>
         </section>

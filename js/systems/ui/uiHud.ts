@@ -19,6 +19,8 @@ const bindHudPanels = (game) => {
 const bindHudButtons = (game) => {
     game.nextWaveBtn = getElement('nextWave');
     game.restartBtn = getElement('restart');
+    game.settingsBtn = getElement('settings');
+    game.speedUpBtn = getElement('speedUpBattle');
     game.muteBtn = getElement('muteToggle');
     game.musicBtn = getElement('musicToggle');
     game.mergeBtn = getElement('mergeTowers');
