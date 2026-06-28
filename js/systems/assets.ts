@@ -1,5 +1,6 @@
 import { createSound, isAudioSupported } from './audio.js';
 import { UI_ASSET_PATHS } from '../config/uiAssets.js';
+import { PLATFORM_SPRITE_PATH } from '../core/platformLayout.js';
 
 const IMAGE_DIR = 'assets/images';
 const TOWER_IMAGE_DIR = `${IMAGE_DIR}/Towers`;
@@ -7,7 +8,7 @@ const SOUND_DIR = 'assets/sound';
 
 const IMAGE_SOURCES = {
     cell: `${IMAGE_DIR}/cell_cut.png`,
-    platform: `${IMAGE_DIR}/platform.png`,
+    platform: PLATFORM_SPRITE_PATH,
     tower_1r_1: `${TOWER_IMAGE_DIR}/T1R_1.png`,
     tower_1r_2: `${TOWER_IMAGE_DIR}/T1R_2.png`,
     tower_1r_3: `${TOWER_IMAGE_DIR}/T1R_3.png`,

@@ -6,10 +6,10 @@ export function createPlatforms({ width, height, platformConfigs = gameConfig.wo
         return [];
     }
 
-    return platformConfigs.map(({ xFactor, yFactor, scale }) => (
+    return platformConfigs.map(({ x, y, xFactor, yFactor, scale }) => (
         new Platform({
-            x: width * xFactor,
-            y: height * yFactor,
+            x: Number.isFinite(x) ? x : width * xFactor,
+            y: Number.isFinite(y) ? y : height * yFactor,
             scale,
         })
     ));

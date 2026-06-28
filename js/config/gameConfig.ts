@@ -1,5 +1,6 @@
 import { balanceConfig } from './balanceConfig.js';
 import { UI_ASSET_PATHS } from './uiAssets.js';
+import { createPlatformConfigs, createPlatformGridConfig } from '../core/platformLayout.js';
 
 interface TutorialContext {
     acknowledgedSteps?: Set<string>;
@@ -88,31 +89,8 @@ const nonBalanceConfig = {
             railgun: { intensity: 5, duration: 0.28, frequency: 52 },
         },
         bounds: { minMargin: 40, projectileRadiusFactor: 2 },
-        grid: {
-            cellSize: { w: 120, h: 160 },
-            topOrigin: { x: -300, y: 400 },
-            bottomOrigin: { x: -210, y: 680 },
-            topOffsets: [
-                { x: 0, y: 0 },
-                { x: 210, y: 30 },
-                { x: 420, y: 50 },
-                { x: 600, y: 52 },
-                { x: 750, y: 40 },
-                { x: 910, y: 18 },
-            ],
-            bottomOffsets: [
-                { x: 0, y: 0 },
-                { x: 190, y: -35 },
-                { x: 380, y: -45 },
-                { x: 600, y: -45 },
-                { x: 750, y: -25 },
-                { x: 910, y: 0 },
-            ],
-        },
-        platforms: [
-            { xFactor: 0.4, yFactor: 0.55, scale: 1.2 },
-            { xFactor: 0.6, yFactor: 0.85, scale: 1.2 },
-        ],
+        grid: createPlatformGridConfig(),
+        platforms: createPlatformConfigs(),
         portal: {
             offset: { x: 0, y: 0 },
             radius: { x: 130, y: 270 },

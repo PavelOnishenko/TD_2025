@@ -11,10 +11,10 @@ test('constructor builds grid with expected cell positions', () => {
 
     const firstTop = grid.topCells[0];
     assert.deepEqual(firstTop, {
-        x: -300,
-        y: 400,
-        w: 120,
-        h: 160,
+        x: 402,
+        y: 155,
+        w: 74,
+        h: 74,
         occupied: false,
         highlight: 0,
         hover: 0,
@@ -26,10 +26,10 @@ test('constructor builds grid with expected cell positions', () => {
 
     const firstBottom = grid.bottomCells[0];
     assert.deepEqual(firstBottom, {
-        x: -210,
-        y: 680,
-        w: 120,
-        h: 160,
+        x: 58,
+        y: 500,
+        w: 74,
+        h: 74,
         occupied: false,
         highlight: 0,
         hover: 0,
