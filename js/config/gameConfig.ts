@@ -1,4 +1,5 @@
 import { balanceConfig } from './balanceConfig.js';
+import { UI_ASSET_PATHS } from './uiAssets.js';
 
 interface TutorialContext {
     acknowledgedSteps?: Set<string>;
@@ -309,7 +310,7 @@ const nonBalanceConfig = {
                 highlightTargets: ['energyPanel'],
                 text: 'Every destroyed ship and completed wave feeds more energy into your reserves. Watch the meter to afford new towers and color switches.',
                 textKey: 'tutorial.energyEconomy.text',
-                picture: 'assets/images/energy_sign.png',
+                picture: UI_ASSET_PATHS.energyIcon,
                 sound: { src: 'assets/sound/placement.mp3', volume: 0.4 },
                 checkComplete(game, context) {
                     return hasAcknowledged(context, 'energy-economy');

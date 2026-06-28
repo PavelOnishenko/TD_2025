@@ -82,6 +82,11 @@ body {
     user-select: none;
 }
 
+.life-heart--empty {
+    opacity: 0.28;
+    filter: grayscale(1) drop-shadow(0 0 3px rgba(0, 0, 0, 0.4));
+}
+
 #crazyGamesUser {
     display: flex;
     align-items: center;
@@ -511,7 +516,10 @@ body {
 .hud-button {
     --button-scale: var(--btn-scale);
     pointer-events: auto;
-    background: rgba(21, 117, 255, 0.2);
+    background-color: rgba(21, 117, 255, 0.2);
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
     color: #b9d8ff;
     border: 2px solid rgba(102, 188, 255, 0.8);
     border-radius: calc(16px * var(--button-scale));
@@ -525,7 +533,7 @@ body {
     position: relative;
     cursor: pointer;
     box-shadow: 0 0 12px rgba(33, 125, 255, 0.45);
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
     font-size: calc(1rem * var(--button-scale));
     font-weight: 600;
     line-height: 1;
@@ -543,10 +551,17 @@ body {
     justify-content: center;
 }
 
-.hud-button__icon svg {
+.hud-button__icon svg,
+.hud-button__icon img {
     width: 100%;
     height: 100%;
     display: block;
+}
+
+.hud-button__icon img {
+    object-fit: contain;
+    pointer-events: none;
+    user-select: none;
 }
 
 .hud-button__label {
@@ -555,6 +570,8 @@ body {
 
 
 .wave-controls__buttons .hud-button {
+    --hud-button-image: url("assets/images/UI/button_preparation_panel.png");
+    background-image: var(--hud-button-image);
     flex-direction: row;
     justify-content: center;
     align-items: center;
@@ -567,8 +584,17 @@ body {
     gap: calc(10px * var(--button-scale));
 }
 
-.wave-controls__buttons .hud-button__icon {
+#nextWave {
+    --hud-button-image: url("assets/images/UI/button_next_level.png");
+}
+
+#nextWave .hud-button__icon {
     display: none;
+}
+
+.wave-controls__buttons .hud-button__icon {
+    width: calc(28px * var(--button-scale));
+    height: calc(28px * var(--button-scale));
 }
 
 .wave-controls__buttons .hud-button__label {
@@ -597,12 +623,13 @@ body {
 }
 
 .hud-button:disabled {
-    background: rgba(40, 60, 90, 0.45);
+    background-color: rgba(40, 60, 90, 0.45);
     border-color: rgba(102, 188, 255, 0.3);
     color: rgba(185, 216, 255, 0.45);
     box-shadow: none;
     cursor: not-allowed;
     transform: none;
+    filter: grayscale(0.85) opacity(0.62);
     transition: none;
     pointer-events: none;
 }
@@ -613,9 +640,10 @@ body {
 }
 
 .hud-button.is-active:not(:disabled) {
-    background: radial-gradient(circle at 20% 20%, rgba(80, 200, 255, 0.28), rgba(21, 117, 255, 0.15)),
+    background-color: rgba(21, 117, 255, 0.24);
+    background-image: radial-gradient(circle at 20% 20%, rgba(80, 200, 255, 0.28), rgba(21, 117, 255, 0.15)),
         radial-gradient(circle at 80% 30%, rgba(94, 234, 212, 0.2), rgba(21, 117, 255, 0)),
-        rgba(21, 117, 255, 0.24);
+        var(--hud-button-image, none);
     border-color: rgba(94, 234, 212, 0.9);
     color: #e0f2ff;
     box-shadow: 0 0 18px rgba(94, 234, 212, 0.8), 0 0 32px rgba(86, 173, 255, 0.65);

@@ -104,7 +104,18 @@ test('loadAssets returns sounds only when audio is supported', async () => {
         'assets/images/tank_R.png',
         'assets/images/tank_B.png',
         'assets/images/swarm_R.png',
-        'assets/images/swarm_B.png'
+        'assets/images/swarm_B.png',
+        'assets/images/UI/neon_void_icon.png',
+        'assets/images/UI/button_next_level.png',
+        'assets/images/UI/button_settings.png',
+        'assets/images/UI/button_pause.png',
+        'assets/images/UI/button_restart.png',
+        'assets/images/UI/button_merge_towers.png',
+        'assets/images/UI/button_upgrade_towers.png',
+        'assets/images/UI/button_speed_up_battle.png',
+        'assets/images/UI/icon_energy_lightning.png',
+        'assets/images/UI/icon_heart.png',
+        'assets/images/UI/button_preparation_panel.png'
     ]);
     assert.deepEqual(soundCreatorCalls, [
         'assets/sound/tower_fire_1.mp3',

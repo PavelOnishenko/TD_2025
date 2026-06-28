@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title data-l10n="app.title">Neon Void</title>
+    <link rel="icon" type="image/png" href="assets/images/UI/neon_void_icon.png" />
     <link rel="stylesheet" href="style.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js"></script>
 </head>
@@ -16,6 +17,13 @@
             <div class="start-overlay__grid"></div>
         </div>
         <div class="start-menu start-menu--splash">
+            <img
+                class="start-menu__icon"
+                src="assets/images/UI/neon_void_icon.png"
+                alt=""
+                aria-hidden="true"
+                draggable="false"
+            />
             <h1 id="startTitle" class="start-menu__title" data-l10n="start.title">Neon Void</h1>
             <p class="start-menu__tagline" data-l10n="start.tagline">Strategize. Merge. Hold the line.</p>
             <div id="loadingProgress" class="loading-progress">
@@ -113,7 +121,7 @@
             <div class="hud-live-region" aria-live="polite">
                 <div id="energy" class="resource" aria-label="Energy: 100">
                     <span class="resource-value">100</span>
-                    <img class="resource-icon" src="assets/images/energy_sign.png" alt="" aria-hidden="true" />
+                    <img class="resource-icon" src="assets/images/UI/icon_energy_lightning.png" alt="" aria-hidden="true" />
                 </div>
             </div>
             <div id="scorePanel" class="score-panel" aria-live="polite">
@@ -133,31 +141,19 @@
                 <div class="wave-controls__buttons" role="group" aria-label="Wave actions" data-l10n-attrs="aria-label:hud.waveActions">
                     <button id="nextWave" class="hud-button" type="button">
                         <span class="hud-button__icon" aria-hidden="true">
-                            <svg viewBox="0 0 24 24" role="img" aria-hidden="true" focusable="false">
-                                <path d="M4.5 17c1.4-1.8 3.3-1.8 4.7 0s3.3 1.8 4.7 0 3.3-1.8 4.7 0" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"></path>
-                                <path d="M5 6.5h8.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"></path>
-                                <path d="M11.5 3.5l4 3-4 3" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"></path>
-                            </svg>
+                            <img src="assets/images/UI/button_next_level.png" alt="" draggable="false" />
                         </span>
                         <span class="hud-button__label" data-l10n="hud.buttons.nextWave">Next Wave</span>
                     </button>
                     <button id="mergeTowers" class="hud-button" type="button" disabled>
                         <span class="hud-button__icon" aria-hidden="true">
-                            <svg viewBox="0 0 24 24" role="img" aria-hidden="true" focusable="false">
-                                <rect x="4" y="5" width="6.5" height="6.5" rx="1.2" ry="1.2" fill="none" stroke="currentColor" stroke-width="1.6"></rect>
-                                <rect x="13.5" y="12.5" width="6.5" height="6.5" rx="1.2" ry="1.2" fill="none" stroke="currentColor" stroke-width="1.6"></rect>
-                                <path d="M12 8.5v7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path>
-                                <path d="M9.5 12l2.5 3 2.5-3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path>
-                            </svg>
+                            <img src="assets/images/UI/button_merge_towers.png" alt="" draggable="false" />
                         </span>
                         <span class="hud-button__label" data-l10n="hud.buttons.merge">Merge Towers</span>
                     </button>
                     <button id="upgradeTowers" class="hud-button" type="button" disabled hidden aria-hidden="true">
                         <span class="hud-button__icon" aria-hidden="true">
-                            <svg viewBox="0 0 24 24" role="img" aria-hidden="true" focusable="false">
-                                <path d="M12 4l5 5h-3v5h-4V9H7z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"></path>
-                                <path d="M7 19h10" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"></path>
-                            </svg>
+                            <img src="assets/images/UI/button_upgrade_towers.png" alt="" draggable="false" />
                         </span>
                         <span class="hud-button__label" data-l10n="hud.buttons.upgrade">Upgrade Towers</span>
                     </button>
@@ -186,10 +182,7 @@
             <div class="hud-controls">
                 <button id="restart" class="hud-button" type="button">
                     <span class="hud-button__icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24" role="img" aria-hidden="true" focusable="false">
-                            <path d="M12 5a7 7 0 1 0 6.4 4.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"></path>
-                            <path d="M18 4.5v4.5h-4.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"></path>
-                        </svg>
+                        <img src="assets/images/UI/button_restart.png" alt="" draggable="false" />
                     </span>
                     <span class="hud-button__label" data-l10n="hud.buttons.restart">Restart</span>
                 </button>
@@ -260,10 +253,7 @@
                     </div>
                     <button id="pause" class="hud-button" type="button" aria-pressed="false">
                         <span class="hud-button__icon" aria-hidden="true">
-                            <svg viewBox="0 0 24 24" role="img" aria-hidden="true" focusable="false">
-                                <rect x="7.5" y="5" width="3.5" height="14" rx="1" ry="1" fill="none" stroke="currentColor" stroke-width="1.6"></rect>
-                                <rect x="13" y="5" width="3.5" height="14" rx="1" ry="1" fill="none" stroke="currentColor" stroke-width="1.6"></rect>
-                            </svg>
+                            <img src="assets/images/UI/button_pause.png" alt="" draggable="false" />
                         </span>
                         <span class="hud-button__label">Pause</span>
                     </button>

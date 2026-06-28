@@ -1,8 +1,6 @@
 import { translate } from '../localization.js';
 import { updateUpgradeAvailability } from './uiButtons.js';
-
-const HEART_FILLED_SRC = 'assets/images/heart_filled.png';
-const HEART_EMPTY_SRC = 'assets/images/heart_empty.png';
+import { UI_ASSET_PATHS } from '../../config/uiAssets.js';
 
 export function resolveScorePair(game) {
     const current = game.scoreManager ? game.scoreManager.getCurrentScore() : 0;
@@ -189,9 +187,9 @@ export function showWaveClearedBanner(game, waveNumber) {
 
 const createHeart = (filled) => {
     const heart = document.createElement('img');
-    heart.src = filled ? HEART_FILLED_SRC : HEART_EMPTY_SRC;
+    heart.src = UI_ASSET_PATHS.heart;
     heart.alt = '';
-    heart.className = 'life-heart';
+    heart.className = filled ? 'life-heart life-heart--filled' : 'life-heart life-heart--empty';
     heart.setAttribute('aria-hidden', 'true');
     heart.draggable = false;
     return heart;
@@ -253,7 +251,7 @@ const createEnergyFragment = (amount) => {
     value.textContent = `${amount}`;
     const icon = document.createElement('img');
     icon.className = 'resource-icon';
-    icon.src = 'assets/images/energy_sign.png';
+    icon.src = UI_ASSET_PATHS.energyIcon;
     icon.alt = '';
     icon.setAttribute('aria-hidden', 'true');
     return { fragment, value, icon };

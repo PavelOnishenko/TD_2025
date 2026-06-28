@@ -33,13 +33,27 @@ const updateResumeButton = (game, isAdPause) => {
     game.resumeBtn.textContent = translate(key, {}, fallback);
 };
 
+const setHudButtonLabel = (button, label) => {
+    const labelEl = typeof button.querySelector === 'function'
+        ? button.querySelector('.hud-button__label')
+        : null;
+    if (labelEl) {
+        labelEl.textContent = label;
+    } else if (typeof button.textContent !== 'undefined') {
+        button.textContent = label;
+    }
+    if (typeof button.setAttribute === 'function') {
+        button.setAttribute('aria-label', label);
+    }
+};
+
 const updatePauseButton = (game, paused, isAdPause) => {
     if (!game.pauseBtn) {
         return;
     }
     const key = paused ? 'pause.resume' : 'pause.pause';
     const fallback = paused ? 'Resume' : 'Pause';
-    game.pauseBtn.textContent = translate(key, {}, fallback);
+    setHudButtonLabel(game.pauseBtn, translate(key, {}, fallback));
     game.pauseBtn.setAttribute('aria-pressed', paused ? 'true' : 'false');
     game.pauseBtn.disabled = !game.hasStarted || game.gameOver || (paused && isAdPause);
 };

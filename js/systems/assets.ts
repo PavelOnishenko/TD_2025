@@ -1,4 +1,5 @@
 import { createSound, isAudioSupported } from './audio.js';
+import { UI_ASSET_PATHS } from '../config/uiAssets.js';
 
 const IMAGE_DIR = 'assets/images';
 const TOWER_IMAGE_DIR = `${IMAGE_DIR}/Towers`;
@@ -36,7 +37,18 @@ const IMAGE_SOURCES = {
     tank_r: `${IMAGE_DIR}/tank_R.png`,
     tank_b: `${IMAGE_DIR}/tank_B.png`,
     swarm_r: `${IMAGE_DIR}/swarm_R.png`,
-    swarm_b: `${IMAGE_DIR}/swarm_B.png`
+    swarm_b: `${IMAGE_DIR}/swarm_B.png`,
+    ui_main_icon: UI_ASSET_PATHS.mainIcon,
+    ui_next_level_button: UI_ASSET_PATHS.nextLevelButton,
+    ui_settings_button: UI_ASSET_PATHS.settingsButton,
+    ui_pause_button: UI_ASSET_PATHS.pauseButton,
+    ui_restart_button: UI_ASSET_PATHS.restartButton,
+    ui_merge_towers_button: UI_ASSET_PATHS.mergeTowersButton,
+    ui_upgrade_towers_button: UI_ASSET_PATHS.upgradeTowersButton,
+    ui_speed_up_battle_button: UI_ASSET_PATHS.speedUpBattleButton,
+    ui_energy_icon: UI_ASSET_PATHS.energyIcon,
+    ui_heart: UI_ASSET_PATHS.heart,
+    ui_preparation_button_background: UI_ASSET_PATHS.preparationButtonBackground
 };
 
 const SOUND_OPTIONS = {

@@ -12,9 +12,13 @@ const ASSET_PATTERN = /['"`](assets\/[^'"`]+)['"`]/g;
 const SOURCE_FILES = [
     'index.html',
     'js/config/gameConfig.ts',
+    'js/config/uiAssets.ts',
     'js/systems/assets.ts',
     'js/systems/ui.ts',
     'js/systems/localization.ts',
+];
+const IGNORED_ASSET_PREFIXES = [
+    'assets/Temp_Folder_For_New_Assets/',
 ];
 
 async function listAssetFiles(relativeDir = 'assets') {
@@ -98,6 +102,9 @@ test('declared asset files exist on disk', async () => {
     const declaredDirectories = new Set(declaredAssets.filter(assetPath => !hasFileExtension(assetPath)));
     const actualFiles = await listAssetFiles();
     const extraAssets = actualFiles.filter(assetPath => {
+        if (IGNORED_ASSET_PREFIXES.some(prefix => assetPath.startsWith(prefix))) {
+            return false;
+        }
         if (declaredFiles.has(assetPath)) {
             return false;
         }
