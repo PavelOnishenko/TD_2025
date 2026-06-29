@@ -115,12 +115,16 @@ test('global speed multiplier applies to all enemies', () => {
     assert.strictEqual(enemy.speedY, 50 * speedMultiplier);
 });
 
-test('horizontal flight keeps vertical speed at zero', () => {
+test('default flight follows the down-right enemy path', () => {
     const swarm = new SwarmEnemy();
     const tank = new TankEnemy();
 
-    assert.strictEqual(swarm.speedY, 0);
-    assert.strictEqual(tank.speedY, 0);
+    assert.ok(swarm.speedX > 0);
+    assert.ok(swarm.speedY > 0);
+    assert.ok(tank.speedX > 0);
+    assert.ok(tank.speedY > 0);
+    assert.strictEqual(swarm.speedY / swarm.speedX, 0.5);
+    assert.strictEqual(tank.speedY / tank.speedX, 0.5);
 });
 
 function createDrawingContext() {

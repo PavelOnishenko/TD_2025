@@ -65,10 +65,11 @@ export const balanceConfig: BalanceConfig = {
         upgradeUnlockWave: 15,
     },
     enemies: {
-        defaultSpawn: { x: -600, y: 600 },
+        defaultSpawn: { x: -260, y: 150 },
+        formationLaneOriginY: 600,
         speedMultiplier: 0.9,
-        tank: { hpMultiplier: 35.7, speed: { x: 100, y: 0 }, },
-        swarm: { groupSize: 3, hpMultiplier: 10, speed: { x: 200, y: 0 }, },
+        tank: { hpMultiplier: 35.7, speed: { x: 100, y: 50 }, },
+        swarm: { groupSize: 3, hpMultiplier: 10, speed: { x: 200, y: 100 }, },
     },
     waves: {
         difficultyMultiplier: 1,    // todo up this to make waves more epic

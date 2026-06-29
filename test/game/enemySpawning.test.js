@@ -200,6 +200,26 @@ test('spawnEnemiesIfNeeded executes planned formations', () => {
     assert.equal(game.spawned, 2);
 });
 
+test('spawnEnemiesIfNeeded maps planned lane y values around the top-left route origin', () => {
+    const game = createGame({ disableFormations: true });
+    const plan = {
+        events: [
+            { time: 0, type: 'swarm', color: 'red', y: 640, groupSize: 1 },
+        ],
+    };
+    game.waveInProgress = true;
+    game.waveSpawnSchedule = plan.events.slice();
+    game.enemiesPerWave = plan.events.length;
+    game.waveSpawnCursor = 0;
+    game.waveElapsed = 0;
+    game.spawned = 0;
+
+    game.spawnEnemiesIfNeeded(0);
+
+    assert.equal(game.enemies.length, 1);
+    assert.equal(game.enemies[0].y, gameConfig.enemies.defaultSpawn.y + 40);
+});
+
 test('updateEnemies removes enemies reaching the base', () => {
     const game = createGame();
     const enemy = {

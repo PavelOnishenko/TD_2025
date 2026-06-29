@@ -18,25 +18,63 @@ const EXPECTED_PLATFORM_CONFIGS = [
 
 const EXPECTED_GRID_CONFIG = {
     cellSize: { w: 74, h: 74 },
-    topOrigin: { x: 402, y: 155 },
-    bottomOrigin: { x: 58, y: 500 },
+    topOrigin: { x: 492.4, y: 96.7 },
+    bottomOrigin: { x: 147.4, y: 443.7 },
     topOffsets: [
         { x: 0, y: 0 },
-        { x: 104, y: 28 },
-        { x: 208, y: 56 },
-        { x: 312, y: 84 },
-        { x: 416, y: 112 },
-        { x: 520, y: 140 },
+        { x: 64.6, y: 33.6 },
+        { x: 133.6, y: 71.8 },
+        { x: 199.9, y: 106.8 },
+        { x: 269.3, y: 144.0 },
+        { x: 337.7, y: 181.7 },
     ],
     bottomOffsets: [
         { x: 0, y: 0 },
-        { x: 104, y: 28 },
-        { x: 208, y: 56 },
-        { x: 312, y: 84 },
-        { x: 416, y: 112 },
-        { x: 520, y: 140 },
+        { x: 64.6, y: 33.6 },
+        { x: 133.6, y: 71.8 },
+        { x: 199.9, y: 106.8 },
+        { x: 269.3, y: 144.0 },
+        { x: 337.7, y: 181.7 },
     ],
 };
+
+const PLATFORM_SPRITE_SIZE = { width: 1680, height: 1067 };
+
+const PAINTED_PAD_CENTERS = [
+    { x: 366.2, y: 182.8 },
+    { x: 545.6, y: 276.1 },
+    { x: 737.2, y: 382.1 },
+    { x: 921.4, y: 479.4 },
+    { x: 1114.2, y: 582.6 },
+    { x: 1304.2, y: 687.4 },
+];
+
+function platformTopLeft(platform) {
+    return {
+        x: platform.x - PLATFORM_SPRITE_SIZE.width * platform.scale / 2,
+        y: platform.y - PLATFORM_SPRITE_SIZE.height * platform.scale / 2,
+    };
+}
+
+function expectedCellPositionsForPlatform(platform) {
+    const origin = platformTopLeft(platform);
+    const halfSlot = EXPECTED_GRID_CONFIG.cellSize.w / 2;
+    return PAINTED_PAD_CENTERS.map(pad => ({
+        x: Number((origin.x + pad.x * platform.scale - halfSlot).toFixed(1)),
+        y: Number((origin.y + pad.y * platform.scale - halfSlot).toFixed(1)),
+        w: EXPECTED_GRID_CONFIG.cellSize.w,
+        h: EXPECTED_GRID_CONFIG.cellSize.h,
+    }));
+}
+
+function normalizeCellPosition({ x, y, w, h }) {
+    return {
+        x: Number(x.toFixed(1)),
+        y: Number(y.toFixed(1)),
+        w,
+        h,
+    };
+}
 
 test('platform layout uses the supplied installation-platform sprite', () => {
     assert.equal(PLATFORM_SPRITE_PATH, NEW_PLATFORM_SPRITE_PATH);
@@ -57,33 +95,25 @@ test('platform layout provides six diagonal tower slots on each platform', () =>
     assert.equal(gridConfig.topOffsets.length, 6);
     assert.equal(gridConfig.bottomOffsets.length, 6);
 
-    for (const offsets of [gridConfig.topOffsets, gridConfig.bottomOffsets]) {
-        for (let index = 1; index < offsets.length; index++) {
-            assert.equal(offsets[index].x - offsets[index - 1].x, 104);
-            assert.equal(offsets[index].y - offsets[index - 1].y, 28);
-        }
-    }
+    assert.deepEqual(
+        gridConfig.topOffsets,
+        gridConfig.bottomOffsets,
+        'both platform rows should dock to identical painted pad positions',
+    );
 });
 
-test('default GameGrid uses the diagonal platform slot layout', () => {
+test('default GameGrid docks blue slot centers to the painted platform pads', () => {
     const grid = new GameGrid();
+    const [upperPlatform, lowerPlatform] = createPlatformConfigs();
 
-    assert.deepEqual(grid.topCells.map(({ x, y, w, h }) => ({ x, y, w, h })), [
-        { x: 402, y: 155, w: 74, h: 74 },
-        { x: 506, y: 183, w: 74, h: 74 },
-        { x: 610, y: 211, w: 74, h: 74 },
-        { x: 714, y: 239, w: 74, h: 74 },
-        { x: 818, y: 267, w: 74, h: 74 },
-        { x: 922, y: 295, w: 74, h: 74 },
-    ]);
-    assert.deepEqual(grid.bottomCells.map(({ x, y, w, h }) => ({ x, y, w, h })), [
-        { x: 58, y: 500, w: 74, h: 74 },
-        { x: 162, y: 528, w: 74, h: 74 },
-        { x: 266, y: 556, w: 74, h: 74 },
-        { x: 370, y: 584, w: 74, h: 74 },
-        { x: 474, y: 612, w: 74, h: 74 },
-        { x: 578, y: 640, w: 74, h: 74 },
-    ]);
+    assert.deepEqual(
+        grid.topCells.map(normalizeCellPosition),
+        expectedCellPositionsForPlatform(upperPlatform),
+    );
+    assert.deepEqual(
+        grid.bottomCells.map(normalizeCellPosition),
+        expectedCellPositionsForPlatform(lowerPlatform),
+    );
 });
 
 test('createPlatforms can consume explicit platform centers from the layout', () => {

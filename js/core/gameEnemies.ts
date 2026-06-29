@@ -4,6 +4,25 @@ import gameConfig from '../config/gameConfig.js';
 import { DEFAULT_TIME_SCALE } from './game/world.js';
 import { trackLifeLost } from '../systems/balanceTracking.js';
 
+function resolvePlannedLaneY(value) {
+    if (!Number.isFinite(value)) {
+        return undefined;
+    }
+
+    const routeStartY = gameConfig.enemies.defaultSpawn.y;
+    const laneOriginY = Number.isFinite(gameConfig.enemies.formationLaneOriginY)
+        ? gameConfig.enemies.formationLaneOriginY
+        : routeStartY;
+    return routeStartY + (value - laneOriginY);
+}
+
+function resolvePlannedLaneOffsets(offsets) {
+    if (!Array.isArray(offsets)) {
+        return undefined;
+    }
+    return offsets.map(offset => resolvePlannedLaneY(offset));
+}
+
 export const enemyActions: any = {
     chooseEnemyColor() {
         return Math.random() < 0.5 ? 'red' : 'blue';
@@ -153,10 +172,10 @@ export const enemyActions: any = {
         const options = {
             color,
             x: Number.isFinite(event.x) ? event.x : undefined,
-            y: Number.isFinite(event.y) ? event.y : undefined,
+            y: resolvePlannedLaneY(event.y),
             groupSize: Number.isFinite(event.groupSize) ? event.groupSize : undefined,
             spacing: Number.isFinite(event.spacing) ? event.spacing : undefined,
-            offsets: Array.isArray(event.offsets) ? event.offsets : undefined,
+            offsets: resolvePlannedLaneOffsets(event.offsets),
             colors: Array.isArray(event.colors) ? event.colors : undefined,
         };
         if (event.type === 'tank') {
