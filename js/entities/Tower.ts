@@ -7,6 +7,11 @@ interface Point {
     y: number;
 }
 
+interface PlacementCell extends Point {
+    w?: number;
+    h?: number;
+}
+
 interface LevelConfig {
     damage: number;
     fireInterval: number;
@@ -73,9 +78,9 @@ let towerIdCounter = 1;
 
 const DEFAULT_PLACEMENT_ANCHOR = Object.freeze({
     // The anchor describes the fraction of the sprite width/height between the
-    // top-left corner and the point that should sit on the cell origin.
-    x: -0.5,
-    y: 0,
+    // top-left corner and the point that should sit on the highlighted slot.
+    x: 0.5,
+    y: 0.5,
 });
 
 const DEFAULT_TOWER_DIRECTION_INDEX = 2;
@@ -249,13 +254,15 @@ export default class Tower {
     }
 
     /**
-     * Aligns the tower so its sprite anchor sits on the provided cell.
-     * @param {{ x: number, y: number }} cell
+     * Aligns the tower so its sprite anchor sits on the provided cell center.
+     * @param {{ x: number, y: number, w?: number, h?: number }} cell
      */
-    alignToCell(cell: Point): void {
+    alignToCell(cell: PlacementCell): void {
         const offset = this.getPlacementOffset();
-        this.x = cell.x - offset.x;
-        this.y = cell.y - offset.y;
+        const targetX = cell.x + (cell.w ?? 0) / 2;
+        const targetY = cell.y + (cell.h ?? 0) / 2;
+        this.x = targetX - offset.x;
+        this.y = targetY - offset.y;
     }
 
     /**

@@ -34,6 +34,18 @@ test('alignToCell positions tower anchor on target cell', () => {
     assert.deepEqual({ x: tower.x + offset.x, y: tower.y + offset.y }, { x: 100, y: 80 });
 });
 
+test('alignToCell centers tower on highlighted slot rectangle', () => {
+    const tower = new Tower(0, 0);
+    const highlightedSlot = { x: 492.4, y: 96.7, w: 74, h: 74 };
+
+    tower.alignToCell(highlightedSlot);
+
+    assert.deepEqual(tower.center(), {
+        x: highlightedSlot.x + highlightedSlot.w / 2,
+        y: highlightedSlot.y + highlightedSlot.h / 2,
+    });
+});
+
 test('draw renders sprite and level text without range circle', () => {
     const tower = new Tower(50, 60);
     tower.glowTime = 0;
