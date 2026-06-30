@@ -65,7 +65,7 @@ export const balanceConfig: BalanceConfig = {
         upgradeUnlockWave: 15,
     },
     enemies: {
-        defaultSpawn: { x: -260, y: 150 },
+        defaultSpawn: { x: -420, y: -40 },
         formationLaneOriginY: 600,
         speedMultiplier: 0.9,
         tank: { hpMultiplier: 35.7, speed: { x: 100, y: 50 }, },

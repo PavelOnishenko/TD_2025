@@ -36,7 +36,7 @@ test('alignToCell positions tower anchor on target cell', () => {
 
 test('alignToCell centers tower on highlighted slot rectangle', () => {
     const tower = new Tower(0, 0);
-    const highlightedSlot = { x: 492.4, y: 96.7, w: 74, h: 74 };
+    const highlightedSlot = { x: 498.72, y: 52.58, w: 74, h: 74 };
 
     tower.alignToCell(highlightedSlot);
 

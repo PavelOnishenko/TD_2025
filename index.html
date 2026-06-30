@@ -280,10 +280,12 @@
                     </label>
                     <input id="timeScaleSlider" class="diagnostics__slider" type="range" min="0" max="100" step="1" value="50" />
                     <button id="openPositionEditor" class="diagnostics__button" type="button">Position Editor</button>
+                    <button id="openLayoutEditor" class="diagnostics__button" type="button">Layout editor</button>
                     <button id="openBalanceViewer" class="diagnostics__button" type="button">Balance Data</button>
                 </div>
                 <pre id="diagnosticsLog" class="diagnostics__log"></pre>
             </div>
+            <div id="layoutEditorHandles" class="layout-editor-handles layout-editor-handles--hidden" aria-hidden="true"></div>
     </main>
 
     <div id="positionEditor" class="dev-modal dev-modal--hidden" role="dialog" aria-modal="true" aria-labelledby="positionEditorTitle">
@@ -357,6 +359,28 @@
                         </div>
                     </div>
                     <div id="positionSlotList" class="dev-modal__slot-list" role="list"></div>
+                </section>
+            </div>
+        </div>
+    </div>
+
+    <div id="layoutEditor" class="dev-modal layout-editor-modal dev-modal--hidden" role="dialog" aria-modal="true" aria-labelledby="layoutEditorTitle">
+        <div class="dev-modal__backdrop" aria-hidden="true"></div>
+        <div class="dev-modal__panel" role="document">
+            <header class="dev-modal__header">
+                <div>
+                    <p class="dev-modal__eyebrow">Developer Tool</p>
+                    <h2 id="layoutEditorTitle" class="dev-modal__title">Layout editor</h2>
+                    <p class="dev-modal__subtitle">Mode active. Use the canvas buttons near each platform.</p>
+                </div>
+                <button id="closeLayoutEditor" class="dev-modal__close" type="button" aria-label="Close layout editor">&times;</button>
+            </header>
+            <div class="dev-modal__content">
+                <section class="dev-modal__section" aria-label="Copyable layout values">
+                    <label class="dev-modal__field" for="layoutEditorValues">
+                        <span class="dev-modal__field-label">Copyable config values</span>
+                        <textarea id="layoutEditorValues" class="dev-modal__input layout-editor__values" readonly rows="5"></textarea>
+                    </label>
                 </section>
             </div>
         </div>

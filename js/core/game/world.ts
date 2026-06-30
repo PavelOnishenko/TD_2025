@@ -131,9 +131,6 @@ function computeBoundsForGame(game) {
     const cells = game.grid?.getAllCells?.();
     expandWithCells(bounds, cells);
     expandWithBase(bounds, game.base);
-    if (game.portal) {
-        expandWithPortal(bounds, game.portal);
-    }
     if (typeof game.getDefaultEnemyCoords === 'function') {
         expandWithSpawn(bounds, game.getDefaultEnemyCoords());
     }

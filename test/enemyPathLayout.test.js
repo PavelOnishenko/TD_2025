@@ -5,9 +5,9 @@ import gameConfig from '../dist/config/gameConfig.js';
 import { createGame } from './game/helpers.js';
 import { createPlatformConfigs } from '../dist/core/platformLayout.js';
 
-const EXPECTED_ROUTE_START = { x: -260, y: 150 };
+const EXPECTED_ROUTE_START = { x: -420, y: -40 };
 const EXPECTED_ROUTE_SLOPE = 0.5;
-const EXPECTED_BASE_BOTTOM_OFFSET = 180;
+const EXPECTED_BASE_BOTTOM_OFFSET = 140;
 const EXPECTED_PORTAL_ROTATION = Math.atan2(1, 2);
 
 function yOnEnemyPath(x) {
@@ -26,12 +26,29 @@ test('game environment anchors portal and base to the diagonal enemy route', () 
     assert.deepEqual(game.getDefaultEnemyCoords(), EXPECTED_ROUTE_START);
     assert.deepEqual(game.portal.position, EXPECTED_ROUTE_START);
     assert.ok(Math.abs(game.portal.rotation - EXPECTED_PORTAL_ROTATION) < 1e-6);
-    assert.equal(game.base.x, 1100);
+    assert.equal(game.base.x, 1320);
     assert.equal(game.base.y, game.logicalH - EXPECTED_BASE_BOTTOM_OFFSET);
 
     const routeYAtBase = yOnEnemyPath(game.base.x);
     assert.ok(routeYAtBase >= game.base.y);
     assert.ok(routeYAtBase <= game.base.y + game.base.h);
+});
+
+test('portal and base sit partly off the top-left and bottom-right corners', () => {
+    const game = createGame();
+
+    assert.ok(game.portal.position.x < 0, 'portal should be clipped by the left edge');
+    assert.ok(game.portal.position.y < 0, 'portal should be clipped by the top edge');
+    assert.ok(game.base.x > game.logicalW * 2, 'base should sit far to the right of the logical viewport');
+    assert.ok(game.base.y + game.base.h > game.logicalH, 'base should press into the lower UI corner');
+});
+
+test('world bounds fit the enemy spawn but allow the decorative portal to be clipped', () => {
+    const game = createGame();
+    const bounds = game.computeWorldBounds();
+
+    assert.ok(bounds.minX >= EXPECTED_ROUTE_START.x - 40);
+    assert.ok(bounds.minY >= EXPECTED_ROUTE_START.y - 40);
 });
 
 test('platforms sit on both sides of the top-left to bottom-right enemy path', () => {

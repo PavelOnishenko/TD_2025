@@ -1220,6 +1220,105 @@ button:focus-visible {
     font-size: 0.95rem;
 }
 
+.engine-floating-panel__drag-handle {
+    cursor: grab;
+    user-select: none;
+    touch-action: none;
+}
+
+.engine-floating-panel--dragging .engine-floating-panel__drag-handle {
+    cursor: grabbing;
+}
+
+.layout-editor-modal {
+    inset: auto auto calc(18px * var(--scale)) calc(18px * var(--scale));
+    display: block;
+    width: min(560px, calc(100vw - 36px));
+    pointer-events: none;
+}
+
+.layout-editor-modal .dev-modal__backdrop {
+    display: none;
+    background: transparent;
+    backdrop-filter: none;
+}
+
+.layout-editor-modal .dev-modal__panel {
+    width: 100%;
+    max-height: none;
+    pointer-events: auto;
+}
+
+.layout-editor-modal .dev-modal__header {
+    padding: 12px 14px;
+}
+
+.layout-editor-modal .dev-modal__title {
+    font-size: 1.2rem;
+}
+
+.layout-editor-modal .dev-modal__subtitle {
+    max-width: 420px;
+    font-size: 0.92rem;
+}
+
+.layout-editor-modal .dev-modal__content {
+    padding: 12px 14px 14px;
+    max-height: none;
+}
+
+.layout-editor-modal .dev-modal__section {
+    padding: 10px 12px;
+}
+
+.layout-editor__values {
+    min-height: 130px;
+    max-height: 180px;
+    resize: vertical;
+    font-family: "Fira Code", "Source Code Pro", Menlo, Consolas, monospace;
+    line-height: 1.45;
+}
+
+.layout-editor-handles {
+    position: absolute;
+    inset: 0;
+    z-index: 25;
+    pointer-events: none;
+}
+
+.layout-editor-handle-group {
+    position: absolute;
+    display: grid;
+    grid-template-columns: repeat(4, 34px);
+    gap: 6px;
+    transform: translate(-50%, -50%);
+    pointer-events: auto;
+}
+
+.layout-editor-handle {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: 1px solid rgba(125, 211, 252, 0.95);
+    background: rgba(15, 23, 42, 0.88);
+    color: #e0f2fe;
+    font-weight: 900;
+    cursor: pointer;
+    box-shadow: 0 6px 18px rgba(8, 47, 73, 0.35);
+}
+
+.layout-editor-handle:hover {
+    background: rgba(56, 189, 248, 0.32);
+}
+
+.layout-editor-handle:active {
+    transform: translateY(1px);
+}
+
+.layout-editor-handles--hidden {
+    display: none;
+}
+
 .dev-modal--hidden {
     display: none;
 }

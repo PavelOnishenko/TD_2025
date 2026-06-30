@@ -5,6 +5,7 @@ import { initializeAudio } from './systems/audio.js';
 import { initializeHudController } from './systems/hudLayout.js';
 import initDeveloperPositionEditor from './systems/developerPositionEditor.js';
 import initBalanceViewer from './systems/balanceViewer.js';
+import initLayoutEditor from './systems/layoutEditor.js';
 import initSimpleSaveSystem from './systems/simpleSaveSystem.js';
 import { loadAudioSettings } from './systems/dataStore.js';
 import { bindUI, updateAudioControls } from './systems/ui.js';
@@ -77,6 +78,7 @@ async function startGame(context) {
     bindUI(game);
     initDeveloperPositionEditor(game);
     initBalanceViewer(game);
+    initLayoutEditor(game);
     initializeSimpleSaveIfEnabled(game);
     applySavedAudioSettings(game);
     attachAudioFocusHandlers(game);
