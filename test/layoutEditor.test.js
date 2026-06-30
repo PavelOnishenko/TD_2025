@@ -7,6 +7,7 @@ import {
     formatPlatformLayoutConfig,
     getEditablePlatformLayouts,
     getPlatformHandleControlDescriptors,
+    getPlatformHandleScreenPoint,
 } from '../dist/systems/layoutEditor.js';
 
 test('getEditablePlatformLayouts exposes platform position and independent scale values', () => {
@@ -99,4 +100,26 @@ test('platform handle descriptors put position and scale controls on the canvas'
     ]);
     assert.equal(controls.length, 8);
     assert.ok(controls.every(control => control.title.includes('upper')));
+});
+
+test('platform handle screen points stay fixed while platform layouts move', () => {
+    const game = {
+        viewport: {
+            offsetX: 0,
+            offsetY: 0,
+            scale: 1,
+        },
+    };
+    const upper = { id: 'upper', x: 820, y: 300, scaleX: 0.6, scaleY: 0.6 };
+    const movedUpper = { ...upper, x: 620, y: 520, scaleX: 0.75, scaleY: 0.5 };
+    const lower = { id: 'lower', x: 425, y: 680, scaleX: 0.6, scaleY: 0.6 };
+
+    assert.deepEqual(
+        getPlatformHandleScreenPoint(game, upper, 0, 2),
+        getPlatformHandleScreenPoint(game, movedUpper, 0, 2),
+    );
+    assert.notDeepEqual(
+        getPlatformHandleScreenPoint(game, upper, 0, 2),
+        getPlatformHandleScreenPoint(game, lower, 1, 2),
+    );
 });

@@ -1,4 +1,4 @@
-import { createPlatformGridConfig, normalizePlatformConfig, PLATFORM_SPRITE_SIZE } from '../core/platformLayout.js';
+import { createPlatformGridConfig, normalizePlatformConfig } from '../core/platformLayout.js';
 import gameConfig from '../config/gameConfig.js';
 import { enableFloatingPanel } from '../../engine/systems/FloatingPanel.js';
 
@@ -6,6 +6,11 @@ const MOVE_STEP = 10;
 const SCALE_STEP = 0.02;
 const MIN_SCALE = 0.1;
 const MAX_SCALE = 2;
+const HANDLE_GROUP_WIDTH = 154;
+const HANDLE_GROUP_HEIGHT = 74;
+const HANDLE_RIGHT_MARGIN = 180;
+const HANDLE_MIN_EDGE_MARGIN = 28;
+const HANDLE_VERTICAL_SPACING = 124;
 
 function clamp(value, min, max) {
     const numeric = Number(value);
@@ -210,17 +215,40 @@ function setHandlesVisible(handlesEl, open) {
     handlesEl?.classList?.toggle('layout-editor-handles--hidden', !open);
 }
 
-function getPlatformScreenPoint(game, layout) {
-    const viewport = game?.viewport ?? {};
-    const scale = Number.isFinite(viewport.scale) ? viewport.scale : 1;
-    const offsetX = Number.isFinite(viewport.offsetX) ? viewport.offsetX : 0;
-    const offsetY = Number.isFinite(viewport.offsetY) ? viewport.offsetY : 0;
-    const handleOffsetX = PLATFORM_SPRITE_SIZE.width * layout.scaleX * 0.5 + 44;
-    const handleOffsetY = -PLATFORM_SPRITE_SIZE.height * layout.scaleY * 0.18;
+function getHandleSurfaceSize(game) {
+    const rect = game?.canvas?.getBoundingClientRect?.();
+    if (rect && rect.width > 0 && rect.height > 0) {
+        return { width: rect.width, height: rect.height };
+    }
+    if (typeof window !== 'undefined' && window.innerWidth > 0 && window.innerHeight > 0) {
+        return { width: window.innerWidth, height: window.innerHeight };
+    }
+    const dpr = Number.isFinite(game?.viewport?.dpr) && game.viewport.dpr > 0 ? game.viewport.dpr : 1;
+    const canvasWidth = Number.isFinite(game?.canvas?.width) ? game.canvas.width / dpr : null;
+    const canvasHeight = Number.isFinite(game?.canvas?.height) ? game.canvas.height / dpr : null;
     return {
-        x: (layout.x + handleOffsetX) * scale + offsetX,
-        y: (layout.y + handleOffsetY) * scale + offsetY,
+        width: canvasWidth && canvasWidth > 0 ? canvasWidth : 1600,
+        height: canvasHeight && canvasHeight > 0 ? canvasHeight : 900,
     };
+}
+
+export function getPlatformHandleScreenPoint(game, layout, index = 0, total = 1) {
+    const surface = getHandleSurfaceSize(game);
+    const groupHalfWidth = HANDLE_GROUP_WIDTH / 2;
+    const groupHalfHeight = HANDLE_GROUP_HEIGHT / 2;
+    const x = clamp(
+        surface.width - HANDLE_RIGHT_MARGIN,
+        HANDLE_MIN_EDGE_MARGIN + groupHalfWidth,
+        surface.width - HANDLE_MIN_EDGE_MARGIN - groupHalfWidth,
+    );
+    const centerIndex = (Math.max(1, total) - 1) / 2;
+    const preferredY = surface.height * 0.62 + (index - centerIndex) * HANDLE_VERTICAL_SPACING;
+    const y = clamp(
+        preferredY,
+        HANDLE_MIN_EDGE_MARGIN + groupHalfHeight,
+        surface.height - HANDLE_MIN_EDGE_MARGIN - groupHalfHeight,
+    );
+    return { x, y };
 }
 
 function renderValues(valuesEl, layouts) {
@@ -267,7 +295,7 @@ function renderHandles(game, elements, state, rerender) {
     elements.handlesEl.innerHTML = '';
     state.layouts.forEach((layout, index) => {
         const group = createPlatformHandleGroup(game, state, index, rerender);
-        const point = getPlatformScreenPoint(game, layout);
+        const point = getPlatformHandleScreenPoint(game, layout, index, state.layouts.length);
         group.style.left = `${point.x}px`;
         group.style.top = `${point.y}px`;
         elements.handlesEl.appendChild(group);
