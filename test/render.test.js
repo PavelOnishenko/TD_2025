@@ -14,8 +14,11 @@ function makeFakeCtx() {
         strokeRect(x, y, w, h) { ops.push(['strokeRect', x, y, w, h]); },
         clearRect(x, y, w, h) { ops.push(['clearRect', x, y, w, h]); },
         beginPath() { ops.push(['beginPath']); },
+        moveTo(x, y) { ops.push(['moveTo', x, y]); },
+        lineTo(x, y) { ops.push(['lineTo', x, y]); },
         arc(x, y, r, s, e) { ops.push(['arc', x, y, r, s, e]); },
         fill() { ops.push(['fill']); },
+        stroke() { ops.push(['stroke']); },
         drawImage(img, x, y, w, h) { ops.push(['drawImage', img, x, y, w, h]); },
         save() { ops.push(['save']); },
         restore() { ops.push(['restore']); },
@@ -123,4 +126,31 @@ test('drawEntities renders explosion particles', () => {
     assert.ok(ctx.ops.some(op => op[0] === 'save'));
     assert.ok(ctx.ops.some(op => op[0] === 'globalCompositeOperation' && op[1] === 'lighter'));
     assert.ok(ctx.ops.some(op => op[0] === 'restore'));
+});
+
+test('draw renders layout editor spawn marker and direction arrow while layout mode is open', () => {
+    const ctx = makeFakeCtx();
+    const game = {
+        ctx,
+        canvas: { width: 450, height: 800 },
+        logicalW: 540,
+        logicalH: 960,
+        base: { x: 10, y: 20, w: 30, h: 40 },
+        getAllCells: () => [],
+        getDefaultEnemyCoords: () => ({ x: -120, y: 40 }),
+        layoutSpawnPoint: { x: -90, y: 55 },
+        layoutEditorState: { open: true },
+        towers: [],
+        enemies: [],
+        projectiles: [],
+        projectileRadius: 4,
+        assets: {},
+        explosions: [],
+    };
+
+    draw(game);
+
+    assert.ok(ctx.ops.some(op => op[0] === 'arc' && op[1] === -90 && op[2] === 55 && op[3] >= 18));
+    assert.ok(ctx.ops.some(op => op[0] === 'moveTo' && op[1] === -90 && op[2] === 55));
+    assert.ok(ctx.ops.some(op => op[0] === 'lineTo' && op[1] > -90 && op[2] > 55));
 });

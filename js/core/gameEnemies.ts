@@ -52,6 +52,9 @@ export const enemyActions: any = {
     },
 
     getDefaultEnemyCoords() {
+        if (Number.isFinite(this.layoutSpawnPoint?.x) && Number.isFinite(this.layoutSpawnPoint?.y)) {
+            return { ...this.layoutSpawnPoint };
+        }
         return { ...gameConfig.enemies.defaultSpawn };
     },
 

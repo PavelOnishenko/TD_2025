@@ -48,7 +48,54 @@ export function draw(game) {
     drawPlatforms(game);
     drawGrid(game);
     drawEntities(game);
+    drawLayoutEditorOverlay(game);
 
+    ctx.restore();
+}
+
+function getLayoutSpawnPoint(game) {
+    if (Number.isFinite(game?.layoutSpawnPoint?.x) && Number.isFinite(game?.layoutSpawnPoint?.y)) {
+        return game.layoutSpawnPoint;
+    }
+    if (typeof game?.getDefaultEnemyCoords === 'function') {
+        return game.getDefaultEnemyCoords();
+    }
+    return null;
+}
+
+function drawLayoutEditorOverlay(game) {
+    if (!game?.layoutEditorState?.open) {
+        return;
+    }
+    const spawn = getLayoutSpawnPoint(game);
+    const ctx = game.ctx;
+    if (!spawn || !ctx) {
+        return;
+    }
+    const markerScale = Math.max(0.4, Math.max(game.layoutSpawnMarkerScaleX ?? 1, game.layoutSpawnMarkerScaleY ?? 1));
+    const radius = 22 * markerScale;
+    const arrowLength = 130;
+    const arrowDx = arrowLength * 0.9;
+    const arrowDy = arrowLength * 0.45;
+
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.fillStyle = 'rgba(120, 255, 255, 0.95)';
+    ctx.strokeStyle = 'rgba(235, 255, 255, 0.95)';
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.arc(spawn.x, spawn.y, radius, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(spawn.x, spawn.y);
+    ctx.lineTo(spawn.x + arrowDx, spawn.y + arrowDy);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(spawn.x + arrowDx, spawn.y + arrowDy);
+    ctx.lineTo(spawn.x + arrowDx - 22, spawn.y + arrowDy - 4);
+    ctx.moveTo(spawn.x + arrowDx, spawn.y + arrowDy);
+    ctx.lineTo(spawn.x + arrowDx - 10, spawn.y + arrowDy - 20);
+    ctx.stroke();
     ctx.restore();
 }
 

@@ -12,29 +12,29 @@ import GameGrid from '../dist/core/gameGrid.js';
 const NEW_PLATFORM_SPRITE_PATH = 'assets/images/platform.png';
 
 const EXPECTED_PLATFORM_CONFIGS = [
-    { id: 'upper', x: 820, y: 300, scaleX: 0.6, scaleY: 0.6 },
-    { id: 'lower', x: 445, y: 680, scaleX: 0.6, scaleY: 0.6 },
+    { id: 'upper', x: 730, y: 380, scaleX: 0.62, scaleY: 0.62 },
+    { id: 'lower', x: 95, y: 700, scaleX: 0.62, scaleY: 0.62 },
 ];
 
 const EXPECTED_GRID_CONFIG = {
     cellSize: { w: 74, h: 74 },
-    topOrigin: { x: 498.72, y: 52.58 },
-    bottomOrigin: { x: 123.72, y: 432.58 },
+    topOrigin: { x: 399.244, y: 125.566 },
+    bottomOrigin: { x: -235.756, y: 445.566 },
     topOffsets: [
         { x: 0, y: 0 },
-        { x: 107.64, y: 55.98 },
-        { x: 222.6, y: 119.58 },
-        { x: 333.12, y: 177.96 },
-        { x: 448.8, y: 239.88 },
-        { x: 562.8, y: 302.76 },
+        { x: 111.228, y: 57.846 },
+        { x: 230.02, y: 123.566 },
+        { x: 344.224, y: 183.892 },
+        { x: 463.76, y: 247.876 },
+        { x: 581.56, y: 312.852 },
     ],
     bottomOffsets: [
         { x: 0, y: 0 },
-        { x: 107.64, y: 55.98 },
-        { x: 222.6, y: 119.58 },
-        { x: 333.12, y: 177.96 },
-        { x: 448.8, y: 239.88 },
-        { x: 562.8, y: 302.76 },
+        { x: 111.228, y: 57.846 },
+        { x: 230.02, y: 123.566 },
+        { x: 344.224, y: 183.892 },
+        { x: 463.76, y: 247.876 },
+        { x: 581.56, y: 312.852 },
     ],
 };
 
@@ -182,7 +182,7 @@ test('createPlatforms can consume explicit platform centers from the layout', ()
     });
 
     assert.deepEqual(platforms.map(({ x, y, scaleX, scaleY }) => ({ x, y, scaleX, scaleY })), [
-        { x: 820, y: 300, scaleX: 0.6, scaleY: 0.6 },
-        { x: 445, y: 680, scaleX: 0.6, scaleY: 0.6 },
+        { x: 730, y: 380, scaleX: 0.62, scaleY: 0.62 },
+        { x: 95, y: 700, scaleX: 0.62, scaleY: 0.62 },
     ]);
 });
