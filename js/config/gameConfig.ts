@@ -82,7 +82,7 @@ const hasMergeableTowers = (game: MergeGame | undefined): boolean => {
 const nonBalanceConfig = {
     world: {
         logicalSize: { width: 540, height: 960 },
-        base: { x: 900, width: 160, height: 160, bottomOffset: 210 },
+        base: { x: 800, width: 160, height: 160, bottomOffset: 210 },
         screenShake: {
             frequency: 42,
             rocket: { intensity: 6, duration: 0.5, frequency: 46 },
@@ -92,7 +92,7 @@ const nonBalanceConfig = {
         grid: createPlatformGridConfig(),
         platforms: createPlatformConfigs(),
         portal: {
-            offset: { x: 0, y: -90 },
+            offset: { x: 130, y: -40 },
             radius: { x: 130, y: 270 },
             rotation: Math.atan2(1, 2),
             pulseDuration: 1.05,

@@ -10,13 +10,13 @@ export const PAINTED_PAD_CENTERS = Object.freeze([
     { x: 1304.2, y: 687.4 },
 ]);
 
-const PLATFORM_SCALE_X = 0.62;
-const PLATFORM_SCALE_Y = 0.62;
+const PLATFORM_SCALE_X = 0.56;
+const PLATFORM_SCALE_Y = 0.56;
 const SLOT_SIZE = 74;
 
 const platformConfigs = [
-    { id: 'upper', x: 730, y: 380, scaleX: PLATFORM_SCALE_X, scaleY: PLATFORM_SCALE_Y },
-    { id: 'lower', x: 95, y: 700, scaleX: PLATFORM_SCALE_X, scaleY: PLATFORM_SCALE_Y },
+    { id: 'upper', x: 660, y: 470, scaleX: PLATFORM_SCALE_X, scaleY: PLATFORM_SCALE_Y },
+    { id: 'lower', x: 195, y: 740, scaleX: PLATFORM_SCALE_X, scaleY: PLATFORM_SCALE_Y },
 ];
 
 export function normalizePlatformConfig(platform: any = {}) {
