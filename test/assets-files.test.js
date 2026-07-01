@@ -13,6 +13,7 @@ const SOURCE_FILES = [
     'index.html',
     'js/config/gameConfig.ts',
     'js/config/uiAssets.ts',
+    'js/core/asteroids.ts',
     'js/systems/assets.ts',
     'js/systems/ui.ts',
     'js/systems/localization.ts',

@@ -1,6 +1,7 @@
 import { createSound, isAudioSupported } from './audio.js';
 import { UI_ASSET_PATHS } from '../config/uiAssets.js';
 import { PLATFORM_SPRITE_PATH } from '../core/platformLayout.js';
+import { ASTEROID_ASSET_PATHS } from '../core/asteroids.js';
 
 const IMAGE_DIR = 'assets/images';
 const TOWER_IMAGE_DIR = `${IMAGE_DIR}/Towers`;
@@ -39,6 +40,7 @@ const IMAGE_SOURCES = {
     tank_b: `${IMAGE_DIR}/tank_B.png`,
     swarm_r: `${IMAGE_DIR}/swarm_R.png`,
     swarm_b: `${IMAGE_DIR}/swarm_B.png`,
+    ...ASTEROID_ASSET_PATHS,
     ui_main_icon: UI_ASSET_PATHS.mainIcon,
     ui_next_level_button: UI_ASSET_PATHS.nextLevelButton,
     ui_settings_button: UI_ASSET_PATHS.settingsButton,

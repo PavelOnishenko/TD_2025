@@ -6,6 +6,7 @@ import { drawProjectile } from './renderProjectiles.js';
 import { drawGrid } from './renderGrid.js';
 import { drawEnergyPopups, drawMergeAnimations } from './renderOverlays.js';
 import { drawBase } from './renderBase.js';
+import { drawSpaceAsteroids } from './asteroids.js';
 
 function getScreenShakeOffset(game) {
     const shake = game?.screenShake;
@@ -43,6 +44,7 @@ export function draw(game) {
     ctx.setTransform(scale, 0, 0, scale, offsetX + shakeOffset.x, offsetY + shakeOffset.y);
 
     drawStarfield(game);
+    drawSpaceAsteroids(game);
     drawPortal(ctx, game.portal);
     drawBase(game);
     drawPlatforms(game);
